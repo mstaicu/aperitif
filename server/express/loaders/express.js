@@ -4,7 +4,7 @@ import { publicRouter, emailRouter } from '../routers';
 
 import { requireAuth, tokenAuth } from '../middleware';
 
-import { getUserById } from '../services';
+import { getUserBy } from '../services';
 
 export default async app => {
   /**
@@ -20,7 +20,7 @@ export default async app => {
   /**
    * all subsequent routes require proof of verification
    */
-  app.use(tokenAuth(getUserById));
+  app.use(tokenAuth(getUserBy('id')));
 
   /**
    * resource routers

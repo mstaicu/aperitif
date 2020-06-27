@@ -1,28 +1,31 @@
 import {
+  getUserBy,
+  //
   createUser,
-  getUserByEmail,
   comparePasswords,
   issueToken,
 } from '../services/public';
 
 const signup = createUser;
 
-const login = async (email, password) => {
+const login = async (userEmail, suppliedPassword) => {
   try {
-    const { result: user, err: userLookupError } = getUserByEmail(email);
-
-    if (userLookupError) {
-      return { err: userLookupError };
-    }
-
-    const { err: passwordMatchError } = await comparePasswords(
-      user.password,
-      password,
+    const { result: user, err: lookupError } = await getUserBy('email')(
+      userEmail,
     );
 
-    if (passwordMatchError) {
+    if (lookupError) {
+      return { err: lookupError };
+    }
+
+    const { err: matchError } = await comparePasswords(
+      user.password,
+      suppliedPassword,
+    );
+
+    if (matchError) {
       return {
-        err: passwordMatchError,
+        err: matchError,
       };
     }
 

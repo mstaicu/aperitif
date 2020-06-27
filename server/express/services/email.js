@@ -18,7 +18,7 @@ const getEmail = async id => {
     const result = emails.find(email => email.id === id);
 
     if (!result) {
-      return { err: 'No email found' };
+      return { err: { message: 'No email found' } };
     }
 
     return { result };
@@ -51,7 +51,7 @@ const deleteEmail = async id => {
 
     if (emailIndex < 0) {
       return {
-        err: 'No email found',
+        err: { message: 'No email found' },
       };
     }
 

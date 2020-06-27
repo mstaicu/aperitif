@@ -7,20 +7,15 @@ import users from '../fixtures/users';
 
 import { generateId, hash, createToken } from '../utils';
 
-/**
- * Since we're using the user id in the JWT token creation
- * we need to retrieve the user by its id, once a request
- * is made using the Bearer authentication strategy
- */
-const getUserById = async id => {
+const getUserBy = prop => async value => {
   try {
     /**
      * todo: this should be a 'model' of an ORM
      */
-    const result = users.find(user => user.id === id);
+    const result = users.find(user => user[prop] === value);
 
     if (!result) {
-      return { err: 'No user found with the supplied ID' };
+      return { err: { message: `No user found with the supplied ${prop}` } };
     }
 
     return { result };
@@ -47,38 +42,18 @@ const createUser = async (email, password) => {
       result: newUser,
     };
   } catch (err) {
-    console.error(err);
     return {
-      err: 'Something went wrong while trying to create your account',
+      err: {
+        message: 'Something went wrong while trying to create your account',
+      },
     };
-  }
-};
-
-const getUserByEmail = async email => {
-  try {
-    /**
-     * todo: this should be a 'model' of an ORM
-     */
-    const user = users.find(user => user.email === email);
-
-    if (!user) {
-      return { err: 'No user found for this email address' };
-    }
-
-    return { result: user };
-  } catch (err) {
-    return { err };
   }
 };
 
 const comparePasswords = async (firstPassword, secondPassword) => {
   try {
-    const resolution = await bcrypt.compare(firstPassword, secondPassword);
-
     return {
-      result: {
-        resolution,
-      },
+      result: await bcrypt.compare(firstPassword, secondPassword),
     };
   } catch (err) {
     return {
@@ -92,10 +67,9 @@ const comparePasswords = async (firstPassword, secondPassword) => {
 const issueToken = payload => createToken(payload);
 
 export {
+  getUserBy,
+  //
   createUser,
-  getUserByEmail,
   comparePasswords,
   issueToken,
-  //
-  getUserById,
 };
