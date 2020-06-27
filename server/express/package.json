@@ -1,0 +1,30 @@
+{
+  "name": "email-api",
+  "version": "1.0.0",
+  "description": "Express RESTful API scaffolding",
+  "scripts": {
+    "dev": "nodemon -r esm index.js",
+    "lint": "eslint --ignore-path .gitignore .",
+    "prettier": "prettier --ignore-path .gitignore \"**/*.+(js|json)\"",
+    "check-format": "npm run prettier -- --list-different",
+    "format": "npm run prettier -- --write"
+  },
+  "author": "Mircea Staicu",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^3.0.7",
+    "compression": "^1.7.4",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.6.0",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.9.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "esm": "^3.2.25",
+    "nodemon": "^1.19.4",
+    "prettier": "^1.19.1"
+  }
+}

@@ -1,0 +1,32 @@
+service: web-edge-lambda
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  provider: serverless
+  stage: prod
+  region: us-east-1
+
+functions:
+  router:
+    handler: src/api/router.handler
+    events:
+      - cloudFront:
+        eventType: viewer-request
+        origin: ${self:custom.origins.assetOrigin}
+
+  header:
+    handler: src/api/header.handler
+    events:
+      - cloudFront:
+        eventType: viewer-response
+        origin: ${self:custom.origins.assetOrigin}
+
+
+plugins:
+  - serverless-offline
+
+custom:
+  origins:
+    assetOrigin:
+      DomainName: #Insert S3 DNS A record

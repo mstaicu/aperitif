@@ -1,0 +1,13 @@
+{
+  "name": "web-edge-lambda",
+  "version": "1.0.0",
+  "description": "Lamba used to route whitelisted routes to the client side application and add security headers",
+  "scripts": {
+    "dev": "sls offline start --port 4500"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless-offline": "^5.12.1"
+  }
+}
