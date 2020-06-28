@@ -3,9 +3,11 @@ services:
   express:
     image: node:12-stretch
     volumes:
+      # bind mount the host sources to the container sources
       - type: bind
         source: ./express
         target: /home/node/express
+      # volume mount the node_modules stored in the nodemodules volume
       - type: volume
         source: nodemodules # name of the volume, see below
         target: /home/node/express/node_modules
