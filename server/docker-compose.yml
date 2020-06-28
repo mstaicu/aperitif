@@ -1,0 +1,22 @@
+version: "3.4"
+services:
+  express:
+    image: node:12-stretch
+    volumes:
+      - type: bind
+        source: ./express
+        target: /home/node/express
+      - type: volume
+        source: nodemodules # name of the volume, see below
+        target: /home/node/express/node_modules
+        volume:
+          nocopy: true
+    working_dir: /home/node/express
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+volumes:
+    nodemodules:
