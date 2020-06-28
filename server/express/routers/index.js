@@ -1,2 +1,2 @@
-export * from './public';
 export * from './email';
+export * from './public';

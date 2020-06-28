@@ -1,13 +1,15 @@
+# Build stage
 FROM node:12-stretch AS build
  
 WORKDIR /build
  
-COPY package.json package-lock.json ./
+COPY package*.json ./
  
 RUN npm ci
 
 COPY . .
 
+# Runtime stage
 FROM alpine:3.10
 
 RUN apk add --update nodejs-current
