@@ -32,6 +32,6 @@ COPY --chown=node:node --from=build /build .
 
 EXPOSE 3000
 
-# Currently publishing the Docker image with the 
-# production dependencies and the unobfuscated sources on the fs
+# Currently publishing the Docker image with the production dependencies 
+# and the unobfuscated sources on the container's filesystem
 CMD ["sh", "-c", "exec node -r esm src"]
