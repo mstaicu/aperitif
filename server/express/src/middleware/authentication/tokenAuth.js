@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 import { env } from '../../config';
 
-const tokenAuth = findUser => async (req, res, next) => {
+const tokenAuth = getUserBy => async (req, res, next) => {
   const header = req.headers.authorization || '';
   const [type, token] = header.split(' ');
 
@@ -12,16 +12,17 @@ const tokenAuth = findUser => async (req, res, next) => {
     try {
       payload = jwt.verify(token, env.signature);
     } catch (err) {
-      res.status(401).end();
+      res.sendStatus(401);
       return;
     }
 
     /**
-     * storing just the user id in the JWT payload
+     * Storing just the user id in the JWT payload.
+     * Check the 'issueToken' function
      */
     const { id } = payload;
 
-    const { result: user } = await findUser(id);
+    const { result: user } = await getUserBy(id);
 
     if (user) {
       req.user = user;
