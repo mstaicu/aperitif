@@ -2,6 +2,7 @@ version: "3.4"
 services:
   express:
     image: node:12-stretch
+    working_dir: /home/node/express
     volumes:
       # bind mount the host sources to the container sources
       - type: bind
@@ -13,7 +14,6 @@ services:
         target: /home/node/express/node_modules
         volume:
           nocopy: true
-    working_dir: /home/node/express
     command: npm run dev
     ports:
       - "3000:3000"
