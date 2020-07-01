@@ -10,17 +10,14 @@ import Nav from '../Nav';
 import Loader from '../Loader';
 
 const App = () => (
-  <>
-    <BrowserRouter>
-      {/* TODO: Move into layout */}
-      <Suspense fallback={<Loader />}>
-        <Nav />
-      </Suspense>
-      <Suspense fallback={<Loader />}>
-        <Routes />
-      </Suspense>
-    </BrowserRouter>
-  </>
+  <BrowserRouter>
+    <Suspense fallback={<Loader />}>
+      <Nav />
+    </Suspense>
+    <Suspense fallback={<Loader />}>
+      <Routes />
+    </Suspense>
+  </BrowserRouter>
 );
 
 export default App;
