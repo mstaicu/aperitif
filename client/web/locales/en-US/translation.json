@@ -1,0 +1,8 @@
+{
+  "text": "Hello",
+  "button": {
+    "home": "Go home",
+    "dummy1": "Go to Dummy1",
+    "dummy2": "Go to Dummy2"
+  }
+}

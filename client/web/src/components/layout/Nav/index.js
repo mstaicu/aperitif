@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { useTranslation } from 'react-i18next';
 
-const Nav = () => {
+export const Nav = () => {
   const { t } = useTranslation();
 
   return (
@@ -22,5 +22,3 @@ const Nav = () => {
     </nav>
   );
 };
-
-export default Nav;

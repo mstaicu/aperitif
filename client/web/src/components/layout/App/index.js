@@ -4,12 +4,12 @@ import { BrowserRouter } from 'react-router-dom';
 // eslint-disable-next-line
 import injectGlobal from '../GlobalStyle';
 
-import Routes from '../Routes';
-import Nav from '../Nav';
+import { Routes } from '../Routes';
+import { Nav } from '../Nav';
 
-import Loader from '../Loader';
+import { Loader } from '@src/components/ui';
 
-const App = () => (
+export const App = () => (
   <BrowserRouter>
     <Suspense fallback={<Loader />}>
       <Nav />
@@ -19,5 +19,3 @@ const App = () => (
     </Suspense>
   </BrowserRouter>
 );
-
-export default App;
