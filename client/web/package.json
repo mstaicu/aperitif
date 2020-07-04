@@ -10,8 +10,7 @@
     "validate": "npm-run-all --parallel check-format lint",
     "test": "",
     "dev": "webpack-dev-server --env.env=dev --config ./config/webpack/webpack.config.js",
-    "build": "rimraf dist && webpack --env.env=prod --config ./config/webpack/webpack.config.js && cp -R locales dist/",
-    "aws:s3:deploy": "aws s3 cp dist/ s3://${S3_BUCKET_NAME} --recursive"
+    "build": "rimraf dist && webpack --env.env=prod --config ./config/webpack/webpack.config.js && cp -R locales dist/"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.4",
