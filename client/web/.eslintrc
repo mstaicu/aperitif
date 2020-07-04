@@ -1,12 +1,11 @@
 {
   "parser": "babel-eslint",
   "parserOptions": {
+    "sourceType": "module",
     "ecmaVersion": 2019,
     "ecmaFeatures": {
       "jsx": true
-    },
-    "sourceType": "module",
-    "allowImportExportEverywhere": true
+    }
   },
   "plugins": ["react", "emotion"],
   "extends": [
