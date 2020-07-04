@@ -1,9 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-// eslint-disable-next-line
-import injectGlobal from '../GlobalStyle';
-
 import { Routes } from '../Routes';
 import { Nav } from '../Nav';
 

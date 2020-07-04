@@ -4,11 +4,12 @@ import ReactDOM from 'react-dom';
 // eslint-disable-next-line
 import i18n from '@config/i18n';
 
-import { App } from '@src/components';
+import { App, GlobalStyles } from '@src/components';
 
 // eslint-disable-next-line react/no-render-return-value
 const render = ReactDOM.render(
   <React.StrictMode>
+    <GlobalStyles />
     <App />
   </React.StrictMode>,
   document.getElementById('root'),
