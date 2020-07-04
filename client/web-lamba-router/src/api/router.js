@@ -4,14 +4,14 @@ const validateRequestUri = uri => whitelist.some(regex => regex.test(uri));
 
 const rootDocument = '/index.html';
 
-const handler = (event, context, callback) => {
+const handler = async (event, context) => {
   const request = event.Records[0].cf.request;
 
   if (validateRequestUri(request.uri)) {
     request.uri = rootDocument;
   }
 
-  callback(null, request);
+  return request;
 };
 
 module.exports = { handler };
