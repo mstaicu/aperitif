@@ -15,11 +15,7 @@
   ],
   "rules": {
     "strict": ["error", "never"],
-    "react/prop-types": 0,
-    // We're disabline the requirement to import React in every file
-    // because we're using the @emotion/babel-preset-css-prop
-    // to compile our JSX
-    "react/react-in-jsx-scope": "off"
+    "react/prop-types": 0
   },
   "env": {
     "es6": true,
