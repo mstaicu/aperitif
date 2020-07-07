@@ -1,0 +1,55 @@
+language: node_js
+node_js:
+  - '12'
+cache:
+  - directories:
+    # cache the client side dependency so we don't have to download it again on subsequent builds
+    - node_modules
+    # cache the Google Cloud SDK so we don't have to download it again on subsequent builds
+    - $HOME/google-cloud-sdk
+env:
+  - global:
+    # do not prompt for user input when using any SDK methods.
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+before_install:
+  # encrypt, and store, the Google service account credentials with the sources of the project
+  # this command should encrypt the service account credentials: travis encrypt-file --org op-key.json
+  - "this needs to be replaced with the output from 'travis encrypt-file op-key.json --org'"
+  # the install script errors if this directory already exists,
+  # but Travis already creates it when we mark it as cached
+  - if [ ! -d $HOME/google-cloud-sdk/bin ]; then
+      rm -rf $HOME/google-cloud-sdk;
+      curl https://sdk.cloud.google.com | bash > /dev/null;
+    fi
+  # add the Google Cloud SDK binaries to the PATH in order to be able to access them
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  #
+  - gcloud auth activate-service-account --key-file=op-key.json
+  #
+  - gcloud config set project "${PROJECT_ID}"
+install:
+  - npm install
+before_script:
+  - npm test
+script:
+  - npm run build
+deploy:
+  provider: gcs
+  key_file: op-keys.json
+  bucket: $BUCKET_NAME
+  skip_cleanup: true
+  local-dir: dist
+  on:
+    branch: master
+after_deploy:
+  # all assets in the bucket will be served with the most aggressive
+  # caching strategy available as they contain hashed signatures
+  # in their file name, which will be used to compute the cache keys
+  # on the edge nodes
+  - gsutil -m setmeta -r -h "Cache-Control: public, max-age=31536000, immutable" \
+      gs://$BUCKET_NAME
+  # since we're using the most aggresive caching strategy, we need to evict
+  # the previous assets from the edge nodes
+  - gcloud compute url-maps \ 
+      invalidate-cdn-cache "${URL_MAP_NAME}" \
+      --path "/*"
