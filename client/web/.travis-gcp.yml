@@ -35,7 +35,9 @@ script:
   - npm run build
 before_deploy:
   # remove all the existing contents of the BUCKET_NAME
-  - gsutil -m rm "gs://${BUCKET_NAME}/**"
+  - gsutil -m \
+      rm \
+      "gs://${BUCKET_NAME}/**"
 deploy:
   provider: gcs
   key_file: op-keys.json
@@ -49,7 +51,8 @@ after_deploy:
   # caching strategy available as they contain hashed signatures
   # in their file name, which will be used to compute the cache keys
   # on the edge nodes
-  - gsutil -m setmeta \
+  - gsutil setmeta \
+      -m \
       -r \
       -h "Cache-Control:public,max-age=31536000,immutable" \
       gs://$BUCKET_NAME
@@ -59,6 +62,7 @@ after_deploy:
       gs://{BUCKET_NAME}
   # since we're using the most aggresive caching strategy, we need to evict
   # the previous assets from the edge nodes
-  - gcloud compute url-maps \ 
+  - gcloud compute \
+      url-maps \ 
       invalidate-cdn-cache "${URL_MAP_NAME}" \
       --path "/*"
