@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import xhr from 'i18next-xhr-backend';
+import translationBackend from 'i18next-http-backend';
 import browserLanguageDetector from 'i18next-browser-languagedetector';
 
 const xhrOptions = {
@@ -13,7 +13,7 @@ const languageDetectionOptions = {
 };
 
 i18n
-  .use(xhr)
+  .use(translationBackend)
   .use(browserLanguageDetector)
   .use(initReactI18next)
   .init({

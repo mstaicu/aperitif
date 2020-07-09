@@ -42,7 +42,7 @@
   "dependencies": {
     "i18next": "^19.0.3",
     "i18next-browser-languagedetector": "^4.0.1",
-    "i18next-xhr-backend": "^3.2.2",
+    "i18next-http-backend": "^1.0.16",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-i18next": "^11.3.1",
