@@ -4,10 +4,9 @@ import ReactDOM from 'react-dom';
 // eslint-disable-next-line
 import i18n from '@config/i18n';
 
-import { App, GlobalStyles } from '@src/components';
+import { App, GlobalStyles } from '@src/layout';
 
-// eslint-disable-next-line react/no-render-return-value
-const render = ReactDOM.render(
+ReactDOM.render(
   <React.StrictMode>
     <GlobalStyles />
     <App />
@@ -16,5 +15,5 @@ const render = ReactDOM.render(
 );
 
 if (module.hot) {
-  module.hot.accept('@src/components', render);
+  module.hot.accept();
 }

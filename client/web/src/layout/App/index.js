@@ -2,9 +2,8 @@ import React, { Suspense } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { Routes } from '../Routes';
-import { Nav } from '../Nav';
 
-import { Loader } from '@src/components/ui';
+import { Loader, Nav } from '@src/components';
 
 export const App = () => (
   <BrowserRouter>

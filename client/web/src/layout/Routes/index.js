@@ -1,13 +1,13 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
-import Home from '@src/components/screens/Home';
+import Home from '@src/screens/Home';
 
 const Dummy1 = React.lazy(() =>
-  import(/* webpackPrefetch: true */ '@src/components/screens/Dummy1'),
+  import(/* webpackPrefetch: true */ '@src/screens/Dummy1'),
 );
 const Dummy2 = React.lazy(() =>
-  import(/* webpackPrefetch: true */ '@src/components/screens/Dummy2'),
+  import(/* webpackPrefetch: true */ '@src/screens/Dummy2'),
 );
 
 export const Routes = () => (
