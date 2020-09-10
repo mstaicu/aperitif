@@ -8,12 +8,22 @@ const startServer = async () => {
 
   await loader(app);
 
-  app.listen(env.port, err => {
+  const server = app.listen(env.port, err => {
     if (err) {
       process.exit(1);
     }
 
     console.log(`Running on port ${env.port}...`);
+  });
+
+  process.on('SIGTERM', () => {
+    console.info('SIGTERM signal received: closing HTTP server');
+
+    server.close(() => {
+      console.info('HTTP server closed');
+
+      // Close all connections to databases
+    });
   });
 };
 

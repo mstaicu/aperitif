@@ -1,34 +1,38 @@
 # ---------- Build ----------
-FROM node:12-stretch AS build
+FROM node:14.10.0 AS build
 
 ENV NODE_ENV production
 
-WORKDIR /build
+WORKDIR /home/node/workdir
 
 COPY package*.json .env ./
 
 COPY src ./src
 
-RUN npm ci
+RUN npm install
 
-# If NODE_ENV environment variable is set to production,
-# this command will remove the packages specified in your devDependencies
-RUN npm prune
+# If necessary, add a step to build the app
 
 # ---------- Runtime ----------
-FROM alpine:3.10
+FROM node:14.10.0-slim
 
 ENV NODE_ENV production
 
-RUN apk add --update nodejs-current
-
-RUN addgroup -S node && adduser -S node -G node
+WORKDIR /home/node/server
 
 USER node
 
-WORKDIR /home/node/express
+COPY --chown=node:node --from=build /home/node/workdir .
 
-COPY --chown=node:node --from=build /build .
+# Currently publishing the Docker image with the production dependencies 
+# and the unobfuscated sources on the container's filesystem
+# RUN npm ci --production && npm cache clean --force
+
+# If the --production flag is specified or the NODE_ENV environment variable is set to production, 
+# this command will remove the packages specified in your devDependencies. 
+# Setting --no-production will negate NODE_ENV being set to production.
+
+RUN npm prune
 
 EXPOSE 3000
 

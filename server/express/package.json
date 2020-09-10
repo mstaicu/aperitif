@@ -10,6 +10,10 @@
     "format": "npm run prettier -- --write"
   },
   "author": "Mircea Staicu",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mstaicu/aperitif.git"
+  },
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^3.0.7",
