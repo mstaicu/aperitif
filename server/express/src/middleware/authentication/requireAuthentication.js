@@ -1,4 +1,4 @@
-const requireAuth = (req, res, next) => {
+const requireAuthentication = (req, res, next) => {
   if (req.user) {
     next();
   } else {
@@ -7,4 +7,4 @@ const requireAuth = (req, res, next) => {
   }
 };
 
-export { requireAuth };
+export { requireAuthentication };

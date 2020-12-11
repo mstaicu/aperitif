@@ -1,5 +1,3 @@
-const { validationResult } = require('express-validator');
-
 import * as EmailController from '../controllers/email';
 
 const getAll = async (req, res) => {
@@ -49,12 +47,6 @@ const create = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ err: errors.array() });
-  }
-
   const { id } = req.params;
 
   try {

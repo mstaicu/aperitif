@@ -1,4 +1,3 @@
-export * from './basicAuth';
-export * from './tokenAuth';
-
-export * from './requireAuth';
+export * from './basicAuthentication';
+export * from './requireAuthentication';
+export * from './tokenAuthentication';

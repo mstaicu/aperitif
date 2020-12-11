@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 import { env } from '../../config';
 
-const tokenAuth = getUserBy => async (req, res, next) => {
+const tokenAuthentication = async (req, res, next) => {
   const header = req.headers.authorization || '';
   const [type, token] = header.split(' ');
 
@@ -17,19 +17,16 @@ const tokenAuth = getUserBy => async (req, res, next) => {
     }
 
     /**
-     * Storing just the user id in the JWT payload.
-     * Check the 'issueToken' function
+     * Storing session-based metadata in the JWT
      */
     const { id } = payload;
-
-    const { result: user } = await getUserBy(id);
-
-    if (user) {
-      req.user = user;
-    }
+    req.user = { id };
   }
 
+  /**
+   * Move to the next authentication middleware if the request has no Bearer token
+   */
   next();
 };
 
-export { tokenAuth };
+export { tokenAuthentication };

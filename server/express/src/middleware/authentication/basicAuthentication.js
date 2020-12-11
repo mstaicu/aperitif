@@ -1,4 +1,4 @@
-const basicAuth = findUser => (req, res, next) => {
+const basicAuthentication = findUser => (req, res, next) => {
   const header = req.headers.authorization || '';
 
   /**
@@ -21,4 +21,4 @@ const basicAuth = findUser => (req, res, next) => {
   next();
 };
 
-export { basicAuth };
+export { basicAuthentication };
