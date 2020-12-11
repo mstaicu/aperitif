@@ -1,39 +1,43 @@
-const signupSchema = {
+const signupPayloadSchema = {
+  $id: 'https://example.com/person.schema.json',
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'SignupPayload',
   type: 'object',
   properties: {
     email: {
       title: 'Email',
-      description: 'Like a postal address but for computers.',
       type: 'string',
+      description: 'Like a postal address but for computers.',
       format: 'email',
     },
     password: {
       title: 'Password',
-      description: 'The keys to the kingdom.',
       type: 'string',
+      description: 'The keys to the kingdom.',
       minLength: 1,
     },
   },
-  required: ['email', 'password'],
 };
 
-const loginSchema = {
+const loginPayloadSchema = {
+  $id: 'https://example.com/person.schema.json',
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'SignupPayload',
   type: 'object',
   properties: {
     email: {
       title: 'Email',
-      description: 'Like a postal address but for computers.',
       type: 'string',
+      description: 'Like a postal address but for computers.',
       format: 'email',
     },
     password: {
       title: 'Password',
-      description: 'The keys to the kingdom.',
       type: 'string',
+      description: 'The keys to the kingdom.',
       minLength: 1,
     },
   },
-  required: ['email', 'password'],
 };
 
-export { signupSchema, loginSchema };
+export { signupPayloadSchema, loginPayloadSchema };

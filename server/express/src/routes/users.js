@@ -1,10 +1,10 @@
-import * as PublicController from '../controllers/public';
+import * as UsersController from '../controllers/users';
 
 const signup = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const { result: createdUser, err } = await PublicController.signup(
+    const { result: createdUser, err } = await UsersController.signup(
       email,
       password,
     );
@@ -23,10 +23,7 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const { result: token, err } = await PublicController.login(
-      email,
-      password,
-    );
+    const { result: token, err } = await UsersController.login(email, password);
 
     if (!err) {
       return res.status(200).send({ token });

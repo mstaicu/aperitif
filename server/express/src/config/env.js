@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
 
-const envFound = dotenv.config();
+const result = dotenv.config();
 
-if (!envFound) {
-  throw new Error(
-    '⚠ No .env configuration file found at the root of the project',
-  );
+if (result.error) {
+  throw new Error('No .env configuration found at the root of the project');
 }
 
 export const env = {

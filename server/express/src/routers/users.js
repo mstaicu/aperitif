@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { Validator } from 'express-json-validator-middleware';
 
-import { login, signup } from '../routes/public';
-import { signupSchema, loginSchema } from '../schemas/validation';
+import { login, signup } from '../routes/users';
+import { signupPayloadSchema, loginPayloadSchema } from '../schemas/validation';
 
 /**
  * Create a new instance of the `express-json-validator-middleware`
@@ -33,9 +33,9 @@ import { signupSchema, loginSchema } from '../schemas/validation';
  */
 const { validate } = new Validator();
 
-const publicRouter = Router();
+const usersRouter = Router();
 
-publicRouter.post('/signup', validate({ body: signupSchema }), signup);
-publicRouter.post('/login', validate({ body: loginSchema }), login);
+usersRouter.post('/signup', validate({ body: signupPayloadSchema }), signup);
+usersRouter.post('/login', validate({ body: loginPayloadSchema }), login);
 
-export { publicRouter };
+export { usersRouter };

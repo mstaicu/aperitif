@@ -1,11 +1,11 @@
 import express from 'express';
 
-import { publicRouter, emailRouter } from '../routers';
+import { usersRouter } from '../routers';
 
 import {
   tokenAuthentication,
-  requireAuthentication,
-  validationErrorHandler,
+  // requireAuthentication,
+  validationErrorMiddleware,
 } from '../middleware';
 
 export default async app => {
@@ -26,11 +26,11 @@ export default async app => {
    */
   app.use(express.json());
 
-  app.use('/', publicRouter);
+  app.use('/users', usersRouter);
   app.use(tokenAuthentication);
-  app.use('/email', requireAuthentication, emailRouter);
+  // app.use('/email', requireAuthentication, emailRouter);
 
-  app.use(validationErrorHandler);
+  app.use(validationErrorMiddleware);
 
   return app;
 };

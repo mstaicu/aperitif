@@ -4,7 +4,7 @@ import {
   createUser,
   comparePasswords,
   issueToken,
-} from '../services/public';
+} from '../services/users';
 
 const signup = createUser;
 

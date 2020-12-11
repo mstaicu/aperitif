@@ -7,8 +7,4 @@ export default async app => {
 
   await expressLoader(app);
   console.log('Express.js application ready');
-
-  /**
-   * More loaders to follow for bootstrapping the web server
-   */
 };
