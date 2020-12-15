@@ -1,8 +1,18 @@
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { env } from '../../config';
+/**
+ * TODO: Move out of here
+ */
+interface JsonWebTokenPayload {
+  id: number;
+}
 
-const tokenAuthentication = async (req, res, next) => {
+const tokenAuthentication = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const header = req.headers.authorization || '';
   const [type, token] = header.split(' ');
 
@@ -10,7 +20,7 @@ const tokenAuthentication = async (req, res, next) => {
     let payload;
 
     try {
-      payload = jwt.verify(token, env.signature);
+      payload = jwt.verify(token, process.env.SIGNATURE);
     } catch (err) {
       res.sendStatus(401);
       return;
@@ -19,7 +29,7 @@ const tokenAuthentication = async (req, res, next) => {
     /**
      * Storing session-based metadata in the JWT
      */
-    const { id } = payload;
+    const { id } = payload as JsonWebTokenPayload;
     req.user = { id };
   }
 

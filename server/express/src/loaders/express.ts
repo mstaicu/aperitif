@@ -1,14 +1,9 @@
-import express from 'express';
+import express, { Express } from 'express';
 
+import { tokenAuthentication, validationErrorMiddleware } from '../middleware';
 import { usersRouter } from '../routers';
 
-import {
-  tokenAuthentication,
-  // requireAuthentication,
-  validationErrorMiddleware,
-} from '../middleware';
-
-export default async app => {
+export const expressLoader = async (app: Express) => {
   app.disable('x-powered-by');
 
   /**
@@ -28,7 +23,6 @@ export default async app => {
 
   app.use('/users', usersRouter);
   app.use(tokenAuthentication);
-  // app.use('/email', requireAuthentication, emailRouter);
 
   app.use(validationErrorMiddleware);
 

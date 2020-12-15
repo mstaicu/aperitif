@@ -1,11 +1,9 @@
 import cors from 'cors';
+import { Express } from 'express';
 
-/**
- * Can't use ES imports with morgan without getting a deprecation message
- */
-const morgan = require('morgan');
+import morgan = require('morgan');
 
-export default async app => {
+const generalLoader = async (app: Express) => {
   /**
    * These options will be used to configure the cors middleware to add
    * these headers to the response:
@@ -30,3 +28,5 @@ export default async app => {
 
   return app;
 };
+
+export { generalLoader };

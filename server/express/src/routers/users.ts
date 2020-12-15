@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Validator } from 'express-json-validator-middleware';
 
 import { login, signup } from '../routes/users';
-import { signupPayloadSchema, loginPayloadSchema } from '../schemas/validation';
+import { signupPayload, loginPayload } from '../schemas/validation';
 
 /**
  * Create a new instance of the `express-json-validator-middleware`
@@ -31,11 +31,11 @@ import { signupPayloadSchema, loginPayloadSchema } from '../schemas/validation';
  * function will NOT be run. We'll look at where that error object gets
  * passed to and how we can handle it in the next step.
  */
-const { validate } = new Validator();
+const { validate } = new Validator({ allErrors: true });
 
 const usersRouter = Router();
 
-usersRouter.post('/signup', validate({ body: signupPayloadSchema }), signup);
-usersRouter.post('/login', validate({ body: loginPayloadSchema }), login);
+usersRouter.post('/signup', validate({ body: signupPayload }), signup);
+usersRouter.post('/login', validate({ body: loginPayload }), login);
 
 export { usersRouter };

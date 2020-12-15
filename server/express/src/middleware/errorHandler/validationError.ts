@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from 'express-json-validator-middleware';
 
 /**
@@ -9,13 +10,13 @@ import { ValidationError } from 'express-json-validator-middleware';
  * error handling middleware
  *
  * @see https://expressjs.com/en/guide/error-handling.html
- *
- * @param {Error} error - Error object
- * @param {Object} request - Express request object
- * @param {Object} response - Express response object
- * @param {Function} next - Express next function
  */
-const validationErrorMiddleware = (error, request, response, next) => {
+const validationErrorMiddleware = (
+  error: ValidationError,
+  request: Request,
+  response: Response,
+  next: NextFunction,
+) => {
   /**
    * If response headers have already been sent,
    * delegate to the default Express error handler.

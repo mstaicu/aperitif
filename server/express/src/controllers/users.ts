@@ -1,6 +1,5 @@
 import {
-  getUserBy,
-  //
+  getUserByEmail,
   createUser,
   comparePasswords,
   issueToken,
@@ -8,20 +7,15 @@ import {
 
 const signup = createUser;
 
-const login = async (userEmail, suppliedPassword) => {
+const login = async (email: string, password: string) => {
   try {
-    const { result: user, err: lookupError } = await getUserBy('email')(
-      userEmail,
-    );
+    const { result: user, err: lookupError } = await getUserByEmail(email);
 
-    if (lookupError) {
+    if (lookupError || !user) {
       return { err: lookupError };
     }
 
-    const { err: matchError } = await comparePasswords(
-      user.password,
-      suppliedPassword,
-    );
+    const { err: matchError } = await comparePasswords(user.password, password);
 
     if (matchError) {
       return {
@@ -44,6 +38,12 @@ const login = async (userEmail, suppliedPassword) => {
     };
   } catch (err) {
     console.error(err);
+
+    return {
+      err: {
+        message: 'Something went wrong while trying to login',
+      },
+    };
   }
 };
 

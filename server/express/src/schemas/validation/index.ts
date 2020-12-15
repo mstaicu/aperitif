@@ -1,8 +1,8 @@
-const signupPayloadSchema = {
-  $id: 'https://example.com/person.schema.json',
-  $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'SignupPayload',
+import { JSONSchema7 } from 'json-schema';
+
+const signupPayload: JSONSchema7 = {
   type: 'object',
+  required: ['email', 'password'],
   properties: {
     email: {
       title: 'Email',
@@ -19,11 +19,9 @@ const signupPayloadSchema = {
   },
 };
 
-const loginPayloadSchema = {
-  $id: 'https://example.com/person.schema.json',
-  $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'SignupPayload',
+const loginPayload: JSONSchema7 = {
   type: 'object',
+  required: ['email', 'password'],
   properties: {
     email: {
       title: 'Email',
@@ -40,4 +38,4 @@ const loginPayloadSchema = {
   },
 };
 
-export { signupPayloadSchema, loginPayloadSchema };
+export { signupPayload, loginPayload };
