@@ -1,4 +1,4 @@
 # Development environment
 
-1. Install the dependencies into the container's nodemodules volume target: docker-compose run --rm express npm install
-2. Start the application: docker-compose up
+1. Run all your npm commands through `docker-compose`. This means your initial `npm install` for your project should now be `docker-compose run <service name> npm install`.
+2. Start the application: `docker-compose up`
