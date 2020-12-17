@@ -1,9 +1,9 @@
 {
   "name": "api",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "API starter",
   "scripts": {
-    "start": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules ./src/index.ts",
+    "start": "ts-node-dev --transpile-only --ignore-watch node_modules ./src/index.ts",
     "build": "tsc",
     "lint": "eslint --ignore-path .gitignore .",
     "check:format": "prettier --ignore-path .gitignore --list-different \"src/**/*.+(ts|js|json)\"",
