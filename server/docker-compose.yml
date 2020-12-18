@@ -1,26 +1,23 @@
-version: "3.4"
+version: "2.4"
+
 services:
-  express:
-    image: node:12-stretch
-    working_dir: /home/node/express
+  api:
+    build:
+      context: ./express
+      target: dev
     volumes:
-      # bind mount the host sources to the container sources
-      - type: bind
-        source: ./express
-        target: /home/node/express
-      # volume mount the node_modules stored in the nodemodules volume
-      - type: volume
-        source: nodemodules # name of the volume, see below
-        target: /home/node/express/node_modules
-        volume:
-          nocopy: true
-    command: npm start
+      - ./express:/home/node/api
+      # This is needed because the host node modules are built
+      # for the host operating system architecture
+      # and our development environment's architecture is based on Debian
+      #
+      # Hide the host node_modules by creating an anonymous volume
+      # at the location of the bind mounted node modules
+      #
+      # This will allow us to either run the development environment
+      # with or without Docker
+      - /home/node/api/node_modules
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - MORGAN_LEVEL=tiny
       - SIGNATURE=supersecret
-volumes:
-  nodemodules:
