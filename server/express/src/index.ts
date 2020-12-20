@@ -11,7 +11,7 @@ import app from './app';
 // a graceful shutdown of node process, just a forced exit
 
 const server = app.listen(process.env.PORT, () => {
-  console.log(`🏃🏻‍♂️ on port ${process.env.PORT}`);
+  console.log(`Express API running on port ${process.env.PORT}`);
 });
 
 const shutdown = () => {
