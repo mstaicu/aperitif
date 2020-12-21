@@ -2,22 +2,26 @@ version: "2.4"
 
 services:
   traefik:
-    image: traefik:1.7-alpine
+    image: traefik:2.3
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
+      # The HTTP port
       - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
       - "8080:8080"
     command:
-      - --docker
-      - --docker.domain=traefik
-      - --docker.watch
-      - --api
-      - --defaultentrypoints=http,https
-    labels:
-      - traefik.port=8080
-      - traefik.frontend.rule=Host:traefik.localhost
+      # - "--log.level=DEBUG"
+      # Traefik will listen on port 8080 by default for API request.
+      - "--api.insecure"
+      # Enabling Docker provider
+      - "--providers.docker"
+      # Do not expose containers unless explicitly told so
+      # If set to false, containers that
+      # don't have a traefik.enable=true label
+      # will be ignored from the resulting routing configuration
+      - "--providers.docker.exposedbydefault=false"
   api:
     build:
       context: ./express
@@ -25,10 +29,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      # TODO: curl might not be available in Alpine Linux
-      # TODO: add healthcheck endpoint in express
-      test: curl -f http://127.0.0.1
+    environment:
+      - SIGNATURE=supersecret
+    # healthcheck:
+    # TODO: curl might not be available in Alpine Linux
+    # TODO: add healthcheck endpoint in express
+    # test: curl -f http://127.0.0.1
     volumes:
       - ./express:/home/node/api
       # This is needed because the host node modules are built
@@ -42,14 +48,15 @@ services:
       # with or without Docker
       - /home/node/api/node_modules
     ports:
+      # Still keeping these ports opened in case of debugging
       - "3000:3000"
-      # This port is used by the API's debugger
+      # This port is used by the service's debugger (node debugger)
       - "9229:9229"
-    environment:
-      - SIGNATURE=supersecret
     labels:
-      - traefik.port=3000
-      - traefik.frontend.rule=Host:api.localhost
+      # Explicitly tell Traefik to expose this container
+      - "traefik.enable=true"
+      # The domain the service will respond to
+      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
   postgres:
     image: postgres
     environment:
@@ -57,6 +64,3 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
-    labels:
-      - traefik.port=3000
-      - traefik.frontend.rule=Host:postgres.localhost
