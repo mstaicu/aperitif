@@ -9,6 +9,9 @@ WORKDIR /home/node
 ENV PORT=3000
 ENV MORGAN_LEVEL='common'
 
+# This ... might cause problems with running non-root processes on low ports (:80)
+USER node
+
 COPY package*.json ./
 
 RUN npm install
@@ -54,7 +57,7 @@ ENV NODE_ENV=production
 # production image due to our rules in .dockerignore, which does not
 # include the host node modules when tar-ing the context before
 # sending it to the Docker engine
-COPY . .
+COPY --chown=node:node . .
 
 # TODO: Implement a build process that bundles, minifies the sources
 RUN ./node_modules/.bin/tsc
