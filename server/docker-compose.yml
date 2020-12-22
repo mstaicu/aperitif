@@ -4,7 +4,6 @@ services:
   traefik:
     image: traefik:2.3
     volumes:
-      # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       # The HTTP port
@@ -31,10 +30,6 @@ services:
         condition: service_healthy
     environment:
       - SIGNATURE=supersecret
-    # healthcheck:
-    # TODO: curl might not be available in Alpine Linux
-    # TODO: add healthcheck endpoint in express
-    # test: curl -f http://127.0.0.1
     volumes:
       - ./express:/home/node/api
       # This is needed because the host node modules are built
