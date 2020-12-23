@@ -2,19 +2,22 @@ FROM node:14.15-alpine as base
 
 EXPOSE 3000
 
-RUN apk add --no-cache tini
+ENV NODE_ENV=production
 
-WORKDIR /home/node
+ENV PATH /home/node/node_modules/.bin:$PATH
 
 ENV PORT=3000
 ENV MORGAN_LEVEL='common'
 
-# This ... might cause problems with running non-root processes on low ports (:80)
+WORKDIR /home/node
+
+RUN apk add --no-cache tini
+
 USER node
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \  
   CMD node healthcheck.js
@@ -32,19 +35,22 @@ FROM base as dev
 
 ENV NODE_ENV=development
 
+RUN npm install --only=development
+
+# WORKDIR creates folders with the root user as the owner
+# which prevents us from writing with the node user
+# when building the app
+RUN mkdir /home/node/api
+
 WORKDIR /home/node/api
 
-CMD ["../node_modules/.bin/ts-node-dev", \
+CMD ["ts-node-dev", \
   "--inspect=0.0.0.0:9229", \
   "--transpile-only", \
   "./src/index.ts" \
 ]
 
-# To build the prod stage:
-# $ docker build -t express:prod .
-FROM base as prod
-
-ENV NODE_ENV=production
+FROM dev as build
 
 # Since the development target has the bind mounted sources,
 # we need to copy the contents of the express api in the production
@@ -60,12 +66,14 @@ ENV NODE_ENV=production
 COPY --chown=node:node . .
 
 # TODO: Implement a build process that bundles, minifies the sources
-RUN ./node_modules/.bin/tsc
+RUN tsc
 
-# Remove the sources after we've compiled the Typescript sources to Javascript
-RUN rm -rf ./src
+# To build the prod stage:
+# $ docker build -t express:prod .
+FROM base as prod
 
-# TODO: Find a better way of uninstalling the development node modules
+COPY --from=build /home/node/api/dist/ ./dist
+
 RUN npm prune && npm cache clean --force
 
 CMD ["node", "./dist"]
