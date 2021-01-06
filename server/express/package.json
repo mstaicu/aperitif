@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "API starter",
   "scripts": {
-    "start": "ts-node-dev --transpile-only ./src/index.ts",
+    "start": "ts-node-dev --inspect=0.0.0.0:9229 --transpile-only ./src/index.ts",
     "build": "tsc",
     "lint": "eslint --ignore-path .gitignore .",
     "check:format": "prettier --ignore-path .gitignore --list-different \"src/**/*.+(ts|js|json)\"",

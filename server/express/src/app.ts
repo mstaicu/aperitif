@@ -1,8 +1,12 @@
 import cors from 'cors';
 import express from 'express';
 
-import { tokenAuthentication, validationErrorMiddleware } from './middleware';
+import {
+  configureProblemDetailsResponse,
+  tokenAuthentication,
+} from './middleware';
 import { usersRouter } from './routers';
+import { problems } from './schemas/problems';
 
 import morgan = require('morgan');
 
@@ -21,6 +25,6 @@ app.use(morgan(process.env.MORGAN_LEVEL));
 app.use('/users', usersRouter);
 app.use(tokenAuthentication);
 
-app.use(validationErrorMiddleware);
+app.use(configureProblemDetailsResponse(problems));
 
 export default app;

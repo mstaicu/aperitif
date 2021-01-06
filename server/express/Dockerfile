@@ -19,7 +19,7 @@ COPY package*.json ./
 
 RUN npm ci
 
-HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \  
+HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \
   CMD node healthcheck.js
 
 ENTRYPOINT ["/sbin/tini", "--"]
