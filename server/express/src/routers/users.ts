@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { Validator } from 'express-json-validator-middleware';
 
-import { validate } from '../middleware';
 import { login, signup } from '../routes/users';
 import { signupPayload, loginPayload } from '../schemas/validation';
+
+const { validate } = new Validator({});
 
 const usersRouter = Router();
 

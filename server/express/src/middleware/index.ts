@@ -1,4 +1,3 @@
-export * from './jsonValidator';
-export * from './problemDetailsMiddleware';
+export * from './problemDetails';
 export * from './requireAuth';
 export * from './tokenAuth';
