@@ -4,4 +4,6 @@ interface User {
   password: string;
 }
 
-export const users: User[] = [];
+const users: User[] = [];
+
+export { users };

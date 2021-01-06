@@ -1,6 +1,6 @@
 import { JSONSchema7 } from 'json-schema';
 
-const signupPayload: JSONSchema7 = {
+const signupSchema: JSONSchema7 = {
   title: 'Signup request payload',
   description: 'Values required to open an account.',
   type: 'object',
@@ -8,7 +8,7 @@ const signupPayload: JSONSchema7 = {
   properties: {
     email: {
       type: 'string',
-      format: 'email',
+      // format: 'email',
       description: 'User account email address.',
     },
     password: {
@@ -19,7 +19,7 @@ const signupPayload: JSONSchema7 = {
   },
 };
 
-const loginPayload: JSONSchema7 = {
+const loginSchema: JSONSchema7 = {
   title: 'Login request payload',
   description: 'Values required to login.',
   type: 'object',
@@ -27,7 +27,7 @@ const loginPayload: JSONSchema7 = {
   properties: {
     email: {
       type: 'string',
-      format: 'email',
+      // format: 'email',
       description: 'User account email address.',
     },
     password: {
@@ -38,4 +38,4 @@ const loginPayload: JSONSchema7 = {
   },
 };
 
-export { signupPayload, loginPayload };
+export { signupSchema, loginSchema };

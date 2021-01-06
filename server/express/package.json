@@ -17,10 +17,10 @@
   },
   "dependencies": {
     "@godaddy/terminus": "4.5.0",
+    "ajv": "7.0.3",
     "bcrypt": "5.0.0",
     "cors": "2.8.5",
     "express": "4.17.1",
-    "express-json-validator-middleware": "2.1.1",
     "jsonwebtoken": "8.5.1",
     "morgan": "1.9.1",
     "stoppable": "1.1.0"

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { ProblemTypes, DefaultProblemType } from '../schemas/problem';
+import { RequestValidationError } from '../types';
 
-export const problemDetails = (
-  error: any,
+const problemDetails = (
+  error: RequestValidationError,
   request: Request,
   response: Response,
   next: NextFunction,
@@ -12,25 +12,10 @@ export const problemDetails = (
     return next(error);
   }
 
-  const problemType =
-    ProblemTypes.find(
-      (problemType: any) => error instanceof problemType.matchErrorClass,
-    ) || DefaultProblemType;
-
-  const problemDetails = {
-    ...problemType.details,
-    ...problemType.occurrenceDetails(error),
-  };
-
-  if (!problemDetails.status) {
-    problemDetails.status = error.statusCode || 500;
-  }
-
-  /**
-   * @see https://tools.ietf.org/html/rfc7807#section-3
-   */
   response.set('Content-Type', 'application/problem+json');
-  response.status(problemDetails.status).json(problemDetails);
+  response.status(error.statusCode).json(error.problemDetails);
 
   next();
 };
+
+export { problemDetails };
