@@ -27,26 +27,50 @@ class CustomError extends Error {
   }
 }
 
-class RequestValidationError extends CustomError {
-  constructor(invalidParams?: ErrorObject[] | null) {
-    super('Request validation has failed.');
+class RequestAuthenticationError extends CustomError {
+  statusCode: number;
+  problemDetails: {
+    status: number;
+    title: string;
+    type: string;
+  };
 
-    /**
-     * @see https://tools.ietf.org/html/rfc7807#section-3
-     */
+  constructor() {
+    super('Request authentication has failed.');
 
-    // eslint-disable-next-line
-    // @ts-ignore
-    this.statusCode = 422;
-
-    // eslint-disable-next-line
-    // @ts-ignore
+    this.statusCode = 403;
     this.problemDetails = {
-      invalid_params: invalidParams,
-      title: "Request didn't pass the checks.",
-      type: 'https://example-api.com/problem/invalid-request',
+      status: 403,
+      title: "Request didn't pass authentication checks.",
+      type: 'https://example-api.com/problem/invalid-credentials',
     };
   }
 }
 
-export { RequestValidationError };
+class RequestValidationError extends CustomError {
+  statusCode: number;
+  problemDetails: {
+    invalid_params: ErrorObject[] | null | undefined;
+    status: number;
+    title: string;
+    type: string;
+  };
+
+  constructor(invalidParams: ErrorObject[] | null | undefined) {
+    super('Request validation has failed.');
+
+    this.statusCode = 422;
+
+    /**
+     * @see https://tools.ietf.org/html/rfc7807#section-3
+     */
+    this.problemDetails = {
+      invalid_params: invalidParams,
+      status: 422,
+      title: "Request body didn't pass the checks.",
+      type: 'https://example-api.com/problem/invalid-request-body',
+    };
+  }
+}
+
+export { RequestAuthenticationError, RequestValidationError };

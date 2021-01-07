@@ -1,12 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-/**
- * TODO: Move out of here
- */
-interface JsonWebTokenPayload {
-  id: number;
-}
+import { RequestAuthenticationError } from '../errors';
+import { UserSession } from '../types';
 
 const tokenAuthentication = async (
   req: Request,
@@ -17,25 +13,18 @@ const tokenAuthentication = async (
   const [type, token] = header.split(' ');
 
   if (type === 'Bearer') {
-    let payload;
+    let payload: UserSession;
 
     try {
-      payload = jwt.verify(token, process.env.SIGNATURE);
+      payload = jwt.verify(token, process.env.SIGNATURE) as UserSession;
     } catch (err) {
-      res.sendStatus(401);
+      next(new RequestAuthenticationError());
       return;
     }
 
-    /**
-     * Storing session-based metadata in the JWT
-     */
-    const { id } = payload as JsonWebTokenPayload;
-    req.user = { id };
+    req.user = payload;
   }
 
-  /**
-   * Move to the next authentication middleware if the request has no Bearer token
-   */
   next();
 };
 

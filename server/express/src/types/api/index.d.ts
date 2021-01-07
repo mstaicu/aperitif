@@ -1,12 +1,26 @@
 import { ErrorObject } from 'ajv';
 
-interface RequestValidationError extends Error {
+interface UserSession {
+  id: number;
+}
+
+interface RequestAuthenticationError extends Error {
   problemDetails: {
-    invalid_params: ErrorObject[] | null;
+    status: number;
     title: string;
     type: string;
   };
   statusCode: number;
 }
 
-export { RequestValidationError };
+interface RequestValidationError extends Error {
+  problemDetails: {
+    invalid_params: ErrorObject[] | null | undefined;
+    status: number;
+    title: string;
+    type: string;
+  };
+  statusCode: number;
+}
+
+export { RequestValidationError, RequestValidationError, UserSession };

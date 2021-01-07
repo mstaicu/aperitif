@@ -13,7 +13,6 @@ const validateRequestBody = (bodySchema: JSONSchema7) => (
 ) => {
   const validate = ajv.compile(bodySchema);
   const isPayloadValid = validate(req.body);
-
   !isPayloadValid ? next(new RequestValidationError(validate.errors)) : next();
 };
 

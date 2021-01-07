@@ -1,16 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { RequestAuthenticationError } from '../errors';
+
 const requireAuthentication = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  if (req.user) {
-    next();
-  } else {
-    res.sendStatus(401);
-    return;
-  }
+  req.user ? next() : next(new RequestAuthenticationError());
 };
 
 export { requireAuthentication };
