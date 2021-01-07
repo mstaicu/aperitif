@@ -1,21 +1,22 @@
-import {
-  getUserByEmail,
-  createUser,
-  comparePasswords,
-  issueToken,
-} from '../services/users';
+import { UsersService } from '../services';
 
-const signup = createUser;
+const signup = UsersService.createUser;
 
 const login = async (email: string, password: string) => {
   try {
-    const { result: user, err: lookupError } = await getUserByEmail(email);
+    const {
+      result: user,
+      err: lookupError,
+    } = await UsersService.getUserByEmail(email);
 
     if (lookupError || !user) {
       return { err: lookupError };
     }
 
-    const { err: matchError } = await comparePasswords(user.password, password);
+    const { err: matchError } = await UsersService.comparePasswords(
+      user.password,
+      password,
+    );
 
     if (matchError) {
       return {
@@ -34,7 +35,7 @@ const login = async (email: string, password: string) => {
     const { id } = user;
 
     return {
-      result: issueToken({ id }),
+      result: UsersService.issueToken({ id }),
     };
   } catch (err) {
     console.error(err);

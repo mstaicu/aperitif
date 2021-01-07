@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import * as UsersController from '../controllers/users';
+import { UsersController } from '../controllers';
 
 const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
