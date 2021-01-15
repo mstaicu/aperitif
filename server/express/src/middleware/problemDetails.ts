@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { RequestValidationError } from '../types';
+import { RequestValidationError } from '../types/api';
 
 const problemDetails = (
   error: RequestValidationError,
