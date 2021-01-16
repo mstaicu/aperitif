@@ -13,7 +13,17 @@ const serverTerminator = createHttpTerminator({
 
 const onSignal = async () => {
   console.log('Received SIGINT, gracefully terminating the instance');
-  await serverTerminator.terminate();
+  /**
+   * TODO: Check why the server is terminated before calling .terminate,
+   * which yields a ERR_SERVER_NOT_RUNNING error
+   *
+   * https://github.com/gajus/http-terminator/blob/master/src/factories/createInternalHttpTerminator.js#L145
+   */
+  try {
+    await serverTerminator.terminate();
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 const onHealthCheck = () => Promise.resolve();

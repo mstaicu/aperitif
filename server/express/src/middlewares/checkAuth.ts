@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { RequestAuthenticationError } from '../errors';
-import { UserSession } from '../types/api';
+import { AuthenticationError } from '../errors';
+import type { UserSession } from '../types/api';
 
-const tokenAuthentication = async (
+const checkAuthentication = async (
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction,
 ) => {
   const header = req.headers.authorization || '';
@@ -18,7 +18,7 @@ const tokenAuthentication = async (
     try {
       payload = jwt.verify(token, process.env.SIGNATURE) as UserSession;
     } catch (err) {
-      next(new RequestAuthenticationError());
+      next(new AuthenticationError());
       return;
     }
 
@@ -28,4 +28,4 @@ const tokenAuthentication = async (
   next();
 };
 
-export { tokenAuthentication };
+export { checkAuthentication };

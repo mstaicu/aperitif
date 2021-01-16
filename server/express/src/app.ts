@@ -1,7 +1,7 @@
 import express from 'express';
 
-import { problemDetails, tokenAuthentication } from './middleware';
-import { usersRouter } from './routers';
+import { handleProblemDetails, checkAuthentication } from './middlewares';
+import { publicRouter } from './routers';
 
 import morgan = require('morgan');
 
@@ -14,9 +14,9 @@ app.disable('x-powered-by');
 app.use(express.json());
 app.use(logger);
 
-app.use('/users', usersRouter);
-app.use(tokenAuthentication);
+app.use(publicRouter);
+app.use(checkAuthentication);
 
-app.use(problemDetails);
+app.use(handleProblemDetails);
 
 export default app;
