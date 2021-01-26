@@ -1,7 +1,3 @@
 {
-  "eslint.workingDirectories": [
-    "client/web",
-    "client/web-lambda-router",
-    "server/express"
-  ]
+  "eslint.workingDirectories": ["express", "react"]
 }
