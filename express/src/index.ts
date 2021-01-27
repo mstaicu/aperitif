@@ -26,12 +26,7 @@ const onSignal = async () => {
   }
 };
 
-const onHealthCheck = () => Promise.resolve();
-
 createTerminus(server, {
-  healthChecks: {
-    '/healthz': onHealthCheck,
-  },
   signal: 'SIGINT',
   onSignal,
 });

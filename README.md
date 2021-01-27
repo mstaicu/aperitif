@@ -1,6 +1,6 @@
 # Production environment
 
-1. Build the production image: `docker build -t api:prod ./express`
+1. Build the production image: `docker build -t mdstaicu/api express`
 
 # Development environment
 

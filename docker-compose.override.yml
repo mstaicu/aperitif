@@ -1,0 +1,73 @@
+version: "3.1"
+
+services:
+
+  traefik:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    command:
+      # Traefik will listen on port 8080 by default for API request.
+      - "--api.insecure"
+      # Enabling Docker provider
+      - "--providers.docker"
+      # Do not expose containers unless explicitly told so
+      # If set to false, containers that
+      # don't have a traefik.enable=true label
+      # will be ignored from the resulting routing configuration
+      - "--providers.docker.exposedbydefault=false"
+  api:
+    build:
+      context: ./express
+      target: dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    secrets:
+      - api_env
+    environment:
+      - API_ENV_FILE=/run/secrets/api_env
+    volumes:
+      - ./express:/home/node/api
+      # This is needed because the host node modules are built
+      # for the host operating system architecture
+      # and our development environment's architecture is based on Debian
+      #
+      # Hide the host node_modules by creating an anonymous volume
+      # at the location of the bind mounted node modules
+      #
+      # This will allow us to either run the development environment
+      # with or without Docker
+      - /home/node/api/node_modules
+    ports:
+      # Still keeping these ports opened in case of debugging
+      - "3000:3000"
+      # This port is used by the service's debugger (node debugger)
+      - "9229:9229"
+    labels:
+      # Explicitly tell Traefik to expose this container
+      - "traefik.enable=true"
+      # The domain the service will respond to
+      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+  postgres:
+    secrets:
+      - psql_user
+      - psql_password
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/psql_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/psql_password
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+
+secrets:
+  api_env:
+    file: ./secrets/api/.env
+  #
+  psql_user:
+    file: ./secrets/postgres/psql_user
+  psql_password:
+    file: ./secrets/postgres/psql_password
