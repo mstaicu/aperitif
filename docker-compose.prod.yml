@@ -4,81 +4,39 @@ services:
 
   traefik:
     ports:
-      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
       - 80:80
-      # Listen on port 443, default for HTTPS
       - 443:443
-    # ALL TRAEFIK LABELS SHOULD GO IN THE 'DEPLOY' SECTION
     deploy:
       placement:
         constraints:
-          #
-          # Make the traefik service run only on the node with this label
-          # as the node with it has the volume for the certificates
-          #
-          # $ export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
-          # $ docker node update --label-add traefik-certificates=true $NODE_ID
-          #
           - node.labels.traefik-certificates == true
       labels:
-        # Enable Traefik for this service, to make it available in the public network
-        # Enabling Traefik for this service is sort of redundant since we map the ports directly (:80)
         - traefik.enable=true
-        # Use the 'public' network (declared below)
         - traefik.docker.network=public
-        # Use the custom label "traefik.constraint-label=public"
-        # This public Traefik will only use 'services' with this label
-        # That way you can add other internal Traefik instances per stack if needed
         - traefik.constraint-label=public
-        # admin-auth middleware with HTTP Basic auth
-        # Using the environment variables USERNAME and HASHED_PASSWORD
         - traefik.http.middlewares.admin-auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
         - traefik.http.routers.api.entrypoints=websecure
-        # Uses the environment variable DOMAIN
         - traefik.http.routers.traefik.rule=Host(`${DOMAIN?Variable not set}`)
-        # Use the special Traefik service api@internal with the web UI/Dashboard
         - traefik.http.routers.traefik.service=api@internal
-        # Enable HTTP Basic auth, using the middleware created above
         - traefik.http.routers.traefik.middlewares=admin-auth
-        # Docker Swarm does not provide any port detection information to Traefik.
-        # Therefore you must specify the port to use for communication by using the label 
-        # traefik.http.services.<service_name>.loadbalancer.server.port 
-        # (Check the reference for this label in the routing section for Docker).
-        # Mandatory for Docker Swarm (see the section "Port Detection with Docker Swarm").
         - traefik.http.services.traefik.loadbalancer.server.port=8080
     command:
-      # Enable Docker in Traefik, so that it reads labels from Docker services
       - --providers.docker
-      # Add a constraint to only use services with the label "traefik.constraint-label=public"
       - --providers.docker.constraints=Label(`traefik.constraint-label`, `public`)
-      # Do not expose all Docker services, only the ones explicitly exposed
       - --providers.docker.exposedByDefault=false
-      # Enable Docker Swarm mode
       - --providers.docker.swarmMode
-      # Create an entrypoint "web" listening on port 80
       - --entryPoints.web.address=:80
-      # Permanently redirect 'web' to 'websecure'
       - --entryPoints.web.http.redirections.entryPoint.to=websecure
-      # Create an entrypoint "websecure" listening on port 443
       - --entryPoints.websecure.address=:443
-      # Default TLS configuration applied to all routers associated with the named entry point
       - --entrypoints.websecure.http.tls.certResolver=le
-      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
       - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
-      # Store the Let's Encrypt certificates in the mounted volume
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      # Use the TLS Challenge for Let's Encrypt
       - --certificatesresolvers.le.acme.tlschallenge=true
-      # Enable the access log, with HTTP requests
       - --accesslog
-      # Enable the Traefik log, for configurations and errors
       - --log
-      # Enable the Dashboard and API
       - --api
     volumes:
-      # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock
-      # Mount the volume to store the certificates
       - traefik-certificates:/certificates
     networks:
       - public
@@ -96,11 +54,6 @@ services:
       - traefik.http.routers.api.rule=Host(`${DOMAIN?Variable not set}`) && PathPrefix(`/api`)
       - traefik.http.routers.api.middlewares=api-stripprefix
       - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
-      # Docker Swarm does not provide any port detection information to Traefik.
-      # Therefore you must specify the port to use for communication by using the label 
-      # traefik.http.services.<service_name>.loadbalancer.server.port 
-      # (Check the reference for this label in the routing section for Docker).
-      # Mandatory for Docker Swarm (see the section "Port Detection with Docker Swarm").
       - traefik.http.services.api-service.loadbalancer.server.port=3000
     networks:
       - public
@@ -115,15 +68,11 @@ services:
     networks:
       - public
 
-networks:
-  # $ docker network create --driver=overlay public
+network
   public:
     external: true
 
-volumes:
-  # Create a volume to store the certificates, there is a constraint to make sure
-  # Traefik is always deployed to the same Docker node with the same volume containing
-  # the HTTPS certificates
+volume
   traefik-certificates:
 
 secrets:
