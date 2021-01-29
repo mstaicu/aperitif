@@ -3,87 +3,27 @@ version: "3.1"
 services:
 
   traefik:
-    volumes:
-      # Add Docker as a mounted volume, so that Traefik can read the labels of other services
-      - /var/run/docker.sock:/var/run/docker.sock
-      # Mount the volume to store the certificates
-      - tma1-public-certificates:/certificates
     ports:
-      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
       - 80:80
-      # Listen on port 443, default for HTTPS
-      - 443:443
-      # The Web UI (enabled by --api.insecure=true)
-      - 8080:8080
     labels:
-      # Enable Traefik for this service, to make it available in the public network
-      # Enabling Traefik for this service is sort of redundant since we map the ports directly (:80)
       - traefik.enable=true
-      # Use the 'tma1-public' network (declared below)
-      - traefik.docker.network=tma1-public
-      #
-      # Middlewares
-      #
-      # TODO: Add the environment variables USERNAME and HASHED_PASSWORD
-      # - traefik.http.middlewares.admin-auth.basicauth.users=mircea:mircea
-      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      #
-      # Middlewares
-      #
-      #
-      # Routers
-      #
-      # HTTP
-      - traefik.http.routers.tma1-public-http.rule=Host(`localhost`)
-      - traefik.http.routers.tma1-public-http.entrypoints=http
-      # TODO: Redirect to HTTPS when getting Lets encrypt to work
-      # - traefik.http.routers.tma1-public-http.middlewares=https-redirect
-      #
-      # HTTPS
-      #
-      # - traefik.http.routers.tma1-public-https.rule=Host(`localhost`)
-      # - traefik.http.routers.tma1-public-https.entrypoints=https
-      # - traefik.http.routers.tma1-public-https.tls=true
-      # Use the "le" (Let's Encrypt) resolver created below
-      # - traefik.http.routers.tma1-public-https.tls.certresolver=le
-      # Enable HTTP Basic auth, using the middleware created above
-      # - traefik.http.routers.tma1-public-https.middlewares=admin-auth
-      # Use the special Traefik service api@internal with the web UI/Dashboard
-      # - traefik.http.routers.tma1-public-https.service=api@internal
-      #
-      # Define the port inside of the Docker service to use
-      # - traefik.http.services.tma1-public.loadbalancer.server.port=8080
+      - traefik.docker.network=public
+      - traefik.http.routers.traefik.rule=Host(`localhost`)
+      - traefik.http.routers.traefik.entrypoints=web
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
     command:
-      # Traefik will listen on port 8080 by default for API request.
-      # TODO: Bring up HTTPs so that we don't get to the dashboard
-      # using ports
-      - "--api.insecure"
-      # Enable Docker in Traefik, so that it reads labels from Docker services
       - --providers.docker
-      # Do not expose all Docker services, only the ones explicitly exposed
       - --providers.docker.exposedbydefault=false
-      # Create an entrypoint "http" listening on port 80
-      - --entrypoints.http.address=:80
-      # Create an entrypoint "https" listening on port 443
-      # - --entrypoints.https.address=:443
-      #
-      # Let's encrypt
-      #
-      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
-      # - --certificatesresolvers.le.acme.email=md.staicu@yahoo.com
-      # Store the Let's Encrypt certificates in the mounted volume
-      # - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      # Use the TLS Challenge for Let's Encrypt
-      # - --certificatesresolvers.le.acme.tlschallenge=true
-      # Enable the access log, with HTTP requests
       - --accesslog
-      # Enable the Traefik log, for configurations and errors
+      - --api.insecure
+      - --entrypoints.web.address=:80
       - --log
-      # Enable the Dashboard and API
-      - --api
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - traefik-certificates:/certificates
     networks:
-      - tma1-public
+      - public
 
   api:
     build:
@@ -92,10 +32,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    secrets:
-      - api_env
     environment:
       - API_ENV_FILE=/run/secrets/api_env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.api.middlewares=api-stripprefix
+      - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
+    secrets:
+      - api_env
     volumes:
       - ./express:/home/node/api
       # This is needed because the host node modules are built
@@ -108,41 +53,26 @@ services:
       # This will allow us to either run the development environment
       # with or without Docker
       - /home/node/api/node_modules
-    ports:
-      # Still keeping these ports opened in case of debugging
-      - "3000:3000"
-      # This port is used by the service's debugger (node debugger)
-      - "9229:9229"
-    labels:
-      # Enable Traefik for this service, to make it available in the public network
-      - traefik.enable=true
-      # Route the requests to this container based on the Host header
-      - traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)
-      - traefik.http.routers.api.middlewares=api-stripprefix
-      - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
     networks:
-      - tma1-public
+      - public
 
   postgres:
-    secrets:
-      - psql_user
-      - psql_password
     environment:
       - POSTGRES_USER_FILE=/run/secrets/psql_user
       - POSTGRES_PASSWORD_FILE=/run/secrets/psql_password
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
+    secrets:
+      - psql_user
+      - psql_password
     networks:
-      - tma1-public
+      - public
 
 networks:
-  tma1-public:
+  public:
 
 volumes:
-  # Create a volume to store the certificates, there is a constraint to make sure
-  # Traefik is always deployed to the same Docker node with the same volume containing
-  # the HTTPS certificates
-  tma1-public-certificates:
+  traefik-certificates:
 
 secrets:
   api_env:

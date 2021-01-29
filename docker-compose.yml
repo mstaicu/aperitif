@@ -4,7 +4,9 @@ services:
 
   traefik:
     image: traefik:2.3
+
   api:
     image: mdstaicu/api
+
   postgres:
     image: postgres
