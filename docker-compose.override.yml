@@ -27,7 +27,7 @@ services:
 
   api:
     build:
-      context: ./express
+      context: ./api
       target: dev
     depends_on:
       postgres:
@@ -42,7 +42,7 @@ services:
     secrets:
       - api_env
     volumes:
-      - ./express:/home/node/api
+      - ./api:/home/node/api/dev
       # This is needed because the host node modules are built
       # for the host operating system architecture
       # and our development environment's architecture is based on Debian
@@ -52,7 +52,7 @@ services:
       #
       # This will allow us to either run the development environment
       # with or without Docker
-      - /home/node/api/node_modules
+      - /home/node/api/dev/node_modules
     networks:
       - public
 
