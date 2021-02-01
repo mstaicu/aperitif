@@ -5,23 +5,35 @@ services:
   traefik:
     ports:
       - 80:80
+      - 443:443
     labels:
       - traefik.enable=true
       - traefik.docker.network=public
-      - traefik.http.routers.traefik.rule=Host(`localhost`)
-      - traefik.http.routers.traefik.entrypoints=web
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.rule=Host(`tma1`)
       - traefik.http.routers.traefik.service=api@internal
       - traefik.http.services.traefik.loadbalancer.server.port=8080
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
-      - --accesslog
-      - --api.insecure
+      # TODO: Find a different way of mounting the dynamic configuration for Traefik
+      - --providers.file.directory=/run/secrets
       - --entrypoints.web.address=:80
+      - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --accesslog
+      - --api
       - --log
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - traefik-certificates:/certificates
+    secrets:
+      # TODO: Change this secret
+      - traefik.yml
+      - localhost_cert
+      - localhost_key
+      - api_localhost_cert
+      - api_localhost_key
     networks:
       - public
 
@@ -36,9 +48,11 @@ services:
       - API_ENV_FILE=/run/secrets/api_env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)
-      - traefik.http.routers.api.middlewares=api-stripprefix
-      - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
+      - traefik.docker.network=public
+      - traefik.http.routers.api.entrypoints=websecure
+      - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.rule=Host(`api.tma1`)
+      - traefik.http.services.api.loadbalancer.server.port=3000
     secrets:
       - api_env
     volumes:
@@ -71,12 +85,20 @@ services:
 networks:
   public:
 
-volumes:
-  traefik-certificates:
-
 secrets:
+  traefik.yml:
+    file: ./secrets/traefik/traefik.yml
+  localhost_cert:
+    file: ./secrets/traefik/certs/localhost.crt
+  localhost_key:
+    file: ./secrets/traefik/certs/localhost.key
+  api_localhost_cert:
+    file: ./secrets/traefik/certs/api.localhost.crt
+  api_localhost_key:
+    file: ./secrets/traefik/certs/api.localhost.key
+  #
   api_env:
-    file: ./secrets/api/.env
+    file: ./secrets/api/api_env
   #
   psql_user:
     file: ./secrets/postgres/psql_user

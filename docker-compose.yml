@@ -5,6 +5,7 @@ services:
   traefik:
     image: traefik:2.3
 
+  # TODO: Figure out why 'build' directives don't overrride 'image' directives
   api:
     image: mdstaicu/api
 

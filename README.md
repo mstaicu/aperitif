@@ -1,4 +1,4 @@
-# Production environment
+# Staging environment
 
 1. Provision a N Docker Swarm cluster on a platform (digitalocean, etc)
 2. Install Docker on all nodes and join all the nodes to the swarm
@@ -29,10 +29,17 @@
 ```
 7. Deploy the stack:
 ```
-  $ docker stack deploy --compose-file docker-compose.yml -c docker-compose.prod.yml --with-registry-auth tma1
+  $ docker stack deploy --compose-file docker-compose.yml -c docker-compose.staging.yml --with-registry-auth tma1
 ```
 
 # Development environment
 
-1. Start the application: `docker-compose up`
-2. Any added or removed node modules will require a image rebuild: `docker-compose build`
+1. In case that we don't have any certificates or we need to renew them, this command creates a 2048-bit private key (domain.key) and a self-signed certificate (domain.crt) from scratch:
+```
+openssl req \
+  -newkey rsa:2048 -nodes -keyout domain.key \
+  -x509 -days 365 -out domain.crt
+```
+2. Add the domains to `/etc/hosts/`
+3. Start the application: `docker-compose up`
+4. Any added or removed node modules will require a image rebuild: `docker-compose build`
