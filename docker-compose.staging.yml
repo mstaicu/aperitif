@@ -13,28 +13,15 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=public
-        - traefik.constraint-label=public
-        - traefik.http.routers.traefik.tls=true
-        - traefik.http.routers.traefik.tls.certresolver=le
-        - traefik.http.routers.traefik.entrypoints=websecure
+        - traefik.http.routers.traefik.entrypoints=web
         - traefik.http.routers.traefik.rule=Host(`${DOMAIN?Variable not set}`)
         - traefik.http.routers.traefik.service=api@internal
         - traefik.http.services.traefik.loadbalancer.server.port=8080
     command:
       - --providers.docker
-      - --providers.docker.constraints=Label(`traefik.constraint-label`, `public`)
       - --providers.docker.exposedbydefault=false
-      #
-      - --providers.docker.swarmMode=true
-      #
-      - --entrypoints.web.address=:80
-      # - --entrypoints.web.http.redirections.entryPoint.to=websecure
-      - --entrypoints.websecure.address=:443
-      #
-      - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
-      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      #
+      - --providers.docker.swarmMode
+      - --entryPoints.web.address=:80
       - --accesslog
       - --log
       - --api
@@ -49,15 +36,9 @@ services:
       labels:
       - traefik.enable=true
       - traefik.docker.network=public
-      #
-      # - traefik.http.routers.api.tls=true
-      # - traefik.http.routers.api.tls.certresolver=le
-      #
-      # - traefik.http.routers.api.entrypoints=websecure
-      - traefik.http.routers.api.rule=Host(`${DOMAIN?Variable not set}`) && PathPrefix(`/api`)
-      - traefik.http.routers.api.middlewares=api-stripprefix
-      - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api
-      - traefik.http.services.api-service.loadbalancer.server.port=3000
+      - traefik.http.routers.api.entrypoints=web
+      - traefik.http.routers.api.rule=Host(`api.iarmaroc.space`)
+      - traefik.http.services.api.loadbalancer.server.port=3000
     environment:
       - API_ENV_FILE=/run/secrets/api_env
     secrets:
@@ -85,7 +66,6 @@ volumes:
 secrets:
   api_env:
     external: true
-  #
   psql_user:
     external: true
   psql_password:

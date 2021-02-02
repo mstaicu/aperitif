@@ -3,7 +3,7 @@ version: "3.1"
 services:
 
   traefik:
-    image: traefik:2.3
+    image: traefik:2.4.1
 
   # TODO: Figure out why 'build' directives don't overrride 'image' directives
   api:
