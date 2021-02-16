@@ -11,6 +11,8 @@ RUN apk add --no-cache tini
 #
 ENV PATH /home/node/api/node_modules/.bin:$PATH
 
+ENV NODE_ENV=production
+
 USER node
 
 RUN mkdir /home/node/api
@@ -35,6 +37,8 @@ ENTRYPOINT ["/sbin/tini", "--"]
 #
 FROM base as dev
 
+ENV NODE_ENV=development
+
 RUN npm install --only=development
 
 #
@@ -46,7 +50,8 @@ RUN mkdir /home/node/api/dev
 
 WORKDIR /home/node/api/dev
 
-CMD ["ts-node-dev", \
+CMD [ \
+  "ts-node-dev", \
   "--inspect=0.0.0.0:9229", \
   "--transpile-only", \
   "./src/index.ts" \
@@ -72,11 +77,21 @@ COPY --chown=node:node . .
 # TODO: Implement a build process that bundles, minifies the sources
 RUN tsc
 
+FROM build as audit
+
+USER root
+
+RUN apk add curl \
+    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    && trivy filesystem --exit-code 1 --no-progress /
+
 #
 # To build the prod stage:
 # $ docker build -t mdstaicu/api .
 #
 FROM base as prod
+
+USER node
 
 COPY --from=build /home/node/api/dev/dist /home/node/api/dist
 
