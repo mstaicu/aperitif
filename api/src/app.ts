@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import express from 'express';
 
 import { handleProblemDetails, checkAuthentication } from './middlewares';
-import { publicRouter } from './routers';
+import { publicRouter, statusRouter } from './routers';
 
 import morgan = require('morgan');
 
@@ -22,6 +22,7 @@ app.disable('x-powered-by');
 app.use(express.json());
 app.use(logger);
 
+app.use(statusRouter);
 app.use(publicRouter);
 app.use(checkAuthentication);
 

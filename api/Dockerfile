@@ -1,17 +1,18 @@
 FROM node:14.15-alpine as base
 
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
 RUN apk add --no-cache tini
 
 #
 # Install the node modules, in the container, in the parent directory of the api sources
-# and expose the binaries in the path in order to have access throughout the container
-# to the binaries installed ( tsc for example )
+#
+# Reason for this is to give developers the freedom to run the api either as part of 
+# a container orchestrator or as standalone application
 #
 ENV PATH /home/node/api/node_modules/.bin:$PATH
-
-ENV NODE_ENV=production
 
 USER node
 
@@ -23,10 +24,13 @@ COPY package*.json ./
 
 RUN npm ci
 
+HEALTHCHECK --interval=30s CMD node healthcheck.js
+
 ENTRYPOINT ["/sbin/tini", "--"]
 
 #
 # To build the dev stage:
+#
 # $ docker build -t api:dev --target dev .
 #
 # ⚠️ This stage is intended to be used in docker-compose
@@ -50,8 +54,7 @@ RUN mkdir /home/node/api/dev
 
 WORKDIR /home/node/api/dev
 
-CMD [ \
-  "ts-node-dev", \
+CMD ["ts-node-dev", \
   "--inspect=0.0.0.0:9229", \
   "--transpile-only", \
   "./src/index.ts" \
@@ -60,9 +63,9 @@ CMD [ \
 FROM dev as build
 
 #
-# Since the development target has the bind mounted sources,
-# we need to copy the compiled sources of the api in the production
-# image file system
+# Since the development target has the sources bind mounted,
+# we need to copy the sources of the api from the host file system
+# in order to build the sources for production
 #
 # We copy the contents in the /home/node folder, which has the hoisted
 # node modules
@@ -91,10 +94,6 @@ RUN apk add curl \
 #
 FROM base as prod
 
-USER node
-
 COPY --from=build /home/node/api/dev/dist /home/node/api/dist
-
-RUN npm prune && npm cache clean --force
 
 CMD ["node", "/home/node/api/dist"]

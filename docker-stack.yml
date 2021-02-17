@@ -1,8 +1,13 @@
+#
+# $ docker stack deploy --compose-file docker-stack.yml STACK
+#
+
 version: "3.1"
 
 services:
 
   traefik:
+    image: traefik:2.4.1
     ports:
       - 80:80
       - 443:443
@@ -32,6 +37,7 @@ services:
       - public
 
   api:
+    image: mdstaicu/api
     deploy:
       labels:
       - traefik.enable=true

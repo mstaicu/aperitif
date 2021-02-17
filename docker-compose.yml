@@ -4,10 +4,114 @@ services:
 
   traefik:
     image: traefik:2.4.1
+    ports:
+      - 80:80
+      # - 443:443
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+      - traefik.http.routers.traefik.entrypoints=web
+      # - traefik.http.routers.traefik.entrypoints=websecure
+      # - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.rule=Host(`localhost`)
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+    command:
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      # TODO: Find a different way of mounting the dynamic configuration for Traefik
+      # - --providers.file.directory=/run/secrets
+      # TODO: Find a different way of mounting the dynamic configuration for Traefik
+      - --entrypoints.web.address=:80
+      # - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      # - --entrypoints.websecure.address=:443
+      - --accesslog
+      - --api.insecure
+      - --api.dashboard
+      - --log
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # secrets:
+    #   # TODO: Change this secret
+    #   - traefik.yml
+    #   - localhost_cert
+    #   - localhost_key
+    #   - api_localhost_cert
+    #   - api_localhost_key
+    networks:
+      - public
 
-  # TODO: Figure out why 'build' directives don't overrride 'image' directives
   api:
-    image: mdstaicu/api
+    ports:
+      - 9229:9229
+    build:
+      context: ./api
+      target: dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Disable health checks (the HEALTHCHECK stanza in the Dockerfile) for the development environment
+    healthcheck:
+      disable: true
+    environment:
+      - API_ENV_FILE=/run/secrets/api_env
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+      - traefik.http.routers.api.entrypoints=web
+      # - traefik.http.routers.api.entrypoints=websecure
+      # - traefik.http.routers.api.tls=true
+      - traefik.http.routers.api.rule=Host(`api.localhost`)
+      - traefik.http.services.api.loadbalancer.server.port=3000
+    secrets:
+      - api_env
+    volumes:
+      - ./api:/home/node/api/dev
+      # This is needed because the host node modules are built
+      # for the host operating system architecture
+      # and our development environment's architecture is based on Debian
+      #
+      # Hide the host node_modules by creating an anonymous volume
+      # at the location of the bind mounted node modules
+      #
+      # This will allow us to either run the development environment
+      # with or without Docker
+      - /home/node/api/dev/node_modules
+    networks:
+      - public
 
   postgres:
     image: postgres
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/psql_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/psql_password
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+    secrets:
+      - psql_user
+      - psql_password
+    networks:
+      - public
+
+networks:
+  public:
+
+secrets:
+  traefik.yml:
+    file: ./secrets/traefik/traefik.yml
+  localhost_cert:
+    file: ./secrets/traefik/certs/localhost.crt
+  localhost_key:
+    file: ./secrets/traefik/certs/localhost.key
+  api_localhost_cert:
+    file: ./secrets/traefik/certs/api.localhost.crt
+  api_localhost_key:
+    file: ./secrets/traefik/certs/api.localhost.key
+  #
+  api_env:
+    file: ./secrets/api/api_env
+  #
+  psql_user:
+    file: ./secrets/postgres/psql_user
+  psql_password:
+    file: ./secrets/postgres/psql_password

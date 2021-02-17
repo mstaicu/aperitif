@@ -1,6 +1,6 @@
-# Staging environment
+# Production environment
 
-1. Provision a N Docker Swarm cluster on a platform (digitalocean, etc)
+1. Provision an N node Docker Swarm cluster on a platform (digitalocean, etc)
 2. Install Docker on all nodes and join all the nodes to the swarm
 3. SSH into a node and setup environment vars
 ```
@@ -32,7 +32,7 @@ $ docker swarm init --advertise-addr <eth1-ip-address>
 ```
 8. Deploy the stack:
 ```
-  $ docker stack deploy --compose-file docker-compose.yml -c docker-compose.staging.yml --with-registry-auth tma1
+  $ docker stack deploy --compose-file docker-stack.yml --with-registry-auth mystack
 ```
 
 # Development environment
