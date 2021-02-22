@@ -57,7 +57,7 @@ WORKDIR /home/node/api/dev
 CMD ["ts-node-dev", \
   "--inspect=0.0.0.0:9229", \
   "--transpile-only", \
-  "./src/index.ts" \
+  "./src/server.ts" \
 ]
 
 FROM dev as build
