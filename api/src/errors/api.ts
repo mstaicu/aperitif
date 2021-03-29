@@ -1,82 +1,108 @@
-interface InvalidParam {
+import type { ErrorObject } from 'ajv';
+
+type FormattedInvalidParam = {
   name: string;
   reason?: string;
-}
-
-interface ProblemDetails {
-  type: string;
-  title: string;
-  status: number;
-  details?: string;
-  invalid_params?: InvalidParam[];
-}
-
-const DefaultValidationProblemDetails = {
-  type: 'https://example-api.com/problem/invalid-request-payload',
-  title: "Request payload didn't pass the checks",
-  status: 422,
-  invalid_params: [],
 };
 
-const DefaultAuthenticationProblemDetails = {
-  type: 'https://example-api.com/problem/invalid-credentials',
-  title: "Request didn't pass authentication checks",
-  status: 403,
-};
+export abstract class CustomError extends Error {
+  abstract statusCode: number;
 
-const DefaultAuthorizationProblemDetails = {
-  type: 'https://example-api.com/problem/invalid-authorization',
-  title: "Request didn't pass authorization checks",
-  status: 401,
-};
-
-class AuthenticationError extends Error {
-  problemDetails: ProblemDetails;
-
-  constructor(problemDetails?: Partial<ProblemDetails>) {
-    super((problemDetails || DefaultAuthenticationProblemDetails).title);
-
-    this.name = 'AuthenticationError';
-
-    this.problemDetails = {
-      ...DefaultAuthenticationProblemDetails,
-      ...problemDetails,
-    };
+  constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, CustomError.prototype);
   }
+
+  /**
+   * For more info on the type of the error response:
+   * 
+   * https://tools.ietf.org/html/rfc7807
+   */
+  abstract serializeResponse(): {
+    type: string;
+    title: string;
+    status: number;
+    invalid_params?: FormattedInvalidParam[];
+  };
 }
 
-class AuthorizationError extends Error {
-  problemDetails: ProblemDetails;
+export class RequestAuthenticationError extends CustomError {
+  statusCode = 403;
 
-  constructor(problemDetails?: Partial<ProblemDetails>) {
-    super((problemDetails || DefaultAuthorizationProblemDetails).title);
-
-    this.name = 'AuthorizationError';
-
-    this.problemDetails = {
-      ...DefaultAuthorizationProblemDetails,
-      ...problemDetails,
-    };
+  constructor() {
+    super("Request didn't pass authentication checks");
   }
+
+  serializeResponse = () => ({
+    type: 'https://example-api.com/problem/invalid-credentials',
+    title: "Request didn't pass authentication checks",
+    status: this.statusCode,
+  });
 }
 
-class ValidationError extends Error {
-  problemDetails: ProblemDetails;
+export class RequestAuthorizationError extends CustomError {
+  statusCode = 401;
 
-  constructor(problemDetails?: Partial<ProblemDetails>) {
-    super((problemDetails || DefaultValidationProblemDetails).title);
-
-    this.name = 'ValidationError';
-
-    /**
-     * @see https://tools.ietf.org/html/rfc7807#section-3
-     */
-    this.problemDetails = {
-      ...DefaultValidationProblemDetails,
-      ...problemDetails,
-    };
+  constructor() {
+    super("Request didn't pass authorization checks");
   }
+
+  serializeResponse = () => ({
+    type: 'https://example-api.com/problem/invalid-authorization',
+    title: "Request didn't pass authorization checks",
+    status: this.statusCode,
+  });
 }
 
-export type { InvalidParam, ProblemDetails };
-export { AuthenticationError, AuthorizationError, ValidationError };
+export class RequestValidationError extends CustomError {
+  statusCode = 422;
+
+  /**
+   * Using ajv as a validator against a JSON Schema
+   * The results of the validation are passed as an argument
+   */
+  constructor(public errors: ErrorObject[] | null | undefined) {
+    super("Request payload didn't pass the checks");
+  }
+
+  serializeResponse = () => ({
+    type: 'https://example-api.com/problem/invalid-request-payload',
+    title: "Request payload didn't pass the checks",
+    status: this.statusCode,
+    invalid_params: (this.errors || []).reduce<FormattedInvalidParam[]>(
+      (invalidParams, { dataPath, message }) => [
+        ...invalidParams,
+        { name: dataPath.slice(1), reason: message },
+      ],
+      [],
+    ),
+  });
+}
+
+export class ExistingEmailError extends CustomError {
+  statusCode = 200;
+
+  constructor() {
+    super("Email address is not available");
+  }
+
+  serializeResponse = () => ({
+    type: 'https://example-api.com/problem/email-not-available',
+    title: "Email address is not available",
+    status: this.statusCode,
+  });
+}
+
+export class NonExistingEmailError extends CustomError {
+  statusCode = 404;
+
+  constructor() {
+    super("Email address is not registered");
+  }
+
+  serializeResponse = () => ({
+    type: 'https://example-api.com/problem/email-not-registered',
+    title: "Email address is not registered",
+    status: this.statusCode,
+  });
+}

@@ -24,7 +24,7 @@ COPY package*.json ./
 
 RUN npm ci
 
-HEALTHCHECK --interval=30s CMD node healthcheck.js
+# HEALTHCHECK --interval=30s CMD node healthcheck.js
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
@@ -57,7 +57,7 @@ WORKDIR /home/node/api/dev
 CMD ["ts-node-dev", \
   "--inspect=0.0.0.0:9229", \
   "--transpile-only", \
-  "./src/server.ts" \
+  "./src" \
 ]
 
 FROM dev as build

@@ -1,6 +1,6 @@
 import type { Socket } from 'net';
 
-import app from './app';
+import { app } from './app';
 
 const server = app.listen(process.env.PORT, () => {
   console.log(`Running on port ${process.env.PORT}`);
@@ -10,9 +10,7 @@ const sockets = new Set<Socket>();
 
 server.on('connection', socket => {
   sockets.add(socket);
-  server.once('close', () => {
-    sockets.delete(socket);
-  });
+  server.once('close', () => sockets.delete(socket));
 });
 
 /**
@@ -62,6 +60,7 @@ const shutdown = () => {
       process.exitCode = 1;
     }
 
+    process.exitCode = 0;
     process.exit();
   });
 };

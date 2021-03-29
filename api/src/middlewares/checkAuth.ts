@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { AuthenticationError } from '../errors';
+import { RequestAuthenticationError } from '../errors';
 import type { UserSession } from '../types/api';
 
 const checkAuthentication = async (
@@ -18,7 +18,7 @@ const checkAuthentication = async (
     try {
       payload = jwt.verify(token, process.env.SIGNATURE) as UserSession;
     } catch (err) {
-      next(new AuthenticationError());
+      next(new RequestAuthenticationError());
       return;
     }
 

@@ -4,9 +4,9 @@ import { validateRequestBody } from '../middlewares';
 import { login, register } from '../routes';
 import { registerSchema, loginSchema } from '../schemas/validation';
 
-const publicRouter = Router();
+const router = Router();
 
-publicRouter.post('/register', validateRequestBody(registerSchema), register);
-publicRouter.post('/login', validateRequestBody(loginSchema), login);
+router.post('/register', validateRequestBody(registerSchema), register);
+router.post('/login', validateRequestBody(loginSchema), login);
 
-export { publicRouter };
+export { router as publicRouter };
