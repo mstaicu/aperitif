@@ -15,7 +15,7 @@ export abstract class CustomError extends Error {
 
   /**
    * For more info on the type of the error response:
-   * 
+   *
    * https://tools.ietf.org/html/rfc7807
    */
   abstract serializeResponse(): {
@@ -83,12 +83,12 @@ export class ExistingEmailError extends CustomError {
   statusCode = 200;
 
   constructor() {
-    super("Email address is not available");
+    super('Email address is not available');
   }
 
   serializeResponse = () => ({
     type: 'https://example-api.com/problem/email-not-available',
-    title: "Email address is not available",
+    title: 'Email address is not available',
     status: this.statusCode,
   });
 }
@@ -97,12 +97,12 @@ export class NonExistingEmailError extends CustomError {
   statusCode = 404;
 
   constructor() {
-    super("Email address is not registered");
+    super('Email address is not registered');
   }
 
   serializeResponse = () => ({
     type: 'https://example-api.com/problem/email-not-registered',
-    title: "Email address is not registered",
+    title: 'Email address is not registered',
     status: this.statusCode,
   });
 }
