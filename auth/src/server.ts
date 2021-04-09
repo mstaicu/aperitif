@@ -2,8 +2,8 @@ import type { Socket } from 'net';
 
 import { app } from './app';
 
-const server = app.listen(process.env.PORT, () => {
-  console.log(`Running on port ${process.env.PORT}`);
+const server = app.listen(process.env.PORT!, () => {
+  console.log(`Running on port ${process.env.PORT!}`);
 });
 
 const sockets = new Set<Socket>();

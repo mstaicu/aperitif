@@ -26,7 +26,7 @@ const createUser = async (email: string, password: string) => {
 
   const payload = { id: newUser.id };
 
-  return jwt.sign(payload, process.env.SIGNATURE, { expiresIn: '1h' });
+  return jwt.sign(payload, process.env.SIGNATURE!, { expiresIn: '1h' });
 };
 
 const getToken = async (email: string, password: string) => {
@@ -44,7 +44,7 @@ const getToken = async (email: string, password: string) => {
 
   const payload = { id: user.id };
 
-  return jwt.sign(payload, process.env.SIGNATURE, { expiresIn: '1h' });
+  return jwt.sign(payload, process.env.SIGNATURE!, { expiresIn: '1h' });
 };
 
 export { createUser, getToken };

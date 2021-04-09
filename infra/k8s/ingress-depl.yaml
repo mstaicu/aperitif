@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      containers:
+        - name: traefik
+          image: traefik:v2.4
+          args:
+            - --api
+            - --api.insecure
+            - --accesslog
+            - --entrypoints.http.address=:80
+            - --providers.kubernetescrd
+          ports:
+            - name: http
+              containerPort: 80
+            - name: admin
+              containerPort: 8080
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: auth-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
+      kind: Rule
+      middlewares:
+        - name: strip-auth-prefix
+      services:
+        - name: auth-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-auth-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-lb-srv
+spec:
+  type: LoadBalancer
+  selector:
+    app: traefik
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: admin
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

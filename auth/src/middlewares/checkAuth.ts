@@ -16,7 +16,7 @@ const checkAuthentication = async (
     let payload: UserSession;
 
     try {
-      payload = jwt.verify(token, process.env.SIGNATURE) as UserSession;
+      payload = jwt.verify(token, process.env.SIGNATURE!) as UserSession;
     } catch (err) {
       next(new RequestAuthenticationError());
       return;

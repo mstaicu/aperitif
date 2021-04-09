@@ -1,7 +1,7 @@
 {
-  "name": "api",
+  "name": "auth",
   "version": "0.0.1",
-  "description": "nothing",
+  "description": "",
   "scripts": {
     "start": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only ./src",
     "build": "tsc",
@@ -20,7 +20,6 @@
     "ajv-errors": "2.0.0",
     "ajv-formats": "1.5.1",
     "bcrypt": "5.0.0",
-    "dotenv": "8.2.0",
     "express": "4.17.1",
     "jsonwebtoken": "8.5.1",
     "morgan": "1.9.1"
