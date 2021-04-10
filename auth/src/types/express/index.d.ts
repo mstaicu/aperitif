@@ -12,6 +12,6 @@
 
 declare namespace Express {
   export interface Request {
-    user: import('../api').UserSession;
+    user: import('../auth').UserSession;
   }
 }

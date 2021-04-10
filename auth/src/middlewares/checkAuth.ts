@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { RequestAuthenticationError } from '../errors';
-import type { UserSession } from '../types/api';
+import type { UserSession } from '../types/auth';
 
 const checkAuthentication = async (
   req: Request,

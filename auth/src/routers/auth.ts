@@ -1,12 +1,12 @@
 import { Router } from 'express';
 
 import { validateRequestBody } from '../middlewares';
-import { login, register } from '../routes';
+import { signin, register } from '../routes';
 import { registerSchema, loginSchema } from '../schemas/validation';
 
 const router = Router();
 
 router.post('/register', validateRequestBody(registerSchema), register);
-router.post('/login', validateRequestBody(loginSchema), login);
+router.post('/signin', validateRequestBody(loginSchema), signin);
 
-export { router as publicRouter };
+export { router };

@@ -80,7 +80,7 @@ export class RequestValidationError extends CustomError {
 }
 
 export class ExistingEmailError extends CustomError {
-  statusCode = 200;
+  statusCode = 400;
 
   constructor() {
     super('Email address is not available');
@@ -94,7 +94,7 @@ export class ExistingEmailError extends CustomError {
 }
 
 export class NonExistingEmailError extends CustomError {
-  statusCode = 404;
+  statusCode = 400;
 
   constructor() {
     super('Email address is not registered');
