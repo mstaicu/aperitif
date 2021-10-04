@@ -1,0 +1,185 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      containers:
+        - name: traefik
+          image: traefik:v2.4
+          args:
+            - --api=true
+            - --api.dashboard=true
+
+            - --accesslog
+
+            - --entrypoints.http.address=:80
+
+            - --providers.kubernetescrd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: traefik
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-lb-srv
+spec:
+  type: LoadBalancer
+  selector:
+    app: traefik
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: client-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`)
+      kind: Rule
+      services:
+        - name: client-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: auth-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
+      kind: Rule
+      middlewares:
+        - name: strip-auth-prefix
+      services:
+        - name: auth-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ticket-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+      kind: Rule
+      middlewares:
+        - name: strip-ticket-prefix
+      services:
+        - name: ticket-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: order-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+      kind: Rule
+      middlewares:
+        - name: strip-order-prefix
+      services:
+        - name: order-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: payments-ingress-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+      kind: Rule
+      middlewares:
+        - name: strip-payments-prefix
+      services:
+        - name: payments-srv
+          port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`ticketing`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      kind: Rule
+      # Lower the priority of this router in order to allow priority to our api routes
+      priority: 40
+      services:
+        - name: api@internal
+          kind: TraefikService
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-auth-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/auth
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-ticket-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/tickets
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-order-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/orders
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-payments-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/payments

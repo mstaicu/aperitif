@@ -1,0 +1,64 @@
+apiVersion: skaffold/v2alpha3
+kind: Config
+deploy:
+  kubectl:
+    manifests:
+      - ./infra/k8s-setup/*
+      - ./infra/k8s/*
+      - ./infra/k8s-dev/*
+build:
+  local:
+    # Whenver we build an image, do not push to docker hub
+    push: false
+  artifacts:
+    - image: mdstaicu/auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    # - image: mdstaicu/client
+    #   context: client
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "src/**/*.js"
+    #         dest: .
+    - image: mdstaicu/tickets
+      context: tickets
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: mdstaicu/orders
+      context: orders
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    # - image: mdstaicu/expiration
+    #   context: expiration
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "src/**/*.ts"
+    #         dest: .
+    # - image: mdstaicu/payments
+    #   context: payments
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "src/**/*.ts"
+    #         dest: .

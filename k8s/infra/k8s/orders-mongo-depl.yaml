@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-mongo-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders-mongo
+  template:
+    metadata:
+      labels:
+        app: orders-mongo
+    spec:
+      containers:
+        - name: orders-mongo
+          # This comes from https://hub.docker.com/_/mongo
+          image: mongo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # The 'name' represents the domain in the URL
+  name: orders-mongo-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: orders-mongo
+  ports:
+    # The name is for logging purposes
+    - name: orders-mongo-port
+      protocol: TCP
+      # The port of this service
+      port: 27017
+      # This is the actual port on which your application is running inside the container
+      # Also worth noting that if targetPort is not set, it will default to the same value as port. E.g. 80:80 for service port 80 targeting container port 80.
+      targetPort: 27017
