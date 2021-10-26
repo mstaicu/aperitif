@@ -1,25 +1,25 @@
 import { Message } from "node-nats-streaming";
+
 import { Listener, OrderCreatedEvent, Subjects } from "@tartine/common";
 
-import { expirationQueue } from "../../queues";
+import { Order } from "../../models/order";
 
 export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   readonly subject = Subjects.OrderCreated;
 
-  queueGroupName = "expiration-service";
+  queueGroupName = "payments-service";
 
   onMessage = async (data: OrderCreatedEvent["data"], msg: Message) => {
     try {
-      const delay = new Date(data.expiresAt).getTime() - new Date().getTime();
+      const order = Order.build({
+        id: data.id,
+        status: data.status,
+        userId: data.userId,
+        price: data.ticket.price,
+        version: data.version,
+      });
 
-      await expirationQueue.add(
-        {
-          orderId: data.id,
-        },
-        {
-          delay,
-        }
-      );
+      await order.save();
 
       msg.ack();
     } catch (err) {}

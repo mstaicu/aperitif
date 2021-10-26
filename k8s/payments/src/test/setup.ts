@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
 jest.mock("../events/nats");
+jest.mock("../stripe");
 
 let mongo: MongoMemoryServer;
 
@@ -33,13 +34,14 @@ afterAll(async () => {
 });
 
 declare global {
-  function getSessionCookie(): string[];
+  function getSessionCookie(additionalPayload?: { userId?: string }): string[];
 }
 
-global.getSessionCookie = () => {
+global.getSessionCookie = (additionalPayload = {}) => {
   // Build a JWT payload.  { id, email }
   const payload = {
     userId: new mongoose.Types.ObjectId().toHexString(),
+    ...additionalPayload,
   };
 
   // Create the JWT!

@@ -37,10 +37,6 @@ export class ExpirationCompleteListener extends Listener<ExpirationCompleteEvent
       });
 
       msg.ack();
-    } catch (err) {
-      /**
-       * TODO: Handle out of order related errors
-       */
-    }
+    } catch (err) {}
   };
 }

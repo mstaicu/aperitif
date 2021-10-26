@@ -25,11 +25,11 @@ export class PaymentCreatedListener extends Listener<PaymentCreatedEvent> {
 
       await order.save();
 
-      msg.ack();
-    } catch (err) {
       /**
-       * TODO: Handle out of order related errors
+       * TODO: Emit an order complete event
        */
-    }
+
+      msg.ack();
+    } catch (err) {}
   };
 }

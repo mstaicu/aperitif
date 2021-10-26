@@ -157,8 +157,8 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 2. Update the prod ingress-depl with the new domain name in the Host rules
 3. Create the secrets
   $ kubectl create secret generic jwt-secret --from-literal=JWT_SECRET=asdf
-  $ kubectl create secret generic stripe-secret --from-literal=STRIPE_KEY=sk_test*...
+  $ kubectl create secret generic stripe-secret --from-literal=STRIPE_KEY=sk_test...
 4. Create the cluster resources
-  $ kubectl apply -f infra/k8s/ingress-setup.yaml
+  $ kubectl apply -f infra/k8s-setup
   $ kubectl apply -f infra/k8s infra/k8s-prod
 5. Traefik Dashboard at http[s]://www.[domain]/dashboard/ (NOTICE THE LAST SLASH, very important)

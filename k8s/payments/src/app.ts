@@ -7,10 +7,7 @@ import {
   userCookieHandler,
 } from "@tartine/common";
 
-import { allTicketsRouter } from "./routes/all";
-import { createTicketRouter } from "./routes/create";
-import { showTicketRouter } from "./routes/get";
-import { updateTicketRouter } from "./routes/update";
+import { createChargeRouter } from "./routes";
 
 const app = express();
 
@@ -23,10 +20,7 @@ app.use(
 
 app.use(userCookieHandler);
 
-app.use(showTicketRouter);
-app.use(allTicketsRouter);
-app.use(updateTicketRouter);
-app.use(createTicketRouter);
+app.use(createChargeRouter);
 
 app.get("*", (_, __, next) => next(new NotFoundError()));
 

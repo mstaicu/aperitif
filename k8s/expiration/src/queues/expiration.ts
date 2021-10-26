@@ -1,6 +1,6 @@
 import Queue from "bull";
 
-import { natsWrapper } from "../events/nats-wrapper";
+import { nats } from "../events/nats";
 import { ExpirationCompletePublisher } from "../events/publishers";
 
 interface Payload {
@@ -14,7 +14,7 @@ const expirationQueue = new Queue<Payload>("order:expiration", {
 });
 
 expirationQueue.process((job) =>
-  new ExpirationCompletePublisher(natsWrapper.client).publish({
+  new ExpirationCompletePublisher(nats.client).publish({
     orderId: job.data.orderId,
   })
 );

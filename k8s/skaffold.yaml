@@ -24,6 +24,7 @@ build:
     #   context: client
     #   docker:
     #     dockerfile: Dockerfile
+    #     target: dev
     #   sync:
     #     manual:
     #       - src: "src/**/*.js"
@@ -46,19 +47,21 @@ build:
         manual:
           - src: "src/**/*.ts"
             dest: .
-    # - image: mdstaicu/expiration
-    #   context: expiration
-    #   docker:
-    #     dockerfile: Dockerfile
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
-    # - image: mdstaicu/payments
-    #   context: payments
-    #   docker:
-    #     dockerfile: Dockerfile
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
+    - image: mdstaicu/expiration
+      context: expiration
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: mdstaicu/payments
+      context: payments
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .

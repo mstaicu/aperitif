@@ -21,10 +21,6 @@ export class TicketCreatedListener extends Listener<TicketCreatedEvent> {
       await ticket.save();
 
       msg.ack();
-    } catch (err) {
-      /**
-       * TODO: Handle out of order related errors. This is not the case for ticket created events
-       */
-    }
+    } catch (err) {}
   };
 }
