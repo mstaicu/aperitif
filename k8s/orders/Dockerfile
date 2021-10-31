@@ -31,6 +31,7 @@ CMD ["npm", "start"]
 # ----
 FROM dev as build
 
+# TODO: Bundle the application
 RUN npm run build
 
 # ----
@@ -42,4 +43,4 @@ COPY --from=build /home/node/app/dist /home/node/app
 
 USER node
 
-CMD ["node", "/home/node/app/dist"]
+CMD ["node", "index.js"]

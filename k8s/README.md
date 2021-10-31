@@ -1,7 +1,9 @@
 In case you reset the cluster
 
 kubectl create secret generic jwt-secret --from-literal=JWT_SECRET=asdf
-kubectl create secret generic stripe-secret --from-literal=STRIPE_KEY=sk_test*...
+kubectl create secret generic stripe-secret --from-literal=STRIPE_SECRET_KEY=sk_test*...
+kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUBLISHABLE_KEY=pk_test*...
+kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec_*...
 
 Adding a new service:
 
@@ -144,7 +146,7 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 
 # Build and deploy images from Workflows
 
-1. Add a Github secret containing the Docker login token, Docker username and Digital Ocean access token
+1. Add a Github secret containing the Docker login token, Docker username, Digital Ocean access token, Stripe Test Secret, Stripe Webhook test secret
 
 # Deploy infra
 
@@ -156,8 +158,6 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
   1. Add a CNAME, enter 'www' in the Hostname input and for the 'Is an alias of' input enter '@'
 2. Update the prod ingress-depl with the new domain name in the Host rules
 3. Create the secrets
-  $ kubectl create secret generic jwt-secret --from-literal=JWT_SECRET=asdf
-  $ kubectl create secret generic stripe-secret --from-literal=STRIPE_KEY=sk_test...
 4. Create the cluster resources
   $ kubectl apply -f infra/k8s-setup
   $ kubectl apply -f infra/k8s infra/k8s-prod

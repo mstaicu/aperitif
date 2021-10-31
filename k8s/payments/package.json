@@ -4,7 +4,7 @@
   "description": "Payments service",
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
-    "test": "jest --watchAll --no-cache",
+    "test": "jest --setupFiles ./src/test/setupFiles.ts --watchAll --no-cache",
     "test:ci": "jest",
     "clean": "del ./dist/*",
     "build": "npm run clean && tsc"
@@ -13,7 +13,7 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "./src/test/setup.ts"
+      "./src/test/setupFilesAfterEnv.ts"
     ]
   },
   "keywords": [],
@@ -26,6 +26,7 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/supertest": "^2.0.11",
     "del-cli": "^4.0.1",
+    "dotenv": "^10.0.0",
     "jest": "^27.2.4",
     "mongodb-memory-server": "^6.9.6",
     "supertest": "^6.1.3",

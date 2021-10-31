@@ -93,7 +93,7 @@ test("201 when submitting a valid orderId and token", async () => {
   const payment = await Payment.findOne({
     orderId,
     // as in the __mocks__
-    stripeChargeId: "randomChargeId",
+    stripePaymentIntentId: "paymentIntentId",
   });
 
   expect(payment).not.toBeNull();

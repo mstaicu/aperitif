@@ -97,7 +97,7 @@ spec:
       middlewares:
         - name: strip-ticket-prefix
       services:
-        - name: ticket-srv
+        - name: tickets-srv
           port: 3000
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -113,7 +113,7 @@ spec:
       middlewares:
         - name: strip-order-prefix
       services:
-        - name: order-srv
+        - name: orders-srv
           port: 3000
 ---
 apiVersion: traefik.containo.us/v1alpha1

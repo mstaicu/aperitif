@@ -15,26 +15,24 @@ import { Payment } from "../models/payment";
 
 import { stripe } from "../stripe";
 
-import { nats } from "../events/nats";
-import { PaymentCreatedPublisher } from "../events/publishers";
-
 const router = express.Router();
 
+router.use(express.json());
+
 router.post(
-  "/",
+  "/intent",
   requireAuthHandler,
   [
-    body("token").not().isEmpty().withMessage("'token' must be provided"),
     body("orderId")
       .not()
       .isEmpty()
       .custom(mongoose.Types.ObjectId.isValid)
-      .withMessage("'ticketId' must be provided"),
+      .withMessage("'orderId' must be provided"),
   ],
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { token, orderId } = req.body;
+      const { orderId } = req.body;
 
       const order = await Order.findById(orderId);
 
@@ -52,30 +50,29 @@ router.post(
         throw new BadRequestError("Cannot pay for a cancelled order");
       }
 
-      const charge = await stripe.charges.create({
-        currency: "gbp",
-        amount: order.price * 100,
-        source: token,
-      });
+      const paymentProcessed = await Payment.findOne({ orderId });
 
-      const payment = Payment.build({
-        orderId,
-        stripeChargeId: charge.id,
-      });
+      if (paymentProcessed) {
+        throw new BadRequestError("Order has already been paid for");
+      }
 
-      await payment.save();
+      const { client_secret: clientSecret } =
+        await stripe.paymentIntents.create(
+          {
+            currency: "gbp",
+            amount: order.price * 100,
+            metadata: {
+              orderId: order.id,
+            },
+          },
+          { idempotencyKey: order.id }
+        );
 
-      new PaymentCreatedPublisher(nats.client).publish({
-        id: payment.id,
-        orderId: payment.orderId,
-        stripeChargeId: payment.stripeChargeId,
-      });
-
-      res.status(201).send({ id: payment.id });
+      res.status(200).send({ clientSecret });
     } catch (err) {
       next(err);
     }
   }
 );
 
-export { router as createChargeRouter };
+export { router as paymentIntentRouter };

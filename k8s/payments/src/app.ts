@@ -7,20 +7,26 @@ import {
   userCookieHandler,
 } from "@tartine/common";
 
-import { createChargeRouter } from "./routes";
+import { paymentIntentRouter, stripeWebhookRouter } from "./routes";
 
 const app = express();
 
-app.use(express.json());
 app.use(
   cookieSession({
     signed: false,
   })
 );
 
-app.use(userCookieHandler);
+/**
+ * Unauthenticated, relies on Stripe signature to check the validity of the payload
+ */
+app.use(stripeWebhookRouter);
 
-app.use(createChargeRouter);
+/**
+ * Authenticated
+ */
+app.use(userCookieHandler);
+app.use(paymentIntentRouter);
 
 app.get("*", (_, __, next) => next(new NotFoundError()));
 

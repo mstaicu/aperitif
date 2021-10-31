@@ -3,7 +3,6 @@ kind: Config
 deploy:
   kubectl:
     manifests:
-      - ./infra/k8s-setup/*
       - ./infra/k8s/*
       - ./infra/k8s-dev/*
 build:
@@ -20,15 +19,15 @@ build:
         manual:
           - src: "src/**/*.ts"
             dest: .
-    # - image: mdstaicu/client
-    #   context: client
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.js"
-    #         dest: .
+    - image: mdstaicu/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: "src/**/*.js"
+            dest: .
     - image: mdstaicu/tickets
       context: tickets
       docker:

@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
 jest.mock("../events/nats");
-jest.mock("../stripe");
 
 let mongo: MongoMemoryServer;
 

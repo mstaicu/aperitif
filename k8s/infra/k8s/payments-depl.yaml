@@ -23,11 +23,16 @@ spec:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_SECRET
-            - name: STRIPE_KEY
+            - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: stripe-secret
-                  key: STRIPE_KEY
+                  name: stripe-secret-key
+                  key: STRIPE_SECRET_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-webhook-secret
+                  key: STRIPE_WEBHOOK_SECRET
             #
             # NATS_CLUSTER_ID should match the -cid of the parameter in the nats-streaming image in the deployment
             #
