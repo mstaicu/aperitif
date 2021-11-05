@@ -1,11 +1,7 @@
+import type { Stripe } from "@stripe/stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-let stripePromise;
-
-console.log(
-  "process.env.STRIPE_PUBLISHABLE_KEY STRIPE",
-  process.env.STRIPE_PUBLISHABLE_KEY
-);
+let stripePromise: Promise<Stripe>;
 
 export const getStripe = () => {
   if (!stripePromise) {

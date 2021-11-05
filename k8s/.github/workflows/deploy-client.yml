@@ -12,7 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd client && docker build -t mdstaicu/client .
+      #
+      # TODO: Add STRIPE_PUBLISHABLE_KEY to Github's secrets and build the image with env var
+      #
+      - run: cd client && docker build -t mdstaicu/client --secret id=stripe_publishable_key,env=STRIPE_PUBLISHABLE_KEY .
+        env:
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

@@ -31,7 +31,16 @@ CMD ["npm", "run", "dev"]
 # ----
 FROM dev as build
 
-RUN npm run build
+# https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
+# By default, the container can access the secret at /run/secrets/<secret_name>, but you can customize the file name on the container using the target option.
+
+# To build with this secret
+#
+# $ STRIPE_PUBLISHABLE_KEY=WTFMATE docker build -t mdstaicu/client --secret id=stripe_publishable_key,env=STRIPE_PUBLISHABLE_KEY .
+#
+RUN --mount=type=secret,id=stripe_publishable_key \
+  STRIPE_PUBLISHABLE_KEY=$(cat /run/secrets/stripe_publishable_key) \
+  npm run build
 
 # ----
 # Prod
