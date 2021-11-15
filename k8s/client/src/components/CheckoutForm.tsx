@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   PaymentElement,
   useStripe,
@@ -12,10 +12,10 @@ export const CheckoutForm = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await stripe.confirmPayment({
+    await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: "http://ticketing/orders/617ff8d8f6b2800d2ce2d4e4",
+        return_url: "",
       },
     });
   };

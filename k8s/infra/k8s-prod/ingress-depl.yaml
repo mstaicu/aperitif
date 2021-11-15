@@ -25,30 +25,17 @@ spec:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
 
-            - --certificatesresolvers.ticketresolver.acme.httpchallenge.entrypoint=http
+            - --certificatesresolvers.letsencrypt.acme.email=md.staicu@yahoo.com
+            #
+            # TODO: Depending on the cloud platform, provision a persistent volume claim
+            # in order to save the certificates
+            #
+            - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
+            - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+            - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
 
             - --providers.kubernetescrd
 ---
-#
-# Service to service communication endpoint
-#
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik-srv
-spec:
-  type: ClusterIP
-  selector:
-    app: traefik
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 80
----
-#
-# Cluster gateway
-#
 apiVersion: v1
 kind: Service
 metadata:
@@ -66,9 +53,6 @@ spec:
       protocol: TCP
       port: 443
       targetPort: 443
-#
-# Router configs
-#
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -84,7 +68,7 @@ spec:
         - name: client-srv
           port: 3000
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
 ---
@@ -126,7 +110,7 @@ spec:
         - name: auth-srv
           port: 3000
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
 ---
@@ -162,7 +146,7 @@ spec:
         - name: tickets-srv
           port: 3000
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
 ---
@@ -198,7 +182,7 @@ spec:
         - name: orders-srv
           port: 3000
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
 ---
@@ -234,7 +218,7 @@ spec:
         - name: payments-srv
           port: 3000
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
 ---
@@ -267,18 +251,14 @@ spec:
   routes:
     - match: Host(`www.ticketing-test-prod-app.xyz`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
-      # Lower the priority of this router in order to allow priority to our api routes
       priority: 40
       services:
         - name: api@internal
           kind: TraefikService
   tls:
-    certResolver: ticketresolver
+    certResolver: letsencrypt
     domains:
       - main: www.ticketing-test-prod-app.xyz
-#
-# Middlewares
-#
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

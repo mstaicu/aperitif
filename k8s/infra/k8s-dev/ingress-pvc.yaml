@@ -1,0 +1,73 @@
+# Tell k8s that we need 10Mb worth of storage, can you get me something that meets these requirements?
+# This is what a persistent volume claim is
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ingress-pvc
+spec:
+  #
+  # $ kubectl explain persistentvolumeclaim.spec.accessModes
+  #
+  # AccessModes contains the desired access modes the volume should have. More info:
+  # https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
+  #
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      #
+      # $ kubectl explain persistentvolumeclaim.spec.resources.requests.storage
+      #
+      # Quantity is a fixed-point representation of a number. It provides
+      # convenient marshaling/unmarshaling in JSON and YAML, in addition to
+      # String() and AsInt64() accessors.
+      storage: 10m
+  #
+  # $ kubectl explain persistentvolumeclaim.spec.storageClassName
+  # KIND:     PersistentVolumeClaim
+  # VERSION:  v1
+
+  # FIELD:    storageClassName <string>
+
+  # DESCRIPTION:
+  #      Name of the StorageClass required by the claim. More info:
+  #      https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
+  #
+  # Since we're using the default one for our current cluster, we can ommit this value
+  # The current default provisioner option would have been 'hostpath'
+  #
+  # When we create a cluster on a cloud provider, a storage class services will be created by default for us
+  # and it will be set as the (default) storage class
+  #
+  # storageClassName: hostpath
+  #
+#
+# To see what options k8s currently has for creating a persistent volume:
+#
+# $ kubectl get storageclass
+# NAME                 PROVISIONER          RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+# hostpath (default)   docker.io/hostpath   Delete          Immediate           false                  69d
+#
+# If we don't specificy a storage class with our persistent volume claim, the (default) option will be used
+# The provisioner specifies how k8s will decide to create this persistent volume
+# ---
+#
+# $ kubectl describe storageclass
+#
+# Name:            hostpath
+# IsDefaultClass:  Yes
+# Annotations:     kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"},"name":"hostpath"},"provisioner":"docker.io/hostpath","reclaimPolicy":"Delete","volumeBindingMode":"Immediate"}
+# ,storageclass.kubernetes.io/is-default-class=true
+# Provisioner:           docker.io/hostpath
+# Parameters:            <none>
+# AllowVolumeExpansion:  <unset>
+# MountOptions:          <none>
+# ReclaimPolicy:         Delete
+# VolumeBindingMode:     Immediate
+# Events:                <none>
+#
+# ---
+# Provisioner determines how the space you're asking for gets created
+#
+# docker.io/hostpath means that when we ask k8s to create this persistent volume, it will look
+# on the the host machine on Docker and its going to make a little slice of space on the host hard drive

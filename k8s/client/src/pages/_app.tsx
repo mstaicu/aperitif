@@ -5,6 +5,14 @@ const AppComponent = ({ Component, ...rest }) => <Component {...rest} />;
 AppComponent.getInitialProps = async ({ Component, ctx }) => {
   const client = buildClient(ctx);
 
+  /**
+   * TODO: In the error handler, redirect to login
+   */
+  // client.interceptors.response.use(
+  //   (response) => Promise.resolve(response),
+  //   (error) => Promise.reject(error)
+  // );
+
   const {
     data: { user },
   } = await client.get("/api/auth/currentuser");

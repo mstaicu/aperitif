@@ -1,20 +1,35 @@
-In case you reset the cluster
+# In case you reset the cluster:
 
-kubectl create secret generic jwt-secret --from-literal=JWT_SECRET=asdf
-kubectl create secret generic stripe-secret --from-literal=STRIPE_SECRET_KEY=sk_test*...
-kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUBLISHABLE_KEY=pk_test*...
-kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec_*...
+```
+$ kubectl create secret generic jwt-secret --from-literal=JWT*SECRET=asdf
+$ kubectl create secret generic stripe-secret --from-literal=STRIPE_SECRET_KEY=sk_test*...
+$ kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUBLISHABLE_KEY=pk_test*...
+$ kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec*\*...
+```
 
-Adding a new service:
+# Anatomy of an imperative command:
+
+```
+$ kubectl create (-imperative command to create a new object) secret (-type of object to create) generic (-type of secret) <secret-name> (-name of secret for referencing in the pod) --from-literal (-indicates that we are going to add the secret information into this command, as opposed to from . file) key=value (--key and value, i.e. NODE_ENV=dev)
+```
+
+# Explaining kubectl commands. This follows the hierarchy of markup inside declarative configuration yaml files
+
+```
+$ kubectl explain deployments.spec.template.spec.containers.lifecycle
+```
+
+# Adding a new service:
 
 1. Create the package folder, add sources, install dependencies
 2. Create the Docker image locally:
-   $ docker build -t mdstaicu/expiration .
+   `$ docker build -t mdstaicu/expiration .`
 3. Push the Docker image to dockerhub under your username, else you'll get order-depl-5677d794fb-wx6zz 0/1 ImagePullBackOff 0 10m
-   $ docker push mdstaicu/expiration
+   `$ docker push mdstaicu/expiration`
 
-Debug why traffic doesn't reach any services
+# Debug why traffic doesn't reach any services
 
+```
 $ kubectl get services
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
 auth-mongo-srv ClusterIP 10.101.106.144 <none> 27017/TCP 27s
@@ -27,20 +42,24 @@ order-srv ClusterIP 10.105.28.9 <none> 3000/TCP 25s
 ticket-mongo-srv ClusterIP 10.103.43.47 <none> 27017/TCP 24s
 ticket-srv ClusterIP 10.105.97.188 <none> 3000/TCP 24s
 traefik-lb-srv LoadBalancer 10.109.197.237 <pending> 80:32082/TCP 26s
-traefik-srv ClusterIP 10.107.161.105 <none> 80/TCP 26s
+```
 
 Fix the <pending> state of the entry to Traefik by deleting the service while Skaffold is running, then closing Skaffold and restarting the cluster
 
+```
 $ kubectl delete service traefik-lb-srv
+```
 
-Debug Mongo
+# Debug Mongo
 
-1. kubectl exec ticket-mongo-depl-5dddd6d44-4n6lh -it -- bash
-2. show dbs;
-3. use tickets; || use orders;
-4. db.tickets.find()
+```
+$ kubectl exec ticket-mongo-depl-5dddd6d44-4n6lh -it -- bash
+$ show dbs;
+$ use tickets; || use orders;
+$ db.tickets.find()
+```
 
-Test optimistic concurrency control (from browser, with session)
+# Test optimistic concurrency control (from browser, with session)
 
 ```
 var doRequest = async () => {
@@ -76,13 +95,15 @@ var doRequest = async () => {
 })();
 ```
 
-Caveats:
+# Caveats:
 
 Mongoose broke @types/bson for mongoose.Types.ObjectId.isValid and toHexString. Install @types/bson@4.0.3
 
-Update NPM packages:
+# Update NPM packages:
 
-npm update @tartine/commons
+```
+$ npm update @tartine/commons
+```
 
 Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 
@@ -92,10 +113,11 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 2. Generate an access Applications & API Token https://cloud.digitalocean.com/account/api/tokens?i=23e796
 3. $ doctl auth init
 4. The commands under `doctl kubernetes cluster kubeconfig` are used to manage Kubernetes cluster credentials on your local machine. `doctl kubernetes cluster kubeconfig` to configure `kubectl` to connect to the cluster. You are then able to use `kubectl` to create and manage workloads. `doctl kubernetes cluster kubeconfig save <digital ocean cluster name>` This command adds the credentials for the specified cluster to your local kubeconfig. After this, your kubectl installation can directly manage the specified cluster.
-5. $ doctl kubernetes cluster kubeconfig save k8s-ticketing
+```
+$ doctl kubernetes cluster kubeconfig save k8s-ticketing
    Notice: Adding cluster credentials to kubeconfig file found in "/Users/mircea/.kube/config"
    Notice: Setting current-context to do-fra1-k8s-ticketing
-6. $ kubectl config view
+$ kubectl config view
    apiVersion: v1
    clusters:
 
@@ -132,33 +154,59 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
   user:
   client-certificate-data: REDACTED
   client-key-data: REDACTED
+```
 
 7. From this point on, any commands issued by kubectl will be ran on the digital ocean cluster
-8. $ kubectl get nodes
+```
+$ kubectl get nodes
    NAME STATUS ROLES AGE VERSION
    pool-hpo8g2vpl-81479 Ready <none> 141m v1.21.3
    pool-hpo8g2vpl-8147z Ready <none> 141m v1.21.3
    pool-hpo8g2vpl-814mn Ready <none> 141m v1.21.3
-9. If we wanna switch back to the docker desktop local context
-   $ kubectl config view
-   $ kubectl config use-context <name of context>
-   $ kubectl config use-context do-fra1-k8s-ticketing
+```
+
+If we wanna switch back to the docker desktop local context
+```
+$ kubectl config view
+$ kubectl config use-context <name of context>
+$ kubectl config use-context do-fra1-k8s-ticketing
+```
 
 # Build and deploy images from Workflows
 
 1. Add a Github secret containing the Docker login token, Docker username, Digital Ocean access token, Stripe Test Secret, Stripe Webhook test secret
 
-# Deploy infra
+# Test TLS locally ( https://testssl.sh/ )
+
+```
+$ brew install testssl
+$ testssl.sh https://ticketing/dashboard/
+```
+
+# Save intermediate and root certificates locally so that we don't get browser errors
+
+```
+$ kubectl port-forward <pebble-deployment-name> 15000:15000
+$ curl -s -o intermediate.crt https://localhost:15000/intermediates/0
+$ curl -s -o root.crt https://localhost:15000/roots/0
+```
+
+# Deploy infra on Digital Ocean
 
 1. Buy a domain name, update the nameservers where you bought the domain name from, then:
-  1. go to Digital Ocean
-  1. go to Networking, Domains
-  1. Enter the purchased domain name, without the www subdomain
-  1. The purchased domain should point to the LoadBalancer of the cluster, go to A records, enter '@' in the Hostname input and 'Will redirect' to the cluster's LoadBalancer
-  1. Add a CNAME, enter 'www' in the Hostname input and for the 'Is an alias of' input enter '@'
-2. Update the prod ingress-depl with the new domain name in the Host rules
-3. Create the secrets
-4. Create the cluster resources
-  $ kubectl apply -f infra/k8s-setup
-  $ kubectl apply -f infra/k8s infra/k8s-prod
-5. Traefik Dashboard at http[s]://www.[domain]/dashboard/ (NOTICE THE LAST SLASH, very important)
+1. go to Digital Ocean
+1. go to Networking, Domains
+1. Enter the purchased domain name, without the www subdomain
+1. The purchased domain should point to the LoadBalancer of the cluster, go to A records, enter '@' in the Hostname input and 'Will redirect' to the cluster's LoadBalancer
+1. Add a CNAME, enter 'www' in the Hostname input and for the 'Is an alias of' input enter '@'
+1. Update the prod ingress-depl with the new domain name in the Host rules (?)
+1. Create the secrets
+1. Create a mongodb managed database cluster, and have each service use a database on that cluster
+   Create a mysql database for nats
+   Create a volume for storing traefik certificates
+1. Create the cluster resources
+```
+$ kubectl apply -f infra/k8s-setup
+$ kubectl apply -f infra/k8s infra/k8s-prod
+```
+1. Traefik Dashboard at http[s]://www.[domain]/dashboard/ (NOTICE THE LAST SLASH, very important)

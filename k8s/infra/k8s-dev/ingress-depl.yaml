@@ -23,23 +23,111 @@ spec:
             - --accesslog
 
             - --entrypoints.http.address=:80
+            - --entrypoints.https.address=:443
 
+            #
+            # Email address used for registration.
+            #
+            # Required
+            #
+            - --certificatesresolvers.pebble.acme.email=dj@vasile.com
+            #
+            # Use a HTTP-01 ACME challenge.
+            #
+            # Optional (but recommended)
+            #
+            - --certificatesresolvers.pebble.acme.httpchallenge=true
+            #
+            # EntryPoint to use for the HTTP-01 challenges.
+            #
+            # Required
+            #
+            - --certificatesresolvers.pebble.acme.httpchallenge.entrypoint=http
+            #
+            # Since we're making these requests through HTTPS, we need to validate the certificate
+            # of Pebble, hence why we need to setup the root certificate authority via LEGO_CA_CERTIFICATES
+            #
+            - --certificatesresolvers.pebble.acme.caserver=https://pebble:14000/dir
+            #
+            #
+            #
+            - --certificatesresolvers.pebble.acme.storage=/acme/acme.json
+            #
+            #
+            #
             - --providers.kubernetescrd
+            #
+            #
+            #
+          #
+          # Pod volumes to mount into the container's filesystem. Cannot be updated.
+          # Mount the statically declared root certificate of Pebble at /pebble/pebble.minica.pem
+          #
+          volumeMounts:
+            #
+            # This needs to match the 'volume' name of the pod
+            #
+            - name: pebble-configmap
+              #
+              # Mount all the data keys in the config map at /pebble/[config-map-data-key]
+              #
+              mountPath: /pebble
+            #
+            # This needs to match the 'volume' name of the pod
+            #
+            - name: ingress-storage
+              #
+              # Path within the container at which the volume should be mounted. Must not contain ':'
+              #
+              mountPath: /acme
+              #
+              # Path within the volume from which the container's volume should be mounted
+              #
+              # subPath: acme.json
+          #
+          # Root certificate used for signing Pebble's certificates
+          # Tell the Lego ACME client about the whearabouts of Pebble's root certificate
+          #
+          env:
+            - name: LEGO_CA_CERTIFICATES
+              value: /pebble/pebble.minica.pem
+      # List of volumes that can be mounted by containers belonging to the pod.
+      # More info: https://kubernetes.io/docs/concepts/storage/volumes
+
+      # Volume represents a named volume in a pod that may be accessed by any
+      # container in the pod.
+      #
+      # PersistentVolumeClaimVolumeSource references the user's PVC in the same
+      # namespace. This volume finds the bound PV and mounts that volume for the
+      # pod. A PersistentVolumeClaimVolumeSource is, essentially, a wrapper around
+      # another type of volume that is owned by someone else (the system).
+      #
+      # This statement just allocates the storage for the pod. We then need to assign it
+      # to every container in the pod
+      #
+      volumes:
+        #
+        # Config map for storing the Pebble ACME server specifics
+        #
+        - name: pebble-configmap
+          configMap:
+            #
+            # pebble-cm.yaml
+            #
+            name: pebble-cm
+        #
+        # Persistent volume claim to store Traefik's Pebble issued certificates
+        #
+        - name: ingress-storage
+          # PersistentVolumeClaimVolumeSource represents a reference to a
+          # PersistentVolumeClaim in the same namespace. More info:
+          # https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims
+          persistentVolumeClaim:
+            claimName: ingress-pvc
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik-srv
-spec:
-  type: ClusterIP
-  selector:
-    app: traefik
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 80
----
+#
+# Cluster gateway, load balances requests to all pods created and maintained by this deployment
+#
 apiVersion: v1
 kind: Service
 metadata:
@@ -53,17 +141,56 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+---
+#
+# Router configs
+#
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: client-ingress-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`)
+      kind: Rule
+      middlewares:
+        - name: tls
+      services:
+        - name: client-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: client-ingress-route
+  name: client-ingress-route-http
 spec:
   entryPoints:
     - http
   routes:
     - match: Host(`ticketing`)
       kind: Rule
+      middlewares:
+        - name: tls
+      #
+      # TODO: Route the requests TO the client to HTTPS if they're done by a client from HTTP
+      # I think this is not necessary as when the client makes a request to Traefik via its ClusterIP
+      # it will communicate via HTTP, so I think we can activate all communications to the client from the outside world
+      # to use HTTPS, as the client will always communicate with Traefik via its HTTP ClusterIP endpoint
+      #
+      # middlewares:
+      #   - name: client-ingress-route-redirect-https
       services:
         - name: client-srv
           port: 3000
@@ -71,7 +198,30 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: auth-ingress-route
+  name: auth-ingress-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: strip-auth-prefix
+      services:
+        - name: auth-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: auth-ingress-route-http
 spec:
   entryPoints:
     - http
@@ -79,6 +229,7 @@ spec:
     - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
       kind: Rule
       middlewares:
+        - name: tls
         - name: strip-auth-prefix
       services:
         - name: auth-srv
@@ -87,7 +238,30 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ticket-ingress-route
+  name: ticket-ingress-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: strip-ticket-prefix
+      services:
+        - name: tickets-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ticket-ingress-route-http
 spec:
   entryPoints:
     - http
@@ -95,6 +269,7 @@ spec:
     - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
       kind: Rule
       middlewares:
+        - name: tls
         - name: strip-ticket-prefix
       services:
         - name: tickets-srv
@@ -103,7 +278,30 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: order-ingress-route
+  name: order-ingress-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: strip-order-prefix
+      services:
+        - name: orders-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: order-ingress-route-http
 spec:
   entryPoints:
     - http
@@ -111,6 +309,7 @@ spec:
     - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
       kind: Rule
       middlewares:
+        - name: tls
         - name: strip-order-prefix
       services:
         - name: orders-srv
@@ -119,7 +318,30 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: payments-ingress-route
+  name: payments-ingress-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: strip-payments-prefix
+      services:
+        - name: payments-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: payments-ingress-route-http
 spec:
   entryPoints:
     - http
@@ -127,27 +349,42 @@ spec:
     - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
       kind: Rule
       middlewares:
+        - name: tls
         - name: strip-payments-prefix
       services:
         - name: payments-srv
           port: 3000
 ---
+#
+# TODO: Secure the dashboard access
+#
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: traefik-dashboard
 spec:
   entryPoints:
-    - http
+    - https
   routes:
     - match: Host(`ticketing`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
+      middlewares:
+        - name: tls
       # Lower the priority of this router in order to allow priority to our api routes
       priority: 40
       services:
         - name: api@internal
           kind: TraefikService
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
 ---
+#
+# Middlewares
+#
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:

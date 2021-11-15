@@ -20,9 +20,11 @@ FROM base as dev
 
 ENV NODE_ENV=development
 
-COPY . .
+COPY ./package*.json ./
 
 RUN npm install
+
+COPY . .
 
 CMD ["npm", "run", "dev"]
 

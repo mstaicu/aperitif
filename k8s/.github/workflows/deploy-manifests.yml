@@ -5,7 +5,9 @@ on:
     branches:
       - master
     paths:
-      - "infra/**"
+      - "infra/k8s/*"
+      - "infra/k8s-prod/*"
+      - "infra/k8s-setup/*"
 
 jobs:
   deploy:

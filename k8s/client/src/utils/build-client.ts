@@ -8,9 +8,9 @@ import axios from "axios";
  *  apiVersion: v1
     kind: Service
     metadata:
-      name: traefik-srv
+      name: traefik-lb-srv
     spec:
-      type: ClusterIP
+      type: LoadBalancer
       selector:
         app: traefik
       ports:
@@ -18,6 +18,10 @@ import axios from "axios";
           protocol: TCP
           port: 80
           targetPort: 80
+        - name: https
+          protocol: TCP
+          port: 443
+          targetPort: 443
 
     Otherwise, if window is defined, we are making the request from the browser
     where we can omit the protocol and sub domain as those will be picked when making relative path requests
@@ -28,9 +32,9 @@ import axios from "axios";
   TODO: Add env var for determining if we're in dev or prod mode and pick the host name from there
 
   prod: http://www.ticketing-test-prod-app.xyz/
-  dev: http://traefik-srv/
+  dev: http://traefik-lb-srv/
 
-  TODO: Test this with just http://traefik-srv/ in Digital Ocean as I think we don't need the BASE_URL
+  TODO: Test this with just http://traefik-lb-srv/ in Digital Ocean as I think we don't need the BASE_URL
   as the request headers, including the Host, are passed from req.headers
 
   UHM, I don't think this is necessary, as the server side requests will be performed inside the cluster,
@@ -39,13 +43,16 @@ import axios from "axios";
 
 // const BASE_URL =
 //   process.env.NODE_ENV === "development"
-//     ? "http://traefik-srv/"
+//     ? "http://traefik-lb-srv/"
 //     : "http://www.ticketing-test-prod-app.xyz/";
 
 export const buildClient = ({ req }) =>
   typeof window === "undefined"
     ? axios.create({
-        baseURL: "http://traefik-srv/",
+        /**
+         * TODO: Update to HTTPS
+         */
+        baseURL: "http://traefik-lb-srv/",
         headers: req.headers,
       })
     : axios.create({
