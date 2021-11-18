@@ -7,11 +7,16 @@ spec:
   selector:
     matchLabels:
       app: pebble
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: pebble
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: pebble
           image: letsencrypt/pebble

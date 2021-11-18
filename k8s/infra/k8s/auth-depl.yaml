@@ -7,15 +7,23 @@ spec:
   selector:
     matchLabels:
       app: auth
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: auth
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: auth
           image: mdstaicu/auth
           env:
+            #
+            # TODO: Move the database URIs to secrets
+            #
             - name: MONGO_URI
               value: mongodb://auth-mongo-srv:27017/auth
             - name: JWT_SECRET

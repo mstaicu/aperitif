@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orders-mongo-depl
+  name: nats-postgres-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: orders-mongo
+      app: nats-postgres
   strategy:
     rollingUpdate:
       maxUnavailable: 0
@@ -14,29 +14,42 @@ spec:
   template:
     metadata:
       labels:
-        app: orders-mongo
+        app: nats-postgres
     spec:
       automountServiceAccountToken: false
       containers:
-        - name: orders-mongo
-          # This comes from https://hub.docker.com/_/mongo
-          image: mongo
+        - name: nats-postgres
+          image: postgres
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: nss_db
+          volumeMounts:
+            - name: pebble-configmap
+              mountPath: /bootstrap
+      volumes:
+        - name: pebble-configmap
+          configMap:
+            name: nats-cm
 ---
 apiVersion: v1
 kind: Service
 metadata:
   # The 'name' represents the domain in the URL
-  name: orders-mongo-srv
+  name: nats-postgres-srv
 spec:
   type: ClusterIP
   selector:
-    app: orders-mongo
+    app: nats-postgres
   ports:
     # The name is for logging purposes
-    - name: orders-mongo-port
+    - name: nats-postgres-port
       protocol: TCP
       # The port of this service
-      port: 27017
+      port: 5432
       # This is the actual port on which your application is running inside the container
       # Also worth noting that if targetPort is not set, it will default to the same value as port. E.g. 80:80 for service port 80 targeting container port 80.
-      targetPort: 27017
+      targetPort: 5432

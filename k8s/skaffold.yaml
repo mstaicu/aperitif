@@ -5,7 +5,6 @@ deploy:
     manifests:
       - ./infra/k8s/*
       - ./infra/k8s-dev/*
-      - ./infra/k8s-setup/*
 build:
   local:
     # Whenver we build an image, do not push to docker hub

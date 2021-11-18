@@ -7,11 +7,16 @@ spec:
   selector:
     matchLabels:
       app: expiration-redis
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: expiration-redis
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: expiration-redis
           # This comes from https://hub.docker.com/_/redis

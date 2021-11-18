@@ -7,11 +7,16 @@ spec:
   selector:
     matchLabels:
       app: expiration
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: expiration
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: expiration
           image: mdstaicu/expiration

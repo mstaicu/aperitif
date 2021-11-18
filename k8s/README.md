@@ -7,6 +7,8 @@ $ kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUB
 $ kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec*\*...
 ```
 
+TODO: Provide the database URLs for each service via a secret depending on the environment
+
 # Anatomy of an imperative command:
 
 ```
@@ -113,6 +115,7 @@ Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 2. Generate an access Applications & API Token https://cloud.digitalocean.com/account/api/tokens?i=23e796
 3. $ doctl auth init
 4. The commands under `doctl kubernetes cluster kubeconfig` are used to manage Kubernetes cluster credentials on your local machine. `doctl kubernetes cluster kubeconfig` to configure `kubectl` to connect to the cluster. You are then able to use `kubectl` to create and manage workloads. `doctl kubernetes cluster kubeconfig save <digital ocean cluster name>` This command adds the credentials for the specified cluster to your local kubeconfig. After this, your kubectl installation can directly manage the specified cluster.
+
 ```
 $ doctl kubernetes cluster kubeconfig save k8s-ticketing
    Notice: Adding cluster credentials to kubeconfig file found in "/Users/mircea/.kube/config"
@@ -157,6 +160,7 @@ $ kubectl config view
 ```
 
 7. From this point on, any commands issued by kubectl will be ran on the digital ocean cluster
+
 ```
 $ kubectl get nodes
    NAME STATUS ROLES AGE VERSION
@@ -166,6 +170,7 @@ $ kubectl get nodes
 ```
 
 If we wanna switch back to the docker desktop local context
+
 ```
 $ kubectl config view
 $ kubectl config use-context <name of context>
@@ -205,8 +210,96 @@ $ curl -s -o root.crt https://localhost:15000/roots/0
    Create a mysql database for nats
    Create a volume for storing traefik certificates
 1. Create the cluster resources
+
 ```
 $ kubectl apply -f infra/k8s-setup
 $ kubectl apply -f infra/k8s infra/k8s-prod
 ```
+
 1. Traefik Dashboard at http[s]://www.[domain]/dashboard/ (NOTICE THE LAST SLASH, very important)
+
+# Pod security, use service accounts
+
+```
+$ kubectl get pods/pebble-depl-5ff7c4b5bc-h5xhd -o yaml
+
+  serviceAccount: default
+  serviceAccountName: default
+  volumes:
+  - name: kube-api-access-xx5st
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+```
+
+Every pod gets the `kube-api-access` volume mounted, which exposes the following inside the pod:
+
+```
+$ kubectl exec traefik-depl-77f5dd6748-gjc56 -it -- ash
+$ KUBE_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+$ curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" \
+  https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/default/pods/$HOSTNAME
+```
+
+We get the bearer token which can access the control plane. The API permissions of the service account depend on the authorization plugin and policy in use, hence we need to customise each pod's access to the API server based on the principle of least privilege
+
+In version 1.6+, you can opt out of automounting API credentials for a service account by setting automountServiceAccountToken: false on the service account:
+
+We cannot disable automountServiceAccountToken for Traefik:
+
+```
+time="2021-11-16T13:53:14Z" level=error msg="Cannot start the provider *crd.Provider: failed to create in-cluster configuration: open /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory"
+```
+
+The default service account has the following permissions
+
+```
+$ kubectl get serviceaccounts
+NAME      SECRETS   AGE
+default   1         72d
+
+$ kubectl get serviceaccounts/default -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: "2021-09-04T18:23:38Z"
+  name: default
+  namespace: default
+  resourceVersion: "393"
+  uid: ff35ed7b-a814-4b1c-b7a4-f67ff5b61ed0
+secrets:
+- name: default-token-xgckj
+
+$ kubectl get secrets default-token-xgckj
+NAME                  TYPE                                  DATA   AGE
+default-token-xgckj   kubernetes.io/service-account-token   3      72d
+
+$ kubectl describe secrets default-token-xgckj
+Name:         default-token-xgckj
+Namespace:    default
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: default
+              kubernetes.io/service-account.uid: ff35ed7b-a814-4b1c-b7a4-f67ff5b61ed0
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1066 bytes
+namespace:  7 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IlZaeVdnbjdkRnpsdHZOVVZ1ZmtROXVjeEM2ZWVZV1dZWDFRUkI3QzZpMTgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4teGdja2oiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImZmMzVlZDdiLWE4MTQtNGIxYy1iN2E0LWY2N2ZmNWI2MWVkMCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.rY3arfKQUw7ScDMv4P3sCwvL8ByY0sFnrVdQoosSOJhGkSgkUMjk3HjE9l__N9y3fMVsHbxLXblLv4RYqT9kKgqSqa0ntd9opWnAd9POvkNY41Q_qYPIOuol60Zzm3jiCMEJEVN6TXV5q2nkPJxGB36J6WoMK6WprEQI-ed0YBdI73i1aqHmMXHlJWI-NshIbRuA5B2mmcO5wLC_Np64T6GA8snxMqSuaR0tz-DnHr-DFSg4rD7A1jUkazt5SPwkshvWwABys3jmcilGJCeBWXSxQERRIyQC2KccQpHYA6vmO0dC-lZ4kJh3-crvmT0MlkTKW36vdRHC2HcVR8rc5w
+```

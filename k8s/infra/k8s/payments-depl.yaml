@@ -7,11 +7,16 @@ spec:
   selector:
     matchLabels:
       app: payments
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: payments
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: payments
           image: mdstaicu/payments

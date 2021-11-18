@@ -7,11 +7,16 @@ spec:
   selector:
     matchLabels:
       app: nats
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
         app: nats
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: nats
           image: nats-streaming:0.17.0
@@ -36,7 +41,18 @@ spec:
               # hbf determines the number of times a client must fail in order for the server to determine it as dead
               "-hbf",
               "2",
+              #
+              # TODO: Disable Stan debugging in prod?
+              #
               "-SD",
+              #
+              "--store",
+              "sql",
+              "--sql_driver",
+              "postgres",
+              "--sql_source",
+              "user=postgres password=postgres host=nats-sql-srv port=5432 dbname=nss_db sslmode=disable",
+              #
               "-cid",
               "ticketing",
             ]
