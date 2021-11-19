@@ -1,19 +1,17 @@
-ifneq (,$(wildcard ./.env))
-	include .env
-	export
+.DEFAULT_GOAL := run
+
+HAS_NO_SECRETS=$(shell kubectl get secret dotenv 1>/dev/null 2>&1; echo $$?)
+
+cmd-exists-%:
+	@hash $(*) > /dev/null 2>&1 || \
+		(echo "ERROR: '$(*)' must be installed and available on your PATH."; exit 1)
+
+prerequisites: cmd-exists-kubectl cmd-exists-skaffold
+
+setup: prerequisites
+ifeq ($(HAS_NO_SECRETS),1)
+	kubectl create secret generic dotenv --from-env-file=.env
 endif
 
-prerequisites:
-	@echo "Checking runtime dependencies"
-	if ! [ -x "$(skaffold version)" ]; then
-		echo 'Error: skaffold is not installed or the current user has no execute rights for it' >&2
-		exit 1
-	fi
-
-setup:
-	@echo "Setup development environment"
-	kubectl create secret generic jwt-secret
-
-run:
-	@echo "Run the cluster"
+run: setup
 	skaffold dev

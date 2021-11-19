@@ -31,6 +31,9 @@ spec:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_SECRET
+          envFrom:
+            - secretRef:
+                name: dotenv
 ---
 apiVersion: v1
 kind: Service

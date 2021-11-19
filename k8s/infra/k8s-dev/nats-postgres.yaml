@@ -28,10 +28,10 @@ spec:
             - name: POSTGRES_DB
               value: nss_db
           volumeMounts:
-            - name: pebble-configmap
-              mountPath: /bootstrap
+            - name: nats-initdb
+              mountPath: /docker-entrypoint-initdb.d
       volumes:
-        - name: pebble-configmap
+        - name: nats-initdb
           configMap:
             name: nats-cm
 ---
