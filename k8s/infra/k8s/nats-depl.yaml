@@ -27,6 +27,9 @@ spec:
           # -st,  --store <string>               Store type: MEMORY|FILE|SQL (default: MEMORY)
           # We wold need to pass the "-st" flag and the <string> value
           # We end with ["-st", "SQL"]
+          envFrom:
+            - secretRef:
+                name: dotenv
           args: [
               "-p",
               "4222",
@@ -51,10 +54,10 @@ spec:
               "--sql_driver",
               "postgres",
               "--sql_source",
-              "user=postgres password=postgres host=nats-sql-srv port=5432 dbname=nss_db sslmode=disable",
+              "user=$(NATS_POSTGRES_USER) password=$(NATS_POSTGRES_PASSWORD) host=$(NATS_POSTGRES_HOST) port=$(NATS_POSTGRES_PORT) dbname=$(NATS_POSTGRES_DB) sslmode=disable",
               #
               "-cid",
-              "ticketing",
+              "$(NATS_CLUSTER_ID",
             ]
 ---
 apiVersion: v1

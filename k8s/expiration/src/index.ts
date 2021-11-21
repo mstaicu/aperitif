@@ -19,6 +19,11 @@ const start = async () => {
   if (!process.env.NATS_URL) {
     throw new Error("NATS_URL must be defined as an environment variable");
   }
+  if (!process.env.EXPIRATION_REDIS_HOST) {
+    throw new Error(
+      "EXPIRATION_REDIS_HOST must be defined as an environment variable"
+    );
+  }
 
   try {
     await nats.connect(

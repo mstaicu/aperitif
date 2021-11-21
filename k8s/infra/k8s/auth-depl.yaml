@@ -20,17 +20,6 @@ spec:
       containers:
         - name: auth
           image: mdstaicu/auth
-          env:
-            #
-            # TODO: Move the database URIs to secrets
-            #
-            - name: MONGO_URI
-              value: mongodb://auth-mongo-srv:27017/auth
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: jwt-secret
-                  key: JWT_SECRET
           envFrom:
             - secretRef:
                 name: dotenv
