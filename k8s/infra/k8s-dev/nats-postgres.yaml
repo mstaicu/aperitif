@@ -20,13 +20,9 @@ spec:
       containers:
         - name: nats-postgres
           image: postgres
-          env:
-            - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
-              value: postgres
-            - name: POSTGRES_DB
-              value: nss_db
+          envFrom:
+            - secretRef:
+                name: dotenv
           volumeMounts:
             - name: nats-initdb
               mountPath: /docker-entrypoint-initdb.d

@@ -20,16 +20,11 @@ spec:
       containers:
         - name: nats
           image: nats-streaming:0.17.0
-          # Array of arguments to be provided to the primary CMD of the Docker image
-          # https://hub.docker.com/_/nats-streaming
-          # Section: Commandline Options
-          # For example:
-          # -st,  --store <string>               Store type: MEMORY|FILE|SQL (default: MEMORY)
-          # We wold need to pass the "-st" flag and the <string> value
-          # We end with ["-st", "SQL"]
           envFrom:
             - secretRef:
                 name: dotenv
+          # Array of arguments to be provided to the primary CMD of the Docker image
+          # https://hub.docker.com/_/nats-streaming
           args: [
               "-p",
               "4222",
@@ -45,8 +40,6 @@ spec:
               "-hbf",
               "2",
               #
-              # TODO: Disable Stan debugging in prod?
-              #
               "-SD",
               #
               "--store",
@@ -57,7 +50,7 @@ spec:
               "user=$(NATS_POSTGRES_USER) password=$(NATS_POSTGRES_PASSWORD) host=$(NATS_POSTGRES_HOST) port=$(NATS_POSTGRES_PORT) dbname=$(NATS_POSTGRES_DB) sslmode=disable",
               #
               "-cid",
-              "$(NATS_CLUSTER_ID",
+              "$(NATS_CLUSTER_ID)",
             ]
 ---
 apiVersion: v1

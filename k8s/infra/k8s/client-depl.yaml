@@ -20,12 +20,9 @@ spec:
       containers:
         - name: client
           image: mdstaicu/client
-          env:
-            - name: STRIPE_PUBLISHABLE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: stripe-publishable-key
-                  key: STRIPE_PUBLISHABLE_KEY
+          envFrom:
+            - secretRef:
+                name: dotenv
 ---
 apiVersion: v1
 kind: Service
