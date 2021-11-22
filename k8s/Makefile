@@ -1,4 +1,4 @@
-# .DEFAULT_GOAL := run
+.DEFAULT_GOAL := run
 
 ENV_FILE_PATH  := $(PWD)/.env
 HAS_NO_SECRETS := $(shell kubectl get secret dotenv 1>/dev/null 2>&1; echo $$?)
@@ -9,7 +9,7 @@ cmd-exists-%:
 		(echo "ERROR: '$(*)' must be installed and available on your PATH."; exit 1)
 
 prerequisites: cmd-exists-kubectl cmd-exists-skaffold
-ifneq ($(HAS_ENV_FILE), 1)
+ifneq ($(HAS_ENV_FILE), 0)
 	@echo "⚠️  Missing .env file at the root of the project"
 endif
 
@@ -20,4 +20,5 @@ ifneq ($(HAS_NO_SECRETS), 0)
 endif
 
 run: setup
-	skaffold dev
+	@kubectl apply -f infra/k8s-setup
+	@skaffold dev

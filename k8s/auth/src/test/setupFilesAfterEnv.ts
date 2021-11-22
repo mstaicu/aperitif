@@ -1,14 +1,13 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET must be defined as an environment variable");
+}
+
 let mongo: MongoMemoryServer;
 
 beforeAll(async () => {
-  /**
-   * Required environment variables
-   */
-  process.env.JWT_SECRET = "wat";
-
   mongo = new MongoMemoryServer();
 
   const mongoUri = await mongo.getUri();
