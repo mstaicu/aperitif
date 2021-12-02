@@ -1,4 +1,34 @@
-# In case you reset the cluster:
+# Welcome to k8s!
+
+## Development
+
+From your terminal:
+
+```sh
+make
+```
+
+This starts the entire cluster in development mode, redeploying services on file changes
+
+## Deployment
+
+Create a feature branch, commit your changes, the push the branch and create a pull request. Tests are ran as part of the pull request and a new deployment of the changed service will be made automatically to the designated cluster
+
+```sh
+git checkout -b feat/newStuff
+
+# make changes
+
+git add .
+
+git commit
+
+git push
+```
+
+## Appendix
+
+### In case you reset the cluster:
 
 ```
 $ kubectl create secret generic jwt-secret --from-literal=JWT*SECRET=asdf
@@ -7,21 +37,19 @@ $ kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUB
 $ kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec*\*...
 ```
 
-TODO: Provide the database URLs for each service via a secret depending on the environment
-
-# Anatomy of an imperative command:
+### Anatomy of an imperative command:
 
 ```
 $ kubectl create (-imperative command to create a new object) secret (-type of object to create) generic (-type of secret) <secret-name> (-name of secret for referencing in the pod) --from-literal (-indicates that we are going to add the secret information into this command, as opposed to from . file) key=value (--key and value, i.e. NODE_ENV=dev)
 ```
 
-# Explaining kubectl commands. This follows the hierarchy of markup inside declarative configuration yaml files
+### Explaining kubectl commands. This follows the hierarchy of markup inside declarative configuration yaml files
 
 ```
 $ kubectl explain deployments.spec.template.spec.containers.lifecycle
 ```
 
-# Adding a new service:
+### Adding a new service:
 
 1. Create the package folder, add sources, install dependencies
 2. Create the Docker image locally:
@@ -29,7 +57,7 @@ $ kubectl explain deployments.spec.template.spec.containers.lifecycle
 3. Push the Docker image to dockerhub under your username, else you'll get order-depl-5677d794fb-wx6zz 0/1 ImagePullBackOff 0 10m
    `$ docker push mdstaicu/expiration`
 
-# Debug why traffic doesn't reach any services
+### Debug why traffic doesn't reach any services
 
 ```
 $ kubectl get services
@@ -52,7 +80,7 @@ Fix the <pending> state of the entry to Traefik by deleting the service while Sk
 $ kubectl delete service traefik-lb-srv
 ```
 
-# Debug Mongo
+### Debug Mongo
 
 ```
 $ kubectl exec ticket-mongo-depl-5dddd6d44-4n6lh -it -- bash
@@ -61,7 +89,7 @@ $ use tickets; || use orders;
 $ db.tickets.find()
 ```
 
-# Test optimistic concurrency control (from browser, with session)
+### Test optimistic concurrency control (from browser, with session)
 
 ```
 var doRequest = async () => {
@@ -97,11 +125,11 @@ var doRequest = async () => {
 })();
 ```
 
-# Caveats:
+### Caveats:
 
 Mongoose broke @types/bson for mongoose.Types.ObjectId.isValid and toHexString. Install @types/bson@4.0.3
 
-# Update NPM packages:
+### Update NPM packages:
 
 ```
 $ npm update @tartine/commons
@@ -109,7 +137,7 @@ $ npm update @tartine/commons
 
 Traefik https://doc.traefik.io/traefik/user-guides/crd-acme/
 
-# Use kubectl to switch contexts from docker-desktop to Digital Ocean
+### Use kubectl to switch contexts from docker-desktop to Digital Ocean
 
 1. Install and Configure doctl https://docs.digitalocean.com/reference/doctl/how-to/install/
 2. Generate an access Applications & API Token https://cloud.digitalocean.com/account/api/tokens?i=23e796
@@ -177,18 +205,18 @@ $ kubectl config use-context <name of context>
 $ kubectl config use-context do-fra1-k8s-ticketing
 ```
 
-# Build and deploy images from Workflows
+### Build and deploy images from Workflows
 
 1. Add a Github secret containing the Docker login token, Docker username, Digital Ocean access token, Stripe Test Secret, Stripe Webhook test secret
 
-# Test TLS locally ( https://testssl.sh/ )
+### Test TLS locally ( https://testssl.sh/ )
 
 ```
 $ brew install testssl
 $ testssl.sh https://ticketing/dashboard/
 ```
 
-# Save intermediate and root certificates locally so that we don't get browser errors
+### Save intermediate and root certificates locally so that we don't get browser errors
 
 ```
 $ kubectl port-forward <pebble-deployment-name> 15000:15000
@@ -196,7 +224,7 @@ $ curl -s -o intermediate.crt https://localhost:15000/intermediates/0
 $ curl -s -o root.crt https://localhost:15000/roots/0
 ```
 
-# Deploy infra on Digital Ocean
+### Deploy infra on Digital Ocean
 
 1. Buy a domain name, update the nameservers where you bought the domain name from, then:
 1. go to Digital Ocean
@@ -218,7 +246,7 @@ $ kubectl apply -f infra/k8s infra/k8s-prod
 
 1. Traefik Dashboard at http[s]://www.[domain]/dashboard/ (NOTICE THE LAST SLASH, very important)
 
-# Pod security, use service accounts
+### Pod security, use service accounts
 
 ```
 $ kubectl get pods/pebble-depl-5ff7c4b5bc-h5xhd -o yaml
