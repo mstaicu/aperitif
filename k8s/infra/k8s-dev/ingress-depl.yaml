@@ -7,10 +7,6 @@ spec:
   selector:
     matchLabels:
       app: traefik
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
   template:
     metadata:
       labels:
@@ -238,126 +234,126 @@ spec:
       services:
         - name: auth-srv
           port: 3000
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ticket-ingress-route-https
-spec:
-  entryPoints:
-    - https
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-ticket-prefix
-      services:
-        - name: tickets-srv
-          port: 3000
-  tls:
-    certResolver: pebble
-    options:
-      name: tls-options
-    domains:
-      - main: ticketing
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ticket-ingress-route-http
-spec:
-  entryPoints:
-    - http
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-ticket-prefix
-      services:
-        - name: tickets-srv
-          port: 3000
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: order-ingress-route-https
-spec:
-  entryPoints:
-    - https
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-order-prefix
-      services:
-        - name: orders-srv
-          port: 3000
-  tls:
-    certResolver: pebble
-    options:
-      name: tls-options
-    domains:
-      - main: ticketing
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: order-ingress-route-http
-spec:
-  entryPoints:
-    - http
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-order-prefix
-      services:
-        - name: orders-srv
-          port: 3000
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: payments-ingress-route-https
-spec:
-  entryPoints:
-    - https
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-payments-prefix
-      services:
-        - name: payments-srv
-          port: 3000
-  tls:
-    certResolver: pebble
-    options:
-      name: tls-options
-    domains:
-      - main: ticketing
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: payments-ingress-route-http
-spec:
-  entryPoints:
-    - http
-  routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
-      kind: Rule
-      middlewares:
-        - name: tls
-        - name: strip-payments-prefix
-      services:
-        - name: payments-srv
-          port: 3000
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: ticket-ingress-route-https
+# spec:
+#   entryPoints:
+#     - https
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-ticket-prefix
+#       services:
+#         - name: tickets-srv
+#           port: 3000
+#   tls:
+#     certResolver: pebble
+#     options:
+#       name: tls-options
+#     domains:
+#       - main: ticketing
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: ticket-ingress-route-http
+# spec:
+#   entryPoints:
+#     - http
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-ticket-prefix
+#       services:
+#         - name: tickets-srv
+#           port: 3000
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: order-ingress-route-https
+# spec:
+#   entryPoints:
+#     - https
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-order-prefix
+#       services:
+#         - name: orders-srv
+#           port: 3000
+#   tls:
+#     certResolver: pebble
+#     options:
+#       name: tls-options
+#     domains:
+#       - main: ticketing
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: order-ingress-route-http
+# spec:
+#   entryPoints:
+#     - http
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-order-prefix
+#       services:
+#         - name: orders-srv
+#           port: 3000
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: payments-ingress-route-https
+# spec:
+#   entryPoints:
+#     - https
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-payments-prefix
+#       services:
+#         - name: payments-srv
+#           port: 3000
+#   tls:
+#     certResolver: pebble
+#     options:
+#       name: tls-options
+#     domains:
+#       - main: ticketing
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: payments-ingress-route-http
+# spec:
+#   entryPoints:
+#     - http
+#   routes:
+#     - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+#       kind: Rule
+#       middlewares:
+#         - name: tls
+#         - name: strip-payments-prefix
+#       services:
+#         - name: payments-srv
+#           port: 3000
 ---
 #
 # TODO: Secure the dashboard access

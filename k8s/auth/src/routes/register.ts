@@ -1,8 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import { body } from "express-validator";
 
-import jwt from "jsonwebtoken";
-
 import { BadRequestError, validateRequestHandler } from "@tartine/common";
 
 import { User } from "../models/user";
@@ -10,10 +8,10 @@ import { User } from "../models/user";
 const router = express.Router();
 
 /**
- * $ http POST http://ticketing/api/auth/signup email=wtf@wa.com password=1asdasd
+ * $ http POST http://ticketing/api/auth/register email=wtf@wa.com password=1asdasd
  */
 router.post(
-  "/signup",
+  "/register",
   [
     body("email").isEmail().withMessage("Email must be valid"),
     body("password")
@@ -36,17 +34,6 @@ router.post(
 
       await user.save();
 
-      const payload = jwt.sign(
-        {
-          userId: user.id,
-        },
-        process.env.JWT_SECRET!
-      );
-
-      req.session = {
-        jwt: payload,
-      };
-
       return res.status(201).send(user);
     } catch (err) {
       next(err);
@@ -54,4 +41,4 @@ router.post(
   }
 );
 
-export { router as signupRouter };
+export { router as registerRouter };

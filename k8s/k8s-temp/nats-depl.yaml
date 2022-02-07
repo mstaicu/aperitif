@@ -7,10 +7,6 @@ spec:
   selector:
     matchLabels:
       app: nats
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
   template:
     metadata:
       labels:

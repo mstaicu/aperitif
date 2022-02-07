@@ -1,25 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: expiration-depl
+  name: tickets-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: expiration
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      app: tickets
   template:
     metadata:
       labels:
-        app: expiration
+        app: tickets
     spec:
       automountServiceAccountToken: false
       containers:
-        - name: expiration
-          image: mdstaicu/expiration
+        - name: tickets
+          image: mdstaicu/tickets
           envFrom:
             - secretRef:
                 name: dotenv
@@ -28,3 +24,17 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: tickets
+  ports:
+    - name: tickets
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

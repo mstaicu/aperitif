@@ -4,9 +4,9 @@ import { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-interface UserPayload {
+type UserPayload = {
   userId: string;
-}
+};
 
 declare global {
   namespace Express {
@@ -16,44 +16,46 @@ declare global {
   }
 }
 
-export const sessionCookieHandler = (
-  req: Request,
-  _: Response,
-  next: NextFunction
-) => {
-  try {
-    const cookies = cookie.parse(req.headers.cookie || "");
-    const sessionCookie = cookies[process.env.SESSION_COOKIE_NAME!];
+type Args = {
+  cookieName: string;
+  cookieSecret: string;
+};
 
-    if (!sessionCookie) {
-      throw new BadRequestError("No session cookie supplied with the request");
-    }
+export const sessionCookieHandler =
+  ({ cookieName, cookieSecret }: Args) =>
+  (req: Request, _: Response, next: NextFunction) => {
+    try {
+      const cookies = cookie.parse(req.headers.cookie || "");
+      const sessionCookie = cookies[cookieName];
 
-    const unsignedValue = cookieSignature.unsign(
-      sessionCookie,
-      process.env.SESSION_COOKIE_SECRET!
-    );
+      if (!sessionCookie) {
+        throw new BadRequestError(
+          "No session cookie supplied with the request"
+        );
+      }
 
-    if (unsignedValue !== false) {
-      try {
-        const payload = JSON.parse(
-          Buffer.from(unsignedValue, "base64").toString("utf8")
-        ) as UserPayload;
+      const unsignedValue = cookieSignature.unsign(sessionCookie, cookieSecret);
 
-        req.user = payload;
-      } catch (err) {
+      if (unsignedValue !== false) {
+        try {
+          const payload = JSON.parse(
+            Buffer.from(unsignedValue, "base64").toString("utf8")
+          ) as UserPayload;
+
+          req.user = payload;
+        } catch (err) {
+          throw new BadRequestError(
+            "Invalid session cookie supplied with the request"
+          );
+        }
+      } else {
         throw new BadRequestError(
           "Invalid session cookie supplied with the request"
         );
       }
-    } else {
-      throw new BadRequestError(
-        "Invalid session cookie supplied with the request"
-      );
+    } catch (err) {
+      next(err);
     }
-  } catch (err) {
-    next(err);
-  }
 
-  next();
-};
+    next();
+  };

@@ -5,13 +5,13 @@ import stylesUrl from "../styles/login.css";
 
 import { login, createUserSession, register } from "~/utils/session.server";
 
-export let links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: stylesUrl }];
-};
+export let links: LinksFunction = () => [
+  { rel: "stylesheet", href: stylesUrl },
+];
 
-function validateUsername(username: unknown) {
-  if (typeof username !== "string" || username.length < 3) {
-    return `Usernames must be at least 3 characters long`;
+function validateEmail(email: unknown) {
+  if (typeof email !== "string" || email.length < 3) {
+    return `Email must be at least 3 characters long`;
   }
 }
 
@@ -24,12 +24,12 @@ function validatePassword(password: unknown) {
 type ActionData = {
   formError?: string;
   fieldErrors?: {
-    username: string | undefined;
+    email: string | undefined;
     password: string | undefined;
   };
   fields?: {
     loginType: string;
-    username: string;
+    email: string;
     password: string;
   };
 };
@@ -38,42 +38,56 @@ export let action: ActionFunction = async ({
   request,
 }): Promise<Response | ActionData> => {
   let form = await request.formData();
+
   let loginType = form.get("loginType");
-  let username = form.get("username");
-  let password = form.get("password");
   let redirectTo = form.get("redirectTo") || "/jokes";
+
+  let email = form.get("email");
+  let password = form.get("password");
+
   if (
     typeof loginType !== "string" ||
-    typeof username !== "string" ||
+    typeof email !== "string" ||
     typeof password !== "string" ||
     typeof redirectTo !== "string"
   ) {
     return { formError: `Form not submitted correctly.` };
   }
 
-  let fields = { loginType, username, password };
+  /**
+   * TODO: Validate the fields on the server?
+   */
+  let fields = { loginType, email, password };
   let fieldErrors = {
-    username: validateUsername(username),
+    email: validateEmail(email),
     password: validatePassword(password),
   };
+
   if (Object.values(fieldErrors).some(Boolean)) return { fieldErrors, fields };
 
   switch (loginType) {
     case "login": {
-      let user = await login({ username, password });
+      let user = await login({ email, password });
+
       if (!user) {
         return {
           fields,
-          formError: `Username/Password combination is incorrect`,
+          formError: `Email/Password combination is incorrect`,
         };
       }
+
       return createUserSession(user.id, redirectTo);
     }
     case "register": {
-      let user = await register({ username, password });
-      /**
-       * Check if there are errors and show them
-       */
+      let user = await register({ email, password });
+
+      if (!user) {
+        return {
+          fields,
+          formError: `Cannot register the given username`,
+        };
+      }
+
       return createUserSession(user.id, redirectTo);
     }
     default: {
@@ -83,8 +97,10 @@ export let action: ActionFunction = async ({
 };
 
 export default function Login() {
-  let actionData = useActionData<ActionData | undefined>();
   let [searchParams] = useSearchParams();
+
+  let actionData = useActionData<ActionData>();
+
   return (
     <div className="container">
       <div className="content" data-light="">
@@ -125,24 +141,24 @@ export default function Login() {
             </label>
           </fieldset>
           <div>
-            <label htmlFor="username-input">Username</label>
+            <label htmlFor="email-input">Email</label>
             <input
               type="text"
-              id="username-input"
-              name="username"
-              defaultValue={actionData?.fields?.username}
-              aria-invalid={Boolean(actionData?.fieldErrors?.username)}
+              id="email-input"
+              name="email"
+              defaultValue={actionData?.fields?.email}
+              aria-invalid={Boolean(actionData?.fieldErrors?.email)}
               aria-describedby={
-                actionData?.fieldErrors?.username ? "username-error" : undefined
+                actionData?.fieldErrors?.email ? "email-error" : undefined
               }
             />
-            {actionData?.fieldErrors?.username ? (
+            {actionData?.fieldErrors?.email ? (
               <p
                 className="form-validation-error"
                 role="alert"
-                id="username-error"
+                id="email-error"
               >
-                {actionData?.fieldErrors.username}
+                {actionData?.fieldErrors.email}
               </p>
             ) : null}
           </div>

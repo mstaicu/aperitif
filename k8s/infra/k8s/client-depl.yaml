@@ -7,10 +7,6 @@ spec:
   selector:
     matchLabels:
       app: client
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
   template:
     metadata:
       labels:
@@ -19,7 +15,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: client
-          image: mdstaicu/client
+          image: mdstaicu/client-remix
           envFrom:
             - secretRef:
                 name: dotenv

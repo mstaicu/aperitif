@@ -3,10 +3,5 @@ import { redirect } from "remix";
 
 import { logout } from "~/utils/session.server";
 
-export let action: ActionFunction = async ({ request }) => {
-  return logout(request);
-};
-
-export let loader: LoaderFunction = async () => {
-  return redirect("/");
-};
+export let action: ActionFunction = async ({ request }) => logout(request);
+export let loader: LoaderFunction = async () => redirect("/");

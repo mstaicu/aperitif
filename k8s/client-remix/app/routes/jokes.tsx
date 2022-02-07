@@ -4,21 +4,19 @@ import { getUser } from "~/utils/session.server";
 
 import stylesUrl from "../styles/jokes.css";
 
-export let links: LinksFunction = () => {
-  return [
-    {
-      rel: "stylesheet",
-      href: stylesUrl,
-    },
-  ];
-};
-
 type loaderData = {
   jokes: Array<{ id: string; name: string }>;
   user: {
-    username: string;
+    id: string;
   } | null;
 };
+
+export let links: LinksFunction = () => [
+  {
+    rel: "stylesheet",
+    href: stylesUrl,
+  },
+];
 
 export let loader: LoaderFunction = async ({ request }) => {
   let user = await getUser(request);
@@ -51,7 +49,7 @@ export default function JokesRoute() {
           </h1>
           {data.user ? (
             <div className="user-info">
-              <span>{`Hi ${data.user.username}`}</span>
+              <span>{`Hi ${data.user.id}`}</span>
               <form action="/logout" method="post">
                 <button type="submit" className="button">
                   Logout

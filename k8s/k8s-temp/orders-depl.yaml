@@ -1,25 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tickets-depl
+  name: orders-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tickets
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      app: orders
   template:
     metadata:
       labels:
-        app: tickets
+        app: orders
     spec:
       automountServiceAccountToken: false
       containers:
-        - name: tickets
-          image: mdstaicu/tickets
+        - name: orders
+          image: mdstaicu/orders
           envFrom:
             - secretRef:
                 name: dotenv
@@ -32,13 +28,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tickets-srv
+  name: orders-srv
 spec:
   type: ClusterIP
   selector:
-    app: tickets
+    app: orders
   ports:
-    - name: tickets
+    - name: orders
       protocol: TCP
       port: 3000
       targetPort: 3000
