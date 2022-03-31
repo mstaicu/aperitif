@@ -1,3 +1,7 @@
+#
+# TODO: Find a way to pass the domain and top-level domain as env vars to this configuration and
+#   not hardcode 'www.ticketing-test-prod-app.xyz'
+#
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,14 +86,6 @@ spec:
   routes:
     - match: Host(`www.ticketing-test-prod-app.xyz`)
       kind: Rule
-      #
-      # TODO: Route the requests TO the client to HTTPS if they're done by a client from HTTP
-      # I think this is not necessary as when the client makes a request to Traefik via its ClusterIP
-      # it will communicate via HTTP, so I think we can activate all communications to the client from the outside world
-      # to use HTTPS, as the client will always communicate with Traefik via its HTTP ClusterIP endpoint
-      #
-      # middlewares:
-      #   - name: client-ingress-route-redirect-https
       services:
         - name: client-srv
           port: 3000

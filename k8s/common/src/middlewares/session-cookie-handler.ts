@@ -4,6 +4,9 @@ import { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
+/**
+ * TODO: Move this to the common package
+ */
 type UserPayload = {
   userId: string;
 };

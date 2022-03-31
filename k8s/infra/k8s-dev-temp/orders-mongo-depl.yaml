@@ -7,10 +7,6 @@ spec:
   selector:
     matchLabels:
       app: orders-mongo
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
   template:
     metadata:
       labels:

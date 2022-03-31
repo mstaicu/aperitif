@@ -91,6 +91,7 @@ spec:
           env:
             - name: LEGO_CA_CERTIFICATES
               value: /pebble/pebble.minica.pem
+      #
       # List of volumes that can be mounted by containers belonging to the pod.
       # More info: https://kubernetes.io/docs/concepts/storage/volumes
 

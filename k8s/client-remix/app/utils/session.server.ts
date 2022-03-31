@@ -1,5 +1,4 @@
 import { fetch } from "@remix-run/node";
-import https from "https";
 import { createCookieSessionStorage, redirect } from "remix";
 
 type LoginForm = {
@@ -7,6 +6,9 @@ type LoginForm = {
   password: string;
 };
 
+/**
+ * TODO: Move these checks in a prerequisites logic file
+ */
 if (!process.env.SESSION_COOKIE_SECRET) {
   throw new Error(
     "SESSION_COOKIE_SECRET must be defined as an environment variable"
@@ -59,13 +61,11 @@ export async function register({ email, password }: LoginForm) {
         Host: "ticketing",
       },
       body: JSON.stringify({ email, password }),
-      agent: new https.Agent({
-        rejectUnauthorized: process.env.NODE_ENV === "production",
-      }),
     });
 
     return await response.json();
   } catch (err) {
+    console.log("err", err);
     return null;
   }
 }
@@ -82,9 +82,6 @@ export async function login({ email, password }: LoginForm) {
         Host: "ticketing",
       },
       body: JSON.stringify({ email, password }),
-      agent: new https.Agent({
-        rejectUnauthorized: process.env.NODE_ENV === "production",
-      }),
     });
 
     return await response.json();

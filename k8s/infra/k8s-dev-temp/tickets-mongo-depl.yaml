@@ -1,24 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: payments-mongo-depl
+  name: tickets-mongo-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: payments-mongo
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      app: tickets-mongo
   template:
     metadata:
       labels:
-        app: payments-mongo
+        app: tickets-mongo
     spec:
       automountServiceAccountToken: false
       containers:
-        - name: payments-mongo
+        - name: tickets-mongo
           # This comes from https://hub.docker.com/_/mongo
           image: mongo
 ---
@@ -26,14 +22,14 @@ apiVersion: v1
 kind: Service
 metadata:
   # The 'name' represents the domain in the URL
-  name: payments-mongo-srv
+  name: tickets-mongo-srv
 spec:
   type: ClusterIP
   selector:
-    app: payments-mongo
+    app: tickets-mongo
   ports:
     # The name is for logging purposes
-    - name: payments-mongo-port
+    - name: tickets-mongo-port
       protocol: TCP
       # The port of this service
       port: 27017
