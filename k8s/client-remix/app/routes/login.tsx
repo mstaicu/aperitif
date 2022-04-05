@@ -1,105 +1,59 @@
-import type { ActionFunction, LinksFunction } from "remix";
+import { fetch } from "@remix-run/node";
 import { useActionData, Link, useSearchParams } from "remix";
+
+import type { ActionFunction, LinksFunction } from "remix";
+import type { ProblemDetailsResponse } from "@tartine/common";
 
 import stylesUrl from "../styles/login.css";
 
-import { login, createUserSession, register } from "~/utils/session.server";
+import { createSession } from "../utils/session.server";
 
 export let links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesUrl },
 ];
 
-function validateEmail(email: unknown) {
-  if (typeof email !== "string" || email.length < 3) {
-    return `Email must be at least 3 characters long`;
-  }
-}
+const onAuthenticateUser = async (
+  email: string,
+  password: string,
+  loginType: string,
+  redirectTo: string
+): Promise<ProblemDetailsResponse | undefined> => {
+  let response = await fetch(`https://traefik-lb-srv/api/auth/${loginType}`, {
+    method: "POST",
+    headers: {
+      ContentType: "application/json",
+      Host: "ticketing",
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-function validatePassword(password: unknown) {
-  if (typeof password !== "string" || password.length < 6) {
-    return `Passwords must be at least 6 characters long`;
-  }
-}
+  let responsePayload = await response.json();
 
-type ActionData = {
-  formError?: string;
-  fieldErrors?: {
-    email: string | undefined;
-    password: string | undefined;
-  };
-  fields?: {
-    loginType: string;
-    email: string;
-    password: string;
-  };
+  if (!response.ok) {
+    return responsePayload;
+  }
+
+  createSession(responsePayload, redirectTo);
 };
 
 export let action: ActionFunction = async ({
   request,
-}): Promise<Response | ActionData> => {
+}): Promise<ProblemDetailsResponse | undefined> => {
   let form = await request.formData();
-
-  let loginType = form.get("loginType");
-  let redirectTo = form.get("redirectTo") || "/jokes";
 
   let email = form.get("email");
   let password = form.get("password");
 
-  if (
-    typeof loginType !== "string" ||
-    typeof email !== "string" ||
-    typeof password !== "string" ||
-    typeof redirectTo !== "string"
-  ) {
-    return { formError: `Form not submitted correctly.` };
-  }
+  let loginType = form.get("loginType");
+  let redirectTo = form.get("redirectTo");
 
-  /**
-   * TODO: Validate the fields on the server?
-   */
-  let fields = { loginType, email, password };
-  let fieldErrors = {
-    email: validateEmail(email),
-    password: validatePassword(password),
-  };
-
-  if (Object.values(fieldErrors).some(Boolean)) return { fieldErrors, fields };
-
-  switch (loginType) {
-    case "login": {
-      let user = await login({ email, password });
-
-      if (!user) {
-        return {
-          fields,
-          formError: `Email/Password combination is incorrect`,
-        };
-      }
-
-      return createUserSession(user.id, redirectTo);
-    }
-    case "register": {
-      let user = await register({ email, password });
-
-      if (!user) {
-        return {
-          fields,
-          formError: `Cannot register the given username`,
-        };
-      }
-
-      return createUserSession(user.id, redirectTo);
-    }
-    default: {
-      return { fields, formError: `Login type invalid` };
-    }
-  }
+  return await onAuthenticateUser(email, password, loginType, redirectTo);
 };
 
 export default function Login() {
   let [searchParams] = useSearchParams();
 
-  let actionData = useActionData<ActionData>();
+  let actionData = useActionData<ProblemDetailsResponse>();
 
   return (
     <div className="container">

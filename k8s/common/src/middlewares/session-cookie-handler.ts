@@ -4,17 +4,14 @@ import { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-/**
- * TODO: Move this to the common package
- */
-type UserPayload = {
+export type UserSessionPayload = {
   userId: string;
 };
 
 declare global {
   namespace Express {
     interface Request {
-      user?: UserPayload;
+      user?: UserSessionPayload;
     }
   }
 }
@@ -43,7 +40,7 @@ export const sessionCookieHandler =
         try {
           const payload = JSON.parse(
             Buffer.from(unsignedValue, "base64").toString("utf8")
-          ) as UserPayload;
+          ) as UserSessionPayload;
 
           req.user = payload;
         } catch (err) {

@@ -1,3 +1,10 @@
+export type ProblemDetailsResponse = {
+  title: string;
+  detail?: string;
+  status: number;
+  invalid_params?: { param: string; reason: string }[];
+};
+
 export abstract class CustomError extends Error {
   abstract statusCode: number;
 
@@ -11,10 +18,5 @@ export abstract class CustomError extends Error {
    *
    * https://tools.ietf.org/html/rfc7807
    */
-  abstract serializeResponse(): {
-    title: string;
-    detail?: string;
-    status: number;
-    invalid_params?: { param: string; reason: string }[];
-  };
+  abstract serializeResponse(): ProblemDetailsResponse;
 }
