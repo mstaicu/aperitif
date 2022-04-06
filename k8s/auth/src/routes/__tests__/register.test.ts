@@ -2,6 +2,15 @@ import request from "supertest";
 
 import { app } from "../../app";
 
+test("201 on successful register", () =>
+  request(app)
+    .post("/register")
+    .send({
+      email: "wtf@wtf.com",
+      password: "asda12ads",
+    })
+    .expect(201));
+
 test("400 on register with invalid email", () =>
   request(app)
     .post("/register")
@@ -55,16 +64,4 @@ test("400 on register with an already registered email", async () => {
       password: "asda12ads",
     })
     .expect(400);
-});
-
-test("201 on successful register", async () => {
-  const response = await request(app)
-    .post("/register")
-    .send({
-      email: "wtf@wtf.com",
-      password: "asda12ads",
-    })
-    .expect(201);
-
-  // expect(response.get("Set-Cookie")).toBeDefined();
 });

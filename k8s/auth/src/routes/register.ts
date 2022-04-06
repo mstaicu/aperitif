@@ -34,7 +34,7 @@ router.post(
 
       await user.save();
 
-      return res.status(201).send(user.toJSON());
+      return res.status(201).send(user);
     } catch (err) {
       next(err);
     }

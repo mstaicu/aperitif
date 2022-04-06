@@ -14,9 +14,12 @@ export class RequestValidationError extends CustomError {
     title: "Bad request",
     detail: "Request payload did not pass validation checks",
     status: this.statusCode,
-    invalid_params: this.errors.map(({ param, msg }) => ({
-      param: param,
-      reason: msg,
-    })),
+    invalid_params: this.errors.reduce(
+      (initial, { param, msg }) => ({
+        ...initial,
+        [param]: { reason: msg },
+      }),
+      {}
+    ),
   });
 }

@@ -8,15 +8,13 @@ test("201 on successful login", async () => {
     password: "asda12ads",
   });
 
-  const response = await request(app)
+  await request(app)
     .post("/login")
     .send({
       email: "wtf@wtf.com",
       password: "asda12ads",
     })
     .expect(200);
-
-  // expect(response.get("Set-Cookie")).toBeDefined();
 });
 
 test("400 on login with invalid email", () =>

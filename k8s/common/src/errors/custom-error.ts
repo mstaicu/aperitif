@@ -2,7 +2,7 @@ export type ProblemDetailsResponse = {
   title: string;
   detail?: string;
   status: number;
-  invalid_params?: { param: string; reason: string }[];
+  invalid_params?: { [param: string]: { reason: string } };
 };
 
 export abstract class CustomError extends Error {
