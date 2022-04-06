@@ -1,14 +1,10 @@
 import type { LinksFunction, LoaderFunction } from "remix";
 import { Outlet, Link, useLoaderData } from "remix";
-import { getUser } from "~/utils/session.server";
 
 import stylesUrl from "../styles/jokes.css";
 
 type loaderData = {
   jokes: Array<{ id: string; name: string }>;
-  user: {
-    id: string;
-  } | null;
 };
 
 export let links: LinksFunction = () => [
@@ -18,9 +14,7 @@ export let links: LinksFunction = () => [
   },
 ];
 
-export let loader: LoaderFunction = async ({ request }) => {
-  let user = await getUser(request);
-
+export let loader: LoaderFunction = async () => {
   let response: loaderData = {
     jokes: [
       {
@@ -28,7 +22,6 @@ export let loader: LoaderFunction = async ({ request }) => {
         name: "Hippo",
       },
     ],
-    user,
   };
 
   return response;

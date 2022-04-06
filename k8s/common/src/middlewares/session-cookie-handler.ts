@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from "express";
 import { BadRequestError } from "../errors";
 
 export type UserSessionPayload = {
-  userId: string;
+  id: string;
 };
 
 declare global {
@@ -16,13 +16,13 @@ declare global {
   }
 }
 
-type Args = {
+type Params = {
   cookieName: string;
   cookieSecret: string;
 };
 
 export const sessionCookieHandler =
-  ({ cookieName, cookieSecret }: Args) =>
+  ({ cookieName, cookieSecret }: Params) =>
   (req: Request, _: Response, next: NextFunction) => {
     try {
       const cookies = cookie.parse(req.headers.cookie || "");

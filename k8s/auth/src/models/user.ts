@@ -33,9 +33,13 @@ const userSchema = new mongoose.Schema(
   {
     toJSON: {
       transform: (doc, ret) => {
+        /**
+         * Keep just the ID when serialising User documents
+         */
         ret.id = ret._id;
 
         delete ret._id;
+        delete ret.email;
         delete ret.password;
       },
       versionKey: false,

@@ -31,7 +31,7 @@ router.post(
         throw new BadRequestError("Invalid credentials");
       }
 
-      return res.status(200).send(user);
+      return res.status(200).send(user.toJSON());
     } catch (err) {
       next(err);
     }
