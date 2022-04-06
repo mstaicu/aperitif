@@ -1,21 +1,18 @@
-import { fetch } from "@remix-run/node";
-import { useActionData, useSearchParams, Link, redirect } from "remix";
+import { useActionData, useSearchParams, Link, redirect, json } from "remix";
 
 import type { ActionFunction, LinksFunction } from "remix";
 import type { ProblemDetailsResponse } from "@tartine/common";
 
-import { getSession, commitSession } from "../utils/session.server";
+import { getSession, commitSession } from "~/utils/session.server";
+import { authenticateUser } from "~/utils/login.server";
 
 import loginStylesUrl from "../styles/login.css";
 
 type ActionReturn = {
   values: {
-    email: string;
-    password: string;
-    loginType: string;
-    redirectTo: string;
+    [key: string]: string;
   };
-  problemDetails: ProblemDetailsResponse;
+  errors: ProblemDetailsResponse;
 };
 
 export let links: LinksFunction = () => [
@@ -23,45 +20,20 @@ export let links: LinksFunction = () => [
 ];
 
 export let action: ActionFunction = async ({ request }) => {
-  let form = await request.formData();
-
-  let email = form.get("email") as string;
-  let password = form.get("password") as string;
-
-  let loginType = form.get("loginType") as string;
-  let redirectTo = (form.get("redirectTo") as string) || "/jokes";
-
-  /**
-   * TODO: Validate loginType and redirectTo
-   */
-
-  let response = await fetch(`https://traefik-lb-srv/api/auth/${loginType}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Host: "ticketing",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  let body = await request.formData();
+  let response = await authenticateUser(body);
 
   let payload = await response.json();
 
   if (!response.ok) {
-    return {
-      values: {
-        email,
-        password,
-        loginType,
-        redirectTo,
-      },
-      problemDetails: payload,
-    };
+    const values = Object.fromEntries(body);
+    return json({ values, errors: payload });
   }
 
   let session = await getSession();
   session.set("id", payload.id);
 
-  throw redirect(redirectTo, {
+  return redirect(body.get("redirectTo") as string, {
     headers: { "Set-Cookie": await commitSession(session) },
   });
 };
@@ -78,7 +50,7 @@ export default function Login() {
         <form
           method="post"
           aria-describedby={
-            actionData?.problemDetails.title ? "form-error-message" : undefined
+            actionData?.errors.title ? "form-error-message" : undefined
           }
         >
           <input
@@ -117,22 +89,20 @@ export default function Login() {
               id="email-input"
               name="email"
               defaultValue={actionData?.values.email}
-              aria-invalid={Boolean(
-                actionData?.problemDetails.invalid_params!.email
-              )}
+              aria-invalid={Boolean(actionData?.errors.invalid_params!.email)}
               aria-describedby={
-                actionData?.problemDetails.invalid_params!.email
+                actionData?.errors.invalid_params!.email
                   ? "email-error"
                   : undefined
               }
             />
-            {actionData?.problemDetails.invalid_params!.email ? (
+            {actionData?.errors.invalid_params!.email ? (
               <p
                 className="form-validation-error"
                 role="alert"
                 id="email-error"
               >
-                {actionData?.problemDetails.invalid_params!.email.reason}
+                {actionData?.errors.invalid_params!.email}
               </p>
             ) : null}
           </div>
@@ -144,28 +114,28 @@ export default function Login() {
               defaultValue={actionData?.values.password}
               type="password"
               aria-invalid={Boolean(
-                actionData?.problemDetails.invalid_params!.password
+                actionData?.errors.invalid_params!.password
               )}
               aria-describedby={
-                actionData?.problemDetails.invalid_params!.password
+                actionData?.errors.invalid_params!.password
                   ? "password-error"
                   : undefined
               }
             />
-            {actionData?.problemDetails.invalid_params!.password ? (
+            {actionData?.errors.invalid_params!.password ? (
               <p
                 className="form-validation-error"
                 role="alert"
                 id="password-error"
               >
-                {actionData?.problemDetails.invalid_params!.password.reason}
+                {actionData?.errors.invalid_params!.password}
               </p>
             ) : null}
           </div>
           <div id="form-error-message">
-            {actionData?.problemDetails.title ? (
+            {actionData?.errors.title ? (
               <p className="form-validation-error" role="alert">
-                {actionData?.problemDetails.title}
+                {actionData?.errors.title}
               </p>
             ) : null}
           </div>

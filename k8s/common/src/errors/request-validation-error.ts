@@ -17,7 +17,7 @@ export class RequestValidationError extends CustomError {
     invalid_params: this.errors.reduce(
       (initial, { param, msg }) => ({
         ...initial,
-        [param]: { reason: msg },
+        [param]: msg,
       }),
       {}
     ),
