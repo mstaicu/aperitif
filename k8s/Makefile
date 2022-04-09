@@ -16,7 +16,6 @@ endif
 setup: prerequisites
 ifneq ($(HAS_NO_SECRETS), 0)
 	@kubectl create secret generic dotenv --from-env-file=.env
-	@echo "🔑  Secrets created"
 endif
 
 run: setup

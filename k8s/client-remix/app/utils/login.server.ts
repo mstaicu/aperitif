@@ -8,6 +8,9 @@ export let authenticateUser = async (body: FormData) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      /**
+       * TODO: Add domain env var
+       */
       Host: "ticketing",
     },
     body: JSON.stringify({ email, password }),

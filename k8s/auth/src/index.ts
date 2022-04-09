@@ -4,8 +4,10 @@ import mongoose from "mongoose";
 import { app } from "./app";
 
 const start = async () => {
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET must be defined as an environment variable");
+  if (!process.env.SESSION_JWT_SECRET) {
+    throw new Error(
+      "SESSION_JWT_SECRET must be defined as an environment variable"
+    );
   }
 
   if (!process.env.AUTH_MONGO_URI) {

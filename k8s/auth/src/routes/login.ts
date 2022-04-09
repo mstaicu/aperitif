@@ -1,5 +1,8 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import { body } from "express-validator";
+import jwt from "jsonwebtoken";
+
+import type { NextFunction, Request, Response } from "express";
 
 import { BadRequestError, validateRequestHandler } from "@tartine/common";
 
@@ -23,15 +26,27 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password } = req.body;
+      let { email, password } = req.body;
 
-      const user = await User.findOne({ email });
+      let user = await User.findOne({ email });
 
       if (!user || !(await Password.compare(user.password, password))) {
-        throw new BadRequestError("Invalid credentials");
+        throw new BadRequestError(
+          "Invalid credentials supplied for this account"
+        );
       }
 
-      return res.status(200).send(user);
+      let token = jwt.sign(
+        { user: user.toJSON() },
+        process.env.SESSION_JWT_SECRET!,
+        {
+          expiresIn: "30m",
+        }
+      );
+
+      return res.status(200).send({
+        token,
+      });
     } catch (err) {
       next(err);
     }

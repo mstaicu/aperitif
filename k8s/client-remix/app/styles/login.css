@@ -1,64 +1,61 @@
-/*
- * when the user visits this page, this style will apply, when they leave, it
- * will get unloaded, so don't worry so much about conflicting styles between
- * pages!
- */
-
-body {
-  background-image: var(--gradient-background);
-}
-
-.container {
-  min-height: inherit;
-}
-
-.container,
-.content {
+fieldset {
+  all: unset;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  gap: 0.25rem;
+  margin-top: 2rem;
 }
 
-.content {
-  padding: 1rem;
-  background-color: hsl(0, 0%, 100%);
-  border-radius: 5px;
-  box-shadow: 0 0.2rem 1rem rgba(0, 0, 0, 0.5);
-  width: 400px;
-  max-width: 100%;
+button,
+input {
+  padding: 0.5rem 1rem;
+  border: solid 1px;
+  border-radius: 4px;
+  line-height: 1.4;
+  font-size: 1.125rem;
 }
 
-@media print, (min-width: 640px) {
-  .content {
-    padding: 2rem;
-    border-radius: 8px;
-  }
+button:focus,
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(42deg 100% 68%);
 }
 
-h1 {
+input {
+  width: 12rem;
+  border-color: #ccc;
+  font-family: inherit;
+}
+
+button {
+  width: 10rem;
+  background: hsl(243deg 85% 73%);
+  border-color: hsl(243deg 85% 63%);
+  color: white;
+}
+
+button:active {
+  background: hsl(243deg 85% 63%);
+}
+
+h2 {
+  outline: none;
+  margin-bottom: 0;
+}
+
+h2 + p {
   margin-top: 0;
 }
 
-fieldset {
-  display: flex;
-  justify-content: center;
-}
-
-fieldset > :not(:last-child) {
-  margin-right: 2rem;
-}
-
-.links ul {
-  margin-top: 1rem;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.links a:hover {
-  text-decoration-style: wavy;
-  text-decoration-thickness: 1px;
+.sr-only {
+  border: 0 !important;
+  clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
+  -webkit-clip-path: inset(50%) !important;
+  clip-path: inset(50%) !important; /* 2 */
+  height: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  position: absolute !important;
+  width: 1px !important;
+  white-space: nowrap !important; /* 3 */
 }

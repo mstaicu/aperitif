@@ -1,5 +1,13 @@
 import { createCookieSessionStorage } from "remix";
 
+export { default as jsonwebtoken } from "jsonwebtoken";
+
+if (!process.env.SESSION_JWT_SECRET) {
+  throw new Error(
+    "SESSION_JWT_SECRET must be defined as an environment variable"
+  );
+}
+
 if (!process.env.SESSION_COOKIE_NAME) {
   throw new Error(
     "SESSION_COOKIE_NAME must be defined as an environment variable"
@@ -19,7 +27,7 @@ let storage = createCookieSessionStorage({
     secrets: [process.env.SESSION_COOKIE_SECRET],
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 60 * 30, // half hour, in seconds
     httpOnly: true,
   },
 });

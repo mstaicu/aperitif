@@ -1,37 +1,53 @@
-import { Links, LiveReload, Outlet } from "remix";
-import type { LinksFunction } from "remix";
+import {
+  Links,
+  LiveReload,
+  Outlet,
+  Meta,
+  ScrollRestoration,
+  Scripts,
+} from "remix";
+import type { LinksFunction, MetaFunction } from "remix";
 
-import globalStylesUrl from "./styles/global.css";
-import globalMediumStylesUrl from "./styles/global-medium.css";
-import globalLargeStylesUrl from "./styles/global-large.css";
+import styles from "~/styles/root.css";
+
+export const meta: MetaFunction = () => ({
+  charset: "utf-8",
+  title: "App name in progress",
+  viewport: "width=device-width,initial-scale=1",
+});
 
 export let links: LinksFunction = () => [
   {
     rel: "stylesheet",
-    href: globalStylesUrl,
+    href: "https://unpkg.com/modern-normalize@1.1.0/modern-normalize.css",
   },
-  {
-    rel: "stylesheet",
-    href: globalMediumStylesUrl,
-    media: "print, (min-width: 640px)",
-  },
-  {
-    rel: "stylesheet",
-    href: globalLargeStylesUrl,
-    media: "screen and (min-width: 1024px)",
-  },
+  { rel: "stylesheet", href: styles },
 ];
 
 export default () => (
   <html lang="en">
     <head>
       <meta charSet="utf-8" />
-      <title>Remix: So great, it's funny!</title>
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      {/* All meta exports on all routes will go here */}
+      <Meta />
+
+      {/* All link exports on all routes will go here */}
       <Links />
     </head>
     <body>
+      {/* Child routes go here */}
       <Outlet />
-      {process.env.NODE_ENV === "development" ? <LiveReload /> : null}
+
+      {/* Manages scroll position for client-side transitions */}
+      <ScrollRestoration />
+
+      {/* Script tags go here */}
+      <Scripts />
+
+      {/* Sets up automatic reload when you change code */}
+      {/* and only does anything during development */}
+      {process.env.NODE_ENV === "development" && <LiveReload />}
     </body>
   </html>
 );

@@ -1,5 +1,8 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import { body } from "express-validator";
+import jwt from "jsonwebtoken";
+
+import type { NextFunction, Request, Response } from "express";
 
 import { BadRequestError, validateRequestHandler } from "@tartine/common";
 
@@ -34,7 +37,17 @@ router.post(
 
       await user.save();
 
-      return res.status(201).send(user);
+      let token = jwt.sign(
+        { user: user.toJSON() },
+        process.env.SESSION_JWT_SECRET!,
+        {
+          expiresIn: "30m",
+        }
+      );
+
+      return res.status(201).send({
+        token,
+      });
     } catch (err) {
       next(err);
     }
