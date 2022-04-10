@@ -126,9 +126,9 @@ spec:
           persistentVolumeClaim:
             claimName: ingress-pvc
 ---
-#
+# --------------------------------------------------------
 # Cluster gateway, load balances requests to all pods created and maintained by this deployment
-#
+# --------------------------------------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -146,10 +146,14 @@ spec:
       protocol: TCP
       port: 443
       targetPort: 443
+    - name: live-reload
+      protocol: TCP
+      port: 3001
+      targetPort: 443
 ---
-#
+# --------------------------------------------------------
 # Router configs
-#
+# --------------------------------------------------------
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -188,6 +192,26 @@ spec:
       services:
         - name: client-srv
           port: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: client-live-reload-wss
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`ticketing`) && PathPrefix(`/socket`)
+      kind: Rule
+      services:
+        - name: client-srv
+          port: 3001
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: ticketing
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -380,9 +404,9 @@ spec:
     domains:
       - main: ticketing
 ---
-#
+# --------------------------------------------------------
 # Middlewares
-#
+# --------------------------------------------------------
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:

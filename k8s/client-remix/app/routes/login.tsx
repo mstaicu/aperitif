@@ -13,8 +13,12 @@ import type { ProblemDetailsResponse } from "@tartine/common";
 
 import { getSession, commitSession } from "~/utils/session.server";
 import { authenticateUser } from "~/utils/login.server";
+
 import loginStylesUrl from "~/styles/login.css";
 
+/**
+ *
+ */
 type ActionReturn = {
   values: {
     [key: string]: string;
@@ -22,6 +26,9 @@ type ActionReturn = {
   errors: ProblemDetailsResponse;
 };
 
+/**
+ *
+ */
 export let links: LinksFunction = () => [
   { rel: "stylesheet", href: loginStylesUrl },
 ];
@@ -67,7 +74,11 @@ export default () => {
       emailRef.current?.focus();
     }
 
-    if (state === "error" && actionData?.errors.invalid_params?.password) {
+    if (
+      state === "error" &&
+      actionData?.errors.invalid_params?.password &&
+      !actionData?.errors.invalid_params?.email
+    ) {
       passwordRef.current?.focus();
     }
 

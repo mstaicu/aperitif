@@ -1,5 +1,5 @@
-import type { Socket } from "net";
 import mongoose from "mongoose";
+import type { Socket } from "net";
 
 import { app } from "./app";
 

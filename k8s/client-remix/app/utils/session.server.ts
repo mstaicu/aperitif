@@ -27,7 +27,7 @@ let storage = createCookieSessionStorage({
     secrets: [process.env.SESSION_COOKIE_SECRET],
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 30, // half hour, in seconds
+    maxAge: 60 * 30, // 30m
     httpOnly: true,
   },
 });

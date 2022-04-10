@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-export interface TokenPayload {
+export interface TokenPayload extends JwtPayload {
   user: {
     id: string;
   };

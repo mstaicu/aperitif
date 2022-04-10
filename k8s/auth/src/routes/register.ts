@@ -10,9 +10,6 @@ import { User } from "../models/user";
 
 const router = express.Router();
 
-/**
- * $ http POST http://ticketing/api/auth/register email=wtf@wa.com password=1asdasd
- */
 router.post(
   "/register",
   [
@@ -37,13 +34,10 @@ router.post(
 
       await user.save();
 
-      let token = jwt.sign(
-        { user: user.toJSON() },
-        process.env.SESSION_JWT_SECRET!,
-        {
-          expiresIn: "30m",
-        }
-      );
+      let payload = { user: user.toJSON() };
+      let token = jwt.sign(payload, process.env.SESSION_JWT_SECRET!, {
+        expiresIn: "30m",
+      });
 
       return res.status(201).send({
         token,

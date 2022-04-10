@@ -11,9 +11,6 @@ import { Password } from "../services/password";
 
 const router = express.Router();
 
-/**
- * $ http POST http://ticketing/api/auth/login email=wtf@wa.com password=1asdasd
- */
 router.post(
   "/login",
   [
@@ -36,13 +33,10 @@ router.post(
         );
       }
 
-      let token = jwt.sign(
-        { user: user.toJSON() },
-        process.env.SESSION_JWT_SECRET!,
-        {
-          expiresIn: "30m",
-        }
-      );
+      let payload = { user: user.toJSON() };
+      let token = jwt.sign(payload, process.env.SESSION_JWT_SECRET!, {
+        expiresIn: "30m",
+      });
 
       return res.status(200).send({
         token,
