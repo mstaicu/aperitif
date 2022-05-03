@@ -1,2 +1,2 @@
-export * from "./intent";
+export * from "./checkout";
 export * from "./webhook";

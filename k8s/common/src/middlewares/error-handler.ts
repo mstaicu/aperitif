@@ -1,13 +1,8 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 
 import { CustomError } from "../errors";
 
-export const errorHandler = (
-  error: Error,
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+export const errorHandler = (error: Error, _: Request, response: Response) => {
   response.set("Content-Type", "application/problem+json");
 
   if (error instanceof CustomError) {
