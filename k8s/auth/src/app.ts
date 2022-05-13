@@ -1,17 +1,25 @@
 import express from "express";
-// import cookieSession from "cookie-session";
 
 import { errorHandler, NotFoundError } from "@tartine/common";
 
-import { loginRouter } from "./routes/login";
-import { registerRouter } from "./routes/register";
+import {
+  // loginRouter,
+  // registerRouter,
+  sendMagicLinkRouter,
+  validateMagicTokenRouter,
+} from "./routes";
 
 const app = express();
 
 app.use(express.json());
 
-app.use(loginRouter);
-app.use(registerRouter);
+// app.use(loginRouter);
+/**
+ * TODO: Deprecate register route
+ */
+// app.use(registerRouter);
+app.use(sendMagicLinkRouter);
+app.use(validateMagicTokenRouter);
 
 app.get("*", (_, __, next) => next(new NotFoundError()));
 

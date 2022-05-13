@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscriptions-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscriptions
+  template:
+    metadata:
+      labels:
+        app: subscriptions
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: subscriptions
+          image: mdstaicu/subscriptions
+          envFrom:
+            - secretRef:
+                name: dotenv
+          env:
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscriptions-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: subscriptions
+  ports:
+    - name: subscriptions
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

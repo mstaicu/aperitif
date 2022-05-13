@@ -6,7 +6,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { BadRequestError, validateRequestHandler } from "@tartine/common";
 
-import { User } from "../models/user";
+// import { User } from "../models/user";
 
 const router = express.Router();
 
@@ -22,26 +22,26 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password } = req.body;
+      // const { email, password } = req.body;
 
-      const existingUser = await User.findOne({ email });
+      // const existingUser = await User.findOne({ email });
 
-      if (existingUser) {
-        throw new BadRequestError("Email is already in use");
-      }
+      // if (existingUser) {
+      //   throw new BadRequestError("Email is already in use");
+      // }
 
-      const user = User.build({ email, password });
+      // const user = User.build({ email, password });
 
-      await user.save();
+      // await user.save();
 
-      let payload = { user: user.toJSON() };
-      let token = jwt.sign(payload, process.env.SESSION_JWT_SECRET!, {
-        expiresIn: "30m",
-      });
+      // let payload = { user: user.toJSON() };
+      // let token = jwt.sign(payload, process.env.SESSION_JWT_SECRET!, {
+      //   expiresIn: "30m",
+      // });
 
-      return res.status(201).send({
-        token,
-      });
+      // return res.status(201).send({
+      //   token,
+      // });
     } catch (err) {
       next(err);
     }

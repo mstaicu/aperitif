@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
 
 # ----
 # Build
@@ -36,14 +36,12 @@ FROM dev as build
 RUN npm run build
 
 # ----
-# TODO: Prod
+# Prod
 # ----
 FROM base as prod
 
-# COPY --from=build /home/node/app/public /home/node/app/public
-# COPY --from=build /home/node/app/build /home/node/app/build
-# COPY --from=build /home/node/app/package.json /home/node/app/package.json
+COPY --from=build /home/node/app/dist /home/node/app
 
 USER node
 
-CMD ["npm", "run", "start"]
+CMD ["node", "/home/node/app/dist"]

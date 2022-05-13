@@ -1,23 +1,47 @@
-import mongoose from "mongoose";
 import type { Socket } from "net";
+
+// import { nats } from "./events/nats";
 
 import { app } from "./app";
 
 const start = async () => {
-  if (!process.env.SESSION_JWT_SECRET) {
-    throw new Error(
-      "SESSION_JWT_SECRET must be defined as an environment variable"
-    );
+  if (!process.env.DOMAIN) {
+    throw new Error("DOMAIN must be defined as an environment variable");
   }
 
-  if (!process.env.AUTH_MONGO_URI) {
+  if (!process.env.NATS_CLUSTER_ID) {
     throw new Error(
-      "AUTH_MONGO_URI must be defined as an environment variable"
+      "NATS_CLUSTER_ID must be defined as an environment variable"
+    );
+  }
+  if (!process.env.NATS_CLIENT_ID) {
+    throw new Error(
+      "NATS_CLIENT_ID must be defined as an environment variable"
+    );
+  }
+  if (!process.env.NATS_URL) {
+    throw new Error("NATS_URL must be defined as an environment variable");
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error(
+      "STRIPE_SECRET_KEY must be defined as an environment variable"
+    );
+  }
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error(
+      "STRIPE_WEBHOOK_SECRET must be defined as an environment variable"
     );
   }
 
   // try {
-  //   await mongoose.connect(process.env.AUTH_MONGO_URI);
+  //   await nats.connect(
+  //     process.env.NATS_CLUSTER_ID,
+  //     process.env.NATS_CLIENT_ID,
+  //     {
+  //       url: process.env.NATS_URL,
+  //     }
+  //   );
   // } catch (err) {
   //   console.error(err);
   // }
@@ -44,12 +68,27 @@ const start = async () => {
     shutdown();
   });
 
+  // nats.client.on("close", () => {
+  //   console.info("NATS streaming server closed, gracefully shutting down");
+  //   shutdown();
+  // });
+
   const shutdown = () => {
     /**
-     * The server is finally closed when all connections are ended and the server emits a 'close' event.
      * waitForSocketsToClose will give existing connections 10 seconds to terminate before destroying the sockets
+     *
+     * the server is finally closed when all connections are ended and the server emits a 'close' event.
      */
     waitForSocketsToClose(10);
+
+    /**
+     * inform NATS streaming server that this client is no longer active
+     */
+
+    /**
+     * TODO: This might .. blow ... if we call close on the client in the case when nats emits a close event
+     */
+    // nats.client.close();
 
     /**
      * https://nodejs.org/api/net.html#net_server_close_callback
