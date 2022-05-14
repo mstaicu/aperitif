@@ -46,8 +46,13 @@ router.post(
 
       let payload: Partial<MagicLinkPayload> = {};
 
+      /**
+       * The decodeURIComponent call does not affect already decoded URI components
+       */
       try {
-        payload = JSON.parse(decryptMagicLinkPayload(magicToken));
+        payload = JSON.parse(
+          decryptMagicLinkPayload(decodeURIComponent(magicToken))
+        );
       } catch (error) {
         throw new BadRequestError(
           "The provided magic token could not be decoded"
@@ -83,20 +88,17 @@ router.post(
         );
       }
 
-      /**
-       * TODO: Relax the 'active' check
-       */
-      const { data: subscriptions } = await stripe.subscriptions.search({
-        query: `status:\'active\' AND customer:\'${customer.id}\'`,
+      const { data: subscriptions } = await stripe.subscriptions.list({
+        customer: customer.id,
       });
 
-      const [subscription] = subscriptions;
-
-      if (!subscription) {
+      if (subscriptions.length === 0) {
         throw new BadRequestError(
-          "The provided email address does not have an active subscription with us"
+          "The provided email address does not have any subscription with us"
         );
       }
+
+      let [subscription] = subscriptions;
 
       let tokenPayload = {
         customerId: customer.id,
@@ -111,6 +113,7 @@ router.post(
 
       return res.status(200).send({
         token,
+        landingPage: payload.landingPage,
       });
     } catch (err) {
       next(err);

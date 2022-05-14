@@ -1,7 +1,11 @@
 import sg from "@sendgrid/mail";
+import type { MailDataRequired } from "@sendgrid/mail";
 
 import { encryptMagicLinkPayload } from "./magic-crypto";
 
+/**
+ * Make sure we have all the environment variables
+ */
 if (!process.env.DOMAIN) {
   throw new Error("DOMAIN must be defined as an environment variable");
 }
@@ -11,7 +15,15 @@ if (!process.env.SENDGRID_API_KEY) {
     "SENDGRID_API_KEY must be defined as an environment variable"
   );
 }
+if (!process.env.SENDGRID_SENDER_EMAIL) {
+  throw new Error(
+    "SENDGRID_SENDER_EMAIL must be defined as an environment variable"
+  );
+}
 
+/**
+ * Set the Sendgrid API key with which we'll make all our requests
+ */
 sg.setApiKey(process.env.SENDGRID_API_KEY);
 
 export function generateMagicLink(email: string, landingPage: string) {
@@ -42,9 +54,14 @@ export async function sendMagicLink(email: string, landingPage: string) {
     </div>
   `;
 
-  const message = {
-    to: "test@example.com",
-    from: "m@ticketing.com",
+  const message: MailDataRequired = {
+    from: {
+      name: "no-reply",
+      email: process.env.SENDGRID_SENDER_EMAIL!,
+    },
+    to: {
+      email,
+    },
     subject: "Your login credentials",
     html,
   };

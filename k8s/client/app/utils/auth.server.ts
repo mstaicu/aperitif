@@ -123,6 +123,8 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
     return json({ landingPage: getReferrer(request) });
   }
 
+  console.log('wtf')
+
   let response = await fetch(
     "https://traefik-lb-srv/api/auth/validate-magic-token",
     {
@@ -166,9 +168,8 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
 export let loginAction: ActionFunction = async ({ request }) => {
   let body = Object.fromEntries(new URLSearchParams(await request.text()));
 
-  /**
-   * TODO: Skip remix.run validation?
-   */
+  console.log(body);
+
   if (typeof body.email !== "string" || body.email.indexOf("@") === -1) {
     throw json("Missing email", { status: 400 });
   }
@@ -192,6 +193,8 @@ export let loginAction: ActionFunction = async ({ request }) => {
   if (response.ok) {
     return json("ok");
   }
+
+  console.log(await response.json());
 
   throw json("Something went wrong while trying to send you a magic link", {
     status: 400,

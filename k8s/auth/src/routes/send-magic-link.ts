@@ -24,7 +24,7 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { email, landingPage = "/dashboard" } = req.body;
+      let { email, landingPage = "/" } = req.body;
 
       try {
         await sendMagicLink(email, landingPage);
@@ -36,7 +36,6 @@ router.post(
 
       return res.status(200);
     } catch (err) {
-      console.log('WTFsssss', err)
       next(err);
     }
   }

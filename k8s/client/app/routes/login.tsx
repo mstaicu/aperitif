@@ -1,128 +1,143 @@
-import { useEffect, useRef } from "react";
 import { Form, useActionData, useSearchParams, useTransition } from "remix";
 import type { LinksFunction } from "remix";
-
-import loginStylesUrl from "~/styles/login.css";
 
 export {
   loginAction as action,
   loginLoader as loader,
-} from "~/utils/magic-auth.server";
+} from "~/utils/auth.server";
 
-export let links: LinksFunction = () => [
-  { rel: "stylesheet", href: loginStylesUrl },
-];
+export default () => (
+  <Form method="post">
+    <fieldset>
+      <input
+        aria-label="Email address"
+        aria-describedby="email-state"
+        type="email"
+        name="email"
+        placeholder="Enter your email address"
+      />
 
-export default () => {
-  let [searchParams] = useSearchParams();
-  let transition = useTransition();
+      <input type="hidden" name="landingPage" value="/" />
+    </fieldset>
 
-  let actionData = useActionData();
+    <button>Submit</button>
+  </Form>
+);
 
-  let state: "idle" | "submitting" | "error" = transition.submission
-    ? "submitting"
-    : actionData?.errors
-    ? "error"
-    : "idle";
+// export let links: LinksFunction = () => [
+//   { rel: "stylesheet", href: loginStylesUrl },
+// ];
 
-  let mounted = useRef<boolean>();
+// export default () => {
+//   let [searchParams] = useSearchParams();
+//   let transition = useTransition();
 
-  let emailRef = useRef<HTMLInputElement>(null);
-  let passwordRef = useRef<HTMLInputElement>(null);
+//   let actionData = useActionData();
 
-  useEffect(() => {
-    if (state === "error" && actionData?.errors.invalid_params?.email) {
-      emailRef.current?.focus();
-    }
+//   let state: "idle" | "submitting" | "error" = transition.submission
+//     ? "submitting"
+//     : actionData?.errors
+//     ? "error"
+//     : "idle";
 
-    if (
-      state === "error" &&
-      actionData?.errors.invalid_params?.password &&
-      !actionData?.errors.invalid_params?.email
-    ) {
-      passwordRef.current?.focus();
-    }
+//   let mounted = useRef<boolean>();
 
-    if (state === "idle" && mounted.current) {
-      emailRef.current?.select();
-    }
+//   let emailRef = useRef<HTMLInputElement>(null);
+//   let passwordRef = useRef<HTMLInputElement>(null);
 
-    mounted.current = true;
-  }, [state]);
+//   useEffect(() => {
+//     if (state === "error" && actionData?.errors.invalid_params?.email) {
+//       emailRef.current?.focus();
+//     }
 
-  return (
-    <main>
-      <Form replace method="post">
-        <h2>Login or Register?</h2>
+//     if (
+//       state === "error" &&
+//       actionData?.errors.invalid_params?.password &&
+//       !actionData?.errors.invalid_params?.email
+//     ) {
+//       passwordRef.current?.focus();
+//     }
 
-        <fieldset disabled={state === "submitting"}>
-          <label>
-            <input
-              type="radio"
-              name="loginType"
-              value="login"
-              defaultChecked={
-                !actionData?.values.loginType ||
-                actionData?.values.loginType === "login"
-              }
-            />
-            Login
-          </label>
+//     if (state === "idle" && mounted.current) {
+//       emailRef.current?.select();
+//     }
 
-          <label>
-            <input
-              type="radio"
-              name="loginType"
-              value="register"
-              defaultChecked={actionData?.values.loginType === "register"}
-            />
-            Register
-          </label>
-        </fieldset>
+//     mounted.current = true;
+//   }, [state]);
 
-        <fieldset disabled={state === "submitting"}>
-          <input
-            ref={emailRef}
-            aria-label="Email address"
-            aria-describedby="email-state"
-            type="email"
-            name="email"
-            placeholder="Enter your email address"
-          />
-          <input
-            ref={passwordRef}
-            aria-label="Password field"
-            aria-describedby="password-state"
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-          />
+//   return (
+//     <main>
+//       <Form replace method="post">
+//         <h2>Login or Register?</h2>
 
-          <input
-            type="hidden"
-            name="redirectTo"
-            value={searchParams.get("redirectTo") ?? "/"}
-          />
+//         <fieldset disabled={state === "submitting"}>
+//           <label>
+//             <input
+//               type="radio"
+//               name="loginType"
+//               value="login"
+//               defaultChecked={
+//                 !actionData?.values.loginType ||
+//                 actionData?.values.loginType === "login"
+//               }
+//             />
+//             Login
+//           </label>
 
-          <button>{state === "submitting" ? "Submitting" : "Submit"}</button>
-        </fieldset>
+//           <label>
+//             <input
+//               type="radio"
+//               name="loginType"
+//               value="register"
+//               defaultChecked={actionData?.values.loginType === "register"}
+//             />
+//             Register
+//           </label>
+//         </fieldset>
 
-        <p id="email-state">
-          {state === "error" && actionData?.errors.invalid_params?.email ? (
-            actionData?.errors.invalid_params?.email
-          ) : (
-            <>&nbsp;</>
-          )}
-        </p>
+//         <fieldset disabled={state === "submitting"}>
+//           <input
+//             ref={emailRef}
+//             aria-label="Email address"
+//             aria-describedby="email-state"
+//             type="email"
+//             name="email"
+//             placeholder="Enter your email address"
+//           />
+//           <input
+//             ref={passwordRef}
+//             aria-label="Password field"
+//             aria-describedby="password-state"
+//             type="password"
+//             name="password"
+//             placeholder="Enter your password"
+//           />
 
-        <p id="password-state">
-          {state === "error" && actionData?.errors.invalid_params?.password ? (
-            actionData?.errors.invalid_params?.password
-          ) : (
-            <>&nbsp;</>
-          )}
-        </p>
-      </Form>
-    </main>
-  );
-};
+// <input
+//   type="hidden"
+//   name="redirectTo"
+//   value={searchParams.get("redirectTo") ?? "/"}
+// />
+
+//           <button>{state === "submitting" ? "Submitting" : "Submit"}</button>
+//         </fieldset>
+
+//         <p id="email-state">
+//           {state === "error" && actionData?.errors.invalid_params?.email ? (
+//             actionData?.errors.invalid_params?.email
+//           ) : (
+//             <>&nbsp;</>
+//           )}
+//         </p>
+
+//         <p id="password-state">
+//           {state === "error" && actionData?.errors.invalid_params?.password ? (
+//             actionData?.errors.invalid_params?.password
+//           ) : (
+//             <>&nbsp;</>
+//           )}
+//         </p>
+//       </Form>
+//     </main>
+//   );
+// };

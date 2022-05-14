@@ -69,12 +69,3 @@ build:
     #     manual:
     #       - src: "src/**/*.ts"
     #         dest: .
-    - image: mdstaicu/subscriptions
-      context: subscriptions
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: "src/**/*.ts"
-            dest: .

@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import type { Socket } from "net";
 
 import { app } from "./app";
@@ -10,17 +9,11 @@ const start = async () => {
     );
   }
 
-  if (!process.env.AUTH_MONGO_URI) {
+  if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error(
-      "AUTH_MONGO_URI must be defined as an environment variable"
+      "STRIPE_SECRET_KEY must be defined as an environment variable"
     );
   }
-
-  // try {
-  //   await mongoose.connect(process.env.AUTH_MONGO_URI);
-  // } catch (err) {
-  //   console.error(err);
-  // }
 
   const server = app.listen(3000, () => console.log("Listening on port 3000"));
 
