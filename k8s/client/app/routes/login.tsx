@@ -1,143 +1,104 @@
-import { Form, useActionData, useSearchParams, useTransition } from "remix";
-import type { LinksFunction } from "remix";
+import { Form, Link, useActionData, useLoaderData, useTransition } from "remix";
 
 export {
   loginAction as action,
   loginLoader as loader,
 } from "~/utils/auth.server";
 
-export default () => (
-  <Form method="post">
-    <fieldset>
-      <input
-        aria-label="Email address"
-        aria-describedby="email-state"
-        type="email"
-        name="email"
-        placeholder="Enter your email address"
-      />
+import type { ProblemDetailsResponse } from "@tartine/common";
+import { useEffect, useRef } from "react";
 
-      <input type="hidden" name="landingPage" value="/" />
-    </fieldset>
+/**
+ *
+ */
+type ActionData = {
+  ok: boolean;
+} & Partial<ProblemDetailsResponse>;
 
-    <button>Submit</button>
-  </Form>
-);
+type LoaderData = {
+  ok: boolean;
+  landingPage?: string;
+} & Partial<ProblemDetailsResponse>;
 
-// export let links: LinksFunction = () => [
-//   { rel: "stylesheet", href: loginStylesUrl },
-// ];
+/**
+ *
+ */
+export default () => {
+  let actionData = useActionData<ActionData>();
+  let loaderData = useLoaderData<LoaderData>();
+  let transition = useTransition();
 
-// export default () => {
-//   let [searchParams] = useSearchParams();
-//   let transition = useTransition();
+  let inputRef = useRef<HTMLInputElement>(null);
+  let successMessageRef = useRef<HTMLHeadingElement>(null);
+  let isMounted = useRef<boolean>(false);
 
-//   let actionData = useActionData();
+  let state: "success" | "error" | "idle" | "submitting" = transition.submission
+    ? "submitting"
+    : actionData?.ok === true
+    ? "success"
+    : actionData?.ok === false
+    ? "error"
+    : "idle";
 
-//   let state: "idle" | "submitting" | "error" = transition.submission
-//     ? "submitting"
-//     : actionData?.errors
-//     ? "error"
-//     : "idle";
+  useEffect(() => {
+    if (state === "error") {
+      inputRef.current?.focus();
+    }
 
-//   let mounted = useRef<boolean>();
+    if (state === "idle" && isMounted.current) {
+      inputRef.current?.select();
+    }
 
-//   let emailRef = useRef<HTMLInputElement>(null);
-//   let passwordRef = useRef<HTMLInputElement>(null);
+    if (state === "success") {
+      successMessageRef.current?.focus();
+    }
 
-//   useEffect(() => {
-//     if (state === "error" && actionData?.errors.invalid_params?.email) {
-//       emailRef.current?.focus();
-//     }
+    isMounted.current = true;
+  }, [state]);
 
-//     if (
-//       state === "error" &&
-//       actionData?.errors.invalid_params?.password &&
-//       !actionData?.errors.invalid_params?.email
-//     ) {
-//       passwordRef.current?.focus();
-//     }
+  return (
+    <main>
+      {/* This form is shown ( un-hidden ) in an 'idle' or 'error' state */}
+      <Form replace={true} method="post" aria-hidden={state === "success"}>
+        <fieldset disabled={state === "submitting"}>
+          <input
+            aria-aria-label="Email address"
+            aria-describedby="email-error-message"
+            ref={inputRef}
+            type="email"
+            name="email"
+            placeholder="you@are.rockstar"
+          />
 
-//     if (state === "idle" && mounted.current) {
-//       emailRef.current?.select();
-//     }
+          <input
+            type="hidden"
+            name="landingPage"
+            value={
+              loaderData.ok === false && loaderData.landingPage
+                ? loaderData.landingPage
+                : "/"
+            }
+          />
 
-//     mounted.current = true;
-//   }, [state]);
+          <p id="email-error-message">
+            {state === "error" ? (
+              actionData?.invalid_params?.email
+            ) : (
+              <>&nbsp;</>
+            )}
+          </p>
+        </fieldset>
 
-//   return (
-//     <main>
-//       <Form replace method="post">
-//         <h2>Login or Register?</h2>
+        <button>{state === "submitting" ? "Sending..." : "Send"}</button>
+      </Form>
 
-//         <fieldset disabled={state === "submitting"}>
-//           <label>
-//             <input
-//               type="radio"
-//               name="loginType"
-//               value="login"
-//               defaultChecked={
-//                 !actionData?.values.loginType ||
-//                 actionData?.values.loginType === "login"
-//               }
-//             />
-//             Login
-//           </label>
-
-//           <label>
-//             <input
-//               type="radio"
-//               name="loginType"
-//               value="register"
-//               defaultChecked={actionData?.values.loginType === "register"}
-//             />
-//             Register
-//           </label>
-//         </fieldset>
-
-//         <fieldset disabled={state === "submitting"}>
-//           <input
-//             ref={emailRef}
-//             aria-label="Email address"
-//             aria-describedby="email-state"
-//             type="email"
-//             name="email"
-//             placeholder="Enter your email address"
-//           />
-//           <input
-//             ref={passwordRef}
-//             aria-label="Password field"
-//             aria-describedby="password-state"
-//             type="password"
-//             name="password"
-//             placeholder="Enter your password"
-//           />
-
-// <input
-//   type="hidden"
-//   name="redirectTo"
-//   value={searchParams.get("redirectTo") ?? "/"}
-// />
-
-//           <button>{state === "submitting" ? "Submitting" : "Submit"}</button>
-//         </fieldset>
-
-//         <p id="email-state">
-//           {state === "error" && actionData?.errors.invalid_params?.email ? (
-//             actionData?.errors.invalid_params?.email
-//           ) : (
-//             <>&nbsp;</>
-//           )}
-//         </p>
-
-//         <p id="password-state">
-//           {state === "error" && actionData?.errors.invalid_params?.password ? (
-//             actionData?.errors.invalid_params?.password
-//           ) : (
-//             <>&nbsp;</>
-//           )}
-//         </p>
-//       </Form>
-//     </main>
-//   );
-// };
+      {/* This div is shown ( un-hidden ) in a 'success' state */}
+      <div aria-hidden={state !== "success"}>
+        <h2 ref={successMessageRef} tabIndex={-1}>
+          Check your email inbox for the magic login link!
+        </h2>
+        <Link to=".">Wrong email?</Link>
+      </div>
+    </main>
+  );
+};

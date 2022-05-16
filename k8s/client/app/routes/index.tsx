@@ -3,12 +3,22 @@ import type { LoaderFunction } from "remix";
 
 import { stripe } from "~/utils/stripe.server";
 
+type Plan = {
+  id: string;
+  name: string;
+  price: number | null;
+};
+
+type LoaderData = {
+  plans: Plan[];
+};
+
 export let loader: LoaderFunction = async ({ request }) => {
   let { data: prices } = await stripe.prices.list();
 
-  let plans = await Promise.all(
+  let plans: Plan[] = await Promise.all(
     prices.map(async (price) => {
-      let product = await stripe.products.retrieve(price.product as string);
+      let product = await stripe.products.retrieve(`${price.product}`);
 
       return {
         id: price.id,
@@ -22,36 +32,13 @@ export let loader: LoaderFunction = async ({ request }) => {
 };
 
 export default () => {
-  let data = useLoaderData();
+  let { plans } = useLoaderData<LoaderData>();
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Welcome to Remix</h1>
+    <div>
+      <h1>Welcome to the future</h1>
       <ul>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/blog"
-            rel="noreferrer"
-          >
-            15m Quickstart Blog Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/jokes"
-            rel="noreferrer"
-          >
-            Deep Dive Jokes App Tutorial
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
-            Remix Docs
-          </a>
-        </li>
-        {data.plans.map((plan: any) => (
+        {plans.map((plan) => (
           <li key={plan.id}>
             <a href={`/checkout/${plan.id}`}>{plan.name}</a>
           </li>

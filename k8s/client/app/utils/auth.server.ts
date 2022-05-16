@@ -5,7 +5,7 @@ import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
 import { isTokenPayload } from "@tartine/common";
-import type { TokenPayload } from "@tartine/common";
+import type { TokenPayload, ProblemDetailsResponse } from "@tartine/common";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
@@ -121,10 +121,16 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
   let { searchParams } = new URL(request.url);
   let magicToken = searchParams.get("magic");
 
+  /**
+   * 'magic' query string parameter is not present, render the login page
+   */
   if (typeof magicToken !== "string") {
-    return json({ landingPage: getReferrer(request) });
+    return json({ ok: false, landingPage: getReferrer(request) });
   }
 
+  /**
+   * 'magic' query string parameter present, validate the magic token, redirect
+   */
   let response = await fetch(
     "https://traefik-lb-srv/api/auth/validate-magic-token",
     {
@@ -152,9 +158,8 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
     });
   }
 
-  throw json("Something went wrong while trying to validate your magic token", {
-    status: 400,
-  });
+  let details: ProblemDetailsResponse = await response.json();
+  return json({ ok: false, ...details });
 };
 
 /*******************************************************************************
@@ -181,11 +186,11 @@ export let loginAction: ActionFunction = async ({ request }) => {
   );
 
   if (!response.ok) {
-    let details = await response.json();
-    return json({ details });
+    let details: ProblemDetailsResponse = await response.json();
+    return json({ ok: false, ...details });
   }
 
-  return json("ok");
+  return json({ ok: true });
 };
 
 function getReferrer(request: Request) {
