@@ -6,9 +6,11 @@ import type { NextFunction, Request, Response } from "express";
 
 import {
   BadRequestError,
+  isMagicLinkPayload,
   decryptMagicLinkPayload,
   validateRequestHandler,
 } from "@tartine/common";
+import type { MagicLinkPayload, TokenPayload } from "@tartine/common";
 
 import { stripe } from "../stripe";
 
@@ -16,21 +18,6 @@ const router = express.Router();
 
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
-
-type MagicLinkPayload = {
-  email: string;
-  landingPage: string;
-  creationDate: string;
-};
-
-function isMagicLinkPayload(obj: any): obj is MagicLinkPayload {
-  return (
-    typeof obj === "object" &&
-    typeof obj.email === "string" &&
-    typeof obj.landingPage === "string" &&
-    typeof obj.creationDate === "string"
-  );
-}
 
 router.post(
   "/validate-magic-token",
@@ -46,11 +33,11 @@ router.post(
 
       let payload: Partial<MagicLinkPayload> = {};
 
-      /**
-       * The decodeURIComponent call does not affect already decoded URI components
-       */
       try {
         payload = JSON.parse(
+          /**
+           * The decodeURIComponent call does not affect already decoded URI components
+           */
           decryptMagicLinkPayload(decodeURIComponent(magicToken))
         );
       } catch (error) {
@@ -74,7 +61,9 @@ router.post(
       }
 
       /**
+       * ---------------------------------------------------------------------
        * Enter Stripe
+       * ---------------------------------------------------------------------
        */
       const { data: customers } = await stripe.customers.search({
         query: `email:'${payload.email}'`,
@@ -88,27 +77,46 @@ router.post(
         );
       }
 
+      /**
+       * TODO: Filter for 'active' and 'trialing' subscriptions
+       */
       const { data: subscriptions } = await stripe.subscriptions.list({
         customer: customer.id,
       });
 
       if (subscriptions.length === 0) {
         throw new BadRequestError(
-          "The provided email address does not have any subscription with us"
+          "The provided email address does not have any active subscription with us"
         );
       }
 
       let [subscription] = subscriptions;
+      let {
+        items: {
+          data: [item],
+        },
+      } = subscription;
 
-      let tokenPayload = {
-        customerId: customer.id,
-        subscription: {
-          status: subscription.status,
+      let tokenPayload: TokenPayload = {
+        user: {
+          id: customer.id,
+          subscription: {
+            id: subscription.id,
+            status: subscription.status,
+            product: {
+              id: item.price.product as string,
+            },
+            price: {
+              id: item.price.id,
+              currency: item.price.currency,
+              unit_amount: item.price.unit_amount,
+            },
+          },
         },
       };
 
       let token = sign(tokenPayload, process.env.SESSION_JWT_SECRET!, {
-        expiresIn: "30m" /** expiresIn: subscription.current_period_end */,
+        expiresIn: "30m",
       });
 
       return res.status(200).send({

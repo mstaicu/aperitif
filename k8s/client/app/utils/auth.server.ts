@@ -71,7 +71,7 @@ export let authSession = createCookieSessionStorage({
 
 export async function getAuthSession(
   request: Request
-): Promise<[JwtPayload, string, () => Promise<Headers>]> {
+): Promise<[Payload, string, () => Promise<Headers>]> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
@@ -85,7 +85,7 @@ export async function getAuthSession(
   }
 
   let token = session.get("token");
-  let tokenPayload = (await getJwtPayload(request)) as JwtPayload;
+  let payload = await getJwtPayload(request);
 
   let refresh = async () =>
     new Headers({
@@ -94,7 +94,7 @@ export async function getAuthSession(
       }),
     });
 
-  return [tokenPayload, token, refresh];
+  return [payload, token, refresh];
 }
 
 /*******************************************************************************
@@ -122,8 +122,6 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
   if (typeof magicToken !== "string") {
     return json({ landingPage: getReferrer(request) });
   }
-
-  console.log('wtf')
 
   let response = await fetch(
     "https://traefik-lb-srv/api/auth/validate-magic-token",
@@ -168,8 +166,6 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
 export let loginAction: ActionFunction = async ({ request }) => {
   let body = Object.fromEntries(new URLSearchParams(await request.text()));
 
-  console.log(body);
-
   if (typeof body.email !== "string" || body.email.indexOf("@") === -1) {
     throw json("Missing email", { status: 400 });
   }
@@ -194,8 +190,6 @@ export let loginAction: ActionFunction = async ({ request }) => {
     return json("ok");
   }
 
-  console.log(await response.json());
-
   throw json("Something went wrong while trying to send you a magic link", {
     status: 400,
   });
@@ -213,12 +207,22 @@ function getReferrer(request: Request) {
   return "/dashboard";
 }
 
-async function getJwtPayload(request: Request) {
+/**
+ * TODO: Add this to the common package
+ */
+interface Payload extends JwtPayload {
+  user: {};
+}
+
+async function getJwtPayload(request: Request): Promise<Payload> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
   try {
-    return verify(session.get("token"), process.env.SESSION_JWT_SECRET!);
+    return verify(
+      session.get("token"),
+      process.env.SESSION_JWT_SECRET!
+    ) as Payload;
   } catch (error) {
     throw redirect("/login", {
       status: 303,

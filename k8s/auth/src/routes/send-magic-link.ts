@@ -9,6 +9,8 @@ import {
   sendMagicLink,
 } from "@tartine/common";
 
+import { stripe } from "../stripe";
+
 const router = express.Router();
 
 router.post(
@@ -25,6 +27,18 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       let { email, landingPage = "/" } = req.body;
+
+      const { data: customers } = await stripe.customers.search({
+        query: `email:'${email}'`,
+      });
+
+      const [customer] = customers;
+
+      if (!customer) {
+        throw new BadRequestError(
+          "The provided email address is not registered with us"
+        );
+      }
 
       try {
         await sendMagicLink(email, landingPage);

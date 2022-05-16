@@ -2,11 +2,8 @@ import { json, useLoaderData } from "remix";
 import type { LoaderFunction } from "remix";
 
 import { stripe } from "~/utils/stripe.server";
-// import { getAuthSession } from "~/utils/auth.server";
 
 export let loader: LoaderFunction = async ({ request }) => {
-  // let [userData, jwt] = await getAuthSession(request);
-
   let { data: prices } = await stripe.prices.list();
 
   let plans = await Promise.all(
