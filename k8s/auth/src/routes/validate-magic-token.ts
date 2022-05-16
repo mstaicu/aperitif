@@ -77,16 +77,13 @@ router.post(
         );
       }
 
-      /**
-       * TODO: Filter for 'active' and 'trialing' subscriptions
-       */
       const { data: subscriptions } = await stripe.subscriptions.list({
         customer: customer.id,
       });
 
       if (subscriptions.length === 0) {
         throw new BadRequestError(
-          "The provided email address does not have any active subscription with us"
+          "The provided email address does not have any active subscriptions"
         );
       }
 
@@ -97,6 +94,9 @@ router.post(
         },
       } = subscription;
 
+      /**
+       *
+       */
       let tokenPayload: TokenPayload = {
         user: {
           id: customer.id,

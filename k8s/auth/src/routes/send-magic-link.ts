@@ -20,9 +20,6 @@ router.post(
       .isEmail()
       .withMessage("A valid email address must be provided with this request"),
   ],
-  /**
-   * Don't validate the landingPage as we want it to be optional
-   */
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {

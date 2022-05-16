@@ -21,10 +21,8 @@ const start = async () => {
     );
   }
 
-  if (!process.env.NATS_CLUSTER_ID) {
-    throw new Error(
-      "NATS_CLUSTER_ID must be defined as an environment variable"
-    );
+  if (!process.env.DOMAIN) {
+    throw new Error("DOMAIN must be defined as an environment variable");
   }
   if (!process.env.NATS_CLIENT_ID) {
     throw new Error(
@@ -44,13 +42,9 @@ const start = async () => {
   try {
     await mongoose.connect(process.env.PAYMENTS_MONGO_URI);
 
-    await nats.connect(
-      process.env.NATS_CLUSTER_ID,
-      process.env.NATS_CLIENT_ID,
-      {
-        url: process.env.NATS_URL,
-      }
-    );
+    await nats.connect(process.env.DOMAIN, process.env.NATS_CLIENT_ID, {
+      url: process.env.NATS_URL,
+    });
   } catch (err) {
     console.error(err);
   }

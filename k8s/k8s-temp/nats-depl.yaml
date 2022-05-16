@@ -46,7 +46,7 @@ spec:
               "user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(NATS_POSTGRES_HOST) port=$(NATS_POSTGRES_PORT) dbname=$(POSTGRES_DB) sslmode=disable",
               #
               "-cid",
-              "$(NATS_CLUSTER_ID)",
+              "$(DOMAIN)",
             ]
 ---
 apiVersion: v1

@@ -5,13 +5,14 @@ import {
   scryptSync,
 } from "crypto";
 
-/**
- * TODO: Add env var for magic link encryption password
- */
-let PASSWORD = "V>84(%F@U8>q!&W'6T:'xmx4TsU2rAn@Fm'-{[6bW=6p-efy8c";
+if (!process.env.MAGIC_LINK_PASSWORD) {
+  throw new Error(
+    "MAGIC_LINK_PASSWORD must be defined as an environment variable"
+  );
+}
 
 let algorithm = "aes-256-ctr";
-let encryptionKey = scryptSync(PASSWORD, "salt", 32);
+let encryptionKey = scryptSync(process.env.MAGIC_LINK_PASSWORD, "salt", 32);
 
 export function encryptMagicLinkPayload(magicLinkPayload: string) {
   let iv = randomBytes(16);

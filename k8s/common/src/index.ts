@@ -10,4 +10,4 @@ export * from "./listeners";
 
 export * from "./publishers";
 
-export * from "./validation";
+export * from "./validations";

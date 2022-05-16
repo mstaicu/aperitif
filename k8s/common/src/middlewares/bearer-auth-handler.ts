@@ -5,8 +5,8 @@ import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-import { isTokenPayload } from "../validation";
-import type { TokenPayload } from "../validation";
+import { isTokenPayload } from "../validations";
+import type { TokenPayload } from "../validations";
 
 declare global {
   namespace Express {
@@ -34,7 +34,7 @@ export const requireBearerAuth = (
       let { user } = jwt.verify(
         token,
         process.env.SESSION_JWT_SECRET!
-      ) as TokenPayload & JwtPayload;
+      ) as JwtPayload & TokenPayload;
 
       if (!isTokenPayload(user)) {
         throw new BadRequestError(

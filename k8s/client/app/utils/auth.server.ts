@@ -4,6 +4,9 @@ import type { ActionFunction, LoaderFunction } from "remix";
 import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
+import { isTokenPayload } from "@tartine/common";
+import type { TokenPayload } from "@tartine/common";
+
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
  * everything we need. If anything is missing, we just prevent the app from
@@ -20,7 +23,6 @@ if (!process.env.SESSION_COOKIE_SECRET) {
     "SESSION_COOKIE_SECRET must be defined as an environment variable"
   );
 }
-
 if (!process.env.SESSION_JWT_SECRET) {
   throw new Error(
     "SESSION_JWT_SECRET must be defined as an environment variable"
@@ -71,7 +73,7 @@ export let authSession = createCookieSessionStorage({
 
 export async function getAuthSession(
   request: Request
-): Promise<[Payload, string, () => Promise<Headers>]> {
+): Promise<[TokenPayload, string, () => Promise<Headers>]> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
@@ -85,7 +87,7 @@ export async function getAuthSession(
   }
 
   let token = session.get("token");
-  let payload = await getJwtPayload(request);
+  let user = await getJwtPayload(request);
 
   let refresh = async () =>
     new Headers({
@@ -94,7 +96,7 @@ export async function getAuthSession(
       }),
     });
 
-  return [payload, token, refresh];
+  return [user, token, refresh];
 }
 
 /*******************************************************************************
@@ -164,16 +166,6 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
  * No go back up to (5)
  */
 export let loginAction: ActionFunction = async ({ request }) => {
-  let body = Object.fromEntries(new URLSearchParams(await request.text()));
-
-  if (typeof body.email !== "string" || body.email.indexOf("@") === -1) {
-    throw json("Missing email", { status: 400 });
-  }
-
-  if (typeof body.landingPage !== "string") {
-    throw json("Missing landing page", { status: 400 });
-  }
-
   let response = await fetch(
     "https://traefik-lb-srv/api/auth/send-magic-link",
     {
@@ -182,17 +174,18 @@ export let loginAction: ActionFunction = async ({ request }) => {
         "Content-Type": "application/json",
         Host: process.env.DOMAIN!,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(
+        Object.fromEntries(new URLSearchParams(await request.text()))
+      ),
     }
   );
 
-  if (response.ok) {
-    return json("ok");
+  if (!response.ok) {
+    let details = await response.json();
+    return json({ details });
   }
 
-  throw json("Something went wrong while trying to send you a magic link", {
-    status: 400,
-  });
+  return json("ok");
 };
 
 function getReferrer(request: Request) {
@@ -204,25 +197,26 @@ function getReferrer(request: Request) {
     return url.pathname + url.search;
   }
 
-  return "/dashboard";
+  return "/";
 }
 
-/**
- * TODO: Add this to the common package
- */
-interface Payload extends JwtPayload {
-  user: {};
-}
-
-async function getJwtPayload(request: Request): Promise<Payload> {
+async function getJwtPayload(request: Request): Promise<TokenPayload> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
   try {
-    return verify(
+    let { user } = verify(
       session.get("token"),
       process.env.SESSION_JWT_SECRET!
-    ) as Payload;
+    ) as JwtPayload & TokenPayload;
+
+    if (!isTokenPayload(user)) {
+      throw new Error(
+        "Authorization payload contains incorrect or incomplete data"
+      );
+    }
+
+    return user;
   } catch (error) {
     throw redirect("/login", {
       status: 303,
