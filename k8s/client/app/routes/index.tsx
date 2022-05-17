@@ -16,6 +16,8 @@ type LoaderData = {
 export let loader: LoaderFunction = async ({ request }) => {
   let { data: prices } = await stripe.prices.list();
 
+  prices = prices.filter(({ active }) => active);
+
   let plans: Plan[] = await Promise.all(
     prices.map(async (price) => {
       let product = await stripe.products.retrieve(`${price.product}`);

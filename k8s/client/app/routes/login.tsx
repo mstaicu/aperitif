@@ -1,4 +1,12 @@
-import { Form, Link, useActionData, useLoaderData, useTransition } from "remix";
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useTransition,
+  useCatch,
+} from "remix";
+import type { ThrownResponse } from "@remix-run/react";
 
 export {
   loginAction as action,
@@ -62,8 +70,8 @@ export default () => {
       <Form replace={true} method="post" aria-hidden={state === "success"}>
         <fieldset disabled={state === "submitting"}>
           <input
-            aria-aria-label="Email address"
-            aria-describedby="email-error-message"
+            aria-label="Email address"
+            aria-describedby="error-message"
             ref={inputRef}
             type="email"
             name="email"
@@ -80,9 +88,9 @@ export default () => {
             }
           />
 
-          <p id="email-error-message">
+          <p id="error-message">
             {state === "error" ? (
-              actionData?.invalid_params?.email
+              actionData?.invalid_params?.email || actionData?.detail
             ) : (
               <>&nbsp;</>
             )}
@@ -102,3 +110,17 @@ export default () => {
     </main>
   );
 };
+
+export function CatchBoundary() {
+  const caught = useCatch<ThrownResponse<400, ProblemDetailsResponse>>();
+
+  return (
+    <main>
+      <h2>
+        Uh oh, something went wrong.{" "}
+        {caught.data.invalid_params?.magicToken || caught.data.detail}
+      </h2>
+      <Link to=".">Try again?</Link>
+    </main>
+  );
+}

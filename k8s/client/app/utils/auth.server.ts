@@ -73,7 +73,7 @@ export let authSession = createCookieSessionStorage({
 
 export async function getAuthSession(
   request: Request
-): Promise<[TokenPayload, string, () => Promise<Headers>]> {
+): Promise<[TokenPayload & JwtPayload, string, () => Promise<Headers>]> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
@@ -86,9 +86,6 @@ export async function getAuthSession(
     });
   }
 
-  let token = session.get("token");
-  let user = await getJwtPayload(request);
-
   let refresh = async () =>
     new Headers({
       "Set-Cookie": await authSession.commitSession(session, {
@@ -96,7 +93,7 @@ export async function getAuthSession(
       }),
     });
 
-  return [user, token, refresh];
+  return [await getJwtPayload(request), session.get("token"), refresh];
 }
 
 /*******************************************************************************
@@ -121,14 +118,14 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
   let { searchParams } = new URL(request.url);
   let magicToken = searchParams.get("magic");
 
-  /**
+  /*******************************************************************************
    * 'magic' query string parameter is not present, render the login page
    */
   if (typeof magicToken !== "string") {
     return json({ ok: false, landingPage: getReferrer(request) });
   }
 
-  /**
+  /*******************************************************************************
    * 'magic' query string parameter present, validate the magic token, redirect
    */
   let response = await fetch(
@@ -158,8 +155,11 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
     });
   }
 
+  /*******************************************************************************
+   * Render the catch boundary in place of the render component of the login page
+   */
   let details: ProblemDetailsResponse = await response.json();
-  return json({ ok: false, ...details });
+  throw json(details, { status: details.status });
 };
 
 /*******************************************************************************
@@ -194,7 +194,9 @@ export let loginAction: ActionFunction = async ({ request }) => {
 };
 
 function getReferrer(request: Request) {
-  // This doesn't work with all remix adapters yet, so pick a good default
+  /*******************************************************************************
+   * This doesn't work with all remix adapters yet, so pick a good default
+   */
   let referrer = request.referrer;
 
   if (referrer) {
@@ -210,18 +212,18 @@ async function getJwtPayload(request: Request): Promise<TokenPayload> {
   let session = await authSession.getSession(cookie);
 
   try {
-    let { user } = verify(
+    let payload = verify(
       session.get("token"),
       process.env.SESSION_JWT_SECRET!
     ) as JwtPayload & TokenPayload;
 
-    if (!isTokenPayload(user)) {
+    if (!isTokenPayload(payload)) {
       throw new Error(
         "Authorization payload contains incorrect or incomplete data"
       );
     }
 
-    return user;
+    return payload;
   } catch (error) {
     throw redirect("/login", {
       status: 303,

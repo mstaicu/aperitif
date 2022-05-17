@@ -5,6 +5,9 @@ import {
   scryptSync,
 } from "crypto";
 
+/**
+ *
+ */
 if (!process.env.MAGIC_LINK_PASSWORD) {
   throw new Error(
     "MAGIC_LINK_PASSWORD must be defined as an environment variable"
@@ -14,6 +17,9 @@ if (!process.env.MAGIC_LINK_PASSWORD) {
 let algorithm = "aes-256-ctr";
 let encryptionKey = scryptSync(process.env.MAGIC_LINK_PASSWORD, "salt", 32);
 
+/**
+ *
+ */
 export function encryptMagicLinkPayload(magicLinkPayload: string) {
   let iv = randomBytes(16);
 
@@ -27,6 +33,9 @@ export function encryptMagicLinkPayload(magicLinkPayload: string) {
   return `${iv.toString("hex")}:${encrypted.toString("hex")}`;
 }
 
+/**
+ *
+ */
 export function decryptMagicLinkPayload(encryptedMagicLinkPayload: string) {
   let [ivPart, encryptedPart] = encryptedMagicLinkPayload.split(":");
 

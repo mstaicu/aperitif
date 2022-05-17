@@ -14,11 +14,3 @@ export class NotFoundError extends CustomError {
     status: this.statusCode,
   });
 }
-
-/**
- * Receipe for 404 in Express
- *
- * After all route handlers, add
- *
- * app.get('*', (req, res, next) => next(new NotFoundError()))
- */

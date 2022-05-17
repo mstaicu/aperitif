@@ -4,7 +4,7 @@ import type { MailDataRequired } from "@sendgrid/mail";
 import { encryptMagicLinkPayload } from "./magic-crypto";
 
 /**
- * Make sure we have all the environment variables
+ *
  */
 if (!process.env.DOMAIN) {
   throw new Error("DOMAIN must be defined as an environment variable");
@@ -22,10 +22,13 @@ if (!process.env.SENDGRID_SENDER_EMAIL) {
 }
 
 /**
- * Set the Sendgrid API key with which we'll make all our requests
+ *
  */
 sg.setApiKey(process.env.SENDGRID_API_KEY);
 
+/**
+ *
+ */
 export function generateMagicLink(email: string, landingPage: string) {
   let payload = {
     email,
@@ -43,6 +46,9 @@ export function generateMagicLink(email: string, landingPage: string) {
   return url.toString();
 }
 
+/**
+ *
+ */
 export async function sendMagicLink(email: string, landingPage: string) {
   let link = generateMagicLink(email, landingPage);
 
@@ -68,10 +74,3 @@ export async function sendMagicLink(email: string, landingPage: string) {
 
   return sg.send(message);
 }
-
-/**
- * Success page
- * 
- * const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-   const customer = await stripe.customers.retrieve(session.customer);
- */

@@ -115,10 +115,51 @@ router.post(
         },
       };
 
+      /**
+       * The JWT expires in 1 day from the time of the request
+       *
+       * If that date is past the end of the current period for which this subscription has been invoiced
+       * then the new expiry date becomes the end date for the period which this subscription has been invoiced
+       */
+
+      let expiresIn = new Date();
+      expiresIn.setDate(expiresIn.getDate() + 1);
+
+      /**
+       * Stripe timestamps need to be multiply by 1000 before using them to create dates
+       */
+      let subscriptionPeriodEnd = new Date(
+        subscription.current_period_end * 1000
+      );
+
+      /**
+       *
+       */
+      if (subscription.cancel_at_period_end) {
+        subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
+      }
+
+      if (expiresIn > subscriptionPeriodEnd) {
+        expiresIn = subscriptionPeriodEnd;
+      }
+
+      /**
+       * How many seconds are there between now and expiresIn?
+       */
+      let expiresInSeconds = Math.round(
+        Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
+      );
+
+      /**
+       * Sign...
+       */
       let token = sign(tokenPayload, process.env.SESSION_JWT_SECRET!, {
-        expiresIn: "30m",
+        expiresIn: expiresInSeconds,
       });
 
+      /**
+       * and ship 🚢
+       */
       return res.status(200).send({
         token,
         landingPage: payload.landingPage,

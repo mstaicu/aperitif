@@ -41,7 +41,7 @@ router.post(
         await sendMagicLink(email, landingPage);
       } catch (err) {
         throw new BadRequestError(
-          "Could not send an email with the magic link"
+          "Uh oh, something went wrong while trying to email you the magic link"
         );
       }
 
