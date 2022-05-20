@@ -1,11 +1,11 @@
-import { createCookieSessionStorage, json, redirect } from "remix";
-import type { ActionFunction, LoaderFunction } from "remix";
+import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
 import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
-import { isTokenPayload } from "@tartine/common";
-import type { TokenPayload, ProblemDetailsResponse } from "@tartine/common";
+import { hasSessionPayload } from "@tartine/common";
+import type { SessionPayload, ProblemDetailsResponse } from "@tartine/common";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
@@ -29,8 +29,6 @@ if (!process.env.SESSION_JWT_SECRET) {
   );
 }
 
-let sessionMaxAge = /* seconds */ 60 * /* minutes */ 30; // 30m
-
 /*******************************************************************************
  * 1. It all starts with a "user session". A session is a fancy type of cookie
  * that references data either in the cookie directly or in some other storage
@@ -40,11 +38,11 @@ let sessionMaxAge = /* seconds */ 60 * /* minutes */ 30; // 30m
  */
 export let authSession = createCookieSessionStorage({
   cookie: {
-    secure: process.env.NODE_ENV === "production",
-    secrets: [process.env.SESSION_COOKIE_SECRET],
+    httpOnly: true,
     path: "/",
     sameSite: "lax",
-    httpOnly: true,
+    secure: true,
+    secrets: [process.env.SESSION_COOKIE_SECRET],
   },
 });
 
@@ -73,7 +71,9 @@ export let authSession = createCookieSessionStorage({
 
 export async function getAuthSession(
   request: Request
-): Promise<[TokenPayload & JwtPayload, string, () => Promise<Headers>]> {
+): Promise<
+  [SessionPayload & JwtPayload, string, (request: Request) => Promise<Headers>]
+> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
@@ -85,13 +85,6 @@ export async function getAuthSession(
       },
     });
   }
-
-  let refresh = async () =>
-    new Headers({
-      "Set-Cookie": await authSession.commitSession(session, {
-        maxAge: sessionMaxAge,
-      }),
-    });
 
   return [await getJwtPayload(request), session.get("token"), refresh];
 }
@@ -128,35 +121,42 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
   /*******************************************************************************
    * 'magic' query string parameter present, validate the magic token, redirect
    */
-  let response = await fetch(
-    "https://traefik-lb-srv/api/auth/validate-magic-token",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Host: process.env.DOMAIN!,
-      },
-      body: JSON.stringify({ magicToken }),
-    }
-  );
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/validate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Host: process.env.DOMAIN!,
+    },
+    body: JSON.stringify({ magicToken }),
+  });
 
   if (response.ok) {
     let { token, landingPage } = await response.json();
 
-    let session = await authSession.getSession();
-    session.set("token", token);
+    let payload = verify(token, process.env.SESSION_JWT_SECRET!);
 
-    return redirect(landingPage, {
-      headers: {
-        "Set-Cookie": await authSession.commitSession(session, {
-          maxAge: sessionMaxAge,
-        }),
-      },
-    });
+    if (hasSessionPayload(payload)) {
+      let session = await authSession.getSession();
+      session.set("token", token);
+
+      let expiresIn = new Date(payload.exp! * 1000);
+      let expiresInSeconds = Math.round(
+        Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
+      );
+
+      return redirect(landingPage, {
+        headers: {
+          "Set-Cookie": await authSession.commitSession(session, {
+            maxAge: expiresInSeconds,
+          }),
+        },
+      });
+    }
   }
 
   /*******************************************************************************
    * Render the catch boundary in place of the render component of the login page
+   * if there is a problem while processing the exchange of the magic token for a jwt
    */
   let details: ProblemDetailsResponse = await response.json();
   throw json(details, { status: details.status });
@@ -171,19 +171,16 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
  * No go back up to (5)
  */
 export let loginAction: ActionFunction = async ({ request }) => {
-  let response = await fetch(
-    "https://traefik-lb-srv/api/auth/send-magic-link",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Host: process.env.DOMAIN!,
-      },
-      body: JSON.stringify(
-        Object.fromEntries(new URLSearchParams(await request.text()))
-      ),
-    }
-  );
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Host: process.env.DOMAIN!,
+    },
+    body: JSON.stringify(
+      Object.fromEntries(new URLSearchParams(await request.text()))
+    ),
+  });
 
   if (!response.ok) {
     let details: ProblemDetailsResponse = await response.json();
@@ -207,19 +204,76 @@ function getReferrer(request: Request) {
   return "/";
 }
 
-async function getJwtPayload(request: Request): Promise<TokenPayload> {
+async function refresh(request: Request): Promise<Headers> {
+  let cookie = request.headers.get("cookie");
+  let session = await authSession.getSession(cookie);
+
+  if (!session.has("token")) {
+    throw new Error("The current user session does not contain a JWT");
+  }
+
+  try {
+    let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.get("token")}`,
+        "Content-Type": "application/json",
+        Host: process.env.DOMAIN!,
+      },
+    });
+
+    if (response.ok) {
+      let { token } = await response.json();
+
+      let payload = verify(token, process.env.SESSION_JWT_SECRET!);
+
+      if (hasSessionPayload(payload)) {
+        let session = await authSession.getSession();
+        session.set("token", token);
+
+        let expiresIn = new Date(payload.exp! * 1000);
+        let expiresInSeconds = Math.round(
+          Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
+        );
+
+        return new Headers({
+          "Set-Cookie": await authSession.commitSession(session, {
+            maxAge: expiresInSeconds,
+          }),
+        });
+      }
+
+      throw new Error(
+        "Renewed JSON Web Token contains incorrect or incomplete session data"
+      );
+    }
+
+    throw new Error(
+      "The request to renew the JSON Web Token failed checks on the server"
+    );
+  } catch (err) {
+    throw redirect("/login", {
+      status: 303,
+      headers: {
+        "auth-redirect": getReferrer(request),
+        "Set-Cookie": await authSession.destroySession(session),
+      },
+    });
+  }
+}
+
+async function getJwtPayload(
+  request: Request
+): Promise<JwtPayload & SessionPayload> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
   try {
-    let payload = verify(
-      session.get("token"),
-      process.env.SESSION_JWT_SECRET!
-    ) as JwtPayload & TokenPayload;
+    let payload = verify(session.get("token"), process.env.SESSION_JWT_SECRET!);
 
-    if (!isTokenPayload(payload)) {
+    if (!hasSessionPayload(payload)) {
       throw new Error(
-        "Authorization payload contains incorrect or incomplete data"
+        "Authorization payload contains incorrect or incomplete session data"
       );
     }
 

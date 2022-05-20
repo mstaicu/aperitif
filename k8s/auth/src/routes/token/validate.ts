@@ -10,9 +10,9 @@ import {
   decryptMagicLinkPayload,
   validateRequestHandler,
 } from "@tartine/common";
-import type { MagicLinkPayload, TokenPayload } from "@tartine/common";
+import type { MagicLinkPayload, SessionPayload } from "@tartine/common";
 
-import { stripe } from "../stripe";
+import { stripe } from "../../stripe";
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
 
 router.post(
-  "/validate-magic-token",
+  "/token/validate",
   [
     body("magicToken")
       .notEmpty()
@@ -83,10 +83,14 @@ router.post(
 
       if (subscriptions.length === 0) {
         throw new BadRequestError(
-          "The provided email address does not have any active subscriptions"
+          "The provided email address does not have any subscriptions with us"
         );
       }
 
+      /**
+       * TODO: What if... the user decides to purchase the same product twice,
+       * i.e. have N subscriptions for the same product
+       */
       let [subscription] = subscriptions;
       let {
         items: {
@@ -97,14 +101,18 @@ router.post(
       /**
        *
        */
-      let tokenPayload: TokenPayload = {
+      let tokenPayload: SessionPayload = {
         user: {
           id: customer.id,
           subscription: {
             id: subscription.id,
             status: subscription.status,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            cancel_at: subscription.cancel_at,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
             product: {
-              id: item.price.product as string,
+              id: item.price.product,
             },
             price: {
               id: item.price.id,
@@ -116,17 +124,14 @@ router.post(
       };
 
       /**
-       * The JWT expires in 1 day from the time of the request
-       *
-       * If that date is past the end of the current period for which this subscription has been invoiced
-       * then the new expiry date becomes the end date for the period which this subscription has been invoiced
+       * Inital token expiration date set to 15 minutes from the moment of this request
        */
-
       let expiresIn = new Date();
-      expiresIn.setDate(expiresIn.getDate() + 1);
+      expiresIn.setMinutes(expiresIn.getMinutes() + 15);
 
       /**
-       * Stripe timestamps need to be multiply by 1000 before using them to create dates
+       * Stripe timestamps are in seconds. They need to be converted to milliseconds
+       * by multiply them by 1000 before using them to create dates
        */
       let subscriptionPeriodEnd = new Date(
         subscription.current_period_end * 1000
@@ -139,6 +144,10 @@ router.post(
         subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
       }
 
+      /**
+       * If that date is past the end of the current period for which this subscription has been invoiced
+       * then the new expiry date becomes the end date for the period which this subscription has been invoiced
+       */
       if (expiresIn > subscriptionPeriodEnd) {
         expiresIn = subscriptionPeriodEnd;
       }

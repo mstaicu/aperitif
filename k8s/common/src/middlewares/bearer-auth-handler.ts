@@ -5,12 +5,12 @@ import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-import { isTokenPayload } from "../validations";
-import type { TokenPayload } from "../validations";
+import { hasSessionPayload } from "../validations";
+import type { SessionPayload } from "../validations";
 
 declare global {
   namespace Express {
-    interface Request extends TokenPayload {}
+    interface Request extends SessionPayload {}
   }
 }
 
@@ -31,18 +31,18 @@ export const requireBearerAuth = (
     let [type, token] = header.split(" ");
 
     if (type === "Bearer") {
-      let { user } = jwt.verify(
+      let payload = jwt.verify(
         token,
         process.env.SESSION_JWT_SECRET!
-      ) as JwtPayload & TokenPayload;
+      ) as JwtPayload & SessionPayload;
 
-      if (!isTokenPayload(user)) {
+      if (!hasSessionPayload(payload)) {
         throw new BadRequestError(
           "Authorization payload contains incorrect or incomplete data"
         );
       }
 
-      req.user = user;
+      req.user = payload.user;
     } else {
       throw new BadRequestError(`Authorization strategy ${type} not supported`);
     }

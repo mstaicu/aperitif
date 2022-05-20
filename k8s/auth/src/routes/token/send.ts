@@ -9,12 +9,12 @@ import {
   sendMagicLink,
 } from "@tartine/common";
 
-import { stripe } from "../stripe";
+import { stripe } from "../../stripe";
 
 const router = express.Router();
 
 router.post(
-  "/send-magic-link",
+  "/token/send",
   [
     body("email")
       .isEmail()

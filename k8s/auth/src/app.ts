@@ -1,8 +1,16 @@
 import express from "express";
 
-import { errorHandler, NotFoundError } from "@tartine/common";
+import {
+  requireBearerAuth,
+  errorHandler,
+  NotFoundError,
+} from "@tartine/common";
 
-import { sendMagicLinkRouter, validateMagicTokenRouter } from "./routes";
+import {
+  extendTokenRouter,
+  sendMagicLinkRouter,
+  validateMagicTokenRouter,
+} from "./routes";
 
 const app = express();
 
@@ -10,6 +18,8 @@ app.use(express.json());
 
 app.use(sendMagicLinkRouter);
 app.use(validateMagicTokenRouter);
+
+app.use(requireBearerAuth, extendTokenRouter);
 
 app.get("*", (_, __, next) => next(new NotFoundError()));
 

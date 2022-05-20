@@ -1,20 +1,20 @@
+import { useEffect, useRef } from "react";
 import {
   Form,
   Link,
+  ThrownResponse,
+  useCatch,
   useActionData,
   useLoaderData,
   useTransition,
-  useCatch,
-} from "remix";
-import type { ThrownResponse } from "@remix-run/react";
+} from "@remix-run/react";
 
 export {
   loginAction as action,
   loginLoader as loader,
-} from "~/utils/auth.server";
+} from "~/utils/session.server";
 
 import type { ProblemDetailsResponse } from "@tartine/common";
-import { useEffect, useRef } from "react";
 
 /**
  *
@@ -112,13 +112,14 @@ export default () => {
 };
 
 export function CatchBoundary() {
-  const caught = useCatch<ThrownResponse<400, ProblemDetailsResponse>>();
+  const {
+    data: { invalid_params, detail },
+  } = useCatch<ThrownResponse<400, ProblemDetailsResponse>>();
 
   return (
     <main>
       <h2>
-        Uh oh, something went wrong.{" "}
-        {caught.data.invalid_params?.magicToken || caught.data.detail}
+        Uh oh, something went wrong. {invalid_params?.magicToken || detail}
       </h2>
       <Link to=".">Try again?</Link>
     </main>

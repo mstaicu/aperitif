@@ -1,7 +1,7 @@
 import { redirect } from "remix";
 import type { ActionFunction, LoaderFunction } from "remix";
 
-import { authSession } from "~/utils/auth.server";
+import { authSession } from "~/utils/session.server";
 
 export let action: ActionFunction = async ({ request }) => {
   let session = await authSession.getSession(request.headers.get("Cookie"));
