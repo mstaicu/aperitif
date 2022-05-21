@@ -10,7 +10,9 @@ import { getAuthSession } from "~/utils/session.server";
 type LoaderData = SessionPayload & JwtPayload;
 
 export let loader: LoaderFunction = async ({ request }) => {
-  let [payload] = await getAuthSession(request);
+  let [payload, jwt] = await getAuthSession(request);
+
+  console.log("jwt", jwt);
 
   return json({
     user: payload.user,

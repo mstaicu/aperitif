@@ -84,7 +84,10 @@ export function hasSessionPayload(
     typeof obj.user.subscription.id === "string" &&
     typeof obj.user.subscription.status === "string" &&
     (typeof obj.user.subscription.cancel_at === "number" ||
-      typeof obj.user.subscription.cancel_at === null) &&
+      /**
+       * typeof null === 'object'
+       */
+      typeof obj.user.subscription.cancel_at === "object") &&
     typeof obj.user.subscription.cancel_at_period_end === "boolean" &&
     typeof obj.user.subscription.current_period_start === "number" &&
     typeof obj.user.subscription.current_period_end === "number" &&

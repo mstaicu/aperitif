@@ -86,8 +86,6 @@ export async function getAuthSession(
     });
   }
 
-  console.log("token ", session.get("token"));
-
   return [await getJwtPayload(request), session.get("token"), refresh];
 }
 
