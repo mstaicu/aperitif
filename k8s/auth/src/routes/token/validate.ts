@@ -155,9 +155,13 @@ router.post(
       /**
        * How many seconds are there between now and expiresIn?
        */
-      let expiresInSeconds = Math.round(
-        Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
-      );
+      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+
+      if (expiresInSeconds <= 0) {
+        throw new BadRequestError(
+          "The provided user's current active subscription has expired"
+        );
+      }
 
       /**
        * Sign...

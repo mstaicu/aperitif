@@ -3,7 +3,7 @@ import { sign } from "jsonwebtoken";
 
 import type { NextFunction, Request, Response } from "express";
 
-import { requireAuthHandler } from "@tartine/common";
+import { BadRequestError, requireAuthHandler } from "@tartine/common";
 import type { SessionPayload } from "@tartine/common";
 
 const router = express.Router();
@@ -51,9 +51,13 @@ router.post(
       /**
        * How many seconds are there between now and expiresIn?
        */
-      let expiresInSeconds = Math.round(
-        Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
-      );
+      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+
+      if (expiresInSeconds <= 0) {
+        throw new BadRequestError(
+          "The user's current active subscription has expired"
+        );
+      }
 
       /**
        * Sign...

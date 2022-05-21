@@ -1,7 +1,7 @@
 import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
-import { verify } from "jsonwebtoken";
+import { verify, TokenExpiredError } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
 import { hasSessionPayload } from "@tartine/common";
@@ -86,6 +86,8 @@ export async function getAuthSession(
     });
   }
 
+  console.log("token ", session.get("token"));
+
   return [await getJwtPayload(request), session.get("token"), refresh];
 }
 
@@ -140,9 +142,7 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
       session.set("token", token);
 
       let expiresIn = new Date(payload.exp! * 1000);
-      let expiresInSeconds = Math.round(
-        Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
-      );
+      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
 
       return redirect(landingPage, {
         headers: {
@@ -208,11 +208,11 @@ async function refresh(request: Request): Promise<Headers> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
-  if (!session.has("token")) {
-    throw new Error("The current user session does not contain a JWT");
-  }
-
   try {
+    if (!session.has("token")) {
+      throw new Error("The current user session does not contain a JWT");
+    }
+
     let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
       method: "POST",
       headers: {
@@ -228,13 +228,10 @@ async function refresh(request: Request): Promise<Headers> {
       let payload = verify(token, process.env.SESSION_JWT_SECRET!);
 
       if (hasSessionPayload(payload)) {
-        let session = await authSession.getSession();
         session.set("token", token);
 
         let expiresIn = new Date(payload.exp! * 1000);
-        let expiresInSeconds = Math.round(
-          Math.abs(expiresIn.getTime() - new Date().getTime()) / 1000
-        );
+        let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
 
         return new Headers({
           "Set-Cookie": await authSession.commitSession(session, {
@@ -279,6 +276,12 @@ async function getJwtPayload(
 
     return payload;
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      /**
+       * TODO: Add logging?
+       */
+    }
+
     throw redirect("/login", {
       status: 303,
       headers: {

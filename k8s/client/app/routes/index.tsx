@@ -1,5 +1,6 @@
-import { json, useLoaderData } from "remix";
-import type { LoaderFunction } from "remix";
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import type { LoaderFunction } from "@remix-run/node";
 
 import { stripe } from "~/utils/stripe.server";
 
@@ -13,7 +14,7 @@ type LoaderData = {
   plans: Plan[];
 };
 
-export let loader: LoaderFunction = async ({ request }) => {
+export let loader: LoaderFunction = async () => {
   let { data: prices } = await stripe.prices.list();
 
   prices = prices.filter(({ active }) => active);

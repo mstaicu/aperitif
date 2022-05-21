@@ -1,6 +1,4 @@
-import jwt from "jsonwebtoken";
-import type { JwtPayload } from "jsonwebtoken";
-
+import { verify, TokenExpiredError } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
@@ -31,10 +29,24 @@ export const requireBearerAuth = (
     let [type, token] = header.split(" ");
 
     if (type === "Bearer") {
-      let payload = jwt.verify(
-        token,
-        process.env.SESSION_JWT_SECRET!
-      ) as JwtPayload & SessionPayload;
+      let payload;
+
+      try {
+        payload = verify(token, process.env.SESSION_JWT_SECRET!);
+      } catch (error) {
+        if (error instanceof TokenExpiredError) {
+          throw new BadRequestError(
+            "The provided authorization token has expired"
+          );
+        }
+
+        /**
+         * TODO: Add NotBeforeError check if current time is before the nbf claim.
+         */
+        throw new BadRequestError(
+          "The provided authorization token has failed verification checks"
+        );
+      }
 
       if (!hasSessionPayload(payload)) {
         throw new BadRequestError(
@@ -42,6 +54,9 @@ export const requireBearerAuth = (
         );
       }
 
+      /**
+       * TODO: Add exp and iat to req.user
+       */
       req.user = payload.user;
     } else {
       throw new BadRequestError(`Authorization strategy ${type} not supported`);
