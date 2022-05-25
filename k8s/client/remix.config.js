@@ -6,7 +6,7 @@ module.exports = {
   assetsBuildDirectory: "public/build",
   /**
    * Don't forget to set REMIX_DEV_SERVER_WS_PORT to 3001 as well
-   * We need this because Docker runs on the default port of Remix's WSS
+   * We need this because Docker runs on the default port of Remix's WSS, which is 8002
    */
   devServerPort: 3001,
   ignoredRouteFiles: ["**/.*"],

@@ -6,6 +6,8 @@ import type { NextFunction, Request, Response } from "express";
 import { BadRequestError, requireAuthHandler } from "@tartine/common";
 import type { SessionPayload } from "@tartine/common";
 
+import { stripe } from "../../stripe";
+
 const router = express.Router();
 
 router.post(
@@ -17,7 +19,26 @@ router.post(
         user: req.user,
       };
 
-      let { subscription } = req.user;
+      const { data: subscriptions } = await stripe.subscriptions.list({
+        customer: req.user.id,
+      });
+
+      if (subscriptions.length === 0) {
+        throw new BadRequestError(
+          "The provided email address does not have any active subscriptions with us"
+        );
+      }
+
+      /**
+       * TODO: What if... the user decides to purchase the same product twice,
+       * i.e. have N subscriptions for the same product
+       */
+      let [subscription] = subscriptions;
+      let {
+        items: {
+          data: [item],
+        },
+      } = subscription;
 
       /**
        * Inital token expiration date set to 15 minutes from the moment of this request
@@ -51,7 +72,9 @@ router.post(
       /**
        * How many seconds are there between now and expiresIn?
        */
-      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+      let expiresInSeconds = Math.trunc(
+        (expiresIn.getTime() - Date.now()) / 1000
+      );
 
       if (expiresInSeconds <= 0) {
         throw new BadRequestError(
@@ -69,7 +92,7 @@ router.post(
       /**
        * and ship 🚢
        */
-      return res.status(200).send({
+      return res.status(200).json({
         token: newToken,
       });
     } catch (err) {

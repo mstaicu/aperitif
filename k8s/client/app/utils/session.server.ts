@@ -140,7 +140,9 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
       session.set("token", token);
 
       let expiresIn = new Date(payload.exp! * 1000);
-      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+      let expiresInSeconds = Math.trunc(
+        (expiresIn.getTime() - Date.now()) / 1000
+      );
 
       return redirect(landingPage, {
         headers: {
@@ -229,7 +231,9 @@ async function refresh(request: Request): Promise<Headers> {
         session.set("token", token);
 
         let expiresIn = new Date(payload.exp! * 1000);
-        let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+        let expiresInSeconds = Math.trunc(
+          (expiresIn.getTime() - Date.now()) / 1000
+        );
 
         return new Headers({
           "Set-Cookie": await authSession.commitSession(session, {

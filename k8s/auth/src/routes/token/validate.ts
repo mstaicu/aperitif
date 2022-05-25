@@ -10,7 +10,7 @@ import {
   decryptMagicLinkPayload,
   validateRequestHandler,
 } from "@tartine/common";
-import type { MagicLinkPayload, SessionPayload } from "@tartine/common";
+import type { SessionPayload } from "@tartine/common";
 
 import { stripe } from "../../stripe";
 
@@ -24,14 +24,14 @@ router.post(
   [
     body("magicToken")
       .notEmpty()
-      .withMessage("A magic token must be provided with this request"),
+      .withMessage("A 'magicToken' must be provided with this request"),
   ],
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       let { magicToken } = req.body;
 
-      let payload: Partial<MagicLinkPayload> = {};
+      let payload;
 
       try {
         payload = JSON.parse(
@@ -83,7 +83,7 @@ router.post(
 
       if (subscriptions.length === 0) {
         throw new BadRequestError(
-          "The provided email address does not have any subscriptions with us"
+          "The provided email address does not have any active subscriptions with us"
         );
       }
 
@@ -155,7 +155,9 @@ router.post(
       /**
        * How many seconds are there between now and expiresIn?
        */
-      let expiresInSeconds = (expiresIn.getTime() - Date.now()) / 1000;
+      let expiresInSeconds = Math.trunc(
+        (expiresIn.getTime() - Date.now()) / 1000
+      );
 
       if (expiresInSeconds <= 0) {
         throw new BadRequestError(
@@ -173,7 +175,7 @@ router.post(
       /**
        * and ship 🚢
        */
-      return res.status(200).send({
+      return res.status(200).json({
         token,
         landingPage: payload.landingPage,
       });
