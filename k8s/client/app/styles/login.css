@@ -33,29 +33,10 @@ button {
   color: white;
 }
 
-button:active {
-  background: hsl(243deg 85% 63%);
+[aria-hidden="false"] {
+  display: block;
 }
 
-h2 {
-  outline: none;
-  margin-bottom: 0;
-}
-
-h2 + p {
-  margin-top: 0;
-}
-
-.sr-only {
-  border: 0 !important;
-  clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
-  -webkit-clip-path: inset(50%) !important;
-  clip-path: inset(50%) !important; /* 2 */
-  height: 1px !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  position: absolute !important;
-  width: 1px !important;
-  white-space: nowrap !important; /* 3 */
+[aria-hidden="true"] {
+  display: none;
 }

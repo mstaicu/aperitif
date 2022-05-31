@@ -1,7 +1,7 @@
 import type { JwtPayload } from "jsonwebtoken";
 import type Stripe from "stripe";
 
-export type SessionPayload = {
+export type UserPayload = {
   user: {
     /**
      * Unique identifier for the object.
@@ -73,9 +73,7 @@ export type SessionPayload = {
   };
 };
 
-export function hasSessionPayload(
-  obj: any
-): obj is JwtPayload & SessionPayload {
+export function hasUserPayload(obj: any): obj is UserPayload {
   return (
     typeof obj === "object" &&
     typeof obj.user === "object" &&
@@ -99,6 +97,18 @@ export function hasSessionPayload(
     (typeof obj.user.subscription.price.unit_amount === "number" ||
       typeof obj.user.subscription.price.unit_amount === null)
   );
+}
+
+export function isJwtPayload(obj: any): obj is JwtPayload {
+  return (
+    typeof obj === "object" &&
+    typeof obj.iat === "number" &&
+    typeof obj.exp === "number"
+  );
+}
+
+export function isSessionPayload(obj: any): obj is UserPayload & JwtPayload {
+  return isJwtPayload(obj) && hasUserPayload(obj);
 }
 
 export type MagicLinkPayload = {

@@ -6,8 +6,6 @@ import type { NextFunction, Request, Response } from "express";
 import { BadRequestError, requireAuthHandler } from "@tartine/common";
 import type { SessionPayload } from "@tartine/common";
 
-import { stripe } from "../../stripe";
-
 const router = express.Router();
 
 router.post(
@@ -15,30 +13,7 @@ router.post(
   requireAuthHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let tokenPayload: SessionPayload = {
-        user: req.user,
-      };
-
-      const { data: subscriptions } = await stripe.subscriptions.list({
-        customer: req.user.id,
-      });
-
-      if (subscriptions.length === 0) {
-        throw new BadRequestError(
-          "The provided email address does not have any active subscriptions with us"
-        );
-      }
-
-      /**
-       * TODO: What if... the user decides to purchase the same product twice,
-       * i.e. have N subscriptions for the same product
-       */
-      let [subscription] = subscriptions;
-      let {
-        items: {
-          data: [item],
-        },
-      } = subscription;
+      let { subscription } = req.user;
 
       /**
        * Inital token expiration date set to 15 minutes from the moment of this request
@@ -54,9 +29,6 @@ router.post(
         subscription.current_period_end * 1000
       );
 
-      /**
-       *
-       */
       if (subscription.cancel_at_period_end) {
         subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
       }
@@ -69,6 +41,10 @@ router.post(
         expiresIn = subscriptionPeriodEnd;
       }
 
+      if (Date.now() > expiresIn.getTime()) {
+        throw new BadRequestError("The user's active subscription has expired");
+      }
+
       /**
        * How many seconds are there between now and expiresIn?
        */
@@ -76,16 +52,14 @@ router.post(
         (expiresIn.getTime() - Date.now()) / 1000
       );
 
-      if (expiresInSeconds <= 0) {
-        throw new BadRequestError(
-          "The user's current active subscription has expired"
-        );
-      }
+      let payload: SessionPayload = {
+        user: req.user,
+      };
 
       /**
        * Sign...
        */
-      let newToken = sign(tokenPayload, process.env.SESSION_JWT_SECRET!, {
+      let token = sign(payload, process.env.SESSION_JWT_SECRET!, {
         expiresIn: expiresInSeconds,
       });
 
@@ -93,7 +67,7 @@ router.post(
        * and ship 🚢
        */
       return res.status(200).json({
-        token: newToken,
+        token,
       });
     } catch (err) {
       next(err);

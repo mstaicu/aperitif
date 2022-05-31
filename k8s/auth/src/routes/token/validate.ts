@@ -137,9 +137,6 @@ router.post(
         subscription.current_period_end * 1000
       );
 
-      /**
-       *
-       */
       if (subscription.cancel_at_period_end) {
         subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
       }
@@ -152,18 +149,16 @@ router.post(
         expiresIn = subscriptionPeriodEnd;
       }
 
+      if (Date.now() > expiresIn.getTime()) {
+        throw new BadRequestError("The user's active subscription has expired");
+      }
+
       /**
        * How many seconds are there between now and expiresIn?
        */
       let expiresInSeconds = Math.trunc(
         (expiresIn.getTime() - Date.now()) / 1000
       );
-
-      if (expiresInSeconds <= 0) {
-        throw new BadRequestError(
-          "The provided user's current active subscription has expired"
-        );
-      }
 
       /**
        * Sign...

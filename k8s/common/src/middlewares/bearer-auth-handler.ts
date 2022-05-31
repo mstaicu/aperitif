@@ -1,14 +1,15 @@
 import { verify, TokenExpiredError } from "jsonwebtoken";
+
 import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-import { hasSessionPayload } from "../validations";
-import type { SessionPayload } from "../validations";
+import { isSessionPayload } from "../validations";
+import type { UserPayload } from "../validations";
 
 declare global {
   namespace Express {
-    interface Request extends SessionPayload {}
+    interface Request extends UserPayload {}
   }
 }
 
@@ -40,23 +41,17 @@ export const requireBearerAuth = (
           );
         }
 
-        /**
-         * TODO: Add NotBeforeError check if current time is before the nbf claim.
-         */
         throw new BadRequestError(
           "The provided authorization token has failed verification checks"
         );
       }
 
-      if (!hasSessionPayload(payload)) {
+      if (!isSessionPayload(payload)) {
         throw new BadRequestError(
           "Authorization payload contains incorrect or incomplete data"
         );
       }
 
-      /**
-       * TODO: Add exp and iat to req.user
-       */
       req.user = payload.user;
     } else {
       throw new BadRequestError(`Authorization strategy ${type} not supported`);

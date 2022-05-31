@@ -81,11 +81,7 @@ export default () => {
           <input
             type="hidden"
             name="landingPage"
-            value={
-              loaderData.ok === false && loaderData.landingPage
-                ? loaderData.landingPage
-                : "/"
-            }
+            value={loaderData.landingPage ?? "/secret"}
           />
 
           <p id="error-message">

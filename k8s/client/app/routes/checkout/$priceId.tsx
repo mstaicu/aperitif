@@ -1,5 +1,5 @@
-import { json, redirect } from "remix";
-import type { LoaderFunction } from "remix";
+import { json, redirect } from "@remix-run/node";
+import type { LoaderFunction } from "@remix-run/node";
 
 import { stripe } from "~/utils/stripe.server";
 

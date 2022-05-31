@@ -1,6 +1,6 @@
 {
   "name": "@tartine/common",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "Nothing but commons",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

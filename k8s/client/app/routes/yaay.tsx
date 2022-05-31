@@ -1,6 +1,9 @@
 import Stripe from "stripe";
-import { json, useLoaderData, useCatch } from "remix";
-import type { LoaderFunction, ThrownResponse } from "remix";
+import { useLoaderData, useCatch } from "@remix-run/react";
+import { json } from "@remix-run/node";
+
+import type { ThrownResponse } from "@remix-run/react";
+import type { LoaderFunction } from "@remix-run/node";
 
 import { stripe } from "~/utils/stripe.server";
 

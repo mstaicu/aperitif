@@ -1,11 +1,11 @@
 import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
-import { verify, TokenExpiredError } from "jsonwebtoken";
+import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
-import { hasSessionPayload } from "@tartine/common";
-import type { SessionPayload, ProblemDetailsResponse } from "@tartine/common";
+import { isSessionPayload } from "@tartine/common";
+import type { UserPayload, ProblemDetailsResponse } from "@tartine/common";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
@@ -69,24 +69,18 @@ export let authSession = createCookieSessionStorage({
  * even if the user is on your site every day.
  */
 
+type SessionPayload = JwtPayload & UserPayload;
+
 export async function getAuthSession(
   request: Request
-): Promise<
-  [SessionPayload & JwtPayload, string, (request: Request) => Promise<Headers>]
-> {
+): Promise<[SessionPayload, string, (request: Request) => Promise<Headers>]> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
-  if (!session.has("token")) {
-    throw redirect("/login", {
-      status: 303,
-      headers: {
-        "auth-redirect": getReferrer(request),
-      },
-    });
-  }
+  let payload = await getJwtPayload(request);
+  let token = session.get("token");
 
-  return [await getJwtPayload(request), session.get("token"), refresh];
+  return [payload, token, refresh];
 }
 
 /*******************************************************************************
@@ -115,7 +109,7 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
    * 'magic' query string parameter is not present, render the login page
    */
   if (typeof magicToken !== "string") {
-    return json({ ok: false, landingPage: getReferrer(request) });
+    return json({ landingPage: getReferrer(request) });
   }
 
   /*******************************************************************************
@@ -135,7 +129,7 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
 
     let payload = verify(token, process.env.SESSION_JWT_SECRET!);
 
-    if (hasSessionPayload(payload)) {
+    if (isSessionPayload(payload)) {
       let session = await authSession.getSession();
       session.set("token", token);
 
@@ -147,7 +141,7 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
       return redirect(landingPage, {
         headers: {
           "Set-Cookie": await authSession.commitSession(session, {
-            maxAge: expiresInSeconds,
+            maxAge: expiresInSeconds > 0 ? expiresInSeconds : 0,
           }),
         },
       });
@@ -155,7 +149,7 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
   }
 
   /*******************************************************************************
-   * Render the catch boundary in place of the render component of the login page
+   * Render the catch boundary in place of the render component of the login page (throw vs return)
    * if there is a problem while processing the exchange of the magic token for a jwt
    */
   let details: ProblemDetailsResponse = await response.json();
@@ -193,6 +187,7 @@ export let loginAction: ActionFunction = async ({ request }) => {
 function getReferrer(request: Request) {
   /*******************************************************************************
    * This doesn't work with all remix adapters yet, so pick a good default
+   *******************************************************************************
    */
   let referrer = request.referrer;
 
@@ -210,7 +205,7 @@ async function refresh(request: Request): Promise<Headers> {
 
   try {
     if (!session.has("token")) {
-      throw new Error("The current user session does not contain a JWT");
+      throw new Error("The current user session does not contain a token");
     }
 
     let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
@@ -227,7 +222,7 @@ async function refresh(request: Request): Promise<Headers> {
 
       let payload = verify(token, process.env.SESSION_JWT_SECRET!);
 
-      if (hasSessionPayload(payload)) {
+      if (isSessionPayload(payload)) {
         session.set("token", token);
 
         let expiresIn = new Date(payload.exp! * 1000);
@@ -237,7 +232,7 @@ async function refresh(request: Request): Promise<Headers> {
 
         return new Headers({
           "Set-Cookie": await authSession.commitSession(session, {
-            maxAge: expiresInSeconds,
+            maxAge: expiresInSeconds > 0 ? expiresInSeconds : 0,
           }),
         });
       }
@@ -248,7 +243,7 @@ async function refresh(request: Request): Promise<Headers> {
     }
 
     throw new Error(
-      "The request to renew the JSON Web Token failed checks on the server"
+      "The request to renew the session token failed checks on the server"
     );
   } catch (err) {
     throw redirect("/login", {
@@ -261,16 +256,18 @@ async function refresh(request: Request): Promise<Headers> {
   }
 }
 
-async function getJwtPayload(
-  request: Request
-): Promise<JwtPayload & SessionPayload> {
+async function getJwtPayload(request: Request): Promise<SessionPayload> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
   try {
+    if (!session.has("token")) {
+      throw new Error("The current user session does not contain a token");
+    }
+
     let payload = verify(session.get("token"), process.env.SESSION_JWT_SECRET!);
 
-    if (!hasSessionPayload(payload)) {
+    if (!isSessionPayload(payload)) {
       throw new Error(
         "Authorization payload contains incorrect or incomplete session data"
       );
@@ -278,12 +275,6 @@ async function getJwtPayload(
 
     return payload;
   } catch (error) {
-    if (error instanceof TokenExpiredError) {
-      /**
-       * TODO: Add logging?
-       */
-    }
-
     throw redirect("/login", {
       status: 303,
       headers: {

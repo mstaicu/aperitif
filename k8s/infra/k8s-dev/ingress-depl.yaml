@@ -162,7 +162,7 @@ spec:
   entryPoints:
     - https
   routes:
-    - match: Host(`ticketing`)
+    - match: Host(`tma1`)
       kind: Rule
       middlewares:
         - name: tls
@@ -174,7 +174,7 @@ spec:
     options:
       name: tls-options
     domains:
-      - main: ticketing
+      - main: tma1
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -184,7 +184,7 @@ spec:
   entryPoints:
     - http
   routes:
-    - match: Host(`ticketing`)
+    - match: Host(`tma1`)
       kind: Rule
       middlewares:
         - name: tls
@@ -201,7 +201,7 @@ spec:
   entryPoints:
     - https
   routes:
-    - match: Host(`ticketing`) && PathPrefix(`/socket`)
+    - match: Host(`tma1`) && PathPrefix(`/socket`)
       kind: Rule
       services:
         - name: client-srv
@@ -211,7 +211,7 @@ spec:
     options:
       name: tls-options
     domains:
-      - main: ticketing
+      - main: tma1
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -221,7 +221,7 @@ spec:
   entryPoints:
     - https
   routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
+    - match: Host(`tma1`) && PathPrefix(`/api/auth`)
       kind: Rule
       middlewares:
         - name: tls
@@ -234,7 +234,7 @@ spec:
     options:
       name: tls-options
     domains:
-      - main: ticketing
+      - main: tma1
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -244,7 +244,7 @@ spec:
   entryPoints:
     - http
   routes:
-    - match: Host(`ticketing`) && PathPrefix(`/api/auth`)
+    - match: Host(`tma1`) && PathPrefix(`/api/auth`)
       kind: Rule
       middlewares:
         - name: tls
@@ -262,7 +262,7 @@ spec:
 #   entryPoints:
 #     - https
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/tickets`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -275,7 +275,7 @@ spec:
 #     options:
 #       name: tls-options
 #     domains:
-#       - main: ticketing
+#       - main: tma1
 # ---
 # apiVersion: traefik.containo.us/v1alpha1
 # kind: IngressRoute
@@ -285,7 +285,7 @@ spec:
 #   entryPoints:
 #     - http
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/tickets`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/tickets`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -303,7 +303,7 @@ spec:
 #   entryPoints:
 #     - https
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/orders`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -316,7 +316,7 @@ spec:
 #     options:
 #       name: tls-options
 #     domains:
-#       - main: ticketing
+#       - main: tma1
 # ---
 # apiVersion: traefik.containo.us/v1alpha1
 # kind: IngressRoute
@@ -326,7 +326,7 @@ spec:
 #   entryPoints:
 #     - http
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/orders`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/orders`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -344,7 +344,7 @@ spec:
 #   entryPoints:
 #     - https
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/payments`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -357,7 +357,7 @@ spec:
 #     options:
 #       name: tls-options
 #     domains:
-#       - main: ticketing
+#       - main: tma1
 # ---
 # apiVersion: traefik.containo.us/v1alpha1
 # kind: IngressRoute
@@ -367,7 +367,7 @@ spec:
 #   entryPoints:
 #     - http
 #   routes:
-#     - match: Host(`ticketing`) && PathPrefix(`/api/payments`)
+#     - match: Host(`tma1`) && PathPrefix(`/api/payments`)
 #       kind: Rule
 #       middlewares:
 #         - name: tls
@@ -388,7 +388,7 @@ spec:
   entryPoints:
     - https
   routes:
-    - match: Host(`ticketing`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+    - match: Host(`tma1`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
       middlewares:
         - name: tls
@@ -402,7 +402,7 @@ spec:
     options:
       name: tls-options
     domains:
-      - main: ticketing
+      - main: tma1
 ---
 # --------------------------------------------------------
 # Middlewares
