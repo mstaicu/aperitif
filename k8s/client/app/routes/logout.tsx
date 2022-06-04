@@ -1,15 +1,5 @@
-import { redirect } from "@remix-run/node";
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { ActionFunction } from "@remix-run/node";
 
-import { authSession } from "~/utils/session.server";
+import { getLoginRedirect } from "~/utils/session.server";
 
-export let action: ActionFunction = async ({ request }) => {
-  let session = await authSession.getSession(request.headers.get("Cookie"));
-
-  throw redirect("/login", {
-    headers: {
-      "Set-Cookie": await authSession.destroySession(session),
-    },
-  });
-};
-export let loader: LoaderFunction = async () => redirect("/login");
+export let action: ActionFunction = ({ request }) => getLoginRedirect(request);

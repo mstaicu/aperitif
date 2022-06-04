@@ -9,12 +9,17 @@ import {
   useTransition,
 } from "@remix-run/react";
 
+import type { LinksFunction } from "@remix-run/node";
+import type { ProblemDetailsResponse } from "@tartine/common";
+
 export {
   loginAction as action,
   loginLoader as loader,
 } from "~/utils/session.server";
 
-import type { ProblemDetailsResponse } from "@tartine/common";
+import styles from "~/styles/login.css";
+
+export let links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 /**
  *
@@ -47,6 +52,11 @@ export default () => {
     : actionData?.ok === false
     ? "error"
     : "idle";
+
+  let errorMessage =
+    state === "error"
+      ? actionData?.invalid_params?.email || actionData?.detail
+      : undefined;
 
   useEffect(() => {
     if (state === "error") {
@@ -81,15 +91,11 @@ export default () => {
           <input
             type="hidden"
             name="landingPage"
-            value={loaderData.landingPage ?? "/secret"}
+            value={loaderData.landingPage}
           />
 
           <p id="error-message">
-            {state === "error" ? (
-              actionData?.invalid_params?.email || actionData?.detail
-            ) : (
-              <>&nbsp;</>
-            )}
+            {state === "error" ? errorMessage : <>&nbsp;</>}
           </p>
         </fieldset>
 

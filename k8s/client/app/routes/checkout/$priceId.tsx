@@ -1,43 +1,66 @@
 import { json, redirect } from "@remix-run/node";
-import type { LoaderFunction } from "@remix-run/node";
+
+import type { ActionFunction } from "@remix-run/node";
 
 import { stripe } from "~/utils/stripe.server";
 
-export let loader: LoaderFunction = async ({ params }) => {
-  const { priceId } = params;
+export let action: ActionFunction = async ({ request, params }) => {
+  let { priceId } = params;
+  let { email } = Object.fromEntries(new URLSearchParams(await request.text()));
 
   if (!priceId) {
     throw json(
-      "You must provide a 'priceId' for the subscription you are looking to purchase",
+      {
+        message: "You must provide a 'priceId' with this request",
+      },
       {
         status: 400,
       }
     );
   }
 
-  const price = await stripe.prices.retrieve(priceId);
+  if (!email) {
+    throw json(
+      {
+        message: "You must provide an 'email' address with this request",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  let price = await stripe.prices.retrieve(priceId);
 
   if (!price) {
     throw json(
-      "The provide 'priceId' does not belong to any plans that we offer",
+      {
+        message:
+          "The provided 'priceId' does not belong to any plans that we offer",
+      },
       {
         status: 400,
       }
     );
   }
 
-  const { url } = await stripe.checkout.sessions.create({
+  let { url } = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
 
-    success_url: `https://${process.env.DOMAIN}/yaay?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `https://${process.env.DOMAIN}/naay`,
+    success_url: `https://${process.env.DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `https://${process.env.DOMAIN}/checkout/cancelled`,
   });
 
   if (!url) {
-    throw json("Something went wrong while trying to initiate the checkout", {
-      status: 400,
-    });
+    throw json(
+      {
+        message: "Something went wrong while trying to initiate the checkout",
+      },
+      {
+        status: 400,
+      }
+    );
   }
 
   return redirect(url);

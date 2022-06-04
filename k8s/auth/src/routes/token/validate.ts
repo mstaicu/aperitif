@@ -18,6 +18,7 @@ const router = express.Router();
 
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
+let tokenExpiration = 15; /** 15 mins */
 
 router.post(
   "/token/validate",
@@ -65,8 +66,8 @@ router.post(
        * Enter Stripe
        * ---------------------------------------------------------------------
        */
-      const { data: customers } = await stripe.customers.search({
-        query: `email:'${payload.email}'`,
+      const { data: customers } = await stripe.customers.list({
+        email: payload.email,
       });
 
       const [customer] = customers;
@@ -127,7 +128,7 @@ router.post(
        * Inital token expiration date set to 15 minutes from the moment of this request
        */
       let expiresIn = new Date();
-      expiresIn.setMinutes(expiresIn.getMinutes() + 15);
+      expiresIn.setMinutes(expiresIn.getMinutes() + tokenExpiration);
 
       /**
        * Stripe timestamps are in seconds. They need to be converted to milliseconds

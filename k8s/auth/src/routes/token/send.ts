@@ -23,10 +23,10 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { email, landingPage = "/" } = req.body;
+      let { email, landingPage = "/user" } = req.body;
 
-      const { data: customers } = await stripe.customers.search({
-        query: `email:'${email}'`,
+      const { data: customers } = await stripe.customers.list({
+        email,
       });
 
       const [customer] = customers;
@@ -36,6 +36,10 @@ router.post(
           "The provided email address is not registered with us"
         );
       }
+
+      /**
+       * TODO: Check if user has an active subscription?
+       */
 
       try {
         await sendMagicLink(email, landingPage);

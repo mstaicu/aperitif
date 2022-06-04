@@ -1,40 +1,5 @@
-fieldset {
-  all: unset;
-  display: flex;
-  gap: 0.25rem;
-  margin-top: 2rem;
-}
-
-button,
-input {
-  padding: 0.5rem 1rem;
-  border: solid 1px;
-  border-radius: 4px;
-  line-height: 1.4;
-  font-size: 1.125rem;
-}
-
-button:focus,
-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(42deg 100% 68%);
-}
-
-input {
-  width: 12rem;
-  border-color: #ccc;
-  font-family: inherit;
-}
-
-button {
-  width: 10rem;
-  background: hsl(243deg 85% 73%);
-  border-color: hsl(243deg 85% 63%);
-  color: white;
-}
-
 [aria-hidden="false"] {
-  display: block;
+  display: initial;
 }
 
 [aria-hidden="true"] {

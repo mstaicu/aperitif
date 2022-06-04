@@ -7,13 +7,23 @@ import type { LoaderFunction } from "@remix-run/node";
 
 import { stripe } from "~/utils/stripe.server";
 
+/**
+ *
+ */
+
 type LoaderData = {
   customer: Stripe.Customer;
 };
 
+type CatchBoundaryData = { message: string };
+
+/**
+ *
+ */
+
 export let loader: LoaderFunction = async ({ request }) => {
-  let url = new URL(request.url);
-  let sessionId = url.searchParams.get("session_id");
+  let { searchParams } = new URL(request.url);
+  let sessionId = searchParams.get("session_id");
 
   if (!sessionId) {
     throw json(
@@ -46,6 +56,10 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default () => {
   let { customer } = useLoaderData<LoaderData>();
 
+  /**
+   * TODO: Continue onboarding the user?
+   */
+
   return (
     <main>
       <h2>Welcome: {customer.email}.</h2>
@@ -54,12 +68,13 @@ export default () => {
 };
 
 export function CatchBoundary() {
-  const caught = useCatch<ThrownResponse<400, { message: string }>>();
+  const {
+    data: { message },
+  } = useCatch<ThrownResponse<400, CatchBoundaryData>>();
 
   return (
     <main>
-      <h2>Uh oh, something went wrong. {caught.data.message}</h2>
-      {/* <Link to=".">Try again?</Link> */}
+      <h2>Uh oh, something went wrong. {message}</h2>
     </main>
   );
 }

@@ -95,9 +95,6 @@ export async function getAuthSession(
  * this time we have a token in the URL. If it's valid, we set the JWT as the "token"
  * in the session as we redirect to the landing page. We've got a user session!
  *
- * You might also do some work with your database here, like create a user
- * record.
- *
  * Now go up to (6)
  */
 
@@ -141,7 +138,12 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
       return redirect(landingPage, {
         headers: {
           "Set-Cookie": await authSession.commitSession(session, {
-            maxAge: expiresInSeconds > 0 ? expiresInSeconds : 0,
+            /**
+             * Indicates the number of seconds until the cookie expires.
+             * A zero or negative number will expire the cookie immediately.
+             * If both Expires and Max-Age are set, Max-Age has precedence.
+             */
+            maxAge: expiresInSeconds,
           }),
         },
       });
@@ -184,21 +186,6 @@ export let loginAction: ActionFunction = async ({ request }) => {
   return json({ ok: true });
 };
 
-function getReferrer(request: Request) {
-  /*******************************************************************************
-   * This doesn't work with all remix adapters yet, so pick a good default
-   *******************************************************************************
-   */
-  let referrer = request.referrer;
-
-  if (referrer) {
-    let url = new URL(referrer);
-    return url.pathname + url.search;
-  }
-
-  return "/";
-}
-
 async function refresh(request: Request): Promise<Headers> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
@@ -232,7 +219,12 @@ async function refresh(request: Request): Promise<Headers> {
 
         return new Headers({
           "Set-Cookie": await authSession.commitSession(session, {
-            maxAge: expiresInSeconds > 0 ? expiresInSeconds : 0,
+            /**
+             * Indicates the number of seconds until the cookie expires.
+             * A zero or negative number will expire the cookie immediately.
+             * If both Expires and Max-Age are set, Max-Age has precedence.
+             */
+            maxAge: expiresInSeconds,
           }),
         });
       }
@@ -243,16 +235,10 @@ async function refresh(request: Request): Promise<Headers> {
     }
 
     throw new Error(
-      "The request to renew the session token failed checks on the server"
+      "The request to renew the JSON Web Token failed checks on the server"
     );
   } catch (err) {
-    throw redirect("/login", {
-      status: 303,
-      headers: {
-        "auth-redirect": getReferrer(request),
-        "Set-Cookie": await authSession.destroySession(session),
-      },
-    });
+    throw await getLoginRedirect(request);
   }
 }
 
@@ -275,12 +261,34 @@ async function getJwtPayload(request: Request): Promise<SessionPayload> {
 
     return payload;
   } catch (error) {
-    throw redirect("/login", {
-      status: 303,
-      headers: {
-        "auth-redirect": getReferrer(request),
-        "Set-Cookie": await authSession.destroySession(session),
-      },
-    });
+    throw await getLoginRedirect(request);
   }
+}
+
+export async function getLoginRedirect(request: Request) {
+  let cookie = request.headers.get("cookie");
+  let session = await authSession.getSession(cookie);
+
+  return redirect("/login", {
+    status: 303,
+    headers: {
+      "auth-redirect": getReferrer(request),
+      "Set-Cookie": await authSession.destroySession(session),
+    },
+  });
+}
+
+function getReferrer(request: Request) {
+  /*******************************************************************************
+   * This doesn't work with all remix adapters yet, so pick a good default
+   *******************************************************************************
+   */
+  let referrer = request.referrer;
+
+  if (referrer) {
+    let url = new URL(referrer);
+    return url.pathname + url.search;
+  }
+
+  return "/";
 }

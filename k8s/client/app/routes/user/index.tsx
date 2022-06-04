@@ -3,17 +3,17 @@ import { useLoaderData } from "@remix-run/react";
 
 import type { JwtPayload } from "jsonwebtoken";
 import type { LoaderFunction } from "@remix-run/node";
-import type { SessionPayload } from "@tartine/common";
+import type { UserPayload } from "@tartine/common";
 
 import { getAuthSession } from "~/utils/session.server";
 
-type LoaderData = SessionPayload & JwtPayload;
+type LoaderData = UserPayload & JwtPayload;
 
 export let loader: LoaderFunction = async ({ request }) => {
-  let [payload] = await getAuthSession(request);
+  let [user, _, refresh] = await getAuthSession(request);
 
-  return json({
-    user: payload.user,
+  return json(user, {
+    headers: await refresh(request),
   });
 };
 

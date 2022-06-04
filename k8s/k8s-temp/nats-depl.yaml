@@ -43,7 +43,7 @@ spec:
               "--sql_driver",
               "postgres",
               "--sql_source",
-              "user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) host=$(NATS_POSTGRES_HOST) port=$(NATS_POSTGRES_PORT) dbname=$(POSTGRES_DB) sslmode=disable",
+              "user=$(NATS_POSTGRES_USER) password=$(NATS_POSTGRES_PASSWORD) host=$(NATS_POSTGRES_HOST) port=$(NATS_POSTGRES_PORT) dbname=$(NATS_POSTGRES_DB) sslmode=disable",
               #
               "-cid",
               "$(DOMAIN)",
