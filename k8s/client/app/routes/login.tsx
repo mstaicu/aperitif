@@ -8,14 +8,33 @@ import {
   useLoaderData,
   useTransition,
 } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
 
-import type { LinksFunction } from "@remix-run/node";
+import type {
+  ActionFunction,
+  LinksFunction,
+  LoaderFunction,
+} from "@remix-run/node";
 import type { ProblemDetailsResponse } from "@tartine/common";
 
-export {
-  loginAction as action,
-  loginLoader as loader,
+import {
+  authSession,
+  /**
+   *
+   */
+  exchangeMagicToken,
+  emailMagicToken,
+  /**
+   *
+   */
+  getReferrer,
+  getTokenExpiration,
+  getLoginRedirect,
 } from "~/utils/session.server";
+
+/**
+ *
+ */
 
 import styles from "~/styles/login.css";
 
@@ -24,14 +43,53 @@ export let links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 /**
  *
  */
-type ActionData = {
-  ok: boolean;
-} & Partial<ProblemDetailsResponse>;
 
 type LoaderData = {
-  ok: boolean;
   landingPage?: string;
-} & Partial<ProblemDetailsResponse>;
+};
+
+export let loader: LoaderFunction = async ({ request }) => {
+  let { searchParams } = new URL(request.url);
+  let magicToken = searchParams.get("magic");
+
+  if (typeof magicToken !== "string") {
+    return json({ landingPage: getReferrer(request) });
+  }
+
+  /**
+   * If the token exchange throws, render the catch boundary
+   */
+  let { jsonWebToken, landingPage } = await exchangeMagicToken(magicToken);
+
+  let session = await authSession.getSession();
+  session.set("jsonWebToken", jsonWebToken);
+
+  return redirect(landingPage, {
+    headers: {
+      "Set-Cookie": await authSession.commitSession(session, {
+        maxAge: getTokenExpiration(jsonWebToken),
+      }),
+    },
+  });
+};
+
+/**
+ *
+ */
+type ActionData = Partial<ProblemDetailsResponse>;
+
+export let action: ActionFunction = async ({ request }) => {
+  let { email, landingPage } = Object.fromEntries(
+    new URLSearchParams(await request.text())
+  );
+
+  try {
+    await emailMagicToken(email, landingPage);
+  } catch (error) {
+    console.error("login action error", error);
+    return error;
+  }
+};
 
 /**
  *
@@ -47,9 +105,9 @@ export default () => {
 
   let state: "success" | "error" | "idle" | "submitting" = transition.submission
     ? "submitting"
-    : actionData?.ok === true
+    : actionData?.status === 200
     ? "success"
-    : actionData?.ok === false
+    : actionData?.status !== 200
     ? "error"
     : "idle";
 

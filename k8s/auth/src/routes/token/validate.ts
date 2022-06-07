@@ -18,19 +18,19 @@ const router = express.Router();
 
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
-let tokenExpiration = 15; /** 15 mins */
+let jsonWebTokenExpiration = 15; /** 15 mins */
 
 router.post(
   "/token/validate",
   [
-    body("magicToken")
+    body("token")
       .notEmpty()
-      .withMessage("A 'magicToken' must be provided with this request"),
+      .withMessage("A 'token' must be provided with this request"),
   ],
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { magicToken } = req.body;
+      let { token } = req.body;
 
       let payload;
 
@@ -39,7 +39,7 @@ router.post(
           /**
            * The decodeURIComponent call does not affect already decoded URI components
            */
-          decryptMagicLinkPayload(decodeURIComponent(magicToken))
+          decryptMagicLinkPayload(decodeURIComponent(token))
         );
       } catch (error) {
         throw new BadRequestError(
@@ -100,35 +100,10 @@ router.post(
       } = subscription;
 
       /**
-       *
-       */
-      let tokenPayload: SessionPayload = {
-        user: {
-          id: customer.id,
-          subscription: {
-            id: subscription.id,
-            status: subscription.status,
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            cancel_at: subscription.cancel_at,
-            current_period_start: subscription.current_period_start,
-            current_period_end: subscription.current_period_end,
-            product: {
-              id: item.price.product,
-            },
-            price: {
-              id: item.price.id,
-              currency: item.price.currency,
-              unit_amount: item.price.unit_amount,
-            },
-          },
-        },
-      };
-
-      /**
        * Inital token expiration date set to 15 minutes from the moment of this request
        */
       let expiresIn = new Date();
-      expiresIn.setMinutes(expiresIn.getMinutes() + tokenExpiration);
+      expiresIn.setMinutes(expiresIn.getMinutes() + jsonWebTokenExpiration);
 
       /**
        * Stripe timestamps are in seconds. They need to be converted to milliseconds
@@ -155,6 +130,31 @@ router.post(
       }
 
       /**
+       *
+       */
+      let jsonWebTokenPayload: SessionPayload = {
+        user: {
+          id: customer.id,
+          subscription: {
+            id: subscription.id,
+            status: subscription.status,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            cancel_at: subscription.cancel_at,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            product: {
+              id: item.price.product,
+            },
+            price: {
+              id: item.price.id,
+              currency: item.price.currency,
+              unit_amount: item.price.unit_amount,
+            },
+          },
+        },
+      };
+
+      /**
        * How many seconds are there between now and expiresIn?
        */
       let expiresInSeconds = Math.trunc(
@@ -164,15 +164,19 @@ router.post(
       /**
        * Sign...
        */
-      let token = sign(tokenPayload, process.env.SESSION_JWT_SECRET!, {
-        expiresIn: expiresInSeconds,
-      });
+      let jsonWebToken = sign(
+        jsonWebTokenPayload,
+        process.env.SESSION_JWT_SECRET!,
+        {
+          expiresIn: expiresInSeconds,
+        }
+      );
 
       /**
        * and ship 🚢
        */
       return res.status(200).json({
-        token,
+        jsonWebToken,
         landingPage: payload.landingPage,
       });
     } catch (err) {

@@ -5,60 +5,23 @@ import { json } from "@remix-run/node";
 import type { ThrownResponse } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 
-import { stripe } from "~/utils/stripe.server";
-
-/**
- *
- */
+import { getStripeSessionCustomer } from "~/utils/onboarding.server";
 
 type LoaderData = {
   customer: Stripe.Customer;
 };
 
-type CatchBoundaryData = { message: string };
-
-/**
- *
- */
-
 export let loader: LoaderFunction = async ({ request }) => {
   let { searchParams } = new URL(request.url);
   let sessionId = searchParams.get("session_id");
 
-  if (!sessionId) {
-    throw json(
-      { message: "Uh oh, you must provide a session identifier" },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  let session = await stripe.checkout.sessions.retrieve(sessionId);
-
-  if (!session) {
-    throw json(
-      {
-        message:
-          "Uh oh, could not retrieve the session for the given session identifier",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
   return json({
-    customer: await stripe.customers.retrieve(`${session.customer}`),
+    customer: await getStripeSessionCustomer({ sessionId }),
   });
 };
 
 export default () => {
   let { customer } = useLoaderData<LoaderData>();
-
-  /**
-   * TODO: Continue onboarding the user?
-   */
 
   return (
     <main>
@@ -66,6 +29,12 @@ export default () => {
     </main>
   );
 };
+
+/**
+ *
+ */
+
+type CatchBoundaryData = { message: string };
 
 export function CatchBoundary() {
   const {

@@ -37,10 +37,6 @@ router.post(
         );
       }
 
-      /**
-       * TODO: Check if user has an active subscription?
-       */
-
       try {
         await sendMagicLink(email, landingPage);
       } catch (err) {

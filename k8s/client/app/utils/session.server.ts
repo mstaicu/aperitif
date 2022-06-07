@@ -1,5 +1,4 @@
 import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
 import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
@@ -69,18 +68,24 @@ export let authSession = createCookieSessionStorage({
  * even if the user is on your site every day.
  */
 
-type SessionPayload = JwtPayload & UserPayload;
-
 export async function getAuthSession(
   request: Request
-): Promise<[SessionPayload, string, (request: Request) => Promise<Headers>]> {
-  let cookie = request.headers.get("cookie");
-  let session = await authSession.getSession(cookie);
+): Promise<
+  [JwtPayload & UserPayload, string, (request: Request) => Promise<Headers>]
+> {
+  let jsonWebToken = await getJsonWebToken(request);
 
-  let payload = await getJwtPayload(request);
-  let token = session.get("token");
+  if (!jsonWebToken) {
+    throw await getLoginRedirect(request);
+  }
 
-  return [payload, token, refresh];
+  let jsonWebTokenPayload = await getJsonWebTokenPayload(request);
+
+  if (!isSessionPayload(jsonWebTokenPayload)) {
+    throw await getLoginRedirect(request);
+  }
+
+  return [jsonWebTokenPayload, jsonWebToken, refreshSession];
 }
 
 /*******************************************************************************
@@ -98,66 +103,6 @@ export async function getAuthSession(
  * Now go up to (6)
  */
 
-export let loginLoader: LoaderFunction = async ({ request }) => {
-  let { searchParams } = new URL(request.url);
-  let magicToken = searchParams.get("magic");
-
-  /*******************************************************************************
-   * 'magic' query string parameter is not present, render the login page
-   */
-  if (typeof magicToken !== "string") {
-    return json({ landingPage: getReferrer(request) });
-  }
-
-  /*******************************************************************************
-   * 'magic' query string parameter present, validate the magic token, redirect
-   */
-  let response = await fetch("https://traefik-lb-srv/api/auth/token/validate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Host: process.env.DOMAIN!,
-    },
-    body: JSON.stringify({ magicToken }),
-  });
-
-  if (response.ok) {
-    let { token, landingPage } = await response.json();
-
-    let payload = verify(token, process.env.SESSION_JWT_SECRET!);
-
-    if (isSessionPayload(payload)) {
-      let session = await authSession.getSession();
-      session.set("token", token);
-
-      let expiresIn = new Date(payload.exp! * 1000);
-      let expiresInSeconds = Math.trunc(
-        (expiresIn.getTime() - Date.now()) / 1000
-      );
-
-      return redirect(landingPage, {
-        headers: {
-          "Set-Cookie": await authSession.commitSession(session, {
-            /**
-             * Indicates the number of seconds until the cookie expires.
-             * A zero or negative number will expire the cookie immediately.
-             * If both Expires and Max-Age are set, Max-Age has precedence.
-             */
-            maxAge: expiresInSeconds,
-          }),
-        },
-      });
-    }
-  }
-
-  /*******************************************************************************
-   * Render the catch boundary in place of the render component of the login page (throw vs return)
-   * if there is a problem while processing the exchange of the magic token for a jwt
-   */
-  let details: ProblemDetailsResponse = await response.json();
-  throw json(details, { status: details.status });
-};
-
 /*******************************************************************************
  * 4. After the user submits the form with their email address, we read the POST
  * body from the request, validate it, send the email, and finally render the
@@ -166,103 +111,109 @@ export let loginLoader: LoaderFunction = async ({ request }) => {
  *
  * No go back up to (5)
  */
-export let loginAction: ActionFunction = async ({ request }) => {
+
+/**
+ * TODO: Use typed return types for express endpoints as well
+ */
+type ExchangeMagicToken = (
+  token: string
+) => Promise<{ jsonWebToken: string; landingPage: string }>;
+
+export let exchangeMagicToken: ExchangeMagicToken = async (token) => {
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/validate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Host: process.env.DOMAIN!,
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  let details: ProblemDetailsResponse = await response.json();
+  throw json(details, { status: details.status });
+};
+
+/**
+ * TODO: Use typed return types for express endpoints as well
+ */
+type RefreshJsonWebToken = (
+  jsonWebToken: string
+) => Promise<{ jsonWebToken: string }>;
+
+let refreshJsonWebToken: RefreshJsonWebToken = async (jsonWebToken) => {
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${jsonWebToken}`,
+      "Content-Type": "application/json",
+      Host: process.env.DOMAIN!,
+    },
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  let details: ProblemDetailsResponse = await response.json();
+  throw json(details, { status: details.status });
+};
+
+export let emailMagicToken = async (email: string, landingPage: string) => {
   let response = await fetch("https://traefik-lb-srv/api/auth/token/send", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Host: process.env.DOMAIN!,
     },
-    body: JSON.stringify(
-      Object.fromEntries(new URLSearchParams(await request.text()))
-    ),
+    body: JSON.stringify({ email, landingPage }),
   });
 
-  if (!response.ok) {
-    let details: ProblemDetailsResponse = await response.json();
-    return json({ ok: false, ...details });
+  if (response.ok) {
+    return await response.json();
   }
 
-  return json({ ok: true });
+  let details: ProblemDetailsResponse = await response.json();
+  throw json(details, { status: details.status });
 };
 
-async function refresh(request: Request): Promise<Headers> {
-  let cookie = request.headers.get("cookie");
-  let session = await authSession.getSession(cookie);
-
+async function refreshSession(request: Request): Promise<Headers> {
   try {
-    if (!session.has("token")) {
-      throw new Error("The current user session does not contain a token");
-    }
-
-    let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.get("token")}`,
-        "Content-Type": "application/json",
-        Host: process.env.DOMAIN!,
-      },
-    });
-
-    if (response.ok) {
-      let { token } = await response.json();
-
-      let payload = verify(token, process.env.SESSION_JWT_SECRET!);
-
-      if (isSessionPayload(payload)) {
-        session.set("token", token);
-
-        let expiresIn = new Date(payload.exp! * 1000);
-        let expiresInSeconds = Math.trunc(
-          (expiresIn.getTime() - Date.now()) / 1000
-        );
-
-        return new Headers({
-          "Set-Cookie": await authSession.commitSession(session, {
-            /**
-             * Indicates the number of seconds until the cookie expires.
-             * A zero or negative number will expire the cookie immediately.
-             * If both Expires and Max-Age are set, Max-Age has precedence.
-             */
-            maxAge: expiresInSeconds,
-          }),
-        });
-      }
-
-      throw new Error(
-        "Renewed JSON Web Token contains incorrect or incomplete session data"
-      );
-    }
-
-    throw new Error(
-      "The request to renew the JSON Web Token failed checks on the server"
+    let { jsonWebToken } = await refreshJsonWebToken(
+      await getJsonWebToken(request)
     );
+
+    let cookie = request.headers.get("cookie");
+    let session = await authSession.getSession(cookie);
+
+    return new Headers({
+      "Set-Cookie": await authSession.commitSession(session, {
+        maxAge: getTokenExpiration(jsonWebToken),
+      }),
+    });
   } catch (err) {
     throw await getLoginRedirect(request);
   }
 }
 
-async function getJwtPayload(request: Request): Promise<SessionPayload> {
-  let cookie = request.headers.get("cookie");
-  let session = await authSession.getSession(cookie);
+/**
+ *
+ */
 
-  try {
-    if (!session.has("token")) {
-      throw new Error("The current user session does not contain a token");
-    }
+export function getTokenExpiration(jsonWebToken: string) {
+  let { exp } = verifyJsonWebToken(jsonWebToken);
 
-    let payload = verify(session.get("token"), process.env.SESSION_JWT_SECRET!);
+  /**
+   * Get the JsonWebToken's 'exp' expiration claim value, which is in seconds
+   * Convert to milliseconds by multiplying with 1000
+   */
+  let expiresIn = new Date(exp! * 1000);
+  let expiresInSeconds = Math.trunc((expiresIn.getTime() - Date.now()) / 1000);
 
-    if (!isSessionPayload(payload)) {
-      throw new Error(
-        "Authorization payload contains incorrect or incomplete session data"
-      );
-    }
-
-    return payload;
-  } catch (error) {
-    throw await getLoginRedirect(request);
-  }
+  return expiresInSeconds;
 }
 
 export async function getLoginRedirect(request: Request) {
@@ -278,7 +229,7 @@ export async function getLoginRedirect(request: Request) {
   });
 }
 
-function getReferrer(request: Request) {
+export function getReferrer(request: Request) {
   /*******************************************************************************
    * This doesn't work with all remix adapters yet, so pick a good default
    *******************************************************************************
@@ -286,9 +237,24 @@ function getReferrer(request: Request) {
   let referrer = request.referrer;
 
   if (referrer) {
-    let url = new URL(referrer);
-    return url.pathname + url.search;
+    let { pathname, search } = new URL(referrer);
+    return `${pathname}${search}`;
   }
 
   return "/";
+}
+
+async function getJsonWebToken(request: Request) {
+  let cookie = request.headers.get("cookie");
+  let { get } = await authSession.getSession(cookie);
+
+  return get("jsonWebToken");
+}
+
+async function getJsonWebTokenPayload(request: Request) {
+  return verifyJsonWebToken(await getJsonWebToken(request));
+}
+
+function verifyJsonWebToken(jsonWebToken: string) {
+  return verify(jsonWebToken, process.env.SESSION_JWT_SECRET!) as JwtPayload;
 }

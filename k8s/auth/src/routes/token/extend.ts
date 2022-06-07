@@ -59,7 +59,7 @@ router.post(
       /**
        * Sign...
        */
-      let token = sign(payload, process.env.SESSION_JWT_SECRET!, {
+      let jsonWebToken = sign(payload, process.env.SESSION_JWT_SECRET!, {
         expiresIn: expiresInSeconds,
       });
 
@@ -67,7 +67,7 @@ router.post(
        * and ship 🚢
        */
       return res.status(200).json({
-        token,
+        jsonWebToken,
       });
     } catch (err) {
       next(err);
