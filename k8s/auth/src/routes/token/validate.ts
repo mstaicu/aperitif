@@ -14,7 +14,7 @@ import type { SessionPayload } from "@tartine/common";
 
 import { stripe } from "../../stripe";
 
-const router = express.Router();
+let router = express.Router();
 
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
@@ -66,11 +66,11 @@ router.post(
        * Enter Stripe
        * ---------------------------------------------------------------------
        */
-      const { data: customers } = await stripe.customers.list({
+      let { data: customers } = await stripe.customers.list({
         email: payload.email,
       });
 
-      const [customer] = customers;
+      let [customer] = customers;
 
       if (!customer) {
         throw new BadRequestError(
@@ -78,7 +78,7 @@ router.post(
         );
       }
 
-      const { data: subscriptions } = await stripe.subscriptions.list({
+      let { data: subscriptions } = await stripe.subscriptions.list({
         customer: customer.id,
       });
 
@@ -88,10 +88,6 @@ router.post(
         );
       }
 
-      /**
-       * TODO: What if... the user decides to purchase the same product twice,
-       * i.e. have N subscriptions for the same product
-       */
       let [subscription] = subscriptions;
       let {
         items: {

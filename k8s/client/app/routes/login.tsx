@@ -29,7 +29,6 @@ import {
    */
   getReferrer,
   getTokenExpiration,
-  getLoginRedirect,
 } from "~/utils/session.server";
 
 /**
@@ -76,26 +75,22 @@ export let loader: LoaderFunction = async ({ request }) => {
 /**
  *
  */
-type ActionData = Partial<ProblemDetailsResponse>;
 
 export let action: ActionFunction = async ({ request }) => {
   let { email, landingPage } = Object.fromEntries(
     new URLSearchParams(await request.text())
   );
 
-  try {
-    await emailMagicToken(email, landingPage);
-  } catch (error) {
-    console.error("login action error", error);
-    return error;
-  }
+  return await emailMagicToken(email, {
+    landingPage,
+  });
 };
 
 /**
  *
  */
-export default () => {
-  let actionData = useActionData<ActionData>();
+export default async () => {
+  let actionData = useActionData<Response>();
   let loaderData = useLoaderData<LoaderData>();
   let transition = useTransition();
 
@@ -105,16 +100,18 @@ export default () => {
 
   let state: "success" | "error" | "idle" | "submitting" = transition.submission
     ? "submitting"
-    : actionData?.status === 200
+    : actionData?.ok === true
     ? "success"
-    : actionData?.status !== 200
+    : actionData?.ok === false
     ? "error"
     : "idle";
 
+  let errorResponse: ProblemDetailsResponse =
+    state === "error" ? await actionData?.json() : null;
   let errorMessage =
     state === "error"
-      ? actionData?.invalid_params?.email || actionData?.detail
-      : undefined;
+      ? errorResponse?.invalid_params?.email || errorResponse?.detail
+      : null;
 
   useEffect(() => {
     if (state === "error") {

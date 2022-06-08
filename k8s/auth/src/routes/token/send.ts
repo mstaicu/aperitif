@@ -11,7 +11,7 @@ import {
 
 import { stripe } from "../../stripe";
 
-const router = express.Router();
+let router = express.Router();
 
 router.post(
   "/token/send",
@@ -23,13 +23,20 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      /**
+       *
+       */
       let { email, landingPage = "/user" } = req.body;
 
-      const { data: customers } = await stripe.customers.list({
+      /**
+       *
+       */
+
+      let { data: customers } = await stripe.customers.list({
         email,
       });
 
-      const [customer] = customers;
+      let [customer] = customers;
 
       if (!customer) {
         throw new BadRequestError(
@@ -37,6 +44,19 @@ router.post(
         );
       }
 
+      let { data: subscriptions } = await stripe.subscriptions.list({
+        customer: customer.id,
+      });
+
+      if (subscriptions.length === 0) {
+        throw new BadRequestError(
+          "The provided email address does not have any active subscriptions with us"
+        );
+      }
+
+      /**
+       *
+       */
       try {
         await sendMagicLink(email, landingPage);
       } catch (err) {

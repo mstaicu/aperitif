@@ -63,7 +63,7 @@ export default () => {
 
   let state: "submitting" | "error" | "idle" = transition.submission
     ? "submitting"
-    : actionData?.detail
+    : actionData?.status !== 200
     ? "error"
     : "idle";
 

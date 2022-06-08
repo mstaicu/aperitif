@@ -79,7 +79,10 @@ export async function getAuthSession(
     throw await getLoginRedirect(request);
   }
 
-  let jsonWebTokenPayload = await getJsonWebTokenPayload(request);
+  let jsonWebTokenPayload = verify(
+    jsonWebToken,
+    process.env.SESSION_JWT_SECRET!
+  );
 
   if (!isSessionPayload(jsonWebTokenPayload)) {
     throw await getLoginRedirect(request);
@@ -112,14 +115,23 @@ export async function getAuthSession(
  * No go back up to (5)
  */
 
-/**
- * TODO: Use typed return types for express endpoints as well
- */
-type ExchangeMagicToken = (
-  token: string
-) => Promise<{ jsonWebToken: string; landingPage: string }>;
+export async function emailMagicToken(
+  email: string,
+  emailPayload: { landingPage: string }
+): Promise<Response> {
+  return fetch("https://traefik-lb-srv/api/auth/token/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Host: process.env.DOMAIN!,
+    },
+    body: JSON.stringify({ email, landingPage: emailPayload.landingPage }),
+  });
+}
 
-export let exchangeMagicToken: ExchangeMagicToken = async (token) => {
+export async function exchangeMagicToken(
+  token: string
+): Promise<{ jsonWebToken: string; landingPage: string }> {
   let response = await fetch("https://traefik-lb-srv/api/auth/token/validate", {
     method: "POST",
     headers: {
@@ -135,16 +147,11 @@ export let exchangeMagicToken: ExchangeMagicToken = async (token) => {
 
   let details: ProblemDetailsResponse = await response.json();
   throw json(details, { status: details.status });
-};
+}
 
-/**
- * TODO: Use typed return types for express endpoints as well
- */
-type RefreshJsonWebToken = (
+async function refreshJsonWebToken(
   jsonWebToken: string
-) => Promise<{ jsonWebToken: string }>;
-
-let refreshJsonWebToken: RefreshJsonWebToken = async (jsonWebToken) => {
+): Promise<{ jsonWebToken: string }> {
   let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
     method: "POST",
     headers: {
@@ -160,41 +167,26 @@ let refreshJsonWebToken: RefreshJsonWebToken = async (jsonWebToken) => {
 
   let details: ProblemDetailsResponse = await response.json();
   throw json(details, { status: details.status });
-};
+}
 
-export let emailMagicToken = async (email: string, landingPage: string) => {
-  let response = await fetch("https://traefik-lb-srv/api/auth/token/send", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Host: process.env.DOMAIN!,
-    },
-    body: JSON.stringify({ email, landingPage }),
-  });
-
-  if (response.ok) {
-    return await response.json();
-  }
-
-  let details: ProblemDetailsResponse = await response.json();
-  throw json(details, { status: details.status });
-};
-
+/**
+ *
+ */
 async function refreshSession(request: Request): Promise<Headers> {
   try {
     let { jsonWebToken } = await refreshJsonWebToken(
       await getJsonWebToken(request)
     );
 
-    let cookie = request.headers.get("cookie");
-    let session = await authSession.getSession(cookie);
+    let session = await authSession.getSession();
+    session.set("jsonWebToken", jsonWebToken);
 
     return new Headers({
       "Set-Cookie": await authSession.commitSession(session, {
         maxAge: getTokenExpiration(jsonWebToken),
       }),
     });
-  } catch (err) {
+  } catch (error) {
     throw await getLoginRedirect(request);
   }
 }
@@ -203,8 +195,11 @@ async function refreshSession(request: Request): Promise<Headers> {
  *
  */
 
-export function getTokenExpiration(jsonWebToken: string) {
-  let { exp } = verifyJsonWebToken(jsonWebToken);
+export function getTokenExpiration(jsonWebToken: string): number {
+  let { exp } = verify(
+    jsonWebToken,
+    process.env.SESSION_JWT_SECRET!
+  ) as JwtPayload;
 
   /**
    * Get the JsonWebToken's 'exp' expiration claim value, which is in seconds
@@ -216,7 +211,7 @@ export function getTokenExpiration(jsonWebToken: string) {
   return expiresInSeconds;
 }
 
-export async function getLoginRedirect(request: Request) {
+export async function getLoginRedirect(request: Request): Promise<Response> {
   let cookie = request.headers.get("cookie");
   let session = await authSession.getSession(cookie);
 
@@ -229,7 +224,7 @@ export async function getLoginRedirect(request: Request) {
   });
 }
 
-export function getReferrer(request: Request) {
+export function getReferrer(request: Request): string {
   /*******************************************************************************
    * This doesn't work with all remix adapters yet, so pick a good default
    *******************************************************************************
@@ -244,17 +239,9 @@ export function getReferrer(request: Request) {
   return "/";
 }
 
-async function getJsonWebToken(request: Request) {
+async function getJsonWebToken(request: Request): Promise<string> {
   let cookie = request.headers.get("cookie");
   let { get } = await authSession.getSession(cookie);
 
   return get("jsonWebToken");
-}
-
-async function getJsonWebTokenPayload(request: Request) {
-  return verifyJsonWebToken(await getJsonWebToken(request));
-}
-
-function verifyJsonWebToken(jsonWebToken: string) {
-  return verify(jsonWebToken, process.env.SESSION_JWT_SECRET!) as JwtPayload;
 }

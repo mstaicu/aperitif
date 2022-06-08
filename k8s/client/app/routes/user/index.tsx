@@ -1,9 +1,9 @@
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-import type { JwtPayload } from "jsonwebtoken";
 import type { LoaderFunction } from "@remix-run/node";
 import type { UserPayload } from "@tartine/common";
+import type { JwtPayload } from "jsonwebtoken";
 
 import { getAuthSession } from "~/utils/session.server";
 

@@ -6,7 +6,7 @@ import type { NextFunction, Request, Response } from "express";
 import { BadRequestError, requireAuthHandler } from "@tartine/common";
 import type { SessionPayload } from "@tartine/common";
 
-const router = express.Router();
+let router = express.Router();
 
 router.post(
   "/token/extend",
