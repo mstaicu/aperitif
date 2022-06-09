@@ -119,7 +119,7 @@ export async function emailMagicToken(
   email: string,
   emailPayload: { landingPage: string }
 ): Promise<Response> {
-  return fetch("https://traefik-lb-srv/api/auth/token/send", {
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/send", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -127,6 +127,14 @@ export async function emailMagicToken(
     },
     body: JSON.stringify({ email, landingPage: emailPayload.landingPage }),
   });
+
+  let payload = await response.json();
+
+  if (response.ok) {
+    return payload;
+  }
+
+  throw payload;
 }
 
 export async function exchangeMagicToken(
@@ -141,12 +149,13 @@ export async function exchangeMagicToken(
     body: JSON.stringify({ token }),
   });
 
+  let payload = await response.json();
+
   if (response.ok) {
-    return await response.json();
+    return payload;
   }
 
-  let details: ProblemDetailsResponse = await response.json();
-  throw json(details, { status: details.status });
+  throw payload;
 }
 
 async function refreshJsonWebToken(
@@ -161,12 +170,13 @@ async function refreshJsonWebToken(
     },
   });
 
+  let payload = await response.json();
+
   if (response.ok) {
-    return await response.json();
+    return payload;
   }
 
-  let details: ProblemDetailsResponse = await response.json();
-  throw json(details, { status: details.status });
+  throw payload;
 }
 
 /**
@@ -225,10 +235,6 @@ export async function getLoginRedirect(request: Request): Promise<Response> {
 }
 
 export function getReferrer(request: Request): string {
-  /*******************************************************************************
-   * This doesn't work with all remix adapters yet, so pick a good default
-   *******************************************************************************
-   */
   let referrer = request.referrer;
 
   if (referrer) {

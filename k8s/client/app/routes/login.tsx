@@ -76,21 +76,37 @@ export let loader: LoaderFunction = async ({ request }) => {
  *
  */
 
+type ActionData = {
+  status: number;
+  message?: string;
+};
+
 export let action: ActionFunction = async ({ request }) => {
   let { email, landingPage } = Object.fromEntries(
     new URLSearchParams(await request.text())
   );
 
-  return await emailMagicToken(email, {
-    landingPage,
-  });
+  try {
+    await emailMagicToken(email, {
+      landingPage,
+    });
+
+    return json<ActionData>({ status: 200 });
+  } catch (error) {
+    let problemDetails = error as ProblemDetailsResponse;
+
+    return json<ActionData>({
+      status: problemDetails.status,
+      message: problemDetails.invalid_params?.email || problemDetails.detail,
+    });
+  }
 };
 
 /**
  *
  */
-export default async () => {
-  let actionData = useActionData<Response>();
+export default () => {
+  let actionData = useActionData<ActionData>();
   let loaderData = useLoaderData<LoaderData>();
   let transition = useTransition();
 
@@ -100,18 +116,11 @@ export default async () => {
 
   let state: "success" | "error" | "idle" | "submitting" = transition.submission
     ? "submitting"
-    : actionData?.ok === true
+    : actionData?.status === 200
     ? "success"
-    : actionData?.ok === false
+    : actionData?.status !== 200
     ? "error"
     : "idle";
-
-  let errorResponse: ProblemDetailsResponse =
-    state === "error" ? await actionData?.json() : null;
-  let errorMessage =
-    state === "error"
-      ? errorResponse?.invalid_params?.email || errorResponse?.detail
-      : null;
 
   useEffect(() => {
     if (state === "error") {
@@ -140,7 +149,7 @@ export default async () => {
             ref={inputRef}
             type="email"
             name="email"
-            placeholder="you@are.rockstar"
+            placeholder="Your email address"
           />
 
           <input
@@ -150,7 +159,7 @@ export default async () => {
           />
 
           <p id="error-message">
-            {state === "error" ? errorMessage : <>&nbsp;</>}
+            {state === "error" ? actionData?.message : <>&nbsp;</>}
           </p>
         </fieldset>
 

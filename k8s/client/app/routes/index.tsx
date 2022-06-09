@@ -4,7 +4,7 @@ import {
   useLoaderData,
   useTransition,
 } from "@remix-run/react";
-import { redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 
 import type {
   ActionFunction,
@@ -37,7 +37,11 @@ export let loader: LoaderFunction = () => getServiceLevelOfferings();
 /**
  *
  */
-type ActionData = Partial<ProblemDetailsResponse>;
+
+type ActionData = {
+  status: number;
+  message?: string;
+};
 
 export let action: ActionFunction = async ({ request }) => {
   let { email, priceId } = Object.fromEntries(
@@ -45,9 +49,14 @@ export let action: ActionFunction = async ({ request }) => {
   );
 
   try {
-    redirect(await getStripeCheckoutUrl({ priceId, email }));
+    redirect(await getStripeCheckoutUrl({ email, priceId }));
   } catch (error) {
-    return error;
+    let problemDetails = error as ProblemDetailsResponse;
+
+    return json<ActionData>({
+      status: problemDetails.status,
+      message: problemDetails.invalid_params?.email || problemDetails.detail,
+    });
   }
 };
 
@@ -56,10 +65,9 @@ export let action: ActionFunction = async ({ request }) => {
  */
 
 export default () => {
-  let transition = useTransition();
-
-  let loaderData = useLoaderData<LoaderData>();
   let actionData = useActionData<ActionData>();
+  let loaderData = useLoaderData<LoaderData>();
+  let transition = useTransition();
 
   let state: "submitting" | "error" | "idle" = transition.submission
     ? "submitting"
@@ -104,7 +112,7 @@ export default () => {
                       />
 
                       <p id="error-message">
-                        {state === "error" ? actionData?.detail : <>&nbsp;</>}
+                        {state === "error" ? actionData?.message : <>&nbsp;</>}
                       </p>
                     </fieldset>
 
