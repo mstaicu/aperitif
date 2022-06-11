@@ -4,7 +4,7 @@ import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
 import { isSessionPayload } from "@tartine/common";
-import type { UserPayload, ProblemDetailsResponse } from "@tartine/common";
+import type { UserPayload } from "@tartine/common";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
@@ -211,11 +211,15 @@ export function getTokenExpiration(jsonWebToken: string): number {
     process.env.SESSION_JWT_SECRET!
   ) as JwtPayload;
 
+  if (!exp) {
+    return 0;
+  }
+
   /**
    * Get the JsonWebToken's 'exp' expiration claim value, which is in seconds
    * Convert to milliseconds by multiplying with 1000
    */
-  let expiresIn = new Date(exp! * 1000);
+  let expiresIn = new Date(exp * 1000);
   let expiresInSeconds = Math.trunc((expiresIn.getTime() - Date.now()) / 1000);
 
   return expiresInSeconds;

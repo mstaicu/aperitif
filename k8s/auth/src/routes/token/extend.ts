@@ -4,7 +4,7 @@ import { sign } from "jsonwebtoken";
 import type { NextFunction, Request, Response } from "express";
 
 import { BadRequestError, requireAuthHandler } from "@tartine/common";
-import type { SessionPayload } from "@tartine/common";
+import type { UserPayload } from "@tartine/common";
 
 let router = express.Router();
 
@@ -52,7 +52,7 @@ router.post(
         (expiresIn.getTime() - Date.now()) / 1000
       );
 
-      let payload: SessionPayload = {
+      let payload: UserPayload = {
         user: req.user,
       };
 

@@ -10,7 +10,7 @@ import {
   decryptMagicLinkPayload,
   validateRequestHandler,
 } from "@tartine/common";
-import type { SessionPayload } from "@tartine/common";
+import type { UserPayload } from "@tartine/common";
 
 import { stripe } from "../../stripe";
 
@@ -128,7 +128,7 @@ router.post(
       /**
        *
        */
-      let jsonWebTokenPayload: SessionPayload = {
+      let jsonWebTokenPayload: UserPayload = {
         user: {
           id: customer.id,
           subscription: {
