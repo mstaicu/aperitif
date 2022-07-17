@@ -65,7 +65,7 @@ orderSchema.set("versionKey", "version");
 orderSchema.pre("save", function (next) {
   this.$where = {
     ...this.$where,
-    version: this["version"],
+    version: this.get("version"),
   };
 
   this.increment();

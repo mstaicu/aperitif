@@ -31,7 +31,7 @@ export default () => {
 
   return (
     <main>
-      <h2>Welcome: {customer.email}.</h2>
+      <h2>Welcome: {customer.email}</h2>
     </main>
   );
 };

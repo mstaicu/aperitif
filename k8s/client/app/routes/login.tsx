@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   Form,
   Link,
@@ -76,10 +76,7 @@ export let loader: LoaderFunction = async ({ request }) => {
  *
  */
 
-type ActionData = {
-  status: number;
-  message?: string;
-};
+type ActionData = Partial<ProblemDetailsResponse>;
 
 export let action: ActionFunction = async ({ request }) => {
   let { email, landingPage } = Object.fromEntries(
@@ -93,12 +90,7 @@ export let action: ActionFunction = async ({ request }) => {
 
     return json<ActionData>({ status: 200 });
   } catch (error) {
-    let problemDetails = error as ProblemDetailsResponse;
-
-    return json<ActionData>({
-      status: problemDetails.status,
-      message: problemDetails.invalid_params?.email || problemDetails.detail,
-    });
+    return json<ActionData>(error as ProblemDetailsResponse);
   }
 };
 
@@ -159,7 +151,11 @@ export default () => {
           />
 
           <p id="error-message">
-            {state === "error" ? actionData?.message : <>&nbsp;</>}
+            {state === "error" ? (
+              actionData?.invalid_params?.email || actionData?.detail
+            ) : (
+              <>&nbsp;</>
+            )}
           </p>
         </fieldset>
 

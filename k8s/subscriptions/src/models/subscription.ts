@@ -1,50 +1,40 @@
 import mongoose from "mongoose";
 
-// This interface will list out all the properties that are required to create a Ticket document
-interface TicketAttrs {
-  userId: string;
+import Stripe from "stripe";
 
-  title: string;
-  price: number;
+interface SubscriptionAttrs {
+  stripeSubscriptionId: string;
+  stripeSubscription: Stripe.Subscription;
 }
 
-// This interface will list out all the properties that an instance of a Ticket document has
-interface TicketDoc extends mongoose.Document {
-  userId: string;
-
-  orderId?: string;
-
-  title: string;
-  price: number;
-
+interface SubscriptionDoc extends mongoose.Document {
+  stripeSubscriptionId: string;
+  stripeSubscription: Stripe.Subscription;
   version: number;
 }
 
-interface TicketModel extends mongoose.Model<TicketDoc> {
-  build(attrs: TicketAttrs): TicketDoc;
+interface SubscriptionModel extends mongoose.Model<SubscriptionDoc> {
+  build(attrs: SubscriptionAttrs): SubscriptionDoc;
 }
 
-const ticketSchema = new mongoose.Schema(
+const subscriptionSchema = new mongoose.Schema(
   {
-    userId: {
+    stripeSubscriptionId: {
       type: String,
       required: true,
+      unique: true,
     },
-    orderId: {
-      type: String,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    price: {
-      type: Number,
+    stripeSubscription: {
+      /**
+       * https://mongoosejs.com/docs/schematypes.html#mixed
+       */
+      type: mongoose.SchemaTypes.Mixed,
       required: true,
     },
   },
   {
     toJSON: {
-      transform: (_, ret) => {
+      transform: (document, ret) => {
         ret.id = ret._id;
         delete ret._id;
       },
@@ -52,12 +42,14 @@ const ticketSchema = new mongoose.Schema(
   }
 );
 
-ticketSchema.set("versionKey", "version");
+subscriptionSchema.set("versionKey", "version");
 
 /**
  * Optimistic concurrency control
+ *
+ * https://github.com/eoin-obrien/mongoose-update-if-current/blob/master/src/version-occ-plugin.js
  */
-ticketSchema.pre("save", function (next) {
+subscriptionSchema.pre("save", function (next) {
   this.$where = {
     ...this.$where,
     version: this.get("version"),
@@ -96,9 +88,12 @@ ticketSchema.pre("save", function (next) {
    */
 });
 
-// If you move this line below the Ticket declaration line, everything breaks
-ticketSchema.statics.build = (attrs: TicketAttrs) => new Ticket(attrs);
+subscriptionSchema.statics.build = (attrs: SubscriptionAttrs) =>
+  new Subscription(attrs);
 
-const Ticket = mongoose.model<TicketDoc, TicketModel>("Ticket", ticketSchema);
+const Subscription = mongoose.model<SubscriptionDoc, SubscriptionModel>(
+  "Subscription",
+  subscriptionSchema
+);
 
-export { Ticket };
+export { Subscription };

@@ -12,7 +12,7 @@ import {
 } from "@tartine/common";
 import type { UserPayload } from "@tartine/common";
 
-import { stripe } from "../../stripe";
+import { User } from "../../models/user";
 
 let router = express.Router();
 
@@ -61,39 +61,28 @@ router.post(
         throw new BadRequestError("The provided magic token has expired");
       }
 
-      /**
-       * ---------------------------------------------------------------------
-       * Enter Stripe
-       * ---------------------------------------------------------------------
-       */
-      let { data: customers } = await stripe.customers.list({
-        email: payload.email,
-      });
+      let user = await User.findOne({ email: payload.email }).populate(
+        "subscription"
+      );
 
-      let [customer] = customers;
-
-      if (!customer) {
+      if (!user) {
         throw new BadRequestError(
           "The provided email address is not registered with us"
         );
       }
 
-      let { data: subscriptions } = await stripe.subscriptions.list({
-        customer: customer.id,
-      });
-
-      if (subscriptions.length === 0) {
+      if (user.subscription.stripeSubscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );
       }
 
-      let [subscription] = subscriptions;
+      let { stripeSubscription } = user.subscription;
       let {
         items: {
           data: [item],
         },
-      } = subscription;
+      } = stripeSubscription;
 
       /**
        * Inital token expiration date set to 15 minutes from the moment of this request
@@ -106,11 +95,11 @@ router.post(
        * by multiply them by 1000 before using them to create dates
        */
       let subscriptionPeriodEnd = new Date(
-        subscription.current_period_end * 1000
+        stripeSubscription.current_period_end * 1000
       );
 
-      if (subscription.cancel_at_period_end) {
-        subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
+      if (stripeSubscription.cancel_at_period_end) {
+        subscriptionPeriodEnd = new Date(stripeSubscription.cancel_at! * 1000);
       }
 
       /**
@@ -130,14 +119,14 @@ router.post(
        */
       let jsonWebTokenPayload: UserPayload = {
         user: {
-          id: customer.id,
+          id: user.id,
           subscription: {
-            id: subscription.id,
-            status: subscription.status,
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            cancel_at: subscription.cancel_at,
-            current_period_start: subscription.current_period_start,
-            current_period_end: subscription.current_period_end,
+            id: stripeSubscription.id,
+            status: stripeSubscription.status,
+            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+            cancel_at: stripeSubscription.cancel_at,
+            current_period_start: stripeSubscription.current_period_start,
+            current_period_end: stripeSubscription.current_period_end,
             product: {
               id: item.price.product,
             },

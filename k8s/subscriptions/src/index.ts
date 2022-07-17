@@ -1,22 +1,19 @@
-import mongoose from "mongoose";
 import type { Socket } from "net";
+import mongoose from "mongoose";
 
 import { nats } from "./events/nats";
-import {
-  SubscriptionCreatedListener,
-  SubscriptionUpdatedListener,
-} from "./events/listeners";
 
 import { app } from "./app";
 
 const start = async () => {
+  if (!process.env.SUBSCRIPTIONS_MONGO_URI) {
+    throw new Error(
+      "SUBSCRIPTIONS_MONGO_URI must be defined as an environment variable"
+    );
+  }
+
   if (!process.env.DOMAIN) {
     throw new Error("DOMAIN must be defined as an environment variable");
-  }
-  if (!process.env.AUTH_MONGO_URI) {
-    throw new Error(
-      "AUTH_MONGO_URI must be defined as an environment variable"
-    );
   }
   /**
    *
@@ -29,14 +26,7 @@ const start = async () => {
   if (!process.env.NATS_URL) {
     throw new Error("NATS_URL must be defined as an environment variable");
   }
-  /**
-   *
-   */
-  if (!process.env.SESSION_JWT_SECRET) {
-    throw new Error(
-      "SESSION_JWT_SECRET must be defined as an environment variable"
-    );
-  }
+
   /**
    *
    */
@@ -45,13 +35,14 @@ const start = async () => {
       "STRIPE_SECRET_KEY must be defined as an environment variable"
     );
   }
-
-  /**
-   *
-   */
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error(
+      "STRIPE_WEBHOOK_SECRET must be defined as an environment variable"
+    );
+  }
 
   try {
-    await mongoose.connect(process.env.AUTH_MONGO_URI);
+    await mongoose.connect(process.env.SUBSCRIPTIONS_MONGO_URI);
 
     await nats.connect(process.env.DOMAIN, process.env.NATS_CLIENT_ID, {
       url: process.env.NATS_URL,
@@ -59,17 +50,6 @@ const start = async () => {
   } catch (err) {
     console.error(err);
   }
-
-  /**
-   *
-   */
-
-  new SubscriptionCreatedListener(nats.client).listen();
-  new SubscriptionUpdatedListener(nats.client).listen();
-
-  /**
-   *
-   */
 
   const server = app.listen(3000, () => console.log("Listening on port 3000"));
 
@@ -93,10 +73,16 @@ const start = async () => {
     shutdown();
   });
 
+  nats.client.on("close", () => {
+    console.info("NATS streaming server closed, gracefully shutting down");
+    shutdown();
+  });
+
   const shutdown = () => {
     /**
-     * The server is finally closed when all connections are ended and the server emits a 'close' event.
      * waitForSocketsToClose will give existing connections 10 seconds to terminate before destroying the sockets
+     *
+     * the server is finally closed when all connections are ended and the server emits a 'close' event.
      */
     waitForSocketsToClose(10);
 

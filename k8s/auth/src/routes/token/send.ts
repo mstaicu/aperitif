@@ -9,7 +9,8 @@ import {
   sendMagicLink,
 } from "@tartine/common";
 
-import { stripe } from "../../stripe";
+// import { stripe } from "../../stripe";
+import { User } from "../../models/user";
 
 let router = express.Router();
 
@@ -32,23 +33,25 @@ router.post(
        *
        */
 
-      let { data: customers } = await stripe.customers.list({
-        email,
-      });
+      // let { data: customers } = await stripe.customers.list({
+      //   email,
+      // });
 
-      let [customer] = customers;
+      // let [customer] = customers;
 
-      if (!customer) {
+      let user = await User.findOne({ email }).populate("subscription");
+
+      if (!user) {
         throw new BadRequestError(
           "The provided email address is not registered with us"
         );
       }
 
-      let { data: subscriptions } = await stripe.subscriptions.list({
-        customer: customer.id,
-      });
+      // let { data: subscriptions } = await stripe.subscriptions.list({
+      //   customer: customer.id,
+      // });
 
-      if (subscriptions.length === 0) {
+      if (user.subscription.stripeSubscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );

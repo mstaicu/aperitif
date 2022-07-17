@@ -38,10 +38,7 @@ export let loader: LoaderFunction = () => getServiceLevelOfferings();
  *
  */
 
-type ActionData = {
-  status: number;
-  message?: string;
-};
+type ActionData = Partial<ProblemDetailsResponse>;
 
 export let action: ActionFunction = async ({ request }) => {
   let { email, priceId } = Object.fromEntries(
@@ -51,12 +48,7 @@ export let action: ActionFunction = async ({ request }) => {
   try {
     redirect(await getStripeCheckoutUrl({ email, priceId }));
   } catch (error) {
-    let problemDetails = error as ProblemDetailsResponse;
-
-    return json<ActionData>({
-      status: problemDetails.status,
-      message: problemDetails.invalid_params?.email || problemDetails.detail,
-    });
+    return json<ActionData>(error as ProblemDetailsResponse);
   }
 };
 
@@ -112,7 +104,12 @@ export default () => {
                       />
 
                       <p id="error-message">
-                        {state === "error" ? actionData?.message : <>&nbsp;</>}
+                        {state === "error" ? (
+                          actionData?.invalid_params?.email ||
+                          actionData?.detail
+                        ) : (
+                          <>&nbsp;</>
+                        )}
                       </p>
                     </fieldset>
 
