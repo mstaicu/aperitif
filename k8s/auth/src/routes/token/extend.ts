@@ -6,6 +6,8 @@ import type { NextFunction, Request, Response } from "express";
 import { BadRequestError, requireAuthHandler } from "@tartine/common";
 import type { UserPayload } from "@tartine/common";
 
+import { User } from "../../models/user";
+
 let router = express.Router();
 
 router.post(
@@ -13,7 +15,17 @@ router.post(
   requireAuthHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { subscription } = req.user;
+      let { id } = req.user;
+
+      let user = await User.findById(id).populate("subscription");
+
+      if (!user) {
+        throw new BadRequestError(
+          "The provided token is not associated with any accounts registered with us"
+        );
+      }
+
+      let userSubscription = user.subscription.stripeSubscription;
 
       /**
        * Inital token expiration date set to 15 minutes from the moment of this request
@@ -26,11 +38,11 @@ router.post(
        * by multiply them by 1000 before using them to create dates
        */
       let subscriptionPeriodEnd = new Date(
-        subscription.current_period_end * 1000
+        userSubscription.current_period_end * 1000
       );
 
-      if (subscription.cancel_at_period_end) {
-        subscriptionPeriodEnd = new Date(subscription.cancel_at! * 1000);
+      if (userSubscription.cancel_at_period_end) {
+        subscriptionPeriodEnd = new Date(userSubscription.cancel_at! * 1000);
       }
 
       /**

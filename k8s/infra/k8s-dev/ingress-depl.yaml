@@ -377,6 +377,47 @@ spec:
 #         - name: payments-srv
 #           port: 3000
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: subscriptions-route-https
+spec:
+  entryPoints:
+    - https
+  routes:
+    - match: Host(`tma`) && PathPrefix(`/api/subscriptions`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: strip-subscriptions-prefix
+      services:
+        - name: subscriptions-srv
+          port: 3000
+  tls:
+    certResolver: pebble
+    options:
+      name: tls-options
+    domains:
+      - main: tma
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: subscriptions-route-http
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`tma`) && PathPrefix(`/api/subscriptions`)
+      kind: Rule
+      middlewares:
+        - name: tls
+        - name: redirect-https
+        - name: strip-subscriptions-prefix
+      services:
+        - name: subscriptions-srv
+          port: 3000
+---
 #
 # TODO: Secure the dashboard access
 #
@@ -442,6 +483,15 @@ spec:
   stripPrefix:
     prefixes:
       - /api/payments
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-subscriptions-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/subscriptions
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

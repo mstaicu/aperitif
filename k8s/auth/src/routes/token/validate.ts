@@ -123,18 +123,6 @@ router.post(
           subscription: {
             id: stripeSubscription.id,
             status: stripeSubscription.status,
-            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-            cancel_at: stripeSubscription.cancel_at,
-            current_period_start: stripeSubscription.current_period_start,
-            current_period_end: stripeSubscription.current_period_end,
-            product: {
-              id: item.price.product,
-            },
-            price: {
-              id: item.price.id,
-              currency: item.price.currency,
-              unit_amount: item.price.unit_amount,
-            },
           },
         },
       };

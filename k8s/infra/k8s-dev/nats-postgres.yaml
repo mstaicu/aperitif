@@ -19,6 +19,13 @@ spec:
           envFrom:
             - secretRef:
                 name: dotenv
+          env:
+            - name: POSTGRES_DB
+              value: "nss_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
           volumeMounts:
             - name: nats-initdb
               mountPath: /docker-entrypoint-initdb.d

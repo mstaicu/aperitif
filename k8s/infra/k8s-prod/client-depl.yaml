@@ -15,7 +15,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: client
-          image: mdstaicu/client-remix
+          image: mdstaicu/client
           envFrom:
             - secretRef:
                 name: dotenv
