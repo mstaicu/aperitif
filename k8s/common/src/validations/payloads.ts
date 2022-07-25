@@ -50,7 +50,11 @@ export function isJwtPayload(obj: any): obj is JwtPayload {
   );
 }
 
-export function isSessionPayload(obj: any): obj is UserPayload & JwtPayload {
+export function isAccessToken(obj: any): obj is UserPayload & JwtPayload {
+  return isJwtPayload(obj) && hasUserPayload(obj);
+}
+
+export function isRefreshToken(obj: any): obj is UserPayload & JwtPayload {
   return isJwtPayload(obj) && hasUserPayload(obj);
 }
 

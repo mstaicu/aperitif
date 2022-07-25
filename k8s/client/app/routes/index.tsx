@@ -46,7 +46,7 @@ export let action: ActionFunction = async ({ request }) => {
   );
 
   try {
-    redirect(await getStripeCheckoutUrl({ email, priceId }));
+    return redirect(await getStripeCheckoutUrl({ email, priceId }));
   } catch (error) {
     return json<ActionData>(error as ProblemDetailsResponse);
   }

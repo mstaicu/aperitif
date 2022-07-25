@@ -1,9 +1,9 @@
-import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
 
 import { verify } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 
-import { isSessionPayload } from "@tartine/common";
+import { isAccessToken, isRefreshToken } from "@tartine/common";
 import type { UserPayload } from "@tartine/common";
 
 /*******************************************************************************
@@ -22,9 +22,14 @@ if (!process.env.SESSION_COOKIE_SECRET) {
     "SESSION_COOKIE_SECRET must be defined as an environment variable"
   );
 }
-if (!process.env.SESSION_JWT_SECRET) {
+if (!process.env.ACCESS_TOKEN_SECRET) {
   throw new Error(
-    "SESSION_JWT_SECRET must be defined as an environment variable"
+    "ACCESS_TOKEN_SECRET must be defined as an environment variable"
+  );
+}
+if (!process.env.REFRESH_TOKEN_SECRET) {
+  throw new Error(
+    "REFRESH_TOKEN_SECRET must be defined as an environment variable"
   );
 }
 
@@ -35,8 +40,20 @@ if (!process.env.SESSION_JWT_SECRET) {
  * storage). In our case we're going to keep the data in the cookie itself since
  * we don't know what kind of database you've got.
  */
-export let authSession = createCookieSessionStorage({
+export let accesTokenSession = createCookieSessionStorage({
   cookie: {
+    name: "tma_access",
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+    secure: true,
+    secrets: [process.env.SESSION_COOKIE_SECRET],
+  },
+});
+
+export let refreshTokenSession = createCookieSessionStorage({
+  cookie: {
+    name: "tma_refresh",
     httpOnly: true,
     path: "/",
     sameSite: "lax",
@@ -73,22 +90,48 @@ export async function getAuthSession(
 ): Promise<
   [JwtPayload & UserPayload, string, (request: Request) => Promise<Headers>]
 > {
-  let jsonWebToken = await getJsonWebToken(request);
+  try {
+    let accessToken = await getAccessToken(request);
+    let refreshToken = await getRefreshToken(request);
 
-  if (!jsonWebToken) {
+    if (!accessToken) {
+      throw new Error(
+        "The provided session cookie does not contain an access token"
+      );
+    }
+    if (!refreshToken) {
+      throw new Error(
+        "The provided session cookie does not contain a refresh token"
+      );
+    }
+
+    /**
+     *
+     */
+
+    let accessTokenPayload = verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET!
+    );
+    let refreshTokenPayload = verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    );
+
+    if (!isAccessToken(accessTokenPayload)) {
+      throw new Error("Access token does not contain the required metadata");
+    }
+    if (!isRefreshToken(refreshTokenPayload)) {
+      throw new Error("Refresh token does not contain the required metadata");
+    }
+
+    /**
+     *
+     */
+    return [accessTokenPayload, accessToken, refreshSession];
+  } catch (err) {
     throw await getLoginRedirect(request);
   }
-
-  let jsonWebTokenPayload = verify(
-    jsonWebToken,
-    process.env.SESSION_JWT_SECRET!
-  );
-
-  if (!isSessionPayload(jsonWebTokenPayload)) {
-    throw await getLoginRedirect(request);
-  }
-
-  return [jsonWebTokenPayload, jsonWebToken, refreshSession];
 }
 
 /*******************************************************************************
@@ -139,7 +182,7 @@ export async function emailMagicToken(
 
 export async function exchangeMagicToken(
   token: string
-): Promise<{ jsonWebToken: string; landingPage: string }> {
+): Promise<{ accessToken: string; refreshToken: string; landingPage: string }> {
   let response = await fetch("https://traefik-lb-srv/api/auth/token/validate", {
     method: "POST",
     headers: {
@@ -158,13 +201,13 @@ export async function exchangeMagicToken(
   throw payload;
 }
 
-async function refreshJsonWebToken(
-  jsonWebToken: string
-): Promise<{ jsonWebToken: string }> {
-  let response = await fetch("https://traefik-lb-srv/api/auth/token/extend", {
+async function getFreshTokens(
+  refreshToken: string
+): Promise<{ accessToken: string; refreshToken: string }> {
+  let response = await fetch("https://traefik-lb-srv/api/auth/token/refresh", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${jsonWebToken}`,
+      Authorization: `Bearer ${refreshToken}`,
       "Content-Type": "application/json",
       Host: process.env.DOMAIN!,
     },
@@ -184,18 +227,34 @@ async function refreshJsonWebToken(
  */
 async function refreshSession(request: Request): Promise<Headers> {
   try {
-    let { jsonWebToken } = await refreshJsonWebToken(
-      await getJsonWebToken(request)
+    let { accessToken, refreshToken } = await getFreshTokens(
+      await getRefreshToken(request)
     );
 
-    let session = await authSession.getSession();
-    session.set("jsonWebToken", jsonWebToken);
+    let session = await accesTokenSession.getSession();
+    session.set("accessToken", accessToken);
 
-    return new Headers({
-      "Set-Cookie": await authSession.commitSession(session, {
-        maxAge: getTokenExpiration(jsonWebToken),
+    /**
+     *
+     */
+
+    let responseHeaders = new Headers({
+      "Set-Cookie": await accesTokenSession.commitSession(session, {
+        maxAge: getAccessTokenExpiration(accessToken),
       }),
     });
+
+    session = await refreshTokenSession.getSession();
+    session.set("refreshToken", refreshToken);
+
+    responseHeaders.append(
+      "Set-Cookie",
+      await refreshTokenSession.commitSession(session, {
+        maxAge: getRefreshTokenExpiration(refreshToken),
+      })
+    );
+
+    return responseHeaders;
   } catch (error) {
     throw await getLoginRedirect(request);
   }
@@ -205,10 +264,10 @@ async function refreshSession(request: Request): Promise<Headers> {
  *
  */
 
-export function getTokenExpiration(jsonWebToken: string): number {
+export function getAccessTokenExpiration(jsonWebToken: string): number {
   let { exp } = verify(
     jsonWebToken,
-    process.env.SESSION_JWT_SECRET!
+    process.env.ACCESS_TOKEN_SECRET!
   ) as JwtPayload;
 
   if (!exp) {
@@ -225,16 +284,53 @@ export function getTokenExpiration(jsonWebToken: string): number {
   return expiresInSeconds;
 }
 
+export function getRefreshTokenExpiration(jsonWebToken: string): number {
+  let { exp } = verify(
+    jsonWebToken,
+    process.env.REFRESH_TOKEN_SECRET!
+  ) as JwtPayload;
+
+  if (!exp) {
+    return 0;
+  }
+
+  /**
+   * Get the JsonWebToken's 'exp' expiration claim value, which is in seconds
+   * Convert to milliseconds by multiplying with 1000
+   */
+  let expiresIn = new Date(exp * 1000);
+  let expiresInSeconds = Math.trunc((expiresIn.getTime() - Date.now()) / 1000);
+
+  return expiresInSeconds;
+}
+
+/**
+ *
+ */
+
 export async function getLoginRedirect(request: Request): Promise<Response> {
   let cookie = request.headers.get("cookie");
-  let session = await authSession.getSession(cookie);
 
+  let session = await accesTokenSession.getSession(cookie);
+
+  let headers = new Headers({
+    "auth-redirect": getReferrer(request),
+    "Set-Cookie": await accesTokenSession.destroySession(session),
+  });
+
+  session = await refreshTokenSession.getSession(cookie);
+
+  headers.append(
+    "Set-Cookie",
+    await refreshTokenSession.destroySession(session)
+  );
+
+  /**
+   *
+   */
   return redirect("/login", {
     status: 303,
-    headers: {
-      "auth-redirect": getReferrer(request),
-      "Set-Cookie": await authSession.destroySession(session),
-    },
+    headers,
   });
 }
 
@@ -249,9 +345,15 @@ export function getReferrer(request: Request): string {
   return "/";
 }
 
-async function getJsonWebToken(request: Request): Promise<string> {
+async function getAccessToken(request: Request): Promise<string> {
   let cookie = request.headers.get("cookie");
-  let { get } = await authSession.getSession(cookie);
+  let { get } = await accesTokenSession.getSession(cookie);
 
-  return get("jsonWebToken");
+  return get("accessToken");
+}
+async function getRefreshToken(request: Request): Promise<string> {
+  let cookie = request.headers.get("cookie");
+  let { get } = await refreshTokenSession.getSession(cookie);
+
+  return get("refreshToken");
 }

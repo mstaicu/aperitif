@@ -18,7 +18,8 @@ import type {
 import type { ProblemDetailsResponse } from "@tartine/common";
 
 import {
-  authSession,
+  accesTokenSession,
+  refreshTokenSession,
   /**
    *
    */
@@ -28,7 +29,11 @@ import {
    *
    */
   getReferrer,
-  getTokenExpiration,
+  /**
+   *
+   */
+  getAccessTokenExpiration,
+  getRefreshTokenExpiration,
 } from "~/utils/session.server";
 
 /**
@@ -58,17 +63,36 @@ export let loader: LoaderFunction = async ({ request }) => {
   /**
    * If the token exchange throws, render the catch boundary
    */
-  let { jsonWebToken, landingPage } = await exchangeMagicToken(magicToken);
+  let { accessToken, refreshToken } = await exchangeMagicToken(magicToken);
 
-  let session = await authSession.getSession();
-  session.set("jsonWebToken", jsonWebToken);
+  /**
+   *
+   */
 
-  return redirect(landingPage, {
-    headers: {
-      "Set-Cookie": await authSession.commitSession(session, {
-        maxAge: getTokenExpiration(jsonWebToken),
-      }),
-    },
+  let session = await accesTokenSession.getSession();
+  session.set("accessToken", accessToken);
+
+  let headers = new Headers({
+    "Set-Cookie": await accesTokenSession.commitSession(session, {
+      maxAge: getAccessTokenExpiration(accessToken),
+    }),
+  });
+
+  session = await refreshTokenSession.getSession();
+  session.set("refreshToken", refreshToken);
+
+  headers.append(
+    "Set-Cookie",
+    await refreshTokenSession.commitSession(session, {
+      maxAge: getRefreshTokenExpiration(refreshToken),
+    })
+  );
+
+  /**
+   * TODO: Add landing page back
+   */
+  return redirect("/user", {
+    headers,
   });
 };
 

@@ -56,23 +56,6 @@ router.post(
         );
       }
 
-      /**
-       *  event type payment_method.attached
-          event type customer.source.created
-          event type customer.created
-          event type plan.created
-          event type price.created
-          event type charge.succeeded
-          event type customer.updated
-          event type invoice.created
-          event type invoice.finalized
-          -- created --
-          event type invoice.paid
-          event type invoice.payment_succeeded
-          event type payment_intent.succeeded
-          event type payment_intent.created
-       */
-
       switch (event.type) {
         /**
          * Sent when the subscription is created.
@@ -117,6 +100,8 @@ router.post(
          */
         case "customer.subscription.updated":
           const subscriptionUpdate = event.data.object as Stripe.Subscription;
+
+          console.log('subscriptionUpdate', subscriptionUpdate)
 
           const customerSubscriptionUpdate = await Subscription.findOne({
             stripeSubscriptionId: subscriptionUpdate.id,

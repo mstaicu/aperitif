@@ -10,10 +10,10 @@ import { getAuthSession } from "~/utils/session.server";
 type LoaderData = UserPayload & JwtPayload;
 
 export let loader: LoaderFunction = async ({ request }) => {
-  let [user, _, refreshSession] = await getAuthSession(request);
+  let [user, _, refreshTokens] = await getAuthSession(request);
 
   return json(user, {
-    headers: await refreshSession(request),
+    headers: await refreshTokens(request),
   });
 };
 

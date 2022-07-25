@@ -1,3 +1,4 @@
-export * from "./token/extend";
-export * from "./token/send";
-export * from "./token/validate";
+export * from "./magic/send";
+export * from "./magic/validate";
+
+export * from "./token/refresh";

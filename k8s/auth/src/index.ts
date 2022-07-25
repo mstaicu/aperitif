@@ -32,9 +32,14 @@ const start = async () => {
   /**
    *
    */
-  if (!process.env.SESSION_JWT_SECRET) {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
     throw new Error(
-      "SESSION_JWT_SECRET must be defined as an environment variable"
+      "ACCESS_TOKEN_SECRET must be defined as an environment variable"
+    );
+  }
+  if (!process.env.REFRESH_TOKEN_SECRET) {
+    throw new Error(
+      "REFRESH_TOKEN_SECRET must be defined as an environment variable"
     );
   }
   /**

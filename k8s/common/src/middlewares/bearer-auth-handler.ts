@@ -4,7 +4,7 @@ import type { Request, Response, NextFunction } from "express";
 
 import { BadRequestError } from "../errors";
 
-import { isSessionPayload } from "../validations";
+import { isAccessToken } from "../validations";
 import type { UserPayload } from "../validations";
 
 declare global {
@@ -30,10 +30,16 @@ export const requireBearerAuth = (
     let [type, token] = header.split(" ");
 
     if (type === "Bearer") {
-      let payload;
-
       try {
-        payload = verify(token, process.env.SESSION_JWT_SECRET!);
+        let payload = verify(token, process.env.ACCESS_TOKEN_SECRET!);
+
+        if (!isAccessToken(payload)) {
+          throw new BadRequestError(
+            "Authorization payload contains incorrect or incomplete data"
+          );
+        }
+
+        req.user = payload.user;
       } catch (error) {
         if (error instanceof TokenExpiredError) {
           throw new BadRequestError(
@@ -45,14 +51,6 @@ export const requireBearerAuth = (
           "The provided authorization token has failed verification checks"
         );
       }
-
-      if (!isSessionPayload(payload)) {
-        throw new BadRequestError(
-          "Authorization payload contains incorrect or incomplete data"
-        );
-      }
-
-      req.user = payload.user;
     } else {
       throw new BadRequestError(`Authorization strategy ${type} not supported`);
     }

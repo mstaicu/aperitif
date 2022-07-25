@@ -23,15 +23,7 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      /**
-       *
-       */
-
       let { email, landingPage = "/user" } = req.body;
-
-      /**
-       *
-       */
 
       let user = await User.findOne({ email }).populate("subscription");
 
@@ -41,25 +33,23 @@ router.post(
         );
       }
 
+      console.log("user", JSON.stringify(user, null, 2));
+
       if (user.subscription.stripeSubscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );
       }
 
-      /**
-       *
-       */
-
       try {
         await sendMagicLink(email, landingPage);
+
+        return res.status(200).json();
       } catch (err) {
         throw new BadRequestError(
           "Uh oh, something went wrong while trying to email you the magic link"
         );
       }
-
-      return res.status(200).json();
     } catch (err) {
       next(err);
     }

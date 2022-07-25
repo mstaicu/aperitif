@@ -18,13 +18,15 @@ let router = express.Router();
 
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
-let jsonWebTokenExpiration = 15; /** 15 mins */
+let accessTokenMinuteExpiration = 2; /** 2 mins */
+let refreshTokenMinuteExpiration = 15; /** 15 mins */
 
 router.post(
   "/token/validate",
   [
     body("token")
       .notEmpty()
+      .isString()
       .withMessage("A 'token' must be provided with this request"),
   ],
   validateRequestHandler,
@@ -32,6 +34,9 @@ router.post(
     try {
       let { token } = req.body;
 
+      /**
+       * Start magic link payload check
+       */
       let payload;
 
       try {
@@ -61,6 +66,10 @@ router.post(
         throw new BadRequestError("The provided magic token has expired");
       }
 
+      /**
+       *
+       */
+
       let user = await User.findOne({ email: payload.email }).populate(
         "subscription"
       );
@@ -71,24 +80,39 @@ router.post(
         );
       }
 
-      if (user.subscription.stripeSubscription.status !== "active") {
+      /**
+       * TODO: Check if this endpoint was requested with a Bearer auth header?
+       * Invalidate the refresh tokens for the owner of the Bearer refresh token?
+       */
+
+      let { stripeSubscription } = user.subscription;
+
+      if (stripeSubscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );
       }
 
-      let { stripeSubscription } = user.subscription;
-      let {
-        items: {
-          data: [item],
-        },
-      } = stripeSubscription;
+      /**
+       * Inital access token expiration date set to 2 minutes from the moment of this request
+       */
+      let accessTokenExpiresIn = new Date();
+      accessTokenExpiresIn.setMinutes(
+        accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
+      );
 
       /**
-       * Inital token expiration date set to 15 minutes from the moment of this request
+       * Inital refresh token expiration date set to 15 minutes from the moment of this request
        */
-      let expiresIn = new Date();
-      expiresIn.setMinutes(expiresIn.getMinutes() + jsonWebTokenExpiration);
+      let refreshTokenExpiresIn = new Date();
+      refreshTokenExpiresIn.setMinutes(
+        refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
+      );
+
+      /**
+       * Check if the expiration time for both the access and refresh tokens
+       * are within the subscription period
+       */
 
       /**
        * Stripe timestamps are in seconds. They need to be converted to milliseconds
@@ -106,18 +130,31 @@ router.post(
        * If that date is past the end of the current period for which this subscription has been invoiced
        * then the new expiry date becomes the end date for the period which this subscription has been invoiced
        */
-      if (expiresIn > subscriptionPeriodEnd) {
-        expiresIn = subscriptionPeriodEnd;
+      if (accessTokenExpiresIn > subscriptionPeriodEnd) {
+        accessTokenExpiresIn = subscriptionPeriodEnd;
+      }
+      if (refreshTokenExpiresIn > subscriptionPeriodEnd) {
+        refreshTokenExpiresIn = subscriptionPeriodEnd;
       }
 
-      if (Date.now() > expiresIn.getTime()) {
+      if (Date.now() > accessTokenExpiresIn.getTime()) {
         throw new BadRequestError("The user's active subscription has expired");
       }
 
       /**
        *
        */
-      let jsonWebTokenPayload: UserPayload = {
+      let accessTokenPayload: UserPayload = {
+        user: {
+          id: user.id,
+          subscription: {
+            id: stripeSubscription.id,
+            status: stripeSubscription.status,
+          },
+        },
+      };
+
+      let refreshTokenPayload: UserPayload = {
         user: {
           id: user.id,
           subscription: {
@@ -128,29 +165,49 @@ router.post(
       };
 
       /**
-       * How many seconds are there between now and expiresIn?
+       * Get the number of seconds until each token expires
+       * We need the value in seconds for the expires clause when creating the tokens
        */
-      let expiresInSeconds = Math.trunc(
-        (expiresIn.getTime() - Date.now()) / 1000
+      let accessTokenExpiresInSeconds = Math.trunc(
+        (accessTokenExpiresIn.getTime() - Date.now()) / 1000
+      );
+
+      let refreshTokenExpiresInSeconds = Math.trunc(
+        (refreshTokenExpiresIn.getTime() - Date.now()) / 1000
       );
 
       /**
-       * Sign...
+       *
        */
-      let jsonWebToken = sign(
-        jsonWebTokenPayload,
-        process.env.SESSION_JWT_SECRET!,
+      let newAccessToken = sign(
+        accessTokenPayload,
+        process.env.ACCESS_TOKEN_SECRET!,
         {
-          expiresIn: expiresInSeconds,
+          expiresIn: accessTokenExpiresInSeconds,
+        }
+      );
+
+      let newRefreshToken = sign(
+        refreshTokenPayload,
+        process.env.REFRESH_TOKEN_SECRET!,
+        {
+          expiresIn: refreshTokenExpiresInSeconds,
         }
       );
 
       /**
-       * and ship 🚢
+       *
+       */
+
+      user.refreshTokens = [...user.refreshTokens, newRefreshToken];
+      await user.save();
+
+      /**
+       *
        */
       return res.status(200).json({
-        jsonWebToken,
-        landingPage: payload.landingPage,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
       });
     } catch (err) {
       next(err);

@@ -22,6 +22,10 @@ interface UserDoc extends mongoose.Document {
    *
    */
   subscription: SubscriptionDoc;
+  /**
+   * Refresh token rotation and reuse detection
+   */
+  refreshTokens: String[];
 }
 
 /**
@@ -44,6 +48,7 @@ const userSchema = new mongoose.Schema(
        */
       ref: "Subscription",
     },
+    refreshTokens: [String],
   },
   {
     toJSON: {
