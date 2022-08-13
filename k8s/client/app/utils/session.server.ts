@@ -105,10 +105,6 @@ export async function getAuthSession(
       );
     }
 
-    /**
-     *
-     */
-
     let accessTokenPayload = verify(
       accessToken,
       process.env.ACCESS_TOKEN_SECRET!
@@ -125,12 +121,116 @@ export async function getAuthSession(
       throw new Error("Refresh token does not contain the required metadata");
     }
 
+    return [accessTokenPayload, accessToken, refreshSession];
+  } catch (err) {
+    throw await logout(request);
+  }
+}
+
+/**
+ *
+ */
+
+export async function login(magicToken: string): Promise<Response> {
+  /**
+   * If the token exchange throws, the caller of this function is responsible for handling the error
+   */
+
+  let { accessToken, refreshToken } = await exchangeMagicToken(magicToken);
+
+  /**
+   *
+   */
+
+  let session = await accesTokenSession.getSession();
+  session.set("accessToken", accessToken);
+
+  let headers = new Headers({
+    "Set-Cookie": await accesTokenSession.commitSession(session, {
+      maxAge: getAccessTokenExpiration(accessToken),
+    }),
+  });
+
+  session = await refreshTokenSession.getSession();
+  session.set("refreshToken", refreshToken);
+
+  headers.append(
+    "Set-Cookie",
+    await refreshTokenSession.commitSession(session, {
+      maxAge: getRefreshTokenExpiration(refreshToken),
+    })
+  );
+
+  /**
+   * TODO: Add landing page back
+   */
+
+  return redirect("/user", {
+    headers,
+  });
+}
+
+export async function logout(request: Request): Promise<Response> {
+  let cookie = request.headers.get("cookie");
+
+  // TODO: Call /logout on the auth service to delete all refresh tokens
+
+  let session = await accesTokenSession.getSession(cookie);
+
+  let headers = new Headers({
+    "auth-redirect": getReferrer(request),
+    "Set-Cookie": await accesTokenSession.destroySession(session),
+  });
+
+  session = await refreshTokenSession.getSession(cookie);
+
+  headers.append(
+    "Set-Cookie",
+    await refreshTokenSession.destroySession(session)
+  );
+
+  /**
+   *
+   */
+
+  return redirect("/login", {
+    status: 303,
+    headers,
+  });
+}
+
+async function refreshSession(request: Request): Promise<Headers> {
+  try {
+    let { accessToken, refreshToken } = await getFreshTokens(
+      await getRefreshToken(request)
+    );
+
+    let session = await accesTokenSession.getSession();
+    session.set("accessToken", accessToken);
+
     /**
      *
      */
-    return [accessTokenPayload, accessToken, refreshSession];
-  } catch (err) {
-    throw await getLoginRedirect(request);
+
+    let responseHeaders = new Headers({
+      "Set-Cookie": await accesTokenSession.commitSession(session, {
+        maxAge: getAccessTokenExpiration(accessToken),
+      }),
+    });
+
+    session = await refreshTokenSession.getSession();
+    session.set("refreshToken", refreshToken);
+
+    responseHeaders.append(
+      "Set-Cookie",
+      await refreshTokenSession.commitSession(session, {
+        maxAge: getRefreshTokenExpiration(refreshToken),
+      })
+    );
+
+    return responseHeaders;
+  } catch (error) {
+    throw await logout(request);
   }
 }
 
@@ -225,48 +325,10 @@ async function getFreshTokens(
 /**
  *
  */
-async function refreshSession(request: Request): Promise<Headers> {
-  try {
-    let { accessToken, refreshToken } = await getFreshTokens(
-      await getRefreshToken(request)
-    );
 
-    let session = await accesTokenSession.getSession();
-    session.set("accessToken", accessToken);
-
-    /**
-     *
-     */
-
-    let responseHeaders = new Headers({
-      "Set-Cookie": await accesTokenSession.commitSession(session, {
-        maxAge: getAccessTokenExpiration(accessToken),
-      }),
-    });
-
-    session = await refreshTokenSession.getSession();
-    session.set("refreshToken", refreshToken);
-
-    responseHeaders.append(
-      "Set-Cookie",
-      await refreshTokenSession.commitSession(session, {
-        maxAge: getRefreshTokenExpiration(refreshToken),
-      })
-    );
-
-    return responseHeaders;
-  } catch (error) {
-    throw await getLoginRedirect(request);
-  }
-}
-
-/**
- *
- */
-
-export function getAccessTokenExpiration(jsonWebToken: string): number {
+export function getAccessTokenExpiration(accessToken: string): number {
   let { exp } = verify(
-    jsonWebToken,
+    accessToken,
     process.env.ACCESS_TOKEN_SECRET!
   ) as JwtPayload;
 
@@ -284,9 +346,9 @@ export function getAccessTokenExpiration(jsonWebToken: string): number {
   return expiresInSeconds;
 }
 
-export function getRefreshTokenExpiration(jsonWebToken: string): number {
+export function getRefreshTokenExpiration(refreshToken: string): number {
   let { exp } = verify(
-    jsonWebToken,
+    refreshToken,
     process.env.REFRESH_TOKEN_SECRET!
   ) as JwtPayload;
 
@@ -302,36 +364,6 @@ export function getRefreshTokenExpiration(jsonWebToken: string): number {
   let expiresInSeconds = Math.trunc((expiresIn.getTime() - Date.now()) / 1000);
 
   return expiresInSeconds;
-}
-
-/**
- *
- */
-
-export async function getLoginRedirect(request: Request): Promise<Response> {
-  let cookie = request.headers.get("cookie");
-
-  let session = await accesTokenSession.getSession(cookie);
-
-  let headers = new Headers({
-    "auth-redirect": getReferrer(request),
-    "Set-Cookie": await accesTokenSession.destroySession(session),
-  });
-
-  session = await refreshTokenSession.getSession(cookie);
-
-  headers.append(
-    "Set-Cookie",
-    await refreshTokenSession.destroySession(session)
-  );
-
-  /**
-   *
-   */
-  return redirect("/login", {
-    status: 303,
-    headers,
-  });
 }
 
 export function getReferrer(request: Request): string {

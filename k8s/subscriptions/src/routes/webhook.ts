@@ -1,8 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import { BadRequestError } from "@tartine/common";
-
+/**
+ *
+ */
 import type Stripe from "stripe";
-
+/**
+ *
+ */
 import { Subscription } from "../models/subscription";
 /**
  *
@@ -56,6 +60,8 @@ router.post(
         );
       }
 
+      // console.log("event.type", event.type);
+
       switch (event.type) {
         /**
          * Sent when the subscription is created.
@@ -65,6 +71,11 @@ router.post(
          */
         case "customer.subscription.created":
           let subscription = event.data.object as Stripe.Subscription;
+
+          console.log(
+            "customer.subscription.created",
+            JSON.stringify(subscription, null, 2)
+          );
 
           let customerExistingSubscription = await Subscription.findOne({
             stripeSubscriptionId: subscription.id,
@@ -76,19 +87,16 @@ router.post(
             );
           }
 
-          let customerNewSubscription = Subscription.build({
-            stripeSubscriptionId: subscription.id,
-            stripeSubscription: subscription,
-          });
+          let customerNewSubscription = Subscription.build(subscription);
 
           await customerNewSubscription.save();
 
           /**
            *
            */
-          new SubscriptionCreatedPublisher(nats.client).publish({
-            stripeSubscription: customerNewSubscription.stripeSubscription,
-          });
+          // new SubscriptionCreatedPublisher(nats.client).publish({
+          //   stripeSubscription: customerNewSubscription.stripeSubscription,
+          // });
 
           break;
 
@@ -99,13 +107,16 @@ router.post(
          * and changing plans all trigger this event.
          */
         case "customer.subscription.updated":
-          const subscriptionUpdate = event.data.object as Stripe.Subscription;
+          let subscriptionUpdate = event.data.object as Stripe.Subscription;
 
-          console.log('subscriptionUpdate', subscriptionUpdate)
+          console.log(
+            "customer.subscription.updated",
+            JSON.stringify(subscriptionUpdate, null, 2)
+          );
 
-          const customerSubscriptionUpdate = await Subscription.findOne({
-            stripeSubscriptionId: subscriptionUpdate.id,
-          });
+          let customerSubscriptionUpdate = await Subscription.findById(
+            subscriptionUpdate.id
+          );
 
           if (!customerSubscriptionUpdate) {
             throw new BadRequestError(
@@ -113,27 +124,24 @@ router.post(
             );
           }
 
-          customerSubscriptionUpdate.set({
-            stripeSubscription: subscriptionUpdate,
-          });
+          // customerSubscriptionUpdate.set({
+          //   stripeSubscription: subscriptionUpdate,
+          // });
 
           await customerSubscriptionUpdate.save();
 
           /**
            *
            */
-          new SubscriptionUpdatedPublisher(nats.client).publish({
-            stripeSubscriptionId:
-              customerSubscriptionUpdate.stripeSubscription.id,
-            stripeSubscription: customerSubscriptionUpdate.stripeSubscription,
-            version: customerSubscriptionUpdate.version,
-          });
+          // new SubscriptionUpdatedPublisher(nats.client).publish({
+          //   stripeSubscriptionId:
+          //     customerSubscriptionUpdate.stripeSubscription.id,
+          //   stripeSubscription: customerSubscriptionUpdate.stripeSubscription,
+          //   version: customerSubscriptionUpdate.version,
+          // });
 
           break;
 
-        /**
-         * TODO
-         */
         case "customer.subscription.deleted":
           break;
 

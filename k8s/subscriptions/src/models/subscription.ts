@@ -2,14 +2,9 @@ import mongoose from "mongoose";
 
 import Stripe from "stripe";
 
-interface SubscriptionAttrs {
-  stripeSubscriptionId: string;
-  stripeSubscription: Stripe.Subscription;
-}
+interface SubscriptionAttrs extends Stripe.Subscription {}
 
 interface SubscriptionDoc extends mongoose.Document {
-  stripeSubscriptionId: string;
-  stripeSubscription: Stripe.Subscription;
   version: number;
 }
 
@@ -18,23 +13,10 @@ interface SubscriptionModel extends mongoose.Model<SubscriptionDoc> {
 }
 
 const subscriptionSchema = new mongoose.Schema(
-  {
-    stripeSubscriptionId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    stripeSubscription: {
-      /**
-       * https://mongoosejs.com/docs/schematypes.html#mixed
-       */
-      type: mongoose.SchemaTypes.Mixed,
-      required: true,
-    },
-  },
+  {},
   {
     toJSON: {
-      transform: (document, ret) => {
+      transform: (_, ret) => {
         ret.id = ret._id;
         delete ret._id;
       },
@@ -88,8 +70,8 @@ subscriptionSchema.pre("save", function (next) {
    */
 });
 
-subscriptionSchema.statics.build = (attrs: SubscriptionAttrs) =>
-  new Subscription(attrs);
+subscriptionSchema.statics.build = ({ id, ...rest }: SubscriptionAttrs) =>
+  new Subscription({ _id: id, ...rest });
 
 const Subscription = mongoose.model<SubscriptionDoc, SubscriptionModel>(
   "Subscription",

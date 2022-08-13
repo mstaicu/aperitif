@@ -114,8 +114,6 @@ router.post(
 
           let { stripeSubscription } = user.subscription;
 
-          console.log("user", user);
-
           if (stripeSubscription.status !== "active") {
             throw new BadRequestError(
               "The provided refresh token belongs to a user with no active subscriptions"
@@ -243,8 +241,6 @@ router.post(
             refreshToken: newRefreshToken,
           });
         } catch (error) {
-          console.log("error", error);
-
           /**
            * Remove the provided refresh token from the user's list of refresh tokens
            */

@@ -12,6 +12,11 @@ export class SubscriptionUpdatedListener extends Listener<SubscriptionUpdatedEve
     try {
       let { stripeSubscription } = data;
 
+      console.log(
+        "SubscriptionUpdatedListener",
+        JSON.stringify(stripeSubscription, null, 2)
+      );
+
       let existingSubscription = await Subscription.findByEvent(data);
 
       if (!existingSubscription) {

@@ -8,50 +8,38 @@ import {
   useLoaderData,
   useTransition,
 } from "@remix-run/react";
-import { json, redirect } from "@remix-run/node";
-
+import { json } from "@remix-run/node";
+/**
+ *
+ */
 import type {
   ActionFunction,
   LinksFunction,
   LoaderFunction,
 } from "@remix-run/node";
 import type { ProblemDetailsResponse } from "@tartine/common";
-
-import {
-  accesTokenSession,
-  refreshTokenSession,
-  /**
-   *
-   */
-  exchangeMagicToken,
-  emailMagicToken,
-  /**
-   *
-   */
-  getReferrer,
-  /**
-   *
-   */
-  getAccessTokenExpiration,
-  getRefreshTokenExpiration,
-} from "~/utils/session.server";
-
+/**
+ *
+ */
+import { emailMagicToken, getReferrer, login } from "~/utils/session.server";
 /**
  *
  */
 
 import styles from "~/styles/login.css";
-
-export let links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
-
 /**
  *
  */
-
+export let links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+/**
+ *
+ */
 type LoaderData = {
   landingPage?: string;
 };
-
+/**
+ *
+ */
 export let loader: LoaderFunction = async ({ request }) => {
   let { searchParams } = new URL(request.url);
   let magicToken = searchParams.get("magic");
@@ -60,46 +48,11 @@ export let loader: LoaderFunction = async ({ request }) => {
     return json({ landingPage: getReferrer(request) });
   }
 
-  /**
-   * If the token exchange throws, render the catch boundary
-   */
-  let { accessToken, refreshToken } = await exchangeMagicToken(magicToken);
-
-  /**
-   *
-   */
-
-  let session = await accesTokenSession.getSession();
-  session.set("accessToken", accessToken);
-
-  let headers = new Headers({
-    "Set-Cookie": await accesTokenSession.commitSession(session, {
-      maxAge: getAccessTokenExpiration(accessToken),
-    }),
-  });
-
-  session = await refreshTokenSession.getSession();
-  session.set("refreshToken", refreshToken);
-
-  headers.append(
-    "Set-Cookie",
-    await refreshTokenSession.commitSession(session, {
-      maxAge: getRefreshTokenExpiration(refreshToken),
-    })
-  );
-
-  /**
-   * TODO: Add landing page back
-   */
-  return redirect("/user", {
-    headers,
-  });
+  throw await login(magicToken);
 };
-
 /**
  *
  */
-
 type ActionData = Partial<ProblemDetailsResponse>;
 
 export let action: ActionFunction = async ({ request }) => {

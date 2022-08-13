@@ -33,8 +33,6 @@ router.post(
         );
       }
 
-      console.log("user", JSON.stringify(user, null, 2));
-
       if (user.subscription.stripeSubscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
