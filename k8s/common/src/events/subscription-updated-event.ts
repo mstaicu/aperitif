@@ -5,8 +5,11 @@ import { Subjects } from "./types/subjects";
 export interface SubscriptionUpdatedEvent {
   subject: Subjects.SubscriptionUpdated;
   data: {
-    stripeSubscriptionId: string;
-    stripeSubscription: Stripe.Subscription;
+    id: string;
+    cancel_at: number | null;
+    cancel_at_period_end: boolean;
+    current_period_end: number;
+    status: Stripe.Subscription.Status;
     version: number;
   };
 }

@@ -13,25 +13,30 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
 
   onMessage = async (data: SubscriptionCreatedEvent["data"], msg: Message) => {
     try {
-      let { stripeSubscription } = data;
+      let {
+        id,
+        cancel_at,
+        cancel_at_period_end,
+        current_period_end,
+        customer,
+        status,
+      } = data;
 
-      if (typeof stripeSubscription.customer !== "string") {
+      if (typeof customer !== "string") {
         throw new Error(
           "SubscriptionCreatedEvent contains a customer of type Stripe.Customer or Stripe.DeletedCustomer"
         );
       }
 
-      let stripeCustomer = await stripe.customers.retrieve(
-        stripeSubscription.customer
-      );
+      customer = await stripe.customers.retrieve(customer);
 
-      if (stripeCustomer.deleted) {
+      if (customer.deleted) {
         throw new Error(
           "SubscriptionCreatedEvent contains a customer of type Stripe.DeletedCustomer"
         );
       }
 
-      if (!stripeCustomer.email) {
+      if (!customer.email) {
         throw new Error(
           "SubscriptionCreatedEvent contains a customer with an invalid email address"
         );
@@ -40,7 +45,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
       /**
        *
        */
-      let existingUser = await User.findOne({ email: stripeCustomer.email });
+      let existingUser = await User.findOne({ email: customer.email });
 
       if (existingUser) {
         throw new Error(
@@ -48,9 +53,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
         );
       }
 
-      let existingSubscription = await Subscription.findOne({
-        stripeSubscriptionId: stripeSubscription.id,
-      });
+      let existingSubscription = await Subscription.findById(id);
 
       if (existingSubscription) {
         throw new Error(
@@ -62,8 +65,11 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
        *
        */
       let subscription = Subscription.build({
-        stripeSubscriptionId: stripeSubscription.id,
-        stripeSubscription,
+        id,
+        cancel_at,
+        cancel_at_period_end,
+        current_period_end,
+        status,
       });
 
       await subscription.save();
@@ -72,7 +78,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
        *
        */
       let user = User.build({
-        email: stripeCustomer.email,
+        email: customer.email,
         subscription,
       });
 

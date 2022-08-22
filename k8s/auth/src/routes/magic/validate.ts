@@ -85,12 +85,27 @@ router.post(
        * Invalidate the refresh tokens for the owner of the Bearer refresh token?
        */
 
-      let { stripeSubscription } = user.subscription;
-
-      if (stripeSubscription.status !== "active") {
+      if (user.subscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );
+      }
+
+      /**
+       * Check if the expiration time for both the access and refresh tokens
+       * are within the subscription period
+       */
+
+      /**
+       * Stripe timestamps are in seconds. They need to be converted to milliseconds
+       * by multiply them by 1000 before using them to create dates
+       */
+      let subscriptionPeriodEnd = new Date(
+        user.subscription.current_period_end * 1000
+      );
+
+      if (user.subscription.cancel_at_period_end) {
+        subscriptionPeriodEnd = new Date(user.subscription.cancel_at! * 1000);
       }
 
       /**
@@ -108,23 +123,6 @@ router.post(
       refreshTokenExpiresIn.setMinutes(
         refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
       );
-
-      /**
-       * Check if the expiration time for both the access and refresh tokens
-       * are within the subscription period
-       */
-
-      /**
-       * Stripe timestamps are in seconds. They need to be converted to milliseconds
-       * by multiply them by 1000 before using them to create dates
-       */
-      let subscriptionPeriodEnd = new Date(
-        stripeSubscription.current_period_end * 1000
-      );
-
-      if (stripeSubscription.cancel_at_period_end) {
-        subscriptionPeriodEnd = new Date(stripeSubscription.cancel_at! * 1000);
-      }
 
       /**
        * If that date is past the end of the current period for which this subscription has been invoiced
@@ -148,8 +146,8 @@ router.post(
         user: {
           id: user.id,
           subscription: {
-            id: stripeSubscription.id,
-            status: stripeSubscription.status,
+            id: user.subscription.id,
+            status: user.subscription.status,
           },
         },
       };
@@ -158,8 +156,8 @@ router.post(
         user: {
           id: user.id,
           subscription: {
-            id: stripeSubscription.id,
-            status: stripeSubscription.status,
+            id: user.subscription.id,
+            status: user.subscription.status,
           },
         },
       };

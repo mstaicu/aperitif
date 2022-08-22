@@ -3,42 +3,49 @@ import mongoose from "mongoose";
 import Stripe from "stripe";
 
 interface SubscriptionAttrs {
-  stripeSubscriptionId: string;
-  stripeSubscription: Stripe.Subscription;
+  id: string;
+  status: Stripe.Subscription.Status;
+  cancel_at_period_end: boolean;
+  cancel_at: number | null;
+  current_period_end: number;
 }
 
 export interface SubscriptionDoc extends mongoose.Document {
-  stripeSubscriptionId: string;
-  stripeSubscription: Stripe.Subscription;
+  status: Stripe.Subscription.Status;
+  cancel_at_period_end: boolean;
+  cancel_at: number | null;
+  current_period_end: number;
   version: number;
 }
 
 interface SubscriptionModel extends mongoose.Model<SubscriptionDoc> {
   build(attrs: SubscriptionAttrs): SubscriptionDoc;
   findByEvent(event: {
-    stripeSubscriptionId: string;
+    id: string;
     version: number;
   }): Promise<SubscriptionDoc | null>;
 }
 
 const subscriptionSchema = new mongoose.Schema(
   {
-    stripeSubscriptionId: {
+    status: {
       type: String,
       required: true,
-      unique: true,
     },
-    stripeSubscription: {
-      /**
-       * https://mongoosejs.com/docs/schematypes.html#mixed
-       */
-      type: mongoose.SchemaTypes.Mixed,
+    cancel_at_period_end: {
+      type: Boolean,
       required: true,
+    },
+    cancel_at: {
+      type: Number,
+    },
+    current_period_end: {
+      type: Number,
     },
   },
   {
     toJSON: {
-      transform: (document, ret) => {
+      transform: (_, ret) => {
         ret.id = ret._id;
         delete ret._id;
       },
@@ -92,15 +99,15 @@ subscriptionSchema.pre("save", function (next) {
    */
 });
 
-subscriptionSchema.statics.build = (attrs: SubscriptionAttrs) =>
-  new Subscription(attrs);
+subscriptionSchema.statics.build = ({ id, ...rest }: SubscriptionAttrs) =>
+  new Subscription({ _id: id, ...rest });
 
 subscriptionSchema.statics.findByEvent = (event: {
-  stripeSubscriptionId: string;
+  id: string;
   version: number;
 }) =>
   Subscription.findOne({
-    stripeSubscriptionId: event.stripeSubscriptionId,
+    id: event.id,
     version: event.version - 1,
   });
 

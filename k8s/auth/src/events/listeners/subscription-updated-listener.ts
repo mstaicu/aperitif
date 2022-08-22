@@ -10,13 +10,6 @@ export class SubscriptionUpdatedListener extends Listener<SubscriptionUpdatedEve
 
   onMessage = async (data: SubscriptionUpdatedEvent["data"], msg: Message) => {
     try {
-      let { stripeSubscription } = data;
-
-      console.log(
-        "SubscriptionUpdatedListener",
-        JSON.stringify(stripeSubscription, null, 2)
-      );
-
       let existingSubscription = await Subscription.findByEvent(data);
 
       if (!existingSubscription) {
@@ -26,7 +19,10 @@ export class SubscriptionUpdatedListener extends Listener<SubscriptionUpdatedEve
       }
 
       existingSubscription.set({
-        stripeSubscription,
+        cancel_at: data.cancel_at,
+        cancel_at_period_end: data.cancel_at_period_end,
+        current_period_end: data.current_period_end,
+        status: data.status,
       });
 
       await existingSubscription.save();

@@ -72,14 +72,9 @@ router.post(
         case "customer.subscription.created":
           let subscription = event.data.object as Stripe.Subscription;
 
-          console.log(
-            "customer.subscription.created",
-            JSON.stringify(subscription, null, 2)
+          let customerExistingSubscription = await Subscription.findById(
+            subscription.id
           );
-
-          let customerExistingSubscription = await Subscription.findOne({
-            stripeSubscriptionId: subscription.id,
-          });
 
           if (customerExistingSubscription) {
             throw new BadRequestError(
@@ -87,16 +82,27 @@ router.post(
             );
           }
 
-          let customerNewSubscription = Subscription.build(subscription);
+          let customerNewSubscription = Subscription.build({
+            id: subscription.id,
+            cancel_at: subscription.cancel_at,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            current_period_end: subscription.current_period_end,
+            status: subscription.status,
+          });
 
           await customerNewSubscription.save();
 
           /**
            *
            */
-          // new SubscriptionCreatedPublisher(nats.client).publish({
-          //   stripeSubscription: customerNewSubscription.stripeSubscription,
-          // });
+          new SubscriptionCreatedPublisher(nats.client).publish({
+            id: subscription.id,
+            cancel_at: subscription.cancel_at,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            current_period_end: subscription.current_period_end,
+            status: subscription.status,
+            customer: subscription.customer,
+          });
 
           break;
 
@@ -109,36 +115,36 @@ router.post(
         case "customer.subscription.updated":
           let subscriptionUpdate = event.data.object as Stripe.Subscription;
 
-          console.log(
-            "customer.subscription.updated",
-            JSON.stringify(subscriptionUpdate, null, 2)
-          );
-
-          let customerSubscriptionUpdate = await Subscription.findById(
+          let existingSubscription = await Subscription.findById(
             subscriptionUpdate.id
           );
 
-          if (!customerSubscriptionUpdate) {
+          if (!existingSubscription) {
             throw new BadRequestError(
               "Event customer.subscription.updated contains a subscription that is not registered with us"
             );
           }
 
-          // customerSubscriptionUpdate.set({
-          //   stripeSubscription: subscriptionUpdate,
-          // });
+          existingSubscription.set({
+            cancel_at: subscriptionUpdate.cancel_at,
+            cancel_at_period_end: subscriptionUpdate.cancel_at_period_end,
+            current_period_end: subscriptionUpdate.current_period_end,
+            status: subscriptionUpdate.status,
+          });
 
-          await customerSubscriptionUpdate.save();
+          await existingSubscription.save();
 
           /**
            *
            */
-          // new SubscriptionUpdatedPublisher(nats.client).publish({
-          //   stripeSubscriptionId:
-          //     customerSubscriptionUpdate.stripeSubscription.id,
-          //   stripeSubscription: customerSubscriptionUpdate.stripeSubscription,
-          //   version: customerSubscriptionUpdate.version,
-          // });
+          new SubscriptionUpdatedPublisher(nats.client).publish({
+            id: existingSubscription.id,
+            cancel_at: existingSubscription.cancel_at,
+            cancel_at_period_end: existingSubscription.cancel_at_period_end,
+            current_period_end: existingSubscription.current_period_end,
+            status: existingSubscription.status,
+            version: existingSubscription.version,
+          });
 
           break;
 
