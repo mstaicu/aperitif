@@ -60,8 +60,6 @@ router.post(
         );
       }
 
-      // console.log("event.type", event.type);
-
       switch (event.type) {
         /**
          * Sent when the subscription is created.

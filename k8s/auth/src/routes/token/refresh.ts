@@ -43,7 +43,11 @@ router.post(
         if (!user) {
           try {
             /**
-             * If the token is still valid invalidate all the refresh tokens
+             * TODO: If the token is expired, should we still find the user and remove all its refresh tokens?
+             */
+
+            /**
+             * if the token is still valid, invalidate all the refresh tokens
              * of the user that the provided refresh token belongs to
              */
             let payload = verify(
@@ -112,11 +116,28 @@ router.post(
            * Start subscription checks
            */
 
-          let { stripeSubscription } = user.subscription;
-
-          if (stripeSubscription.status !== "active") {
+          if (user.subscription.status !== "active") {
             throw new BadRequestError(
               "The provided refresh token belongs to a user with no active subscriptions"
+            );
+          }
+
+          /**
+           * Check if the expiration time for both the access and refresh tokens
+           * are within the subscription period
+           */
+
+          /**
+           * Stripe timestamps are in seconds. They need to be converted to milliseconds
+           * by multiply them by 1000 before using them to create dates
+           */
+          let subscriptionPeriodEnd = new Date(
+            user.subscription.current_period_end * 1000
+          );
+
+          if (user.subscription.cancel_at_period_end) {
+            subscriptionPeriodEnd = new Date(
+              user.subscription.cancel_at! * 1000
             );
           }
 
@@ -137,25 +158,6 @@ router.post(
           );
 
           /**
-           * Check if the expiration time for both the access and refresh tokens
-           * are within the subscription period
-           */
-
-          /**
-           * Stripe timestamps are in seconds. They need to be converted to milliseconds
-           * by multiply them by 1000 before using them to create dates
-           */
-          let subscriptionPeriodEnd = new Date(
-            stripeSubscription.current_period_end * 1000
-          );
-
-          if (stripeSubscription.cancel_at_period_end) {
-            subscriptionPeriodEnd = new Date(
-              stripeSubscription.cancel_at! * 1000
-            );
-          }
-
-          /**
            * If that date is past the end of the current period for which this subscription has been invoiced
            * then the new expiry date becomes the end date for the period which this subscription has been invoiced
            */
@@ -166,6 +168,9 @@ router.post(
             refreshTokenExpiresIn = subscriptionPeriodEnd;
           }
 
+          /**
+           * TODO: Do we need this check?
+           */
           if (Date.now() > accessTokenExpiresIn.getTime()) {
             throw new BadRequestError(
               "The user's active subscription has expired"
@@ -179,8 +184,8 @@ router.post(
             user: {
               id: user.id,
               subscription: {
-                id: stripeSubscription.id,
-                status: stripeSubscription.status,
+                id: user.subscription.id,
+                status: user.subscription.status,
               },
             },
           };
@@ -189,8 +194,8 @@ router.post(
             user: {
               id: user.id,
               subscription: {
-                id: stripeSubscription.id,
-                status: stripeSubscription.status,
+                id: user.subscription.id,
+                status: user.subscription.status,
               },
             },
           };

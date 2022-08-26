@@ -15,12 +15,16 @@ import type { UserPayload } from "@tartine/common";
 import { User } from "../../models/user";
 
 let router = express.Router();
-
+/**
+ *
+ */
 let magicTokenExpiration =
   1000 /** one second */ * 60 /** one minute */ * 30; /** 30 mins */
 let accessTokenMinuteExpiration = 2; /** 2 mins */
 let refreshTokenMinuteExpiration = 15; /** 15 mins */
-
+/**
+ *
+ */
 router.post(
   "/token/validate",
   [
@@ -41,6 +45,10 @@ router.post(
 
       try {
         payload = JSON.parse(
+          /**
+           * TODO: Move to JWT for magic link payload
+           */
+
           /**
            * The decodeURIComponent call does not affect already decoded URI components
            */
@@ -67,7 +75,7 @@ router.post(
       }
 
       /**
-       *
+       * Token is valid, proceed
        */
 
       let user = await User.findOne({ email: payload.email }).populate(
@@ -117,7 +125,7 @@ router.post(
       );
 
       /**
-       * Inital refresh token expiration date set to 15 minutes from the moment of this request
+       * Refresh token expiration date set to 15 minutes from the moment of this request
        */
       let refreshTokenExpiresIn = new Date();
       refreshTokenExpiresIn.setMinutes(

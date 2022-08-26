@@ -33,7 +33,7 @@ router.post(
         );
       }
 
-      if (user.subscription.stripeSubscription.status !== "active") {
+      if (user.subscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );
