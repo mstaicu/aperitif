@@ -84,7 +84,9 @@ $ kubectl delete service traefik-lb-srv
 
 ```
 $ kubectl exec ticket-mongo-depl-5dddd6d44-4n6lh -it -- bash
+$ mongosh // https://www.mongodb.com/docs/manual/release-notes/6.0-compatibility/#legacy-mongo-shell-removed
 $ show dbs;
+$ show collections;
 $ use tickets; || use orders;
 $ db.tickets.find()
 ```

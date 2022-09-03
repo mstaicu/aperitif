@@ -3,6 +3,8 @@ import type { Socket } from "net";
 
 import { nats } from "./events/nats";
 import {
+  CustomerCreatedListener,
+  //
   SubscriptionCreatedListener,
   SubscriptionUpdatedListener,
 } from "./events/listeners";
@@ -68,6 +70,8 @@ const start = async () => {
   /**
    *
    */
+
+  new CustomerCreatedListener(nats.client).listen();
 
   new SubscriptionCreatedListener(nats.client).listen();
   new SubscriptionUpdatedListener(nats.client).listen();

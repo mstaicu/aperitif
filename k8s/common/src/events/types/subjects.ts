@@ -1,14 +1,16 @@
 export enum Subjects {
-  TicketCreated = "ticket:created",
-  TicketUpdated = "ticket:updated",
+  CustomerCreated = "customer:created",
+
+  ExpirationComplete = "expiration:complete",
 
   OrderCreated = "order:created",
   OrderCancelled = "order:cancelled",
-
-  ExpirationComplete = "expiration:complete",
 
   PaymentCreated = "payment:created",
 
   SubscriptionCreated = "subscription:created",
   SubscriptionUpdated = "subscription:updated",
+
+  TicketCreated = "ticket:created",
+  TicketUpdated = "ticket:updated",
 }

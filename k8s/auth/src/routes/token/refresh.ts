@@ -116,7 +116,7 @@ router.post(
            * Start subscription checks
            */
 
-          if (user.subscription.status !== "active") {
+          if (!user.subscription || user.subscription.status !== "active") {
             throw new BadRequestError(
               "The provided refresh token belongs to a user with no active subscriptions"
             );

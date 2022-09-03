@@ -13,6 +13,7 @@ import { Subscription } from "../models/subscription";
  */
 import { nats } from "../events/nats";
 import {
+  CustomerCreatedPublisher,
   SubscriptionCreatedPublisher,
   SubscriptionUpdatedPublisher,
 } from "../events/publishers";
@@ -61,6 +62,16 @@ router.post(
       }
 
       switch (event.type) {
+        case "customer.created":
+          let { id, email } = event.data.object as Stripe.Customer;
+
+          new CustomerCreatedPublisher(nats.client).publish({
+            id,
+            email,
+          });
+
+          break;
+
         /**
          * Sent when the subscription is created.
          * The subscription status may be incomplete if customer authentication

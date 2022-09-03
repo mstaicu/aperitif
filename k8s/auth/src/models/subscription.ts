@@ -28,6 +28,13 @@ interface SubscriptionModel extends mongoose.Model<SubscriptionDoc> {
 
 const subscriptionSchema = new mongoose.Schema(
   {
+    /**
+     * Mapping Stripe Subscription IDs to internal Subscription IDs
+     */
+    _id: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       required: true,
@@ -107,7 +114,7 @@ subscriptionSchema.statics.findByEvent = (event: {
   version: number;
 }) =>
   Subscription.findOne({
-    id: event.id,
+    _id: event.id,
     version: event.version - 1,
   });
 

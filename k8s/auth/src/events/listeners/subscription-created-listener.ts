@@ -4,7 +4,7 @@ import { Subjects, Listener, SubscriptionCreatedEvent } from "@tartine/common";
 import { User } from "../../models/user";
 import { Subscription } from "../../models/subscription";
 
-import { stripe } from "../../stripe";
+// import { stripe } from "../../stripe";
 
 export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEvent> {
   readonly subject = Subjects.SubscriptionCreated;
@@ -28,28 +28,28 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
         );
       }
 
-      customer = await stripe.customers.retrieve(customer);
+      // customer = await stripe.customers.retrieve(customer);
 
-      if (customer.deleted) {
-        throw new Error(
-          "SubscriptionCreatedEvent contains a customer of type Stripe.DeletedCustomer"
-        );
-      }
+      // if (customer.deleted) {
+      //   throw new Error(
+      //     "SubscriptionCreatedEvent contains a customer of type Stripe.DeletedCustomer"
+      //   );
+      // }
 
-      if (!customer.email) {
-        throw new Error(
-          "SubscriptionCreatedEvent contains a customer with an invalid email address"
-        );
-      }
+      // if (!customer.email) {
+      //   throw new Error(
+      //     "SubscriptionCreatedEvent contains a customer with an invalid email address"
+      //   );
+      // }
 
       /**
        *
        */
-      let existingUser = await User.findOne({ email: customer.email });
+      let registeredCustomer = await User.findById(customer);
 
-      if (existingUser) {
+      if (!registeredCustomer) {
         throw new Error(
-          "SubscriptionCreatedEvent contains a customer that is already registered"
+          "SubscriptionCreatedEvent contains a customer that is not registered with us"
         );
       }
 
@@ -74,15 +74,11 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
 
       await subscription.save();
 
-      /**
-       *
-       */
-      let user = User.build({
-        email: customer.email,
+      registeredCustomer.set({
         subscription,
       });
 
-      await user.save();
+      await registeredCustomer.save();
 
       msg.ack();
     } catch (err) {}

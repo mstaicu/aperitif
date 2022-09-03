@@ -6,11 +6,15 @@ import type { SubscriptionDoc } from "./subscription";
  * describes the properties that are requried to create a new User
  */
 interface UserAttrs {
+  id: string;
+  /**
+   *
+   */
   email: string;
   /**
    *
    */
-  subscription: SubscriptionDoc;
+  subscription?: SubscriptionDoc;
 }
 
 /**
@@ -21,7 +25,7 @@ interface UserDoc extends mongoose.Document {
   /**
    *
    */
-  subscription: SubscriptionDoc;
+  subscription?: SubscriptionDoc;
   /**
    * Refresh token rotation and reuse detection
    */
@@ -37,6 +41,13 @@ interface UserModel extends mongoose.Model<UserDoc> {
 
 const userSchema = new mongoose.Schema(
   {
+    /**
+     * Mapping Stripe Customers IDs to internal User IDs
+     */
+    _id: {
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: true,
@@ -48,11 +59,14 @@ const userSchema = new mongoose.Schema(
        */
       ref: "Subscription",
     },
-    refreshTokens: [String],
+    refreshTokens: {
+      type: [String],
+      default: [],
+    },
   },
   {
     toJSON: {
-      transform(doc, ret) {
+      transform(_, ret) {
         ret.id = ret._id;
 
         delete ret._id;
@@ -62,7 +76,8 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.statics.build = (attrs: UserAttrs) => new User(attrs);
+userSchema.statics.build = ({ id, ...rest }: UserAttrs) =>
+  new User({ _id: id, ...rest });
 
 const User = mongoose.model<UserDoc, UserModel>("User", userSchema);
 

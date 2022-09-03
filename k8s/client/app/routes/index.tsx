@@ -4,7 +4,7 @@ import {
   useLoaderData,
   useTransition,
 } from "@remix-run/react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 
 import type {
   ActionFunction,

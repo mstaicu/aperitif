@@ -22,8 +22,15 @@ interface SubscriptionModel extends mongoose.Model<SubscriptionDoc> {
   build(attrs: SubscriptionAttrs): SubscriptionDoc;
 }
 
-const subscriptionSchema = new mongoose.Schema(
+let subscriptionSchema = new mongoose.Schema(
   {
+    /**
+     * Lets hope this is a good idea, mapping Stripe Subscription IDs to internal Subscription IDs
+     */
+    _id: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       required: true,
@@ -98,7 +105,7 @@ subscriptionSchema.pre("save", function (next) {
 subscriptionSchema.statics.build = ({ id, ...rest }: SubscriptionAttrs) =>
   new Subscription({ _id: id, ...rest });
 
-const Subscription = mongoose.model<SubscriptionDoc, SubscriptionModel>(
+let Subscription = mongoose.model<SubscriptionDoc, SubscriptionModel>(
   "Subscription",
   subscriptionSchema
 );

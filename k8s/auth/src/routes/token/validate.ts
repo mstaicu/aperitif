@@ -93,7 +93,7 @@ router.post(
        * Invalidate the refresh tokens for the owner of the Bearer refresh token?
        */
 
-      if (user.subscription.status !== "active") {
+      if (!user.subscription || user.subscription.status !== "active") {
         throw new BadRequestError(
           "The provided email address does not have any active subscriptions with us"
         );

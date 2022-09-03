@@ -20,4 +20,4 @@ endif
 
 run: setup
 	@kubectl apply -f infra/k8s-setup
-	@skaffold dev
+	@skaffold dev --status-check=false
