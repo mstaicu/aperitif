@@ -53,7 +53,12 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     subscription: {
-      type: mongoose.Schema.Types.ObjectId,
+      /**
+       * Type is String, because we're using custom _id fields with type Strings
+       * If we were using the default _id system, then Type would have been mongoose.Schema.Types.ObjectId
+       */
+      type: String,
+      // type: mongoose.Schema.Types.ObjectId,
       /**
        * https://mongoosejs.com/docs/populate.html#populate
        */

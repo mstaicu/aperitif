@@ -91,6 +91,10 @@ router.post(
             );
           }
 
+          /**
+           *
+           */
+
           let customerNewSubscription = Subscription.build({
             id: subscription.id,
             cancel_at: subscription.cancel_at,
@@ -105,11 +109,12 @@ router.post(
            *
            */
           new SubscriptionCreatedPublisher(nats.client).publish({
-            id: subscription.id,
-            cancel_at: subscription.cancel_at,
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            current_period_end: subscription.current_period_end,
-            status: subscription.status,
+            id: customerNewSubscription.id,
+            cancel_at: customerNewSubscription.cancel_at,
+            cancel_at_period_end: customerNewSubscription.cancel_at_period_end,
+            current_period_end: customerNewSubscription.current_period_end,
+            status: customerNewSubscription.status,
+            //
             customer: subscription.customer,
           });
 
@@ -134,6 +139,10 @@ router.post(
             );
           }
 
+          /**
+           *
+           */
+
           existingSubscription.set({
             cancel_at: subscriptionUpdate.cancel_at,
             cancel_at_period_end: subscriptionUpdate.cancel_at_period_end,
@@ -155,9 +164,6 @@ router.post(
             version: existingSubscription.version,
           });
 
-          break;
-
-        case "customer.subscription.deleted":
           break;
 
         default:
