@@ -117,9 +117,82 @@ router.post(
            */
 
           if (!user.subscription || user.subscription.status !== "active") {
-            throw new BadRequestError(
-              "The provided refresh token belongs to a user with no active subscriptions"
+            /**
+             * Inital access token expiration date set to 2 minutes from the moment of this request
+             */
+            let accessTokenExpiresIn = new Date();
+            accessTokenExpiresIn.setMinutes(
+              accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
             );
+
+            /**
+             * Refresh token expiration date set to 15 minutes from the moment of this request
+             */
+            let refreshTokenExpiresIn = new Date();
+            refreshTokenExpiresIn.setMinutes(
+              refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
+            );
+
+            /**
+             * Get the number of seconds until each token expires
+             * We need the value in seconds for the expires clause when creating the tokens
+             */
+            let accessTokenExpiresInSeconds = Math.trunc(
+              (accessTokenExpiresIn.getTime() - Date.now()) / 1000
+            );
+
+            let refreshTokenExpiresInSeconds = Math.trunc(
+              (refreshTokenExpiresIn.getTime() - Date.now()) / 1000
+            );
+
+            /**
+             *
+             */
+            let accessTokenPayload: UserPayload = {
+              user: {
+                id: user.id,
+              },
+            };
+
+            let refreshTokenPayload: UserPayload = {
+              user: {
+                id: user.id,
+              },
+            };
+
+            /**
+             *
+             */
+            let newAccessToken = sign(
+              accessTokenPayload,
+              process.env.ACCESS_TOKEN_SECRET!,
+              {
+                expiresIn: accessTokenExpiresInSeconds,
+              }
+            );
+
+            let newRefreshToken = sign(
+              refreshTokenPayload,
+              process.env.REFRESH_TOKEN_SECRET!,
+              {
+                expiresIn: refreshTokenExpiresInSeconds,
+              }
+            );
+
+            /**
+             *
+             */
+
+            user.refreshTokens = [...user.refreshTokens, newRefreshToken];
+            await user.save();
+
+            /**
+             *
+             */
+            return res.status(200).json({
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+            });
           }
 
           /**
@@ -166,15 +239,6 @@ router.post(
           }
           if (refreshTokenExpiresIn > subscriptionPeriodEnd) {
             refreshTokenExpiresIn = subscriptionPeriodEnd;
-          }
-
-          /**
-           * TODO: Do we need this check?
-           */
-          if (Date.now() > accessTokenExpiresIn.getTime()) {
-            throw new BadRequestError(
-              "The user's active subscription has expired"
-            );
           }
 
           /**

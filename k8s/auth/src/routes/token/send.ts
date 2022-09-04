@@ -5,8 +5,9 @@ import type { NextFunction, Request, Response } from "express";
 
 import {
   BadRequestError,
+  //
   validateRequestHandler,
-  sendMagicLink,
+  sendLoginLink,
 } from "@tartine/common";
 
 import { User } from "../../models/user";
@@ -40,7 +41,7 @@ router.post(
       }
 
       try {
-        await sendMagicLink({ email, landingPage });
+        await sendLoginLink({ email, landingPage });
 
         return res.status(200).json();
       } catch (err) {

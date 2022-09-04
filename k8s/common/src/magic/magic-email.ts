@@ -39,7 +39,7 @@ sg.setApiKey(process.env.SENDGRID_API_KEY);
  *
  */
 
-export async function getMagicLink(payload: {
+export async function getLoginLink(payload: {
   email: string;
   landingPage: string;
 }) {
@@ -54,11 +54,11 @@ export async function getMagicLink(payload: {
   return url.toString();
 }
 
-export async function sendMagicLink(payload: {
+export async function sendLoginLink(payload: {
   email: string;
   landingPage: string;
 }) {
-  let link = getMagicLink(payload);
+  let link = getLoginLink(payload);
 
   let html = `
     <div>

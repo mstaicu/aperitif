@@ -8,9 +8,9 @@ export type UserPayload = {
      */
     id: string;
     /**
-     *
+     * Since the user can have a free tier, the 'subscription' property is optional
      */
-    subscription: {
+    subscription?: {
       /**
        * Unique identifier for the object.
        */
@@ -35,10 +35,7 @@ export function hasUserPayload(obj: any): obj is UserPayload {
   return (
     typeof obj === "object" &&
     typeof obj.user === "object" &&
-    typeof obj.user.id === "string" &&
-    typeof obj.user.subscription === "object" &&
-    typeof obj.user.subscription.id === "string" &&
-    typeof obj.user.subscription.status === "string"
+    typeof obj.user.id === "string"
   );
 }
 
@@ -61,14 +58,12 @@ export function isRefreshToken(obj: any): obj is UserPayload & JwtPayload {
 export type MagicLinkPayload = {
   email: string;
   landingPage: string;
-  creationDate: string;
 };
 
 export function isMagicLinkPayload(obj: any): obj is MagicLinkPayload {
   return (
     typeof obj === "object" &&
     typeof obj.email === "string" &&
-    typeof obj.landingPage === "string" &&
-    typeof obj.creationDate === "string"
+    typeof obj.landingPage === "string"
   );
 }
