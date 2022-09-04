@@ -4,8 +4,6 @@ import { Subjects, Listener, SubscriptionCreatedEvent } from "@tartine/common";
 import { User } from "../../models/user";
 import { Subscription } from "../../models/subscription";
 
-// import { stripe } from "../../stripe";
-
 export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEvent> {
   readonly subject = Subjects.SubscriptionCreated;
 

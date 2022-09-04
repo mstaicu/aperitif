@@ -6,14 +6,16 @@ import { nats } from "./events/nats";
 import { app } from "./app";
 
 const start = async () => {
+  if (!process.env.DOMAIN) {
+    throw new Error("DOMAIN must be defined as an environment variable");
+  }
+  /**
+   *
+   */
   if (!process.env.SUBSCRIPTIONS_MONGO_URI) {
     throw new Error(
       "SUBSCRIPTIONS_MONGO_URI must be defined as an environment variable"
     );
-  }
-
-  if (!process.env.DOMAIN) {
-    throw new Error("DOMAIN must be defined as an environment variable");
   }
   /**
    *

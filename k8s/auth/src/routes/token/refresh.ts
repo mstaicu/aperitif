@@ -45,11 +45,6 @@ router.post(
             /**
              * TODO: If the token is expired, should we still find the user and remove all its refresh tokens?
              */
-
-            /**
-             * if the token is still valid, invalidate all the refresh tokens
-             * of the user that the provided refresh token belongs to
-             */
             let payload = verify(
               refreshToken,
               process.env.REFRESH_TOKEN_SECRET!
@@ -69,6 +64,10 @@ router.post(
               );
             }
 
+            /**
+             * if the token is still valid, invalidate all the refresh tokens
+             * of the user that the provided refresh token belongs to
+             */
             tokenOwner.refreshTokens = [];
             await tokenOwner.save();
 
@@ -111,11 +110,8 @@ router.post(
           verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!);
 
           /**
-           * Refresh token is still valid and belongs to the user
-           *
-           * Start subscription checks
+           * User has free-tier plan
            */
-
           if (!user.subscription || user.subscription.status !== "active") {
             /**
              * Inital access token expiration date set to 2 minutes from the moment of this request

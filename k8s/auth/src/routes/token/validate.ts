@@ -14,15 +14,17 @@ import type { UserPayload } from "@tartine/common";
 import { User } from "../../models/user";
 
 let router = express.Router();
-/**
- *
- */
+
 let accessTokenMinuteExpiration = 2; /** 2 mins */
 let refreshTokenMinuteExpiration = 15; /** 15 mins */
+
 /**
+ * 
  * TODO: Check if this endpoint was requested with a Bearer auth header?
  * Invalidate the refresh tokens for the owner of the Bearer refresh token?
+ * 
  */
+
 router.post(
   "/token/validate",
   [

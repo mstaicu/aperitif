@@ -22,6 +22,9 @@ interface UserAttrs {
  */
 interface UserDoc extends mongoose.Document {
   _id: string;
+  /**
+   *
+   */
   email: string;
   /**
    *

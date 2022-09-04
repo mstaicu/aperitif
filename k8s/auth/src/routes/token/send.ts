@@ -19,24 +19,20 @@ router.post(
   [
     body("email")
       .isEmail()
-      .withMessage("A valid email address must be provided with this request"),
+      .withMessage(
+        "A valid 'email' address must be provided with this request"
+      ),
   ],
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       let { email, landingPage = "/user" } = req.body;
 
-      let user = await User.findOne({ email }).populate("subscription");
+      let user = await User.findOne({ email });
 
       if (!user) {
         throw new BadRequestError(
           "The provided email address is not registered with us"
-        );
-      }
-
-      if (!user.subscription || user.subscription.status !== "active") {
-        throw new BadRequestError(
-          "The provided email address does not have any active subscriptions with us"
         );
       }
 

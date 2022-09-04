@@ -145,10 +145,6 @@ export async function login(magicToken: string): Promise<Response> {
 
   let { accessToken, refreshToken } = await exchangeMagicToken(magicToken);
 
-  /**
-   *
-   */
-
   let session = await accesTokenSession.getSession();
   session.set("accessToken", accessToken);
 
