@@ -15,21 +15,13 @@ const start = async () => {
   if (!process.env.DOMAIN) {
     throw new Error("DOMAIN must be defined as an environment variable");
   }
+  /**
+   *
+   */
   if (!process.env.AUTH_MONGO_URI) {
     throw new Error(
       "AUTH_MONGO_URI must be defined as an environment variable"
     );
-  }
-  /**
-   *
-   */
-  if (!process.env.NATS_CLIENT_ID) {
-    throw new Error(
-      "NATS_CLIENT_ID must be defined as an environment variable"
-    );
-  }
-  if (!process.env.NATS_URL) {
-    throw new Error("NATS_URL must be defined as an environment variable");
   }
   /**
    *
@@ -44,6 +36,11 @@ const start = async () => {
       "REFRESH_TOKEN_SECRET must be defined as an environment variable"
     );
   }
+  if (!process.env.MAGIC_PAYLOAD_SECRET) {
+    throw new Error(
+      "MAGIC_PAYLOAD_SECRET must be defined as an environment variable"
+    );
+  }
   /**
    *
    */
@@ -52,7 +49,17 @@ const start = async () => {
       "STRIPE_SECRET_KEY must be defined as an environment variable"
     );
   }
-
+  /**
+   *
+   */
+  if (!process.env.NATS_CLIENT_ID) {
+    throw new Error(
+      "NATS_CLIENT_ID must be defined as an environment variable"
+    );
+  }
+  if (!process.env.NATS_URL) {
+    throw new Error("NATS_URL must be defined as an environment variable");
+  }
   /**
    *
    */

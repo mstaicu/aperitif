@@ -4,17 +4,20 @@ import Stripe from "stripe";
 
 interface SubscriptionAttrs {
   id: string;
-  status: Stripe.Subscription.Status;
   cancel_at_period_end: boolean;
   cancel_at: number | null;
   current_period_end: number;
+  customerId: string;
+  status: Stripe.Subscription.Status;
 }
 
 export interface SubscriptionDoc extends mongoose.Document {
-  status: Stripe.Subscription.Status;
+  _id: string;
   cancel_at_period_end: boolean;
   cancel_at: number | null;
   current_period_end: number;
+  customerId: string;
+  status: Stripe.Subscription.Status;
   version: number;
 }
 
@@ -35,10 +38,6 @@ const subscriptionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    status: {
-      type: String,
-      required: true,
-    },
     cancel_at_period_end: {
       type: Boolean,
       required: true,
@@ -48,6 +47,14 @@ const subscriptionSchema = new mongoose.Schema(
     },
     current_period_end: {
       type: Number,
+    },
+    customerId: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      required: true,
     },
   },
   {

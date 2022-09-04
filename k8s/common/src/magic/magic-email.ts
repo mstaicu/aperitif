@@ -1,7 +1,7 @@
 import sg from "@sendgrid/mail";
-import type { MailDataRequired } from "@sendgrid/mail";
+import { sign } from "jsonwebtoken";
 
-import { encryptMagicLinkPayload } from "./magic-crypto";
+import type { MailDataRequired } from "@sendgrid/mail";
 
 /**
  *
@@ -9,7 +9,9 @@ import { encryptMagicLinkPayload } from "./magic-crypto";
 if (!process.env.DOMAIN) {
   throw new Error("DOMAIN must be defined as an environment variable");
 }
-
+/**
+ *
+ */
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error(
     "SENDGRID_API_KEY must be defined as an environment variable"
@@ -20,7 +22,14 @@ if (!process.env.SENDGRID_SENDER_EMAIL) {
     "SENDGRID_SENDER_EMAIL must be defined as an environment variable"
   );
 }
-
+/**
+ *
+ */
+if (!process.env.MAGIC_PAYLOAD_SECRET) {
+  throw new Error(
+    "MAGIC_PAYLOAD_SECRET must be defined as an environment variable"
+  );
+}
 /**
  *
  */
@@ -29,28 +38,27 @@ sg.setApiKey(process.env.SENDGRID_API_KEY);
 /**
  *
  */
-export function generateMagicLink(email: string, landingPage: string) {
-  let payload = {
-    email,
-    landingPage,
-    creationDate: new Date().toISOString(),
-  };
 
-  let payloadStringified = JSON.stringify(payload);
-  let encryptedPayload = encryptMagicLinkPayload(payloadStringified);
+export async function getMagicLink(payload: {
+  email: string;
+  landingPage: string;
+}) {
+  let magicPayload = sign(payload, process.env.MAGIC_PAYLOAD_SECRET!, {
+    expiresIn: "30m",
+  });
 
   let url = new URL(`https://${process.env.DOMAIN}`);
   url.pathname = "/login";
-  url.searchParams.set("magic", encryptedPayload);
+  url.searchParams.set("magic", magicPayload);
 
   return url.toString();
 }
 
-/**
- *
- */
-export async function sendMagicLink(email: string, landingPage: string) {
-  let link = generateMagicLink(email, landingPage);
+export async function sendMagicLink(payload: {
+  email: string;
+  landingPage: string;
+}) {
+  let link = getMagicLink(payload);
 
   let html = `
     <div>
@@ -66,7 +74,7 @@ export async function sendMagicLink(email: string, landingPage: string) {
       email: process.env.SENDGRID_SENDER_EMAIL!,
     },
     to: {
-      email,
+      email: payload.email,
     },
     subject: "Your login credentials",
     html,

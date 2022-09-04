@@ -40,12 +40,12 @@ router.post(
       }
 
       try {
-        await sendMagicLink(email, landingPage);
+        await sendMagicLink({ email, landingPage });
 
         return res.status(200).json();
       } catch (err) {
         throw new BadRequestError(
-          "Uh oh, something went wrong while trying to email you the magic link"
+          "Uh oh, something went wrong while trying to email you the login link"
         );
       }
     } catch (err) {

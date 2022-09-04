@@ -16,15 +16,22 @@ import type { UserPayload } from "@tartine/common";
 if (!process.env.DOMAIN) {
   throw new Error("DOMAIN must be defined as an environment variable");
 }
-
-if (!process.env.SESSION_COOKIE_SECRET) {
+/**
+ *
+ */
+if (!process.env.ACCESS_COOKIE_SECRET) {
   throw new Error(
-    "SESSION_COOKIE_SECRET must be defined as an environment variable"
+    "ACCESS_COOKIE_SECRET must be defined as an environment variable"
   );
 }
 if (!process.env.ACCESS_TOKEN_SECRET) {
   throw new Error(
     "ACCESS_TOKEN_SECRET must be defined as an environment variable"
+  );
+}
+if (!process.env.REFRESH_COOKIE_SECRET) {
+  throw new Error(
+    "REFRESH_COOKIE_SECRET must be defined as an environment variable"
   );
 }
 if (!process.env.REFRESH_TOKEN_SECRET) {
@@ -47,7 +54,7 @@ export let accesTokenSession = createCookieSessionStorage({
     path: "/",
     sameSite: "lax",
     secure: true,
-    secrets: [process.env.SESSION_COOKIE_SECRET],
+    secrets: [process.env.ACCESS_COOKIE_SECRET],
   },
 });
 
@@ -58,7 +65,7 @@ export let refreshTokenSession = createCookieSessionStorage({
     path: "/",
     sameSite: "lax",
     secure: true,
-    secrets: [process.env.SESSION_COOKIE_SECRET],
+    secrets: [process.env.REFRESH_COOKIE_SECRET],
   },
 });
 
@@ -162,7 +169,7 @@ export async function login(magicToken: string): Promise<Response> {
   );
 
   /**
-   * TODO: Add landing page back
+   * TODO: Add landing page back instead of /user
    */
 
   return redirect("/user", {
@@ -173,7 +180,9 @@ export async function login(magicToken: string): Promise<Response> {
 export async function logout(request: Request): Promise<Response> {
   let cookie = request.headers.get("cookie");
 
-  // TODO: Call /logout on the auth service to delete all refresh tokens
+  /**
+   * TODO: Call /logout on the auth service to delete all refresh tokens
+   */
 
   let session = await accesTokenSession.getSession(cookie);
 
@@ -189,10 +198,6 @@ export async function logout(request: Request): Promise<Response> {
     await refreshTokenSession.destroySession(session)
   );
 
-  /**
-   *
-   */
-
   return redirect("/login", {
     status: 303,
     headers,
@@ -207,10 +212,6 @@ async function refreshSession(request: Request): Promise<Headers> {
 
     let session = await accesTokenSession.getSession();
     session.set("accessToken", accessToken);
-
-    /**
-     *
-     */
 
     let responseHeaders = new Headers({
       "Set-Cookie": await accesTokenSession.commitSession(session, {

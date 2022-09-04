@@ -1,13 +1,12 @@
 import express from "express";
 import { body } from "express-validator";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 
 import type { NextFunction, Request, Response } from "express";
 
 import {
   BadRequestError,
   isMagicLinkPayload,
-  decryptMagicLinkPayload,
   validateRequestHandler,
 } from "@tartine/common";
 import type { UserPayload } from "@tartine/common";
@@ -38,25 +37,16 @@ router.post(
     try {
       let { token } = req.body;
 
-      /**
-       * Start magic link payload check
-       */
       let payload;
 
       try {
-        payload = JSON.parse(
-          /**
-           * TODO: Move to JWT for magic link payload
-           */
-
-          /**
-           * The decodeURIComponent call does not affect already decoded URI components
-           */
-          decryptMagicLinkPayload(decodeURIComponent(token))
+        payload = verify(
+          decodeURIComponent(token),
+          process.env.MAGIC_PAYLOAD_SECRET!
         );
       } catch (error) {
         throw new BadRequestError(
-          "The provided magic token could not be decoded"
+          "The provided magic token failed verifications"
         );
       }
 
@@ -64,14 +54,6 @@ router.post(
         throw new BadRequestError(
           "The provided magic token does not contain all the required fields"
         );
-      }
-
-      let magicTokenCreationDate = new Date(payload.creationDate);
-      let expirationTime =
-        magicTokenCreationDate.getTime() + magicTokenExpiration;
-
-      if (Date.now() > expirationTime) {
-        throw new BadRequestError("The provided magic token has expired");
       }
 
       /**

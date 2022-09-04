@@ -46,6 +46,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
         cancel_at,
         cancel_at_period_end,
         current_period_end,
+        customerId,
         status,
       });
 

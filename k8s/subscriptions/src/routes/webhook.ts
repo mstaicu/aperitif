@@ -74,6 +74,12 @@ router.post(
 
           let subscription = await Subscription.findById(stripeSubscription.id);
 
+          if (typeof stripeSubscription.customer !== "string") {
+            throw new BadRequestError(
+              "Stripe event 'customer.subscription.updated' sent a 'customer' property that is not of type 'string'"
+            );
+          }
+
           if (!subscription) {
             /**
              * Out-of-order Stripe event mitigation
@@ -82,12 +88,6 @@ router.post(
              *
              * Create a new subscription on a "customer.subscription.updated" event
              */
-
-            if (typeof stripeSubscription.customer !== "string") {
-              throw new BadRequestError(
-                "Stripe event 'customer.subscription.updated' sent a 'customer' property that is not of type 'string'"
-              );
-            }
 
             subscription = Subscription.build({
               id: stripeSubscription.id,
