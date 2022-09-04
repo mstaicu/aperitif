@@ -22,6 +22,7 @@ export class SubscriptionUpdatedListener extends Listener<SubscriptionUpdatedEve
         cancel_at: data.cancel_at,
         cancel_at_period_end: data.cancel_at_period_end,
         current_period_end: data.current_period_end,
+        customerId: data.customerId,
         status: data.status,
       });
 

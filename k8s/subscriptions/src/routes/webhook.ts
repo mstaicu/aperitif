@@ -40,9 +40,6 @@ router.post(
       let event: Stripe.Event;
 
       try {
-        /**
-         * Build the event from the Buffer request body, the Stripe signature header value and the webhook endpoint secret
-         */
         const webhookRawBody = req.body;
         const webhookStripeSignatureHeader = req.headers["stripe-signature"]!;
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -72,96 +69,88 @@ router.post(
 
           break;
 
-        /**
-         * Sent when the subscription is created.
-         * The subscription status may be incomplete if customer authentication
-         * is required to complete the payment or if you set payment_behavior to default_incomplete.
-         * For more details, read about subscription payment behavior.
-         */
-        case "customer.subscription.created":
-          let subscription = event.data.object as Stripe.Subscription;
+        case "customer.subscription.updated":
+          let stripeSubscription = event.data.object as Stripe.Subscription;
 
-          let customerExistingSubscription = await Subscription.findById(
-            subscription.id
-          );
+          let subscription = await Subscription.findById(stripeSubscription.id);
 
-          if (customerExistingSubscription) {
-            throw new BadRequestError(
-              "Event customer.subscription.created contains a subscription already registered with us"
-            );
+          if (!subscription) {
+            /**
+             * Out-of-order Stripe event mitigation
+             *
+             * Phase 1
+             *
+             * Create a new subscription on a "customer.subscription.updated" event
+             */
+
+            if (typeof stripeSubscription.customer !== "string") {
+              throw new BadRequestError(
+                "Stripe event 'customer.subscription.updated' sent a 'customer' property that is not of type 'string'"
+              );
+            }
+
+            subscription = Subscription.build({
+              id: stripeSubscription.id,
+              cancel_at: stripeSubscription.cancel_at,
+              cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+              current_period_end: stripeSubscription.current_period_end,
+              customerId: stripeSubscription.customer,
+              status: stripeSubscription.status,
+            });
+
+            await subscription.save();
+
+            /**
+             * Out-of-order Stripe event mitigation
+             *
+             * Phase 2
+             *
+             * Emit a new subscription on a "customer.subscription.updated" event
+             */
+            new SubscriptionCreatedPublisher(nats.client).publish({
+              id: subscription.id,
+              cancel_at: subscription.cancel_at,
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              current_period_end: subscription.current_period_end,
+              customerId: subscription.customerId,
+              status: subscription.status,
+            });
+
+            return res.sendStatus(200);
           }
 
           /**
+           * Out-of-order Stripe event mitigation
            *
+           * Phase 3
+           *
+           * Update the subscription on a "customer.subscription.updated" event
            */
+          subscription.set({
+            cancel_at: stripeSubscription.cancel_at,
+            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+            current_period_end: stripeSubscription.current_period_end,
+            customerId: stripeSubscription.customer,
+            status: stripeSubscription.status,
+          });
 
-          let customerNewSubscription = Subscription.build({
+          await subscription.save();
+
+          /**
+           * Out-of-order Stripe event mitigation
+           *
+           * Phase 4
+           *
+           * Emit the subscription update on a "customer.subscription.updated" event
+           */
+          new SubscriptionUpdatedPublisher(nats.client).publish({
             id: subscription.id,
             cancel_at: subscription.cancel_at,
             cancel_at_period_end: subscription.cancel_at_period_end,
             current_period_end: subscription.current_period_end,
+            customerId: subscription.customerId,
             status: subscription.status,
-          });
-
-          await customerNewSubscription.save();
-
-          /**
-           *
-           */
-          new SubscriptionCreatedPublisher(nats.client).publish({
-            id: customerNewSubscription.id,
-            cancel_at: customerNewSubscription.cancel_at,
-            cancel_at_period_end: customerNewSubscription.cancel_at_period_end,
-            current_period_end: customerNewSubscription.current_period_end,
-            status: customerNewSubscription.status,
-            //
-            customer: subscription.customer,
-          });
-
-          break;
-
-        /**
-         * Sent when the subscription is successfully started, after the payment is confirmed.
-         * Also sent whenever a subscription is changed.
-         * For example, adding a coupon, applying a discount, adding an invoice item,
-         * and changing plans all trigger this event.
-         */
-        case "customer.subscription.updated":
-          let subscriptionUpdate = event.data.object as Stripe.Subscription;
-
-          let existingSubscription = await Subscription.findById(
-            subscriptionUpdate.id
-          );
-
-          if (!existingSubscription) {
-            throw new BadRequestError(
-              "Event customer.subscription.updated contains a subscription that is not registered with us"
-            );
-          }
-
-          /**
-           *
-           */
-
-          existingSubscription.set({
-            cancel_at: subscriptionUpdate.cancel_at,
-            cancel_at_period_end: subscriptionUpdate.cancel_at_period_end,
-            current_period_end: subscriptionUpdate.current_period_end,
-            status: subscriptionUpdate.status,
-          });
-
-          await existingSubscription.save();
-
-          /**
-           *
-           */
-          new SubscriptionUpdatedPublisher(nats.client).publish({
-            id: existingSubscription.id,
-            cancel_at: existingSubscription.cancel_at,
-            cancel_at_period_end: existingSubscription.cancel_at_period_end,
-            current_period_end: existingSubscription.current_period_end,
-            status: existingSubscription.status,
-            version: existingSubscription.version,
+            version: subscription.version,
           });
 
           break;

@@ -33,42 +33,6 @@ build:
             dest: .
           - src: "app/**/*.css"
             dest: .
-    # - image: mdstaicu/tickets
-    #   context: tickets
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
-    # - image: mdstaicu/orders
-    #   context: orders
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
-    # - image: mdstaicu/expiration
-    #   context: expiration
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
-    # - image: mdstaicu/payments
-    #   context: payments
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: "src/**/*.ts"
-    #         dest: .
     - image: mdstaicu/subscriptions
       context: subscriptions
       docker:

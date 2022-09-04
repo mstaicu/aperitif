@@ -18,36 +18,13 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
         cancel_at,
         cancel_at_period_end,
         current_period_end,
-        customer,
+        customerId,
         status,
       } = data;
 
-      if (typeof customer !== "string") {
-        throw new Error(
-          "SubscriptionCreatedEvent contains a customer of type Stripe.Customer or Stripe.DeletedCustomer"
-        );
-      }
+      let user = await User.findById(customerId);
 
-      // customer = await stripe.customers.retrieve(customer);
-
-      // if (customer.deleted) {
-      //   throw new Error(
-      //     "SubscriptionCreatedEvent contains a customer of type Stripe.DeletedCustomer"
-      //   );
-      // }
-
-      // if (!customer.email) {
-      //   throw new Error(
-      //     "SubscriptionCreatedEvent contains a customer with an invalid email address"
-      //   );
-      // }
-
-      /**
-       *
-       */
-      let registeredCustomer = await User.findById(customer);
-
-      if (!registeredCustomer) {
+      if (!user) {
         throw new Error(
           "SubscriptionCreatedEvent contains a customer that is not registered with us"
         );
@@ -74,11 +51,11 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
 
       await subscription.save();
 
-      registeredCustomer.set({
+      user.set({
         subscription,
       });
 
-      await registeredCustomer.save();
+      await user.save();
 
       msg.ack();
     } catch (err) {}
