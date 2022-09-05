@@ -257,7 +257,7 @@ async function refreshSession(request: Request): Promise<Headers> {
 
 export async function emailMagicToken(
   email: string,
-  emailPayload: { landingPage: string }
+  loginLinkPayload: { landingPage: string }
 ): Promise<Response> {
   let response = await fetch("https://traefik-lb-srv/api/auth/token/send", {
     method: "POST",
@@ -265,7 +265,7 @@ export async function emailMagicToken(
       "Content-Type": "application/json",
       Host: process.env.DOMAIN!,
     },
-    body: JSON.stringify({ email, landingPage: emailPayload.landingPage }),
+    body: JSON.stringify({ email, landingPage: loginLinkPayload.landingPage }),
   });
 
   let payload = await response.json();

@@ -36,24 +36,9 @@ router.post(
     try {
       let { email } = req.body;
 
-      /**
-       * TODO: Find a sane way of checking if the email address is both registered on Stripe
-       * and we have our systems reconcilled with Stripe's db
-       */
-
-      // let { data: customers } = await stripe.customers.list({
-      //   email: email.toLocaleLowerCase(),
-      //   limit: 1,
-      // });
-      // let userAccount = await User.findOne({ email });
-
-      // let emailRegistered = userAccount && customers.length !== 0;
-
-      let userAccount = await User.findOne({ email });
-
-      if (userAccount) {
+      if (await User.findOne({ email })) {
         throw new BadRequestError(
-          "The provided email address is already registered with us"
+          "The provided 'email' address is already registered with us"
         );
       }
 

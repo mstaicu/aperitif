@@ -15,7 +15,7 @@ router.post(
   "/subscribe",
   [
     body("customerId")
-      .isEmail()
+      .isString()
       .withMessage("A valid 'customerId' must be provided with this request"),
     body("priceId")
       .isString()
@@ -30,7 +30,7 @@ router.post(
 
       if (!customer) {
         throw new BadRequestError(
-          "The provided customer id does not match any customers on our records"
+          "The provided 'customerId' does not belong to any of our customers"
         );
       }
 
@@ -57,6 +57,12 @@ router.post(
 
         customer: customerId,
 
+        // subscription_data: {
+        //   trial_period_days: 30,
+        // },
+
+        // payment_method_collection: "if_required",
+
         success_url: `https://${process.env.DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://${process.env.DOMAIN}/checkout/cancelled`,
       });
@@ -76,4 +82,4 @@ router.post(
   }
 );
 
-export { router as stripeSubscriptionRouter };
+export { router as stripeSubscribeRouter };
