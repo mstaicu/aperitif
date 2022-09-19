@@ -1,7 +1,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import { body } from "express-validator";
 
-import { validateRequestHandler, BadRequestError } from "@tartine/common";
+import {
+  validateRequestHandler,
+  requireAuthHandler,
+  BadRequestError,
+} from "@tartine/common";
 
 import { stripe } from "../stripe";
 /**
@@ -13,10 +17,8 @@ const router = express.Router();
  */
 router.post(
   "/subscribe",
+  requireAuthHandler,
   [
-    body("customerId")
-      .isString()
-      .withMessage("A valid 'customerId' must be provided with this request"),
     body("priceId")
       .isString()
       .withMessage("A valid 'priceId' must be provided with this request"),
@@ -24,13 +26,13 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { customerId, priceId } = req.body;
+      let { priceId } = req.body;
 
-      let customer = await stripe.customers.retrieve(customerId);
+      let customer = await stripe.customers.retrieve(req.user.id);
 
       if (!customer) {
         throw new BadRequestError(
-          "The provided 'customerId' does not belong to any of our customers"
+          "The provided user identifier does not belong to any of our customers"
         );
       }
 
@@ -42,26 +44,18 @@ router.post(
         );
       }
 
-      /**
-       * TODO: Add support to generate the checkout URL via HTTP REST calls
-       *
-       * Currently this is not possible as we're decrypting the customer id from the access token in Remix.
-       * Thus, you cannot provide the 'customerId' because it is not exposed
-       *
-       */
-
       let { url } = await stripe.checkout.sessions.create({
         mode: "subscription",
 
         line_items: [{ price: priceId, quantity: 1 }],
 
-        customer: customerId,
+        customer: req.user.id,
 
-        // subscription_data: {
-        //   trial_period_days: 30,
-        // },
+        subscription_data: {
+          trial_period_days: 30,
+        },
 
-        // payment_method_collection: "if_required",
+        payment_method_collection: "if_required",
 
         success_url: `https://${process.env.DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://${process.env.DOMAIN}/checkout/cancelled`,

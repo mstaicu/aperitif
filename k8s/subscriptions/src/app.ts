@@ -1,12 +1,19 @@
 import express from "express";
 
-import { NotFoundError, errorHandler } from "@tartine/common";
+import {
+  NotFoundError,
+  errorHandler,
+  requireBearerAuth,
+} from "@tartine/common";
 
-import { stripeWebhookRouter } from "./routes";
+import { stripeWebhookRouter, stripeSubscribeRouter } from "./routes";
 
 const app = express();
 
 app.use(stripeWebhookRouter);
+
+app.use(requireBearerAuth);
+app.use(stripeSubscribeRouter);
 
 app.get("*", (_, __, next) => next(new NotFoundError()));
 
