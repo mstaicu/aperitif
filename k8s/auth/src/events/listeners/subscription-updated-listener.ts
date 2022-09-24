@@ -14,7 +14,7 @@ export class SubscriptionUpdatedListener extends Listener<SubscriptionUpdatedEve
 
       if (!existingSubscription) {
         throw new Error(
-          "SubscriptionUpdatedEvent contains an out-of-order version of an updated subscription"
+          "SubscriptionUpdatedEvent contains an out-of-order version of a subscription update operation"
         );
       }
 

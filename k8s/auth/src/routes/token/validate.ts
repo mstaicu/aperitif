@@ -19,10 +19,10 @@ let accessTokenMinuteExpiration = 2; /** 2 mins */
 let refreshTokenMinuteExpiration = 15; /** 15 mins */
 
 /**
- * 
+ *
  * TODO: Check if this endpoint was requested with a Bearer auth header?
  * Invalidate the refresh tokens for the owner of the Bearer refresh token?
- * 
+ *
  */
 
 router.post(
@@ -157,6 +157,22 @@ router.post(
       }
 
       /**
+       * Inital access token expiration date set to 2 minutes from the moment of this request
+       */
+      let accessTokenExpiresIn = new Date();
+      accessTokenExpiresIn.setMinutes(
+        accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
+      );
+
+      /**
+       * Refresh token expiration date set to 15 minutes from the moment of this request
+       */
+      let refreshTokenExpiresIn = new Date();
+      refreshTokenExpiresIn.setMinutes(
+        refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
+      );
+
+      /**
        * Stripe timestamps are in seconds. They need to be converted to milliseconds
        * by multiply them by 1000 before using them to create dates
        */
@@ -173,22 +189,6 @@ router.post(
       if (user.subscription.cancel_at_period_end) {
         subscriptionPeriodEnd = new Date(user.subscription.cancel_at! * 1000);
       }
-
-      /**
-       * Inital access token expiration date set to 2 minutes from the moment of this request
-       */
-      let accessTokenExpiresIn = new Date();
-      accessTokenExpiresIn.setMinutes(
-        accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
-      );
-
-      /**
-       * Refresh token expiration date set to 15 minutes from the moment of this request
-       */
-      let refreshTokenExpiresIn = new Date();
-      refreshTokenExpiresIn.setMinutes(
-        refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
-      );
 
       /**
        * Check if the expiration time for both the access and refresh tokens

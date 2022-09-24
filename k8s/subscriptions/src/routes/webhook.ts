@@ -14,7 +14,7 @@ import { Subscription } from "../models/subscription";
 import { nats } from "../events/nats";
 import {
   SubscriptionCreatedPublisher,
-  // SubscriptionUpdatedPublisher,
+  SubscriptionUpdatedPublisher,
 } from "../events/publishers";
 /**
  *
@@ -59,25 +59,20 @@ router.post(
 
       switch (event.type) {
         case "checkout.session.completed":
-          let session = event.data.object as Stripe.Checkout.Session;
+          var session = event.data.object as Stripe.Checkout.Session;
 
           /**
-           * Casting this to 'string' as the 'subscription' property is the subscription id
-           * in a session object
+           * https://stripe.com/docs/api/checkout/sessions/object#checkout_session_object-subscription
            */
-          let subscriptionId = session.subscription as string;
+          var subscriptionId = session.subscription as string;
 
-          let existingSubscription = await Subscription.findById(
-            subscriptionId
-          );
-
-          if (existingSubscription) {
+          if (await Subscription.findById(subscriptionId)) {
             throw new BadRequestError(
-              "Stripe event 'checkout.session.completed' contains an existing subscription"
+              "Stripe event 'checkout.session.completed' contains the id of an existing subscription"
             );
           }
 
-          let stripeSubscription = await stripe.subscriptions.retrieve(
+          var stripeSubscription = await stripe.subscriptions.retrieve(
             subscriptionId
           );
 
@@ -87,7 +82,7 @@ router.post(
             );
           }
 
-          let newSubscription = Subscription.build({
+          var newSubscription = Subscription.build({
             id: stripeSubscription.id,
             cancel_at: stripeSubscription.cancel_at,
             cancel_at_period_end: stripeSubscription.cancel_at_period_end,
@@ -112,22 +107,55 @@ router.post(
         /**
          * Sent each billing interval when a payment succeeds
          */
-        // case "invoice.paid":
-        //   let invoice = event.data.object as Stripe.Invoice;
+        case "invoice.paid":
+          var invoice = event.data.object as Stripe.Invoice;
 
-        //   let invoiceSubscriptionId = invoice.subscription as string;
+          /**
+           * https://stripe.com/docs/api/invoices/object#invoice_object-subscription
+           */
+          var subscriptionId = invoice.subscription as string;
 
-        //   new SubscriptionUpdatedPublisher(nats.client).publish({
-        //     id: subscription.id,
-        //     cancel_at: subscription.cancel_at,
-        //     cancel_at_period_end: subscription.cancel_at_period_end,
-        //     current_period_end: subscription.current_period_end,
-        //     customerId: subscription.customerId,
-        //     status: subscription.status,
-        //     version: subscription.version,
-        //   });
+          var existingSubscription = await Subscription.findById(
+            subscriptionId
+          );
 
-        //   break;
+          if (!existingSubscription) {
+            throw new BadRequestError(
+              "Stripe event 'checkout.session.completed' contains the id of a subscription that is not registered with us"
+            );
+          }
+
+          var stripeSubscription = await stripe.subscriptions.retrieve(
+            subscriptionId
+          );
+
+          if (typeof stripeSubscription.customer !== "string") {
+            throw new BadRequestError(
+              "Stripe event 'checkout.session.completed' contains a customer object instead of a customer id"
+            );
+          }
+
+          existingSubscription.set({
+            cancel_at: stripeSubscription.cancel_at,
+            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+            current_period_end: stripeSubscription.current_period_end,
+            customerId: stripeSubscription.customer,
+            status: stripeSubscription.status,
+          });
+
+          await existingSubscription.save();
+
+          new SubscriptionUpdatedPublisher(nats.client).publish({
+            id: existingSubscription.id,
+            cancel_at: existingSubscription.cancel_at,
+            cancel_at_period_end: existingSubscription.cancel_at_period_end,
+            current_period_end: existingSubscription.current_period_end,
+            customerId: existingSubscription.customerId,
+            status: existingSubscription.status,
+            version: existingSubscription.version,
+          });
+
+          break;
 
         // /**
         //  * Sent each billing interval if there is an issue with your customer’s payment method
@@ -137,68 +165,6 @@ router.post(
 
         //   let invoiceSubscriptionId = invoice.subscription as string;
 
-        //   new SubscriptionUpdatedPublisher(nats.client).publish({
-        //     id: subscription.id,
-        //     cancel_at: subscription.cancel_at,
-        //     cancel_at_period_end: subscription.cancel_at_period_end,
-        //     current_period_end: subscription.current_period_end,
-        //     customerId: subscription.customerId,
-        //     status: subscription.status,
-        //     version: subscription.version,
-        //   });
-
-        //   break;
-
-        // case "customer.subscription.updated":
-        //   let stripeSubscription = event.data.object as Stripe.Subscription;
-
-        //   let subscription = await Subscription.findById(stripeSubscription.id);
-
-        //   /**
-        //    * TODO: Add case for customer deletion
-        //    */
-        //   if (typeof stripeSubscription.customer !== "string") {
-        //     throw new BadRequestError(
-        //       "Stripe event 'customer.subscription.updated' sent a 'customer' property that is not of type 'string'"
-        //     );
-        //   }
-
-        //   if (!subscription) {
-        //     /**
-        //      * Out-of-order Stripe event mitigation
-        //      *
-        //      * Phase 1
-        //      *
-        //      * Create a new subscription on a "customer.subscription.updated" event
-        //      */
-
-        //     return res.sendStatus(200);
-        //   }
-
-        //   /**
-        //    * Out-of-order Stripe event mitigation
-        //    *
-        //    * Phase 3
-        //    *
-        //    * Update the subscription on a "customer.subscription.updated" event
-        //    */
-        //   subscription.set({
-        //     cancel_at: stripeSubscription.cancel_at,
-        //     cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-        //     current_period_end: stripeSubscription.current_period_end,
-        //     customerId: stripeSubscription.customer,
-        //     status: stripeSubscription.status,
-        //   });
-
-        //   await subscription.save();
-
-        //   /**
-        //    * Out-of-order Stripe event mitigation
-        //    *
-        //    * Phase 4
-        //    *
-        //    * Emit the subscription update on a "customer.subscription.updated" event
-        //    */
         //   new SubscriptionUpdatedPublisher(nats.client).publish({
         //     id: subscription.id,
         //     cancel_at: subscription.cancel_at,

@@ -24,7 +24,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
 
       if (!user) {
         throw new Error(
-          "SubscriptionCreatedEvent contains a customer that is not registered with us"
+          "SubscriptionCreatedEvent contains the id of a customer that is not registered with us"
         );
       }
 
@@ -32,7 +32,7 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
 
       if (existingSubscription) {
         throw new Error(
-          "SubscriptionCreatedEvent contains an existing subscription"
+          "SubscriptionCreatedEvent contains the id of a subscription that is already registered with us"
         );
       }
 

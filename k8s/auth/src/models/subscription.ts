@@ -12,7 +12,6 @@ interface SubscriptionAttrs {
 }
 
 export interface SubscriptionDoc extends mongoose.Document {
-  _id: string;
   cancel_at_period_end: boolean;
   cancel_at: number | null;
   current_period_end: number;

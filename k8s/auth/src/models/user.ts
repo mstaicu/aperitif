@@ -21,10 +21,6 @@ interface UserAttrs {
  * describes the properties that a User Document has
  */
 interface UserDoc extends mongoose.Document {
-  _id: string;
-  /**
-   *
-   */
   email: string;
   /**
    *

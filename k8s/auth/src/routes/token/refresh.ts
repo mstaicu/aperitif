@@ -3,7 +3,7 @@ import { sign, verify, TokenExpiredError } from "jsonwebtoken";
 
 import type { NextFunction, Request, Response } from "express";
 
-import { BadRequestError, isRefreshToken } from "@tartine/common";
+import { BadRequestError, CustomError, isRefreshToken } from "@tartine/common";
 import type { UserPayload } from "@tartine/common";
 
 import { User } from "../../models/user";
@@ -71,10 +71,6 @@ router.post(
             tokenOwner.refreshTokens = [];
             await tokenOwner.save();
 
-            /**
-             *
-             */
-
             throw new BadRequestError(
               "The owner of the provided refresh token has had his refresh tokens invalidated"
             );
@@ -84,6 +80,14 @@ router.post(
                 "The provided refresh token has expired"
               );
             }
+
+            if (error instanceof CustomError) {
+              throw error;
+            }
+
+            /**
+             *
+             */
 
             throw new BadRequestError(
               "The provided refresh token has failed verification checks"
@@ -192,6 +196,22 @@ router.post(
           }
 
           /**
+           * Inital access token expiration date set to 2 minutes from the moment of this request
+           */
+          let accessTokenExpiresIn = new Date();
+          accessTokenExpiresIn.setMinutes(
+            accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
+          );
+
+          /**
+           * Inital refresh token expiration date set to 15 minutes from the moment of this request
+           */
+          let refreshTokenExpiresIn = new Date();
+          refreshTokenExpiresIn.setMinutes(
+            refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
+          );
+
+          /**
            * Check if the expiration time for both the access and refresh tokens
            * are within the subscription period
            */
@@ -209,22 +229,6 @@ router.post(
               user.subscription.cancel_at! * 1000
             );
           }
-
-          /**
-           * Inital access token expiration date set to 2 minutes from the moment of this request
-           */
-          let accessTokenExpiresIn = new Date();
-          accessTokenExpiresIn.setMinutes(
-            accessTokenExpiresIn.getMinutes() + accessTokenMinuteExpiration
-          );
-
-          /**
-           * Inital refresh token expiration date set to 15 minutes from the moment of this request
-           */
-          let refreshTokenExpiresIn = new Date();
-          refreshTokenExpiresIn.setMinutes(
-            refreshTokenExpiresIn.getMinutes() + refreshTokenMinuteExpiration
-          );
 
           /**
            * If that date is past the end of the current period for which this subscription has been invoiced
@@ -306,19 +310,20 @@ router.post(
             refreshToken: newRefreshToken,
           });
         } catch (error) {
-          /**
-           * Remove the provided refresh token from the user's list of refresh tokens
-           */
-
           user.refreshTokens = [...userRefreshTokens];
           await user.save();
+
+          if (error instanceof TokenExpiredError) {
+            throw new BadRequestError("The provided refresh token has expired");
+          }
+
+          if (error instanceof CustomError) {
+            throw error;
+          }
 
           /**
            *
            */
-          if (error instanceof TokenExpiredError) {
-            throw new BadRequestError("The provided refresh token has expired");
-          }
 
           throw new BadRequestError(
             "The provided refresh token has failed verification checks"

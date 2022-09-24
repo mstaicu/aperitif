@@ -26,8 +26,6 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { priceId } = req.body;
-
       let customer = await stripe.customers.retrieve(req.user.id);
 
       if (!customer) {
@@ -35,6 +33,8 @@ router.post(
           "The provided user identifier does not belong to any of our customers"
         );
       }
+
+      let { priceId } = req.body;
 
       let price = await stripe.prices.retrieve(priceId);
 
@@ -51,11 +51,11 @@ router.post(
 
         customer: req.user.id,
 
-        subscription_data: {
-          trial_period_days: 30,
-        },
+        // subscription_data: {
+        //   trial_period_days: 30,
+        // },
 
-        payment_method_collection: "if_required",
+        // payment_method_collection: "if_required",
 
         success_url: `https://${process.env.DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://${process.env.DOMAIN}/checkout/cancelled`,
