@@ -37,6 +37,10 @@ export class SubscriptionCreatedListener extends Listener<SubscriptionCreatedEve
       }
 
       /**
+       * TODO: Check for existing subscriptions that the customer might have and delete them?
+       */
+
+      /**
        *
        */
       let subscription = Subscription.build({

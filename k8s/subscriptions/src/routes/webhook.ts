@@ -57,13 +57,16 @@ router.post(
         );
       }
 
+      /**
+       * https://stripe.com/docs/billing/subscriptions/build-subscriptions
+       */
       switch (event.type) {
+        /**
+         * TODO: Check for existing subscriptions that the customer might have and delete them?
+         */
         case "checkout.session.completed":
           var session = event.data.object as Stripe.Checkout.Session;
 
-          /**
-           * https://stripe.com/docs/api/checkout/sessions/object#checkout_session_object-subscription
-           */
           var subscriptionId = session.subscription as string;
 
           if (await Subscription.findById(subscriptionId)) {
@@ -157,25 +160,62 @@ router.post(
 
           break;
 
-        // /**
-        //  * Sent each billing interval if there is an issue with your customer’s payment method
-        //  */
-        // case "invoice.payment_failed":
-        //   let invoice = event.data.object as Stripe.Invoice;
+        /**
+         * Sent each billing interval if there is an issue with your customer’s payment method
+         */
+        case "invoice.payment_failed":
+          var invoice = event.data.object as Stripe.Invoice;
 
-        //   let invoiceSubscriptionId = invoice.subscription as string;
+          /**
+           * https://stripe.com/docs/api/invoices/object#invoice_object-subscription
+           */
+          var subscriptionId = invoice.subscription as string;
 
-        //   new SubscriptionUpdatedPublisher(nats.client).publish({
-        //     id: subscription.id,
-        //     cancel_at: subscription.cancel_at,
-        //     cancel_at_period_end: subscription.cancel_at_period_end,
-        //     current_period_end: subscription.current_period_end,
-        //     customerId: subscription.customerId,
-        //     status: subscription.status,
-        //     version: subscription.version,
-        //   });
+          var existingSubscription = await Subscription.findById(
+            subscriptionId
+          );
 
-        //   break;
+          if (!existingSubscription) {
+            throw new BadRequestError(
+              "Stripe event 'checkout.session.completed' contains the id of a subscription that is not registered with us"
+            );
+          }
+
+          var stripeSubscription = await stripe.subscriptions.retrieve(
+            subscriptionId
+          );
+
+          if (typeof stripeSubscription.customer !== "string") {
+            throw new BadRequestError(
+              "Stripe event 'checkout.session.completed' contains a customer object instead of a customer id"
+            );
+          }
+
+          existingSubscription.set({
+            cancel_at: stripeSubscription.cancel_at,
+            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+            current_period_end: stripeSubscription.current_period_end,
+            customerId: stripeSubscription.customer,
+            status: stripeSubscription.status,
+          });
+
+          await existingSubscription.save();
+
+          new SubscriptionUpdatedPublisher(nats.client).publish({
+            id: existingSubscription.id,
+            cancel_at: existingSubscription.cancel_at,
+            cancel_at_period_end: existingSubscription.cancel_at_period_end,
+            current_period_end: existingSubscription.current_period_end,
+            customerId: existingSubscription.customerId,
+            status: existingSubscription.status,
+            version: existingSubscription.version,
+          });
+
+          /**
+           * TODO: Send email to user to notify that payment has failed, and send a link to Stripe customer portal
+           */
+
+          break;
 
         default:
           console.log(`Unhandled event type ${event.type}`);

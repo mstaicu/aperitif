@@ -28,9 +28,7 @@ router.post(
     try {
       let { email, landingPage = "/user" } = req.body;
 
-      let user = await User.findOne({ email });
-
-      if (!user) {
+      if (!(await User.findOne({ email }))) {
         throw new BadRequestError(
           "The provided email address is not registered with us"
         );

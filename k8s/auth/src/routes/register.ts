@@ -38,7 +38,7 @@ router.post(
 
       if (await User.findOne({ email })) {
         throw new BadRequestError(
-          "The provided 'email' address is already registered with us"
+          "The provided email address is already registered with us"
         );
       }
 

@@ -28,6 +28,29 @@ git push
 
 ## Appendix
 
+### NATS
+
+```
+$ helm repo add nats https://nats-io.github.io/k8s/helm/charts/
+$ helm repo update
+$ helm repo list
+$ helm install nats nats/nats --dry-run --set config.cluster.enabled=true --set config.jetstream.enabled=true > helms
+```
+
+```
+$ nats context ls
+$ nats context save tma
+$ nats context edit tma
+
+url: nats://127.0.0.1:4222 # LoadBalancer should expose this locally when running the k8s
+user: admin
+password: password
+
+$ nats context select tma
+$ nats server ls --sort=name
+$ while true; do nats server ls --sort=name; sleep 1; done
+```
+
 ### In case you reset the cluster:
 
 ```

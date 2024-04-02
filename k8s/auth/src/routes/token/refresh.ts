@@ -42,9 +42,6 @@ router.post(
          */
         if (!user) {
           try {
-            /**
-             * TODO: If the token is expired, should we still find the user and remove all its refresh tokens?
-             */
             let payload = verify(
               refreshToken,
               process.env.REFRESH_TOKEN_SECRET!
@@ -114,7 +111,7 @@ router.post(
           verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!);
 
           /**
-           * User has free-tier plan
+           * TODO: If a user's subscription is not 'active', should we treat it as a non-existing subscription?
            */
           if (!user.subscription || user.subscription.status !== "active") {
             /**
@@ -310,8 +307,16 @@ router.post(
             refreshToken: newRefreshToken,
           });
         } catch (error) {
+          /**
+           *
+           */
+
           user.refreshTokens = [...userRefreshTokens];
           await user.save();
+
+          /**
+           *
+           */
 
           if (error instanceof TokenExpiredError) {
             throw new BadRequestError("The provided refresh token has expired");

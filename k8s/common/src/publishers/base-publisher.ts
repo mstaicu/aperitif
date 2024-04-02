@@ -1,4 +1,4 @@
-import { Stan } from "node-nats-streaming";
+import type { Stan } from "node-nats-streaming";
 
 import { Subjects } from "../events/types";
 

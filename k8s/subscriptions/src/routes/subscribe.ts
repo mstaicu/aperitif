@@ -26,6 +26,10 @@ router.post(
   validateRequestHandler,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      /**
+       * TODO: Since we require a authenticated request to this route, do we still need to check
+       * for the exitence of a customer?
+       */
       let customer = await stripe.customers.retrieve(req.user.id);
 
       if (!customer) {
@@ -50,6 +54,10 @@ router.post(
         line_items: [{ price: priceId, quantity: 1 }],
 
         customer: req.user.id,
+
+        /**
+         * TODO: When purchasing a subscription, should we allow a trial version of that plan?
+         */
 
         // subscription_data: {
         //   trial_period_days: 30,
