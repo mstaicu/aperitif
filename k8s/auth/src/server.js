@@ -2,11 +2,11 @@
 import mongoose from "mongoose";
 import nconf from "nconf";
 
-import { app } from "./app";
+import { app } from "./app.js";
 /**
  * TODO: Move to commons
  */
-import { graceful } from "./utils/graceful";
+import { graceful } from "./utils/graceful.js";
 
 await mongoose.connect(nconf.get("mongodb:uri"), {
   dbName: nconf.get("mongodb:options:dbName"),

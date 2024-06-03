@@ -1,10 +1,12 @@
 // @ts-check
 import axios from "axios";
 import express from "express";
-import http from "node:http";
-import { test, expect } from "vitest";
 
-import { graceful, check } from "./graceful";
+import { equal } from "node:assert";
+import http from "node:http";
+import { test } from "node:test";
+
+import { graceful, check } from "./graceful.js";
 
 test("server took the default 5 seconds of keep-alive time to close with no requests", async function () {
   const server = createExpressApp();
@@ -14,7 +16,7 @@ test("server took the default 5 seconds of keep-alive time to close with no requ
   const started = Date.now();
   await close();
 
-  expect(isAround(Date.now() - started, 0)).toBe(true);
+  equal(isAround(Date.now() - started, 0), true);
 });
 
 test(
@@ -28,7 +30,8 @@ test(
     const request = requester();
 
     const response = await request("/");
-    expect(response.data).toBe("ok");
+
+    equal(response.data, "ok");
 
     // let keep-alive to expire
     await sleep(5000);
@@ -36,7 +39,7 @@ test(
     const started = Date.now();
     await close();
 
-    expect(isAround(Date.now() - started, 0)).toBe(true);
+    equal(isAround(Date.now() - started, 0), true);
   }
 );
 
@@ -58,9 +61,9 @@ test("server took as long as the request (3s) to close", async function () {
   await close();
 
   const response1 = await r1;
-  expect(response1.data).toBe("ok");
+  equal(response1.data, "ok");
 
-  expect(isAround(Date.now() - started, 3000)).toBe(true);
+  equal(isAround(Date.now() - started, 3000), true);
 });
 
 test("close() in the middle of a long-polling request", async function () {
@@ -76,9 +79,9 @@ test("close() in the middle of a long-polling request", async function () {
   await close();
 
   const response = await r1;
-  expect(response.data).toBe("ok");
+  equal(response.data, "ok");
 
-  expect(isAround(Date.now() - started, 1000)).toBe(true);
+  equal(isAround(Date.now() - started, 1000), true);
 });
 
 test("server took as the longest request (3s) to close with multiple concurrent requests", async function () {
@@ -89,7 +92,7 @@ test("server took as the longest request (3s) to close with multiple concurrent 
   const request = requester();
 
   const response1 = await request("/");
-  expect(response1.data).toBe("ok");
+  equal(response1.data, "ok");
 
   const r2 = request("/slow-request");
   const r3 = request("/long-polling");
@@ -100,12 +103,12 @@ test("server took as the longest request (3s) to close with multiple concurrent 
   await close();
 
   const response2 = await r2;
-  expect(response2.data).toBe("ok");
+  equal(response2.data, "ok");
 
   const response3 = await r3;
-  expect(response3.data).toBe("ok");
+  equal(response3.data, "ok");
 
-  expect(isAround(Date.now() - started, 3000)).toBe(true);
+  equal(isAround(Date.now() - started, 3000), true);
 });
 
 test("timeoutForceEndSockets with a pending request", async function () {
@@ -122,10 +125,10 @@ test("timeoutForceEndSockets with a pending request", async function () {
   await close();
 
   const response1 = await r1;
-  expect(response1.code).toBe("ECONNRESET");
+  equal(response1.code, "ECONNRESET");
 
   // Server took the configured timeoutForceEndSockets to close
-  expect(isAround(Date.now() - started, 1000)).toBe(true);
+  equal(isAround(Date.now() - started, 1000), true);
 });
 
 function createExpressApp() {
