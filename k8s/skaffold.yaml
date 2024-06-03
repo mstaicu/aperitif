@@ -1,22 +1,22 @@
-apiVersion: skaffold/v2alpha3
+apiVersion: skaffold/v4beta11
 kind: Config
-deploy:
-  kubectl:
+profiles:
+  - name: dev
+    build:
+      artifacts:
+        - image: mdstaicu/authentication
+          context: authentication
+          sync:
+            manual:
+              - src: src/**/*.ts
+                dest: .
+          docker:
+            dockerfile: Dockerfile
+            target: dev
+      local:
+        push: false
+    deploy:
+      kubectl: {}
     manifests:
-      - ./infra/**/*
-build:
-  local:
-    #
-    # Whenver we build an image, do not push to docker hub
-    #
-    push: false
-  artifacts:
-    - image: mdstaicu/auth
-      context: auth
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: "src/**/*.ts"
-            dest: .
+      rawYaml:
+        - ./infra/**/*

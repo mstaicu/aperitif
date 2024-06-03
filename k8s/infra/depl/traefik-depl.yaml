@@ -66,7 +66,6 @@ spec:
             - --serversTransport.insecureSkipVerify=true
             #
             - --entrypoints.web.address=:80
-            - --entrypoints.web.http.redirections.entryPoint.to=websecure
             - --entrypoints.websecure.address=:443
             #
             # https://doc.traefik.io/traefik/v3.0/routing/entrypoints/#http3
@@ -117,7 +116,7 @@ spec:
     #
     # After the certificate is trusted by the browser, the logged error goes away, no more tls unknown certificate
     #
-    secretName: traefik-certificates-secret
+    secretName: certs-secret
     options:
       name: traefik-tls-options
 ---
