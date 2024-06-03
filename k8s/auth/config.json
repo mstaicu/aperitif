@@ -1,0 +1,13 @@
+{
+  "express": {
+    "port": 3000
+  },
+  "mongodb": {
+    "uri": "",
+    "options": {
+      "dbName": "auth",
+      "user": "",
+      "pass": ""
+    }
+  }
+}

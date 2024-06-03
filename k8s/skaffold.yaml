@@ -3,38 +3,16 @@ kind: Config
 deploy:
   kubectl:
     manifests:
-      - ./infra/k8s-setup/*
-      - ./infra/k8s-dev/*
-      - ./infra/k8s/*
+      - ./infra/**/*
 build:
   local:
+    #
     # Whenver we build an image, do not push to docker hub
+    #
     push: false
   artifacts:
     - image: mdstaicu/auth
       context: auth
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: "src/**/*.ts"
-            dest: .
-    - image: mdstaicu/client
-      context: client
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: "app/**/*.ts"
-            dest: .
-          - src: "app/**/*.tsx"
-            dest: .
-          - src: "app/**/*.css"
-            dest: .
-    - image: mdstaicu/subscriptions
-      context: subscriptions
       docker:
         dockerfile: Dockerfile
         target: dev
