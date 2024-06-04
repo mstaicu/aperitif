@@ -17,9 +17,7 @@ spec:
       labels:
         app: traefik
     spec:
-      #
       # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
-      #
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -96,6 +94,11 @@ spec:
         - name: api@internal
           kind: TraefikService
 ---
+# ---------------------------------------------------------------------------------
+#
+# Middleware
+#
+# ---------------------------------------------------------------------------------
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -105,6 +108,19 @@ spec:
     browserXssFilter: true
     contentTypeNosniff: true
     frameDeny: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: validate-auth
+spec:
+  forwardAuth:
+    address: http://auth-srv/validate-auth
+# ---------------------------------------------------------------------------------
+#
+# Middleware
+#
+# ---------------------------------------------------------------------------------
 ---
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
@@ -121,7 +137,19 @@ spec:
     - CurveP521
     - CurveP384
   #
-  # https://doc.traefik.io/traefik/https/tls/#strict-sni-checking
+  # With strict SNI checking enabled, Traefik won't allow connections from clients
+  # that do not specify a server_name extension or don't match any of the configured certificates.
+  # The default certificate is irrelevant on that matter
+  #
+  # # https://doc.traefik.io/traefik/https/tls/#strict-sni-checking
+  #
+  # A server that receives a client hello containing the "server_name" extension
+  # MAY use the information contained in the extension to guide its selection
+  # of an appropriate certificate to return to the client, and/or other aspects of security policy.
+  # In this event, the server SHALL include an extension of type "server_name" in the (extended) server hello.
+  # The "extension_data" field of this extension SHALL be empty
+  #
+  # https://www.rfc-editor.org/rfc/rfc6066#section-3
   #
   sniStrict: true
 ---
@@ -163,5 +191,5 @@ spec:
   ports:
     - name: traefik
       protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 3000
+      targetPort: 3000

@@ -6,13 +6,13 @@ check-tools:
 	@command -v mkcert >/dev/null 2>&1 || { echo >&2 "mkcert is not installed. Please install it and try again."; exit 1; }
 	@command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is not installed. Please install it and try again."; exit 1; }
 	@command -v skaffold >/dev/null 2>&1 || { echo >&2 "skaffold is not installed. Please install it and try again."; exit 1; }
-	@echo "all required tools are installed"
+	@echo "✅ all required tools are installed"
 
 generate-cert-secret:
-	@echo "installing mkcert certificate authority"
+	@echo "🪪 installing mkcert certificate authority"
 	@mkcert -install
 
-	@echo "generating certificate and key for domain $(DOMAIN) using mkcert"
+	@echo "🪪 generating certificate and key for domain $(DOMAIN) using mkcert"
 
 	@cert_file=$$(mktemp) && \
 	key_file=$$(mktemp) && \
@@ -21,21 +21,21 @@ generate-cert-secret:
 	rm $$cert_file $$key_file
 
 add-host: generate-cert-secret
-	@echo "checking /etc/hosts for existing entry"
+	@echo "📍 checking /etc/hosts for existing entry"
 
 	@if ! grep -q "^127.0.0.1 $(DOMAIN)$$" /etc/hosts; then \
 		echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null; \
-		echo "127.0.0.1 $(DOMAIN) added to /etc/hosts"; \
+		echo "📍 127.0.0.1 $(DOMAIN) added to /etc/hosts"; \
 	else \
-		echo "127.0.0.1 $(DOMAIN) already exists in /etc/hosts"; \
+		echo "📍 127.0.0.1 $(DOMAIN) already exists in /etc/hosts"; \
 	fi
 
 create-env-secret: add-host
-	@echo "checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
+	@echo "🔐 checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
 	@if kubectl get secret $(DOTENV_SECRET_NAME) >/dev/null 2>&1; then \
-		echo "secret/$(DOTENV_SECRET_NAME) exists, skipping creation"; \
+		echo "🔐 secret/$(DOTENV_SECRET_NAME) exists, skipping creation"; \
 	else \
-		echo "secret/$(DOTENV_SECRET_NAME) does not exist, creating it from $(ENV_FILE)..."; \
+		echo "🔐 secret/$(DOTENV_SECRET_NAME) does not exist, creating it from $(ENV_FILE)..."; \
 		kubectl create secret generic $(DOTENV_SECRET_NAME) --from-env-file=$(ENV_FILE); \
 	fi
 

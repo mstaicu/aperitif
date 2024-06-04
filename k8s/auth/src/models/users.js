@@ -7,10 +7,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    refreshTokens: {
-      type: [String],
-      default: [],
-    },
   },
   {
     optimisticConcurrency: true,
