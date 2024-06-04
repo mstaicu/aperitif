@@ -31,19 +31,23 @@ add-host: generate-cert-secret
 	fi
 
 create-env-secret: add-host
-	@echo "creating Kubernetes environment variable secret from $(ENV_FILE)"
-	@kubectl create secret generic $(DOTENV_SECRET_NAME) --from-env-file=$(ENV_FILE)
-	@echo "secret $(DOTENV_SECRET_NAME) created from $(ENV_FILE)"
+	@echo "checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
+	@if kubectl get secret $(DOTENV_SECRET_NAME) >/dev/null 2>&1; then \
+		echo "secret/$(DOTENV_SECRET_NAME) exists, skipping creation"; \
+	else \
+		echo "secret/$(DOTENV_SECRET_NAME) does not exist, creating it from $(ENV_FILE)..."; \
+		kubectl create secret generic $(DOTENV_SECRET_NAME) --from-env-file=$(ENV_FILE); \
+	fi
 
 dev: create-env-secret
-	@echo "👷🏻‍♂️ applying config maps"
-	@kubectl apply -f infra/cm
+# @echo "👷🏻‍♂️ applying config maps"
+# @kubectl apply -f infra/cm
 
 	@echo "👷🏻‍♂️ applying custom resource definitions"
-	@kubectl apply -f infra/crds
+	@kubectl apply -f infra/crd/traefik-crd.yaml
 
 	@echo "👷🏻‍♂️ applying deployments"
-	@kubectl apply -f infra/depls
+	@kubectl apply -f infra/depl/traefik-depl.yaml
 
 	@echo "🚀 starting development environment"
 	@skaffold dev --status-check=false

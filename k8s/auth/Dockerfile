@@ -26,22 +26,19 @@ RUN npm install
 
 COPY . .
 
-CMD ["npm", "start"]
-
-# ----
-# Build
-# ----
-FROM dev as build
-
-RUN npm run build
+CMD ["node", "src"]
 
 # ----
 # Prod
 # ----
 FROM base as prod
 
-COPY --from=build /home/node/app/dist /home/node/app
+ENV NODE_ENV=production
 
-USER node
+COPY ./package*.json ./
 
-CMD ["node", "/home/node/app/dist"]
+RUN npm install
+
+COPY . .
+
+CMD ["node", "src"]

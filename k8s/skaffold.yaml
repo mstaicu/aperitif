@@ -1,18 +1,18 @@
 apiVersion: skaffold/v4beta11
 kind: Config
-build:
-  artifacts:
-    - docker:
-        dockerfile: Dockerfile
-        target: dev
-      image: mdstaicu/auth
-      context: auth
-      sync:
-        manual:
-          - src: src/**/*.ts
-            dest: .
-  local:
-    push: false
+# build:
+#   artifacts:
+#     - docker:
+#         dockerfile: Dockerfile
+#         target: dev
+#       image: mdstaicu/auth
+#       context: auth
+#       sync:
+#         manual:
+#           - src: src/**/*.ts
+#             dest: .
+#   local:
+#     push: false
 deploy:
   kubectl: {}
 manifests:
