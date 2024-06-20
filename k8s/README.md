@@ -1,5 +1,11 @@
 # Welcome to k8s!
 
+-> Load Balancer 
+  -> Client ( receives cookies, unpacks them and forwards the request with Bearer )
+  -> (This should be exposed publicly in the future) Traefik
+    -> forwardAuth ( exclude auth services requests )
+  -> Microservices
+
 ## Development
 
 From your terminal:

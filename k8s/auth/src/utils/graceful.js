@@ -18,6 +18,9 @@ import { Socket } from "node:net";
  * @property {WeakMap<Socket, boolean>} hasRepliedClosedConnectionForSocket
  * @property {boolean} closing
  *
+ */
+
+/**
  * @typedef {WeakMap<Server, serverStatus>} servers
  */
 
@@ -115,6 +118,7 @@ import { Socket } from "node:net";
 var servers = new WeakMap();
 
 /**
+ * Close the server
  *
  * @param {Server} server
  * @param {options} [options]
@@ -148,7 +152,7 @@ function graceful(server, options = {}) {
   var requestCountPerSocket = new Map();
 
   /**
-   * Responses holds the responses for which we haven't send a Connection: close header
+   * Responses holds the responses for which we haven't send a 'Connection: close' header
    */
 
   /**
@@ -200,9 +204,10 @@ function graceful(server, options = {}) {
     // @ts-ignore
     var server = servers.get(socket.server);
 
-    // @ts-ignore
-    requestCountPerSocket.set(socket, requestCountPerSocket.get(socket) + 1);
-
+    requestCountPerSocket.set(
+      socket,
+      (requestCountPerSocket.get(socket) || 0) + 1
+    );
     responses.set(response, true);
 
     /**
@@ -235,12 +240,11 @@ function graceful(server, options = {}) {
      */
     response.on("finish", () => {
       // @ts-ignore
-      var server = servers.get(socket.server);
+      var serverStatus = servers.get(socket.server);
 
-      // @ts-ignore
-      var socketPendingRequests = requestCountPerSocket.get(socket) - 1;
+      var socketPendingRequests = (requestCountPerSocket.get(socket) || 0) - 1;
       var hasSuggestedClosingConnection =
-        server?.hasRepliedClosedConnectionForSocket.get(socket);
+        serverStatus?.hasRepliedClosedConnectionForSocket.get(socket);
 
       requestCountPerSocket.set(socket, socketPendingRequests);
 
@@ -261,11 +265,11 @@ function graceful(server, options = {}) {
    */
   function close() {
     return new Promise((resolve, reject) => {
-      var currentServer = servers.get(server);
+      var currentServerStatus = servers.get(server);
 
       // @ts-ignore
       servers.set(server, {
-        ...currentServer,
+        ...currentServerStatus,
         closing: true,
       });
 
@@ -278,7 +282,7 @@ function graceful(server, options = {}) {
       for (const [response] of responses.entries()) {
         if (!response.headersSent) {
           response.setHeader("connection", "close");
-          currentServer?.hasRepliedClosedConnectionForSocket.set(
+          currentServerStatus?.hasRepliedClosedConnectionForSocket.set(
             response.req.socket,
             true
           );
@@ -336,7 +340,7 @@ function graceful(server, options = {}) {
  * @param {Socket | IncomingMessage | ServerResponse} obj
  * @returns {boolean}
  */
-function check(obj) {
+function isClosing(obj) {
   var objType = obj.constructor.name;
 
   var server;
@@ -364,4 +368,4 @@ function check(obj) {
   return serverStatus.closing;
 }
 
-export { graceful, check };
+export { graceful, isClosing };

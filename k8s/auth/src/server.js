@@ -23,6 +23,7 @@ var close = graceful(
 var shutdown = async () => {
   try {
     await close();
+
     await mongoose.connection.close();
 
     process.exit(0);

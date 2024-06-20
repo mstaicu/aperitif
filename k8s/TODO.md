@@ -10,3 +10,5 @@
 # Both
 
 1. Don't redirect to HTTPS, remove the access token if a request is done over HTTP
+
+https://www.paddle.com/get-started

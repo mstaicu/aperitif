@@ -17,14 +17,6 @@ spec:
       # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
       affinity:
         podAntiAffinity:
-          # requiredDuringSchedulingIgnoredDuringExecution:
-          #   - labelSelector:
-          #       matchExpressions:
-          #         - key: app
-          #           operator: In
-          #           values:
-          #             - nats
-          #     topologyKey: "kubernetes.io/hostname"
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               podAffinityTerm:
@@ -65,15 +57,18 @@ spec:
           requests:
             storage: 1Gi
 ---
+#
 # StatefulSets currently require a Headless Service to be responsible
 # for the network identity of the Pods. You are responsible for creating this Service.
-
+#
 # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+#
 apiVersion: v1
 kind: Service
 metadata:
   name: nats-headless
 spec:
+  #
   # $ kubectl -n kube-system get svc kube-dns
   # NAME       TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)                  AGE
   # kube-dns   ClusterIP   10.245.0.10   <none>        53/UDP,53/TCP,9153/TCP   4d22h

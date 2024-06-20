@@ -15,20 +15,17 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: auth-mongo
-          # This comes from https://hub.docker.com/_/mongo
           image: mongo
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  # The 'name' represents the domain in the URL
   name: auth-mongo-srv
 spec:
   type: ClusterIP
   selector:
     app: auth-mongo
   ports:
-    # The name is for logging purposes
     - name: auth-mongo-port
       protocol: TCP
       # The port of this service
