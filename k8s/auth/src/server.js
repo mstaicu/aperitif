@@ -3,18 +3,26 @@ import mongoose from "mongoose";
 import nconf from "nconf";
 
 import { app } from "./app.js";
-/**
- * TODO: Move to commons
- */
+
 import { graceful } from "./utils/graceful.js";
 
-await mongoose.connect(nconf.get("mongodb:uri"), {
-  dbName: nconf.get("mongodb:options:dbName"),
-  user: nconf.get("mongodb:options:user"),
-  pass: nconf.get("mongodb:options:pass"),
-});
+/**
+ *
+ */
 
-var port = nconf.get("express:port");
+nconf.env({ lowerCase: true, parseValues: true, separator: "_" });
+
+var port = nconf.get("auth:express:port");
+var mongoUri = nconf.get("auth:mongodb:uri");
+var dbName = nconf.get("auth:mongodb:options:dbname");
+
+/**
+ *
+ */
+
+await mongoose.connect(mongoUri, {
+  dbName,
+});
 
 var close = graceful(
   app.listen(port, () => console.log(`Listening on port ${port}`))
@@ -28,9 +36,6 @@ var shutdown = async () => {
 
     process.exit(0);
   } catch (error) {
-    /**
-     * TODO: Add logging
-     */
     console.error(error);
     process.exit(1);
   }

@@ -16,6 +16,9 @@ spec:
       containers:
         - name: auth
           image: mdstaicu/auth
+          envFrom:
+            - secretRef:
+                name: dotenv
           readinessProbe:
             httpGet:
               path: /healthz

@@ -60,7 +60,7 @@ spec:
             # The trailing slash / in /dashboard/ is mandatory
             # Optional, Default=true
             #
-            - --api.dashboard=true
+            - --api.dashboard=false
             #
             # https://doc.traefik.io/traefik/observability/access-logs/#configuration
             #
@@ -79,36 +79,30 @@ spec:
             #
             - --providers.kubernetescrd
 ---
-#
-# As underlined in the documentation for the api.dashboard option,
-# the router rule defined for Traefik must match the path prefixes /api and /dashboard.
-#
-# https://doc.traefik.io/traefik/operations/dashboard/#dashboard-router-rule
-#
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: traefik-dashboard
+  name: auth-route
 spec:
   entryPoints:
     - http
   routes:
-    #
-    # Depending on the deployment, do not forget to add to /etc/hosts a mapping
-    # between the IP of the cloud load balancer and the registered host name
-    # or between the localhost IP and the registered host name
-    #
-    # https://www.padok.fr/en/blog/traefik-kubernetes-certmanager
-    #
-    # We need the Host in order to prevent this message:
-    # No domain found in rule PathPrefix(`/dashboard`) || PathPrefix(`/api`),
-    # the TLS options applied for this router will depend on the SNI of each request
-    #
-    - match: Host(`traefik-srv`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+    - match: PathPrefix(`/v1/auth`)
       kind: Rule
+      middlewares:
+        - name: strip-auth-prefix
       services:
-        - name: api@internal
-          kind: TraefikService
+        - name: auth-srv
+          port: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-auth-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /v1/auth
 ---
 apiVersion: v1
 kind: Service
@@ -127,8 +121,8 @@ spec:
 #
 # If you want to debug this, you have to
 #
-# 2. Register '127.0.0.1 traefik-srv' in your /etc/hosts 
-# 3. Access http://traefik-srv:30000/dashboard/
+# 2. Register '127.0.0.1 traefik-srv' in your /etc/hosts
+# 3. Access http://traefik-srv:30000/v1/auth/healthz
 #
 apiVersion: v1
 kind: Service

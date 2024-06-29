@@ -30,7 +30,7 @@ add-host: generate-cert-secret
 		echo "📍 127.0.0.1 $(DOMAIN) already exists in /etc/hosts"; \
 	fi
 
-create-env-secret: add-host
+create-env-secret:
 	@echo "🔐 checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
 	@if kubectl get secret $(DOTENV_SECRET_NAME) >/dev/null 2>&1; then \
 		echo "🔐 secret/$(DOTENV_SECRET_NAME) exists, skipping creation"; \
@@ -44,10 +44,10 @@ dev: create-env-secret
 # @kubectl apply -f infra/cm
 
 	@echo "👷🏻‍♂️ applying custom resource definitions"
-	@kubectl apply -f infra/crd/traefik-crd.yaml
+#	@kubectl apply -f infra/crd/traefik-crd.yaml
 
 	@echo "👷🏻‍♂️ applying deployments"
-	@kubectl apply -f infra/depl/traefik-depl.yaml
+#	@kubectl apply -f infra/depl/traefik-depl.yaml
 
 	@echo "🚀 starting development environment"
 	@skaffold dev --status-check=false

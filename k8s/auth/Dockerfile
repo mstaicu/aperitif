@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "src"]
+CMD ["./node_modules/.bin/nodemon", "src/server.js"]
 
 # ----
 # Prod
@@ -41,4 +41,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "src"]
+CMD ["node", "src/server.js"]
