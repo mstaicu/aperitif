@@ -105,7 +105,7 @@ test("server took as long as the request to close, 3 seconds", async function ()
   equal(isAround(Date.now() - started, 3000), true);
 });
 
-test("server took as long as the isClosing(res) check to close", async function () {
+test("server took as long as the 'isClosing(res)' check to close", async function () {
   /**
    * arrange
    */

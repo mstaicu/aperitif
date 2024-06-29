@@ -204,10 +204,8 @@ function graceful(server, options = {}) {
     // @ts-ignore
     var server = servers.get(socket.server);
 
-    requestCountPerSocket.set(
-      socket,
-      (requestCountPerSocket.get(socket) || 0) + 1
-    );
+    // @ts-ignore
+    requestCountPerSocket.set(socket, requestCountPerSocket.get(socket) + 1);
     responses.set(response, true);
 
     /**
@@ -242,7 +240,8 @@ function graceful(server, options = {}) {
       // @ts-ignore
       var serverStatus = servers.get(socket.server);
 
-      var socketPendingRequests = (requestCountPerSocket.get(socket) || 0) - 1;
+      // @ts-ignore
+      var socketPendingRequests = requestCountPerSocket.get(socket) - 1;
       var hasSuggestedClosingConnection =
         serverStatus?.hasRepliedClosedConnectionForSocket.get(socket);
 
