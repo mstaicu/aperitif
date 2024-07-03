@@ -1,7 +1,10 @@
 // @ts-check
 import express from "express";
 
-import { registerStartRouter, registerFinishRouter } from "./routes/index.js";
+import {
+  webauthnRegisterFinish,
+  webauthnRegisterStart,
+} from "./routes/index.js";
 
 const app = express();
 
@@ -13,7 +16,7 @@ app.get("/healthz", (_, res) => {
   res.sendStatus(200);
 });
 
-app.use(registerStartRouter);
-app.use(registerFinishRouter);
+app.use(webauthnRegisterStart);
+app.use(webauthnRegisterFinish);
 
 export { app };

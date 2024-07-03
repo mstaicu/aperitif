@@ -9,7 +9,7 @@ import { User } from "../models/users.js";
 var router = express.Router();
 
 router.post(
-  "/register/start",
+  "/webauthn/register/start",
   [
     body("token")
       .not()
@@ -40,7 +40,10 @@ router.post(
        * TODO: Add secret to env var
        */
       try {
-        tokenPayload = verify(decodeURIComponent(token), "SECRET");
+        tokenPayload = verify(
+          decodeURIComponent(token),
+          "WEBAUTHN_START_SECRET"
+        );
       } catch (error) {
         return res.sendStatus(422);
       }
@@ -56,12 +59,7 @@ router.post(
       var user = await User.findOne({ email: tokenPayload.email });
 
       if (!user) {
-        user = new User({
-          email: tokenPayload.email,
-          devices: [],
-        });
-
-        await user.save();
+        return res.sendStatus(422);
       }
 
       var { devices, email } = user;
@@ -110,4 +108,4 @@ router.post(
   }
 );
 
-export { router as registerStartRouter };
+export { router as webauthnRegisterStart };

@@ -9,7 +9,7 @@ import { User } from "../models/users.js";
 var router = express.Router();
 
 router.post(
-  "/register/finish",
+  "/webauthn/register/finish",
   [
     body("token")
       .not()
@@ -67,7 +67,10 @@ router.post(
       }
 
       try {
-        tokenPayload = verify(decodeURIComponent(token), "SECRET");
+        tokenPayload = verify(
+          decodeURIComponent(token),
+          "WEBAUTHN_START_SECRET"
+        );
       } catch (err) {
         return res.sendStatus(422);
       }
@@ -117,4 +120,4 @@ router.post(
   }
 );
 
-export { router as registerFinishRouter };
+export { router as webauthnRegisterFinish };
