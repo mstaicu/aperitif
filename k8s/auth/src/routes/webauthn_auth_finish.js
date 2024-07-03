@@ -1,8 +1,7 @@
 // @ts-check
 import express from "express";
 import { body, validationResult } from "express-validator";
-import { verify } from "jsonwebtoken";
-import { generateRegistrationOptions } from "@simplewebauthn/server";
+import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 
 import { User } from "../models/users.js";
 
@@ -11,11 +10,16 @@ var router = express.Router();
 router.post(
   "/webauthn/authenticate/finish",
   [
-    body("token")
+    body("email")
+      .isEmail()
+      .withMessage("A valid 'email' must be provided with this request"),
+    body("authenticationResponse")
       .not()
       .isEmpty()
-      .isString()
-      .withMessage("A valid 'token' must be provided with this request"),
+      .isObject()
+      .withMessage(
+        "A non empty 'authenticationResponse' must be provided with this request"
+      ),
   ],
   /**
    *
@@ -31,77 +35,68 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      var { token } = req.body;
-
-      var tokenPayload;
+      /**
+       * @type {{
+       *  authenticationResponse: import('@simplewebauthn/types').AuthenticationResponseJSON
+       *  email: String
+       * }}
+       */
+      var { email, authenticationResponse } = req.body;
 
       /**
-       * TODO: Store the magic tokens and mark them as 'used' after they were validated?
-       * TODO: Add secret to env var
+       * TODO: Retrieve the expected challenge from Redis
        */
-      try {
-        tokenPayload = verify(
-          decodeURIComponent(token),
-          "WEBAUTHN_START_SECRET"
-        );
-      } catch (error) {
-        return res.sendStatus(422);
-      }
+      var expectedChallenge = "";
 
-      if (
-        !tokenPayload ||
-        typeof tokenPayload === "string" ||
-        !tokenPayload.email
-      ) {
-        return res.sendStatus(422);
-      }
-
-      var user = await User.findOne({ email: tokenPayload.email });
+      var user = await User.findOne({ email });
 
       if (!user) {
         return res.sendStatus(422);
       }
 
-      var { devices, email } = user;
+      /**
+       * @type {import('@simplewebauthn/types').AuthenticatorDevice}
+       */
+      var authenticatorForCredentials = user.devices.find(
+        ({ credentialID }) => credentialID === authenticationResponse.id
+      );
 
-      var options = await generateRegistrationOptions({
-        rpName: "localhost",
-        rpID: "localhost",
-        userName: email,
-        timeout: 300000, // 5 minutes
-        attestationType: "none",
-        /**
-         * Passing in a user's list of already-registered authenticator IDs here prevents users from
-         * registering the same device multiple times. The authenticator will simply throw an error in
-         * the browser if it's asked to perform registration when one of these ID's already resides
-         * on it.
-         */
-        excludeCredentials: devices.map((dev) => ({
-          id: dev.credentialID,
-          type: "public-key",
-          transports: dev.transports,
-        })),
-        authenticatorSelection: {
-          residentKey: "discouraged",
-          /**
-           * Wondering why user verification isn't required? See here:
-           *
-           * https://passkeys.dev/docs/use-cases/bootstrapping/#a-note-about-user-verification
-           */
-          userVerification: "preferred",
-        },
-        /**
-         * Support the two most common algorithms: ES256, and RS256
-         */
-        supportedAlgorithmIDs: [-7, -257],
-      });
+      if (!authenticatorForCredentials) {
+        return res.sendStatus(422);
+      }
+
+      var verification;
+
+      try {
+        verification = await verifyAuthenticationResponse({
+          response: authenticationResponse,
+          expectedChallenge: `${expectedChallenge}`,
+          expectedOrigin: "localhost",
+          expectedRPID: "localhost",
+          authenticator: authenticatorForCredentials,
+          requireUserVerification: false,
+        });
+      } catch (error) {}
+
+      if (!verification) {
+        return res.sendStatus(422);
+      }
+
+      var { verified, authenticationInfo } = verification;
+
+      if (verified) {
+        authenticatorForCredentials.counter = authenticationInfo.newCounter;
+      }
 
       /**
-       * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
+       * TODO: Remove challenge from Redis
        */
-      var expectedChallenge = options.challenge;
 
-      res.status(200).json({ options });
+      /**
+       * TODO: Generate access and refresh tokens
+       */
+
+      res.status(200);
     } catch (err) {
       next(err);
     }

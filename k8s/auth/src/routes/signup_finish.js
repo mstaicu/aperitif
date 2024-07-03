@@ -2,6 +2,7 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 import { sign, verify } from "jsonwebtoken";
+
 import { User } from "../models/users";
 
 var router = express.Router();

@@ -51,20 +51,10 @@ router.post(
        */
       var expectedChallenge = "";
 
-      var verifiedRegistrationResponse;
+      /**
+       * TODO: Wish I could get rid of the token here and get the userName from somewhere else
+       */
       var tokenPayload;
-
-      try {
-        verifiedRegistrationResponse = await verifyRegistrationResponse({
-          response: registrationResponse,
-          expectedChallenge: `${expectedChallenge}`,
-          expectedOrigin: "http://localhost",
-          expectedRPID: "localhost",
-          requireUserVerification: false,
-        });
-      } catch (error) {
-        return res.sendStatus(422);
-      }
 
       try {
         tokenPayload = verify(
@@ -76,11 +66,27 @@ router.post(
       }
 
       if (
-        !verifiedRegistrationResponse ||
         !tokenPayload ||
         typeof tokenPayload === "string" ||
         !tokenPayload.email
       ) {
+        return res.sendStatus(422);
+      }
+
+      /**
+       * @type {import('@simplewebauthn/server').VerifiedRegistrationResponse}
+       */
+      var verifiedRegistrationResponse;
+
+      try {
+        verifiedRegistrationResponse = await verifyRegistrationResponse({
+          response: registrationResponse,
+          expectedChallenge: `${expectedChallenge}`,
+          expectedOrigin: "http://localhost",
+          expectedRPID: "localhost",
+          requireUserVerification: false,
+        });
+      } catch (error) {
         return res.sendStatus(422);
       }
 

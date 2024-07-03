@@ -68,6 +68,9 @@ router.post(
         rpName: "localhost",
         rpID: "localhost",
         userName: email,
+        /**
+         * Optionals below
+         */
         timeout: 300000, // 5 minutes
         attestationType: "none",
         /**
