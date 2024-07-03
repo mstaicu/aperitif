@@ -1,11 +1,7 @@
 // @ts-check
 import express from "express";
 
-import {
-  refreshTokenRouter,
-  sendTokenRouter,
-  exchangeTokenRouter,
-} from "./routes/index.js";
+import { registerStartRouter, registerFinishRouter } from "./routes/index.js";
 
 const app = express();
 
@@ -17,8 +13,7 @@ app.get("/healthz", (_, res) => {
   res.sendStatus(200);
 });
 
-app.use(sendTokenRouter);
-app.use(exchangeTokenRouter);
-app.use(refreshTokenRouter);
+app.use(registerStartRouter);
+app.use(registerFinishRouter);
 
 export { app };

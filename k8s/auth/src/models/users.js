@@ -1,11 +1,15 @@
 // @ts-check
 import { Schema, model } from "mongoose";
 
-var userSchema = new Schema(
+const userSchema = new Schema(
   {
     email: {
       type: String,
       required: true,
+    },
+    devices: {
+      type: [],
+      default: [],
     },
   },
   {
@@ -20,8 +24,6 @@ var userSchema = new Schema(
   }
 );
 
-var User = model("User", userSchema);
+const User = model("User", userSchema);
 
-var Users = [];
-
-export { User, Users };
+export { User };

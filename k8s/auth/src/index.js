@@ -1,3 +1,4 @@
+// @ts-check
 import nconf from "nconf";
 
 nconf.env({ lowerCase: true, parseValues: true, separator: "_" });
