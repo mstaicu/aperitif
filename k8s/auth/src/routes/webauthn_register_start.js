@@ -11,11 +11,13 @@ var router = express.Router();
 router.post(
   "/webauthn/register/start",
   [
-    body("token")
+    body("webauthnToken")
       .not()
       .isEmpty()
       .isString()
-      .withMessage("A valid 'token' must be provided with this request"),
+      .withMessage(
+        "A valid 'webauthnToken' must be provided with this request"
+      ),
   ],
   /**
    *
@@ -25,38 +27,38 @@ router.post(
    */
   async (req, res, next) => {
     try {
-      const errors = validationResult(req);
+      var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      var { token } = req.body;
+      var { webauthnToken } = req.body;
 
-      var tokenPayload;
+      var webauthnTokenPayload;
 
       /**
        * TODO: Store the magic tokens and mark them as 'used' after they were validated?
        * TODO: Add secret to env var
        */
       try {
-        tokenPayload = verify(
-          decodeURIComponent(token),
-          "WEBAUTHN_START_SECRET"
+        webauthnTokenPayload = verify(
+          decodeURIComponent(webauthnToken),
+          "WEBAUTHN_TOKEN_SECRET"
         );
       } catch (error) {
         return res.sendStatus(422);
       }
 
       if (
-        !tokenPayload ||
-        typeof tokenPayload === "string" ||
-        !tokenPayload.email
+        !webauthnTokenPayload ||
+        typeof webauthnTokenPayload === "string" ||
+        !webauthnTokenPayload.email
       ) {
         return res.sendStatus(422);
       }
 
-      var user = await User.findOne({ email: tokenPayload.email });
+      var user = await User.findOne({ email: webauthnTokenPayload.email });
 
       if (!user) {
         return res.sendStatus(422);
@@ -71,7 +73,7 @@ router.post(
         /**
          * Optionals below
          */
-        timeout: 300000, // 5 minutes
+        timeout: 300000,
         attestationType: "none",
         /**
          * Passing in a user's list of already-registered authenticator IDs here prevents users from
@@ -104,7 +106,9 @@ router.post(
        */
       var expectedChallenge = options.challenge;
 
-      res.status(200).json({ options });
+      res.status(200).json({
+        options,
+      });
     } catch (err) {
       next(err);
     }

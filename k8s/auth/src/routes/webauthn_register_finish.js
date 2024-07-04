@@ -11,11 +11,13 @@ var router = express.Router();
 router.post(
   "/webauthn/register/finish",
   [
-    body("token")
+    body("webauthnToken")
       .not()
       .isEmpty()
       .isString()
-      .withMessage("A valid 'token' must be provided with this request"),
+      .withMessage(
+        "A valid 'webauthnToken' must be provided with this request"
+      ),
     body("registrationResponse")
       .not()
       .isEmpty()
@@ -32,7 +34,7 @@ router.post(
    */
   async (req, res, next) => {
     try {
-      const errors = validationResult(req);
+      var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -41,10 +43,10 @@ router.post(
       /**
        * @type {{
        *  registrationResponse: import('@simplewebauthn/types').RegistrationResponseJSON
-       *  token: String
+       *  webauthnToken: String
        * }}
        */
-      var { registrationResponse, token } = req.body;
+      var { registrationResponse, webauthnToken } = req.body;
 
       /**
        * TODO: Retrieve the expected challenge from Redis
@@ -54,11 +56,11 @@ router.post(
       /**
        * TODO: Wish I could get rid of the token here and get the userName from somewhere else
        */
-      var tokenPayload;
+      var webauthnTokenPayload;
 
       try {
-        tokenPayload = verify(
-          decodeURIComponent(token),
+        webauthnTokenPayload = verify(
+          decodeURIComponent(webauthnToken),
           "WEBAUTHN_START_SECRET"
         );
       } catch (err) {
@@ -66,9 +68,9 @@ router.post(
       }
 
       if (
-        !tokenPayload ||
-        typeof tokenPayload === "string" ||
-        !tokenPayload.email
+        !webauthnTokenPayload ||
+        typeof webauthnTokenPayload === "string" ||
+        !webauthnTokenPayload.email
       ) {
         return res.sendStatus(422);
       }
@@ -95,7 +97,7 @@ router.post(
       if (verified && registrationInfo) {
         var { credentialPublicKey, credentialID, counter } = registrationInfo;
 
-        var user = await User.findOne({ email: tokenPayload.email });
+        var user = await User.findOne({ email: webauthnTokenPayload.email });
 
         if (user) {
           var existingDevice = user.devices.find(

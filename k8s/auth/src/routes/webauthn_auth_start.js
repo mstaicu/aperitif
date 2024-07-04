@@ -22,7 +22,7 @@ router.post(
    */
   async (req, res, next) => {
     try {
-      const errors = validationResult(req);
+      var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -35,11 +35,12 @@ router.post(
       }
 
       var options = await generateAuthenticationOptions({
-        timeout: 60000,
-        allowCredentials: user.devices.map((dev) => ({
-          id: dev.credentialID,
+        rpID: "localhost",
+        timeout: 300000,
+        allowCredentials: user.devices.map(({ credentialID, transports }) => ({
+          id: credentialID,
           type: "public-key",
-          transports: dev.transports,
+          transports: transports,
         })),
         /**
          * Wondering why user verification isn't required? See here:
@@ -47,7 +48,6 @@ router.post(
          * https://passkeys.dev/docs/use-cases/bootstrapping/#a-note-about-user-verification
          */
         userVerification: "preferred",
-        rpID: "localhost",
       });
 
       /**
@@ -55,11 +55,13 @@ router.post(
        */
       var expectedChallenge = options.challenge;
 
-      res.status(200).json({ options });
+      res.status(200).json({
+        options,
+      });
     } catch (err) {
       next(err);
     }
   }
 );
 
-export { router as webauthnRegisterStart };
+export { router as webauthnAuthStart };

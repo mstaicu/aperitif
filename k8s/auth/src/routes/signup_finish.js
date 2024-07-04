@@ -10,11 +10,13 @@ var router = express.Router();
 router.post(
   "/signup/finish",
   [
-    body("token")
+    body("webauthnToken")
       .not()
       .isEmpty()
       .isString()
-      .withMessage("A valid 'token' must be provided with this request"),
+      .withMessage(
+        "A valid 'webauthnToken' must be provided with this request"
+      ),
   ],
   /**
    *
@@ -30,44 +32,43 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      var { token } = req.body;
+      var { webauthnToken } = req.body;
 
-      var tokenPayload;
+      var webauthnTokenPayload;
 
       try {
-        tokenPayload = verify(token, "MAGIC_LINK_SECRET");
+        webauthnTokenPayload = verify(webauthnToken, "WEBAUTHN_TOKEN_SECRET");
       } catch (error) {
         return res.sendStatus(422);
       }
 
       if (
-        !tokenPayload ||
-        typeof tokenPayload === "string" ||
-        !tokenPayload.email
+        !webauthnTokenPayload ||
+        typeof webauthnTokenPayload === "string" ||
+        !webauthnTokenPayload.email
       ) {
         return res.sendStatus(422);
       }
 
-      var user = await User.findOne({ email: tokenPayload.email });
+      var user = await User.findOne({ email: webauthnTokenPayload.email });
 
       if (!user) {
         user = new User({
-          email: tokenPayload.email,
+          email: webauthnTokenPayload.email,
           devices: [],
         });
 
         await user.save();
       }
 
-      var webauthnToken = sign({ email: user.email }, "WEBAUTHN_START_SECRET", {
-        expiresIn: "15m",
-      });
-
-      res.status(200).json({ webauthnToken });
+      /**
+       * Reuse the token from the email for the webauthn registration
+       */
+      res.sendStatus(200);
     } catch (err) {
       next(err);
     }
   }
 );
 
-export { router as signupStartRouter };
+export { router as signupFinishRouter };

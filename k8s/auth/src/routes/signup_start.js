@@ -28,24 +28,26 @@ router.post(
 
       var { email } = req.body;
 
-      var token = sign({ email }, "MAGIC_LINK_SECRET", {
+      var webauthnToken = sign({ email }, "WEBAUTHN_TOKEN_SECRET", {
         expiresIn: "15m",
       });
 
       /**
        * The URL should open the web app route or mobile app screen
-       * that can take over the magic token and complete the signup
+       * that can take over the magic webauthnToken and complete the signup
        * and webauthn flow
        */
       let url = new URL(`http://localhost`);
       url.pathname = "/signup";
-      url.searchParams.set("token", token);
+      url.searchParams.set("webauthnToken", webauthnToken);
 
       /**
        * TODO: Send email
        */
 
-      res.status(200).json({ token });
+      res.status(200).json({
+        webauthnToken,
+      });
     } catch (err) {
       next(err);
     }

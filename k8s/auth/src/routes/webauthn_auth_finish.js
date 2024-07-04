@@ -29,7 +29,7 @@ router.post(
    */
   async (req, res, next) => {
     try {
-      const errors = validationResult(req);
+      var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -57,14 +57,17 @@ router.post(
       /**
        * @type {import('@simplewebauthn/types').AuthenticatorDevice}
        */
-      var authenticatorForCredentials = user.devices.find(
+      var authenticator = user.devices.find(
         ({ credentialID }) => credentialID === authenticationResponse.id
       );
 
-      if (!authenticatorForCredentials) {
+      if (!authenticator) {
         return res.sendStatus(422);
       }
 
+      /**
+       * @type {import("@simplewebauthn/server").VerifiedAuthenticationResponse | undefined}
+       */
       var verification;
 
       try {
@@ -73,7 +76,7 @@ router.post(
           expectedChallenge: `${expectedChallenge}`,
           expectedOrigin: "localhost",
           expectedRPID: "localhost",
-          authenticator: authenticatorForCredentials,
+          authenticator,
           requireUserVerification: false,
         });
       } catch (error) {}
@@ -85,7 +88,7 @@ router.post(
       var { verified, authenticationInfo } = verification;
 
       if (verified) {
-        authenticatorForCredentials.counter = authenticationInfo.newCounter;
+        authenticator.counter = authenticationInfo.newCounter;
       }
 
       /**
@@ -93,14 +96,14 @@ router.post(
        */
 
       /**
-       * TODO: Generate access and refresh tokens
+       * TODO: Generate access and refresh tokens based on subscription status
        */
 
-      res.status(200);
+      res.sendStatus(200);
     } catch (err) {
       next(err);
     }
   }
 );
 
-export { router as webauthnRegisterStart };
+export { router as webauthnAuthFinish };
