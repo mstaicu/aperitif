@@ -1,6 +1,6 @@
 // @ts-check
 import express from "express";
-import { body, validationResult } from "express-validator";
+import { header, body, validationResult } from "express-validator";
 import { verify } from "jsonwebtoken";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
@@ -11,20 +11,15 @@ var router = express.Router();
 router.post(
   "/webauthn/register/finish",
   [
-    body("webauthnToken")
+    header("Authorization")
       .not()
       .isEmpty()
-      .isString()
-      .withMessage(
-        "A valid 'webauthnToken' must be provided with this request"
-      ),
+      .withMessage("'Authorization' header must be provided"),
     body("registrationResponse")
       .not()
       .isEmpty()
       .isObject()
-      .withMessage(
-        "A non empty 'registrationResponse' must be provided with this request"
-      ),
+      .withMessage("'registrationResponse' must be provided"),
   ],
   /**
    *
@@ -40,40 +35,40 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
+      var header = req.headers.authorization || "";
+      var [type, token] = header.split(" ");
+
+      if (type !== "Bearer") {
+        return res.sendStatus(401);
+      }
+
+      var tokenPayload;
+
+      try {
+        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
+      } catch (err) {
+        return res.sendStatus(401);
+      }
+
+      if (
+        !tokenPayload ||
+        typeof tokenPayload === "string" ||
+        !tokenPayload.email
+      ) {
+        return res.sendStatus(401);
+      }
+
       /**
        * @type {{
        *  registrationResponse: import('@simplewebauthn/types').RegistrationResponseJSON
-       *  webauthnToken: String
        * }}
        */
-      var { registrationResponse, webauthnToken } = req.body;
+      var { registrationResponse } = req.body;
 
       /**
        * TODO: Retrieve the expected challenge from Redis
        */
       var expectedChallenge = "";
-
-      /**
-       * TODO: Wish I could get rid of the token here and get the userName from somewhere else
-       */
-      var webauthnTokenPayload;
-
-      try {
-        webauthnTokenPayload = verify(
-          decodeURIComponent(webauthnToken),
-          "WEBAUTHN_START_SECRET"
-        );
-      } catch (err) {
-        return res.sendStatus(422);
-      }
-
-      if (
-        !webauthnTokenPayload ||
-        typeof webauthnTokenPayload === "string" ||
-        !webauthnTokenPayload.email
-      ) {
-        return res.sendStatus(422);
-      }
 
       /**
        * @type {import('@simplewebauthn/server').VerifiedRegistrationResponse}
@@ -97,7 +92,7 @@ router.post(
       if (verified && registrationInfo) {
         var { credentialPublicKey, credentialID, counter } = registrationInfo;
 
-        var user = await User.findOne({ email: webauthnTokenPayload.email });
+        var user = await User.findOne({ email: tokenPayload.email });
 
         if (user) {
           var existingDevice = user.devices.find(

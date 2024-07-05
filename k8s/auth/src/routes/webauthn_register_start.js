@@ -1,6 +1,6 @@
 // @ts-check
 import express from "express";
-import { body, validationResult } from "express-validator";
+import { header, validationResult } from "express-validator";
 import { verify } from "jsonwebtoken";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 
@@ -11,13 +11,10 @@ var router = express.Router();
 router.post(
   "/webauthn/register/start",
   [
-    body("webauthnToken")
+    header("Authorization")
       .not()
       .isEmpty()
-      .isString()
-      .withMessage(
-        "A valid 'webauthnToken' must be provided with this request"
-      ),
+      .withMessage("'Authorization' header must be provided"),
   ],
   /**
    *
@@ -33,59 +30,60 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      var { webauthnToken } = req.body;
+      var header = req.headers.authorization || "";
+      var [type, token] = header.split(" ");
 
-      var webauthnTokenPayload;
+      if (type !== "Bearer") {
+        return res.sendStatus(401);
+      }
+
+      var tokenPayload;
 
       /**
        * TODO: Store the magic tokens and mark them as 'used' after they were validated?
        * TODO: Add secret to env var
        */
       try {
-        webauthnTokenPayload = verify(
-          decodeURIComponent(webauthnToken),
-          "WEBAUTHN_TOKEN_SECRET"
-        );
+        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
       } catch (error) {
         return res.sendStatus(422);
       }
 
       if (
-        !webauthnTokenPayload ||
-        typeof webauthnTokenPayload === "string" ||
-        !webauthnTokenPayload.email
+        !tokenPayload ||
+        typeof tokenPayload === "string" ||
+        !tokenPayload.email
       ) {
         return res.sendStatus(422);
       }
 
-      var user = await User.findOne({ email: webauthnTokenPayload.email });
+      var user = await User.findOne({ email: tokenPayload.email });
 
-      if (!user) {
-        return res.sendStatus(422);
-      }
-
-      var { devices, email } = user;
-
+      /**
+       * Email Enumeration: If the route reveals whether an email exists in the system,
+       * it can be used for enumeration attacks.
+       *
+       * Return the same options response regardless of the existence of the user
+       */
       var options = await generateRegistrationOptions({
         rpName: "localhost",
         rpID: "localhost",
-        userName: email,
+        userName: user ? user.email : "",
         /**
          * Optionals below
          */
         timeout: 300000,
         attestationType: "none",
+        excludeCredentials: user
+          ? user.devices.map((dev) => ({
+              id: dev.credentialID,
+              type: "public-key",
+              transports: dev.transports,
+            }))
+          : [],
         /**
-         * Passing in a user's list of already-registered authenticator IDs here prevents users from
-         * registering the same device multiple times. The authenticator will simply throw an error in
-         * the browser if it's asked to perform registration when one of these ID's already resides
-         * on it.
+         * https://w3c.github.io/webauthn/#dictionary-authenticatorSelection
          */
-        excludeCredentials: devices.map((dev) => ({
-          id: dev.credentialID,
-          type: "public-key",
-          transports: dev.transports,
-        })),
         authenticatorSelection: {
           residentKey: "discouraged",
           /**
@@ -104,7 +102,9 @@ router.post(
       /**
        * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
        */
-      var expectedChallenge = options.challenge;
+      if (user) {
+        var expectedChallenge = options.challenge;
+      }
 
       res.status(200).json({
         options,

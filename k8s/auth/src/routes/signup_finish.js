@@ -1,7 +1,7 @@
 // @ts-check
 import express from "express";
-import { body, validationResult } from "express-validator";
-import { sign, verify } from "jsonwebtoken";
+import { header, validationResult } from "express-validator";
+import { verify } from "jsonwebtoken";
 
 import { User } from "../models/users";
 
@@ -10,13 +10,10 @@ var router = express.Router();
 router.post(
   "/signup/finish",
   [
-    body("webauthnToken")
+    header("Authorization")
       .not()
       .isEmpty()
-      .isString()
-      .withMessage(
-        "A valid 'webauthnToken' must be provided with this request"
-      ),
+      .withMessage("'Authorization' header must be provided"),
   ],
   /**
    *
@@ -32,38 +29,40 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      var { webauthnToken } = req.body;
+      var header = req.headers.authorization || "";
+      var [type, token] = header.split(" ");
 
-      var webauthnTokenPayload;
+      if (type !== "Bearer") {
+        return res.sendStatus(401);
+      }
+
+      var tokenPayload;
 
       try {
-        webauthnTokenPayload = verify(webauthnToken, "WEBAUTHN_TOKEN_SECRET");
+        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
       } catch (error) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
       if (
-        !webauthnTokenPayload ||
-        typeof webauthnTokenPayload === "string" ||
-        !webauthnTokenPayload.email
+        !tokenPayload ||
+        typeof tokenPayload === "string" ||
+        !tokenPayload.email
       ) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
-      var user = await User.findOne({ email: webauthnTokenPayload.email });
+      var user = await User.findOne({ email: tokenPayload.email });
 
       if (!user) {
         user = new User({
-          email: webauthnTokenPayload.email,
+          email: tokenPayload.email,
           devices: [],
         });
 
         await user.save();
       }
 
-      /**
-       * Reuse the token from the email for the webauthn registration
-       */
       res.sendStatus(200);
     } catch (err) {
       next(err);

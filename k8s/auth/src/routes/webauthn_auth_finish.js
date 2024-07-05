@@ -10,16 +10,12 @@ var router = express.Router();
 router.post(
   "/webauthn/authenticate/finish",
   [
-    body("email")
-      .isEmail()
-      .withMessage("A valid 'email' must be provided with this request"),
+    body("email").isEmail().withMessage("'email' must be provided"),
     body("authenticationResponse")
       .not()
       .isEmpty()
       .isObject()
-      .withMessage(
-        "A non empty 'authenticationResponse' must be provided with this request"
-      ),
+      .withMessage("'authenticationResponse' must be provided"),
   ],
   /**
    *
@@ -50,6 +46,9 @@ router.post(
 
       var user = await User.findOne({ email });
 
+      /**
+       * TODO: Email enumeration attacks
+       */
       if (!user) {
         return res.sendStatus(422);
       }
@@ -82,13 +81,15 @@ router.post(
       } catch (error) {}
 
       if (!verification) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
       var { verified, authenticationInfo } = verification;
 
       if (verified) {
         authenticator.counter = authenticationInfo.newCounter;
+
+        await user.save();
       }
 
       /**

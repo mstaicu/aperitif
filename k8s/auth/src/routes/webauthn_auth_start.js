@@ -9,11 +9,7 @@ var router = express.Router();
 
 router.post(
   "/webauthn/authenticate/start",
-  [
-    body("email")
-      .isEmail()
-      .withMessage("A valid 'email' must be provided with this request"),
-  ],
+  [body("email").isEmail().withMessage("'email' must be provided")],
   /**
    *
    * @param {express.Request} req
@@ -30,33 +26,35 @@ router.post(
 
       var user = await User.findOne({ email: req.body.email });
 
-      if (!user) {
-        return res.sendStatus(422);
-      }
-
-      var options = await generateAuthenticationOptions({
+      /**
+       * Email Enumeration: If the route reveals whether an email exists in the system,
+       * it can be used for enumeration attacks.
+       *
+       * Return the same options response regardless of the existence of the user
+       */
+      var options = {
         rpID: "localhost",
         timeout: 300000,
-        allowCredentials: user.devices.map(({ credentialID, transports }) => ({
-          id: credentialID,
-          type: "public-key",
-          transports: transports,
-        })),
-        /**
-         * Wondering why user verification isn't required? See here:
-         *
-         * https://passkeys.dev/docs/use-cases/bootstrapping/#a-note-about-user-verification
-         */
-        userVerification: "preferred",
-      });
+        allowCredentials: user
+          ? user.devices.map(({ credentialID, transports }) => ({
+              id: credentialID,
+              type: "public-key",
+              transports: transports,
+            }))
+          : [],
+      };
 
-      /**
-       * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
-       */
-      var expectedChallenge = options.challenge;
+      var authenticationOptions = await generateAuthenticationOptions(options);
+
+      if (user) {
+        /**
+         * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
+         */
+        var expectedChallenge = authenticationOptions.challenge;
+      }
 
       res.status(200).json({
-        options,
+        authenticationOptions,
       });
     } catch (err) {
       next(err);
