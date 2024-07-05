@@ -59,15 +59,18 @@ router.post(
       }
 
       /**
-       * @type {{
-       *  registrationResponse: import('@simplewebauthn/types').RegistrationResponseJSON
-       * }}
+       * @type {import('@simplewebauthn/types').RegistrationResponseJSON}
        */
-      var { registrationResponse } = req.body;
+      var registrationResponse = req.body.registrationResponse;
 
       /**
        * TODO: Retrieve the expected challenge from Redis
        */
+      // var challengeKey = `webauthnChallenge:register:${tokenPayload.email}`;
+      // var expectedChallenge = await redisClient.get(challengeKey);
+      // if (!expectedChallenge) {
+      //   return res.sendStatus(401)
+      // }
       var expectedChallenge = "";
 
       /**
@@ -84,7 +87,7 @@ router.post(
           requireUserVerification: false,
         });
       } catch (error) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
       var { verified, registrationInfo } = verifiedRegistrationResponse;
@@ -110,11 +113,12 @@ router.post(
             user.devices.push(newDevice);
 
             await user.save();
+
+            // TODO: Remove challenge from Redis
+            // await redisClient.del(challengeKey);
           }
         }
       }
-
-      // TODO: Remove challenge from Redis
 
       res.sendStatus(200);
     } catch (err) {

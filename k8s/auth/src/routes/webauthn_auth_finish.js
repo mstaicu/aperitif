@@ -42,6 +42,11 @@ router.post(
       /**
        * TODO: Retrieve the expected challenge from Redis
        */
+      // var challengeKey = `webauthnChallenge:authenticate:${email}`;
+      // var expectedChallenge = await redisClient.get(challengeKey);
+      // if (!expectedChallenge) {
+      //   return res.sendStatus(401)
+      // }
       var expectedChallenge = "";
 
       var user = await User.findOne({ email });
@@ -90,11 +95,12 @@ router.post(
         authenticator.counter = authenticationInfo.newCounter;
 
         await user.save();
-      }
 
-      /**
-       * TODO: Remove challenge from Redis
-       */
+        /**
+         * TODO: Remove challenge from Redis
+         */
+        // await redisClient.del(challengeKey);
+      }
 
       /**
        * TODO: Generate access and refresh tokens based on subscription status

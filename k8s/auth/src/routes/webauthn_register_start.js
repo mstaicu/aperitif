@@ -46,7 +46,7 @@ router.post(
       try {
         tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
       } catch (error) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
       if (
@@ -54,7 +54,7 @@ router.post(
         typeof tokenPayload === "string" ||
         !tokenPayload.email
       ) {
-        return res.sendStatus(422);
+        return res.sendStatus(401);
       }
 
       var user = await User.findOne({ email: tokenPayload.email });
@@ -65,7 +65,11 @@ router.post(
        *
        * Return the same options response regardless of the existence of the user
        */
-      var options = await generateRegistrationOptions({
+
+      /**
+       * @type {import("@simplewebauthn/server").GenerateRegistrationOptionsOpts}
+       */
+      var options = {
         rpName: "localhost",
         rpID: "localhost",
         userName: user ? user.email : "",
@@ -97,17 +101,20 @@ router.post(
          * Support the two most common algorithms: ES256, and RS256
          */
         supportedAlgorithmIDs: [-7, -257],
-      });
+      };
+
+      var registrationOptions = await generateRegistrationOptions(options);
 
       /**
        * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
        */
       if (user) {
-        var expectedChallenge = options.challenge;
+        // await redisClient.setex(`webauthnChallenge:register:${user.email}`, 300, registrationOptions.challenge);
+        var expectedChallenge = registrationOptions.challenge;
       }
 
       res.status(200).json({
-        options,
+        registrationOptions,
       });
     } catch (err) {
       next(err);

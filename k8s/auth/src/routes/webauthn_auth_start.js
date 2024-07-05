@@ -50,6 +50,7 @@ router.post(
         /**
          * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
          */
+        // await redisClient.setex(`webauthnChallenge:authenticate:${user.email}`, 300, authenticationOptions.challenge);
         var expectedChallenge = authenticationOptions.challenge;
       }
 
