@@ -6,14 +6,14 @@ import { app } from "./app.js";
 
 import { graceful } from "./utils/graceful.js";
 
-var mongoUri = nconf.get("auth:mongodb:uri");
-var dbName = nconf.get("auth:mongodb:options:dbname");
+var mongoUri = nconf.get("AUTH_MONGODB_URI");
+var dbName = nconf.get("AUTH_MONGODB_OPTIONS_DBNAME");
 
 await mongoose.connect(mongoUri, {
   dbName,
 });
 
-var port = nconf.get("auth:express:port");
+var port = nconf.get("AUTH_EXPRESS_PORT");
 
 var close = graceful(
   app.listen(port, () => console.log(`Listening on port ${port}`))

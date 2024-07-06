@@ -56,7 +56,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
+        tokenPayload = verify(token, "ACCESS_TOKEN_SECRET");
       } catch (err) {
         return res.status(401).json({
           type: "https://example.com/errors/unauthorized",
@@ -132,8 +132,6 @@ router.post(
         });
       }
 
-      var { credentialPublicKey, credentialID, counter } = registrationInfo;
-
       var user = await User.findOne({ email: tokenPayload.email });
 
       if (!user) {
@@ -144,6 +142,8 @@ router.post(
           detail: "User not found",
         });
       }
+
+      var { credentialPublicKey, credentialID, counter } = registrationInfo;
 
       var existingDevice = user.devices.find(
         (device) => device.credentialID === credentialID

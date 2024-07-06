@@ -8,7 +8,7 @@ import { User } from "../models/users";
 var router = express.Router();
 
 router.post(
-  "/signup/finish",
+  "/login/finish",
   [
     header("Authorization")
       .not()
@@ -50,7 +50,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
+        tokenPayload = verify(token, "ACCESS_TOKEN_SECRET");
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",
@@ -84,6 +84,10 @@ router.post(
         await user.save();
       }
 
+      /**
+       * Actually, maybe issue access token here, not a refresh, but access token
+       */
+
       res.sendStatus(200);
     } catch (err) {
       next(err);
@@ -91,4 +95,4 @@ router.post(
   }
 );
 
-export { router as signupFinishRouter };
+export { router as loginFinishRouter };

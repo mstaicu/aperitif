@@ -39,6 +39,10 @@ router.post(
        *
        * Return the same options response regardless of the existence of the user
        */
+
+      /**
+       * @type {import("@simplewebauthn/server").GenerateAuthenticationOptionsOpts}
+       */
       var options = {
         rpID: "localhost",
         timeout: 300000,
@@ -57,7 +61,7 @@ router.post(
         /**
          * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
          */
-        // await redisClient.setex(`webauthnChallenge:authenticate:${user.email}`, 300, authenticationOptions.challenge);
+        // await redisClient.setex(`webauthnChallenge:authenticate:${email}`, 300, authenticationOptions.challenge);
         var expectedChallenge = authenticationOptions.challenge;
       }
 

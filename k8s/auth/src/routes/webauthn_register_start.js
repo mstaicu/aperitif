@@ -50,12 +50,8 @@ router.post(
 
       var tokenPayload;
 
-      /**
-       * TODO: Store the magic tokens and mark them as 'used' after they were validated?
-       * TODO: Add secret to env var
-       */
       try {
-        tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
+        tokenPayload = verify(token, "ACCESS_TOKEN_SECRET");
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",

@@ -6,7 +6,7 @@ import { sign } from "jsonwebtoken";
 var router = express.Router();
 
 router.post(
-  "/signup/start",
+  "/login/start",
   [body("email").isEmail().withMessage("'email' must be provided")],
   /**
    *
@@ -30,12 +30,12 @@ router.post(
 
       var { email } = req.body;
 
-      var token = sign({ email }, "SIGNUP_TOKEN_SECRET", {
+      var token = sign({ email }, "ACCESS_TOKEN_SECRET", {
         expiresIn: "15m",
       });
 
       let url = new URL("https://localhost");
-      url.pathname = "/signup";
+      url.pathname = "/login";
       url.searchParams.set("token", token);
 
       /**
@@ -53,4 +53,4 @@ router.post(
   }
 );
 
-export { router as signupStartRouter };
+export { router as loginStartRouter };
