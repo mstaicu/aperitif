@@ -32,14 +32,25 @@ router.post(
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+          type: "https://example.com/probs/validation-error",
+          title: "Invalid Request",
+          status: 400,
+          detail: "There were validation errors with your request",
+          errors: errors.array(),
+        });
       }
 
       var header = req.headers.authorization || "";
       var [type, token] = header.split(" ");
 
-      if (type !== "Bearer") {
-        return res.sendStatus(401);
+      if (type !== "Bearer" || !token) {
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid or missing authorization token",
+        });
       }
 
       var tokenPayload;
@@ -47,7 +58,12 @@ router.post(
       try {
         tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
       } catch (err) {
-        return res.sendStatus(401);
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid or expired authorization token",
+        });
       }
 
       if (
@@ -55,7 +71,12 @@ router.post(
         typeof tokenPayload === "string" ||
         !tokenPayload.email
       ) {
-        return res.sendStatus(401);
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid token payload",
+        });
       }
 
       /**
@@ -69,7 +90,12 @@ router.post(
       // var challengeKey = `webauthnChallenge:register:${tokenPayload.email}`;
       // var expectedChallenge = await redisClient.get(challengeKey);
       // if (!expectedChallenge) {
-      //   return res.sendStatus(401)
+      //   return return res.status(401).json({
+      //   type: "https://example.com/errors/unauthorized",
+      //   title: "Unauthorized",
+      //   status: 401,
+      //   detail: "Challenge expired or not found",
+      // });
       // }
       var expectedChallenge = "";
 
@@ -87,37 +113,56 @@ router.post(
           requireUserVerification: false,
         });
       } catch (error) {
-        return res.sendStatus(401);
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Registration verification failed",
+        });
       }
 
       var { verified, registrationInfo } = verifiedRegistrationResponse;
 
-      if (verified && registrationInfo) {
-        var { credentialPublicKey, credentialID, counter } = registrationInfo;
+      if (!verified || !registrationInfo) {
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Verification failed",
+        });
+      }
 
-        var user = await User.findOne({ email: tokenPayload.email });
+      var { credentialPublicKey, credentialID, counter } = registrationInfo;
 
-        if (user) {
-          var existingDevice = user.devices.find(
-            (device) => device.credentialID === credentialID
-          );
+      var user = await User.findOne({ email: tokenPayload.email });
 
-          if (!existingDevice) {
-            var newDevice = {
-              credentialPublicKey,
-              credentialID,
-              counter,
-              transports: registrationResponse.response.transports,
-            };
+      if (!user) {
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "User not found",
+        });
+      }
 
-            user.devices.push(newDevice);
+      var existingDevice = user.devices.find(
+        (device) => device.credentialID === credentialID
+      );
 
-            await user.save();
+      if (!existingDevice) {
+        var newDevice = {
+          credentialPublicKey,
+          credentialID,
+          counter,
+          transports: registrationResponse.response.transports,
+        };
 
-            // TODO: Remove challenge from Redis
-            // await redisClient.del(challengeKey);
-          }
-        }
+        user.devices.push(newDevice);
+
+        await user.save();
+
+        // TODO: Remove challenge from Redis
+        // await redisClient.del(challengeKey);
       }
 
       res.sendStatus(200);

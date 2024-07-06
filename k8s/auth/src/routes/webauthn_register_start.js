@@ -27,14 +27,25 @@ router.post(
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+          type: "https://example.com/probs/validation-error",
+          title: "Invalid Request",
+          status: 400,
+          detail: "There were validation errors with your request",
+          errors: errors.array(),
+        });
       }
 
       var header = req.headers.authorization || "";
       var [type, token] = header.split(" ");
 
-      if (type !== "Bearer") {
-        return res.sendStatus(401);
+      if (type !== "Bearer" || !token) {
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid or missing authorization token",
+        });
       }
 
       var tokenPayload;
@@ -46,7 +57,12 @@ router.post(
       try {
         tokenPayload = verify(token, "SIGNUP_TOKEN_SECRET");
       } catch (error) {
-        return res.sendStatus(401);
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid or expired authorization token",
+        });
       }
 
       if (
@@ -54,7 +70,12 @@ router.post(
         typeof tokenPayload === "string" ||
         !tokenPayload.email
       ) {
-        return res.sendStatus(401);
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid token payload",
+        });
       }
 
       var user = await User.findOne({ email: tokenPayload.email });

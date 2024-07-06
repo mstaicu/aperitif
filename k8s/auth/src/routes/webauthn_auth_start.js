@@ -21,10 +21,17 @@ router.post(
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+          type: "https://example.com/probs/validation-error",
+          title: "Invalid Request",
+          status: 400,
+          detail: "There were validation errors with your request",
+          errors: errors.array(),
+        });
       }
 
-      var user = await User.findOne({ email: req.body.email });
+      var { email } = req.body;
+      var user = await User.findOne({ email });
 
       /**
        * Email Enumeration: If the route reveals whether an email exists in the system,

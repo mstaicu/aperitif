@@ -7,11 +7,7 @@ var router = express.Router();
 
 router.post(
   "/signup/start",
-  [
-    body("email")
-      .isEmail()
-      .withMessage("A valid 'email' must be provided with this request"),
-  ],
+  [body("email").isEmail().withMessage("'email' must be provided")],
   /**
    *
    * @param {express.Request} req
@@ -32,20 +28,15 @@ router.post(
         expiresIn: "15m",
       });
 
-      /**
-       * The URL should open the web app route or mobile app screen
-       * that can take over the magic token and complete the signup
-       * and webauthn flow
-       */
       let url = new URL("https://localhost");
       url.pathname = "/signup";
       url.searchParams.set("token", token);
 
       /**
        * TODO: Send email
+       *
+       * res.sendStatus(200)
        */
-
-      // res.sendStatus(200)
 
       res.status(200).json({
         token,

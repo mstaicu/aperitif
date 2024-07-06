@@ -28,7 +28,13 @@ router.post(
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+          type: "https://example.com/probs/validation-error",
+          title: "Invalid Request",
+          status: 400,
+          detail: "There were validation errors with your request",
+          errors: errors.array(),
+        });
       }
 
       /**
@@ -39,23 +45,15 @@ router.post(
        */
       var { email, authenticationResponse } = req.body;
 
-      /**
-       * TODO: Retrieve the expected challenge from Redis
-       */
-      // var challengeKey = `webauthnChallenge:authenticate:${email}`;
-      // var expectedChallenge = await redisClient.get(challengeKey);
-      // if (!expectedChallenge) {
-      //   return res.sendStatus(401)
-      // }
-      var expectedChallenge = "";
-
       var user = await User.findOne({ email });
 
-      /**
-       * TODO: Email enumeration attacks
-       */
       if (!user) {
-        return res.sendStatus(422);
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Invalid or missing authorization",
+        });
       }
 
       /**
@@ -66,11 +64,31 @@ router.post(
       );
 
       if (!authenticator) {
-        return res.sendStatus(422);
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Authenticator device not found",
+        });
       }
 
       /**
-       * @type {import("@simplewebauthn/server").VerifiedAuthenticationResponse | undefined}
+       * TODO: Retrieve the expected challenge from Redis
+       */
+      // var challengeKey = `webauthnChallenge:authenticate:${email}`;
+      // var expectedChallenge = await redisClient.get(challengeKey);
+      // if (!expectedChallenge) {
+      //   return res.status(401).json({
+      //     type: "https://example.com/probs/unauthorized",
+      //     title: "Unauthorized",
+      //     status: 401,
+      //     detail: "Challenge expired or not found",
+      //   });
+      // }
+      var expectedChallenge = "";
+
+      /**
+       * @type {import("@simplewebauthn/server").VerifiedAuthenticationResponse}
        */
       var verification;
 
@@ -83,24 +101,33 @@ router.post(
           authenticator,
           requireUserVerification: false,
         });
-      } catch (error) {}
-
-      if (!verification) {
-        return res.sendStatus(401);
+      } catch (error) {
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Authentication verification failed",
+        });
       }
 
       var { verified, authenticationInfo } = verification;
 
-      if (verified) {
-        authenticator.counter = authenticationInfo.newCounter;
-
-        await user.save();
-
-        /**
-         * TODO: Remove challenge from Redis
-         */
-        // await redisClient.del(challengeKey);
+      if (!verified) {
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Authentication failed",
+        });
       }
+
+      authenticator.counter = authenticationInfo.newCounter;
+      await user.save();
+
+      /**
+       * TODO: Remove challenge from Redis
+       */
+      // await redisClient.del(challengeKey);
 
       /**
        * TODO: Generate access and refresh tokens based on subscription status
