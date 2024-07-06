@@ -19,7 +19,13 @@ router.post(
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+          type: "https://example.com/probs/validation-error",
+          title: "Invalid Request",
+          status: 400,
+          detail: "There were validation errors with your request",
+          errors: errors.array(),
+        });
       }
 
       var { email } = req.body;
