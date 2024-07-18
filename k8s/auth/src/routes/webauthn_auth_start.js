@@ -31,6 +31,7 @@ router.post(
       }
 
       var { email } = req.body;
+
       var user = await User.findOne({ email });
 
       /**

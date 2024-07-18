@@ -122,6 +122,7 @@ router.post(
       }
 
       authenticator.counter = authenticationInfo.newCounter;
+
       await user.save();
 
       /**

@@ -2,6 +2,7 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 import { sign } from "jsonwebtoken";
+import nconf from "nconf";
 
 var router = express.Router();
 
@@ -30,13 +31,13 @@ router.post(
 
       var { email } = req.body;
 
-      var token = sign({ email }, "ACCESS_TOKEN_SECRET", {
+      var accessToken = sign({ email }, nconf.get("LOGIN_ACCESS_TOKEN"), {
         expiresIn: "15m",
       });
 
       let url = new URL("https://localhost");
       url.pathname = "/login";
-      url.searchParams.set("token", token);
+      url.searchParams.set("token", accessToken);
 
       /**
        * TODO: Send email
@@ -45,7 +46,7 @@ router.post(
        */
 
       res.status(200).json({
-        token,
+        accessToken,
       });
     } catch (err) {
       next(err);

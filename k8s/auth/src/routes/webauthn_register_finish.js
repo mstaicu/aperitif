@@ -56,7 +56,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, "ACCESS_TOKEN_SECRET");
+        tokenPayload = verify(token, "LOGIN_ACCESS_TOKEN");
       } catch (err) {
         return res.status(401).json({
           type: "https://example.com/errors/unauthorized",

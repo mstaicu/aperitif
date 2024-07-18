@@ -50,7 +50,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, "ACCESS_TOKEN_SECRET");
+        tokenPayload = verify(token, "LOGIN_ACCESS_TOKEN");
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",
@@ -83,10 +83,6 @@ router.post(
 
         await user.save();
       }
-
-      /**
-       * Actually, maybe issue access token here, not a refresh, but access token
-       */
 
       res.sendStatus(200);
     } catch (err) {
