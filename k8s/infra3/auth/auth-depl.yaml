@@ -12,7 +12,6 @@ spec:
       labels:
         app: auth
     spec:
-      automountServiceAccountToken: false
       containers:
         - name: auth
           image: mdstaicu/auth

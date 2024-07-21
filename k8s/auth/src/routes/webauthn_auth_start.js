@@ -4,6 +4,7 @@ import { body, validationResult } from "express-validator";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 
 import { User } from "../models/users.js";
+import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
 
@@ -59,11 +60,13 @@ router.post(
       var authenticationOptions = await generateAuthenticationOptions(options);
 
       if (user) {
-        /**
-         * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
-         */
-        // await redisClient.setex(`webauthnChallenge:authenticate:${email}`, 300, authenticationOptions.challenge);
         var expectedChallenge = authenticationOptions.challenge;
+
+        await redis.setex(
+          `webauthnChallenge:authenticate:${email}`,
+          300,
+          expectedChallenge
+        );
       }
 
       res.status(200).json({

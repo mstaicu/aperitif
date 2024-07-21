@@ -4,6 +4,7 @@ import { body, validationResult } from "express-validator";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 
 import { User } from "../models/users.js";
+import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
 
@@ -72,20 +73,17 @@ router.post(
         });
       }
 
-      /**
-       * TODO: Retrieve the expected challenge from Redis
-       */
-      // var challengeKey = `webauthnChallenge:authenticate:${email}`;
-      // var expectedChallenge = await redisClient.get(challengeKey);
-      // if (!expectedChallenge) {
-      //   return res.status(401).json({
-      //     type: "https://example.com/probs/unauthorized",
-      //     title: "Unauthorized",
-      //     status: 401,
-      //     detail: "Challenge expired or not found",
-      //   });
-      // }
-      var expectedChallenge = "";
+      var challengeKey = `webauthnChallenge:authenticate:${email}`;
+      var expectedChallenge = await redis.get(challengeKey);
+
+      if (!expectedChallenge) {
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Challenge expired or not found",
+        });
+      }
 
       /**
        * @type {import("@simplewebauthn/server").VerifiedAuthenticationResponse}
@@ -125,10 +123,7 @@ router.post(
 
       await user.save();
 
-      /**
-       * TODO: Remove challenge from Redis
-       */
-      // await redisClient.del(challengeKey);
+      await redis.del(challengeKey);
 
       /**
        * TODO: Generate access and refresh tokens based on subscription status

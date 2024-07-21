@@ -12,7 +12,6 @@ spec:
       labels:
         app: auth-mongo
     spec:
-      automountServiceAccountToken: false
       containers:
         - name: auth-mongo
           # This comes from https://hub.docker.com/_/mongo

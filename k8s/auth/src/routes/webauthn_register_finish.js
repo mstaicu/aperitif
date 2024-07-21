@@ -5,6 +5,7 @@ import { verify } from "jsonwebtoken";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
 import { User } from "../models/users.js";
+import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
 
@@ -85,19 +86,19 @@ router.post(
       var registrationResponse = req.body.registrationResponse;
 
       /**
-       * TODO: Retrieve the expected challenge from Redis
+       * Challenge
        */
-      // var challengeKey = `webauthnChallenge:register:${tokenPayload.email}`;
-      // var expectedChallenge = await redisClient.get(challengeKey);
-      // if (!expectedChallenge) {
-      //   return return res.status(401).json({
-      //   type: "https://example.com/errors/unauthorized",
-      //   title: "Unauthorized",
-      //   status: 401,
-      //   detail: "Challenge expired or not found",
-      // });
-      // }
-      var expectedChallenge = "";
+      var challengeKey = `webauthnChallenge:register:${tokenPayload.email}`;
+      var expectedChallenge = await redis.get(challengeKey);
+
+      if (!expectedChallenge) {
+        return res.status(401).json({
+          type: "https://example.com/errors/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Challenge expired or not found",
+        });
+      }
 
       /**
        * @type {import('@simplewebauthn/server').VerifiedRegistrationResponse}
@@ -161,8 +162,7 @@ router.post(
 
         await user.save();
 
-        // TODO: Remove challenge from Redis
-        // await redisClient.del(challengeKey);
+        await redis.del(challengeKey);
       }
 
       res.sendStatus(200);

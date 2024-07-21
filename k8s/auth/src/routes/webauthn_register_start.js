@@ -5,6 +5,7 @@ import { verify } from "jsonwebtoken";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 
 import { User } from "../models/users.js";
+import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
 
@@ -122,12 +123,14 @@ router.post(
 
       var registrationOptions = await generateRegistrationOptions(options);
 
-      /**
-       * TODO: Store the expected challenge in Redis and retrieve it in the registration verification
-       */
       if (user) {
-        // await redisClient.setex(`webauthnChallenge:register:${user.email}`, 300, registrationOptions.challenge);
         var expectedChallenge = registrationOptions.challenge;
+
+        redis.setex(
+          `webauthnChallenge:register:${user.email}`,
+          300,
+          expectedChallenge
+        );
       }
 
       res.status(200).json({

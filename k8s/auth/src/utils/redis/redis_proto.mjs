@@ -1,10 +1,9 @@
-var proto = {
-  get: async function (key) {
-    throw new Error("Method not implemented");
-  },
-  set: async function (key, value) {
-    throw new Error("Method not implemented");
+var handler = {
+  get: function (_, prop) {
+    throw new Error(`Property ${prop} is not implemented`);
   },
 };
+
+var proto = new Proxy({}, handler);
 
 export { proto };
