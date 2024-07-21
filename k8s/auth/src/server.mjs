@@ -4,7 +4,7 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 
-import { graceful } from "./utils/graceful.js";
+import { withGracefulShutdown } from "./utils/mixins/withGracefulShutdown.mjs";
 
 var mongoUri = nconf.get("AUTH_MONGODB_URI");
 var dbName = nconf.get("AUTH_MONGODB_OPTIONS_DBNAME");
@@ -15,13 +15,13 @@ await mongoose.connect(mongoUri, {
 
 var port = nconf.get("AUTH_EXPRESS_PORT");
 
-var close = graceful(
+var server = withGracefulShutdown(
   app.listen(port, () => console.log(`Listening on port ${port}`))
 );
 
 var shutdown = async () => {
   try {
-    await close();
+    await server.gracefulShutdown();
 
     await mongoose.connection.close();
 
