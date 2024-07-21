@@ -1,6 +1,6 @@
 // @ts-check
 import express from "express";
-import { body, validationResult } from "express-validator";
+import { validationResult, checkSchema } from "express-validator";
 import { sign } from "jsonwebtoken";
 import nconf from "nconf";
 
@@ -8,7 +8,15 @@ var router = express.Router();
 
 router.post(
   "/login/start",
-  [body("email").isEmail().withMessage("'email' must be provided")],
+  checkSchema(
+    {
+      email: {
+        isEmail: true,
+        errorMessage: "'email' must be provided",
+      },
+    },
+    ["body"]
+  ),
   /**
    *
    * @param {express.Request} req
