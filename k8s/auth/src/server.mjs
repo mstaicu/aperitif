@@ -4,7 +4,7 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 
-import { withGracefulShutdown } from "./utils/mixins/withGracefulShutdown.mjs";
+import { withGracefulShutdown } from "./utils/mixins/with_graceful_shutdown.mjs";
 
 var mongoUri = nconf.get("AUTH_MONGODB_URI");
 var dbName = nconf.get("AUTH_MONGODB_OPTIONS_DBNAME");

@@ -6,7 +6,7 @@ import { equal } from "node:assert";
 import { test } from "node:test";
 import http from "node:http";
 
-import { withGracefulShutdown, isClosing } from "./withGracefulShutdown.mjs";
+import { withGracefulShutdown, isClosing } from "./with_graceful_shutdown.mjs";
 
 test("server took no time to close server with no requests", async function () {
   /**

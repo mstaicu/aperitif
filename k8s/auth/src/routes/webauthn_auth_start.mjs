@@ -1,6 +1,8 @@
 // @ts-check
 import express from "express";
 import { body, validationResult } from "express-validator";
+import nconf from "nconf";
+
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 
 import { User } from "../models/users.mjs";
@@ -46,7 +48,7 @@ router.post(
        * @type {import("@simplewebauthn/server").GenerateAuthenticationOptionsOpts}
        */
       var options = {
-        rpID: "localhost",
+        rpID: nconf.get("DOMAIN"),
         timeout: 300000,
         allowCredentials: user
           ? user.devices.map(({ credentialID, transports }) => ({

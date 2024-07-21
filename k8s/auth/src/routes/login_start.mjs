@@ -43,7 +43,7 @@ router.post(
         expiresIn: "15m",
       });
 
-      let url = new URL("https://localhost");
+      let url = new URL(nconf.get("ORIGIN"));
       url.pathname = "/login";
       url.searchParams.set("token", accessToken);
 

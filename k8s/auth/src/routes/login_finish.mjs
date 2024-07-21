@@ -2,6 +2,7 @@
 import express from "express";
 import { header, validationResult } from "express-validator";
 import { verify } from "jsonwebtoken";
+import nconf from "nconf";
 
 import { User } from "../models/users.mjs";
 
@@ -50,7 +51,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, "LOGIN_ACCESS_TOKEN");
+        tokenPayload = verify(token, nconf.get("LOGIN_ACCESS_TOKEN"));
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",

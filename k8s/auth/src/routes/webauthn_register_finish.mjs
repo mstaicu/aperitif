@@ -91,7 +91,11 @@ router.post(
        * Challenge
        */
       var challengeKey = `webauthnChallenge:register:${tokenPayload.email}`;
-      var expectedChallenge = await redis.get(challengeKey);
+      var expectedChallenge;
+
+      try {
+        expectedChallenge = await redis.get(challengeKey);
+      } catch (err) {}
 
       if (!expectedChallenge) {
         return res.status(401).json({
@@ -111,8 +115,8 @@ router.post(
         verifiedRegistrationResponse = await verifyRegistrationResponse({
           response: registrationResponse,
           expectedChallenge: `${expectedChallenge}`,
-          expectedOrigin: "http://localhost",
-          expectedRPID: "localhost",
+          expectedOrigin: nconf.get("ORIGIN"),
+          expectedRPID: nconf.get("DOMAIN"),
           requireUserVerification: false,
         });
       } catch (error) {
@@ -164,7 +168,9 @@ router.post(
 
         await user.save();
 
-        await redis.del(challengeKey);
+        try {
+          await redis.del(challengeKey);
+        } catch (err) {}
       }
 
       res.sendStatus(200);

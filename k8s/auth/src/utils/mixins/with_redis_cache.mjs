@@ -11,12 +11,16 @@
 
 function withRedisCache(client, o) {
   function cache(options = {}) {
+    if (!options.key) {
+      throw new Error("A cache key must be provided");
+    }
+
     this.useCache = true;
 
     /**
      * Make sure the key is always a string
      */
-    this.hashKey = JSON.stringify(options.key || "");
+    this.hashKey = JSON.stringify(options.key);
 
     /**
      * Return this for further method chaining
@@ -54,6 +58,10 @@ function withRedisCache(client, o) {
     return result;
   }
 
+  /**
+   * We mutate the object in place, because we're not passing an empty object
+   * as the first argument to Object.assign's call
+   */
   return Object.assign(o, {
     cache,
     exec: patchedExec,

@@ -1,6 +1,8 @@
 // @ts-check
 import express from "express";
 import { body, validationResult } from "express-validator";
+import nconf from "nconf";
+
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 
 import { User } from "../models/users.mjs";
@@ -74,7 +76,11 @@ router.post(
       }
 
       var challengeKey = `webauthnChallenge:authenticate:${email}`;
-      var expectedChallenge = await redis.get(challengeKey);
+      var expectedChallenge;
+
+      try {
+        expectedChallenge = await redis.get(challengeKey);
+      } catch (err) {}
 
       if (!expectedChallenge) {
         return res.status(401).json({
@@ -94,8 +100,8 @@ router.post(
         verification = await verifyAuthenticationResponse({
           response: authenticationResponse,
           expectedChallenge: `${expectedChallenge}`,
-          expectedOrigin: "localhost",
-          expectedRPID: "localhost",
+          expectedOrigin: nconf.get("ORIGIN"),
+          expectedRPID: nconf.get("DOMAIN"),
           authenticator,
           requireUserVerification: false,
         });

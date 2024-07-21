@@ -90,8 +90,8 @@ router.post(
        * @type {import("@simplewebauthn/server").GenerateRegistrationOptionsOpts}
        */
       var options = {
-        rpName: "localhost",
-        rpID: "localhost",
+        rpName: nconf.get("DOMAIN"),
+        rpID: nconf.get("DOMAIN"),
         userName: user ? user.email : "",
         /**
          * Optionals below
