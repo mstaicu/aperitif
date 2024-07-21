@@ -1,6 +1,6 @@
 // @ts-check
 import express from "express";
-import { validationResult, checkSchema } from "express-validator";
+import { checkSchema, validationResult } from "express-validator";
 import { sign } from "jsonwebtoken";
 import nconf from "nconf";
 

@@ -2,9 +2,13 @@
 import express from "express";
 
 import {
+  loginStartRouter,
+  loginFinishRouter,
   webauthnRegisterFinish,
   webauthnRegisterStart,
-} from "./routes/index.js";
+  webauthnAuthStart,
+  webauthnAuthFinish,
+} from "./routes/index.mjs";
 
 const app = express();
 
@@ -16,7 +20,11 @@ app.get("/healthz", (_, res) => {
   res.sendStatus(200);
 });
 
+app.use(loginStartRouter);
+app.use(loginFinishRouter);
 app.use(webauthnRegisterStart);
 app.use(webauthnRegisterFinish);
+app.use(webauthnAuthStart);
+app.use(webauthnAuthFinish);
 
 export { app };

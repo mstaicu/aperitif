@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import nconf from "nconf";
 
-import { app } from "./app.js";
+import { app } from "./app.mjs";
 
 import { graceful } from "./utils/graceful.js";
 
