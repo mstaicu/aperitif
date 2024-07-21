@@ -1,6 +1,10 @@
 var handler = {
-  get: function (_, prop) {
-    throw new Error(`Property ${prop} is not implemented`);
+  get: function (target, prop) {
+    if (prop in target) {
+      return target[prop];
+    } else {
+      throw new Error(`Property ${prop} is not implemented`);
+    }
   },
 };
 

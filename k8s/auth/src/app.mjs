@@ -16,9 +16,7 @@ app.disable("x-powered-by");
 
 app.use(express.json());
 
-app.get("/healthz", (_, res) => {
-  res.sendStatus(200);
-});
+app.get("/healthz", (_, res) => res.sendStatus(200));
 
 app.use(loginStartRouter);
 app.use(loginFinishRouter);

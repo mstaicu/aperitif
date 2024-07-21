@@ -6,7 +6,7 @@ import nconf from "nconf";
 
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 
-import { User } from "../models/users.js";
+import { User } from "../models/users.mjs";
 import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();

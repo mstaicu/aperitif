@@ -4,6 +4,7 @@ import { proto } from "./redis_proto.mjs";
 
 /**
  * @param {import("ioredis").RedisOptions} config
+ * @returns {Redis}
  */
 function getRedisIoClient(config = {}) {
   /**
@@ -27,20 +28,22 @@ function getRedisIoClient(config = {}) {
     return client.del(key);
   };
 
-  /**
-   * @type {Redis}
-   */
-  var ioRedis = Object.create(proto);
+  var hget = async function (key, field) {
+    return client.hget(key, field);
+  };
 
-  /**
-   * This or add property descriptors to Object.create, more verbose
-   */
-  ioRedis.get = get;
-  ioRedis.set = set;
-  ioRedis.setex = setex;
-  ioRedis.del = del;
+  var hset = async function (key, object) {
+    return client.hset(key, object);
+  };
 
-  return ioRedis;
+  return Object.assign(Object.create(proto), {
+    get,
+    set,
+    setex,
+    del,
+    hget,
+    hset,
+  });
 }
 
 export { getRedisIoClient };

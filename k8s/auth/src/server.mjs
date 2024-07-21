@@ -27,6 +27,9 @@ var shutdown = async () => {
 
     process.exit(0);
   } catch (error) {
+    /**
+     * TODO: Log error
+     */
     console.error(error);
     process.exit(1);
   }
