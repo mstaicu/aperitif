@@ -40,14 +40,8 @@ create-env-secret:
 	fi
 
 dev: create-env-secret
-# @echo "👷🏻‍♂️ applying config maps"
-# @kubectl apply -f infra/cm
-
 	@echo "👷🏻‍♂️ applying custom resource definitions"
-#	@kubectl apply -f infra/crd/traefik-crd.yaml
-
-	@echo "👷🏻‍♂️ applying deployments"
-#	@kubectl apply -f infra/depl/traefik-depl.yaml
+	@kubectl apply -f infra/traefik/traefik-crd.yaml
 
 	@echo "🚀 starting development environment"
 	@skaffold dev --status-check=false

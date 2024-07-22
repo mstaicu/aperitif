@@ -1,22 +1,18 @@
 // @ts-check
 import express from "express";
-import { checkSchema, validationResult } from "express-validator";
-import { sign } from "jsonwebtoken";
+import { body, validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
 import nconf from "nconf";
+
+import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
 
+var { sign } = jwt;
+
 router.post(
-  "/login/start",
-  checkSchema(
-    {
-      email: {
-        isEmail: true,
-        errorMessage: "'email' must be provided",
-      },
-    },
-    ["body"]
-  ),
+  "/register/start",
+  body("email").isEmail().withMessage("'email' must be provided"),
   /**
    *
    * @param {express.Request} req
@@ -39,18 +35,26 @@ router.post(
 
       var { email } = req.body;
 
-      var accessToken = sign({ email }, nconf.get("LOGIN_ACCESS_TOKEN"), {
-        expiresIn: "15m",
-      });
+      var accessToken = sign(
+        { email },
+        nconf.get("REGISTRATION_ACCESS_TOKEN"),
+        {
+          expiresIn: "15m",
+        }
+      );
+
+      await redis.setex(`registration:token:${accessToken}`, 900, "valid");
 
       let url = new URL(nconf.get("ORIGIN"));
-      url.pathname = "/login";
+      /**
+       * This is the client web app or mobile view controller route
+       * that takes over and finishes the registration
+       */
+      url.pathname = "/register";
       url.searchParams.set("token", accessToken);
 
       /**
        * TODO: Send email
-       *
-       * res.sendStatus(200)
        */
 
       res.status(200).json({
@@ -62,4 +66,4 @@ router.post(
   }
 );
 
-export { router as loginStartRouter };
+export { router as registerStartRouter };

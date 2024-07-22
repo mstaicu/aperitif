@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["./node_modules/.bin/nodemon", "src/index.js"]
+CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # ----
 # Prod
@@ -41,4 +41,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "src/index.js"]
+CMD ["node", "src/index.mjs"]

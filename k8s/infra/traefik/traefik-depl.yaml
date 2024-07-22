@@ -121,8 +121,8 @@ spec:
 #
 # If you want to debug this, you have to
 #
-# 2. Register '127.0.0.1 traefik-srv' in your /etc/hosts
-# 3. Access http://traefik-srv:30000/v1/auth/healthz
+# 2. Register '127.0.0.1 tma.com' in your /etc/hosts
+# 3. Access http://tma.com:30000/v1/auth/healthz
 #
 apiVersion: v1
 kind: Service

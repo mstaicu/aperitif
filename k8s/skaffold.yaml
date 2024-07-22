@@ -1,21 +1,20 @@
 apiVersion: skaffold/v4beta11
 kind: Config
+metadata:
+  name: k-s
 build:
   artifacts:
-    - docker:
+    - image: mdstaicu/auth
+      context: auth
+      docker:
         dockerfile: Dockerfile
         target: dev
-      image: mdstaicu/auth
-      context: auth
       sync:
         manual:
           - src: src/**/*.js
             dest: .
   local:
     push: false
-deploy:
-  kubectl: {}
 manifests:
   rawYaml:
-    - ./infra3/auth/*
-    - ./infra3/traefik/*
+    - infra/auth/auth-depl.yaml

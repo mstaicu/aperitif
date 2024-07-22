@@ -76,6 +76,7 @@ router.post(
       }
 
       var challengeKey = `webauthnChallenge:authenticate:${email}`;
+
       var expectedChallenge;
 
       try {

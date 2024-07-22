@@ -2,8 +2,8 @@
 import express from "express";
 
 import {
-  loginStartRouter,
-  loginFinishRouter,
+  registerStartRouter,
+  registerFinishRouter,
   webauthnRegisterFinish,
   webauthnRegisterStart,
   webauthnAuthStart,
@@ -18,8 +18,8 @@ app.use(express.json());
 
 app.get("/healthz", (_, res) => res.sendStatus(200));
 
-app.use(loginStartRouter);
-app.use(loginFinishRouter);
+app.use(registerStartRouter);
+app.use(registerFinishRouter);
 app.use(webauthnRegisterStart);
 app.use(webauthnRegisterFinish);
 app.use(webauthnAuthStart);

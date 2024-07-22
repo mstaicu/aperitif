@@ -1,7 +1,7 @@
 // @ts-check
 import express from "express";
 import { header, validationResult } from "express-validator";
-import { verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import nconf from "nconf";
 
 import { generateRegistrationOptions } from "@simplewebauthn/server";
@@ -10,6 +10,8 @@ import { User } from "../models/users.mjs";
 import { redis } from "../utils/redis/index.mjs";
 
 var router = express.Router();
+
+var { verify } = jwt;
 
 router.post(
   "/webauthn/register/start",
@@ -40,6 +42,7 @@ router.post(
       }
 
       var header = req.headers.authorization || "";
+
       var [type, token] = header.split(" ");
 
       if (type !== "Bearer" || !token) {
@@ -51,10 +54,21 @@ router.post(
         });
       }
 
+      var tokenStatus = await redis.get(`registration:token:${token}`);
+
+      if (!tokenStatus) {
+        return res.status(401).json({
+          type: "https://example.com/probs/unauthorized",
+          title: "Unauthorized",
+          status: 401,
+          detail: "Token is either expired or has been used already",
+        });
+      }
+
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, nconf.get("LOGIN_ACCESS_TOKEN"));
+        tokenPayload = verify(token, nconf.get("REGISTRATION_ACCESS_TOKEN"));
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",
