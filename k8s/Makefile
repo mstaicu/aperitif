@@ -1,11 +1,16 @@
 DOMAIN = tma.com
 DOTENV_SECRET_NAME = dotenv
 ENV_FILE = .env
+NAMESPACE = my-namespace
+
+define check_command
+  @command -v $(1) >/dev/null 2>&1 || { echo >&2 "$(1) is not installed. Please install it and try again."; exit 1; }
+endef
 
 check-tools:
-	@command -v mkcert >/dev/null 2>&1 || { echo >&2 "mkcert is not installed. Please install it and try again."; exit 1; }
-	@command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is not installed. Please install it and try again."; exit 1; }
-	@command -v skaffold >/dev/null 2>&1 || { echo >&2 "skaffold is not installed. Please install it and try again."; exit 1; }
+	$(call check_command,mkcert)
+	$(call check_command,kubectl)
+	$(call check_command,skaffold)
 	@echo "✅ all required tools are installed"
 
 generate-cert-secret:
@@ -41,14 +46,8 @@ create-env-secret:
 
 dev: create-env-secret
 	@echo "🚀 starting development environment"
-	@skaffold dev --status-check=false
-
-# The --status-check flag in the skaffold dev command is used to control whether Skaffold performs a status check on deployed resources after they have been applied to the Kubernetes cluster. The status check helps ensure that all resources are in the "ready" state before considering the deployment as successful.
-# Here's what it does:
-# --status-check=true (default behavior): Skaffold will perform a status check on deployed resources. It will continuously check the status of resources in the Kubernetes cluster and wait until they are in a "ready" state before considering the deployment complete. This is useful to ensure that your application is fully available and running before you start working with it.
-# --status-check=false: If you set --status-check=false, Skaffold won't perform the status check on deployed resources. It will consider the deployment complete as soon as it has applied the resources to the cluster. This can be useful if you want to skip the status check for some reason, such as for faster development iterations.
+	@skaffold dev
 
 .PHONY: check-tools generate-cert-secret add-host create-env-secret dev all
 
-# Default target to set up the development environment
 all: check-tools generate-cert-secret add-host create-env-secret dev
