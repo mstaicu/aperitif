@@ -36,6 +36,10 @@ function getRedisIoClient(config = {}) {
     return client.hset(key, object);
   };
 
+  var quit = async function () {
+    return client.quit();
+  };
+
   return Object.assign(Object.create(proto), {
     get,
     set,
@@ -43,6 +47,7 @@ function getRedisIoClient(config = {}) {
     del,
     hget,
     hset,
+    quit,
   });
 }
 

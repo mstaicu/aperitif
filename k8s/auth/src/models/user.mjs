@@ -3,7 +3,7 @@ import { Schema } from "mongoose";
 
 import { authDbConnection } from "../services/index.mjs";
 
-const userSchema = new Schema(
+var userSchema = new Schema(
   {
     email: {
       type: String,
@@ -26,6 +26,6 @@ const userSchema = new Schema(
   }
 );
 
-const User = authDbConnection.model("User", userSchema);
+var User = authDbConnection.model("User", userSchema);
 
 export { User };

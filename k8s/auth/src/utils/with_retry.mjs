@@ -4,20 +4,20 @@ var withRetry =
     var retries = 0;
 
     return new Promise((resolve, reject) => {
-      const connect = async () => {
+      const retry = async () => {
         try {
           resolve(await fn());
         } catch (err) {
           if (retries < maxRetries) {
             retries += 1;
-            setTimeout(connect, initialRetryInterval * Math.pow(2, retries));
+            setTimeout(retry, initialRetryInterval * Math.pow(2, retries));
           } else {
             reject(err);
           }
         }
       };
 
-      connect();
+      retry();
     });
   };
 

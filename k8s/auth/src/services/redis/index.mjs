@@ -17,6 +17,11 @@ if (clientType === "ioredis") {
   redis = getRedisIoClient({
     port: nconf.get("REDIS_PORT"),
     host: nconf.get("REDIS_HOST"),
+    /**
+     * This might not work for all use cases
+     * If it doesn't, wrap the internal initialization in withRetry
+     * and convert this to an async function
+     */
     lazyConnect: true,
   });
 }

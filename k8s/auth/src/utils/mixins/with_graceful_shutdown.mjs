@@ -260,7 +260,7 @@ function withGracefulShutdown(server, options = {}) {
   }
 
   /**
-   * @returns {Promise<void>}
+   * @returns {Promise<Server>}
    */
   function close() {
     return new Promise((resolve, reject) => {
@@ -324,11 +324,14 @@ function withGracefulShutdown(server, options = {}) {
           return;
         }
 
-        resolve();
+        resolve(server);
       });
     });
   }
 
+  /**
+   * Mutating the server object and assigning a new prop to its reference
+   */
   return Object.assign(server, {
     gracefulShutdown: close,
   });

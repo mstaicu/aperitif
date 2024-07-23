@@ -4,7 +4,7 @@ import nconf from "nconf";
 import { app } from "./app.mjs";
 
 import { withGracefulShutdown } from "./utils/index.mjs";
-import { authDbConnection } from "./services/index.mjs";
+import { authDbConnection, redis } from "./services/index.mjs";
 
 await authDbConnection.asPromise();
 
@@ -16,9 +16,10 @@ var server = withGracefulShutdown(
 
 var shutdown = async () => {
   try {
-    await authDbConnection.close();
-
     await server.gracefulShutdown();
+
+    await authDbConnection.close();
+    await redis.quit();
 
     process.exit(0);
   } catch (error) {
