@@ -1,19 +1,12 @@
 // @ts-check
-import mongoose from "mongoose";
 import nconf from "nconf";
 
 import { app } from "./app.mjs";
 
-import { withRetry, withGracefulShutdown } from "./utils/index.mjs";
+import { withGracefulShutdown } from "./utils/index.mjs";
+import { authDbConnection } from "./services/index.mjs";
 
-/**
- * @type {mongoose.Connection}
- */
-var connection = await withRetry()(() =>
-  mongoose.connect(nconf.get("AUTH_MONGODB_URI"), {
-    dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
-  })
-);
+await authDbConnection.asPromise();
 
 var port = nconf.get("AUTH_EXPRESS_PORT");
 
@@ -23,9 +16,9 @@ var server = withGracefulShutdown(
 
 var shutdown = async () => {
   try {
-    await server.gracefulShutdown();
+    await authDbConnection.close();
 
-    await connection.close();
+    await server.gracefulShutdown();
 
     process.exit(0);
   } catch (error) {

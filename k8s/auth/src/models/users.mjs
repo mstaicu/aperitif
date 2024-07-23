@@ -1,5 +1,7 @@
 // @ts-check
-import { Schema, model } from "mongoose";
+import { Schema } from "mongoose";
+
+import { authDbConnection } from "../services/index.mjs";
 
 const userSchema = new Schema(
   {
@@ -24,6 +26,6 @@ const userSchema = new Schema(
   }
 );
 
-const User = model("User", userSchema);
+const User = authDbConnection.model("User", userSchema);
 
 export { User };

@@ -7,11 +7,11 @@ import { proto } from "./redis_proto.mjs";
  * @returns {Redis}
  */
 function getRedisIoClient(config = {}) {
+  var client = new Redis(config);
+
   /**
    * ioredis returns a promise if the last argument isn't a function
    */
-  var client = new Redis(config);
-
   var get = async function (key) {
     return client.get(key);
   };
