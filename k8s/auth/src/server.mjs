@@ -6,12 +6,10 @@ import { app } from "./app.mjs";
 import { withGracefulShutdown } from "./utils/index.mjs";
 import { authDbConnection, redis } from "./services/index.mjs";
 
-await authDbConnection.asPromise();
-
 var port = nconf.get("AUTH_EXPRESS_PORT");
 
 var server = withGracefulShutdown(
-  app.listen(port, () => console.log(`Listening on port ${port}`))
+  app.listen(port, () => console.log(`listening on port ${port}`))
 );
 
 var shutdown = async () => {
@@ -20,6 +18,8 @@ var shutdown = async () => {
 
     await authDbConnection.close();
     await redis.quit();
+
+    console.log("shutdown complete");
 
     process.exit(0);
   } catch (error) {

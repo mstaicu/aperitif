@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
+CMD ["node", "--watch-path=./src", "src/index.mjs"]
 
 # ----
 # Prod

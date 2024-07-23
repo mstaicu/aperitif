@@ -44,9 +44,9 @@ create-env-secret:
 		kubectl create secret generic $(DOTENV_SECRET_NAME) --from-env-file=$(ENV_FILE); \
 	fi
 
-dev: create-env-secret
+dev:
 	@echo "🚀 starting development environment"
-	@skaffold dev
+	@skaffold dev --cache-artifacts=false --no-prune=false --no-prune-children=false
 
 .PHONY: check-tools generate-cert-secret add-host create-env-secret dev all
 
