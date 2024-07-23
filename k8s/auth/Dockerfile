@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "--watch-path=./src", "src/index.mjs"]
+CMD ./node_modules/.bin/nodemon --signal SIGINT src/index.mjs
 
 # ----
 # Prod
@@ -41,4 +41,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "src/index.mjs"]
+CMD node src/index.mjs

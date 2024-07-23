@@ -11,8 +11,6 @@ import { redis } from "../services/index.mjs";
 
 var router = express.Router();
 
-var { verify } = jwt;
-
 router.post(
   "/webauthn/register/start",
   [
@@ -68,7 +66,7 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = verify(token, nconf.get("REGISTRATION_ACCESS_TOKEN"));
+        tokenPayload = jwt.verify(token, nconf.get("REGISTRATION_ACCESS_TOKEN"));
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",

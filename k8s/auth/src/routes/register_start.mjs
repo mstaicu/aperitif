@@ -8,8 +8,6 @@ import { redis } from "../services/index.mjs";
 
 var router = express.Router();
 
-var { sign } = jwt;
-
 router.post(
   "/register/start",
   body("email").isEmail().withMessage("'email' must be provided"),
@@ -35,7 +33,7 @@ router.post(
 
       var { email } = req.body;
 
-      var accessToken = sign(
+      var accessToken = jwt.sign(
         { email },
         nconf.get("REGISTRATION_ACCESS_TOKEN"),
         {
