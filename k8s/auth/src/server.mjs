@@ -4,9 +4,12 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 
-import { withRetry, withGracefulShutdown } from "./utils/mixins/index.mjs";
+import { withRetry, withGracefulShutdown } from "./utils/index.mjs";
 
-await withRetry()(() =>
+/**
+ * @type {mongoose.Connection}
+ */
+var connection = await withRetry()(() =>
   mongoose.connect(nconf.get("AUTH_MONGODB_URI"), {
     dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
   })
@@ -22,7 +25,7 @@ var shutdown = async () => {
   try {
     await server.gracefulShutdown();
 
-    await mongoose.connection.close();
+    await connection.close();
 
     process.exit(0);
   } catch (error) {

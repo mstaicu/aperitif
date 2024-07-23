@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import nconf from "nconf";
 
 import { User } from "../models/users.mjs";
-import { redis } from "../utils/redis/index.mjs";
+import { redis } from "../services/index.mjs";
 
 var router = express.Router();
 
