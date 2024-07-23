@@ -17,6 +17,7 @@ if (clientType === "ioredis") {
   redis = getRedisIoClient({
     port: nconf.get("REDIS_PORT"),
     host: nconf.get("REDIS_HOST"),
+    lazyConnect: true,
   });
 }
 

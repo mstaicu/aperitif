@@ -4,14 +4,13 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 
-import { withGracefulShutdown } from "./utils/mixins/with_graceful_shutdown.mjs";
+import { withRetry, withGracefulShutdown } from "./utils/mixins/index.mjs";
 
-var mongoUri = nconf.get("AUTH_MONGODB_URI");
-var dbName = nconf.get("AUTH_MONGODB_OPTIONS_DBNAME");
-
-await mongoose.connect(mongoUri, {
-  dbName,
-});
+await withRetry()(() =>
+  mongoose.connect(nconf.get("AUTH_MONGODB_URI"), {
+    dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
+  })
+);
 
 var port = nconf.get("AUTH_EXPRESS_PORT");
 
@@ -27,9 +26,6 @@ var shutdown = async () => {
 
     process.exit(0);
   } catch (error) {
-    /**
-     * TODO: Log error
-     */
     console.error(error);
     process.exit(1);
   }
