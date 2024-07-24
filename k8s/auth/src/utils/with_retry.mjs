@@ -6,8 +6,8 @@ import { setTimeout } from "node:timers";
  * @param {Object} options - Options for the retry mechanism.
  * @param {number} [options.maxAttempts=3] - The maximum number of retry attempts.
  * @param {number} [options.initialRetryInterval=1000] - The initial retry interval in milliseconds.
- * @param {Function} [options.shouldRetry] - Function to determine if an error should trigger a retry.
- * @param {Function} [options.onAttempt] - Function called on each retry with the number of retries and the error.
+ * @param {(err: Error) => boolean} [options.shouldRetry] - Function to determine if an error should trigger a retry.
+ * @param {(attempt: number, err: Error) => void} [options.onAttempt] - Function called on each retry with the number of retries and the error.
  * @returns {Function} A function that takes a promise-returning function and returns a promise.
  */
 var withRetry =
@@ -18,7 +18,7 @@ var withRetry =
     onAttempt = () => {},
   } = {}) =>
   /**
-   * @param {Function} fn - The promise-returning function to retry.
+   * @param {() => Promise<any>} fn - The promise-returning function to retry.
    * @returns {Promise<any>} A promise that resolves to the result of the function or rejects with an error.
    */
   (fn) => {
