@@ -18,18 +18,45 @@ spec:
           envFrom:
             - secretRef:
                 name: dotenv
+          #
+          # The readiness probe is used to determine if a container is ready to serve requests.
+          # If the readiness probe fails, Kubernetes will remove the pod from the service's
+          # endpoints, ensuring that it does not receive any traffic until it passes
+          # the readiness check
+          #
           readinessProbe:
             httpGet:
               path: /healthz
               port: 3000
+            # Useful to give your application enough time to start before the probe checks its status.
             initialDelaySeconds: 5
-            periodSeconds: 10
+            # Determines how frequently the probe runs. More frequent checks can detect issues faster but may increase the load.
+            periodSeconds: 5
+            # The maximum time Kubernetes waits for the probe to succeed.
+            # timeoutSeconds
+            # The number of consecutive failures needed before marking the container as unhealthy.
+            failureThreshold: 3
+            # The number of consecutive successes needed before marking the container as healthy.
+            successThreshold: 1
+          #
+          # The liveness probe is used to determine if a container is running and alive.
+          # If the liveness probe fails, Kubernetes will kill the container and,
+          # depending on the restart policy, may attempt to restart it.
+          #
           livenessProbe:
             httpGet:
               path: /healthz
               port: 3000
+            # Useful to give your application enough time to start before the probe checks its status.
             initialDelaySeconds: 10
-            periodSeconds: 15
+            # Determines how frequently the probe runs. More frequent checks can detect issues faster but may increase the load.
+            periodSeconds: 5
+            # The maximum time Kubernetes waits for the probe to succeed.
+            # timeoutSeconds
+            # The number of consecutive failures needed before marking the container as unhealthy.
+            failureThreshold: 3
+            # The number of consecutive successes needed before marking the container as healthy.
+            successThreshold: 1
 ---
 apiVersion: v1
 kind: Service

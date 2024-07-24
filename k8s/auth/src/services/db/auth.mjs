@@ -10,7 +10,30 @@ import { withRetry } from "../../utils/index.mjs";
  * @returns {Promise<mongoose.Connection>}
  */
 var createConnection = async (uri, options) =>
-  withRetry()(() => mongoose.createConnection(uri, options));
+  withRetry({
+    shouldRetry: (err) => {
+      var retryableErrors = [
+        "MongoNetworkError",
+        "MongoTimeoutError",
+        "MongoServerSelectionError",
+        "MongoWriteConcernError",
+        "MongoServerError",
+        "MongoNotPrimaryError",
+        "ECONNREFUSED",
+        "EHOSTUNREACH",
+        "EPIPE",
+        "ETIMEDOUT",
+      ];
+      return (
+        retryableErrors.includes(err.name) || retryableErrors.includes(err.code)
+      );
+    },
+    onAttempt: (attempt, err) => {
+      console.log(
+        `Retrying connection attempt ${attempt} due to error: ${err.message}`
+      );
+    },
+  })(() => mongoose.createConnection(uri, options));
 
 var authDbConnection = await createConnection(nconf.get("AUTH_MONGODB_URI"), {
   dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
