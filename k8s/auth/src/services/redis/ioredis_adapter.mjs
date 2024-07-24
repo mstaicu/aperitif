@@ -6,7 +6,7 @@ import { proto } from "./redis_proto.mjs";
  * @param {import("ioredis").RedisOptions} config
  * @returns {Redis}
  */
-function getRedisIoClient(config = {}) {
+function getIoRedisClient(config = {}) {
   var client = new Redis(config);
 
   /**
@@ -51,4 +51,4 @@ function getRedisIoClient(config = {}) {
   });
 }
 
-export { getRedisIoClient };
+export { getIoRedisClient };

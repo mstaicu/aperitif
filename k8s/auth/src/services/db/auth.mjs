@@ -37,7 +37,7 @@ var createConnection = async (uri, options) =>
       console.log(
         `Retrying connection attempt ${attempt} due to error: ${err.message}`
       ),
-  })(() => mongoose.createConnection(uri, options));
+  })(() => mongoose.createConnection(uri, options).asPromise());
 
 var authDbConnection = await createConnection(nconf.get("AUTH_MONGODB_URI"), {
   dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),

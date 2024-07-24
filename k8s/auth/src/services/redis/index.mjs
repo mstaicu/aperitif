@@ -1,7 +1,7 @@
 import nconf from "nconf";
 import { Redis } from "ioredis";
 
-import { getRedisIoClient } from "./redisio_adapter.mjs";
+import { getIoRedisClient } from "./ioredis_adapter.mjs";
 
 /**
  * TODO: Add ENV var to switch between Redis clients if we need to migrate
@@ -14,7 +14,7 @@ var clientType = "ioredis";
 var redis;
 
 if (clientType === "ioredis") {
-  redis = getRedisIoClient({
+  redis = getIoRedisClient({
     port: nconf.get("REDIS_PORT"),
     host: nconf.get("REDIS_HOST"),
     /**
