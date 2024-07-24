@@ -1,3 +1,4 @@
+// @ts-check
 import { setTimeout } from "node:timers";
 
 /**

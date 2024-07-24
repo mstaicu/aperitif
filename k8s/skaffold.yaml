@@ -20,5 +20,4 @@ deploy:
 manifests:
   rawYaml:
     - infra/redis/redis-depl.yaml
-    - infra/auth/auth-mongo-depl.yaml
     - infra/auth/auth-depl.yaml

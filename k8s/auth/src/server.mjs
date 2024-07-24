@@ -1,10 +1,10 @@
 // @ts-check
 import nconf from "nconf";
 
-import { app } from "./app.mjs";
-
 import { withGracefulShutdown } from "./utils/index.mjs";
 import { authDbConnection, redis } from "./services/index.mjs";
+
+import { app } from "./app.mjs";
 
 var port = nconf.get("AUTH_EXPRESS_PORT");
 

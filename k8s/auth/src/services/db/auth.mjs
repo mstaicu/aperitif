@@ -11,28 +11,6 @@ import { withRetry } from "../../utils/index.mjs";
  */
 var createConnection = async (uri, options) =>
   withRetry({
-    /**
-     * @param {Error & {code?: string}} err
-     * @returns {boolean} - Returns true if the error should trigger a retry.
-     */
-    shouldRetry: (err) => {
-      var retryableErrors = [
-        "MongoNetworkError",
-        "MongoTimeoutError",
-        "MongoServerSelectionError",
-        "MongoWriteConcernError",
-        "MongoServerError",
-        "MongoNotPrimaryError",
-        "ECONNREFUSED",
-        "EHOSTUNREACH",
-        "EPIPE",
-        "ETIMEDOUT",
-      ];
-      return (
-        retryableErrors.includes(err.name) ||
-        retryableErrors.includes(err.code || "")
-      );
-    },
     onAttempt: (attempt, err) =>
       console.log(
         `Retrying connection attempt ${attempt} due to error: ${err.message}`
@@ -41,6 +19,15 @@ var createConnection = async (uri, options) =>
 
 var authDbConnection = await createConnection(nconf.get("AUTH_MONGODB_URI"), {
   dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
+  /**
+   * https://mongoosejs.com/docs/connections.html#serverselectiontimeoutms
+   *
+   * By default, serverSelectionTimeoutMS is 30000 (30 seconds).
+   * This means that, for example, if you call mongoose.connect()
+   * when your standalone MongoDB server is down,
+   * your mongoose.connect() call will only throw an error after 30 seconds
+   */
+  serverSelectionTimeoutMS: 5000,
 });
 
 export { authDbConnection };
