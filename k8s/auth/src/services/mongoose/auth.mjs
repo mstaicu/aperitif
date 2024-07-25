@@ -18,7 +18,7 @@ var createConnection = async (uri, options) =>
   })(() => mongoose.createConnection(uri, options).asPromise());
 
 var authDbConnection = await createConnection(nconf.get("AUTH_MONGODB_URI"), {
-  dbName: nconf.get("AUTH_MONGODB_OPTIONS_DBNAME"),
+  dbName: "auth",
   /**
    * https://mongoosejs.com/docs/connections.html#serverselectiontimeoutms
    *
