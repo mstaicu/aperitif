@@ -3,9 +3,6 @@ import { Redis } from "ioredis";
 
 import { getIoRedisClient } from "./ioredis_adapter.mjs";
 
-/**
- * TODO: Add ENV var to switch between Redis clients if we need to migrate
- */
 var clientType = "ioredis";
 
 /**

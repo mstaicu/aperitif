@@ -15,11 +15,9 @@ router.get(
    */
   async (req, res, next) => {
     try {
-      var authDbConnectionStatus = authDbConnection.readyState;
+      var connectionStatus = authDbConnection.readyState;
 
-      console.log(authDbConnectionStatus);
-
-      if (authDbConnectionStatus === 1) {
+      if (connectionStatus === 1) {
         res.sendStatus(200);
       } else {
         res.sendStatus(500);
