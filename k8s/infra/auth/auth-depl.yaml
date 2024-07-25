@@ -18,48 +18,32 @@ spec:
           envFrom:
             - secretRef:
                 name: dotenv
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 3000
-            #
-            # Total first probe time, worst case, 15s
-            # Total second probe time, worst case, 15s
-            #
-            # Pod is restarted after 30s, worst case,
-            # because the first probe fails after 15s,
-            # and the second probe fails after 15s, totally 2 time failures
-            # thus triggering a pod restart after 30s
-            #
-            # 1. first probe is sent after 10 seconds
-            initialDelaySeconds: 10
-            # 3. we then wait another 10 seconds, we send a probe, we wait 5 seconds
-            periodSeconds: 10
-            # 2. we then wait 5 seconds
-            timeoutSeconds: 5
-            # restart the pod after this many probe failures
-            failureThreshold: 2
+          # readinessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 3000
+          #   initialDelaySeconds: 5
+          #   timeoutSeconds: 30
+          #   periodSeconds: 5
+          #   failureThreshold: 2
           livenessProbe:
             httpGet:
               path: /healthz
               port: 3000
             #
-            # Total first probe time, worst case, 15s
-            # Total second probe time, worst case, 15s
+            # We measured the mongoose initial connection duration
+            # worst case, without jitter, to be 34s
             #
-            # Pod is restarted after 30s, worst case,
-            # because the first probe fails after 15s,
-            # and the second probe fails after 15s, totally 2 time failures
-            # thus triggering a pod restart after 30s
+            # Recommending setting the first liveness probe to run after 5s
+            # leaving a 30s timeout for the server to respond
             #
-            # 1. first probe is sent after 10 seconds
-            initialDelaySeconds: 10
-            # 3. we then wait another 10 seconds, we send a probe, we wait 5 seconds
+            # Subsequent probes should run on a 5 seconds interval and a 30s timeout
+            # with a failure threshold of 3 attempts failed
+            #
+            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+            initialDelaySeconds: 5
             periodSeconds: 10
-            # 2. we then wait 5 seconds
-            timeoutSeconds: 5
-            # restart the pod after this many probe failures
-            failureThreshold: 2
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service

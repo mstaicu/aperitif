@@ -40,6 +40,10 @@ function getIoRedisClient(config = {}) {
     return client.quit();
   };
 
+  var ping = async function () {
+    return client.ping();
+  };
+
   return Object.assign(Object.create(proto), {
     get,
     set,
@@ -48,6 +52,7 @@ function getIoRedisClient(config = {}) {
     hget,
     hset,
     quit,
+    ping,
   });
 }
 

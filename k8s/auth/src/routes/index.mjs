@@ -5,3 +5,4 @@ export * from "./webauthn_register_finish.mjs";
 export * from "./webauthn_register_start.mjs";
 export * from "./register_start.mjs";
 export * from "./register_finish.mjs";
+export * from "./healtz.mjs";

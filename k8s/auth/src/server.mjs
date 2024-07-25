@@ -16,8 +16,13 @@ var shutdown = async () => {
   try {
     await server.gracefulShutdown();
 
-    await authDbConnection.close();
-    await redis.quit();
+    if (authDbConnection.readyState === 1) {
+      await authDbConnection.close();
+    }
+
+    if (await redis.ping()) {
+      await redis.quit();
+    }
 
     console.log("shutdown complete");
 
