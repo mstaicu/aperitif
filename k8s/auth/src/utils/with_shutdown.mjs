@@ -3,7 +3,7 @@ import { authDbConnection, redis } from "../services/index.mjs";
 var shutdownInitiated = false;
 
 var withShutdown =
-  ({ dbConnections = [authDbConnection], redisClients = [redis] }) =>
+  ({ dbConnections = [authDbConnection], redisClients = [redis] } = {}) =>
   async (fn) => {
     if (shutdownInitiated) {
       return;
@@ -14,6 +14,10 @@ var withShutdown =
     console.log("shutting down");
 
     try {
+      /**
+       * TODO: If the server cannot shut down gracefuly,
+       * make sure the pending connections are closed regardless
+       */
       await fn();
 
       for (let dbConnection of dbConnections) {

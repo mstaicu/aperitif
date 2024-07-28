@@ -14,3 +14,5 @@ var server = withGracefulShutdown(
 ["SIGINT", "SIGTERM"].forEach((signal) =>
   process.once(signal, () => handleShutdown(() => server.gracefulShutdown()))
 );
+
+export { server };

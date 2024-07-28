@@ -11,6 +11,7 @@ import { withRetry } from "../../utils/index.mjs";
  */
 var createConnection = async (uri, options) =>
   withRetry({
+    maxAttempts: Number.POSITIVE_INFINITY,
     onAttempt: (attempt, err) =>
       console.log(
         `Retrying connection attempt ${attempt} due to error: ${err.message}`
