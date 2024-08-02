@@ -53,7 +53,7 @@ function withRedisCache(client, o) {
 
     var result = await exec.apply(this, arguments);
 
-    client.hset(this.hashKey, key, JSON.stringify(result));
+    await client.hset(this.hashKey, key, JSON.stringify(result));
 
     return result;
   }

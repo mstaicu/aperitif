@@ -5,6 +5,17 @@ import nconf from "nconf";
 import { withRetry } from "../../utils/index.mjs";
 
 /**
+ * When you call mongoose.createConnection(), you create a new connection
+ * object that Mongoose tracks in the mongoose.connections property
+ *
+ * Here's a couple examples when you would need to create multiple connections:
+ * 1. Your app needs to acess data stored in multiple databases.
+ *  A Mongoose connection is scoped to exactly one database -
+ *  if you need to create models on different databases, you need a separate connection.
+ *
+ * 2. Your app has certain operations that are slow, and you don't want the slow operations
+ *  to cause performance issues on fast queries.
+ *
  * @param {string} uri
  * @param {mongoose.ConnectOptions} options
  * @returns {Promise<mongoose.Connection>}
