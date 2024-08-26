@@ -3,8 +3,6 @@ import mongoose from "mongoose";
 import nconf from "nconf";
 import crypto from "node:crypto";
 
-import { authDbConnection } from "../services/index.mjs";
-
 /**
  * @description base64-encoded 32-byte key
  * @type {String}
@@ -79,6 +77,4 @@ var RefreshTokenSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-var RefreshToken = authDbConnection.model("RefreshToken", RefreshTokenSchema);
-
-export { RefreshToken };
+export { RefreshTokenSchema };

@@ -2,9 +2,7 @@
 import mongoose from "mongoose";
 import { randomBytes } from "node:crypto";
 
-import { authDbConnection } from "../services/index.mjs";
-
-var challengeSchema = new mongoose.Schema({
+var ChallengeSchema = new mongoose.Schema({
   content: {
     type: String,
     /**
@@ -24,6 +22,4 @@ var challengeSchema = new mongoose.Schema({
   },
 });
 
-var Challenge = authDbConnection.model("Challenge", challengeSchema);
-
-export { Challenge };
+export { ChallengeSchema };
