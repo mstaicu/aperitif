@@ -208,30 +208,28 @@ const { MongoMemoryServer } = await import("mongodb-memory-server");
 var mongod = await MongoMemoryServer.create();
 await mongoose.connect(mongod.getUri());
 
-mongoose.modelNames();
-
-mongoose.deleteModel("Token");
-
-var TokenSchema = new mongoose.Schema(
-  {
-    _id: {
-      type: String,
-      required: true,
-      default: () => crypto.randomBytes(50).toString("base64"),
-    },
-    expireAt: { type: Date, required: true },
+var challengeSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    /**
+     * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits)
+     */
+    default: "WTF",
+    unique: true,
+    index: true,
   },
-  {
-    optimisticConcurrency: true,
-  }
-);
-
-TokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
-
-var Token = mongoose.model("Token", TokenSchema);
-
-var token = new Token({
-  expireAt: new Date(Date.now() + 10000),
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-await token.save();
+challengeSchema.index({ createdAt: 1 }, { expireAfterSeconds: 5 });
+
+var Challenge = mongoose.model("Challenge", challengeSchema);
+
+var c = new Challenge();
+
+await c.save();
+
+await Challenge.find({});

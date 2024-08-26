@@ -10,6 +10,7 @@ import { authDbConnection } from "../services/index.mjs";
  * @type {String}
  */
 var ENCRYPTION_KEY = nconf.get("AUTH_REFRESH_TOKEN_ENCRYPTION_KEY");
+// var ENCRYPTION_KEY = crypto.randomBytes(32).toString("base64");
 var IV_LENGTH = 16;
 
 /**
@@ -57,22 +58,26 @@ function decrypt(text) {
   return decrypted.toString();
 }
 
-var RefreshTokenSchema = new mongoose.Schema({
-  content: {
-    type: String,
+var RefreshTokenSchema = new mongoose.Schema(
+  {
+    content: {
+      type: String,
 
-    set: encrypt,
-    get: decrypt,
+      set: encrypt,
+      get: decrypt,
 
-    required: true,
-    unique: true,
-    index: true,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    /**
+     * if 'expireAt' is set, then document expires at expireAt + 'expires' seconds
+     */
+    expireAt: { type: Date, required: true, expires: 0 },
+    user: { type: "ObjectId", required: true, ref: "User" },
   },
-  expireAt: { type: Date, required: true },
-  user: { type: "ObjectId", required: true, ref: "User" },
-});
-
-RefreshTokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+  { timestamps: true }
+);
 
 var RefreshToken = authDbConnection.model("RefreshToken", RefreshTokenSchema);
 

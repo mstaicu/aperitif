@@ -1,12 +1,12 @@
-import { randomBytes } from "crypto";
-import { Schema } from "mongoose";
+// @ts-check
+import mongoose from "mongoose";
+import { randomBytes } from "node:crypto";
 
 import { authDbConnection } from "../services/index.mjs";
 
-var challengeSchema = new Schema({
+var challengeSchema = new mongoose.Schema({
   content: {
     type: String,
-    required: true,
     /**
      * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits)
      */
@@ -14,10 +14,13 @@ var challengeSchema = new Schema({
     unique: true,
     index: true,
   },
+  /**
+   * if 'createdAt' is set, then document expires at createdAt + 'expires' seconds
+   */
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 300, // 5 minutes (300 seconds)
+    expires: 60,
   },
 });
 
