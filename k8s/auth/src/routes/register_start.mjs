@@ -4,8 +4,6 @@ import { body, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import nconf from "nconf";
 
-import { redis } from "../services/index.mjs";
-
 var router = express.Router();
 
 router.post(

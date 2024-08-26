@@ -6,8 +6,7 @@ import nconf from "nconf";
 
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 
-import { User } from "../models/user.mjs";
-import { redis } from "../services/index.mjs";
+import { User } from "../models/index.mjs";
 
 var router = express.Router();
 
@@ -66,7 +65,10 @@ router.post(
       var tokenPayload;
 
       try {
-        tokenPayload = jwt.verify(token, nconf.get("REGISTRATION_ACCESS_TOKEN"));
+        tokenPayload = jwt.verify(
+          token,
+          nconf.get("REGISTRATION_ACCESS_TOKEN")
+        );
       } catch (error) {
         return res.status(401).json({
           type: "https://example.com/probs/unauthorized",
