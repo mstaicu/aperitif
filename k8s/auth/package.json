@@ -1,14 +1,12 @@
 {
   "name": "auth",
-  "type": "module",
   "scripts": {
     "test": "node --test"
   },
   "dependencies": {
-    "@simplewebauthn/server": "^10.0.0",
+    "@passwordless-id/webauthn": "^2.1.0",
     "express": "^4.19.2",
     "express-validator": "^7.1.0",
-    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.3.0",
     "nconf": "^0.12.1"

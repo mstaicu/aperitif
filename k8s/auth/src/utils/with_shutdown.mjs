@@ -1,9 +1,10 @@
-import { authDbConnection, redis } from "../services/index.mjs";
+// @ts-check
+import { authDbConnection } from "../services/index.mjs";
 
 var shutdownInitiated = false;
 
 var withShutdown =
-  ({ dbConnections = [authDbConnection], redisClients = [redis] } = {}) =>
+  ({ dbConnections = [authDbConnection] } = {}) =>
   async (fn) => {
     if (shutdownInitiated) {
       return;
@@ -25,14 +26,6 @@ var withShutdown =
           await dbConnection.close();
         }
       }
-
-      try {
-        for (let redisClient of redisClients) {
-          if (await redisClient.ping()) {
-            await redisClient.quit();
-          }
-        }
-      } catch (err) {}
 
       console.log("shutdown complete");
 
