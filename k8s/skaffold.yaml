@@ -15,10 +15,8 @@ build:
             dest: .
   local:
     push: false
-deploy:
-  kubectl: {}
+
 manifests:
-  rawYaml:
-    - infra/redis/redis-depl.yaml
-    - infra/auth/auth-mongo-depl.yaml
-    - infra/auth/auth-depl.yaml
+  kustomize:
+    paths:
+      - infra-2/overlays/dev

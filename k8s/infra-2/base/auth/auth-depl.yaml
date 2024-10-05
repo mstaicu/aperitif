@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: mdstaicu/auth
+          envFrom:
+            - secretRef:
+                name: dotenv
+          # readinessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 3000
+          #   initialDelaySeconds: 5
+          #   timeoutSeconds: 30
+          #   periodSeconds: 5
+          #   failureThreshold: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            #
+            # We measured the mongoose initial connection duration
+            # worst case, without jitter, to be 34s
+            #
+            # Recommending setting the first liveness probe to run after 5s
+            # leaving a 30s timeout for the server to respond
+            #
+            # Subsequent probes should run on a 5 seconds interval and a 30s timeout
+            # with a failure threshold of 3 attempts failed
+            #
+            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+            initialDelaySeconds: 5
+            #
+            # How often (in seconds) to perform the probe. Default to 10 seconds. The minimum value is 1
+            #
+            periodSeconds: 10
+            #
+            # failureThreshold: After a probe fails failureThreshold times in a row,
+            # Kubernetes considers that the overall check has failed:
+            # the container is not ready/healthy/live.
+            #
+            # Defaults to 3
+            #
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+    - name: auth
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

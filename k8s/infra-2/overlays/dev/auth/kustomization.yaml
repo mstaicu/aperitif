@@ -1,0 +1,3 @@
+resources:
+  - ../../../base/auth
+  - ./auth-mongo-depl.yaml
