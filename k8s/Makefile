@@ -2,6 +2,10 @@ DOMAIN = tma.com
 DOTENV_SECRET_NAME = dotenv
 ENV_FILE = .env
 
+.PHONY: check-tools generate-cert-secret add-host create-env-secret dev all
+
+all: dev
+
 define check_command
   @command -v $(1) >/dev/null 2>&1 || { echo >&2 "$(1) is not installed. Please install it and try again."; exit 1; }
 endef
@@ -50,7 +54,3 @@ create-env-secret: add-host
 dev: create-env-secret
 	@echo "🚀 starting development environment"
 	@skaffold dev --cache-artifacts=false --no-prune=false --no-prune-children=false
-
-.PHONY: check-tools generate-cert-secret add-host create-env-secret dev all
-
-all: dev

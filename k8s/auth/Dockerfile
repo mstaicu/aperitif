@@ -1,7 +1,7 @@
 # ----
 # Base
 # ----
-FROM node:alpine as base
+FROM node:alpine AS base
 
 ENV NODE_ENV=production
 
@@ -16,7 +16,7 @@ ENTRYPOINT ["/sbin/tini", "--"]
 # ----
 # Dev
 # ----
-FROM base as dev
+FROM base AS dev
 
 ENV NODE_ENV=development
 
@@ -26,12 +26,12 @@ RUN npm install
 
 COPY . .
 
-CMD ./node_modules/.bin/nodemon --signal SIGINT src/index.mjs
+CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # ----
 # Prod
 # ----
-FROM base as prod
+FROM base AS prod
 
 ENV NODE_ENV=production
 
@@ -41,4 +41,4 @@ RUN npm install
 
 COPY . .
 
-CMD node src/index.mjs
+CMD ["node", "src/index.mjs"]

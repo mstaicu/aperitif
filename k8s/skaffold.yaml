@@ -20,3 +20,10 @@ manifests:
   kustomize:
     paths:
       - infra-2/overlays/dev
+
+profiles:
+  - name: staging
+    manifests:
+      kustomize:
+        paths:
+          - infra-2/overlays/staging
