@@ -1,2 +1,3 @@
 resources:
   - auth-depl.yaml
+  - auth-srv.yaml

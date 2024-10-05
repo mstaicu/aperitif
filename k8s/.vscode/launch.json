@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to auth service",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/auth",
+      "remoteRoot": "/home/node/app"
+    }
+  ]
+}

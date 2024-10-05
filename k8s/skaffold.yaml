@@ -27,3 +27,9 @@ profiles:
       kustomize:
         paths:
           - infra-2/overlays/staging
+
+portForward:
+  - resourceType: service
+    resourceName: auth-srv
+    port: 9229
+    localPort: 9229

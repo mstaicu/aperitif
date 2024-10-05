@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
+CMD ["./node_modules/.bin/nodemon", '--inspect=0.0.0.0:9229', "src/index.mjs"]
 
 # ----
 # Prod
