@@ -1,6 +1,7 @@
 resources:
   - ../../../base/nats
-  - nats.conf.yaml
+  - nats-conf.yaml
+  - nats-srv.yaml
 
-patchesStrategicMerge:
-  - nats-depl.yaml
+patches:
+  - path: nats-depl.yaml

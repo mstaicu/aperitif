@@ -16,22 +16,6 @@ make
 
 This starts the entire cluster in development mode, redeploying services on file changes
 
-## Deployment
-
-Create a feature branch, commit your changes, the push the branch and create a pull request. Tests are ran as part of the pull request and a new deployment of the changed service will be made automatically to the designated cluster
-
-```sh
-git checkout -b feat/newStuff
-
-# make changes
-
-git add .
-
-git commit
-
-git push
-```
-
 ## Appendix
 
 ### NATS

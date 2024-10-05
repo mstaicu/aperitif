@@ -3,6 +3,26 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
+  template:
+    spec:
+      containers:
+        - name: nats
+          image: nats:alpine
+          args: ["-p", "4222", "-c", "/etc/nats/nats-server.conf"]
+          ports:
+            - name: nats-client
+              containerPort: 4222
+            - name: nats-cluster
+              containerPort: 6222
+          volumeMounts:
+            - name: nats-server-configmap
+              mountPath: /etc/nats/
+            - name: nats-pvc
+              mountPath: /data
+      volumes:
+        - name: nats-server-configmap
+          configMap:
+            name: nats-server-config-cm
   volumeClaimTemplates:
     - metadata:
         name: nats-pvc
