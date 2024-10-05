@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats-depl
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-pvc
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        #
+        # Consult your cloud provider with regards to available PVC classes
+        # otherwise dynamic provisioning will probably fail
+        #
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 1Gi

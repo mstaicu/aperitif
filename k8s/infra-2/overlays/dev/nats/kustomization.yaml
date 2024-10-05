@@ -1,0 +1,6 @@
+resources:
+  - ../../../base/nats
+  - nats.conf.yaml
+
+patchesStrategicMerge:
+  - nats-depl.yaml
