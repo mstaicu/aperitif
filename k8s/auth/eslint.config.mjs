@@ -13,5 +13,5 @@ export default [
   pluginJs.configs.recommended,
   eslintPluginPerfectionst.configs["recommended-natural"],
   eslintPluginPrettier, // prettier as an ESLint rule, integrates .prettierrc settings
-  eslintConfigPrettier, // disable conflicting prettier rules in eslint
+  eslintConfigPrettier, // disable conflicting prettier rules in eslint,
 ];
