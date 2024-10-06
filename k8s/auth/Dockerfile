@@ -26,7 +26,10 @@ RUN npm install
 
 COPY . .
 
-CMD ["./node_modules/.bin/nodemon", '--inspect=0.0.0.0:9229', "src/index.mjs"]
+# Expose debug port for dev stage
+EXPOSE 9229
+
+CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # ----
 # Prod

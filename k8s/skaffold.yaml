@@ -1,7 +1,7 @@
 apiVersion: skaffold/v4beta11
 kind: Config
 metadata:
-  name: k-s
+  name: k8s
 build:
   artifacts:
     - image: mdstaicu/auth
@@ -27,9 +27,3 @@ profiles:
       kustomize:
         paths:
           - infra-2/overlays/staging
-
-portForward:
-  - resourceType: service
-    resourceName: auth-srv
-    port: 9229
-    localPort: 9229

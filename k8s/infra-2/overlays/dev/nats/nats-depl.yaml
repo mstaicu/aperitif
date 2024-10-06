@@ -3,8 +3,29 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nats
+  serviceName: nats-headless
   template:
+    metadata:
+      labels:
+        app: nats
     spec:
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - nats
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: nats
           image: nats:alpine
@@ -17,17 +38,7 @@ spec:
           volumeMounts:
             - name: nats-server-configmap
               mountPath: /etc/nats/
-            - name: nats-pvc
-              mountPath: /data
       volumes:
         - name: nats-server-configmap
           configMap:
             name: nats-server-config-cm
-  volumeClaimTemplates:
-    - metadata:
-        name: nats-pvc
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi

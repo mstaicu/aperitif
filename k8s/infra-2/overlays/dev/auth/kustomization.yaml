@@ -1,6 +1,3 @@
 resources:
   - ../../../base/auth
   - auth-mongo-depl.yaml
-
-patches:
-  - path: auth-srv.yaml
