@@ -2,7 +2,7 @@ DOMAIN = tma.com
 DOTENV_SECRET_NAME = dotenv
 ENV_FILE = .env
 
-.PHONY: check-tools generate-cert-secret add-host create-env-secret dev all
+.PHONY: check-tools generate-cert-secret add-host create-env-secret dev debug all
 
 all: dev
 
@@ -20,7 +20,7 @@ generate-cert-secret: check-tools
 	@echo "🪪 installing mkcert certificate authority"
 	@mkcert -install
 
-	@echo "🔍 Checking if secret/certs-secret exists"
+	@echo "🔍 checking if secret/certs-secret exists"
 	@if kubectl get secret certs-secret >/dev/null 2>&1; then \
 		echo "🔐 secret/certs-secret already exists, skipping creation"; \
 	else \
@@ -33,7 +33,7 @@ generate-cert-secret: check-tools
 	fi
 
 add-host: generate-cert-secret
-	@echo "📍 checking /etc/hosts for existing entry"
+	@echo "🔍 checking /etc/hosts for existing entry"
 
 	@if ! grep -q "^127.0.0.1 $(DOMAIN)$$" /etc/hosts; then \
 		echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null; \
@@ -43,7 +43,7 @@ add-host: generate-cert-secret
 	fi
 
 create-env-secret: add-host
-	@echo "🔐 checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
+	@echo "🔍 checking if Kubernetes secret/$(DOTENV_SECRET_NAME) exists..."
 	@if kubectl get secret $(DOTENV_SECRET_NAME) >/dev/null 2>&1; then \
 		echo "🔐 secret/$(DOTENV_SECRET_NAME) exists, skipping creation"; \
 	else \
@@ -54,3 +54,7 @@ create-env-secret: add-host
 dev: create-env-secret
 	@echo "🚀 starting development environment"
 	@skaffold dev --cache-artifacts=false --no-prune=false --no-prune-children=false
+
+debug: create-env-secret
+	@echo "🚀 starting debug environment"
+	@skaffold debug --cache-artifacts=false --no-prune=false --no-prune-children=false

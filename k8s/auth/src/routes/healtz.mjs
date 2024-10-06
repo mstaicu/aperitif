@@ -9,11 +9,11 @@ router.get(
   "/healthz",
   /**
    *
-   * @param {express.Request} req
+   * @param {express.Request} _
    * @param {express.Response} res
    * @param {express.NextFunction} next
    */
-  async (req, res, next) => {
+  async (_, res, next) => {
     try {
       var connectionStatus = authDbConnection.readyState;
 
