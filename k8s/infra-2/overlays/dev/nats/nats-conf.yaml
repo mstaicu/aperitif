@@ -3,8 +3,10 @@ kind: ConfigMap
 metadata:
   name: nats-server-config-cm
 data:
+  #
   # https://github.com/nats-io/nats-docker/blob/256811340a89b8a3b78f1a144b6a87fba4424b67/2.10.x/scratch/Dockerfile#L9
   # https://docs.nats.io/running-a-nats-service/configuration/clustering/jetstream_clustering#raft
+  #
   nats-server.conf: |
     server_name=$HOSTNAME
 

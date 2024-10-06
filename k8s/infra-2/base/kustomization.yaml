@@ -1,6 +1,5 @@
 resources:
-  # - crds/nats-crd.yaml
-  # - crds/traefik-crd.yaml
   - auth
-  # - traefik
+  # - crds
   # - nats
+  # - traefik

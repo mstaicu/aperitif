@@ -1,0 +1,3 @@
+resources:
+  - nats-crd.yaml
+  - traefik-crd.yaml
