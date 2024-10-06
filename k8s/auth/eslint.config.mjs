@@ -1,4 +1,5 @@
 import pluginJs from "@eslint/js";
+import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginPerfectionst from "eslint-plugin-perfectionist";
 import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
@@ -11,5 +12,6 @@ export default [
   },
   pluginJs.configs.recommended,
   eslintPluginPerfectionst.configs["recommended-natural"],
-  eslintPluginPrettier, // any rules we setup now in .prettierrc will show up as errors
+  eslintPluginPrettier, // prettier as an ESLint rule, integrates .prettierrc settings
+  eslintConfigPrettier, // disable conflicting prettier rules in eslint
 ];

@@ -1,4 +1,5 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "javascript.validate.enable": false // Let ESLint perform validation and reporting, disable vscode's built-in .ts linter for .mjs / .js files
+  "eslint.format.enable": true, // enable eslint as a formatter in the eslint vscode extension
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint", // set eslint as the default formatter, in order to format on Option Shift F and apply lint plugins
+  "javascript.validate.enable": false // let eslint perform validation and reporting, disable vscode's built-in .ts linter for .mjs / .js files
 }

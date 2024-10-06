@@ -28,11 +28,11 @@ router.post(
 
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          type: "https://example.com/probs/validation-error",
-          title: "Invalid Request",
-          status: 400,
           detail: "There were validation errors with your request",
           errors: errors.array(),
+          status: 400,
+          title: "Invalid Request",
+          type: "https://example.com/probs/validation-error",
         });
       }
 
@@ -42,10 +42,10 @@ router.post(
 
       if (type !== "Bearer" || !token) {
         return res.status(401).json({
-          type: "https://example.com/probs/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid or missing authorization token",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/probs/unauthorized",
         });
       }
 
@@ -53,10 +53,10 @@ router.post(
 
       if (!tokenStatus) {
         return res.status(401).json({
-          type: "https://example.com/probs/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Token is either expired or has been used already",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/probs/unauthorized",
         });
       }
 
@@ -69,10 +69,10 @@ router.post(
         );
       } catch (error) {
         return res.status(401).json({
-          type: "https://example.com/probs/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid or expired authorization token",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/probs/unauthorized",
         });
       }
 
@@ -82,10 +82,10 @@ router.post(
         !tokenPayload.email
       ) {
         return res.status(401).json({
-          type: "https://example.com/probs/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid token payload",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/probs/unauthorized",
         });
       }
 
@@ -93,8 +93,8 @@ router.post(
 
       if (!user) {
         user = new User({
-          email: tokenPayload.email,
           devices: [],
+          email: tokenPayload.email,
         });
 
         await user.save();
