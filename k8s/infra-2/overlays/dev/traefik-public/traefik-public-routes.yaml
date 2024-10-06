@@ -11,7 +11,7 @@ spec:
       middlewares:
         - name: tls
       services:
-        - name: auth-srv
+        - name: client-srv
           port: 3000
   tls:
     secretName: certs-secret

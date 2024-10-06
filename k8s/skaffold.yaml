@@ -22,6 +22,14 @@ manifests:
       - infra-2/overlays/dev
 
 profiles:
+  - name: dev
+    manifests:
+      kustomize:
+        paths:
+          - infra-2/overlays/dev
+    env:
+      APP_ENV: "development"
+
   - name: staging
     manifests:
       kustomize:

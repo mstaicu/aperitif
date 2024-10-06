@@ -2,13 +2,14 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: traefik-public-ingress-controller
+
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: traefik-public-depl
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: traefik-public
@@ -17,23 +18,10 @@ spec:
       labels:
         app: traefik-public
     spec:
-      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - traefik-public
-                topologyKey: kubernetes.io/hostname
       serviceAccountName: traefik-public-ingress-controller
       containers:
         - name: traefik-public
-          image: traefik:v3.0.1
+          image: traefik:v3.2
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode

@@ -33,7 +33,7 @@ spec:
       serviceAccountName: traefik-internal-ingress-controller
       containers:
         - name: traefik-internal
-          image: traefik:v3.0.1
+          image: traefik:v3.2
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
@@ -41,7 +41,7 @@ spec:
             # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
             # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
             #
-            - --api=true
+            - --api=false
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
             #
