@@ -15,4 +15,6 @@ var server = withGracefulShutdown(
   process.once(signal, () => handleShutdown(() => server.gracefulShutdown()))
 );
 
+var b;
+
 export { server };

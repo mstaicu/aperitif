@@ -1,0 +1,4 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "javascript.validate.enable": false // Let ESLint perform validation and reporting, disable vscode's built-in .ts linter for .mjs / .js files
+}

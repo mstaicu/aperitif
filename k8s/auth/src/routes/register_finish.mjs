@@ -17,10 +17,10 @@ router.post(
       .withMessage("'Authorization' header must be provided"),
   ],
   /**
-   *
-   * @param {express.Request} req
-   * @param {express.Response} res
-   * @param {express.NextFunction} next
+   * @param {express.Request} req - The request object.
+   * @param {express.Response} res - The response object.
+   * @param {express.NextFunction} next - The next middleware function.
+   * @returns {Promise}
    */
   async (req, res, next) => {
     try {
