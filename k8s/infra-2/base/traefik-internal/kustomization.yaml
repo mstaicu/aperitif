@@ -1,0 +1,4 @@
+resources:
+  - traefik-internal-depl.yaml
+  - traefik-internal-srv.yaml
+  - traefik-internal-routes.yaml

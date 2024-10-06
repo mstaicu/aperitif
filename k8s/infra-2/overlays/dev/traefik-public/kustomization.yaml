@@ -1,0 +1,5 @@
+resources:
+  - traefik-public-depl.yaml
+  - traefik-public-routes.yaml
+  - traefik-public-srv.yaml
+  - traefik-public-tls.yaml

@@ -1,5 +1,0 @@
-resources:
-  - ../../../base/traefik
-
-patches:
-  - path: traefik-depl.yaml

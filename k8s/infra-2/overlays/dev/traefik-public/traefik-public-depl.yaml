@@ -1,21 +1,21 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: traefik-ingress-controller
+  name: traefik-public-ingress-controller
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: traefik-depl
+  name: traefik-public-depl
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: traefik
+      app: traefik-public
   template:
     metadata:
       labels:
-        app: traefik
+        app: traefik-public
     spec:
       # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
       affinity:
@@ -28,20 +28,20 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - traefik
+                        - traefik-public
                 topologyKey: kubernetes.io/hostname
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: traefik-public-ingress-controller
       containers:
-        - name: traefik
+        - name: traefik-public
           image: traefik:v3.0.1
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
             #
             # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
+            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@public in the dynamic configuration, to allow defining:
             #
-            - --api=true
+            - --api=false
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
             #
@@ -75,6 +75,6 @@ spec:
             #
             - --serversTransport.insecureSkipVerify=true
             #
-            - --entrypoints.http.address=:80
+            - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd

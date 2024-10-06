@@ -1,3 +1,4 @@
 resources:
   - auth
   # - nats
+  # - traefik-public

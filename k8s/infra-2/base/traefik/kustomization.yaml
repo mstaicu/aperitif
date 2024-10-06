@@ -1,3 +1,0 @@
-resources:
-  - traefik-depl.yaml
-  - traefik-srv.yaml
