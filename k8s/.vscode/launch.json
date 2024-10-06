@@ -10,7 +10,7 @@
       "restart": true,
       "sourceMaps": true,
       "localRoot": "${workspaceFolder}/auth",
-      "remoteRoot": "/home/node/app"
+      "remoteRoot": "/home/node/app" // WORKDIR defined in Dockerfile
     }
   ]
 }
