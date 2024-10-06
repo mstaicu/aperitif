@@ -2,12 +2,12 @@
 import express from "express";
 
 import {
-  registerStartRouter,
-  registerFinishRouter,
-  webauthnRegisterFinish,
-  webauthnRegisterStart,
-  webauthnAuthStart,
-  webauthnAuthFinish,
+  // registerStartRouter,
+  // registerFinishRouter,
+  // webauthnRegisterFinish,
+  // webauthnRegisterStart,
+  // webauthnAuthStart,
+  // webauthnAuthFinish,
   healtzRouter,
 } from "./routes/index.mjs";
 
@@ -19,11 +19,11 @@ app.use(express.json());
 
 app.use(healtzRouter);
 
-app.use(registerStartRouter);
-app.use(registerFinishRouter);
-app.use(webauthnRegisterStart);
-app.use(webauthnRegisterFinish);
-app.use(webauthnAuthStart);
-app.use(webauthnAuthFinish);
+// app.use(registerStartRouter);
+// app.use(registerFinishRouter);
+// app.use(webauthnRegisterStart);
+// app.use(webauthnRegisterFinish);
+// app.use(webauthnAuthStart);
+// app.use(webauthnAuthFinish);
 
 export { app };
