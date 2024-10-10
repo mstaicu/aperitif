@@ -29,7 +29,7 @@ spec:
             # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
             # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@public in the dynamic configuration, to allow defining:
             #
-            - --api=true
+            - --api=false
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
             #
@@ -64,5 +64,22 @@ spec:
             - --serversTransport.insecureSkipVerify=true
             #
             - --entrypoints.https.address=:443
+            - --entrypoints.http.address=:80
+            #
+            - --certificatesresolvers.letsencrypt.acme.email=m@tma.com
+            - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+            - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
             #
             - --providers.kubernetescrd
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+      #     volumeMounts:
+      #       - mountPath: /data
+      #         name: acme-storage
+      # volumes:
+      #   - name: acme-storage
+      #     persistentVolumeClaim:
+      #       claimName: traefik-acme-pvc

@@ -3,5 +3,5 @@ resources:
   - nats-conf.yaml
   - nats-srv.yaml
 
-patches:
+patchesStrategicMerge:
   - path: nats-depl.yaml

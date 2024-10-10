@@ -21,11 +21,11 @@ router.post(
 
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          type: "https://example.com/probs/validation-error",
-          title: "Invalid Request",
-          status: 400,
           detail: "There were validation errors with your request",
           errors: errors.array(),
+          status: 400,
+          title: "Invalid Request",
+          type: "https://example.com/probs/validation-error",
         });
       }
 
@@ -36,7 +36,7 @@ router.post(
         nconf.get("REGISTRATION_ACCESS_TOKEN"),
         {
           expiresIn: "15m",
-        }
+        },
       );
 
       await redis.setex(`registration:token:${accessToken}`, 900, "valid");
@@ -59,7 +59,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export { router as registerStartRouter };
