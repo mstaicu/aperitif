@@ -30,7 +30,7 @@ var withShutdown =
       console.log("shutdown complete");
 
       process.exit(0);
-    } catch (error) {
+    } catch {
       process.exit(1);
     }
   };

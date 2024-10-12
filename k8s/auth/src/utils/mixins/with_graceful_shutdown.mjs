@@ -1,6 +1,4 @@
 // @ts-check
-import { IncomingMessage, Server, ServerResponse } from "node:http";
-import { Socket } from "node:net";
 
 /**
  * https://www.dashlane.com/blog/implementing-nodejs-http-graceful-shutdown
@@ -22,6 +20,34 @@ import { Socket } from "node:net";
 
 /**
  * @typedef {WeakMap<Server, serverStatus>} servers
+ */
+
+/**
+ * 
+  The provided code handles graceful shutdown in an HTTP/1.1 server, 
+  specifically addressing the issue of persistent (keep-alive) connections. 
+  By default, when a server is shut down using server.close(), 
+  it stops accepting new connections 
+  but doesn't handle active or idle keep-alive connections gracefully. 
+  
+  These connections may prevent the server from shutting down cleanly, 
+  leading to errors such as "socket hangups."
+
+  The code solves this by:
+
+  1. Tracking ongoing connections and requests.
+  2. Sending Connection: close headers to clients.
+  3. Ensuring pending requests are completed.
+  4. Closing idle connections after a set timeout, 
+    ensuring the server shuts down cleanly while avoiding abrupt client disconnections.
+
+  Why This Is Necessary:
+
+  1. Persistent Connections: HTTP/1.1 uses keep-alive connections by default, keeping the TCP connection open for multiple requests, improving efficiency.
+  2. Graceful Shutdown: Without this handling, keep-alive connections may keep the server from closing, causing delays or even preventing shutdown.
+  3. Avoiding Errors: The approach minimizes client-side errors like "connection reset" by ensuring requests are completed before connections are closed.
+  
+  This mechanism is crucial in production environments to avoid disruptions during server restarts or deployments, particularly for long-running or high-availability services.
  */
 
 /**
@@ -161,6 +187,7 @@ function withGracefulShutdown(server, options = {}) {
   var responses = new Map();
 
   servers.set(server, {
+    closing: false,
     /*
      * To minimize the chances of closing a connection while there is a request in-flight from the client
      * we respond with a 'Connection: close' header once the server starts being terminated. We'll only
@@ -170,7 +197,6 @@ function withGracefulShutdown(server, options = {}) {
      * This won't help against clients that don't respect the Connection: close header
      * */
     hasRepliedClosedConnectionForSocket: new WeakMap(),
-    closing: false,
   });
 
   /**
@@ -283,7 +309,7 @@ function withGracefulShutdown(server, options = {}) {
           response.setHeader("connection", "close");
           currentServerStatus?.hasRepliedClosedConnectionForSocket.set(
             response.req.socket,
-            true
+            true,
           );
           responses.delete(response);
         }
@@ -362,7 +388,7 @@ function isClosing(obj) {
   } else {
     throw new Error(
       objType +
-        " is not supported. Should be one of: Socket, IncomingMessage or ServerResponse"
+        " is not supported. Should be one of: Socket, IncomingMessage or ServerResponse",
     );
   }
 
@@ -372,4 +398,4 @@ function isClosing(obj) {
   return serverStatus.closing;
 }
 
-export { withGracefulShutdown, isClosing };
+export { isClosing, withGracefulShutdown };

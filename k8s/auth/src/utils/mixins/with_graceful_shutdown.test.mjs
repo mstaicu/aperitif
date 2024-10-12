@@ -1,12 +1,11 @@
 // @ts-check
 import axios from "axios";
 import express from "express";
-
 import { equal } from "node:assert";
-import { test } from "node:test";
 import http from "node:http";
+import { test } from "node:test";
 
-import { withGracefulShutdown, isClosing } from "./with_graceful_shutdown.mjs";
+import { isClosing, withGracefulShutdown } from "./with_graceful_shutdown.mjs";
 
 test("server took no time to close server with no requests", async function () {
   /**
@@ -63,7 +62,7 @@ test(
      * assert
      */
     equal(isAround(Date.now() - started, 0), true);
-  }
+  },
 );
 
 test("server took as long as the request to close, 3 seconds", async function () {
