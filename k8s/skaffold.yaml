@@ -2,40 +2,60 @@ apiVersion: skaffold/v4beta11
 kind: Config
 metadata:
   name: k8s
-# build:
-#   artifacts:
-#     - image: mdstaicu/auth
-#       context: auth
-#       docker:
-#         dockerfile: Dockerfile
-#         target: dev
-#       sync:
-#         manual:
-#           - src: src/**/*.mjs
-#             dest: .
-#   local:
-#     push: false
+build:
+  artifacts:
+    - image: mdstaicu/auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: src/**/*.mjs
+            dest: .
+  local:
+    push: false
 
 manifests:
   kustomize:
     paths:
-      - infra-2/overlays/dev
+      - infra/overlays/dev
+  hooks:
+    before:
+      - host:
+          command: ["kubectl", "apply", "-f", "./infra/crds"]
+          os: [darwin, linux, windows]
 
 profiles:
   - name: dev
     manifests:
       kustomize:
         paths:
-          - infra-2/overlays/dev
+          - infra/overlays/dev
+      hooks:
+        before:
+          - host:
+              command: ["kubectl", "apply", "-f", "./infra/crds"]
+              os: [darwin, linux, windows]
 
   - name: staging
     manifests:
       kustomize:
         paths:
-          - infra-2/overlays/staging
+          - infra/overlays/staging
+      hooks:
+        before:
+          - host:
+              command: ["kubectl", "apply", "-f", "./infra/crds"]
+              os: [darwin, linux, windows]
 
   - name: prod
     manifests:
       kustomize:
         paths:
-          - infra-2/overlays/prod
+          - infra/overlays/prod
+      hooks:
+        before:
+          - host:
+              command: ["kubectl", "apply", "-f", "./infra/crds"]
+              os: [darwin, linux, windows]
