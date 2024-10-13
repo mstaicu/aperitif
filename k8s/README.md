@@ -11,7 +11,7 @@
 From your terminal:
 
 ```sh
-make
+task
 ```
 
 This starts the entire cluster in development mode, redeploying services on file changes
@@ -21,7 +21,7 @@ This starts the entire cluster in development mode, redeploying services on file
 From your terminal:
 
 ```sh
-make debug
+task debug
 ```
 
 This starts the entire cluster in debug mode where you can attach debuggers to the applications running inside the containers, redeploying services on file changes

@@ -1,0 +1,48 @@
+version: "3"
+
+dotenv: [".env"]
+
+env:
+  DOTENV_SECRET_NAME: dotenv
+  ENV_FILE: .env
+
+tasks:
+  check-tools:
+    desc: "Check if required tools are installed"
+    cmds:
+      - node ./.tasks/check-tools.mjs
+
+  generate-cert-secret:
+    desc: "Generate a certificate secret for the domain"
+    deps: [check-tools]
+    cmds:
+      - node ./.tasks/generate-cert-secret.mjs
+
+  add-host:
+    desc: "Add /etc/hosts entry"
+    deps: [generate-cert-secret]
+    cmds:
+      - node ./.tasks/add-host.mjs
+
+  create-env-secret:
+    desc: "Create environment secret"
+    deps: [add-host]
+    cmds:
+      - node ./.tasks/create-env-secret.mjs
+
+  dev:
+    desc: "Start development environment"
+    deps: [create-env-secret]
+    cmds:
+      - node ./.tasks/dev.mjs
+
+  debug:
+    desc: "Start debug environment"
+    deps: [create-env-secret]
+    cmds:
+      - node ./.tasks/debug.mjs
+
+  default:
+    desc: "This is the default task"
+    cmds:
+      - task: dev
