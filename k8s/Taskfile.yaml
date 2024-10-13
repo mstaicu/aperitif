@@ -12,9 +12,15 @@ tasks:
     cmds:
       - node ./.tasks/check-tools.mjs
 
+  check-namespace:
+    desc: "Check if namespace exists"
+    deps: [check-tools]
+    cmds:
+      - node ./.tasks/check-namespace.mjs
+
   generate-cert-secret:
     desc: "Generate a certificate secret for the domain"
-    deps: [check-tools]
+    deps: [check-namespace]
     cmds:
       - node ./.tasks/generate-cert-secret.mjs
 
