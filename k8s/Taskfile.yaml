@@ -30,11 +30,11 @@ tasks:
     cmds:
       - node ./.tasks/add-host.mjs
 
-  create-env-secret:
-    desc: "Create environment secret"
+  create-k8s-resources:
+    desc: "Create environment resources"
     deps: [add-host]
     cmds:
-      - node ./.tasks/create-env-secret.mjs
+      - node ./.tasks/create-k8s-resources.mjs
 
   dev:
     desc: "Start development environment"

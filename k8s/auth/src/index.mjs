@@ -12,11 +12,9 @@ dotenv.config();
  */
 nconf.env();
 
-// nconf.required([
-//   "AUTH_EXPRESS_PORT",
-//   "AUTH_MONGODB_URI",
-//   "DOMAIN",
-//   "ORIGIN",
-// ]);
+/**
+ * 3. validate required env vars
+ */
+nconf.required(["EXPRESS_PORT", "MONGODB_URI", "DOMAIN", "ORIGIN"]);
 
 import("./server.mjs");

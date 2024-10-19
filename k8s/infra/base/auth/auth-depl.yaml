@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: auth-depl
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: auth
@@ -15,30 +15,49 @@ spec:
       containers:
         - name: auth
           image: mdstaicu/auth
-          envFrom:
-            - secretRef:
-                name: dotenv
-          # readinessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 3000
-          #   initialDelaySeconds: 5
-          #   timeoutSeconds: 30
-          #   periodSeconds: 5
-          #   failureThreshold: 2
+          env:
+            - name: MONGO_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: MONGO_DB_URI
+
+            - name: JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: JWT_PRIVATE_KEY
+
+            - name: JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: JWT_PUBLIC_KEY
+
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: DOMAIN
+
+          #
+          # total probe time =
+          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
+          #
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8080
+            initialDelaySeconds: 5 # Start checking 5 seconds after the pod starts
+            periodSeconds: 5 # Check every 5 seconds
+            timeoutSeconds: 3 # Wait up to 3 seconds for a response
+            failureThreshold: 1 # Mark as "not ready" after a single failure ( currently after 5 + 3 seconds )
+
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 3000
-            #
-            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-            #
-            initialDelaySeconds: 5
-            #
-            # How often (in seconds) to perform the probe. Default to 10 seconds. The minimum value is 1
-            #
-            periodSeconds: 10
-            #
-            # Defaults to 3
-            #
-            failureThreshold: 3
+              port: 8080
+            initialDelaySeconds: 10 # Allow time for app startup
+            periodSeconds: 10 # Check every 10 seconds
+            timeoutSeconds: 5 # Wait up to 5 seconds for a response
+            failureThreshold: 3 # Restart the pod after 3 consecutive failures
