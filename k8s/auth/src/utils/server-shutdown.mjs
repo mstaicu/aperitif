@@ -3,9 +3,9 @@ var shutdownInitiated = false;
 
 /**
  * @param {import('node:http').Server} server
- * @param {import('mongoose').Connection[]} dbConnections
+ * @param {import('mongoose').Connection[]} mongooseConnections
  */
-var handleShutdown = async (server, dbConnections = []) => {
+export var handleShutdown = async (server, mongooseConnections) => {
   if (shutdownInitiated) {
     return;
   }
@@ -20,9 +20,10 @@ var handleShutdown = async (server, dbConnections = []) => {
       await server.gracefulShutdown();
     }
 
-    for (let connection of dbConnections) {
+    console.log("closing database connections...");
+
+    for (let connection of mongooseConnections) {
       if (connection.readyState === 1) {
-        console.log("closing database connection...");
         await connection.close();
       }
     }
@@ -34,5 +35,3 @@ var handleShutdown = async (server, dbConnections = []) => {
     process.exit(1);
   }
 };
-
-export { handleShutdown };

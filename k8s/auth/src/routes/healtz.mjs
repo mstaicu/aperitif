@@ -5,18 +5,16 @@ import { connection } from "../models/index.mjs";
 
 var router = express.Router();
 
-// Readiness Probe: Check if the app is ready to receive traffic, especially the DB connection
 router.get("/readiness", (req, res) => {
   if (connection && connection.readyState === 1) {
-    res.sendStatus(200); // DB connection is ready
+    res.sendStatus(200);
   } else {
-    res.sendStatus(500); // Not ready, DB connection is not established
+    res.sendStatus(500);
   }
 });
 
-// Liveness Probe: Always return 200 if the app is running, regardless of DB connection
 router.get("/healthz", (_, res) => {
-  res.sendStatus(200); // Always indicate that the app is alive
+  res.sendStatus(200);
 });
 
 export { router as healtzRouter };

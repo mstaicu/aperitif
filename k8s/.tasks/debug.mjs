@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
 
-const ORIGIN = process.env.ORIGIN;
+var ORIGIN = process.env.ORIGIN;
 
 console.log(`🚀 starting debug environment at ${ORIGIN}`);
 
-const skaffoldProcess = spawn(
+var skaffoldProcess = spawn(
   "skaffold",
   [
     "debug",
@@ -16,7 +16,7 @@ const skaffoldProcess = spawn(
 );
 
 // List of signals to forward to the child process (Skaffold)
-const signals = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"];
+var signals = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"];
 
 // Forward each signal received by the Node.js process to the Skaffold process
 signals.forEach((signal) => {

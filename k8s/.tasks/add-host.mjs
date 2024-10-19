@@ -1,10 +1,10 @@
 import { execSync } from "child_process";
 import fs from "fs";
 
-const DOMAIN = process.env.DOMAIN;
+var DOMAIN = process.env.DOMAIN;
 
 try {
-  const hostsContent = fs.readFileSync("/etc/hosts", "utf8");
+  var hostsContent = fs.readFileSync("/etc/hosts", "utf8");
 
   if (!hostsContent.includes(`127.0.0.1 ${DOMAIN}`)) {
     console.log(`Adding 127.0.0.1 ${DOMAIN} to /etc/hosts`);

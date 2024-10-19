@@ -1,8 +1,8 @@
 import { execSync } from "child_process";
 import { unlinkSync } from "fs";
 
-const DOMAIN = process.env.DOMAIN;
-const NAMESPACE = process.env.NAMESPACE;
+var DOMAIN = process.env.DOMAIN;
+var NAMESPACE = process.env.NAMESPACE;
 
 try {
   console.log("🪪 installing mkcert certificate authority");

@@ -1,6 +1,6 @@
 import { execSync } from "child_process";
 
-const NAMESPACE = process.env.NAMESPACE;
+var NAMESPACE = process.env.NAMESPACE;
 
 try {
   console.log(`🔍 checking if ${NAMESPACE} namespace exists...`);
