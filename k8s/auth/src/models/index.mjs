@@ -1,25 +1,30 @@
 // @ts-check
 import mongoose from "mongoose";
-import nconf from "nconf";
 
 import { ChallengeSchema } from "./Challenge.schema.mjs";
 import { PasskeySchema } from "./Passkey.schema.mjs";
 import { RefreshTokenSchema } from "./RefreshToken.schema.mjs";
 import { UserSchema } from "./User.schema.mjs";
 
-var authDbConnection = await mongoose
-  .createConnection(nconf.get("AUTH_MONGODB_URI"), {
-    dbName: "auth",
-    /**
-     * https://mongoosejs.com/docs/connections.html#serverselectiontimeoutms
-     */
-    serverSelectionTimeoutMS: 30000,
-  })
-  .asPromise();
+/**
+ * @type {mongoose.Connection}
+ */
+var connection;
 
-authDbConnection.model("Challenge", ChallengeSchema);
-authDbConnection.model("Passkey", PasskeySchema);
-authDbConnection.model("RefreshToken", RefreshTokenSchema);
-authDbConnection.model("User", UserSchema);
+/**
+ *
+ * @param {string} uri
+ * @param {mongoose.ConnectOptions} options
+ */
+var createConnection = async (uri, options) => {
+  connection = await mongoose.createConnection(uri, options).asPromise();
 
-export { authDbConnection };
+  connection.model("Challenge", ChallengeSchema);
+  connection.model("Passkey", PasskeySchema);
+  connection.model("RefreshToken", RefreshTokenSchema);
+  connection.model("User", UserSchema);
+
+  return connection;
+};
+
+export { connection, createConnection };

@@ -1,31 +1,22 @@
 // @ts-check
 import express from "express";
 
-import { authDbConnection } from "../services/index.mjs";
+import { connection } from "../models/index.mjs";
 
 var router = express.Router();
 
-router.get(
-  "/healthz",
-  /**
-   *
-   * @param {express.Request} _
-   * @param {express.Response} res
-   * @param {express.NextFunction} next
-   */
-  async (_, res, next) => {
-    try {
-      var connectionStatus = authDbConnection.readyState;
+// Readiness Probe: Check if the app is ready to receive traffic, especially the DB connection
+router.get("/readiness", (req, res) => {
+  if (connection && connection.readyState === 1) {
+    res.sendStatus(200); // DB connection is ready
+  } else {
+    res.sendStatus(500); // Not ready, DB connection is not established
+  }
+});
 
-      if (connectionStatus === 1) {
-        res.sendStatus(200);
-      } else {
-        res.sendStatus(500);
-      }
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+// Liveness Probe: Always return 200 if the app is running, regardless of DB connection
+router.get("/healthz", (_, res) => {
+  res.sendStatus(200); // Always indicate that the app is alive
+});
 
 export { router as healtzRouter };
