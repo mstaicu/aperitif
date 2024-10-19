@@ -1,51 +1,78 @@
-var { execSync } = require("child_process");
+import { execSync } from "child_process";
+import { generateKeyPairSync } from "node:crypto";
 
+var namespace = process.env.NAMESPACE;
 var domain = process.env.DOMAIN;
+var origin = process.env.ORIGIN;
 
-if (!domain) {
-  console.error("error: DOMAIN and HOST environment variables must be set.");
+if (!namespace || !domain || !origin) {
+  console.error(
+    "error: NAMESPACE, DOMAIN, and ORIGIN environment variables must be set."
+  );
   process.exit(1);
 }
 
-function generateRSAKeyPair() {
-  var { privateKey, publicKey } = generateKeyPairSync("rsa", {
-    modulusLength: 2048,
-    publicKeyEncoding: {
-      type: "spki",
-      format: "pem",
-    },
-    privateKeyEncoding: {
-      type: "pkcs8",
-      format: "pem",
-    },
-  });
-
-  return { privateKey, publicKey };
+function checkResourceExists(kind, name, namespace) {
+  try {
+    execSync(`kubectl get ${kind} ${name} --namespace=${namespace}`, {
+      stdio: "inherit",
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
 
-var { privateKey, publicKey } = generateRSAKeyPair();
+function createAuthServiceResources() {
+  const authMongoDbUrl = "mongodb://auth-mongo-srv:27017";
 
-const authMongoDbUrl = "mongodb://auth-mongo-srv:27017";
+  if (!checkResourceExists("secret", "auth-service-secrets", namespace)) {
+    var { privateKey, publicKey } = generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: "spki",
+        format: "pem",
+      },
+      privateKeyEncoding: {
+        type: "pkcs8",
+        format: "pem",
+      },
+    });
 
-try {
-  console.log("creating k8s secret for auth-service-secrets...");
-  execSync(
-    `kubectl create secret generic auth-service-secrets \
-    --from-literal=MONGO_DB_URI=${authMongoDbUrl} \
-   --from-literal=JWT_PRIVATE_KEY='${privateKey}' \
-    --from-literal=JWT_PUBLIC_KEY='${publicKey}'`,
-    { stdio: "inherit" }
-  );
+    console.log("creating k8s secret for auth-service-secrets...");
+    execSync(
+      `kubectl create secret generic auth-service-secrets \
+      --from-literal=MONGO_DB_URI="${authMongoDbUrl}" \
+      --from-literal=JWT_PRIVATE_KEY="${privateKey}" \
+      --from-literal=JWT_PUBLIC_KEY="${publicKey}" \
+      --namespace="${namespace}"`,
+      { stdio: "inherit" }
+    );
+  } else {
+    console.log(
+      "secret auth-service-secrets already exists, skipping creation."
+    );
+  }
 
-  console.log("Creating k8s configmap for auth-service-config...");
-  execSync(
-    `kubectl create configmap auth-service-config \
-    --from-literal=DOMAIN=${domain}`,
-    { stdio: "inherit" }
-  );
+  // Create ConfigMap if it doesn't exist
+  if (!checkResourceExists("configmap", "auth-service-config", namespace)) {
+    console.log("creating k8s configmap for auth-service-config...");
 
-  console.log("k8s secrets and configmap created successfully!");
-} catch (err) {
-  console.error("error creating Kubernetes resources:", err);
-  process.exit(1);
+    const authPort = 3000;
+
+    execSync(
+      `kubectl create configmap auth-service-config \
+      --from-literal=PORT="${authPort}" \
+      --from-literal=DOMAIN="${domain}" \
+      --from-literal=ORIGIN="${origin}" \
+      --namespace="${namespace}"`,
+      { stdio: "inherit" }
+    );
+  } else {
+    console.log(
+      "configMap auth-service-config already exists, skipping creation."
+    );
+  }
 }
+
+createAuthServiceResources();

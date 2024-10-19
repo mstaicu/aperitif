@@ -35,12 +35,3 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/staging
-
-  - name: prod
-    build:
-      local:
-        push: true
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/prod

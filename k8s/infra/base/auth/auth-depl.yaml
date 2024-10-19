@@ -34,12 +34,23 @@ spec:
                   name: auth-service-secrets
                   key: JWT_PUBLIC_KEY
 
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: PORT
+
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
                   name: auth-service-config
                   key: DOMAIN
 
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: ORIGIN
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
