@@ -22,7 +22,7 @@ function encrypt(text) {
   var cipher = crypto.createCipheriv(
     "aes-256-cbc",
     Buffer.from(ENCRYPTION_KEY, "base64"),
-    iv
+    iv,
   );
 
   var encrypted = cipher.update(text);
@@ -47,7 +47,7 @@ function decrypt(text) {
   var decipher = crypto.createDecipheriv(
     "aes-256-cbc",
     Buffer.from(ENCRYPTION_KEY, "base64"),
-    iv
+    iv,
   );
 
   var decrypted = decipher.update(encryptedBuffer);
@@ -59,22 +59,22 @@ function decrypt(text) {
 var RefreshTokenSchema = new mongoose.Schema(
   {
     content: {
-      type: String,
-
-      set: encrypt,
       get: decrypt,
 
-      required: true,
-      unique: true,
       index: true,
+      required: true,
+
+      set: encrypt,
+      type: String,
+      unique: true,
     },
     /**
      * if 'expireAt' is set, then document expires at expireAt + 'expires' seconds
      */
-    expireAt: { type: Date, required: true, expires: 0 },
-    user: { type: "ObjectId", required: true, ref: "User" },
+    expireAt: { expires: 0, required: true, type: Date },
+    user: { ref: "User", required: true, type: "ObjectId" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export { RefreshTokenSchema };

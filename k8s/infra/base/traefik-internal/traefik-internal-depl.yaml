@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: traefik-internal-ingress-controller
+  name: traefik-ingress-controller
+
 ---
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: traefik-internal-depl
 spec:
@@ -30,7 +31,7 @@ spec:
                       values:
                         - traefik-internal
                 topologyKey: kubernetes.io/hostname
-      serviceAccountName: traefik-internal-ingress-controller
+      serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik-internal
           image: traefik:v3.2

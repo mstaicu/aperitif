@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 
 var PasskeySchema = new mongoose.Schema(
   {
-    user: { type: "ObjectId", required: true, ref: "User" },
+    user: { ref: "User", required: true, type: "ObjectId" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export { PasskeySchema };

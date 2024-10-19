@@ -149,7 +149,7 @@ var servers = new WeakMap();
  * @param {Server} server
  * @param {options} [options]
  */
-function withGracefulShutdown(server, options = {}) {
+function addGracefulShutdown(server, options = {}) {
   /**
    * In cases a client is sending no more requests, we won't have the opportunity to send
    * 'Connection: close' back
@@ -398,4 +398,4 @@ function isClosing(obj) {
   return serverStatus.closing;
 }
 
-export { isClosing, withGracefulShutdown };
+export { addGracefulShutdown, isClosing };

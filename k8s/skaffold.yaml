@@ -27,35 +27,20 @@ manifests:
           os: [darwin, linux, windows]
 
 profiles:
-  - name: dev
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/dev
-      hooks:
-        before:
-          - host:
-              command: ["kubectl", "apply", "-f", "./infra/crds"]
-              os: [darwin, linux, windows]
-
   - name: staging
+    build:
+      local:
+        push: true
     manifests:
       kustomize:
         paths:
           - infra/overlays/staging
-      hooks:
-        before:
-          - host:
-              command: ["kubectl", "apply", "-f", "./infra/crds"]
-              os: [darwin, linux, windows]
 
   - name: prod
+    build:
+      local:
+        push: true
     manifests:
       kustomize:
         paths:
           - infra/overlays/prod
-      hooks:
-        before:
-          - host:
-              command: ["kubectl", "apply", "-f", "./infra/crds"]
-              os: [darwin, linux, windows]

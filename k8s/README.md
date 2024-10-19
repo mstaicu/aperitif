@@ -51,27 +51,6 @@ $ nats server ls --sort=name
 $ while true; do nats server ls --sort=name; sleep 1; done
 ```
 
-### In case you reset the cluster:
-
-```
-$ kubectl create secret generic jwt-secret --from-literal=JWT*SECRET=asdf
-$ kubectl create secret generic stripe-secret --from-literal=STRIPE_SECRET_KEY=sk_test*...
-$ kubectl create secret generic stripe-publishable-key --from-literal=STRIPE_PUBLISHABLE_KEY=pk_test*...
-$ kubectl create secret generic stripe-webhook-secret --from-literal=STRIPE_WEBHOOK_SECRET=whsec*\*...
-```
-
-### Anatomy of an imperative command:
-
-```
-$ kubectl create (-imperative command to create a new object) secret (-type of object to create) generic (-type of secret) <secret-name> (-name of secret for referencing in the pod) --from-literal (-indicates that we are going to add the secret information into this command, as opposed to from . file) key=value (--key and value, i.e. NODE_ENV=dev)
-```
-
-### Explaining kubectl commands. This follows the hierarchy of markup inside declarative configuration yaml files
-
-```
-$ kubectl explain deployments.spec.template.spec.containers.lifecycle
-```
-
 ### Adding a new service:
 
 1. Create the package folder, add sources, install dependencies

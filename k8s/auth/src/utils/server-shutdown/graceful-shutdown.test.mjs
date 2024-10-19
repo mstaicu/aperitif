@@ -5,13 +5,13 @@ import { equal } from "node:assert";
 import http from "node:http";
 import { test } from "node:test";
 
-import { isClosing, withGracefulShutdown } from "./with_graceful_shutdown.mjs";
+import { addGracefulShutdown, isClosing } from "./graceful-shutdown.mjs";
 
 test("server took no time to close server with no requests", async function () {
   /**
    * arrange
    */
-  const server = withGracefulShutdown(getExpressServer());
+  const server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
@@ -33,7 +33,7 @@ test(
     /**
      * arrange
      */
-    const server = withGracefulShutdown(getExpressServer());
+    const server = addGracefulShutdown(getExpressServer());
     await waitEvent(server, "listening");
 
     /**
@@ -69,7 +69,7 @@ test("server took as long as the request to close, 3 seconds", async function ()
   /**
    * arrange
    */
-  const server = withGracefulShutdown(getExpressServer());
+  const server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
@@ -105,7 +105,7 @@ test("server took as long as the 'isClosing(res)' check to close", async functio
   /**
    * arrange
    */
-  const server = withGracefulShutdown(getExpressServer());
+  const server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
@@ -138,7 +138,7 @@ test("server took as the longest request to close, 3 seconds", async function ()
   /**
    * arrange
    */
-  const server = withGracefulShutdown(getExpressServer());
+  const server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
@@ -181,7 +181,7 @@ test("server took the configured 'timeoutForceEndSockets' to close", async funct
   /**
    * arrange
    */
-  const server = withGracefulShutdown(getExpressServer(), {
+  const server = addGracefulShutdown(getExpressServer(), {
     timeoutForceEndSockets: 1000,
   });
   await waitEvent(server, "listening");

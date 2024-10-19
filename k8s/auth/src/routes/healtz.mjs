@@ -25,7 +25,7 @@ router.get(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export { router as healtzRouter };
