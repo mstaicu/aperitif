@@ -44,4 +44,6 @@ RUN npm install
 
 COPY . .
 
+USER node
+
 CMD ["node", "src/index.mjs"]

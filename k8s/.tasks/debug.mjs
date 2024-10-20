@@ -2,18 +2,11 @@ import { spawn } from "child_process";
 
 var ORIGIN = process.env.ORIGIN;
 
-console.log(`🚀 starting debug environment at ${ORIGIN}`);
+var skaffoldProcess = spawn("skaffold", ["debug", "--cache-artifacts=false"], {
+  stdio: "inherit",
+});
 
-var skaffoldProcess = spawn(
-  "skaffold",
-  [
-    "debug",
-    "--cache-artifacts=false",
-    "--no-prune=false",
-    "--no-prune-children=false",
-  ],
-  { stdio: "inherit" }
-);
+console.log(`🚀 starting debug environment at ${ORIGIN}`);
 
 // List of signals to forward to the child process (Skaffold)
 var signals = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"];

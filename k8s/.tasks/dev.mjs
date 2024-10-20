@@ -1,17 +1,11 @@
 import { spawn } from "child_process";
 
 var ORIGIN = process.env.ORIGIN;
+var NAMESPACE = process.env.NAMESPACE;
 
-var skaffoldProcess = spawn(
-  "skaffold",
-  [
-    "dev",
-    "--cache-artifacts=false",
-    "--no-prune=false",
-    "--no-prune-children=false",
-  ],
-  { stdio: "inherit" }
-);
+var skaffoldProcess = spawn("skaffold", ["dev", "--cache-artifacts=false"], {
+  stdio: "inherit",
+});
 
 console.log(`🚀 started development environment at ${ORIGIN}`);
 
@@ -28,13 +22,13 @@ signals.forEach((signal) => {
 
 skaffoldProcess.on("exit", (code, signal) => {
   if (signal) {
-    console.log(`Skaffold process was killed by signal: ${signal}`);
+    console.log(`skaffold process was killed by signal: ${signal}`);
     process.exit(1);
   } else if (code !== 0) {
-    console.error(`Skaffold process exited with error code: ${code}`);
+    console.error(`skaffold process exited with error code: ${code}`);
     process.exit(code);
   } else {
-    console.log("Skaffold process exited successfully.");
+    console.log("skaffold process exited successfully.");
     process.exit(0);
   }
 });

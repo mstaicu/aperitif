@@ -61,7 +61,7 @@ spec:
               port: 3000
             initialDelaySeconds: 5 # Start checking 5 seconds after the pod starts
             periodSeconds: 5 # Check every 5 seconds
-            timeoutSeconds: 3 # Wait up to 3 seconds for a response
+            timeoutSeconds: 5 # Wait up to 5 seconds for a response
             failureThreshold: 1 # Mark as "not ready" after a single failure ( currently after 5 + 3 seconds )
 
           livenessProbe:
@@ -71,4 +71,4 @@ spec:
             initialDelaySeconds: 10 # Allow time for app startup
             periodSeconds: 10 # Check every 10 seconds
             timeoutSeconds: 5 # Wait up to 5 seconds for a response
-            failureThreshold: 1 # Restart the pod after 3 consecutive failures
+            failureThreshold: 2 # Restart the pod after 2 consecutive failures

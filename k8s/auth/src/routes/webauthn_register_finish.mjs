@@ -1,10 +1,9 @@
+import { verifyRegistrationResponse } from "@simplewebauthn/server";
 // @ts-check
 import express from "express";
-import { header, body, validationResult } from "express-validator";
+import { body, header, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import nconf from "nconf";
-
-import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
 import { User } from "../models/index.mjs";
 
@@ -23,23 +22,17 @@ router.post(
       .isObject()
       .withMessage("'registrationResponse' must be provided"),
   ],
-  /**
-   *
-   * @param {express.Request} req
-   * @param {express.Response} res
-   * @param {express.NextFunction} next
-   */
   async (req, res, next) => {
     try {
       var errors = validationResult(req);
 
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          type: "https://example.com/probs/validation-error",
-          title: "Invalid Request",
-          status: 400,
           detail: "There were validation errors with your request",
           errors: errors.array(),
+          status: 400,
+          title: "Invalid Request",
+          type: "https://example.com/probs/validation-error",
         });
       }
 
@@ -49,10 +42,10 @@ router.post(
 
       if (type !== "Bearer" || !token) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid or missing authorization token",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
@@ -60,10 +53,10 @@ router.post(
 
       if (!tokenStatus) {
         return res.status(401).json({
-          type: "https://example.com/probs/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Token is either expired or has been used already",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/probs/unauthorized",
         });
       }
 
@@ -72,14 +65,14 @@ router.post(
       try {
         tokenPayload = jwt.verify(
           token,
-          nconf.get("REGISTRATION_ACCESS_TOKEN")
+          nconf.get("REGISTRATION_ACCESS_TOKEN"),
         );
       } catch (err) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid or expired authorization token",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
@@ -89,10 +82,10 @@ router.post(
         !tokenPayload.email
       ) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Invalid token payload",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
@@ -114,10 +107,10 @@ router.post(
 
       if (!expectedChallenge) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Challenge expired or not found",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
@@ -128,29 +121,29 @@ router.post(
 
       try {
         verifiedRegistrationResponse = await verifyRegistrationResponse({
-          response: registrationResponse,
           expectedChallenge: `${expectedChallenge}`,
           expectedOrigin: nconf.get("ORIGIN"),
           expectedRPID: nconf.get("DOMAIN"),
           requireUserVerification: false,
+          response: registrationResponse,
         });
       } catch (error) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Registration verification failed",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
-      var { verified, registrationInfo } = verifiedRegistrationResponse;
+      var { registrationInfo, verified } = verifiedRegistrationResponse;
 
       if (!verified || !registrationInfo) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "Verification failed",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
@@ -158,24 +151,24 @@ router.post(
 
       if (!user) {
         return res.status(401).json({
-          type: "https://example.com/errors/unauthorized",
-          title: "Unauthorized",
-          status: 401,
           detail: "User not found",
+          status: 401,
+          title: "Unauthorized",
+          type: "https://example.com/errors/unauthorized",
         });
       }
 
-      var { credentialPublicKey, credentialID, counter } = registrationInfo;
+      var { counter, credentialID, credentialPublicKey } = registrationInfo;
 
       var existingDevice = user.devices.find(
-        (device) => device.credentialID === credentialID
+        (device) => device.credentialID === credentialID,
       );
 
       if (!existingDevice) {
         var newDevice = {
-          credentialPublicKey,
-          credentialID,
           counter,
+          credentialID,
+          credentialPublicKey,
           transports: registrationResponse.response.transports,
         };
 
@@ -193,7 +186,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export { router as webauthnRegisterFinish };

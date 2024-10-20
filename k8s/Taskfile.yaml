@@ -3,7 +3,7 @@ version: "3"
 env:
   NAMESPACE: local
   DOMAIN: tma.com
-  ORIGIN: http://tma.com
+  ORIGIN: https://tma.com
 
 tasks:
   check-tools:
@@ -11,9 +11,15 @@ tasks:
     cmds:
       - node ./.tasks/check-tools.mjs
 
+  check-kubernetes:
+    desc: "Check if Kubernetes is configured and kubectl is working"
+    deps: [check-tools]
+    cmds:
+      - node ./.tasks/check-k8s-ready.mjs
+
   check-namespace:
     desc: "Check if namespace exists"
-    deps: [check-tools]
+    deps: [check-kubernetes]
     cmds:
       - node ./.tasks/check-namespace.mjs
 

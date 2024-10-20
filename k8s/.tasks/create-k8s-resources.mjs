@@ -40,6 +40,7 @@ function createAuthServiceResources() {
     });
 
     console.log("creating k8s secret for auth-service-secrets...");
+
     execSync(
       `kubectl create secret generic auth-service-secrets \
       --from-literal=MONGO_DB_URI="${authMongoDbUrl}" \
@@ -54,11 +55,10 @@ function createAuthServiceResources() {
     );
   }
 
-  // Create ConfigMap if it doesn't exist
   if (!checkResourceExists("configmap", "auth-service-config", namespace)) {
-    console.log("creating k8s configmap for auth-service-config...");
-
     const authPort = 3000;
+
+    console.log("creating k8s configmap for auth-service-config...");
 
     execSync(
       `kubectl create configmap auth-service-config \
