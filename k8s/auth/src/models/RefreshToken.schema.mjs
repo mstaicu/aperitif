@@ -1,4 +1,3 @@
-// @ts-check
 import mongoose from "mongoose";
 import nconf from "nconf";
 import crypto from "node:crypto";

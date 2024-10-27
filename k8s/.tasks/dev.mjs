@@ -9,10 +9,14 @@ var skaffoldProcess = spawn("skaffold", ["dev", "--cache-artifacts=false"], {
 
 console.log(`🚀 started development environment at ${ORIGIN}`);
 
-// List of signals to forward to the child process (Skaffold)
+/**
+ * List of signals to forward to the child process (Skaffold)
+ */
 var signals = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"];
 
-// Forward each signal received by the Node.js process to the Skaffold process
+/**
+ * Forward each signal received by the Node.js process to the Skaffold process
+ */
 signals.forEach((signal) => {
   process.on(
     signal,

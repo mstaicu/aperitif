@@ -68,7 +68,7 @@ spec:
             httpGet:
               path: /healthz
               port: 3000
-            initialDelaySeconds: 10 # Allow time for app startup
-            periodSeconds: 10 # Check every 10 seconds
-            timeoutSeconds: 5 # Wait up to 5 seconds for a response
-            failureThreshold: 2 # Restart the pod after 2 consecutive failures
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2

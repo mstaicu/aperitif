@@ -1,4 +1,3 @@
-// @ts-check
 import nconf from "nconf";
 
 import { app } from "./app.mjs";
@@ -12,10 +11,11 @@ var server = addGracefulShutdown(
 );
 
 var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
+  bufferCommands: false,
   dbName: "auth",
 });
 
-["SIGINT", "SIGTERM"].forEach((signal) =>
+["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
   process.once(signal, () => handleShutdown(server, [connection])),
 );
 
