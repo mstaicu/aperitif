@@ -3,7 +3,8 @@ import { metrics } from "../utils/metrics.mjs";
 
 /**
  * Middleware to check the availability of the database service.
- * If the database connection is not ready, it responds with a 503 error using RFC 7807 Problem Details.
+ * If the database connection is not ready,
+ * it responds with a 503 error using RFC 7807 Problem Details.
  *
  * @param {import("express").Request} req - Express request object
  * @param {import("express").Response} res - Express response object
