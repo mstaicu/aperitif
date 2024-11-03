@@ -1,8 +1,12 @@
 // @ts-check
 import mongoose from "mongoose";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 var ChallengeSchema = new mongoose.Schema({
+  _id: {
+    default: randomUUID,
+    type: String,
+  },
   content: {
     /**
      * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits)

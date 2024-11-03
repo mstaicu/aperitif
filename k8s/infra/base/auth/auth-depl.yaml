@@ -57,7 +57,7 @@ spec:
           #
           readinessProbe:
             httpGet:
-              path: /readiness
+              path: /readyz
               port: 3000
             initialDelaySeconds: 5 # Start checking 5 seconds after the pod starts
             periodSeconds: 5 # Check every 5 seconds

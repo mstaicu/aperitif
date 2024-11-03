@@ -5,8 +5,6 @@ FROM node:alpine AS base
 
 ENV NODE_ENV=production
 
-EXPOSE 3000
-
 RUN apk add --no-cache tini
 
 WORKDIR /home/node/app
@@ -14,36 +12,43 @@ WORKDIR /home/node/app
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # ----
-# Dev
+# Dependencies
+# ----
+#
+# Install production dependencies only, to leverage layer caching
+#
+FROM base AS dependencies
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+# ----
+# Development
 # ----
 FROM base AS dev
 
 ENV NODE_ENV=development
 
-COPY ./package*.json ./
-
-RUN npm install
+COPY package*.json ./
+RUN npm ci
 
 COPY . .
 
-# Expose debug port for dev stage
-EXPOSE 9229
+EXPOSE 3000 9229
 
 CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # ----
-# Prod
+# Production
 # ----
 FROM base AS prod
 
-ENV NODE_ENV=production
-
-COPY ./package*.json ./
-
-RUN npm install
+COPY --from=dependencies /home/node/app/node_modules ./node_modules
 
 COPY . .
 
 USER node
+
+EXPOSE 3000
 
 CMD ["node", "src/index.mjs"]

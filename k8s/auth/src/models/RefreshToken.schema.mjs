@@ -1,14 +1,23 @@
 import mongoose from "mongoose";
 import nconf from "nconf";
-import crypto from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  randomUUID,
+} from "node:crypto";
 
 /**
  * @description base64-encoded 32-byte key
  * @type {String}
  */
 var ENCRYPTION_KEY = nconf.get("AUTH_REFRESH_TOKEN_ENCRYPTION_KEY");
-// var ENCRYPTION_KEY = crypto.randomBytes(32).toString("base64");
+// var ENCRYPTION_KEY = randomBytes(32).toString("base64");
 var IV_LENGTH = 16;
+
+if (!ENCRYPTION_KEY || Buffer.from(ENCRYPTION_KEY, "base64").length !== 32) {
+  throw new Error("Invalid encryption key length. Must be 32 bytes in base64.");
+}
 
 /**
  * Encrypts the given text using AES-256-CBC.
@@ -17,8 +26,8 @@ var IV_LENGTH = 16;
  * @returns {String} Encrypted text in the format "iv:encrypted"
  */
 function encrypt(text) {
-  var iv = crypto.randomBytes(IV_LENGTH);
-  var cipher = crypto.createCipheriv(
+  var iv = randomBytes(IV_LENGTH);
+  var cipher = createCipheriv(
     "aes-256-cbc",
     Buffer.from(ENCRYPTION_KEY, "base64"),
     iv,
@@ -43,7 +52,7 @@ function decrypt(text) {
   var iv = Buffer.from(storedIv, "hex");
   var encryptedBuffer = Buffer.from(encryptedText, "hex");
 
-  var decipher = crypto.createDecipheriv(
+  var decipher = createDecipheriv(
     "aes-256-cbc",
     Buffer.from(ENCRYPTION_KEY, "base64"),
     iv,
@@ -57,6 +66,10 @@ function decrypt(text) {
 
 var RefreshTokenSchema = new mongoose.Schema(
   {
+    _id: {
+      default: randomUUID,
+      type: String,
+    },
     content: {
       get: decrypt,
 
@@ -71,7 +84,7 @@ var RefreshTokenSchema = new mongoose.Schema(
      * if 'expireAt' is set, then document expires at expireAt + 'expires' seconds
      */
     expireAt: { expires: 0, required: true, type: Date },
-    user: { ref: "User", required: true, type: "ObjectId" },
+    user: { ref: "User", required: true, type: String },
   },
   { timestamps: true },
 );
