@@ -1,4 +1,5 @@
 import { connection } from "../models/index.mjs";
+import { metrics } from "../utils/metrics.mjs";
 
 /**
  * Middleware to check the availability of the database service.
@@ -8,10 +9,16 @@ import { connection } from "../models/index.mjs";
  * @param {import("express").Response} res - Express response object
  * @param {import("express").NextFunction} next - Express next middleware function
  */
-export var serviceAvailability = (req, res, next) => {
+export var availability = (req, res, next) => {
+  var { dbConnectionAttempts } = metrics;
+
   if (connection && connection.readyState === 1) {
+    dbConnectionAttempts.inc({ status: "success" });
+
     return next();
   }
+
+  dbConnectionAttempts.inc({ status: "failure" });
 
   /**
    * Use RFC 7807 Problem Details to return structured error response

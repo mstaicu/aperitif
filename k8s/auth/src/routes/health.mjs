@@ -12,4 +12,4 @@ router.get("/readyz", (req, res) =>
 
 router.get("/healthz", (_, res) => res.sendStatus(200));
 
-export { router as healtz };
+export { router as healthRouter };
