@@ -11,6 +11,7 @@ var server = addGracefulShutdown(
 );
 
 var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
+  autoIndex: false,
   bufferCommands: false,
   dbName: "auth",
 });

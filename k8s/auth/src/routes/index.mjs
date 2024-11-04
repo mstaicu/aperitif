@@ -7,21 +7,24 @@ import { metricsRouter } from "./metrics.mjs";
 const router = express.Router();
 
 /**
- * Non-business routes, like /metrics, /healthz and /readyz
- * bypass the availability middleware and remain accessible for continuous monitoring
+ * non-business routes that are always accessible
  */
 router.use("/", healthRouter);
-
-router.use(prometheus);
 router.use("/", metricsRouter);
 
 /**
- * Only requests that need the database connection are gated by the availability check.
+ * apply 'prometheus' middleware to track only business-related requests
+ */
+router.use(prometheus);
+
+/**
+ * apply 'availability' middleware to ensure database connectivity for business routes
  */
 router.use(availability);
 
 /**
- * Add business related routers here
+ * business-related routes that depend on the database go here
  */
+// router.use("/users", userRouter);
 
 export { router };

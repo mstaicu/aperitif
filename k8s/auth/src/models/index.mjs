@@ -24,6 +24,18 @@ var createConnection = async (uri, options) => {
   connection.model("RefreshToken", RefreshTokenSchema);
   connection.model("User", UserSchema);
 
+  if (!options.autoIndex) {
+    connection.once("open", () =>
+      Promise.all(
+        Object.values(connection.models).map((model) => model.syncIndexes()),
+      )
+        .then(() => console.log("Indexes synchronized successfully."))
+        .catch((error) =>
+          console.error("Error during index synchronization:", error),
+        ),
+    );
+  }
+
   return connection;
 };
 
