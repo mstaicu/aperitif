@@ -28,7 +28,7 @@ export var prometheus = (req, res, next) => {
 
   activeConnections.inc();
 
-  res.on("finish", () => {
+  res.once("finish", () => {
     httpRequestTotal.inc({
       method: req.method,
       route: req.route ? req.route.path : req.path,

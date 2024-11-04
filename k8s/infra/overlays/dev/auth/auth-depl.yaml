@@ -4,3 +4,71 @@ metadata:
   name: auth-depl
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: mdstaicu/auth
+          env:
+            - name: MONGO_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: MONGO_DB_URI
+
+            - name: JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: JWT_PRIVATE_KEY
+
+            - name: JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: JWT_PUBLIC_KEY
+
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: PORT
+
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: DOMAIN
+
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: ORIGIN
+          #
+          # total probe time =
+          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
+          #
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 1

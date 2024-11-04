@@ -59,16 +59,16 @@ spec:
             httpGet:
               path: /readyz
               port: 3000
-            initialDelaySeconds: 5 # Start checking 5 seconds after the pod starts
-            periodSeconds: 5 # Check every 5 seconds
-            timeoutSeconds: 5 # Wait up to 5 seconds for a response
-            failureThreshold: 1 # Mark as "not ready" after a single failure ( currently after 5 + 3 seconds )
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
 
           livenessProbe:
             httpGet:
               path: /healthz
               port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
             failureThreshold: 2
