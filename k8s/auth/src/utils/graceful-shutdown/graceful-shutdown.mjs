@@ -6,6 +6,13 @@
  */
 
 /**
+ * @typedef {import('node:http').Server} Server
+ * @typedef {import('node:net').Socket} Socket
+ * @typedef {import('node:http').IncomingMessage} IncomingMessage
+ * @typedef {import('node:http').ServerResponse} ServerResponse
+ */
+
+/**
  * @typedef {Object} options
  * @property {number} [timeoutEndIdleSockets] - Duration in ms to wait to gently close
  * @property {number} [timeoutForceEndSockets] - Duration in ms to wait to force close
@@ -148,6 +155,7 @@ var servers = new WeakMap();
  *
  * @param {Server} server
  * @param {options} [options]
+ * @returns {Server & {gracefulShutdown: () => Promise<Server>}}
  */
 function addGracefulShutdown(server, options = {}) {
   /**

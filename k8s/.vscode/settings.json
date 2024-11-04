@@ -1,5 +1,4 @@
 {
-  "javascript.validate.enable": false, // let eslint perform validation and reporting, disable vscode's built-in .ts linter for .mjs / .js files
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   }

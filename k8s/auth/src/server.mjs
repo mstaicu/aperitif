@@ -1,3 +1,4 @@
+// @ts-check
 import nconf from "nconf";
 
 import { app } from "./app.mjs";

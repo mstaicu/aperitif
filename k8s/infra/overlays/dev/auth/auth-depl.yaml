@@ -12,10 +12,14 @@ spec:
       labels:
         app: auth
     spec:
+      affinity: {}
       containers:
         - name: auth
           image: mdstaicu/auth
           env:
+            #
+            # TODO: Move to env specific secrets and configmaps
+            #
             - name: MONGO_DB_URI
               valueFrom:
                 secretKeyRef:

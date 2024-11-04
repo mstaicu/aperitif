@@ -12,6 +12,18 @@ spec:
       labels:
         app: auth
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - auth
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: auth
           image: mdstaicu/auth
