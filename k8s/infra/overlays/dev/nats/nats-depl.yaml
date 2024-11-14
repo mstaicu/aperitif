@@ -7,39 +7,33 @@ spec:
   selector:
     matchLabels:
       app: nats
-  # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
   serviceName: nats-headless
   template:
     metadata:
       labels:
         app: nats
     spec:
-      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - nats
-                topologyKey: kubernetes.io/hostname
+      affinity: null
+      automountServiceAccountToken: false
       containers:
         - name: nats
           image: nats:alpine
-          args: ["-p", "4222", "-c", "/etc/nats/nats-server.conf"]
+          args: ["-c", "/etc/nats/nats-server.conf"]
           ports:
             - name: nats-client
               containerPort: 4222
             - name: nats-cluster
               containerPort: 6222
           volumeMounts:
-            - name: nats-server-configmap
+            - name: nats-storage
+              mountPath: /data
+            - name: nats-cm
               mountPath: /etc/nats/
-      volumes:
-        - name: nats-server-configmap
-          configMap:
-            name: nats-server-config-cm
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

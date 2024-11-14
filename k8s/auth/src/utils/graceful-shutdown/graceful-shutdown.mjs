@@ -401,9 +401,7 @@ function isClosing(obj) {
   }
 
   var serverStatus = servers.get(server);
-
-  // @ts-ignore
-  return serverStatus.closing;
+  return serverStatus?.closing || false;
 }
 
 export { addGracefulShutdown, isClosing };

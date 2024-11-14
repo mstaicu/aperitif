@@ -1,6 +1,6 @@
 // @ts-check
 import mongoose from "mongoose";
-import nconf from "nconf";
+// import nconf from "nconf";
 import {
   createCipheriv,
   createDecipheriv,
@@ -12,13 +12,13 @@ import {
  * @description base64-encoded 32-byte key
  * @type {String}
  */
-var ENCRYPTION_KEY = nconf.get("AUTH_REFRESH_TOKEN_ENCRYPTION_KEY");
-// var ENCRYPTION_KEY = randomBytes(32).toString("base64");
+// var ENCRYPTION_KEY = nconf.get("AUTH_REFRESH_TOKEN_ENCRYPTION_KEY");
+var ENCRYPTION_KEY = randomBytes(32).toString("base64");
 var IV_LENGTH = 16;
 
-if (!ENCRYPTION_KEY || Buffer.from(ENCRYPTION_KEY, "base64").length !== 32) {
-  throw new Error("Invalid encryption key length. Must be 32 bytes in base64.");
-}
+// if (!ENCRYPTION_KEY || Buffer.from(ENCRYPTION_KEY, "base64").length !== 32) {
+//   throw new Error("Invalid encryption key length. Must be 32 bytes in base64.");
+// }
 
 /**
  * Encrypts the given text using AES-256-CBC.

@@ -22,15 +22,14 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - traefik-internal
-                topologyKey: kubernetes.io/hostname
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - traefik-internal
+              topologyKey: kubernetes.io/hostname
+      automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik-internal

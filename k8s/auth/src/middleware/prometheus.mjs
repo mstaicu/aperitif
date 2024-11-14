@@ -7,10 +7,6 @@ import { metrics } from "../utils/metrics.mjs";
  * @param {import("express").NextFunction} next - Express next middleware function
  */
 export var prometheus = (req, res, next) => {
-  /**
-   * These are not really necessary, as this middleware comes after the non-business endpoints
-   * and the non-business route handlers terminate the response,
-   */
   if (
     req.path.toLowerCase() === "/healthz" ||
     req.path.toLowerCase() === "/readyz" ||

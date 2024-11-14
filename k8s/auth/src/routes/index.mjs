@@ -1,10 +1,10 @@
-import express from "express";
+import { Router } from "express";
 
 import { availability, prometheus } from "../middleware/index.mjs";
 import { healthRouter } from "./health.mjs";
 import { metricsRouter } from "./metrics.mjs";
 
-const router = express.Router();
+const router = Router();
 
 /**
  * non-business routes that are always accessible

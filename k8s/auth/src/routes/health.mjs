@@ -4,7 +4,7 @@ import { connection } from "../models/index.mjs";
 
 var router = express.Router();
 
-router.get("/readyz", (req, res) =>
+router.get("/readyz", (_, res) =>
   connection && connection.readyState === 1
     ? res.sendStatus(200)
     : res.sendStatus(500),

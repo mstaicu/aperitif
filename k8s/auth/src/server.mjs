@@ -17,6 +17,9 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
   dbName: "auth",
 });
 
+/**
+ * SIGUSR2 is used by nodemon
+ */
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
   process.once(signal, () => handleShutdown(server, [connection])),
 );

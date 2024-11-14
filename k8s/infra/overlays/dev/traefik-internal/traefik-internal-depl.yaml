@@ -18,7 +18,8 @@ spec:
       labels:
         app: traefik-internal
     spec:
-      affinity: {}
+      affinity: null
+      automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik-internal

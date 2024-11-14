@@ -12,18 +12,18 @@ spec:
       labels:
         app: auth
     spec:
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - auth
-                topologyKey: "kubernetes.io/hostname"
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - traefik-internal
+              topologyKey: kubernetes.io/hostname
+      automountServiceAccountToken: false
       containers:
         - name: auth
           image: mdstaicu/auth

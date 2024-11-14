@@ -12,7 +12,7 @@ spec:
       labels:
         app: auth
     spec:
-      affinity: {}
+      affinity: null
       containers:
         - name: auth
           image: mdstaicu/auth

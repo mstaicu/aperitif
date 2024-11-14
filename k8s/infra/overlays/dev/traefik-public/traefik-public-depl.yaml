@@ -18,6 +18,7 @@ spec:
       labels:
         app: traefik-public
     spec:
+      automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik-public

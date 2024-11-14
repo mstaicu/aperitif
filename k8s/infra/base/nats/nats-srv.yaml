@@ -1,22 +1,8 @@
-# StatefulSets currently require a Headless Service to be responsible
-# for the network identity of the Pods. You are responsible for creating this Service.
-
-# https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 apiVersion: v1
 kind: Service
 metadata:
   name: nats-headless
 spec:
-  # $ kubectl -n kube-system get svc kube-dns
-  # NAME       TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)                  AGE
-  # kube-dns   ClusterIP   10.245.0.10   <none>        53/UDP,53/TCP,9153/TCP   4d22h
-  # $ kubectl get ep
-  # NAME            ENDPOINTS                                                          AGE
-  # kubernetes      100.65.58.7:443                                                    4d22h
-  # nats-headless   10.244.0.119:4222,10.244.0.195:4222,10.244.1.83:4222 + 3 more...   18m
-  # $ kubectl exec -it nats-0 -- /bin/ash
-  # # nslookup 10.244.0.119 10.245.0.10
-  #
   clusterIP: None
   selector:
     app: nats
