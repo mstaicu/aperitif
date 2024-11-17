@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
   - auth
   # - nats
-  # - traefik-internal
+  # - traefik

@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: traefik-internal-srv
+  name: traefik-srv
 spec:
   type: ClusterIP
   selector:
-    app: traefik-internal
+    app: traefik
   ports:
-    - name: traefik-internal
+    - name: traefik
       protocol: TCP
       port: 3000
       targetPort: 3000

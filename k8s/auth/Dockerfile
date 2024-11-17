@@ -1,11 +1,11 @@
 # Base
 FROM node:alpine AS base
 
-WORKDIR /home/node/app
-
 RUN apk add --no-cache tini
 
 ENTRYPOINT ["/sbin/tini", "--"]
+
+WORKDIR /home/node/app
 
 ENV NODE_ENV=production
 

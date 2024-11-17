@@ -4,30 +4,32 @@ metadata:
   name: traefik-ingress-controller
 
 ---
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: traefik-public-depl
+  name: traefik-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: traefik-public
+      app: traefik
   template:
     metadata:
       labels:
-        app: traefik-public
+        app: traefik
     spec:
+      affinity: null
+      automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
-        - name: traefik-public
+        - name: traefik
           image: traefik:v3.2
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
             #
             # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@public in the dynamic configuration, to allow defining:
+            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
             #
             - --api=false
             #
@@ -48,7 +50,7 @@ spec:
             # The trailing slash / in /dashboard/ is mandatory
             # Optional, Default=true
             #
-            - --api.dashboard=true
+            - --api.dashboard=false
             #
             # https://doc.traefik.io/traefik/observability/access-logs/#configuration
             #
@@ -63,23 +65,31 @@ spec:
             #
             - --serversTransport.insecureSkipVerify=true
             #
-            - --entrypoints.https.address=:443
+            # TODO: Generate self signed certificates for internal use
+            #
             - --entrypoints.http.address=:80
             #
-            - --certificatesresolvers.letsencrypt.acme.email=m@tma.com
-            - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
-            - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
-            #
             - --providers.kubernetescrd
-          ports:
-            - name: http
-              containerPort: 80
-            - name: https
-              containerPort: 443
-      #     volumeMounts:
-      #       - mountPath: /data
-      #         name: acme-storage
-      # volumes:
-      #   - name: acme-storage
-      #     persistentVolumeClaim:
-      #       claimName: traefik-acme-pvc
+            #
+            #
+            - --ping
+            - --ping.entryPoint=http
+            #
+            - --metrics.prometheus=true
+            - --metrics.prometheus.entryPoint=http
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 1

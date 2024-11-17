@@ -1,8 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: local
 resources:
-  - auth
-  # - nats
-  # - traefik
-  # - traefik-public
+  - traefik-depl.yaml
+  - traefik-srv.yaml
+  - traefik-routes.yaml

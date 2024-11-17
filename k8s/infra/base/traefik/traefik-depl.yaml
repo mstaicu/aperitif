@@ -7,22 +7,32 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: traefik-internal-depl
+  name: traefik-depl
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      app: traefik-internal
+      app: traefik
   template:
     metadata:
       labels:
-        app: traefik-internal
+        app: traefik
     spec:
-      affinity: null
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - traefik
+              topologyKey: kubernetes.io/hostname
       automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
-        - name: traefik-internal
+        - name: traefik
           image: traefik:v3.2
           args:
             #
@@ -56,7 +66,7 @@ spec:
             #
             - --accesslog
             #
-            - --log.level=DEBUG
+            - --log.level=INFO
             #
             #
             # Disables certificate verification between your Traefik instance and your backends
@@ -81,15 +91,15 @@ spec:
             httpGet:
               path: /ping
               port: 80
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             timeoutSeconds: 2
             periodSeconds: 5
-            failureThreshold: 1
+            failureThreshold: 2
           livenessProbe:
             httpGet:
               path: /ping
               port: 80
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             timeoutSeconds: 2
             periodSeconds: 5
-            failureThreshold: 1
+            failureThreshold: 3
