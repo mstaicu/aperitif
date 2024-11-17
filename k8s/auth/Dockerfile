@@ -9,8 +9,6 @@ WORKDIR /home/node/app
 
 ENV NODE_ENV=production
 
-USER node
-
 # Dependencies
 FROM base AS dependencies
 
@@ -31,6 +29,8 @@ COPY . .
 
 EXPOSE 3000 9229
 
+USER node
+
 CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # Production
@@ -41,5 +41,7 @@ COPY --from=dependencies /home/node/app/node_modules ./node_modules
 COPY . .
 
 EXPOSE 3000
+
+USER node
 
 CMD ["node", "src/index.mjs"]

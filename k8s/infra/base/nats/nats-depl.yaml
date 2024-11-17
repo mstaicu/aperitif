@@ -38,8 +38,12 @@ spec:
           volumeMounts:
             - name: nats-storage
               mountPath: /data
-            - name: nats-cm
+            - name: nats-server-cm
               mountPath: /etc/nats/
+      volumes:
+        - name: nats-server-cm
+          configMap:
+            name: nats-cm
   volumeClaimTemplates:
     - metadata:
         name: nats-storage
