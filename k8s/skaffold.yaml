@@ -23,11 +23,6 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/dev
-      hooks:
-        before:
-          - host:
-              command: ["kubectl", "apply", "-f", "./infra/crds"]
-              os: [darwin, linux, windows]
 
   - name: staging
     manifests:

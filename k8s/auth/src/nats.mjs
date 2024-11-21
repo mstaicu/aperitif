@@ -8,7 +8,9 @@ import {
 } from "@nats-io/jetstream";
 import { connect, nanos } from "@nats-io/transport-node";
 
-var con = await connect({ servers: ["http://nats-0:4222"] });
+var con = await connect({
+  servers: ["http://nats-0:4222"],
+});
 
 var STREAM_NAME = "resources";
 var SUBSCRIPTIONS = "subscriptions.*";
@@ -19,7 +21,7 @@ var SUBSCRIPTIONS_ACTIONS = Object.freeze({
   UPDATE: "subscriptions.updated",
 });
 
-var AUTH_SUBSCRIPTIONS_CONSUMER = "auth.subscription.actions";
+var SUBSCRIPTIONS_CONSUMER = "auth.subscription.actions";
 
 var jsm = await jetstreamManager(con);
 
@@ -41,22 +43,19 @@ await js.publish(
 );
 
 try {
-  await js.consumers.get(STREAM_NAME, AUTH_SUBSCRIPTIONS_CONSUMER);
+  await js.consumers.get(STREAM_NAME, SUBSCRIPTIONS_CONSUMER);
 } catch {
   await jsm.consumers.add(STREAM_NAME, {
     ack_policy: AckPolicy.Explicit,
     ack_wait: nanos(60 * 1000),
     deliver_policy: DeliverPolicy.All,
-    durable_name: AUTH_SUBSCRIPTIONS_CONSUMER,
+    durable_name: SUBSCRIPTIONS_CONSUMER,
     filter_subjects: Object.values(SUBSCRIPTIONS_ACTIONS),
-    name: AUTH_SUBSCRIPTIONS_CONSUMER,
+    name: SUBSCRIPTIONS_CONSUMER,
   });
 }
 
-var { consume } = await js.consumers.get(
-  STREAM_NAME,
-  AUTH_SUBSCRIPTIONS_CONSUMER,
-);
+var { consume } = await js.consumers.get(STREAM_NAME, SUBSCRIPTIONS_CONSUMER);
 
 for await (const m of await consume({ max_messages: 1 })) {
   console.log(m.json());
