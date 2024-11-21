@@ -3,6 +3,6 @@ kind: Kustomization
 namespace: local
 resources:
   - auth
-  # - nats
+  - nats
   # - traefik
   # - traefik-public

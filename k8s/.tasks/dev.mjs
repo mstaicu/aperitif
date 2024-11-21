@@ -1,11 +1,14 @@
 import { spawn } from "child_process";
 
 var ORIGIN = process.env.ORIGIN;
-var NAMESPACE = process.env.NAMESPACE;
 
-var skaffoldProcess = spawn("skaffold", ["dev", "--cache-artifacts=false"], {
-  stdio: "inherit",
-});
+var skaffoldProcess = spawn(
+  "skaffold",
+  ["dev", "--profile=dev", "--cache-artifacts=false"],
+  {
+    stdio: "inherit",
+  }
+);
 
 console.log(`🚀 started development environment at ${ORIGIN}`);
 

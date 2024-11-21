@@ -52,3 +52,4 @@ spec:
         resources:
           requests:
             storage: 1Gi
+        storageClassName: do-block-storage

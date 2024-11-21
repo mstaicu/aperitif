@@ -5,6 +5,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@nats-io/jetstream": "^3.0.0-29",
+    "@nats-io/transport-node": "^3.0.0-26",
     "@passwordless-id/webauthn": "^2.1.0",
     "express": "^5.0.0",
     "express-validator": "^7.1.0",

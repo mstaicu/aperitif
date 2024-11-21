@@ -2,35 +2,34 @@ apiVersion: skaffold/v4beta11
 kind: Config
 metadata:
   name: k8s
-build:
-  artifacts:
-    - image: mdstaicu/auth
-      context: auth
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: src/**/*.mjs
-            dest: .
-  local:
-    push: false
-
-manifests:
-  kustomize:
-    paths:
-      - infra/overlays/dev
-  hooks:
-    before:
-      - host:
-          command: ["kubectl", "apply", "-f", "./infra/crds"]
-          os: [darwin, linux, windows]
 
 profiles:
-  - name: staging
+  - name: dev
     build:
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            dockerfile: Dockerfile
+            target: dev
+          sync:
+            manual:
+              - src: src/**/*.mjs
+                dest: .
       local:
-        push: true
+        push: false
+
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/dev
+      hooks:
+        before:
+          - host:
+              command: ["kubectl", "apply", "-f", "./infra/crds"]
+              os: [darwin, linux, windows]
+
+  - name: staging
     manifests:
       kustomize:
         paths:
