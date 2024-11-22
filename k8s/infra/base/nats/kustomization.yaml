@@ -7,5 +7,5 @@ configMapGenerator:
       - nats-server.conf=nats-server.conf
 
 resources:
-  - nats-depl.yaml
   - nats-srv.yaml
+  - nats-depl.yaml

@@ -5,10 +5,10 @@ import { app } from "./app.mjs";
 import { createConnection } from "./models/index.mjs";
 import { addGracefulShutdown, handleShutdown } from "./utils/index.mjs";
 
-var port = nconf.get("PORT");
+var PORT = 3000;
 
 var server = addGracefulShutdown(
-  app.listen(port, () => console.log(`listening on port ${port}`)),
+  app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
 );
 
 var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
@@ -17,9 +17,6 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
   dbName: "auth",
 });
 
-/**
- * SIGUSR2 is used by nodemon
- */
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
   process.once(signal, () => handleShutdown(server, [connection])),
 );

@@ -29,3 +29,19 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/staging
+
+  - name: prod
+    build:
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            dockerfile: Dockerfile
+            target: prod
+      local:
+        push: true
+
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/prod
