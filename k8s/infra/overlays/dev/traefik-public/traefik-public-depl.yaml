@@ -1,5 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: traefik-public-depl
 spec:
@@ -12,7 +13,6 @@ spec:
       labels:
         app: traefik-public
     spec:
-      automountServiceAccountToken: false
       serviceAccountName: traefik-public-account
       containers:
         - name: traefik-public
@@ -61,22 +61,3 @@ spec:
             - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd
-            #
-            - --ping
-            - --ping.entryPoint=http
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 1
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 1

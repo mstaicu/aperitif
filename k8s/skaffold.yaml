@@ -24,12 +24,6 @@ profiles:
         paths:
           - infra/overlays/dev
 
-  - name: staging
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/staging
-
   - name: prod
     build:
       artifacts:

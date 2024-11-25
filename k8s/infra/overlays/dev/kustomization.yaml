@@ -5,7 +5,7 @@ namespace: dev
 
 resources:
   - namespace.yaml
-  - auth
-  - nats
+  # - auth
+  # - nats
   # - traefik
-  # - traefik-public
+  - traefik-public

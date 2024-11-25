@@ -1,7 +1,8 @@
-kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+
 metadata:
-  name: traefik-role
+  name: traefik-public-role
 
 rules:
   - apiGroups:

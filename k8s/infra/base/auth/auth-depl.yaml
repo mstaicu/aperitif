@@ -46,17 +46,18 @@ spec:
                   name: auth-service-config
                   key: ORIGIN
 
-            - name: JWT_PRIVATE_KEY
+            - name: ACCESS_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: JWT_PRIVATE_KEY
+                  key: ACCESS_TOKEN_SECRET
 
-            - name: JWT_PUBLIC_KEY
+            - name: REFRESH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: JWT_PUBLIC_KEY
+                  key: REFRESH_TOKEN_SECRET
+
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )

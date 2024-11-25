@@ -23,7 +23,6 @@ spec:
                     values:
                       - traefik
               topologyKey: kubernetes.io/hostname
-      automountServiceAccountToken: false
       serviceAccountName: traefik-account
       containers:
         - name: traefik
@@ -74,22 +73,3 @@ spec:
             - --entrypoints.http.address=:80
             #
             - --providers.kubernetescrd
-            #
-            - --ping
-            - --ping.entryPoint=http
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 10
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 2
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 10
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 3

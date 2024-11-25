@@ -13,7 +13,6 @@ spec:
         app: traefik
     spec:
       affinity: null
-      automountServiceAccountToken: false
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik
@@ -64,23 +63,3 @@ spec:
             - --entrypoints.http.address=:80
             #
             - --providers.kubernetescrd
-            #
-            #
-            - --ping
-            - --ping.entryPoint=http
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 1
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 1
