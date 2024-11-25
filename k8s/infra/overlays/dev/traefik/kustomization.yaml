@@ -5,3 +5,4 @@ resources:
 
 patches:
   - path: traefik-depl.yaml
+  - path: traefik-role-binding.yaml

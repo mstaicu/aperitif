@@ -13,7 +13,7 @@ spec:
         app: traefik-public
     spec:
       automountServiceAccountToken: false
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: traefik-public-account
       containers:
         - name: traefik-public
           image: traefik:v3.2
@@ -61,6 +61,9 @@ spec:
             - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd
+            #
+            - --ping
+            - --ping.entryPoint=http
           readinessProbe:
             httpGet:
               path: /ping

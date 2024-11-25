@@ -51,7 +51,6 @@ try {
     deliver_policy: DeliverPolicy.All,
     durable_name: SUBSCRIPTIONS_CONSUMER,
     filter_subjects: Object.values(SUBSCRIPTIONS_ACTIONS),
-    name: SUBSCRIPTIONS_CONSUMER,
   });
 }
 
