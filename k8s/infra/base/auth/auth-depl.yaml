@@ -21,7 +21,7 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - traefik-internal
+                      - auth
               topologyKey: kubernetes.io/hostname
       automountServiceAccountToken: false
       containers:

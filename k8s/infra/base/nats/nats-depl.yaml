@@ -36,20 +36,9 @@ spec:
             - name: nats-cluster
               containerPort: 6222
           volumeMounts:
-            - name: nats-storage
-              mountPath: /data
             - name: nats-server-cm
               mountPath: /etc/nats/
       volumes:
         - name: nats-server-cm
           configMap:
             name: nats-cm
-  volumeClaimTemplates:
-    - metadata:
-        name: nats-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
-        storageClassName: do-block-storage

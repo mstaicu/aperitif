@@ -1,5 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
   - ../../../base/auth
   - auth-mongo-depl.yaml
@@ -10,14 +11,6 @@ configMapGenerator:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
-
-secretGenerator:
-  - name: auth-service-access-token-secret
-    literals:
-      - ACCESS_TOKEN_SECRET=3nlcUgqCL5yU3OOcHycq2aIP/tj5xA259u5rIVrpFW4=
-  - name: auth-service-refresh-token-secret
-    literals:
-      - REFRESH_TOKEN_SECRET=uEn5Usn1arsBwGI3a+PgxxSZ3JlMWqGJun2AgCJNIx0=
 
 patches:
   - path: auth-depl.yaml

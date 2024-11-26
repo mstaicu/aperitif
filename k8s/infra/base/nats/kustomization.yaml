@@ -1,11 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-configMapGenerator:
-  - name: nats-cm
-    files:
-      - nats-server.conf=nats-server.conf
-
 resources:
+  - nats-crd.yaml
+  - nats-cr.yaml
   - nats-srv.yaml
   - nats-depl.yaml

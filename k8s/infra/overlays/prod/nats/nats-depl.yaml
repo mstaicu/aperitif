@@ -15,7 +15,16 @@ spec:
         app: nats
     spec:
       # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
-      affinity: null
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nats
+              topologyKey: kubernetes.io/hostname
       automountServiceAccountToken: false
       containers:
         - name: nats
@@ -35,8 +44,12 @@ spec:
         - name: nats-server-cm
           configMap:
             name: nats-cm
-        - name: nats-storage
-          hostPath:
-            path: /tmp/nats-storage
-            type: DirectoryOrCreate
-  volumeClaimTemplates: null
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: do-block-storage
