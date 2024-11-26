@@ -39,4 +39,3 @@ spec:
           hostPath:
             path: /tmp/nats-storage
             type: DirectoryOrCreate
-  volumeClaimTemplates: null
