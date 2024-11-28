@@ -1,7 +1,7 @@
 // @ts-check
 import express from "express";
 
-import { router } from "./routes/index.mjs";
+import { router } from "./routers/index.mjs";
 
 const app = express();
 

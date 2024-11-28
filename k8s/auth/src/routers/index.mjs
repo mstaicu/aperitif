@@ -1,7 +1,9 @@
+// @ts-check
 import { Router } from "express";
 
 import { availability, prometheus } from "../middleware/index.mjs";
 import { healthRouter } from "./health.mjs";
+import { jwksRouter } from "./jwks.mjs";
 import { metricsRouter } from "./metrics.mjs";
 
 const router = Router();
@@ -25,6 +27,6 @@ router.use(availability);
 /**
  * business-related routes that depend on the database go here
  */
-// router.use("/users", userRouter);
+router.use(jwksRouter);
 
 export { router };

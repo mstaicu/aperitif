@@ -34,25 +34,27 @@ spec:
                 configMapKeyRef:
                   name: auth-service-config
                   key: MONGO_DB_URI
-
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
                   name: auth-service-config
                   key: DOMAIN
-
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:
                   name: auth-service-config
                   key: ORIGIN
 
-            - name: ACCESS_TOKEN_SECRET
+            - name: ACCESS_TOKEN_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: ACCESS_TOKEN_SECRET
-
+                  key: ACCESS_TOKEN_PRIVATE_KEY
+            - name: ACCESS_TOKEN_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: ACCESS_TOKEN_PUBLIC_KEY
             - name: REFRESH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
