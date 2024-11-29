@@ -1,6 +1,6 @@
 import express from "express";
 
-import { connection } from "../models/index.mjs";
+import { connection } from "../../models/index.mjs";
 
 var router = express.Router();
 

@@ -1,6 +1,12 @@
 import { connection } from "../models/index.mjs";
 import { metrics } from "../utils/metrics.mjs";
 
+/**
+ *
+ * @param {import("express").Request} req - Express request object
+ * @param {import("express").Response} res - Express response object
+ * @param {import("express").NextFunction} next - Express next middleware function
+ */
 export var availability = (req, res, next) => {
   var { dbConnectionAttempts } = metrics;
 
@@ -12,11 +18,9 @@ export var availability = (req, res, next) => {
 
   dbConnectionAttempts.inc({ status: "failure" });
 
-  return res.status(503).json({
-    detail: "The database connection is not ready yet. Please try again later.",
+  res.status(503).json({
     instance: req.originalUrl,
     status: 503,
     title: "Service Unavailable",
-    type: "https://example.com/probs/db-not-ready",
   });
 };
