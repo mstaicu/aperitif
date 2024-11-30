@@ -1,20 +1,25 @@
 // @ts-check
 import { jetstream } from "@nats-io/jetstream";
 
-var STREAM_NAME = "resources";
-var SUBSCRIPTIONS_CONSUMER = "auth.subscription.actions";
-
 /**
  *
  * @param {import('@nats-io/transport-node').NatsConnection} connection
  */
-export var registerSubscriptionCreatedConsumer = async (connection) => {
+export var registerSubscriptionConsumer = async (connection) => {
   var js = jetstream(connection);
 
-  var { consume } = await js.consumers.get(STREAM_NAME, SUBSCRIPTIONS_CONSUMER);
+  /**
+   * These are defined in the Jetstream Custom Resources
+   */
+  var { consume } = await js.consumers.get("resources", "auth.subscriptions");
 
-  for await (const m of await consume({ max_messages: 1 })) {
-    console.log(m.json());
-    m.ack();
-  }
+  /**
+   * @typedef {import("@nats-io/jetstream").JsMsg} JsMsg
+   * @param {(m: JsMsg) => Promise<void>} cb
+   */
+  return async (cb) => {
+    for await (const m of await consume({ max_messages: 1 })) {
+      await cb(m);
+    }
+  };
 };
