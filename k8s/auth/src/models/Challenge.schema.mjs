@@ -1,8 +1,8 @@
 // @ts-check
-import mongoose from "mongoose";
+import { Schema } from "mongoose";
 import { randomBytes, randomUUID } from "node:crypto";
 
-var ChallengeSchema = new mongoose.Schema({
+var ChallengeSchema = new Schema({
   _id: {
     default: randomUUID,
     type: String,
