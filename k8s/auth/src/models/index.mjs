@@ -16,8 +16,8 @@ var connection;
  * @param {string} uri
  * @param {mongoose.ConnectOptions} options
  */
-var createConnection = async (uri, options) => {
-  connection = await mongoose.createConnection(uri, options).asPromise();
+var createConnection = (uri, options) => {
+  connection = mongoose.createConnection(uri, options);
 
   connection.model("Challenge", ChallengeSchema);
   connection.model("Passkey", PasskeySchema);
@@ -29,14 +29,14 @@ var createConnection = async (uri, options) => {
       Promise.all(
         Object.values(connection.models).map((model) => model.syncIndexes()),
       )
-        .then(() => console.log("Indexes synchronized successfully."))
+        .then(() => console.log("indexes synchronized successfully."))
         .catch((error) =>
-          console.error("Error during index synchronization:", error),
+          console.error("error during index synchronization:", error),
         ),
     );
   }
 
-  return connection;
+  return connection.asPromise();
 };
 
 export { connection, createConnection };

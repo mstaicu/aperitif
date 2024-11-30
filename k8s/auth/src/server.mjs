@@ -18,7 +18,7 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
 });
 
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-  process.once(signal, () => handleShutdown(server, [connection])),
+  process.once(signal, () => handleShutdown(server, connection)),
 );
 
 export { server };

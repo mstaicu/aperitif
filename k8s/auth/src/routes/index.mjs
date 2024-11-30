@@ -1,4 +1,3 @@
-// @ts-check
 import { Router } from "express";
 
 import { availability, prometheus } from "../middleware/index.mjs";

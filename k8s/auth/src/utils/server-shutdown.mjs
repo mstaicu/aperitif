@@ -1,18 +1,10 @@
-// @ts-check
-
-/**
- * @typedef {import('node:http').Server} Server
- * @typedef {() => Promise<Server>} gracefulShutdown
- * @typedef {Server & {gracefulShutdown: gracefulShutdown}} serverWithGracefulShutdown
- */
-
 var shutdownInitiated = false;
 
 /**
- * @param {serverWithGracefulShutdown} server
- * @param {import('mongoose').Connection[]} mongooseConnections
+ * @param {import('node:http').Server} server
+ * @param {import('mongoose').Connection} connection
  */
-export var handleShutdown = async (server, mongooseConnections) => {
+export var handleShutdown = async (server, connection) => {
   if (shutdownInitiated) {
     return;
   }
@@ -27,12 +19,10 @@ export var handleShutdown = async (server, mongooseConnections) => {
       await server.gracefulShutdown();
     }
 
-    console.log("closing database connections...");
+    console.log("closing database connection...");
 
-    for (let connection of mongooseConnections) {
-      if (connection.readyState === 1) {
-        await connection.close();
-      }
+    if (connection.readyState === 1) {
+      await connection.close();
     }
 
     console.log("shutdown complete");
