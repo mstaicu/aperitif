@@ -1,5 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
+
 metadata:
   name: nats-depl
 spec:
@@ -29,8 +30,16 @@ spec:
       containers:
         - name: nats
           image: nats:alpine
+          args: ["-c", "/etc/nats/nats-server.conf"]
           ports:
             - name: nats-client
               containerPort: 4222
             - name: nats-cluster
               containerPort: 6222
+          volumeMounts:
+            - name: nats-server-cm
+              mountPath: /etc/nats/
+      volumes:
+        - name: nats-server-cm
+          configMap:
+            name: nats-cm

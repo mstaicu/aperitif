@@ -5,66 +5,6 @@ metadata:
   name: auth-depl
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: auth
   template:
-    metadata:
-      labels:
-        app: auth
     spec:
       affinity: null
-      containers:
-        - name: auth
-          image: mdstaicu/auth
-          env:
-            - name: MONGO_DB_URI
-              valueFrom:
-                configMapKeyRef:
-                  name: auth-service-config
-                  key: MONGO_DB_URI
-
-            - name: DOMAIN
-              valueFrom:
-                configMapKeyRef:
-                  name: auth-service-config
-                  key: DOMAIN
-
-            - name: ORIGIN
-              valueFrom:
-                configMapKeyRef:
-                  name: auth-service-config
-                  key: ORIGIN
-
-            - name: ACCESS_TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: auth-service-access-token-secret
-                  key: ACCESS_TOKEN_SECRET
-
-            - name: REFRESH_TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: auth-service-refresh-token-secret
-                  key: REFRESH_TOKEN_SECRET
-          #
-          # total probe time =
-          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
-          #
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 3000
-            initialDelaySeconds: 3
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 1
-
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 3000
-            initialDelaySeconds: 3
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 1

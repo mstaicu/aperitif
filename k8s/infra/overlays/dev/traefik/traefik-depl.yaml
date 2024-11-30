@@ -5,62 +5,10 @@ metadata:
   name: traefik-depl
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: traefik
   template:
-    metadata:
-      labels:
-        app: traefik
     spec:
       affinity: null
-      serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v3.2
           args:
-            #
-            # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
-            #
-            # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
-            #
-            - --api=false
-            #
-            # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
-            #
-            # https://doc.traefik.io/traefik/operations/api/#insecure
-            #
-            # Enable the API in insecure mode, which means that the API will be available directly on the entryPoint named 'traefik'.
-            #
-            - --api.insecure=false
-            #
-            # https://doc.traefik.io/traefik/operations/api/#dashboard
-            # https://doc.traefik.io/traefik/operations/dashboard/
-            #
-            # The dashboard is available at the same location as the API
-            # but on the path /dashboard/ by default.
-            #
-            # The trailing slash / in /dashboard/ is mandatory
-            # Optional, Default=true
-            #
-            - --api.dashboard=false
-            #
-            # https://doc.traefik.io/traefik/observability/access-logs/#configuration
-            #
-            - --accesslog
-            #
             - --log.level=DEBUG
-            #
-            #
-            # Disables certificate verification between your Traefik instance and your backends
-            #
-            # https://doc.traefik.io/traefik/v3.0/routing/overview/#insecureskipverify
-            #
-            - --serversTransport.insecureSkipVerify=true
-            #
-            # TODO: Generate self signed certificates for internal use
-            #
-            - --entrypoints.http.address=:80
-            #
-            - --providers.kubernetescrd

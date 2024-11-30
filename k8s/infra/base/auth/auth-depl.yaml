@@ -60,7 +60,9 @@ spec:
                 secretKeyRef:
                   name: auth-service-secrets
                   key: REFRESH_TOKEN_SECRET
-
+          ports:
+            - name: auth
+              containerPort: 3000
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
