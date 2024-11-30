@@ -12,4 +12,4 @@ function checkCommand(cmd) {
   }
 }
 
-["mkcert", "kubectl", "skaffold"].forEach(checkCommand);
+["kubectl", "skaffold", "mkcert", "nats"].forEach(checkCommand);

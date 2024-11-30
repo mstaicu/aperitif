@@ -5,6 +5,8 @@ metadata:
 
 profiles:
   - name: dev
+    activation:
+      - command: dev
     build:
       artifacts:
         - image: mdstaicu/auth
@@ -23,6 +25,34 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/dev
+
+  - name: debug
+    activation:
+      - command: debug
+    build:
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            dockerfile: Dockerfile
+            target: dev
+          sync:
+            manual:
+              - src: src/**/*.mjs
+                dest: .
+      local:
+        push: false
+
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/dev
+
+    portForward:
+      - resourceType: statefulset
+        resourceName: nats-depl
+        port: 4222
+        address: 127.0.0.1
 
   - name: prod
     build:

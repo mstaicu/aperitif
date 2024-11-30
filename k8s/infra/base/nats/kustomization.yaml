@@ -3,6 +3,5 @@ kind: Kustomization
 
 resources:
   - nats-crd.yaml
-  - nats-cr.yaml
   - nats-srv.yaml
   - nats-depl.yaml

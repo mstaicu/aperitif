@@ -16,7 +16,7 @@ router.get("/.well-known/jwks.json", async (_, res) => {
       {
         ...jwk,
         alg: "RS256", // Algorithm used for signing
-        kid: "key-id-1", // Key ID for this key (this is how we match JWTs with their signing keys)
+        kid: "jwk-1", // Key ID for this key (this is how we match JWTs with their signing keys)
         use: "sig", // This key is for signing
       },
     ],

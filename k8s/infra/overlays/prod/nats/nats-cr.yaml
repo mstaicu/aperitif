@@ -1,0 +1,24 @@
+apiVersion: jetstream.nats.io/v1beta2
+kind: Stream
+metadata:
+  name: resources
+spec:
+  name: resources
+  retention: interest
+  subjects: ["subscriptions.*"]
+---
+apiVersion: jetstream.nats.io/v1beta2
+kind: Consumer
+metadata:
+  name: auth-subscriptions-consumer
+spec:
+  streamName: resources
+
+  ackPolicy: explicit
+  deliverPolicy: all
+  durableName: auth-subscriptions-consumer
+
+  filterSubjects:
+    - subscriptions.created
+    - subscriptions.updated
+    - subscriptions.deleted

@@ -2,29 +2,16 @@ import { spawn } from "child_process";
 
 var ORIGIN = process.env.ORIGIN;
 
-var skaffoldProcess = spawn(
-  "skaffold",
-  ["dev", "--profile=dev", "--cache-artifacts=false"],
-  {
-    stdio: "inherit",
-  }
-);
+var skaffoldProcess = spawn("skaffold", ["dev", "--cache-artifacts=false"], {
+  stdio: "inherit",
+});
 
 console.log(`🚀 started development environment at ${ORIGIN}`);
 
-/**
- * List of signals to forward to the child process (Skaffold)
- */
 var signals = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"];
 
-/**
- * Forward each signal received by the Node.js process to the Skaffold process
- */
 signals.forEach((signal) => {
-  process.on(
-    signal,
-    () => skaffoldProcess.kill(signal) // Forward the signal to Skaffold
-  );
+  process.on(signal, () => skaffoldProcess.kill(signal));
 });
 
 skaffoldProcess.on("exit", (code, signal) => {
