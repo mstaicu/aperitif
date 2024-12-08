@@ -2,8 +2,13 @@
 import { jetstream } from "@nats-io/jetstream";
 
 /**
+ * @typedef {import("@nats-io/jetstream").JsMsg} JsMsg
+ * @typedef {import('@nats-io/transport-node').NatsConnection} NatsConnection
+ */
+
+/**
  *
- * @param {import('@nats-io/transport-node').NatsConnection} connection
+ * @param {NatsConnection} connection
  */
 export var registerSubscriptionConsumer = async (connection) => {
   var js = jetstream(connection);
@@ -14,7 +19,6 @@ export var registerSubscriptionConsumer = async (connection) => {
   var { consume } = await js.consumers.get("resources", "auth.subscriptions");
 
   /**
-   * @typedef {import("@nats-io/jetstream").JsMsg} JsMsg
    * @param {(m: JsMsg) => Promise<void>} cb
    */
   return async (cb) => {

@@ -39,3 +39,33 @@ var RefreshTokenSchema = new Schema(
 );
 
 export { RefreshTokenSchema };
+
+/**
+ * 
+ * Delete the provided token once issuing a different token pair
+ * 
+ * const refreshToken = sign({}, process.env.REFRESH_TOKEN_SECRET, {
+    subject: userId,
+    expiresIn: "30d",
+  });
+
+  await RefreshToken.create({
+    tokenHash: refreshToken, // The `set` function will hash it automatically
+    user: userId,
+    expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+  });
+
+  async function validateRefreshToken(refreshToken) {
+  const hashedToken = createHash("sha256").update(refreshToken).digest("hex");
+
+  const tokenEntry = await RefreshToken.findOne({ tokenHash: hashedToken });
+
+  if (!tokenEntry) {
+    throw new Error("Invalid or revoked token");
+  }
+
+  // Validate the token signature and claims
+  const decoded = verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  return decoded.sub; // Return the user ID
+}
+ */

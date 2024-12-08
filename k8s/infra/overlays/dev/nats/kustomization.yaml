@@ -6,11 +6,6 @@ configMapGenerator:
     files:
       - nats-server.conf=nats-server.conf
 
-#
-# If we move the CRs to the base overlay, we get an error due to
-# CRDs not being available at the time of CRs,
-# even though the render output is correct
-#
 resources:
   - ../../../base/nats
   - nats-cr.yaml
