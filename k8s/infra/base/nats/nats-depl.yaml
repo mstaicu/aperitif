@@ -41,6 +41,7 @@ spec:
             - name: nats-server-cm
               mountPath: /etc/nats/
           readinessProbe:
+            failureThreshold: 3
             httpGet:
               path: /healthz?js-server-only=true
               port: nats-monitor
@@ -48,8 +49,8 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-            failureThreshold: 3
           livenessProbe:
+            failureThreshold: 3
             httpGet:
               path: /healthz?js-enabled-only=true
               port: nats-monitor
@@ -57,8 +58,8 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 5
-            failureThreshold: 3
           startupProbe:
+            failureThreshold: 90
             httpGet:
               path: /healthz
               port: nats-monitor
@@ -66,7 +67,6 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-            failureThreshold: 90
       volumes:
         - name: nats-server-cm
           configMap:

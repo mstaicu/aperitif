@@ -10,14 +10,14 @@ spec:
   publishNotReadyAddresses: true
   ports:
     - name: nats-client
-      protocol: TCP
+      appProtocol: TCP
       port: 4222
       targetPort: 4222
     - name: nats-cluster
-      protocol: TCP
+      appProtocol: TCP
       port: 6222
       targetPort: 6222
     - name: nats-monitor
-      protocol: TCP
+      appProtocol: HTTP
       port: 8222
       targetPort: 8222
