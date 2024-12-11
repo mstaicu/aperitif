@@ -68,8 +68,6 @@ spec:
             #
             - --serversTransport.insecureSkipVerify=true
             #
-            # TODO: Generate self signed certificates for internal use
-            #
             - --entrypoints.http.address=:80
             #
             - --providers.kubernetescrd

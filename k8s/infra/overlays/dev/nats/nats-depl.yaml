@@ -12,8 +12,12 @@ spec:
           volumeMounts:
             - name: nats-storage
               mountPath: /data
-      volumes:
-        - name: nats-storage
-          hostPath:
-            path: /tmp/nats-storage
-            type: DirectoryOrCreate
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        storageClassName: hostpath
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

@@ -4,18 +4,17 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
+  podManagementPolicy: Parallel
   replicas: 3
   selector:
     matchLabels:
       app: nats
-  # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
   serviceName: nats-headless
   template:
     metadata:
       labels:
         app: nats
     spec:
-      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -36,9 +35,38 @@ spec:
               containerPort: 4222
             - name: nats-cluster
               containerPort: 6222
+            - name: nats-monitor
+              containerPort: 8222
           volumeMounts:
             - name: nats-server-cm
               mountPath: /etc/nats/
+          readinessProbe:
+            httpGet:
+              path: /healthz?js-server-only=true
+              port: nats-monitor
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz?js-enabled-only=true
+              port: nats-monitor
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: nats-monitor
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            failureThreshold: 90
       volumes:
         - name: nats-server-cm
           configMap:
