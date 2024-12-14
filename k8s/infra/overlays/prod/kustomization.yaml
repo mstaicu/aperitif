@@ -5,5 +5,5 @@ namespace: prod
 
 resources:
   # - ../../../base/auth
-  - nats
+  # - nats
   # - traefik

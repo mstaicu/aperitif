@@ -3,7 +3,9 @@ kind: Kustomization
 
 resources:
   - ../../../base/traefik
+  - traefik-account.yaml
+  - traefik-role.yaml
+  - traefik-role-binding.yaml
 
 patches:
   - path: traefik-depl.yaml
-  - path: traefik-role-binding.yaml
