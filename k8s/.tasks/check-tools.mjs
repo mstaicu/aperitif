@@ -6,10 +6,10 @@ function checkCommand(cmd) {
     console.log(`✅ ${cmd} is already installed`);
   } catch (error) {
     console.log(
-      `🔧 ${cmd} is not installed. Installing ${cmd} via Homebrew...`
+      `🔧 ${cmd} is not installed. Consider installing ${cmd} via Homebrew`
     );
-    execSync(`brew install ${cmd}`, { stdio: "inherit" });
+    execSync(`brew info ${cmd}`, { stdio: "inherit" });
   }
 }
 
-["kubectl", "skaffold", "mkcert", "nats"].forEach(checkCommand);
+["kubectl", "skaffold", "mkcert", "nats", "nsc"].forEach(checkCommand);

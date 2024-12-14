@@ -26,14 +26,6 @@ profiles:
         paths:
           - infra/overlays/dev
 
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       before:
-    #         - host:
-    #             command:
-    #               ["kubectl", "apply", "-f", "infra/base/nats/nats-crd.yaml"]
-
   - name: debug
     activation:
       - command: debug
@@ -55,14 +47,6 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/dev
-
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       before:
-    #         - host:
-    #             command:
-    #               ["kubectl", "apply", "-f", "infra/base/nats/nats-crd.yaml"]
 
     portForward:
       - resourceType: statefulset

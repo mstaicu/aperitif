@@ -6,9 +6,12 @@ import {
   jetstreamManager,
   RetentionPolicy,
 } from "@nats-io/jetstream";
-import { connect, nanos } from "@nats-io/transport-node";
+import { connect, credsAuthenticator, nanos } from "@nats-io/transport-node";
+
+var authenticator = credsAuthenticator("/etc/nats/user-jwt/user.jwt");
 
 var con = await connect({
+  authenticator,
   servers: ["http://nats-0:4222"],
 });
 

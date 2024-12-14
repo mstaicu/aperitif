@@ -29,9 +29,15 @@ tasks:
     cmds:
       - node ./.tasks/generate-cert-secret.mjs
 
+  generate-nats-users:
+    desc: "Generates secrets for the NATS accounts and users"
+    deps: [generate-cert-secret]
+    cmds:
+      - node ./.tasks/add-nats-auth.mjs
+
   add-host:
     desc: "Add /etc/hosts entry"
-    deps: [generate-cert-secret]
+    deps: [generate-nats-users]
     cmds:
       - node ./.tasks/add-host.mjs
 
