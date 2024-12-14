@@ -7,12 +7,18 @@ import {
   RetentionPolicy,
 } from "@nats-io/jetstream";
 import { connect, credsAuthenticator, nanos } from "@nats-io/transport-node";
+import nconf from "nconf";
 
-var authenticator = credsAuthenticator("/etc/nats/user-jwt/user.jwt");
+var creds = nconf.get("NATS_USERS_AUTH_CREDS");
+var authenticator = credsAuthenticator(new TextEncoder().encode(creds));
 
 var con = await connect({
   authenticator,
-  servers: ["http://nats-0:4222"],
+  servers: [
+    "http://nats-depl-0:4222",
+    "http://nats-depl-1:4222",
+    "http://nats-depl-2:4222",
+  ],
 });
 
 var STREAM_NAME = "resources";

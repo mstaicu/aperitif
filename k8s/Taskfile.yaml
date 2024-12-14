@@ -7,55 +7,49 @@ env:
 
 tasks:
   check-tools:
-    desc: "Check if required tools are installed"
+    desc: "check if required tools are installed"
     cmds:
       - node ./.tasks/check-tools.mjs
 
   check-kubernetes:
-    desc: "Check if Kubernetes is configured and kubectl is working"
+    desc: "check if cluster is online"
     deps: [check-tools]
     cmds:
-      - node ./.tasks/check-k8s-ready.mjs
+      - node ./.tasks/check-k8s.mjs
 
   check-namespace:
-    desc: "Check if namespace exists"
+    desc: "check if namespace exists"
     deps: [check-kubernetes]
     cmds:
       - node ./.tasks/check-namespace.mjs
 
-  generate-cert-secret:
-    desc: "Generate a certificate secret for the domain"
+  add-resources:
+    desc: "add resources and secrets"
     deps: [check-namespace]
     cmds:
-      - node ./.tasks/generate-cert-secret.mjs
+      - node ./.tasks/add-service-resources.mjs
 
-  generate-nats-users:
-    desc: "Generates secrets for the NATS accounts and users"
-    deps: [generate-cert-secret]
+  add-nats-auth:
+    desc: "add nats operator, accounts and user auth"
+    deps: [add-resources]
     cmds:
       - node ./.tasks/add-nats-auth.mjs
 
   add-host:
     desc: "Add /etc/hosts entry"
-    deps: [generate-nats-users]
+    deps: [add-nats-auth]
     cmds:
       - node ./.tasks/add-host.mjs
 
-  create-k8s-resources:
-    desc: "Create environment resources"
-    deps: [add-host]
-    cmds:
-      - node ./.tasks/create-k8s-resources.mjs
-
   dev:
     desc: "Start development environment"
-    deps: [create-k8s-resources]
+    deps: [add-service-resources]
     cmds:
       - node ./.tasks/dev.mjs
 
   debug:
     desc: "Start debug environment"
-    deps: [create-k8s-resources]
+    deps: [add-service-resources]
     cmds:
       - node ./.tasks/debug.mjs
 

@@ -94,7 +94,7 @@ if (!natsUsersExist) {
 
   execSync(
     `kubectl create secret generic nats-users \
-        --from-literal=auth_service.creds="${authServiceCreds}" \
+        --from-literal=nats_users_auth_creds="${authServiceCreds}" \
         --namespace="${NAMESPACE}"`
   );
 }

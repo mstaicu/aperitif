@@ -60,6 +60,13 @@ spec:
                 secretKeyRef:
                   name: auth-service-secrets
                   key: REFRESH_TOKEN_SECRET
+
+            - name: NATS_USERS_AUTH_CREDS
+              valueFrom:
+                secretKeyRef:
+                  name: nats-users
+                  key: nats_users_auth_creds
+
           ports:
             - name: auth
               containerPort: 3000

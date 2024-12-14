@@ -7,7 +7,7 @@ function checkKubernetes() {
       stdio: "inherit",
     });
 
-    console.log(`✅ Kubernetes API is accessible.\n${serverVersion}`);
+    console.log(`✅ k8s is accessible.\n${serverVersion}`);
   } catch (err) {
     process.exit(1);
   }

@@ -2,6 +2,11 @@ import { execSync } from "child_process";
 
 var NAMESPACE = process.env.NAMESPACE;
 
+if (!NAMESPACE) {
+  console.error("error: NAMESPACE environment variables must be set.");
+  process.exit(1);
+}
+
 try {
   console.log(`🔍 checking if ${NAMESPACE} namespace exists...`);
 

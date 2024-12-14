@@ -49,8 +49,8 @@ profiles:
           - infra/overlays/dev
 
     portForward:
-      - resourceType: statefulset
-        resourceName: nats-depl
+      - resourceType: service
+        resourceName: nats
         port: 4222
         address: 127.0.0.1
 
