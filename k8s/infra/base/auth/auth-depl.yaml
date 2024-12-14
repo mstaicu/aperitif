@@ -32,33 +32,33 @@ spec:
             - name: MONGO_DB_URI
               valueFrom:
                 configMapKeyRef:
-                  name: auth-service-config
+                  name: auth_config
                   key: MONGO_DB_URI
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-service-config
+                  name: auth_config
                   key: DOMAIN
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-service-config
+                  name: auth_config
                   key: ORIGIN
 
             - name: ACCESS_TOKEN_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secrets
+                  name: auth_secrets
                   key: ACCESS_TOKEN_PRIVATE_KEY
             - name: ACCESS_TOKEN_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secrets
+                  name: auth_secrets
                   key: ACCESS_TOKEN_PUBLIC_KEY
             - name: REFRESH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secrets
+                  name: auth_secrets
                   key: REFRESH_TOKEN_SECRET
 
             - name: NATS_USERS_AUTH_CREDS
@@ -67,9 +67,6 @@ spec:
                   name: nats-users
                   key: nats_users_auth_creds
 
-          ports:
-            - name: auth
-              containerPort: 3000
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )

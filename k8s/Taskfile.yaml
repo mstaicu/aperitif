@@ -36,24 +36,24 @@ tasks:
       - node ./.tasks/add-nats-auth.mjs
 
   add-host:
-    desc: "Add /etc/hosts entry"
+    desc: "add /etc/hosts entry"
     deps: [add-nats-auth]
     cmds:
       - node ./.tasks/add-host.mjs
 
   dev:
-    desc: "Start development environment"
+    desc: "start development environment"
     deps: [add-service-resources]
     cmds:
       - node ./.tasks/dev.mjs
 
   debug:
-    desc: "Start debug environment"
+    desc: "start debug environment"
     deps: [add-service-resources]
     cmds:
       - node ./.tasks/debug.mjs
 
   default:
-    desc: "This is the default task"
+    desc: "this is the default task"
     cmds:
       - task: dev
