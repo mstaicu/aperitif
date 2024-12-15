@@ -29,6 +29,13 @@ profiles:
         paths:
           - infra/overlays/dev
 
+    deploy:
+      kubectl:
+        hooks:
+          before:
+            - host:
+                command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]
+
   - name: debug
     activation:
       - command: debug
@@ -42,11 +49,18 @@ profiles:
         paths:
           - infra/overlays/dev
 
-    portForward:
-      - resourceType: service
-        resourceName: nats
-        port: 4222
-        address: 127.0.0.1
+    deploy:
+      kubectl:
+        hooks:
+          before:
+            - host:
+                command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]
+
+    # portForward:
+    #   - resourceType: service
+    #     resourceName: nats
+    #     port: 4222
+    #     address: 127.0.0.1
 
   - name: prod
     build:
@@ -57,3 +71,10 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/prod
+
+    # deploy:
+    #   kubectl:
+    #     hooks:
+    #       before:
+    #         - host:
+    #             command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]

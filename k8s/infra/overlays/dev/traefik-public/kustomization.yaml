@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - traefik-public-account.yaml
-  - traefik-public-crd.yaml
   - traefik-public-role-binding.yaml
   - traefik-public-role.yaml
   - traefik-public-srv.yaml
