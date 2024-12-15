@@ -40,7 +40,7 @@ metadata:
 
 spec:
   dnsNames:
-    - "*.default.svc.cluster.local"
+    - "*.dev.svc.cluster.local"
   secretName: tma-cert-tls
   issuerRef:
     name: tma-issuer
