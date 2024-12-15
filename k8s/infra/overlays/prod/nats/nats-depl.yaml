@@ -8,9 +8,22 @@ spec:
     spec:
       containers:
         - name: nats
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - nats-server
+                  - -sl=ldm=/tmp/nats.pid
           volumeMounts:
+            - name: resolver-volume
+              mountPath: /etc/resolver.conf
+              subPath: resolver.conf
             - name: nats-storage
               mountPath: /data
+      volumes:
+        - name: resolver-volume
+          secret:
+            secretName: nats-resolver
   volumeClaimTemplates:
     - metadata:
         name: nats-storage

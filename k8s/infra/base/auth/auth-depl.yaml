@@ -48,17 +48,17 @@ spec:
             - name: ACCESS_TOKEN_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: auth_secrets
+                  name: auth-secrets
                   key: ACCESS_TOKEN_PRIVATE_KEY
             - name: ACCESS_TOKEN_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: auth_secrets
+                  name: auth-secrets
                   key: ACCESS_TOKEN_PUBLIC_KEY
             - name: REFRESH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: auth_secrets
+                  name: auth-secrets
                   key: REFRESH_TOKEN_SECRET
 
             - name: NATS_USERS_AUTH_CREDS

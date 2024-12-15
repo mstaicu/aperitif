@@ -6,5 +6,6 @@ namespace: dev
 resources:
   # - auth
   - nats
+  # - cert-manager
   # - traefik
   # - traefik-public

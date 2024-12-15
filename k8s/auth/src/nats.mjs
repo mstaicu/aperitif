@@ -14,11 +14,10 @@ var authenticator = credsAuthenticator(new TextEncoder().encode(creds));
 
 var con = await connect({
   authenticator,
-  servers: [
-    "http://nats-depl-0:4222",
-    "http://nats-depl-1:4222",
-    "http://nats-depl-2:4222",
-  ],
+  /**
+   * ClusterIP service, load balancing between replicas, receiving INFO on cluster domains
+   */
+  servers: "nats://nats:4222",
 });
 
 var STREAM_NAME = "resources";

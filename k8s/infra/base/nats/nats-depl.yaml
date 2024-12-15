@@ -29,14 +29,11 @@ spec:
       containers:
         - name: nats
           image: nats:2.10.23-alpine
-          args: ["-c", "/etc/nats/nats-server.conf", "-m", "8222"]
+          args: ["-c", "/etc/nats/nats-server.conf"]
 
           volumeMounts:
             - name: nats-server-cm
               mountPath: /etc/nats/
-            - name: resolver-volume
-              mountPath: /etc/resolver.conf
-              subPath: resolver.conf
 
           readinessProbe:
             httpGet:
@@ -72,6 +69,3 @@ spec:
         - name: nats-server-cm
           configMap:
             name: nats-cm
-        - name: resolver-volume
-          secret:
-            secretName: nats-resolver

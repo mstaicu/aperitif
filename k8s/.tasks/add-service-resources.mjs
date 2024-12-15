@@ -37,7 +37,7 @@ function addPublicLoadBalancerCerts() {
 function addAuthServiceResources() {
   var hasAuthSecrets = (() => {
     try {
-      execSync(`kubectl get secret auth_secrets --namespace=${NAMESPACE}`, {
+      execSync(`kubectl get secret auth-secrets --namespace=${NAMESPACE}`, {
         stdio: "ignore",
       });
 
@@ -62,17 +62,17 @@ function addAuthServiceResources() {
 
     var refreshTokenSecret = randomBytes(32).toString("base64");
 
-    console.log("creating k8s secret for auth_secrets...");
+    console.log("creating k8s secret for auth-secrets...");
 
     execSync(
-      `kubectl create secret generic auth_secrets \
+      `kubectl create secret generic auth-secrets \
       --from-literal=ACCESS_TOKEN_PRIVATE_KEY="${privateKey}" \
       --from-literal=ACCESS_TOKEN_PUBLIC_KEY="${publicKey}" \
       --from-literal=REFRESH_TOKEN_SECRET="${refreshTokenSecret}" \
       --namespace="${NAMESPACE}"`
     );
   } else {
-    console.log("secret auth_secrets already exists, skipping creation.");
+    console.log("secret auth-secrets already exists, skipping creation.");
   }
 }
 

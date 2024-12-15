@@ -23,7 +23,7 @@ tasks:
     cmds:
       - node ./.tasks/check-namespace.mjs
 
-  add-resources:
+  add-service-resources:
     desc: "add resources and secrets"
     deps: [check-namespace]
     cmds:
@@ -31,7 +31,7 @@ tasks:
 
   add-nats-auth:
     desc: "add nats operator, accounts and user auth"
-    deps: [add-resources]
+    deps: [add-service-resources]
     cmds:
       - node ./.tasks/add-nats-auth.mjs
 
@@ -43,13 +43,13 @@ tasks:
 
   dev:
     desc: "start development environment"
-    deps: [add-service-resources]
+    deps: [add-host]
     cmds:
       - node ./.tasks/dev.mjs
 
   debug:
     desc: "start debug environment"
-    deps: [add-service-resources]
+    deps: [add-host]
     cmds:
       - node ./.tasks/debug.mjs
 

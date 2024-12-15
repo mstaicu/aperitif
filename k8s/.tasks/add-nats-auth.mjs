@@ -61,6 +61,8 @@ var natsResolverExists = (() => {
   }
 })();
 
+console.log("console.log(natsResolverExists)", natsResolverExists);
+
 if (!natsResolverExists) {
   var memoryResolver = execSync(
     "nsc generate config --mem-resolver --sys-account SYS",

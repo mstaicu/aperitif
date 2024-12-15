@@ -8,7 +8,6 @@ configMapGenerator:
 
 resources:
   - ../../../base/nats
-  - nats-cr.yaml
 
 patches:
   - path: nats-depl.yaml

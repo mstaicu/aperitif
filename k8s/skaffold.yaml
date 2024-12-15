@@ -3,21 +3,24 @@ kind: Config
 metadata:
   name: k8s
 
+build:
+  artifacts:
+    - image: mdstaicu/auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: src/**/*.mjs
+            dest: .
+
 profiles:
   - name: dev
     activation:
       - command: dev
+
     build:
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            dockerfile: Dockerfile
-            target: dev
-          sync:
-            manual:
-              - src: src/**/*.mjs
-                dest: .
       local:
         push: false
 
@@ -29,17 +32,8 @@ profiles:
   - name: debug
     activation:
       - command: debug
+
     build:
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            dockerfile: Dockerfile
-            target: dev
-          sync:
-            manual:
-              - src: src/**/*.mjs
-                dest: .
       local:
         push: false
 
@@ -56,12 +50,6 @@ profiles:
 
   - name: prod
     build:
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            dockerfile: Dockerfile
-            target: prod
       local:
         push: true
 
