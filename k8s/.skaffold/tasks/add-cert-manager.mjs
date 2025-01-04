@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 export function deployCertManager() {
   try {
     console.log("🚀 deploying cert-manager...");
-    execSync("kubectl apply -f infra/base/cert-manager", { stdio: "inherit" });
+    execSync("kubectl apply -f infra/base/cert-manager", { stdio: "ignore" });
     console.log("✅ cert-manager deployed successfully");
   } catch (error) {
     console.error("❌ error deploying cert-manager:", error.message);

@@ -5,7 +5,7 @@ import { checkNamespace } from "../tasks/check-namespace.mjs";
 import { addSecrets } from "../tasks/add-secrets.mjs";
 import { addNatsResources } from "../tasks/add-nats-auth.mjs";
 import { addHost } from "../tasks/add-host.mjs";
-import { addCrds } from "../tasks/apply-crds.mjs";
+import { addCrds } from "../tasks/add-crds.mjs";
 import {
   deployCertManager,
   waitForCertManager,
