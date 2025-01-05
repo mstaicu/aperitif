@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: secrets-manager
+spec:
+  template:
+    spec:
+      serviceAccountName: secrets-manager-serviceaccount
+      # Init container: Node.js to generate secrets
+      initContainers:
+        - name: generate-secrets
+          image: node:18-alpine
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets
+            - name: scripts-volume
+              mountPath: /scripts
+          command:
+            - sh
+            - -c
+            - |
+              node /scripts/generate-secrets.mjs
+      containers:
+        # Container: kubectl to create Kubernetes secret
+        - name: create-k8s-secret
+          image: bitnami/kubectl:latest
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets
+            - name: scripts-volume
+              mountPath: /scripts
+          env:
+            - name: SECRET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: secrets-config
+                  key: SECRET_NAME
+            - name: NAMESPACE
+              valueFrom:
+                configMapKeyRef:
+                  name: secrets-config
+                  key: NAMESPACE
+          command:
+            - sh
+            - -c
+            - |
+              sh /scripts/create-k8s-secret.sh
+
+      volumes:
+        - name: secrets-volume
+          emptyDir: {}
+        - name: scripts-volume
+          configMap:
+            name: secrets-scripts
+
+      restartPolicy: OnFailure

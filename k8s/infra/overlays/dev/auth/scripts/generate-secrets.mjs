@@ -1,5 +1,6 @@
-import { promises as fs } from "fs";
-import { generateKeyPairSync, randomBytes } from "crypto";
+// @ts-check
+import fs from "node:fs/promises";
+import { generateKeyPairSync, randomBytes } from "node:crypto";
 
 console.log("🔑 Generating RSA key pair...");
 

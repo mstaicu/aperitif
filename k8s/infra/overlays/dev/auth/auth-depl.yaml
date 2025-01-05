@@ -8,17 +8,18 @@ spec:
   template:
     spec:
       affinity: null
-      serviceAccountName: secret-manager-serviceaccount
       initContainers:
         - name: wait-for-auth-secrets
           image: bitnami/kubectl:latest
           env:
             - name: NAMESPACE
-              value: "dev"
+              value: dev
+            - name: AUTH_SECRETS
+              value: auth-secrets
           command:
             - sh
             - -c
             - |
-              while ! kubectl get secret auth-secrets -n $NAMESPACE > /dev/null 2>&1; do
+              while ! kubectl get secret $AUTH_SECRETS -n $NAMESPACE > /dev/null 2>&1; do
                 sleep 1
               done
