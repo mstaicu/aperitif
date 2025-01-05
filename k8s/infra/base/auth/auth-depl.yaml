@@ -24,7 +24,6 @@ spec:
                     values:
                       - auth
               topologyKey: kubernetes.io/hostname
-      automountServiceAccountToken: false
       containers:
         - name: auth
           image: mdstaicu/auth
@@ -32,17 +31,17 @@ spec:
             - name: MONGO_DB_URI
               valueFrom:
                 configMapKeyRef:
-                  name: auth_config
+                  name: auth-config
                   key: MONGO_DB_URI
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth_config
+                  name: auth-config
                   key: DOMAIN
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth_config
+                  name: auth-config
                   key: ORIGIN
 
             - name: ACCESS_TOKEN_PRIVATE_KEY
@@ -61,11 +60,11 @@ spec:
                   name: auth-secrets
                   key: REFRESH_TOKEN_SECRET
 
-            - name: NATS_USERS_AUTH_CREDS
-              valueFrom:
-                secretKeyRef:
-                  name: nats-users
-                  key: nats_users_auth_creds
+            # - name: NATS_USERS_AUTH_CREDS
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: nats-users
+            #       key: nats_users_auth_creds
 
           #
           # total probe time =

@@ -4,13 +4,17 @@ kind: Kustomization
 resources:
   - ../../../base/auth
   - auth-mongo-depl.yaml
+  - auth-job.yaml
 
 configMapGenerator:
-  - name: auth_config
+  - name: auth-config
     literals:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
+  - name: auth-secrets-script
+    files:
+      - generate-secrets.mjs=./scripts/generate-secrets.mjs
 
 patches:
   - path: auth-depl.yaml

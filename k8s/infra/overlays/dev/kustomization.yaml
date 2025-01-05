@@ -4,8 +4,10 @@ kind: Kustomization
 namespace: dev
 
 resources:
-  # - auth
+  - namespace.yaml
+  - auth
+  - rbac
   # - nats
-  - cert-manager
+  # - cert-manager
   # - traefik
   # - traefik-public

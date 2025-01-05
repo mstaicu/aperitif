@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: generate-auth-secrets
+spec:
+  template:
+    spec:
+      serviceAccountName: secret-manager-serviceaccount
+      containers:
+        # Step 1: Generate the secrets using Node.js
+        - name: generate-secrets
+          image: node:18-alpine
+          command: ["node", "/scripts/generate-secrets.mjs"]
+          volumeMounts:
+            - name: scripts-volume
+              mountPath: /scripts
+            - name: secrets-volume
+              mountPath: /secrets
+        # Step 2: Create the Kubernetes secret using kubectl
+        - name: create-k8s-secret
+          image: bitnami/kubectl:latest
+          env:
+            - name: NAMESPACE
+              value: "dev"
+          command:
+            - sh
+            - -c
+            - |
+              echo "Creating Kubernetes secret from generated keys..."
+              kubectl create secret generic auth-secrets \
+                --from-file=ACCESS_TOKEN_PRIVATE_KEY=/secrets/access_token_private_key.pem \
+                --from-file=ACCESS_TOKEN_PUBLIC_KEY=/secrets/access_token_public_key.pem \
+                --from-literal=REFRESH_TOKEN_SECRET="$(cat /secrets/refresh_token_secret.txt)" \
+                -n $NAMESPACE
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets
+      volumes:
+        - name: scripts-volume
+          configMap:
+            name: auth-secrets-script
+        - name: secrets-volume
+          emptyDir: {}
+      restartPolicy: OnFailure

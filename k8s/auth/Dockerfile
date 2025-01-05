@@ -12,7 +12,7 @@ ENV NODE_ENV=production
 # Dependencies
 FROM base AS dependencies
 
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 
 RUN npm ci --only=production
 
@@ -21,11 +21,11 @@ FROM base AS dev
 
 ENV NODE_ENV=development
 
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 
 RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 3000 9229
 
@@ -38,7 +38,7 @@ FROM base AS prod
 
 COPY --from=dependencies /home/node/app/node_modules ./node_modules
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 3000
 

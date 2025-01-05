@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import fs from "fs";
 
-export async function addHost(domain) {
+export function addHost(domain) {
   var hostsContent = fs.readFileSync("/etc/hosts", "utf8");
 
   if (!hostsContent.includes(`127.0.0.1 ${domain}`)) {

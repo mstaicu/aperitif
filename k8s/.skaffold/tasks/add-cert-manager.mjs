@@ -14,7 +14,6 @@ export function deployCertManager() {
 export function waitForCertManager() {
   try {
     console.log("⏳ waiting for cert-manager to be ready...");
-
     execSync("cmctl check api --wait=2m", { stdio: "inherit" });
     console.log("✅ cert-manager is ready");
   } catch (error) {

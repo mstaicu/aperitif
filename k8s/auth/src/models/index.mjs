@@ -29,7 +29,7 @@ var createConnection = (uri, options) => {
       Promise.all(
         Object.values(connection.models).map((model) => model.syncIndexes()),
       )
-        .then(() => console.log("indexes synchronized successfully."))
+        .then(() => console.log("indexes synchronized"))
         .catch((error) =>
           console.error("error during index synchronization:", error),
         ),
