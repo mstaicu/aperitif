@@ -3,7 +3,7 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 import { createConnection } from "./models/index.mjs";
-import { addGracefulShutdown, handleShutdown } from "./utils/index.mjs";
+import { addGracefulShutdown } from "./utils/index.mjs";
 
 var PORT = 3000;
 
@@ -17,8 +17,37 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
   dbName: "auth",
 });
 
+var shutdownInitiated = false;
+
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-  process.once(signal, () => handleShutdown(server, connection)),
+  process.once(signal, async () => {
+    if (shutdownInitiated) {
+      return;
+    }
+
+    shutdownInitiated = true;
+
+    console.log("initiating graceful shutdown");
+
+    try {
+      if (server && server.gracefulShutdown) {
+        console.log("closing server connections...");
+        await server.gracefulShutdown();
+      }
+
+      console.log("closing database connection...");
+
+      if (connection.readyState === 1) {
+        await connection.close();
+      }
+
+      console.log("shutdown complete");
+
+      process.exit(0);
+    } catch {
+      process.exit(1);
+    }
+  }),
 );
 
 export { server };

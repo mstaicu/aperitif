@@ -1,11 +1,7 @@
 import { jetstream } from "@nats-io/jetstream";
 
 /**
- * @typedef {import('@nats-io/transport-node').NatsConnection} NatsConnection
- */
-
-/**
- * @param {NatsConnection} connection
+ * @param {import('@nats-io/transport-node').NatsConnection} connection
  */
 export var getSubscriptionCreatedPublisher = async (connection) => {
   var js = jetstream(connection);

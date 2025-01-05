@@ -4,6 +4,8 @@ metadata:
   name: k8s
 
 build:
+  local:
+    push: false
   artifacts:
     - image: mdstaicu/auth
       context: auth
@@ -20,10 +22,6 @@ profiles:
     activation:
       - command: dev
 
-    build:
-      local:
-        push: false
-
     manifests:
       kustomize:
         paths:
@@ -39,10 +37,6 @@ profiles:
   - name: debug
     activation:
       - command: debug
-
-    build:
-      local:
-        push: false
 
     manifests:
       kustomize:
@@ -71,10 +65,3 @@ profiles:
       kustomize:
         paths:
           - infra/overlays/prod
-
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       before:
-    #         - host:
-    #             command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]
