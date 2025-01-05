@@ -1,5 +1,4 @@
 // @ts-check
-import axios from "axios";
 import express from "express";
 import { equal } from "node:assert";
 import http from "node:http";
@@ -11,13 +10,13 @@ test("server took no time to close server with no requests", async function () {
   /**
    * arrange
    */
-  const server = addGracefulShutdown(getExpressServer());
+  var server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
    * act
    */
-  const started = Date.now();
+  var started = Date.now();
   await server.gracefulShutdown();
 
   /**
@@ -33,19 +32,17 @@ test(
     /**
      * arrange
      */
-    const server = addGracefulShutdown(getExpressServer());
+    var server = addGracefulShutdown(getExpressServer());
     await waitEvent(server, "listening");
 
     /**
      * act
      */
-    const httpAgent = new http.Agent({
-      keepAlive: true,
-      keepAliveMsecs: 5000,
+    var response = await fetch("http://localhost:3030/", {
+      keepalive: true,
     });
-    const response = await axios("http://localhost:3030/", { httpAgent });
 
-    equal(response.data, "ok");
+    equal(await response.text(), "ok");
 
     /**
      * wait for the keep-alive connection to expire
@@ -55,7 +52,7 @@ test(
     /**
      * measure how long it took to close the server
      */
-    const started = Date.now();
+    var started = Date.now();
     await server.gracefulShutdown();
 
     /**
@@ -69,31 +66,27 @@ test("server took as long as the request to close, 3 seconds", async function ()
   /**
    * arrange
    */
-  const server = addGracefulShutdown(getExpressServer());
+  var server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
    * act
    */
-  const httpAgent = new http.Agent({
-    keepAlive: true,
-    keepAliveMsecs: 5000,
-  });
-  const request = axios("http://localhost:3030/slow-request", {
-    httpAgent,
+  var request = fetch("http://localhost:3030/slow-request", {
+    keepalive: true,
   });
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const started = Date.now();
+  var started = Date.now();
   /**
    * Calling 'close' in the middle of a slow request
    * 'Connection: close' would be set to all pending responses
    */
   await server.gracefulShutdown();
 
-  const respose = await request;
-  equal(respose.data, "ok");
+  var respose = await request;
+  equal(await respose.text(), "ok");
 
   /**
    * assert
@@ -105,28 +98,24 @@ test("server took as long as the 'isClosing(res)' check to close", async functio
   /**
    * arrange
    */
-  const server = addGracefulShutdown(getExpressServer());
+  var server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
    * act
    */
-  const httpAgent = new http.Agent({
-    keepAlive: true,
-    keepAliveMsecs: 5000,
-  });
-  const request = axios("http://localhost:3030/long-polling", {
-    httpAgent,
+  var request = fetch("http://localhost:3030/long-polling", {
+    keepalive: true,
   });
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const started = Date.now();
+  var started = Date.now();
 
   await server.gracefulShutdown();
 
-  const response = await request;
-  equal(response.data, "ok");
+  var response = await request;
+  equal(await response.text(), "ok");
 
   /**
    * assert
@@ -138,38 +127,37 @@ test("server took as the longest request to close, 3 seconds", async function ()
   /**
    * arrange
    */
-  const server = addGracefulShutdown(getExpressServer());
+  var server = addGracefulShutdown(getExpressServer());
   await waitEvent(server, "listening");
 
   /**
    * act
    */
-  const httpAgent = new http.Agent({
-    keepAlive: true,
-    keepAliveMsecs: 5000,
-  });
-  const response = await axios("http://localhost:3030/", {
-    httpAgent,
-  });
-  equal(response.data, "ok");
 
-  const request2 = axios("http://localhost:3030/slow-request", {
-    httpAgent,
+  var request = await fetch("http://localhost:3030/", {
+    keepalive: true,
   });
-  const request3 = axios("http://localhost:3030/long-polling", {
-    httpAgent,
+
+  equal(await request.text(), "ok");
+
+  var request2 = fetch("http://localhost:3030/slow-request", {
+    keepalive: true,
+  });
+
+  var request3 = fetch("http://localhost:3030/long-polling", {
+    keepalive: true,
   });
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const started = Date.now();
+  var started = Date.now();
   await server.gracefulShutdown();
 
-  const response2 = await request2;
-  equal(response2.data, "ok");
+  var response2 = await request2;
+  equal(await response2.text(), "ok");
 
-  const response3 = await request3;
-  equal(response3.data, "ok");
+  var response3 = await request3;
+  equal(await response3.text(), "ok");
 
   /**
    * assert
@@ -181,7 +169,7 @@ test("server took the configured 'timeoutForceEndSockets' to close", async funct
   /**
    * arrange
    */
-  const server = addGracefulShutdown(getExpressServer(), {
+  var server = addGracefulShutdown(getExpressServer(), {
     timeoutForceEndSockets: 1000,
   });
   await waitEvent(server, "listening");
@@ -189,31 +177,50 @@ test("server took the configured 'timeoutForceEndSockets' to close", async funct
   /**
    * act
    */
-  const httpAgent = new http.Agent({
-    keepAlive: true,
-    keepAliveMsecs: 5000,
+
+  var options = {
+    hostname: "localhost",
+    method: "GET",
+    path: "/slow-request",
+    port: 3030,
+  };
+
+  var request = new Promise((resolve, reject) => {
+    var req = http.request(options);
+
+    /**
+     * @param {NodeJS.ErrnoException} error
+     */
+    var handler = (error) => {
+      if (error.code === "ECONNRESET") {
+        resolve("ECONNRESET");
+      } else {
+        reject(error);
+      }
+    };
+
+    req.on("error", handler);
+
+    req.end();
   });
-  const request = axios("http://localhost:3030/slow-request", {
-    httpAgent,
-  }).catch((error) => error);
 
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const started = Date.now();
+  var started = Date.now();
 
   await server.gracefulShutdown();
 
-  const response = await request;
-  equal(response.code, "ECONNRESET");
+  var response = await request;
 
   /**
    * assert
    */
+  equal(response, "ECONNRESET");
   equal(isAround(Date.now() - started, 1000), true);
 });
 
 function getExpressServer() {
-  const app = express();
+  var app = express();
 
   app.get("/", function (_, res) {
     res.send("ok");
@@ -244,6 +251,6 @@ function waitEvent(emitter, eventName) {
 }
 
 function isAround(real, expected, precision = 200) {
-  const diff = Math.abs(real - expected);
+  var diff = Math.abs(real - expected);
   return diff <= precision;
 }
