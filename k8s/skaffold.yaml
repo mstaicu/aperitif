@@ -32,7 +32,7 @@ profiles:
     #     hooks:
     #       before:
     #         - host:
-    #             command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]
+    #             command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/local-setup.mjs"]
 
   - name: debug
     activation:
@@ -48,7 +48,7 @@ profiles:
     #     hooks:
     #       before:
     #         - host:
-    #             command: ["node", ".skaffold/hooks/setup-local-dev.mjs"]
+    #             command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/local-setup.mjs"]
 
     # portForward:
     #   - resourceType: service

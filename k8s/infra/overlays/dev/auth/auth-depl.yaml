@@ -13,6 +13,21 @@ spec:
       # in the components directive
       #
       serviceAccountName: secrets-viewer-sa
+      #
+      # Init containers run **before the main container starts** and block the pod from starting until they complete successfully.
+      # This is necessary when dealing with secrets used as **environment variables** because Kubernetes cannot track the availability of those secrets after startup.
+      #
+      # - Kubernetes resolves environment variables **only once** at pod startup.
+      # - If a secret referenced in `env` fields is missing at startup, the pod will fail with `CreateContainerConfigError`.
+      # - Unlike volumes, Kubernetes does not track the availability of secrets referenced in `env` after pod creation.
+      #
+      # - Best for when secrets are injected as **environment variables**.
+      # - The init container can run a loop that waits for the secret to exist before starting the main container.
+      #
+      # - Adds a slight startup delay due to the loop in the init container.
+      # - You need RBAC permissions (`get` verb on `secrets`) for the init container to check for the secret's existence.
+      #
+      # Use init containers when secrets are used as environment variables to ensure the secret exists before the main container starts.
       initContainers:
         - name: wait-for-auth-secrets
           image: bitnami/kubectl:latest

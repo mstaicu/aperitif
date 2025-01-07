@@ -7,6 +7,36 @@ spec:
   template:
     spec:
       affinity: null
+      #
+      # Kubernetes Readiness Gates allow you to add custom conditions that must be satisfied before the pod is marked as "Ready."
+      # By adding a readiness gate for secrets (like `SecretsReady`), you ensure that the pod won't receive traffic until the secret exists.
+      #
+      # - Kubernetes tracks the state of mounted volumes (including secrets) at the node level.
+      # - If a volume (e.g., a secret) is missing, Kubernetes retries mounting it in the pod until it becomes available.
+      # - The readiness gate works by creating a custom `PodCondition` that must be set to `True` before the pod is ready.
+      #
+      # - Best for when secrets are **mounted as files** (volumes).
+      # - Automatically tracks the lifecycle of the secret and handles updates to mounted secrets.
+      #
+      # - Readiness gates don't help when secrets are injected as **environment variables** because Kubernetes doesn't track env vars after pod startup.
+      # - If the secret is missing at pod creation, the pod will fail unless you handle it another way (e.g., init containers).
+      #
+      # Use readiness gates when secrets are mounted as volumes to delay traffic until the secret is available.
+
+      #
+      # Without Readiness Gates:
+      #
+      # Readiness probes determine whether the pod is ready to receive traffic.
+      # If a readiness probe passes, the pod is added to the Service’s endpoints and starts receiving traffic.
+      # If it fails, the pod is removed from the endpoints.
+      #
+      # With Readiness Gates:
+      #
+      # Kubernetes introduces an additional readiness condition (like SecretsReady).
+      # Even if the readiness probe passes, the pod will not be marked Ready until both:
+      # The readiness probe passes.
+      # The readiness gate condition (SecretsReady) is set to True.
+      #
       readinessGates:
         - conditionType: SecretsReady
       containers:
