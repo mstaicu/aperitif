@@ -7,6 +7,8 @@ spec:
   template:
     spec:
       affinity: null
+      readinessGates:
+        - conditionType: SecretsReady
       containers:
         - name: nats
           lifecycle:
@@ -16,15 +18,15 @@ spec:
                   - nats-server
                   - -sl=ldm=/tmp/nats.pid
           volumeMounts:
-            - name: resolver-volume
+            - name: nats-resolver-volume
               mountPath: /etc/resolver.conf
               subPath: resolver.conf
             - name: nats-storage
               mountPath: /data
       volumes:
-        - name: resolver-volume
+        - name: nats-resolver-volume
           secret:
-            secretName: nats-resolver
+            secretName: nats-resolver-secret
 
   volumeClaimTemplates:
     - metadata:

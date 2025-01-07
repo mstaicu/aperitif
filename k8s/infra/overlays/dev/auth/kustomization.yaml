@@ -4,9 +4,7 @@ kind: Kustomization
 resources:
   - ../../../base/auth
   - auth-mongo-depl.yaml
-
-components:
-  - ../../../components/secrets-manager
+  - auth-secrets-job.yaml
 
 configMapGenerator:
   - name: auth-config
@@ -24,4 +22,3 @@ configMapGenerator:
 
 patches:
   - path: auth-depl.yaml
-  - path: auth-secrets-job.yaml

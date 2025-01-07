@@ -8,11 +8,16 @@ spec:
   template:
     spec:
       affinity: null
+      #
+      # This is provided by referencing the secret manager in the overlay kustomization
+      # in the components directive
+      #
       serviceAccountName: secrets-viewer-sa
       initContainers:
         - name: wait-for-auth-secrets
           image: bitnami/kubectl:latest
           env:
+            #
             # Kustomize will insert the namespace
             #
             - name: NAMESPACE
