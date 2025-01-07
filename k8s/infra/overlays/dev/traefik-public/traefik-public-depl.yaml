@@ -16,7 +16,7 @@ spec:
       serviceAccountName: traefik-public-account
       containers:
         - name: traefik-public
-          image: traefik:v3.2
+          image: traefik:v3.3
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode

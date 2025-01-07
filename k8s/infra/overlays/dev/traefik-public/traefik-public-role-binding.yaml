@@ -11,7 +11,3 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: traefik-public-account
-    #
-    # TODO: Update the namespace
-    #
-    namespace: dev

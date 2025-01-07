@@ -2,7 +2,7 @@
 import fs from "fs";
 import { execSync } from "node:child_process";
 
-var tools = ["kubectl", "skaffold", "mkcert", "nats", "nsc", "cmctl"];
+var tools = ["mkcert"];
 
 var domain = process.env.DOMAIN;
 
