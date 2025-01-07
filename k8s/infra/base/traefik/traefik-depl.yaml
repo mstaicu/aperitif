@@ -1,12 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: traefik-depl
 spec:
-  replicas: 3
   selector:
     matchLabels:
       app: traefik
+  replicas: 3
+  # This is the default strategy, making it explicit
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -23,7 +30,7 @@ spec:
                     values:
                       - traefik
               topologyKey: kubernetes.io/hostname
-      serviceAccountName: traefik-account
+      serviceAccountName: traefik-sa
       containers:
         - name: traefik
           image: traefik:v3.2

@@ -4,10 +4,16 @@ kind: Deployment
 metadata:
   name: auth-depl
 spec:
-  replicas: 3
   selector:
     matchLabels:
       app: auth
+  replicas: 3
+  # This is the default strategy, making it explicit
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1 # At most 1 pod can be unavailable during the update
+      maxSurge: 1 # At most 1 additional pod can be created during the update
   template:
     metadata:
       labels:

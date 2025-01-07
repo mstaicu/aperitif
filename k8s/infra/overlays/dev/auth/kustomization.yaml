@@ -12,13 +12,6 @@ configMapGenerator:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
-  - name: auth-scripts-config
-    literals:
-      - SECRET_NAME=auth-secrets
-  - name: auth-secrets-scripts
-    files:
-      - generate-secrets.mjs=./scripts/generate-secrets.mjs
-      - create-k8s-secret.sh=./scripts/create-k8s-secret.sh
 
 patches:
   - path: auth-depl.yaml

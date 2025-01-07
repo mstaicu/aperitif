@@ -5,11 +5,14 @@ metadata:
   name: nats-depl
 spec:
   podManagementPolicy: Parallel
-  replicas: 3
   selector:
     matchLabels:
       app: nats
   serviceName: nats-headless
+  replicas: 3
+  # This is the default strategy, making it explicit
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:

@@ -4,5 +4,8 @@ kind: Kustomization
 resources:
   - traefik-crd.yaml
   - traefik-depl.yaml
+  - traefik-role.yaml
+  - traefik-rolebinding.yaml
   - traefik-routes.yaml
+  - traefik-sa.yaml
   - traefik-srv.yaml

@@ -5,7 +5,7 @@ namespace: dev
 
 resources:
   - namespace.yaml
-  - auth
+  # - auth
   # - nats
   # - cert-manager
   # - traefik
@@ -13,3 +13,21 @@ resources:
 
 components:
   - ../../components/secrets-rbac
+
+# replacements:
+#   - source:
+#       fieldPath: metadata.name
+#       kind: Namespace
+#       name: dev
+#       version: v1
+#     targets:
+#       - fieldPaths:
+#           - spec.dnsNames.0
+#         options:
+#           delimiter: .
+#           index: 1
+#         select:
+#           group: cert-manager.io
+#           kind: Certificate
+#           name: tma-cert
+#           version: v1
