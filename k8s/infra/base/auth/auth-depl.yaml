@@ -24,7 +24,6 @@ spec:
                     values:
                       - auth
               topologyKey: kubernetes.io/hostname
-      serviceAccountName: auth-serviceaccount
       containers:
         - name: auth
           image: mdstaicu/auth

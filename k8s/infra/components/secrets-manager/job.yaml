@@ -4,13 +4,13 @@ kind: Job
 metadata:
   name: secrets-manager
 spec:
+  ttlSecondsAfterFinished: 0 # Automatically delete after 0 seconds
   template:
     spec:
-      serviceAccountName: secrets-manager-serviceaccount
-      # Init container: Node.js to generate secrets
+      serviceAccountName: secrets-manager-sa
       initContainers:
         - name: generate-secrets
-          image: node:18-alpine
+          image: node:latest
           volumeMounts:
             - name: secrets-volume
               mountPath: /secrets
@@ -22,7 +22,6 @@ spec:
             - |
               node /scripts/generate-secrets.mjs
       containers:
-        # Container: kubectl to create Kubernetes secret
         - name: create-k8s-secret
           image: bitnami/kubectl:latest
           volumeMounts:
@@ -34,13 +33,16 @@ spec:
             - name: SECRET_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: secrets-config
+                  name: scripts-config
                   key: SECRET_NAME
+            #
+            # Kustomize will insert the namespace
+            #
             - name: NAMESPACE
               valueFrom:
-                configMapKeyRef:
-                  name: secrets-config
-                  key: NAMESPACE
+                fieldRef:
+                  fieldPath: metadata.namespace
+
           command:
             - sh
             - -c

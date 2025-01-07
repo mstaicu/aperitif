@@ -3,7 +3,4 @@ kind: Kustomization
 
 resources:
   - auth-depl.yaml
-  - auth-role.yaml
-  - auth-rolebinding.yaml
-  - auth-serviceaccount.yaml
   - auth-srv.yaml

@@ -3,8 +3,10 @@ kind: Kustomization
 
 resources:
   - ../../../base/auth
-  - ../../../components/secrets-manager
   - auth-mongo-depl.yaml
+
+components:
+  - ../../../components/secrets-manager
 
 configMapGenerator:
   - name: auth-config
@@ -12,10 +14,9 @@ configMapGenerator:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
-  - name: auth-secrets-config
+  - name: auth-scripts-config
     literals:
       - SECRET_NAME=auth-secrets
-      - NAMESPACE=dev
   - name: auth-secrets-scripts
     files:
       - generate-secrets.mjs=./scripts/generate-secrets.mjs

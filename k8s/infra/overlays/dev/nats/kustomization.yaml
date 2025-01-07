@@ -9,5 +9,8 @@ configMapGenerator:
 resources:
   - ../../../base/nats
 
+components:
+  - ../../../components/secrets-rbac
+
 patches:
   - path: nats-depl.yaml
