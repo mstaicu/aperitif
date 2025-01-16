@@ -6,12 +6,12 @@ resources:
   - auth-mongo-depl.yaml
 
 configMapGenerator:
-  - name: auth-config
+  - name: auth-cm
     literals:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
-  - name: auth-scripts
+  - name: auth-cm-scripts
     files:
       - create-secrets.sh=scripts/create-secrets.sh
       - generate-secrets.mjs=scripts/generate-secrets.mjs

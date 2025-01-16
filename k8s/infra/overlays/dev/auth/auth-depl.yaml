@@ -10,23 +10,23 @@ spec:
       affinity: null
       serviceAccountName: secrets-manager-sa
       initContainers:
-        - name: generate-secrets
+        - name: auth-ic-generate-secrets
           image: node:latest
           volumeMounts:
-            - name: secrets-volume
+            - name: auth-volume-scripts
               mountPath: /secrets
-            - name: auth-scripts
+            - name: auth-cm-scripts
               mountPath: /scripts
           command:
             - node
             - /scripts/generate-secrets.mjs
 
-        - name: create-secret
+        - name: auth-ic-create-secret
           image: bitnami/kubectl:latest
           volumeMounts:
-            - name: secrets-volume
+            - name: auth-volume-scripts
               mountPath: /secrets
-            - name: auth-scripts
+            - name: auth-cm-scripts
               mountPath: /scripts
           env:
             - name: NAMESPACE
@@ -38,8 +38,8 @@ spec:
             - /scripts/create-secrets.sh
 
       volumes:
-        - name: secrets-volume
+        - name: auth-volume-scripts
           emptyDir: {}
-        - name: auth-scripts
+        - name: auth-cm-scripts
           configMap:
-            name: auth-scripts
+            name: auth-cm-scripts

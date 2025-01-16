@@ -37,8 +37,8 @@ spec:
       # The readiness probe passes.
       # The readiness gate condition (SecretsReady) is set to True.
       #
-      readinessGates:
-        - conditionType: SecretsReady
+      # readinessGates:
+      #   - conditionType: SecretsReady
       containers:
         - name: nats
           lifecycle:
@@ -48,19 +48,19 @@ spec:
                   - nats-server
                   - -sl=ldm=/tmp/nats.pid
           volumeMounts:
-            - name: nats-resolver-volume
+            - name: nats-volume-resolver
               mountPath: /etc/resolver.conf
               subPath: resolver.conf
-            - name: nats-storage
+            - name: nats-pvc
               mountPath: /data
       volumes:
-        - name: nats-resolver-volume
+        - name: nats-volume-resolver
           secret:
-            secretName: nats-resolver-secret
+            secretName: nats-secret-resolver
 
   volumeClaimTemplates:
     - metadata:
-        name: nats-storage
+        name: nats-pvc
       spec:
         storageClassName: hostpath
         accessModes: ["ReadWriteOnce"]

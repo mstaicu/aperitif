@@ -37,17 +37,17 @@ spec:
             - name: MONGO_DB_URI
               valueFrom:
                 configMapKeyRef:
-                  name: auth-config
+                  name: auth-cm
                   key: MONGO_DB_URI
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-config
+                  name: auth-cm
                   key: DOMAIN
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-config
+                  name: auth-cm
                   key: ORIGIN
 
             - name: ACCESS_TOKEN_PRIVATE_KEY
@@ -71,6 +71,13 @@ spec:
             #     secretKeyRef:
             #       name: nats-users
             #       key: nats_users_auth_creds
+
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NATS_CLUSTER_FQDN
+              value: "nats.${NAMESPACE}.svc.cluster.local"
 
           #
           # total probe time =

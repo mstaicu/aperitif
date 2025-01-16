@@ -1,5 +1,5 @@
-if ! kubectl get secret nats-resolver-secret -n $NAMESPACE > /dev/null 2>&1; then
-  kubectl create secret generic nats-resolver-secret \
+if ! kubectl get secret nats-secret-resolver -n $NAMESPACE > /dev/null 2>&1; then
+  kubectl create secret generic nats-secret-resolver \
     --from-file=resolver.conf=/secrets/resolver.conf \
     -n $NAMESPACE \
     1> /dev/null

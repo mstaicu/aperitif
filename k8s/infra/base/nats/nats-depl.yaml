@@ -35,7 +35,7 @@ spec:
           args: ["-c", "/etc/nats/nats-server.conf"]
 
           volumeMounts:
-            - name: nats-server-cm
+            - name: nats-cm-server-conf
               mountPath: /etc/nats/
 
           readinessProbe:
@@ -69,6 +69,6 @@ spec:
             failureThreshold: 60
 
       volumes:
-        - name: nats-server-cm
+        - name: nats-cm-server-conf
           configMap:
-            name: nats-cm
+            name: nats-cm-server-conf

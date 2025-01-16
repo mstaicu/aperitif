@@ -3,13 +3,13 @@ kind: Kustomization
 
 resources:
   - ../../../base/nats
-  - nats-secrets-job.yaml
+  - nats-job-secrets.yaml
 
 configMapGenerator:
-  - name: nats-cm
+  - name: nats-cm-server-conf
     files:
       - nats-server.conf=nats-server.conf
-  - name: nats-scripts
+  - name: nats-cm-scripts
     files:
       - create-secrets.sh=scripts/create-secrets.sh
       - generate-secrets.sh=scripts/generate-secrets.sh
