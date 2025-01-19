@@ -10,7 +10,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: tls
+  name: traefik-public-middleware-tls
 spec:
   headers:
     #
@@ -57,7 +57,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
-  name: tls-options
+  name: traefik-public-tls-options
 spec:
   minVersion: VersionTLS12
   cipherSuites:

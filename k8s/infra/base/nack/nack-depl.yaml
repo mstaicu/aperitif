@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: nack
+spec:
+  selector:
+    matchLabels:
+      app: nack
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nack
+    spec:
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: jetstream-controller
+      initContainers:
+        - name: wait-for-nats
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until nc -z nats 4222; do
+                sleep 2;
+              done;
+      readinessGates:
+        - conditionType: SecretsReady
+      containers:
+        - name: jsc
+          image: natsio/jetstream-controller:0.16.0
+          imagePullPolicy: IfNotPresent
+          workingDir: /nack
+          command:
+            - /jetstream-controller
+          args:
+            - -s=nats://nats:4222
+            - --creds=/nack/creds/nack.creds
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+          volumeMounts:
+            - name: nack-volume-creds
+              mountPath: /nack/creds/nack.creds
+              subPath: nack.creds
+            - name: runtime
+              mountPath: /nack
+      volumes:
+        - name: nack-volume-creds
+          secret:
+            secretName: nack-creds
+        - name: runtime
+          emptyDir: {}

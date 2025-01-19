@@ -2,27 +2,27 @@ apiVersion: batch/v1
 kind: Job
 
 metadata:
-  name: traefik-public-generate-certs
+  name: traefik-public-job-certs
 spec:
   ttlSecondsAfterFinished: 0 # Automatically delete after 0 seconds
   template:
     spec:
       serviceAccountName: secrets-manager-sa
       initContainers:
-        - name: mkcert
+        - name: traefik-public-ic-generate-secrets
           image: alpine/mkcert:latest
           volumeMounts:
             - name: tmp
               mountPath: /tmp
           env:
             - name: DOMAIN
-              value: tma.com
+              value: tma.com # TODO: Env vars
           command:
             - sh
             - -c
             - mkcert -cert-file /tmp/cert.pem -key-file /tmp/key.pem $DOMAIN
       containers:
-        - name: create-k8s-secret
+        - name: traefik-public-ic-create-secrets
           image: bitnami/kubectl:latest
           volumeMounts:
             - name: tmp
@@ -39,7 +39,7 @@ spec:
             - sh
             - -c
             - |
-              kubectl create secret tls certs-secret \
+              kubectl create secret tls traefik-public-secret-certs \
                 --cert=/tmp/cert.pem \
                 --key=/tmp/key.pem \
                 -n $NAMESPACE

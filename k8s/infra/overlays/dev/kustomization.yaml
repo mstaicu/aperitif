@@ -6,6 +6,7 @@ namespace: dev
 resources:
   - namespace.yaml
   # - auth
+  - nack
   - nats
   # - cert-manager
   # - traefik

@@ -13,7 +13,7 @@ spec:
       labels:
         app: traefik-public
     spec:
-      serviceAccountName: traefik-public-account
+      serviceAccountName: traefik-public-sa
       containers:
         - name: traefik-public
           image: traefik:v3.3

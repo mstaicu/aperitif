@@ -4,24 +4,31 @@ metadata:
   name: k8s
 
 build:
-  local:
-    push: false
+  tagPolicy:
+    gitCommit:
+      variant: AbbrevCommitSha
   artifacts:
     - image: mdstaicu/auth
       context: auth
       docker:
         dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: src/**/*.mjs
-            dest: .
 
 profiles:
   - name: dev
     activation:
       - command: dev
-
+    build:
+      local:
+        push: false
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            target: dev
+          sync:
+            manual:
+              - src: src/**/*.mjs
+                dest: .
     manifests:
       kustomize:
         paths:
@@ -37,7 +44,18 @@ profiles:
   - name: debug
     activation:
       - command: debug
-
+    build:
+      local:
+        push: false
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            target: dev
+          sync:
+            manual:
+              - src: src/**/*.mjs
+                dest: .
     manifests:
       kustomize:
         paths:
@@ -56,11 +74,28 @@ profiles:
     #     port: 4222
     #     address: 127.0.0.1
 
+  - name: ephemeral
+    build:
+      local:
+        push: true
+      artifacts:
+        - image: mdstaicu/auth
+          context: auth
+          docker:
+            target: prod
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/ephemeral
+
   - name: prod
     build:
       local:
         push: true
-
+      artifacts:
+        - image: mdstaicu/auth
+          docker:
+            target: prod
     manifests:
       kustomize:
         paths:

@@ -1,0 +1,18 @@
+apiVersion: jetstream.nats.io/v1beta2
+kind: Stream
+metadata:
+  name: subscriptions
+spec:
+  name: subscriptions
+  subjects: ["subscriptions.*"]
+  retention: interest
+---
+apiVersion: jetstream.nats.io/v1beta2
+kind: Consumer
+metadata:
+  name: auth-service-subscriptions-consumer
+spec:
+  streamName: subscriptions
+  durableName: auth-service-subscriptions-consumer
+  deliverPolicy: all
+  ackPolicy: explicit

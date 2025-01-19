@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 
 metadata:
-  name: traefik-public-role-binding
+  name: traefik-public-rolebinding
 
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -10,4 +10,4 @@ roleRef:
   name: traefik-public-role
 subjects:
   - kind: ServiceAccount
-    name: traefik-public-account
+    name: traefik-public-sa
