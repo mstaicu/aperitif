@@ -13,9 +13,25 @@ spec:
       labels:
         app: nack
     spec:
-      terminationGracePeriodSeconds: 30
       serviceAccountName: jetstream-controller
       initContainers:
+        - name: wait-for-secret
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while [ ! -f /mnt/nack.creds ] ; do
+                sleep 2;
+              done;
+
+              cp /mnt/nack.creds /nack/nack.creds
+          volumeMounts:
+            - name: nack-volume-creds
+              mountPath: /mnt
+            - name: shared
+              mountPath: /nack
+
         - name: wait-for-nats
           image: busybox
           command:
@@ -25,18 +41,17 @@ spec:
               until nc -z nats 4222; do
                 sleep 2;
               done;
-      readinessGates:
-        - conditionType: SecretsReady
       containers:
         - name: jsc
-          image: natsio/jetstream-controller:0.16.0
-          imagePullPolicy: IfNotPresent
+          image: natsio/jetstream-controller:latest
           workingDir: /nack
           command:
             - /jetstream-controller
           args:
-            - -s=nats://nats:4222
-            - --creds=/nack/creds/nack.creds
+            - --version
+            # - -s=nats://nats:4222
+            # - --control-loop=true
+            # - --creds=/nack/nack.creds
           env:
             - name: POD_NAME
               valueFrom:
@@ -48,14 +63,11 @@ spec:
                   fieldPath: metadata.namespace
 
           volumeMounts:
-            - name: nack-volume-creds
-              mountPath: /nack/creds/nack.creds
-              subPath: nack.creds
-            - name: runtime
+            - name: shared
               mountPath: /nack
       volumes:
         - name: nack-volume-creds
           secret:
             secretName: nack-creds
-        - name: runtime
+        - name: shared
           emptyDir: {}

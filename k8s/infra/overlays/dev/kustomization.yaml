@@ -8,26 +8,8 @@ resources:
   # - auth
   - nack
   - nats
-  # - cert-manager
   # - traefik
   # - traefik-public
 
 components:
   - ../../components/secrets-rbac
-
-# replacements:
-#   - source:
-#       fieldPath: metadata.name
-#       kind: Namespace
-#       version: v1
-#     targets:
-#       - fieldPaths:
-#           - spec.dnsNames.0
-#         options:
-#           delimiter: .
-#           index: 1
-#         select:
-#           group: cert-manager.io
-#           kind: Certificate
-#           name: tma-cert
-#           version: v1

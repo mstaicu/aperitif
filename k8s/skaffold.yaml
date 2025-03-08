@@ -39,7 +39,7 @@ profiles:
     #     hooks:
     #       before:
     #         - host:
-    #             command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/local-setup.mjs"]
+    #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
   - name: debug
     activation:
@@ -66,27 +66,13 @@ profiles:
     #     hooks:
     #       before:
     #         - host:
-    #             command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/local-setup.mjs"]
+    #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
     # portForward:
     #   - resourceType: service
     #     resourceName: nats
     #     port: 4222
     #     address: 127.0.0.1
-
-  - name: ephemeral
-    build:
-      local:
-        push: true
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            target: prod
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/ephemeral
 
   - name: prod
     build:

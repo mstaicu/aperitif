@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 
 var tools = ["mkcert"];
 
-var domain = process.env.DOMAIN;
+var domain = "tma.com";
 
 if (!domain) {
   console.error(
@@ -13,7 +13,6 @@ if (!domain) {
   process.exit(1);
 }
 
-// ✅ Check required tool
 tools.forEach((cmd) => {
   try {
     execSync(`command -v ${cmd}`, { stdio: "ignore" });
@@ -24,7 +23,6 @@ tools.forEach((cmd) => {
   }
 });
 
-// ✅ Modify /etc/hosts
 var hostsContent = fs.readFileSync("/etc/hosts", "utf8");
 
 if (!hostsContent.includes(`127.0.0.1 ${domain}`)) {
@@ -34,7 +32,6 @@ if (!hostsContent.includes(`127.0.0.1 ${domain}`)) {
   console.log(`📍 127.0.0.1 ${domain} already exists in /etc/hosts`);
 }
 
-// ✅ Install mkcert CA
 console.log("🔑 Installing mkcert CA...");
 execSync("mkcert -install", { stdio: "inherit" });
 

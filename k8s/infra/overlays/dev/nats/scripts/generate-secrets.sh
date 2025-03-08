@@ -4,12 +4,18 @@ nsc edit operator --require-signing-keys
 nsc add account tma
 
 nsc edit account tma --sk generate
-nsc edit account tma --js-enable -1
+nsc edit account tma --js-enable 3
 
 nsc add user --account tma nack
 nsc add user --account tma auth
 
-nsc edit user --account tma -n nack --allow-pub "$JS.API.>"
+nsc edit user --account tma -n nack \
+  --allow-pub "\$JS.API.>" \
+  --allow-sub "\$JS.API.>"
+
+nsc edit user --account tma -n nack \
+  --allow-pub "_INBOX.>" \
+  --allow-sub "_INBOX.>"
 
 # Export credentials to shared volume
 nsc generate creds --account tma --name nack > /secrets/nack.creds

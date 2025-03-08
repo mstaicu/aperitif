@@ -10,9 +10,6 @@ spec:
       app: nats
   serviceName: nats-headless
   replicas: 3
-  # This is the default strategy, making it explicit
-  updateStrategy:
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -31,7 +28,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: nats
-          image: nats:2.10.23-alpine
+          image: nats:2.10.26-alpine
           args: ["-c", "/etc/nats/nats-server.conf"]
 
           volumeMounts:
@@ -66,7 +63,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             successThreshold: 1
-            failureThreshold: 60
+            failureThreshold: 90
 
       volumes:
         - name: nats-cm-server-conf

@@ -10,9 +10,9 @@ spec:
 apiVersion: jetstream.nats.io/v1beta2
 kind: Consumer
 metadata:
-  name: auth-service-subscriptions-consumer
+  name: auth-srv-subscriptions-consumer
 spec:
   streamName: subscriptions
-  durableName: auth-service-subscriptions-consumer
+  durableName: auth-srv-subscriptions-consumer
   deliverPolicy: all
   ackPolicy: explicit

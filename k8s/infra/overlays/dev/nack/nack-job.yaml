@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: nack-job
+spec:
+  ttlSecondsAfterFinished: 0 # Automatically delete after 0 seconds
+  template:
+    spec:
+      serviceAccountName: jetstream-controller
+      containers:
+        - name: nack-crd-manager
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              CRDS=("streams.jetstream.nats.io" "consumers.jetstream.nats.io" "accounts.jetstream.nats.io")
+
+              for CRD in "${CRDS[@]}"; do
+                kubectl wait --for=condition=established crd/$CRD --timeout=60s
+
+                if [ $? -ne 0 ]; then
+                  exit 1
+                fi
+              done
+
+              kubectl apply -f /crds/nack-crs.yaml -n $NAMESPACE
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: nack-cm-crds
+              mountPath: /crds
+
+      volumes:
+        - name: nack-cm-crds
+          configMap:
+            name: nack-cm-crds
+
+      restartPolicy: OnFailure

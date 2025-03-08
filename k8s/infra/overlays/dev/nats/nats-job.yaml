@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 
 metadata:
-  name: nats-job-secrets
+  name: nats-job
 spec:
   ttlSecondsAfterFinished: 0 # Automatically delete after 0 seconds
   template:

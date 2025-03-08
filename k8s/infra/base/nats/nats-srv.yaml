@@ -14,7 +14,7 @@ spec:
       protocol: TCP
       port: 6222
       targetPort: 6222
-    - name: nats-monitor
+    - name: nats-cluster-monitor
       protocol: TCP
       appProtocol: HTTP
       port: 8222
@@ -35,3 +35,7 @@ spec:
       protocol: TCP
       port: 4222
       targetPort: 4222
+    - name: nats-monitor
+      protocol: TCP
+      port: 8222
+      targetPort: 8222
