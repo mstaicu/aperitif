@@ -1,3 +1,5 @@
+import { connect, credsAuthenticator } from "@nats-io/transport-node";
+import { readFileSync } from "fs";
 // @ts-check
 import nconf from "nconf";
 
@@ -15,6 +17,15 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
   autoIndex: false,
   bufferCommands: false,
   dbName: "auth",
+});
+
+var authenticator = credsAuthenticator(
+  new Uint8Array(readFileSync("/secrets/auth.creds")),
+);
+
+var nc = await connect({
+  authenticator,
+  servers: "nats://nats:4222",
 });
 
 var shutdownInitiated = false;

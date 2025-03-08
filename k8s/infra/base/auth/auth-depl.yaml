@@ -66,18 +66,18 @@ spec:
                   name: auth-secrets
                   key: REFRESH_TOKEN_SECRET
 
-            # - name: NATS_USERS_AUTH_CREDS
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: nats-users
-            #       key: nats_users_auth_creds
-
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+
             - name: NATS_CLUSTER_FQDN
               value: "nats.${NAMESPACE}.svc.cluster.local"
+
+          volumeMounts:
+            - name: nats-auth-creds
+              mountPath: /secrets
+              readOnly: true
 
           #
           # total probe time =
@@ -100,3 +100,8 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 1
             failureThreshold: 2
+
+      volumes:
+        - name: nats-auth-creds
+          secret:
+            secretName: nats-auth-secret

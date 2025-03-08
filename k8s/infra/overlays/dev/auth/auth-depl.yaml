@@ -10,8 +10,8 @@ spec:
       affinity: null
       serviceAccountName: secrets-manager-sa
       initContainers:
-        - name: auth-ic-generate-secrets
-          image: node:latest
+        - name: generate-auth-secrets
+          image: node:alpine
           volumeMounts:
             - name: auth-volume-scripts
               mountPath: /secrets
@@ -21,7 +21,7 @@ spec:
             - node
             - /scripts/generate-secrets.mjs
 
-        - name: auth-ic-create-secret
+        - name: create-auth-secret
           image: bitnami/kubectl:latest
           volumeMounts:
             - name: auth-volume-scripts
@@ -36,6 +36,22 @@ spec:
           command:
             - sh
             - /scripts/create-secrets.sh
+
+        - name: wait-for-nats-secret
+          image: bitnami/kubectl:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              until kubectl get secret nats-auth-secret -n $NAMESPACE; do
+                sleep 2
+              done
 
       volumes:
         - name: auth-volume-scripts

@@ -1,4 +1,3 @@
-// @ts-check
 import nconf from "nconf";
 
 nconf.env();
@@ -10,9 +9,8 @@ nconf.required([
 
   "ACCESS_TOKEN_PRIVATE_KEY",
   "ACCESS_TOKEN_PUBLIC_KEY",
-  "REFRESH_TOKEN_SECRET",
 
-  // "NATS_USERS_AUTH_CREDS",
+  "REFRESH_TOKEN_SECRET",
 ]);
 
 import("./server.mjs");

@@ -1,25 +1,25 @@
-nsc add operator --name tma --sys --generate-signing-key
+nsc add operator --name TMA --sys --generate-signing-key
 nsc edit operator --require-signing-keys
 
-nsc add account tma
+nsc add account TMA
 
-nsc edit account tma --sk generate
-nsc edit account tma --js-enable 3
+nsc edit account TMA --sk generate
+nsc edit account TMA --js-enable 3
 
-nsc add user --account tma nack
-nsc add user --account tma auth
+# nsc add user --account TMA nack
+nsc add user --account TMA auth
 
-nsc edit user --account tma -n nack \
-  --allow-pub "\$JS.API.>" \
-  --allow-sub "\$JS.API.>"
+# nsc edit user --account TMA -n nack \
+#   --allow-pub "\$JS.API.>" \
+#   --allow-sub "\$JS.API.>"
 
-nsc edit user --account tma -n nack \
-  --allow-pub "_INBOX.>" \
-  --allow-sub "_INBOX.>"
+# nsc edit user --account TMA -n nack \
+#   --allow-pub "_INBOX.>" \
+#   --allow-sub "_INBOX.>"
 
 # Export credentials to shared volume
-nsc generate creds --account tma --name nack > /secrets/nack.creds
-nsc generate creds --account tma --name auth > /secrets/auth.creds
+# nsc generate creds --account TMA --name nack > /secrets/nack.creds
+nsc generate creds --account TMA --name auth > /secrets/auth.creds
 
 # Export memory resolver for server config to shared volume
 nsc generate config --mem-resolver --sys-account SYS > /secrets/resolver.conf
