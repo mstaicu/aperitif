@@ -68,11 +68,11 @@ profiles:
     #         - host:
     #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
-    # portForward:
-    #   - resourceType: service
-    #     resourceName: nats
-    #     port: 4222
-    #     address: 127.0.0.1
+    portForward:
+      - resourceType: service
+        resourceName: nats
+        port: 4222
+        address: 127.0.0.1
 
   - name: prod
     build:

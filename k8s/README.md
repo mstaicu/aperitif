@@ -51,6 +51,24 @@ $ nats server ls --sort=name
 $ while true; do nats server ls --sort=name; sleep 1; done
 ```
 
+### Jetstream https://www.synadia.com/newsletter/nats-weekly-27
+
+```
+$ kubectl get secret nats-sys-creds-secret -o jsonpath="{.data.sys\.creds}" -n dev | base64 --decode > /tmp/sys.creds
+
+$ nats server report js --creds /tmp/sys.creds
+
+$ nats server ls --creds /tmp/sys.creds
+
+$ nats subscribe --stream=math --creds /tmp/auth.creds
+
+$ nats consumer add math worker-1 --filter "math.>" --deliver all --ack all --creds /tmp/auth.creds
+
+$ nats consumer next math worker-1 --creds /tmp/auth.creds
+
+$ nats pub math.add '{"id": 1}' --creds /tmp/auth.creds
+```
+
 ### Adding a new service:
 
 1. Create the package folder, add sources, install dependencies

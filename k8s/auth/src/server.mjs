@@ -1,9 +1,8 @@
-import { connect, credsAuthenticator } from "@nats-io/transport-node";
-import { readFileSync } from "fs";
 // @ts-check
 import nconf from "nconf";
 
 import { app } from "./app.mjs";
+import { connect } from "./messaging/index.mjs";
 import { createConnection } from "./models/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
@@ -19,37 +18,38 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
   dbName: "auth",
 });
 
-var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync("/secrets/auth.creds")),
-);
-
-var nc = await connect({
-  authenticator,
-  servers: "nats://nats:4222",
-});
+var nc = await connect();
 
 var shutdownInitiated = false;
 
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
   process.once(signal, async () => {
-    if (shutdownInitiated) {
-      return;
-    }
+    if (shutdownInitiated) return;
 
     shutdownInitiated = true;
 
-    console.log("initiating graceful shutdown");
+    console.log(`initiating graceful shutdown (${signal})`);
 
     try {
-      if (server && server.gracefulShutdown) {
-        console.log("closing server connections...");
-        await server.gracefulShutdown();
-      }
-
-      console.log("closing database connection...");
+      console.log("closing server connections...");
+      await server.gracefulShutdown();
 
       if (connection.readyState === 1) {
-        await connection.close();
+        console.log("closing database connection...");
+        try {
+          await connection.close();
+        } catch {
+          await connection.close(true);
+        }
+      }
+
+      if (!nc.isClosed()) {
+        console.log("closing nats connection...");
+        try {
+          await nc.drain();
+        } catch {
+          await nc.close();
+        }
       }
 
       console.log("shutdown complete");

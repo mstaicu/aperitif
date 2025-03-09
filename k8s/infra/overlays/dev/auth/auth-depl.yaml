@@ -49,7 +49,7 @@ spec:
             - /bin/sh
             - "-c"
             - |
-              until kubectl get secret nats-auth-secret -n $NAMESPACE; do
+              until kubectl get secret nats-auth-creds-secret -n $NAMESPACE 2>&1 >/dev/null; do
                 sleep 2
               done
 

@@ -24,7 +24,7 @@ spec:
       volumes:
         - name: nats-volume-resolver
           secret:
-            secretName: nats-resolver # Holds the memory resolver
+            secretName: nats-resolver-secret # Holds the memory resolver
 
   volumeClaimTemplates:
     - metadata:

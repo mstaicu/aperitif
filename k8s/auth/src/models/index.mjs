@@ -1,4 +1,3 @@
-// @ts-check
 import mongoose from "mongoose";
 
 import { ChallengeSchema } from "./Challenge.schema.mjs";
@@ -12,7 +11,6 @@ import { UserSchema } from "./User.schema.mjs";
 var connection;
 
 /**
- *
  * @param {string} uri
  * @param {mongoose.ConnectOptions} options
  */

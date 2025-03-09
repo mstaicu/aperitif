@@ -8,12 +8,6 @@ spec:
     matchLabels:
       app: auth
   replicas: 3
-  # This is the default strategy, making it explicit
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1 # At most 1 pod can be unavailable during the update
-      maxSurge: 1 # At most 1 additional pod can be created during the update
   template:
     metadata:
       labels:
@@ -71,9 +65,6 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
 
-            - name: NATS_CLUSTER_FQDN
-              value: "nats.${NAMESPACE}.svc.cluster.local"
-
           volumeMounts:
             - name: nats-auth-creds
               mountPath: /secrets
@@ -101,7 +92,13 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 2
 
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 40
+
       volumes:
         - name: nats-auth-creds
           secret:
-            secretName: nats-auth-secret
+            secretName: nats-auth-creds-secret

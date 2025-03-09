@@ -1,5 +1,6 @@
 import express from "express";
 
+import { nc } from "../messaging/index.mjs";
 import { connection } from "../models/index.mjs";
 
 var router = express.Router();
@@ -8,6 +9,10 @@ router.get("/readyz", async (_, res) => {
   try {
     if (!connection || connection.readyState !== 1) {
       throw new Error("mongoose connection is not available");
+    }
+
+    if (!nc || nc.isClosed()) {
+      throw new Error("nats connection is not available");
     }
 
     res.sendStatus(200);
