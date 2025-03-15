@@ -9,7 +9,7 @@ import nconf from "nconf";
 var defaultCredsPath = "/secrets/auth.creds";
 
 if (!existsSync(defaultCredsPath)) {
-  throw new Error("NATS credentials file missing");
+  throw new Error("missing auth.creds file");
 }
 
 /**
@@ -29,17 +29,25 @@ var js;
  * @param {import("@nats-io/transport-node").ConnectionOptions} options
  */
 async function connect(options = {}) {
-  var servers = [
-    `nats://nats-depl-0.nats-headless.${nconf.get("NAMESPACE")}.svc.cluster.local:4222`,
-    `nats://nats-depl-1.nats-headless.${nconf.get("NAMESPACE")}.svc.cluster.local:4222`,
-    `nats://nats-depl-2.nats-headless.${nconf.get("NAMESPACE")}.svc.cluster.local:4222`,
-  ];
+  var servers = Array.from(Array(3)).map(
+    (_, index) =>
+      `nats://nats-depl-${index}.nats-headless.${nconf.get("NAMESPACE")}.svc.cluster.local:4222`,
+  );
+
+  var authenticator = credsAuthenticator(
+    new Uint8Array(readFileSync(defaultCredsPath)),
+  );
+
+  try {
+    authenticator(); // this should return a { jwt, nkey, sig } or throw an error if the .creds file is invalid
+  } catch (error) {
+    console.error("auth.creds contains invalid content");
+    throw error;
+  }
 
   nc = await retryWithBackoff(() =>
     natsConnect({
-      authenticator: credsAuthenticator(
-        new Uint8Array(readFileSync(defaultCredsPath)),
-      ),
+      authenticator,
       maxReconnectAttempts: -1,
       servers,
       ...options,

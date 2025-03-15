@@ -31,7 +31,6 @@ spec:
           command:
             - sh
             - /scripts/create-secrets.sh
-
           volumeMounts:
             - name: nats-cm-scripts
               mountPath: /scripts

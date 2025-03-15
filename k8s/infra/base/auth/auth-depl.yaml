@@ -97,7 +97,7 @@ spec:
               path: /healthz
               port: 3000
             initialDelaySeconds: 15
-            periodSeconds: 5
+            periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 5
 

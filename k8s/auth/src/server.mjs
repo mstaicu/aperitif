@@ -23,44 +23,47 @@ var nc = await connect();
 var shutdownInitiated = false;
 
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-  process.once(signal, async () => {
+  process.on(signal, async () => {
     if (shutdownInitiated) return;
 
     shutdownInitiated = true;
 
-    console.log(`initiating graceful shutdown (${signal})`);
+    console.log("closing server connections...");
+    await server.gracefulShutdown();
 
-    try {
-      console.log("closing server connections...");
-      await server.gracefulShutdown();
-
-      if (connection.readyState === 1) {
-        console.log("closing database connection...");
-        try {
-          await connection.close();
-        } catch {
-          await connection.close(true);
-        }
+    if (connection.readyState !== 0) {
+      console.log("closing database connection...");
+      try {
+        await connection.close();
+      } catch {
+        console.error("error closing mongoose connection");
       }
-
-      if (!nc.isClosed()) {
-        console.log("closing nats connection...");
-
-        try {
-          await nc.drain();
-        } catch {
-          await nc.close();
-        }
-
-        await nc.closed();
-      }
-
-      console.log("shutdown complete");
-
-      process.exit(0);
-    } catch {
-      process.exit(1);
     }
+
+    if (!nc.isClosed()) {
+      console.log("closing nats connection...");
+      try {
+        await nc.drain();
+      } catch {
+        console.error("error draining nats");
+
+        try {
+          await nc.close();
+        } catch {
+          console.error("error force-closing nats");
+        }
+      }
+
+      try {
+        await nc.closed();
+      } catch {
+        console.error("error waiting for nats to close");
+      }
+    }
+
+    console.log("shutdown complete");
+
+    process.exit(0);
   }),
 );
 

@@ -11,4 +11,4 @@ resources:
   # - traefik-public
 
 components:
-  - ../../components/secrets-rbac
+  - ../../components/secrets-manager

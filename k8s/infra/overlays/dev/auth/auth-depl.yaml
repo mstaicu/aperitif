@@ -37,21 +37,21 @@ spec:
             - sh
             - /scripts/create-secrets.sh
 
-        - name: wait-for-nats-secret
-          image: bitnami/kubectl:latest
-          env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+        # - name: wait-for-nats-secret
+        #   image: bitnami/kubectl:latest
+        #   env:
+        #     - name: NAMESPACE
+        #       valueFrom:
+        #         fieldRef:
+        #           fieldPath: metadata.namespace
 
-          command:
-            - /bin/sh
-            - "-c"
-            - |
-              until kubectl get secret nats-auth-creds-secret -n $NAMESPACE 2>&1 >/dev/null; do
-                sleep 2
-              done
+        #   command:
+        #     - /bin/sh
+        #     - "-c"
+        #     - |
+        #       until kubectl get secret nats-auth-creds-secret -n $NAMESPACE 2>&1 >/dev/null; do
+        #         sleep 2
+        #       done
 
       volumes:
         - name: auth-volume-scripts
