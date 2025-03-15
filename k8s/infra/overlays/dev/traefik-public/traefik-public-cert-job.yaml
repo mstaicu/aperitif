@@ -4,7 +4,7 @@ kind: Job
 metadata:
   name: traefik-public-job-certs
 spec:
-  ttlSecondsAfterFinished: 0 # Automatically delete after 0 seconds
+  ttlSecondsAfterFinished: 0
   template:
     spec:
       serviceAccountName: secrets-manager-sa
@@ -28,9 +28,6 @@ spec:
             - name: tmp
               mountPath: /tmp
           env:
-            #
-            # Kustomize will insert the namespace
-            #
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

@@ -8,12 +8,6 @@ spec:
     matchLabels:
       app: traefik
   replicas: 3
-  # This is the default strategy, making it explicit
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   template:
     metadata:
       labels:

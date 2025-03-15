@@ -1,15 +1,17 @@
 // @ts-check
 import { Router } from "express";
 
-import { availability } from "../middleware/index.mjs";
+import { serviceAvailability } from "../middleware/index.mjs";
 import { healthRouter } from "./health.mjs";
-import { jwksRouter } from "./jwks.mjs";
+// import { jwksRouter } from "./jwks.mjs";
 
 const router = Router();
 
 router.use("/", healthRouter);
-router.use("/", jwksRouter);
+// router.use("/", jwksRouter);
 
-router.use(availability);
+router.use(serviceAvailability);
+
+// Business logic routes come after
 
 export { router };

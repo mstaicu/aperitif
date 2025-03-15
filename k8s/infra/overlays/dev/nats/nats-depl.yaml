@@ -9,12 +9,6 @@ spec:
       affinity: null
       containers:
         - name: nats
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - nats-server
-                  - -sl=ldm=/tmp/nats.pid
           volumeMounts:
             - name: nats-volume-resolver
               mountPath: /etc/resolver.conf

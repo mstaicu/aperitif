@@ -45,11 +45,14 @@ var shutdownInitiated = false;
 
       if (!nc.isClosed()) {
         console.log("closing nats connection...");
+
         try {
           await nc.drain();
         } catch {
           await nc.close();
         }
+
+        await nc.closed();
       }
 
       console.log("shutdown complete");

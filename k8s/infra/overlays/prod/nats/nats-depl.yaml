@@ -8,12 +8,6 @@ spec:
     spec:
       containers:
         - name: nats
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - nats-server
-                  - -sl=ldm=/tmp/nats.pid
           volumeMounts:
             - name: resolver-volume
               mountPath: /etc/resolver.conf

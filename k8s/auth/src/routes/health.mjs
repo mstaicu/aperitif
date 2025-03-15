@@ -6,20 +6,12 @@ import { connection } from "../models/index.mjs";
 var router = express.Router();
 
 router.get("/readyz", async (_, res) => {
-  try {
-    if (!connection || connection.readyState !== 1) {
-      throw new Error("mongoose connection is not available");
-    }
+  var dbAvailable = connection && connection.readyState === 1;
+  var ncAvailable = nc && !nc.isClosed();
 
-    if (!nc || nc.isClosed()) {
-      throw new Error("nats connection is not available");
-    }
+  var serviceUnavailable = !dbAvailable || !ncAvailable;
 
-    res.sendStatus(200);
-  } catch (error) {
-    console.error("readiness check failed:", error.message);
-    res.sendStatus(500);
-  }
+  res.sendStatus(serviceUnavailable ? 500 : 200);
 });
 
 router.get("/healthz", (_, res) => {

@@ -11,6 +11,8 @@ nconf.required([
   "ACCESS_TOKEN_PUBLIC_KEY",
 
   "REFRESH_TOKEN_SECRET",
+
+  "NAMESPACE",
 ]);
 
 import("./server.mjs");

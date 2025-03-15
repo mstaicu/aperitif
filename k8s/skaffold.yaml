@@ -69,10 +69,9 @@ profiles:
     #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
     portForward:
-      - resourceType: service
-        resourceName: nats
+      - resourceType: statefulset
+        resourceName: nats-depl
         port: 4222
-        address: 127.0.0.1
 
   - name: prod
     build:

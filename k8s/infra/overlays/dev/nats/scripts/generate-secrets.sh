@@ -5,7 +5,10 @@ nsc edit operator --require-signing-keys
 nsc add account TMA
 
 nsc edit account TMA --sk generate
-nsc edit account TMA --js-mem-storage -1 \
+
+# This is how you enable Jetstream for an account
+nsc edit account TMA \
+  --js-mem-storage -1 \
   --js-disk-storage -1 \
   --js-streams -1 \
   --js-consumer -1
