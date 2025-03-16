@@ -19,7 +19,7 @@ spec:
                   fieldPath: metadata.namespace
           command:
             - /bin/sh
-            - "-c"
+            - -c
             - |
               kubectl wait --for=condition=complete --timeout=300s job/auth-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
               kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
@@ -36,13 +36,16 @@ spec:
               mountPath: /secrets
           command:
             - /bin/sh
-            - "-c"
+            - -c
             - |
               until kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2
               done
 
               kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
+
+              chown node:node /secrets/auth.creds
+              chmod 600 /secrets/auth.creds
 
         - name: wait-nats
           image: busybox:latest
@@ -53,12 +56,11 @@ spec:
                   fieldPath: metadata.namespace
           command:
             - /bin/sh
-            - "-c"
+            - -c
             - |
               for i in 0 1 2; do
-                SERVER="nats-depl-$i.nats-headless.$NAMESPACE.svc.cluster.local"
-
-                until nc -z -w 2 $SERVER 4222; do
+                SERVER="http://nats-depl-$i.nats-headless.$NAMESPACE.svc.cluster.local:8222/healthz?js-server-only=true"
+                until curl -s -o /dev/null -w "%{http_code}" "$SERVER" | grep 200; do
                   sleep 2
                 done
               done

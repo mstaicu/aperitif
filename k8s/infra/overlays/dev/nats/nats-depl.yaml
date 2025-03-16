@@ -4,6 +4,7 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
+  replicas: 3
   template:
     spec:
       affinity: null
@@ -18,9 +19,9 @@ spec:
                   fieldPath: metadata.namespace
           command:
             - /bin/sh
-            - "-c"
+            - -c
             - |
-              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE"
+              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
 
         - name: copy-secrets
           image: bitnami/kubectl:latest
@@ -34,7 +35,7 @@ spec:
               mountPath: /secrets
           command:
             - /bin/sh
-            - "-c"
+            - -c
             - |
               until kubectl get secret nats-resolver-secret -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2

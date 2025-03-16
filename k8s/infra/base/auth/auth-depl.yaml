@@ -28,6 +28,11 @@ spec:
         - name: auth
           image: mdstaicu/auth
           env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
             - name: MONGO_DB_URI
               valueFrom:
                 configMapKeyRef:
@@ -58,10 +63,6 @@ spec:
                 secretKeyRef:
                   name: auth-secrets
                   key: REFRESH_TOKEN_SECRET
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
 
           #
           # total probe time =
