@@ -43,7 +43,6 @@ spec:
                 configMapKeyRef:
                   name: auth-cm
                   key: ORIGIN
-
             - name: ACCESS_TOKEN_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
@@ -59,16 +58,10 @@ spec:
                 secretKeyRef:
                   name: auth-secrets
                   key: REFRESH_TOKEN_SECRET
-
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-
-          volumeMounts:
-            - name: nats-auth-creds
-              mountPath: /secrets
-              readOnly: true
 
           #
           # total probe time =
@@ -100,8 +93,3 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 1
             failureThreshold: 10
-
-      volumes:
-        - name: nats-auth-creds
-          secret:
-            secretName: nats-auth-creds-secret

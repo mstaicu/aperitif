@@ -39,7 +39,8 @@ async function connect(options = {}) {
   );
 
   try {
-    authenticator(); // this should return a { jwt, nkey, sig } or throw an error if the .creds file is invalid
+    // if it blows up, it is not a valid .creds file, should return { jwt, nkey, sig }
+    authenticator();
   } catch (error) {
     console.error("auth.creds contains invalid content");
     throw error;

@@ -9,7 +9,7 @@ spec:
       affinity: null
       serviceAccountName: nats-sa
       initContainers:
-        - name: wait-nats-secrets-job
+        - name: wait-jobs
           image: bitnami/kubectl:latest
           env:
             - name: NAMESPACE

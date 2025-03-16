@@ -10,7 +10,7 @@ spec:
       affinity: null
       serviceAccountName: auth-sa
       initContainers:
-        - name: wait-auth-secrets-job
+        - name: wait-jobs
           image: bitnami/kubectl:latest
           env:
             - name: NAMESPACE
@@ -43,6 +43,25 @@ spec:
               done
 
               kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
+
+        - name: wait-nats
+          image: busybox:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              for i in 0 1 2; do
+                SERVER="nats-depl-$i.nats-headless.$NAMESPACE.svc.cluster.local"
+
+                until nc -z -w 2 $SERVER 4222; do
+                  sleep 2
+                done
+              done
 
       containers:
         - name: auth
