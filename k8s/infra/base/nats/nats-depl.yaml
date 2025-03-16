@@ -25,14 +25,13 @@ spec:
                     values:
                       - nats
               topologyKey: kubernetes.io/hostname
-      automountServiceAccountToken: false
       containers:
         - name: nats
           image: nats:2.10.26-alpine
           args: ["-c", "/etc/nats/nats-server.conf"]
 
           volumeMounts:
-            - name: nats-cm-server-conf
+            - name: nats-conf-cm
               mountPath: /etc/nats/
 
           readinessProbe:
@@ -66,6 +65,6 @@ spec:
             failureThreshold: 90
 
       volumes:
-        - name: nats-cm-server-conf
+        - name: nats-conf-cm
           configMap:
-            name: nats-cm-server-conf
+            name: nats-conf-cm

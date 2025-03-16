@@ -8,54 +8,48 @@ spec:
   template:
     spec:
       affinity: null
-      serviceAccountName: secrets-manager-sa
+      serviceAccountName: auth-sa
       initContainers:
-        - name: generate-auth-secrets
-          image: node:alpine
-          volumeMounts:
-            - name: auth-volume-scripts
-              mountPath: /secrets
-            - name: auth-cm-scripts
-              mountPath: /scripts
-          command:
-            - node
-            - /scripts/generate-secrets.mjs
-
-        - name: create-auth-secret
+        - name: wait-auth-secrets-job
           image: bitnami/kubectl:latest
-          volumeMounts:
-            - name: auth-volume-scripts
-              mountPath: /secrets
-            - name: auth-cm-scripts
-              mountPath: /scripts
           env:
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
           command:
-            - sh
-            - /scripts/create-secrets.sh
+            - /bin/sh
+            - "-c"
+            - |
+              kubectl wait --for=condition=complete --timeout=300s job/auth-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
+              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
 
-        # - name: wait-for-nats-secret
-        #   image: bitnami/kubectl:latest
-        #   env:
-        #     - name: NAMESPACE
-        #       valueFrom:
-        #         fieldRef:
-        #           fieldPath: metadata.namespace
+        - name: copy-secrets
+          image: bitnami/kubectl:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: auth-secrets-volume
+              mountPath: /secrets
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              until kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" > /dev/null 2>&1; do
+                sleep 2
+              done
 
-        #   command:
-        #     - /bin/sh
-        #     - "-c"
-        #     - |
-        #       until kubectl get secret nats-auth-creds-secret -n $NAMESPACE 2>&1 >/dev/null; do
-        #         sleep 2
-        #       done
+              kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
+
+      containers:
+        - name: auth
+          volumeMounts:
+            - name: auth-secrets-volume
+              mountPath: /secrets
 
       volumes:
-        - name: auth-volume-scripts
+        - name: auth-secrets-volume
           emptyDir: {}
-        - name: auth-cm-scripts
-          configMap:
-            name: auth-cm-scripts

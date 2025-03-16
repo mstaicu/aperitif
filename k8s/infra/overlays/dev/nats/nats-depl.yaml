@@ -7,18 +7,51 @@ spec:
   template:
     spec:
       affinity: null
+      serviceAccountName: nats-sa
+      initContainers:
+        - name: wait-nats-secrets-job
+          image: bitnami/kubectl:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE"
+
+        - name: copy-secrets
+          image: bitnami/kubectl:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: nats-secrets-volume
+              mountPath: /secrets
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              until kubectl get secret nats-resolver-secret -n "$NAMESPACE" > /dev/null 2>&1; do
+                sleep 2
+              done
+
+              kubectl get secret nats-resolver-secret -n "$NAMESPACE" -o jsonpath="{.data.resolver\.conf}" | base64 -d > /secrets/resolver.conf
+
       containers:
         - name: nats
           volumeMounts:
-            - name: nats-volume-resolver
-              mountPath: /etc/resolver.conf
-              subPath: resolver.conf
+            - name: nats-secrets-volume
+              mountPath: /secrets
             - name: nats-pvc
               mountPath: /data
       volumes:
-        - name: nats-volume-resolver
-          secret:
-            secretName: nats-resolver-secret # Holds the memory resolver
+        - name: nats-secrets-volume
+          emptyDir: {}
 
   volumeClaimTemplates:
     - metadata:

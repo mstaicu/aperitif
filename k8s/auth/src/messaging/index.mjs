@@ -70,8 +70,8 @@ async function connect(options = {}) {
 async function retryWithBackoff(
   fn,
   attempt = 0,
-  maxRetries = 5,
-  baseDelay = 1000,
+  maxRetries = 10,
+  baseDelay = 2000,
 ) {
   try {
     return await fn();
@@ -80,9 +80,7 @@ async function retryWithBackoff(
       throw error;
     }
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, baseDelay * Math.pow(2, attempt)),
-    );
+    await new Promise((resolve) => setTimeout(resolve, baseDelay));
 
     return retryWithBackoff(fn, attempt + 1, maxRetries, baseDelay);
   }
