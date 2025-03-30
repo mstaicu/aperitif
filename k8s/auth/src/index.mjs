@@ -2,17 +2,6 @@ import nconf from "nconf";
 
 nconf.env();
 
-nconf.required([
-  "MONGO_DB_URI",
-  "DOMAIN",
-  "ORIGIN",
-
-  "ACCESS_TOKEN_PRIVATE_KEY",
-  "ACCESS_TOKEN_PUBLIC_KEY",
-
-  "REFRESH_TOKEN_SECRET",
-
-  "NAMESPACE",
-]);
+nconf.required(["MONGO_DB_URI", "DOMAIN", "ORIGIN", "NAMESPACE"]);
 
 import("./server.mjs");

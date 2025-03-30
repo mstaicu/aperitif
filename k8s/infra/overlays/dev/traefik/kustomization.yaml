@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../base/traefik
+  - traefik-cert.yaml
 
 patches:
   - path: traefik-depl.yaml

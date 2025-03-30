@@ -72,7 +72,7 @@ async function retryWithBackoff(
   fn,
   attempt = 0,
   maxRetries = 10,
-  baseDelay = 2000,
+  baseDelay = 1000,
 ) {
   try {
     return await fn();
@@ -81,7 +81,9 @@ async function retryWithBackoff(
       throw error;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, baseDelay));
+    await new Promise((resolve) =>
+      setTimeout(resolve, baseDelay * Math.pow(2, attempt)),
+    );
 
     return retryWithBackoff(fn, attempt + 1, maxRetries, baseDelay);
   }

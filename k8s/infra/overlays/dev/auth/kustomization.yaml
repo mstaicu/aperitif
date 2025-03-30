@@ -3,9 +3,9 @@ kind: Kustomization
 
 resources:
   - ../../../base/auth
-  - auth-rbac.yaml
-  - auth-secrets-job.yaml
+  - auth-cert.yaml
   - auth-mongo-depl.yaml
+  - auth-rbac.yaml
 
 configMapGenerator:
   - name: auth-cm
@@ -15,8 +15,7 @@ configMapGenerator:
       - ORIGIN=https://tma.com
   - name: auth-scripts-cm
     files:
-      - create-secrets.sh=scripts/create-secrets.sh
-      - generate-secrets.mjs=scripts/generate-secrets.mjs
+      - auth-token-secrets.mjs=auth-token-secrets.mjs
 
 patches:
   - path: auth-depl.yaml

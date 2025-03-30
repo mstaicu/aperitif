@@ -8,12 +8,22 @@ kind: Role
 metadata:
   name: nats-sa-role
 rules:
-  - apiGroups: ["batch"]
-    resources: ["jobs"]
-    verbs: ["watch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - watch
+      - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

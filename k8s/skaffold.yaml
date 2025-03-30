@@ -32,6 +32,7 @@ profiles:
     manifests:
       kustomize:
         paths:
+          - infra/base/cert-manager
           - infra/overlays/dev
 
     # deploy:
@@ -59,6 +60,7 @@ profiles:
     manifests:
       kustomize:
         paths:
+          - infra/base/cert-manager
           - infra/overlays/dev
 
     # deploy:
@@ -84,4 +86,5 @@ profiles:
     manifests:
       kustomize:
         paths:
+          - infra/base/cert-manager
           - infra/overlays/prod

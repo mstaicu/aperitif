@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: auth-srv-cert
+spec:
+  secretName: auth-srv-tls
+  duration: 2160h
+  renewBefore: 360h
+  commonName: auth-srv.dev.svc.cluster.local
+  dnsNames:
+    - auth-srv
+    - auth-srv.dev
+    - auth-srv.dev.svc
+    - auth-srv.dev.svc.cluster.local
+  issuerRef:
+    name: internal-ca-issuer
+    kind: Issuer

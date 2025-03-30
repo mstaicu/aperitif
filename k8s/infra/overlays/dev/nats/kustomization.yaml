@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../base/nats
+  - nats-cert.yaml
   - nats-rbac.yaml
   - nats-secrets-job.yaml
 
@@ -10,10 +11,10 @@ configMapGenerator:
   - name: nats-conf-cm
     files:
       - nats-server.conf=nats-server.conf
-  - name: nats-cm-scripts
+  - name: nats-scripts-cm
     files:
-      - create-secrets.sh=scripts/create-secrets.sh
-      - generate-secrets.sh=scripts/generate-secrets.sh
+      - nats-secrets-create.sh=nats-secrets-create.sh
+      - nats-secrets-generate.sh=nats-secrets-generate.sh
 
 patches:
   - path: nats-depl.yaml

@@ -10,21 +10,18 @@ spec:
       affinity: null
       serviceAccountName: auth-sa
       initContainers:
-        - name: wait-jobs
-          image: bitnami/kubectl:latest
-          env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+        - name: init-auth-secrets
+          image: node:alpine
+          volumeMounts:
+            - name: auth-secrets-volume
+              mountPath: /secrets
+            - name: auth-scripts-cm
+              mountPath: /scripts
           command:
-            - /bin/sh
-            - -c
-            - |
-              kubectl wait --for=condition=complete --timeout=300s job/auth-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
-              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
+            - node
+            - /scripts/auth-token-secrets.mjs
 
-        - name: copy-secrets
+        - name: init-nats-secrets
           image: bitnami/kubectl:latest
           env:
             - name: NAMESPACE
@@ -38,14 +35,13 @@ spec:
             - /bin/sh
             - -c
             - |
+              kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
+
               until kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2
               done
 
               kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
-
-              chown node:node /secrets/auth.creds
-              chmod 600 /secrets/auth.creds
 
         - name: wait-nats
           image: busybox:latest
@@ -60,8 +56,9 @@ spec:
             - |
               for i in 0 1 2; do
                 SERVER="http://nats-depl-$i.nats-headless.$NAMESPACE.svc.cluster.local:8222/healthz?js-server-only=true"
-                until curl -s -o /dev/null -w "%{http_code}" "$SERVER" | grep 200; do
-                  sleep 2
+
+                until wget -q --spider "$SERVER" 2>/dev/null; do
+                  sleep 1
                 done
               done
 
@@ -73,4 +70,8 @@ spec:
 
       volumes:
         - name: auth-secrets-volume
-          emptyDir: {}
+          emptyDir:
+            medium: Memory
+        - name: auth-scripts-cm
+          configMap:
+            name: auth-scripts-cm

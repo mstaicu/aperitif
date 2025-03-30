@@ -7,6 +7,7 @@ resources:
   - namespace.yaml
   - auth
   - nats
+  - cert-manager
   # - traefik
   # - traefik-public
 
