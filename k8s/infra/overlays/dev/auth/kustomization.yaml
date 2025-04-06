@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../base/auth
-  - auth-cert.yaml
+  # - auth-cert.yaml
   - auth-mongo-depl.yaml
   - auth-rbac.yaml
 

@@ -4,35 +4,28 @@ metadata:
   name: k8s
 
 build:
-  tagPolicy:
-    gitCommit:
-      variant: AbbrevCommitSha
+  local:
+    push: false
   artifacts:
     - image: mdstaicu/auth
       context: auth
       docker:
         dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: src/**/*.mjs
+            dest: .
 
 profiles:
   - name: dev
     activation:
       - command: dev
-    build:
-      local:
-        push: false
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            target: dev
-          sync:
-            manual:
-              - src: src/**/*.mjs
-                dest: .
+
     manifests:
       kustomize:
         paths:
-          - infra/base/cert-manager
+          # - infra/base/cert-manager
           - infra/overlays/dev
 
     # deploy:
@@ -45,30 +38,12 @@ profiles:
   - name: debug
     activation:
       - command: debug
-    build:
-      local:
-        push: false
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            target: dev
-          sync:
-            manual:
-              - src: src/**/*.mjs
-                dest: .
+
     manifests:
       kustomize:
         paths:
-          - infra/base/cert-manager
+          # - infra/base/cert-manager
           - infra/overlays/dev
-
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       before:
-    #         - host:
-    #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
     portForward:
       - resourceType: statefulset
@@ -78,13 +53,14 @@ profiles:
   - name: prod
     build:
       local:
-        push: true
+        push: false
       artifacts:
         - image: mdstaicu/auth
           docker:
+            dockerfile: Dockerfile
             target: prod
+
     manifests:
       kustomize:
         paths:
-          - infra/base/cert-manager
           - infra/overlays/prod

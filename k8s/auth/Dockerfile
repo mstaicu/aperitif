@@ -14,7 +14,7 @@ FROM base AS dependencies
 
 COPY --chown=node:node package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Development
 FROM base AS dev

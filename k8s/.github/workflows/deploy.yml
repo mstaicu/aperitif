@@ -1,0 +1,61 @@
+name: deploy to prod
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  deploy:
+    name: build and deploy to prod
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_REGISTRY: docker.io/mdstaicu
+      SKAFFOLD_PROFILE: prod
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: login to docker
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: setup skaffold with kustomize
+        uses: imjasonh/setup-tools@v1
+        with:
+          tools: skaffold,kustomize,kubectl
+
+      - name: setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "$KUBECONFIG_PROD" > ~/.kube/config
+        env:
+          KUBECONFIG_PROD: ${{ secrets.KUBECONFIG_PROD }}
+
+      # - name: setup doctl
+      #   uses: digitalocean/action-doctl@v2
+      #   with:
+      #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      # - name: get kubeconfig
+      #   run: doctl kubernetes cluster kubeconfig save name_of_cluster_on_digital_ocean
+
+      - name: build and push
+        run: |
+          skaffold build \
+            --profile $SKAFFOLD_PROFILE \
+            --default-repo $DOCKER_REGISTRY
+
+      - name: deploy
+        run: |
+          skaffold deploy \
+            --profile $SKAFFOLD_PROFILE \
+            --default-repo $DOCKER_REGISTRY

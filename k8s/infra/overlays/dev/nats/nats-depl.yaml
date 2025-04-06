@@ -23,28 +23,23 @@ spec:
             - |
               kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
 
-        - name: copy-secrets
-          image: bitnami/kubectl:latest
-          env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          volumeMounts:
-            - name: nats-secrets-volume
-              mountPath: /secrets
-          command:
-            - /bin/sh
-            - -c
-            - |
               until kubectl get secret nats-resolver-secret -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2
               done
 
               kubectl get secret nats-resolver-secret -n "$NAMESPACE" -o jsonpath="{.data.resolver\.conf}" | base64 -d > /secrets/resolver.conf
 
+          volumeMounts:
+            - name: nats-secrets-volume
+              mountPath: /secrets
+
       containers:
         - name: nats
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           volumeMounts:
             - name: nats-secrets-volume
               mountPath: /secrets
