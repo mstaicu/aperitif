@@ -36,17 +36,17 @@ spec:
             - name: MONGO_DB_URI
               valueFrom:
                 configMapKeyRef:
-                  name: auth-cm
+                  name: auth-env-cm
                   key: MONGO_DB_URI
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-cm
+                  name: auth-env-cm
                   key: DOMAIN
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:
-                  name: auth-cm
+                  name: auth-env-cm
                   key: ORIGIN
 
           #

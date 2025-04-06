@@ -13,7 +13,7 @@ spec:
           image: natsio/nats-box:latest
           command:
             - /bin/sh
-            - /scripts/nats-secrets-generate.sh
+            - /scripts/gen-secrets.sh
 
           volumeMounts:
             - name: nats-scripts-cm
@@ -31,7 +31,7 @@ spec:
                   fieldPath: metadata.namespace
           command:
             - /bin/sh
-            - /scripts/nats-secrets-create.sh
+            - /scripts/create-secrets.sh
 
           volumeMounts:
             - name: nats-scripts-cm

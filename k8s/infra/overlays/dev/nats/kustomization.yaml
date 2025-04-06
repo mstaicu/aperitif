@@ -5,7 +5,7 @@ resources:
   - ../../../base/nats
   # - nats-cert.yaml
   - nats-rbac.yaml
-  - nats-secrets-job.yaml
+  - nats-job.yaml
 
 configMapGenerator:
   - name: nats-conf-cm
@@ -13,8 +13,8 @@ configMapGenerator:
       - nats-server.conf=nats-server.conf
   - name: nats-scripts-cm
     files:
-      - nats-secrets-create.sh=nats-secrets-create.sh
-      - nats-secrets-generate.sh=nats-secrets-generate.sh
+      - scripts/create-secrets.sh
+      - scripts/gen-secrets.sh
 
 patches:
   - path: nats-depl.yaml

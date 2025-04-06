@@ -19,7 +19,7 @@ spec:
               mountPath: /scripts
           command:
             - node
-            - /scripts/auth-token-secrets.mjs
+            - /scripts/gen-secrets.mjs
 
         - name: init-nats-secrets
           image: bitnami/kubectl:latest
@@ -37,11 +37,11 @@ spec:
             - |
               kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
 
-              until kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" > /dev/null 2>&1; do
+              until kubectl get secret nats-auth-creds -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2
               done
 
-              kubectl get secret nats-auth-creds-secret -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
+              kubectl get secret nats-auth-creds -n "$NAMESPACE" -o jsonpath="{.data.auth\.creds}" | base64 -d > /secrets/auth.creds
 
         - name: wait-nats
           image: busybox:latest

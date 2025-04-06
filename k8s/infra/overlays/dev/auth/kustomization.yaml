@@ -8,14 +8,14 @@ resources:
   - auth-rbac.yaml
 
 configMapGenerator:
-  - name: auth-cm
+  - name: auth-env-cm
     literals:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
   - name: auth-scripts-cm
     files:
-      - auth-token-secrets.mjs=auth-token-secrets.mjs
+      - scripts/gen-secrets.mjs
 
 patches:
   - path: auth-depl.yaml

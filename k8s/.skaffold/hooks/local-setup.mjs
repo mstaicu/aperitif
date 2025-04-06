@@ -1,7 +1,7 @@
 import fs from "fs";
 import { execSync } from "node:child_process";
 
-var tools = ["mkcert"];
+var tools = ["mkcert", "skaffold", "kustomize"];
 
 var domain = "tma.com";
 

@@ -23,11 +23,11 @@ spec:
             - |
               kubectl wait --for=condition=complete --timeout=300s job/nats-secrets-job -n "$NAMESPACE" > /dev/null 2>&1
 
-              until kubectl get secret nats-resolver-secret -n "$NAMESPACE" > /dev/null 2>&1; do
+              until kubectl get secret nats-resolver -n "$NAMESPACE" > /dev/null 2>&1; do
                 sleep 2
               done
 
-              kubectl get secret nats-resolver-secret -n "$NAMESPACE" -o jsonpath="{.data.resolver\.conf}" | base64 -d > /secrets/resolver.conf
+              kubectl get secret nats-resolver -n "$NAMESPACE" -o jsonpath="{.data.resolver\.conf}" | base64 -d > /secrets/resolver.conf
 
           volumeMounts:
             - name: nats-secrets-volume

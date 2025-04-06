@@ -17,7 +17,8 @@ spec:
       volumes:
         - name: resolver-volume
           secret:
-            secretName: nats-resolver-secret
+            secretName: nats-resolver
+
   volumeClaimTemplates:
     - metadata:
         name: nats-storage
