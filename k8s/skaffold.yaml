@@ -25,42 +25,5 @@ profiles:
     manifests:
       kustomize:
         paths:
-          # - infra/base/cert-manager
+          - infra/platform
           - infra/overlays/dev
-
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       before:
-    #         - host:
-    #             command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
-
-  - name: debug
-    activation:
-      - command: debug
-
-    manifests:
-      kustomize:
-        paths:
-          # - infra/base/cert-manager
-          - infra/overlays/dev
-
-    portForward:
-      - resourceType: statefulset
-        resourceName: nats-depl
-        port: 4222
-
-  - name: prod
-    build:
-      local:
-        push: false
-      artifacts:
-        - image: mdstaicu/auth
-          docker:
-            dockerfile: Dockerfile
-            target: prod
-
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/prod

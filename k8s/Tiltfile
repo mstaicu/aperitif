@@ -1,0 +1,19 @@
+k8s_yaml(local("kustomize build infra/platform"));
+k8s_yaml(local("kustomize build infra/overlays/dev"));
+
+k8s_resource(
+  "auth-depl",
+  resource_deps = [
+    "auth-mongo-depl"
+  ]
+);
+
+docker_build(
+    "mdstaicu/auth",
+    context="auth",
+    dockerfile="auth/Dockerfile",
+    target="dev",
+    live_update=[
+        sync("auth/src", "/home/node/app/src"),
+    ]
+);

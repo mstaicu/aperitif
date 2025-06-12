@@ -6,10 +6,4 @@ namespace: dev
 resources:
   - namespace.yaml
   - auth
-  - nats
-  # - cert-manager
-  # - traefik
-  # - traefik-public
-
-components:
-  - ../../components/secrets-manager
+  - cert-manager

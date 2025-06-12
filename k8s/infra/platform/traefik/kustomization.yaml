@@ -8,4 +8,3 @@ resources:
   - traefik-rolebinding.yaml
   - traefik-routes.yaml
   - traefik-sa.yaml
-  - traefik-srv.yaml
