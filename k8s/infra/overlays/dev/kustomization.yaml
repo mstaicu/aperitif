@@ -6,4 +6,3 @@ namespace: dev
 resources:
   - namespace.yaml
   - auth
-  - cert-manager
