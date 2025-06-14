@@ -1,9 +1,0 @@
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-
-metadata:
-  name: linkerd-mtls
-spec:
-  rootCAsSecrets:
-    - linkerd-trust-bundle
-  insecureSkipVerify: false

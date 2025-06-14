@@ -7,28 +7,12 @@ spec:
   selector:
     matchLabels:
       app: traefik
-  replicas: 3
+  replicas: 1
   template:
-    metadata:
-      labels:
-        app: traefik
-      annotations:
-        linkerd.io/inject: disabled
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - traefik
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: traefik-controller
+      affinity: null
       containers:
         - name: traefik
-          image: traefik:v3.4
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
@@ -36,7 +20,7 @@ spec:
             # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
             # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
             #
-            - --api=false
+            - --api=true
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
             #
@@ -55,7 +39,7 @@ spec:
             # The trailing slash / in /dashboard/ is mandatory
             # Optional, Default=true
             #
-            - --api.dashboard=false
+            - --api.dashboard=true
             #
             # https://doc.traefik.io/traefik/observability/access-logs/#configuration
             #

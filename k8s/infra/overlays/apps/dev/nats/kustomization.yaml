@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - ../../../base/nats
-  # - nats-cert.yaml
   - nats-rbac.yaml
   - nats-job.yaml
 

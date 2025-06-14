@@ -373,4 +373,6 @@ seed linkerd root / intermediary
 > kubectl -n traefik create secret generic linkerd-trust-bundle \
   --from-file=ca.crt=ca.crt
 
+> mkcert -cert-file /certs/traefik-tls.crt -key-file /certs/traefik-tls.key "$DOMAIN" "*.$DOMAIN"
+
 > linkerd install --set proxyInit.runAsRoot=true --identity-external-ca --identity-external-issuer > output.yaml

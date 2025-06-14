@@ -25,5 +25,8 @@ profiles:
     manifests:
       kustomize:
         paths:
-          - infra/platform
-          # - infra/overlays/dev
+          - infra/overlays/cluster/dev/crd
+          - infra/overlays/cluster/dev/ns
+          - infra/overlays/cluster/dev/rbac
+          - infra/overlays/cluster/dev/job
+          - infra/overlays/cluster/dev

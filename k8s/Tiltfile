@@ -1,19 +1,25 @@
-k8s_yaml(local("kustomize build infra/platform"));
-k8s_yaml(local("kustomize build infra/overlays/dev"));
+k8s_yaml(local('kustomize build infra/overlays/cluster/dev/crd'));
+k8s_yaml(local('kustomize build infra/overlays/cluster/dev/ns'));
+k8s_yaml(local('kustomize build infra/overlays/cluster/dev/rbac'));
+k8s_yaml(local('kustomize build infra/overlays/cluster/dev/job'));
 
-k8s_resource(
-  "auth-depl",
-  resource_deps = [
-    "auth-mongo-depl"
-  ]
-);
+k8s_yaml(local('kustomize build infra/overlays/cluster/dev'));
 
-docker_build(
-    "mdstaicu/auth",
-    context="auth",
-    dockerfile="auth/Dockerfile",
-    target="dev",
-    live_update=[
-        sync("auth/src", "/home/node/app/src"),
-    ]
-);
+# # Docker build
+# docker_build(
+#     "mdstaicu/auth",
+#     context="auth",
+#     dockerfile="auth/Dockerfile",
+#     target="dev",
+#     live_update=[
+#         sync("auth/src", "/home/node/app/src"),
+#     ]
+# );
+
+# # Resource dependency example
+# k8s_resource(
+#     "auth-depl",
+#     resource_deps = [
+#         "auth-mongo-depl"
+#     ]
+# );

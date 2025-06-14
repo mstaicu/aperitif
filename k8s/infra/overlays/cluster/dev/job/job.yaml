@@ -32,11 +32,34 @@ spec:
                 --profile intermediate-ca --not-after 8760h --no-password --insecure \
                 --ca ca.crt --ca-key ca.key
 
-              # Permissions for kubectl
+              
+              # ⬅️ Make all files world-readable
               chmod 0644 *.crt *.key
+
           volumeMounts:
             - name: certs
               mountPath: /certs
+
+        - name: generate-traefik-tls
+          image: alpine/mkcert
+          env:
+            - name: DOMAIN
+              value: tma.com
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              mkdir -p /certs
+              mkcert -cert-file /certs/traefik-tls.crt -key-file /certs/traefik-tls.key "$DOMAIN" "*.$DOMAIN"
+
+              # ⬅️ Make all files world-readable
+              chmod 0644 /certs/traefik-tls.*
+
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+
         - name: wait-for-namespaces
           image: bitnami/kubectl:latest
           command:
@@ -50,6 +73,7 @@ spec:
                   sleep 2
                 done
               done
+
       containers:
         - name: create-secrets
           image: bitnami/kubectl:latest
@@ -76,7 +100,13 @@ spec:
               kubectl -n traefik create secret generic linkerd-trust-bundle \
                 --from-file=ca.crt=/certs/ca.crt
 
-              echo "Bootstrap completed: linkerd-identity-issuer, linkerd-identity-trust-roots, linkerd-trust-bundle"
+              # 4. Traefik TLS secret (mkcert public cert/key for HTTPS)
+              kubectl -n traefik delete secret traefik-tls || true
+              kubectl -n traefik create secret tls traefik-tls \
+                --cert=/certs/traefik-tls.crt \
+                --key=/certs/traefik-tls.key
+
+              echo "Bootstrap completed: linkerd-identity-issuer, linkerd-identity-trust-roots, linkerd-trust-bundle, traefik-tls"
           volumeMounts:
             - name: certs
               mountPath: /certs

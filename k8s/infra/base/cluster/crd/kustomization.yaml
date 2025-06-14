@@ -3,3 +3,5 @@ kind: Kustomization
 
 resources:
   - gateway-api-crd.yaml
+  - linkerd-crd.yaml
+  - traefik-crd.yaml

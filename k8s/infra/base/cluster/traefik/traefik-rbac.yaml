@@ -7,9 +7,9 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - namespaces
       - services
       - secrets
+      - nodes
       - configmaps
     verbs:
       - get
@@ -23,31 +23,20 @@ rules:
       - list
       - watch
   - apiGroups:
-      - gateway.networking.k8s.io
+      - extensions
+      - networking.k8s.io
     resources:
-      - gatewayclasses
-      - gateways
-      - httproutes
-      - grpcroutes
-      - tcproutes
-      - tlsroutes
-      - referencegrants
-      - backendtlspolicies
+      - ingresses
+      - ingressclasses
     verbs:
       - get
       - list
       - watch
   - apiGroups:
-      - gateway.networking.k8s.io
+      - extensions
+      - networking.k8s.io
     resources:
-      - gatewayclasses/status
-      - gateways/status
-      - httproutes/status
-      - grpcroutes/status
-      - tcproutes/status
-      - tlsroutes/status
-      - referencegrants/status
-      - backendtlspolicies/status
+      - ingresses/status
     verbs:
       - update
   - apiGroups:
@@ -67,6 +56,7 @@ rules:
       - get
       - list
       - watch
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -80,6 +70,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: traefik-controller
+    namespace: traefik
 ---
 apiVersion: v1
 kind: ServiceAccount
