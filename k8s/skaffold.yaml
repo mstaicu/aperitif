@@ -26,4 +26,4 @@ profiles:
       kustomize:
         paths:
           - infra/platform
-          - infra/overlays/dev
+          # - infra/overlays/dev

@@ -353,3 +353,24 @@ ca.crt:     1066 bytes
 namespace:  7 bytes
 token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IlZaeVdnbjdkRnpsdHZOVVZ1ZmtROXVjeEM2ZWVZV1dZWDFRUkI3QzZpMTgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4teGdja2oiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImZmMzVlZDdiLWE4MTQtNGIxYy1iN2E0LWY2N2ZmNWI2MWVkMCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.rY3arfKQUw7ScDMv4P3sCwvL8ByY0sFnrVdQoosSOJhGkSgkUMjk3HjE9l__N9y3fMVsHbxLXblLv4RYqT9kKgqSqa0ntd9opWnAd9POvkNY41Q_qYPIOuol60Zzm3jiCMEJEVN6TXV5q2nkPJxGB36J6WoMK6WprEQI-ed0YBdI73i1aqHmMXHlJWI-NshIbRuA5B2mmcO5wLC_Np64T6GA8snxMqSuaR0tz-DnHr-DFSg4rD7A1jUkazt5SPwkshvWwABys3jmcilGJCeBWXSxQERRIyQC2KccQpHYA6vmO0dC-lZ4kJh3-crvmT0MlkTKW36vdRHC2HcVR8rc5w
 ```
+
+seed linkerd root / intermediary
+
+> step certificate create root.linkerd.cluster.local ca.crt ca.key \
+--profile root-ca --no-password --insecure
+
+> step certificate create identity.linkerd.cluster.local issuer.crt issuer.key --profile intermediate-ca --not-after 8760h --no-password --insecure \
+--ca ca.crt --ca-key ca.key
+
+> kubectl -n linkerd create secret generic linkerd-identity-issuer \
+  --from-file=tls.crt=issuer.crt \
+  --from-file=tls.key=issuer.key \
+  --from-file=ca.crt=ca.crt
+
+> kubectl -n linkerd create configmap linkerd-identity-trust-roots \
+  --from-file=ca-bundle.crt=ca.crt
+
+> kubectl -n traefik create secret generic linkerd-trust-bundle \
+  --from-file=ca.crt=ca.crt
+
+> linkerd install --set proxyInit.runAsRoot=true --identity-external-ca --identity-external-issuer > output.yaml

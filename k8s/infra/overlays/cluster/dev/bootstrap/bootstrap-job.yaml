@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: platform-secrets-bootstrap
+  namespace: platform-bootstrap
+spec:
+  template:
+    spec:
+      serviceAccountName: platform-secrets-bootstrap
+      restartPolicy: Never
+      volumes:
+        - name: certs
+          emptyDir: {}
+      initContainers:
+        - name: generate-certs
+          image: smallstep/step-cli:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              mkdir -p /certs
+              cd /certs
+
+              # 1. Generate Root CA (ECDSA)
+              step certificate create root.linkerd.cluster.local ca.crt ca.key \
+                --profile root-ca --no-password --insecure --not-after=87600h
+
+              # 2. Generate Intermediate (Issuer)
+              step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
+                --profile intermediate-ca --not-after 8760h --no-password --insecure \
+                --ca ca.crt --ca-key ca.key
+
+              # Permissions for kubectl
+              chmod 0644 *.crt *.key
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+        - name: wait-for-namespaces
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              for ns in linkerd traefik; do
+                until kubectl get ns $ns >/dev/null 2>&1; do
+                  echo "Waiting for namespace $ns..."
+                  sleep 2
+                done
+              done
+      containers:
+        - name: create-secrets
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              # 1. Linkerd issuer secret (intermediate key/cert, root cert)
+              kubectl -n linkerd delete secret linkerd-identity-issuer || true
+              kubectl -n linkerd create secret generic linkerd-identity-issuer \
+                --from-file=tls.crt=/certs/issuer.crt \
+                --from-file=tls.key=/certs/issuer.key \
+                --from-file=ca.crt=/certs/ca.crt
+
+              # 2. Linkerd trust roots configmap (root CA only)
+              kubectl -n linkerd delete configmap linkerd-identity-trust-roots || true
+              kubectl -n linkerd create configmap linkerd-identity-trust-roots \
+                --from-file=ca-bundle.crt=/certs/ca.crt
+
+              # 3. Traefik trust bundle secret (root CA only)
+              kubectl -n traefik delete secret linkerd-trust-bundle || true
+              kubectl -n traefik create secret generic linkerd-trust-bundle \
+                --from-file=ca.crt=/certs/ca.crt
+
+              echo "Bootstrap completed: linkerd-identity-issuer, linkerd-identity-trust-roots, linkerd-trust-bundle"
+          volumeMounts:
+            - name: certs
+              mountPath: /certs

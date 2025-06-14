@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: traefik
+      annotations:
+        linkerd.io/inject: disabled
     spec:
       affinity:
         podAntiAffinity:
@@ -31,3 +33,13 @@ spec:
             - --accesslog
             - --log.level=INFO
             - --providers.kubernetesgateway
+            - --entrypoints.web.address=:80
+            - --entrypoints.websecure.address=:443
+            - --metrics.prometheus=true
+            - --ping=true
+            - --ping.entrypoint=web
+          ports:
+            - name: web
+              containerPort: 80
+            - name: websecure
+              containerPort: 443

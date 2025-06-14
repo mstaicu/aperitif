@@ -1,19 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: gateway-role
+  name: traefik-controller-role
 
 rules:
   - apiGroups:
       - ""
     resources:
       - namespaces
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
       - services
       - secrets
       - configmaps
@@ -56,16 +50,33 @@ rules:
       - backendtlspolicies/status
     verbs:
       - update
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares
+      - middlewaretcps
+      - ingressroutes
+      - traefikservices
+      - ingressroutetcps
+      - ingressrouteudps
+      - tlsoptions
+      - tlsstores
+      - serverstransports
+      - serverstransporttcps
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 
 metadata:
-  name: gateway-controller
+  name: traefik-controller-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: gateway-role
+  name: traefik-controller-role
 subjects:
   - kind: ServiceAccount
     name: traefik-controller

@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-secrets-bootstrap
+  namespace: platform-bootstrap
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manage-namespaces
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bootstrap-namespaces
+subjects:
+  - kind: ServiceAccount
+    name: platform-secrets-bootstrap
+    namespace: platform-bootstrap
+roleRef:
+  kind: ClusterRole
+  name: manage-namespaces
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: linkerd
+  name: manage-linkerd-secrets
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "create", "delete", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: traefik
+  name: manage-traefik-secrets
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "delete", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: linkerd
+  name: bootstrap-linkerd-secrets
+subjects:
+  - kind: ServiceAccount
+    name: platform-secrets-bootstrap
+    namespace: platform-bootstrap
+roleRef:
+  kind: Role
+  name: manage-linkerd-secrets
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: traefik
+  name: bootstrap-traefik-secrets
+subjects:
+  - kind: ServiceAccount
+    name: platform-secrets-bootstrap
+    namespace: platform-bootstrap
+roleRef:
+  kind: Role
+  name: manage-traefik-secrets
+  apiGroup: rbac.authorization.k8s.io
