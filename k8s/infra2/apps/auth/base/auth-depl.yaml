@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-depl
+spec:
+  selector:
+    matchLabels:
+      app: auth
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - auth
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: auth
+          image: mdstaicu/auth
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+            - name: MONGO_DB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-env-cm
+                  key: MONGO_DB_URI
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-env-cm
+                  key: DOMAIN
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-env-cm
+                  key: ORIGIN
+
+          #
+          # total probe time =
+          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
+          #
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2

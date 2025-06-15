@@ -34,4 +34,42 @@ if (!hostsContent.includes(`127.0.0.1 ${domain}`)) {
 console.log("🔑 Installing mkcert CA...");
 execSync("mkcert -install", { stdio: "inherit" });
 
-console.log("🚀 Local setup complete!");
+console.log("🔧 Applying namespaces...");
+
+execSync("kustomize build infra2/envs/dev/namespace | kubectl apply -f -", {
+  stdio: "inherit",
+});
+
+var traefikNamespace = "traefik";
+var traefikSecretName = "traefik-tls";
+
+console.log(`⏳ Waiting for namespace '${traefikNamespace}'...`);
+
+while (true) {
+  try {
+    execSync(`kubectl get ns ${traefikNamespace}`, { stdio: "ignore" });
+    break;
+  } catch {
+    await new Promise((res) => setTimeout(res, 1000));
+  }
+}
+console.log(`✅ Namespace '${traefikNamespace}' is ready.`);
+
+console.log(`🔐 Generating TLS cert for ${domain}...`);
+execSync(
+  `mkcert -cert-file traefik-tls.crt -key-file traefik-tls.key ${domain} "*.${domain}"`,
+  { stdio: "inherit" }
+);
+
+console.log(
+  `🔒 Creating/updating TLS secret '${traefikSecretName}' in namespace '${traefikNamespace}'...`
+);
+
+execSync(
+  `kubectl -n ${traefikNamespace} delete secret ${traefikSecretName} || true`
+);
+execSync(
+  `kubectl -n ${traefikNamespace} create secret tls ${traefikSecretName} --cert=traefik-tls.crt --key=traefik-tls.key`
+);
+
+console.log("✅ TLS secret applied. Ready for Skaffold deploy!");

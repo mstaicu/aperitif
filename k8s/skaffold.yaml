@@ -22,11 +22,18 @@ profiles:
     activation:
       - command: dev
 
+    deploy:
+      kubectl:
+        hooks:
+          before:
+            - host:
+                command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
+
     manifests:
       kustomize:
         paths:
-          - infra/overlays/cluster/dev/crd
-          - infra/overlays/cluster/dev/ns
-          - infra/overlays/cluster/dev/rbac
-          - infra/overlays/cluster/dev/job
-          - infra/overlays/cluster/dev
+          - infra2/envs/dev/crds
+          - infra2/envs/dev/namespace
+          - infra2/envs/dev/jobs
+          - infra2/envs/dev/platforms/linkerd
+          - infra2/envs/dev/platforms/traefik

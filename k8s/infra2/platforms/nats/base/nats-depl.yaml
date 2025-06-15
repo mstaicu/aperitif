@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: nats-depl
+spec:
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: nats
+  serviceName: nats-headless
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nats
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: nats
+          image: nats:2.10.26-alpine
+          args: ["-c", "/etc/nats/nats-server.conf"]
+
+          volumeMounts:
+            - name: nats-conf-cm
+              mountPath: /etc/nats/
+            - name: resolver-volume
+              mountPath: /etc/resolver.conf
+              subPath: resolver.conf
+            - name: nats-storage
+              mountPath: /data
+
+          readinessProbe:
+            httpGet:
+              path: /healthz?js-server-only=true
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /healthz?js-enabled-only=true
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 90
+
+      volumes:
+        - name: nats-conf-cm
+          configMap:
+            name: nats-conf-cm
+        - name: resolver-volume
+          secret:
+            secretName: nats-resolver
+
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        # storageClassName: do-block-storage
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
