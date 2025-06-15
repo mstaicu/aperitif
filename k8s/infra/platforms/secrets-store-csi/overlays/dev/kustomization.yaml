@@ -2,7 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # - linkerd
-  # - nats
-  - secrets-store-csi
-  - traefik
+  - ../../base
+  - traefik-tls-spc.yaml
+  - vault-csi-provider.yaml

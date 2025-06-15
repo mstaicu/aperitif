@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ../../../platforms/linkerd/crds
   - ../../../platforms/traefik/crds
+  - ../../../platforms/secrets-store-csi/crds

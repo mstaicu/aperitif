@@ -1,5 +1,7 @@
 import fs from "fs";
 import { execSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 var tools = ["mkcert", "skaffold", "kustomize"];
 
@@ -31,45 +33,33 @@ if (!hostsContent.includes(`127.0.0.1 ${domain}`)) {
   console.log(`📍 127.0.0.1 ${domain} already exists in /etc/hosts`);
 }
 
-console.log("🔑 Installing mkcert CA...");
 execSync("mkcert -install", { stdio: "inherit" });
 
-console.log("🔧 Applying namespaces...");
-
-execSync("kustomize build infra2/envs/dev/namespace | kubectl apply -f -", {
+execSync("kustomize build infra/envs/dev/namespace | kubectl apply -f -", {
   stdio: "inherit",
 });
 
 var traefikNamespace = "traefik";
-var traefikSecretName = "traefik-tls";
+var traefikSecretName = "mkcert-tls-secret";
 
-console.log(`⏳ Waiting for namespace '${traefikNamespace}'...`);
+var tempDir = fs.mkdtempSync(path.join(tmpdir(), "traefik-tls-"));
+var certPath = path.join(tempDir, "traefik-tls.crt");
+var keyPath = path.join(tempDir, "traefik-tls.key");
 
-while (true) {
-  try {
-    execSync(`kubectl get ns ${traefikNamespace}`, { stdio: "ignore" });
-    break;
-  } catch {
-    await new Promise((res) => setTimeout(res, 1000));
-  }
+try {
+  execSync(
+    `mkcert -cert-file "${certPath}" -key-file "${keyPath}" ${domain} "*.${domain}"`,
+    { stdio: "inherit" }
+  );
+
+  execSync(
+    `kubectl -n ${traefikNamespace} delete secret ${traefikSecretName} || true`
+  );
+  execSync(
+    `kubectl -n ${traefikNamespace} create secret tls ${traefikSecretName} --cert="${certPath}" --key="${keyPath}"`
+  );
+} finally {
+  fs.unlinkSync(certPath);
+  fs.unlinkSync(keyPath);
+  fs.rmdirSync(tempDir);
 }
-console.log(`✅ Namespace '${traefikNamespace}' is ready.`);
-
-console.log(`🔐 Generating TLS cert for ${domain}...`);
-execSync(
-  `mkcert -cert-file traefik-tls.crt -key-file traefik-tls.key ${domain} "*.${domain}"`,
-  { stdio: "inherit" }
-);
-
-console.log(
-  `🔒 Creating/updating TLS secret '${traefikSecretName}' in namespace '${traefikNamespace}'...`
-);
-
-execSync(
-  `kubectl -n ${traefikNamespace} delete secret ${traefikSecretName} || true`
-);
-execSync(
-  `kubectl -n ${traefikNamespace} create secret tls ${traefikSecretName} --cert=traefik-tls.crt --key=traefik-tls.key`
-);
-
-console.log("✅ TLS secret applied. Ready for Skaffold deploy!");

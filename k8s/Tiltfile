@@ -2,9 +2,11 @@ local("node .skaffold/hooks/local-setup.mjs");
 
 k8s_yaml(kustomize('infra/envs/dev/crds'));
 k8s_yaml(kustomize('infra/envs/dev/namespace'));
-k8s_yaml(kustomize('infra/envs/dev/jobs'));
-k8s_yaml(kustomize('infra/envs/dev/platforms/linkerd'));
-k8s_yaml(kustomize('infra/envs/dev/platforms/traefik'));
+# k8s_yaml(kustomize('infra/envs/dev/jobs'));
+k8s_yaml(kustomize('infra/envs/dev/platforms'));
+# k8s_yaml(kustomize('infra/envs/dev/platforms/secrets-store-csi'));
+# k8s_yaml(kustomize('infra/envs/dev/platforms/linkerd'));
+# k8s_yaml(kustomize('infra/envs/dev/platforms/traefik'));
 
 # # Docker build
 # docker_build(
