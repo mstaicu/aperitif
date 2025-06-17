@@ -18,7 +18,7 @@ build:
             dest: .
 
 profiles:
-  - name: platform
+  - name: local
     activation:
       - command: dev
 
@@ -27,22 +27,25 @@ profiles:
         hooks:
           before:
             - host:
-                command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/pre-deploy.mjs"]
+                command:
+                  ["sh", "-c", "DOMAIN=tma.com node .skaffold/pre-deploy.mjs"]
           after:
             - host:
-                command: ["sh", "-c", "DOMAIN=tma.com node .skaffold/hooks/post-deploy.mjs"]
+                command:
+                  ["sh", "-c", "DOMAIN=tma.com node .skaffold/post-deploy.mjs"]
 
     manifests:
       kustomize:
         paths:
           - infra/envs/dev/crds
           - infra/envs/dev/namespace
-
-  - name: stack
-    activation:
-      - command: dev
-
-    manifests:
-      kustomize:
-        paths:
           - infra/envs/dev/platform
+
+  # - name: stack
+  #   activation:
+  #     - command: dev
+
+  #   manifests:
+  #     kustomize:
+  #       paths:
+  #         - infra/envs/dev/platform

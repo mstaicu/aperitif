@@ -36,9 +36,7 @@ execSync(
   `mkcert -cert-file "${traefikCrt}" -key-file "${traefikKey}" ${DOMAIN} "*.${DOMAIN}"`,
   { stdio: "inherit" }
 );
-execSync(
-  `kubectl -n ${TRAEFIK_NAMESPACE} delete secret ${TRAEFIK_CERT} || true`
-);
+
 execSync(
   `kubectl -n ${TRAEFIK_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
 );
