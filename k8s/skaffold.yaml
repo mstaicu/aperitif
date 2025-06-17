@@ -17,23 +17,23 @@ build:
           - src: src/**/*.mjs
             dest: .
 
-profiles:
-  - name: dev
-    activation:
-      - command: dev
+# profiles:
+#   - name: dev
+#     activation:
+#       - command: dev
 
-    deploy:
-      kubectl:
-        hooks:
-          before:
-            - host:
-                command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
+#     deploy:
+#       kubectl:
+#         hooks:
+#           before:
+#             - host:
+#                 command: ["sh", "-c", "node .skaffold/hooks/local-setup.mjs"]
 
-    manifests:
-      kustomize:
-        paths:
-          - infra2/envs/dev/crds
-          - infra2/envs/dev/namespace
-          - infra2/envs/dev/jobs
-          - infra2/envs/dev/platforms/linkerd
-          - infra2/envs/dev/platforms/traefik
+#     manifests:
+#       kustomize:
+#         paths:
+#           - infra2/envs/dev/crds
+#           - infra2/envs/dev/namespace
+#           - infra2/envs/dev/jobs
+#           - infra2/envs/dev/platforms/linkerd
+#           - infra2/envs/dev/platforms/traefik
