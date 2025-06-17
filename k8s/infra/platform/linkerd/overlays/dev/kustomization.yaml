@@ -5,3 +5,5 @@ namespace: linkerd
 
 resources:
   - ../../base
+  - ../../crds
+  - ../../namespace

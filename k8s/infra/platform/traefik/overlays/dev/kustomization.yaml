@@ -5,6 +5,8 @@ namespace: traefik
 
 resources:
   - ../../base
+  - ../../crds
+  - ../../namespace
   - traefik-cr.yaml
 
 patches:
