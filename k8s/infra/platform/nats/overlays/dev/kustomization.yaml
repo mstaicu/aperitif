@@ -5,17 +5,6 @@ namespace: nats
 
 resources:
   - ../../base
-  - nats-job.yaml
-  - nats-rbac.yaml
-
-configMapGenerator:
-  - name: nats-conf-cm
-    files:
-      - nats-server.conf=nats-server.conf
-  - name: nats-scripts-cm
-    files:
-      - scripts/create-secrets.sh
-      - scripts/gen-secrets.sh
 
 patches:
   - path: nats-depl.yaml

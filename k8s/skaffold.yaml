@@ -18,34 +18,34 @@ build:
             dest: .
 
 profiles:
-  - name: local
-    activation:
-      - command: dev
-
+  - name: setup
     deploy:
       kubectl:
         hooks:
-          before:
-            - host:
-                command:
-                  ["sh", "-c", "DOMAIN=tma.com node .skaffold/pre-deploy.mjs"]
           after:
             - host:
-                command:
-                  ["sh", "-c", "DOMAIN=tma.com node .skaffold/post-deploy.mjs"]
+                command: ["sh", "-c", "node .skaffold/post-deploy.mjs"]
+
+    manifests:
+      rawYaml:
+        - infra2/linkerd/base/linkerd-ns.yaml
+        - infra2/linkerd/base/linkerd-crd.yaml
+        - infra2/linkerd/base/gateway-api-crd.yaml
+        - infra2/traefik/base/traefik-ns.yaml
+        - infra2/traefik/base/traefik-crd.yaml
+
+      # kustomize:
+      #   paths:
+      #     - infra/envs/dev/crds
+      #     - infra/envs/dev/namespace
+
+  - name: start
+    activation:
+      - command: dev
 
     manifests:
       kustomize:
         paths:
-          - infra/envs/dev/crds
-          - infra/envs/dev/namespace
-          - infra/envs/dev/platform
-
-  # - name: stack
-  #   activation:
-  #     - command: dev
-
-  #   manifests:
-  #     kustomize:
-  #       paths:
-  #         - infra/envs/dev/platform
+          - infra2/linkerd/overlays/dev
+          - infra2/traefik/overlays/dev
+          - infra2/auth/overlays/dev

@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ../../../platform/linkerd/namespace
   - ../../../platform/traefik/namespace
+  - app-ns.yaml
