@@ -18,7 +18,14 @@ build:
             dest: .
 
 profiles:
-  - name: setup
+  - name: crd
+    manifests:
+      rawYaml:
+        - infra/linkerd/base/linkerd-crd.yaml
+        - infra/linkerd/base/gateway-api-crd.yaml
+        - infra/traefik/base/traefik-crd.yaml
+
+  - name: ns
     deploy:
       kubectl:
         hooks:
@@ -28,24 +35,15 @@ profiles:
 
     manifests:
       rawYaml:
-        - infra2/linkerd/base/linkerd-ns.yaml
-        - infra2/linkerd/base/linkerd-crd.yaml
-        - infra2/linkerd/base/gateway-api-crd.yaml
-        - infra2/traefik/base/traefik-ns.yaml
-        - infra2/traefik/base/traefik-crd.yaml
+        - infra/linkerd/base/linkerd-ns.yaml
+        - infra/traefik/base/traefik-ns.yaml
+        # TODO: Move this to all apps
+        - infra/auth/overlays/dev/namespace.yaml
 
-      # kustomize:
-      #   paths:
-      #     - infra/envs/dev/crds
-      #     - infra/envs/dev/namespace
-
-  - name: start
-    activation:
-      - command: dev
-
-    manifests:
-      kustomize:
-        paths:
-          - infra2/linkerd/overlays/dev
-          - infra2/traefik/overlays/dev
-          - infra2/auth/overlays/dev
+  # - name: depl
+  #   manifests:
+  #     kustomize:
+  #       paths:
+  #         - infra/linkerd/overlays/dev
+  #         - infra/traefik/overlays/dev
+  #         - infra/auth/overlays/dev
