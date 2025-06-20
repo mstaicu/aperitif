@@ -6,6 +6,13 @@ namespace: traefik
 resources:
   - ../../base
   - traefik-cr.yaml
+  #
+  - pebble-depl.yaml
 
 patches:
   - path: traefik-depl.yaml
+
+configMapGenerator:
+  - name: pebble-ca-cm
+    files:
+      - pebble.minica.pem=pebble.minica.pem

@@ -50,9 +50,42 @@ spec:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
             #
+            # Email address used for registration.
+            #
+            # Required
+            #
+            - --certificatesresolvers.pebble.acme.email=dj@vasile.com
+            #
+            # Use a HTTP-01 ACME challenge.
+            #
+            # Optional (but recommended)
+            #
+            - --certificatesresolvers.pebble.acme.httpchallenge=true
+            #
+            # EntryPoint to use for the HTTP-01 challenges.
+            #
+            # Required
+            #
+            - --certificatesresolvers.pebble.acme.httpchallenge.entrypoint=http
+            #
+            # Since we're making these requests through HTTPS, we need to validate the certificate
+            # of Pebble, hence why we need to setup the root certificate authority via LEGO_CA_CERTIFICATES
+            #
+            - --certificatesresolvers.pebble.acme.caserver=https://pebble:14000/dir
+            - --certificatesresolvers.pebble.acme.caCertificates=/pebble/pebble.minica.pem
+            #
+            # - --certificatesresolvers.pebble.acme.storage=/acme/acme.json
+            #
             - --providers.kubernetescrd
           ports:
             - name: http
               containerPort: 80
             - name: https
               containerPort: 443
+          volumeMounts:
+            - name: pebble-ca-volume
+              mountPath: /pebble
+      volumes:
+        - name: pebble-ca-volume
+          configMap:
+            name: pebble-ca-cm
