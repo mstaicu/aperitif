@@ -8,7 +8,7 @@ import { healthRouter } from "./health.mjs";
 const router = Router();
 
 router.use("/", healthRouter);
-router.use("/api/auth/hello", (_, res) => {
+router.use("/hello", (_, res) => {
   res.json({ hello: "world" });
 });
 // router.use("/", jwksRouter);

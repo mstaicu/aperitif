@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: traefik
 
 resources:
+  # Omitting these CRDs so that they are no deleted when I close the skaffold dev -p depl
   # - traefik-crd.yaml
   - traefik-depl.yaml
   - traefik-ns.yaml

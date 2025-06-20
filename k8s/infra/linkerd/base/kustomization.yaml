@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: linkerd
 
 resources:
+  # Omitting these CRDs so that they are no deleted when I close the skaffold dev -p depl
   # - gateway-api-crd.yaml
   # - linkerd-crd.yaml
   - linkerd-depl.yaml
-  - linkerd-ns.yaml
+  # - linkerd-ns.yaml

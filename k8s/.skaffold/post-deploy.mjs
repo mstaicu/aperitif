@@ -38,12 +38,17 @@ execSync(
   { stdio: "inherit" }
 );
 
-execSync(
-  `kubectl -n ${TRAEFIK_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
-);
-execSync(
-  `kubectl -n ${APP_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
-);
+try {
+  execSync(
+    `kubectl -n ${TRAEFIK_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
+  );
+} catch {}
+
+try {
+  execSync(
+    `kubectl -n ${APP_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
+  );
+} catch {}
 
 // import { writeFileSync } from "fs";
 // import { generateKeyPairSync, randomBytes } from "node:crypto";
@@ -115,19 +120,23 @@ execSync(
   { stdio: "inherit" }
 );
 
-execSync(
-  `kubectl -n ${LINKERD_NAMESPACE} create secret generic linkerd-identity-issuer \
+try {
+  execSync(
+    `kubectl -n ${LINKERD_NAMESPACE} create secret generic linkerd-identity-issuer \
     --from-file=tls.crt=${linkerdDir}/issuer.crt \
     --from-file=tls.key=${linkerdDir}/issuer.key \
     --from-file=ca.crt=${linkerdDir}/ca.crt`,
-  { stdio: "inherit" }
-);
+    { stdio: "inherit" }
+  );
+} catch {}
 
-execSync(
-  `kubectl -n ${LINKERD_NAMESPACE} create configmap linkerd-identity-trust-roots \
+try {
+  execSync(
+    `kubectl -n ${LINKERD_NAMESPACE} create configmap linkerd-identity-trust-roots \
     --from-file=ca-bundle.crt=${linkerdDir}/ca.crt`,
-  { stdio: "inherit" }
-);
+    { stdio: "inherit" }
+  );
+} catch {}
 
 fs.rmSync(traefikDir, { recursive: true });
 fs.rmSync(linkerdDir, { recursive: true });

@@ -37,13 +37,12 @@ profiles:
       rawYaml:
         - infra/linkerd/base/linkerd-ns.yaml
         - infra/traefik/base/traefik-ns.yaml
-        # TODO: Move this to all apps
-        - infra/auth/overlays/dev/namespace.yaml
+        - infra/apps/overlays/dev/namespace.yaml
 
-  # - name: depl
-  #   manifests:
-  #     kustomize:
-  #       paths:
-  #         - infra/linkerd/overlays/dev
-  #         - infra/traefik/overlays/dev
-  #         - infra/auth/overlays/dev
+  - name: depl
+    manifests:
+      kustomize:
+        paths:
+          - infra/linkerd/overlays/dev
+          - infra/traefik/overlays/dev
+          - infra/apps/overlays/dev
