@@ -6,6 +6,9 @@ namespace: traefik
 resources:
   - ../../base
   - traefik-cr.yaml
+  - traefik-ns.yaml
+  #
+  # This is our ACME server for getting the certs for Traefik
   #
   - pebble-depl.yaml
 

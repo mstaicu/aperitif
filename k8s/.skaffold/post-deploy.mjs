@@ -21,36 +21,7 @@ if (!hostsContent.includes(`127.0.0.1 ${DOMAIN}`)) {
   console.log(`📍 127.0.0.1 ${DOMAIN} already exists in /etc/hosts`);
 }
 
-// var TRAEFIK_NAMESPACE = "traefik";
-// var APP_NAMESPACE = "app";
 var LINKERD_NAMESPACE = "linkerd";
-// var TRAEFIK_CERT = "traefik-tls";
-
-// var traefikDir = fs.mkdtempSync(path.join(tmpdir(), "traefik-tls-"));
-
-// var traefikCrt = path.join(traefikDir, "tls.crt");
-// var traefikKey = path.join(traefikDir, "tls.key");
-
-// execSync("mkcert -install", { stdio: "inherit" });
-
-// execSync(
-//   `mkcert -cert-file "${traefikCrt}" -key-file "${traefikKey}" ${DOMAIN} "*.${DOMAIN}"`,
-//   { stdio: "inherit" }
-// );
-
-// try {
-//   execSync(
-//     `kubectl -n ${TRAEFIK_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
-//   );
-// } catch {}
-
-// try {
-//   execSync(
-//     `kubectl -n ${APP_NAMESPACE} create secret tls ${TRAEFIK_CERT} --cert="${traefikCrt}" --key="${traefikKey}"`
-//   );
-// } catch {}
-
-// fs.rmSync(traefikDir, { recursive: true });
 
 // import { writeFileSync } from "fs";
 // import { generateKeyPairSync, randomBytes } from "node:crypto";
