@@ -28,7 +28,7 @@ spec:
       serviceAccountName: traefik-controller
       containers:
         - name: traefik
-          image: traefik:v3.4
+          image: traefik:v3.4.3
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
@@ -67,9 +67,3 @@ spec:
             - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd
-            # - --providers.kubernetescrd.allowCrossNamespace=true
-          ports:
-            - name: http
-              containerPort: 80
-            - name: https
-              containerPort: 443

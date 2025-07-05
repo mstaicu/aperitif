@@ -1,6 +1,0 @@
-{
-  "root": "/home/step/secrets/root_ca.crt",
-  "crt": "/home/step/secrets/intermediate_ca.crt",
-  "key": "/home/step/secrets/intermediate_ca_key.pem",
-  "address": ":9000"
-}

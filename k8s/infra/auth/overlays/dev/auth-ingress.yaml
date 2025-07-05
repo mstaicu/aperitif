@@ -15,8 +15,7 @@ spec:
       services:
         - name: auth-srv
           port: 3000
-  tls:
-    certResolver: pebble
+  tls: {}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
