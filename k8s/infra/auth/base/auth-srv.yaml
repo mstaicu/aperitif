@@ -4,11 +4,9 @@ kind: Service
 metadata:
   name: auth-srv
 spec:
-  type: ClusterIP
   selector:
     app: auth
   ports:
     - name: auth
-      protocol: TCP
       port: 3000
       targetPort: 3000

@@ -1,7 +1,5 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 
 var DOMAIN = process.env.DOMAIN || "tma.com";
 
@@ -9,6 +7,7 @@ if (!DOMAIN) {
   console.error(
     `❌ ${DOMAIN} is not available. Specify it as an environment variable`
   );
+
   process.exit(1);
 }
 
@@ -20,8 +19,6 @@ if (!hostsContent.includes(`127.0.0.1 ${DOMAIN}`)) {
 } else {
   console.log(`📍 127.0.0.1 ${DOMAIN} already exists in /etc/hosts`);
 }
-
-var LINKERD_NAMESPACE = "linkerd";
 
 // import { writeFileSync } from "fs";
 // import { generateKeyPairSync, randomBytes } from "node:crypto";
@@ -75,40 +72,3 @@ var LINKERD_NAMESPACE = "linkerd";
 //   --from-file=/secrets/sys.creds \
 //   -n $NAMESPACE \
 //   --dry-run=client -o yaml | kubectl apply -f -
-
-var linkerdDir = fs.mkdtempSync(path.join(tmpdir(), "linkerd-certs-"));
-
-process.chdir(linkerdDir);
-
-execSync(
-  `step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca --no-password --insecure --not-after=87600h`,
-  { stdio: "inherit" }
-);
-
-execSync(
-  `step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca --not-after 8760h --no-password --insecure \
-  --ca ca.crt --ca-key ca.key`,
-  { stdio: "inherit" }
-);
-
-try {
-  execSync(
-    `kubectl -n ${LINKERD_NAMESPACE} create secret generic linkerd-identity-issuer \
-    --from-file=tls.crt=${linkerdDir}/issuer.crt \
-    --from-file=tls.key=${linkerdDir}/issuer.key \
-    --from-file=ca.crt=${linkerdDir}/ca.crt`,
-    { stdio: "inherit" }
-  );
-} catch {}
-
-try {
-  execSync(
-    `kubectl -n ${LINKERD_NAMESPACE} create configmap linkerd-identity-trust-roots \
-    --from-file=ca-bundle.crt=${linkerdDir}/ca.crt`,
-    { stdio: "inherit" }
-  );
-} catch {}
-
-fs.rmSync(linkerdDir, { recursive: true });

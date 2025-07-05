@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: step-ca
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: step-ca
+  template:
+    metadata:
+      labels:
+        app: step-ca
+    spec:
+      containers:
+        - name: step-ca
+          image: smallstep/step-ca:latest
+          volumeMounts:
+            - name: ca-secrets
+              mountPath: /home/step/secrets
+            - name: ca-config
+              mountPath: /home/step/config
+
+      volumes:
+        - name: ca-secrets
+          secret:
+            secretName: step-ca-secrets
+        - name: ca-config
+          configMap:
+            name: step-ca-config

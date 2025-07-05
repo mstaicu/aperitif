@@ -19,24 +19,29 @@ build:
 
 profiles:
   - name: setup
-    manifests:
-      rawYaml:
-        - infra/linkerd/base/gateway-api-crd.yaml
-        - infra/linkerd/base/linkerd-crd.yaml
-        # Creating the namespace so that we don't delete it with skaffold dev -p depl
-        - infra/linkerd/base/linkerd-ns.yaml
-        - infra/traefik/base/traefik-crd.yaml
-
-  - name: depl
     deploy:
       kubectl:
         hooks:
           after:
             - host:
-                command: ["sh", "-c", "node .skaffold/post-deploy.mjs"]
+                command: ["sh", "-c", "node ./scripts/post-deploy.mjs"]
+            - host:
+                command: ["./scripts/certs.sh"]
+
+    manifests:
+      rawYaml:
+        # - infra/linkerd/base/gateway-api-crd.yaml
+        # - infra/linkerd/base/linkerd-crd.yaml
+        # - infra/traefik/base/traefik-crd.yaml
+        # # Creating the namespace so that we don't delete it with skaffold dev -p depl
+        # - infra/linkerd/base/linkerd-ns.yaml
+        - infra/step-ca/overlays/dev/namespace.yaml
+
+  - name: depl
     manifests:
       kustomize:
         paths:
-          - infra/linkerd/overlays/dev
-          - infra/traefik/overlays/dev
-          - infra/apps/overlays/dev
+          # - infra/linkerd/overlays/dev
+          # - infra/traefik/overlays/dev
+          # - infra/apps/overlays/dev
+          - infra/step-ca/overlays/dev
