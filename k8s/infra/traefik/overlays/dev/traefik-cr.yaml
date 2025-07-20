@@ -12,7 +12,10 @@ spec:
       services:
         - name: api@internal
           kind: TraefikService
-  tls: {}
+  tls:
+    options:
+      name: tls-options
+      namespace: traefik
 ---
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption

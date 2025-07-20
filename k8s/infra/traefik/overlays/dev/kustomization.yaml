@@ -7,6 +7,7 @@ resources:
   - ../../base
   - traefik-cr.yaml
   - traefik-ns.yaml
+  - traefik-svc.yaml
 
 patches:
   - path: traefik-depl.yaml

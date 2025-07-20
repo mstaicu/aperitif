@@ -24,19 +24,22 @@ profiles:
         # - infra/linkerd/base/gateway-api-crd.yaml
         # - infra/linkerd/base/linkerd-crd.yaml
         # - infra/traefik/base/traefik-crd.yaml
-        # # Creating the namespace so that we don't delete it with skaffold dev -p depl
-        # - infra/linkerd/base/linkerd-ns.yaml
+        - infra/linkerd/base/linkerd-ns.yaml
+        - infra/cert-manager/base/cert-manager-crd.yaml
+        - infra/trust-manager/base/trust-manager-crd.yaml
 
   - name: depl
     manifests:
       kustomize:
         paths:
           # - infra/linkerd/overlays/dev
-          - infra/traefik/overlays/dev
-          - infra/apps/overlays/dev
-    deploy:
-      kubectl:
-        hooks:
-          after:
-            - host:
-                command: ["./scripts/certs.sh"]
+          # - infra/traefik/overlays/dev
+          # - infra/apps/overlays/dev
+          - infra/cert-manager/overlays/dev
+          - infra/trust-manager/overlays/dev
+    # deploy:
+    #   kubectl:
+    #     hooks:
+    #       after:
+    #         - host:
+    #             command: ["./scripts/localhost.sh"]
