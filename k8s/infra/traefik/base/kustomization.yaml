@@ -5,4 +5,3 @@ resources:
   - traefik-crd.yaml
   - traefik-depl.yaml
   - traefik-rbac.yaml
-  - traefik-svc.yaml

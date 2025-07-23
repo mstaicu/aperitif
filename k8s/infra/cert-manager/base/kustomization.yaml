@@ -4,5 +4,3 @@ kind: Kustomization
 resources:
   - cert-manager-crd.yaml
   - cert-manager-depl.yaml
-  - cert-manager-ns.yaml
-  - cert-manager-rbac.yaml

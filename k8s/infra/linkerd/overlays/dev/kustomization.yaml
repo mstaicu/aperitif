@@ -5,4 +5,5 @@ namespace: linkerd
 
 resources:
   - ../../base
-  - linkerd-intermediary-ca.yaml
+  - linkerd-identity-issuer.yaml
+  - linkerd-identity-trust-roots.yaml

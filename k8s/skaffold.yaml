@@ -7,8 +7,8 @@ build:
   local:
     push: false
   artifacts:
-    - image: mdstaicu/auth
-      context: auth
+    - image: mdstaicu/identity
+      context: identity
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -18,28 +18,15 @@ build:
             dest: .
 
 profiles:
-  - name: setup
-    manifests:
-      rawYaml:
-        # - infra/linkerd/base/gateway-api-crd.yaml
-        # - infra/linkerd/base/linkerd-crd.yaml
-        # - infra/traefik/base/traefik-crd.yaml
-        - infra/linkerd/base/linkerd-ns.yaml
-        - infra/cert-manager/base/cert-manager-crd.yaml
-        - infra/trust-manager/base/trust-manager-crd.yaml
-
   - name: depl
     manifests:
       kustomize:
         paths:
-          # - infra/linkerd/overlays/dev
-          # - infra/traefik/overlays/dev
-          # - infra/apps/overlays/dev
-          - infra/cert-manager/overlays/dev
-          - infra/trust-manager/overlays/dev
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       after:
-    #         - host:
-    #             command: ["./scripts/localhost.sh"]
+          - infra/apps/overlays/dev
+
+    deploy:
+      kubectl:
+        hooks:
+          after:
+            - host:
+                command: ["./scripts/localhost.sh"]
