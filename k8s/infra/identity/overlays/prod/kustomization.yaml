@@ -3,3 +3,12 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - identity-ingress.yaml
+
+# TODO
+configMapGenerator:
+  - name: identity-env-cm
+    literals:
+      - MONGO_DB_URI=mongodb://identity-mongo-srv:27017
+      - DOMAIN=tma.com
+      - ORIGIN=https://tma.com

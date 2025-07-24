@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - https
   routes:
-    - match: Host(`tma.com`) && PathPrefix(`/api/v1/identity`)
+    - match: Host(`$PR_DOMAIN`) && PathPrefix(`/api/v1/identity`)
       kind: Rule
       priority: 69
       middlewares:

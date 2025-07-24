@@ -1,10 +1,10 @@
 # Welcome to k8s!
 
--> Load Balancer 
-  -> Client ( receives cookies, unpacks them and forwards the request with Bearer )
-  -> (This should be exposed publicly in the future) Traefik
-    -> forwardAuth ( exclude auth services requests )
-  -> Microservices
+-> Load Balancer
+-> Client ( receives cookies, unpacks them and forwards the request with Bearer )
+-> (This should be exposed publicly in the future) Traefik
+-> forwardAuth ( exclude auth services requests )
+-> Microservices
 
 ## Development
 
@@ -357,22 +357,48 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IlZaeVdnbjdkRnpsdHZOVVZ1ZmtROXVjeEM2ZWVZ
 seed linkerd root / intermediary
 
 > step certificate create root.linkerd.cluster.local ca.crt ca.key \
---profile root-ca --no-password --insecure
+> --profile root-ca --no-password --insecure
 
 > step certificate create identity.linkerd.cluster.local issuer.crt issuer.key --profile intermediate-ca --not-after 8760h --no-password --insecure \
---ca ca.crt --ca-key ca.key
+> --ca ca.crt --ca-key ca.key
 
 > kubectl -n linkerd create secret generic linkerd-identity-issuer \
-  --from-file=tls.crt=issuer.crt \
-  --from-file=tls.key=issuer.key \
-  --from-file=ca.crt=ca.crt
+>  --from-file=tls.crt=issuer.crt \
+>  --from-file=tls.key=issuer.key \
+>  --from-file=ca.crt=ca.crt
 
 > kubectl -n linkerd create configmap linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca.crt
+>  --from-file=ca-bundle.crt=ca.crt
 
 > kubectl -n traefik create secret generic linkerd-trust-bundle \
-  --from-file=ca.crt=ca.crt
+>  --from-file=ca.crt=ca.crt
 
 > mkcert -cert-file /certs/traefik-tls.crt -key-file /certs/traefik-tls.key "$DOMAIN" "*.$DOMAIN"
 
 > linkerd install --set proxyInit.runAsRoot=true --identity-external-ca --identity-external-issuer > output.yaml
+
+## Ephemeral workloads
+
+0. Build and push the Docker image of the microservice in this pull request, tag it and export the file to use in the kustomize build next step. All namespace scoped resources will now use the namespace resources, for example the trafik ingress will now point to the identity instance in this namespace
+
+skaffold render --profile identity-prod --namespace identity-pr-123 --output identity-prod.yaml
+
+1. Programmatically create the namespace for the ephemeral microservice
+
+kubectl create namespace identity-pr-123
+kubectl label namespace identity linkerd.io/inject=enabled
+
+2. Commit this file to the Flux directory so that the controller syncs the state of the cluster with the new ephemeral microservice namespace
+
+mkdir -p clusters/dev/apps/identity-pr-123
+
+# Host based domain for ingress ( replace the $PR_DOMAIN in the ingress )
+
+export PR_DOMAIN=pr-123.tma.com
+envsubst < identity-pr-123.yaml > clusters/dev/apps/identity-pr-123/identity.yaml
+
+git add clusters/dev/apps/identity-pr-123
+git commit -m "Deploy identity PR preview env for PR #123"
+git push
+
+3. Don't forget to clean up this namespace after the PR is merged or closed (automate it in CI).

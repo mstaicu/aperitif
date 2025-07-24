@@ -1,32 +1,51 @@
 apiVersion: skaffold/v4beta11
 kind: Config
+
 metadata:
   name: k8s
 
 build:
   local:
-    push: false
+    push: true
   artifacts:
     - image: mdstaicu/identity
       context: identity
       docker:
         dockerfile: Dockerfile
-        target: dev
-      sync:
-        manual:
-          - src: src/**/*.mjs
-            dest: .
+        target: prod
+  tagPolicy:
+    gitCommit: {}
 
 profiles:
-  - name: depl
+  - name: local
+    build:
+      local:
+        push: false
+      artifacts:
+        - image: mdstaicu/identity
+          context: identity
+          docker:
+            dockerfile: Dockerfile
+            target: dev
+          sync:
+            manual:
+              - src: src/**/*.mjs
+                dest: .
     manifests:
       kustomize:
         paths:
-          - infra/apps/overlays/dev
+          - infra/identity/overlays/dev
+          # - infra/subscription/overlays/dev
 
-    deploy:
-      kubectl:
-        hooks:
-          after:
-            - host:
-                command: ["./scripts/localhost.sh"]
+  - name: identity-prod
+    manifests:
+      kustomize:
+        paths:
+          - infra/identity/overlays/prod
+
+    # deploy:
+    #   kubectl:
+    #     hooks:
+    #       after:
+    #         - host:
+    #             command: ["./scripts/localhost.sh"]

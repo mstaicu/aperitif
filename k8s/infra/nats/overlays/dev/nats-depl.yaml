@@ -10,7 +10,7 @@ spec:
 
   volumeClaimTemplates:
     - metadata:
-        name: nats-pvc
+        name: nats-storage
       spec:
         storageClassName: hostpath
         accessModes: ["ReadWriteOnce"]
