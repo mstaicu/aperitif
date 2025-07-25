@@ -4,7 +4,6 @@ import {
   connect as natsConnect,
 } from "@nats-io/transport-node";
 import { existsSync, readFileSync } from "fs";
-import nconf from "nconf";
 
 var defaultCredsPath = "/secrets/auth.creds";
 
@@ -31,7 +30,7 @@ var js;
 async function connect(options = {}) {
   var servers = Array.from(Array(3)).map(
     (_, index) =>
-      `nats://nats-depl-${index}.nats-headless.${nconf.get("NAMESPACE")}.svc.cluster.local:4222`,
+      `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
   );
 
   var authenticator = credsAuthenticator(
@@ -46,47 +45,17 @@ async function connect(options = {}) {
     throw error;
   }
 
-  nc = await retryWithBackoff(() =>
-    natsConnect({
+  nc = natsConnect({
       authenticator,
       maxReconnectAttempts: -1,
       servers,
       ...options,
-    }),
-  );
+    })
 
   jsm = await jetstreamManager(nc);
   js = jetstream(nc);
 
   return nc;
-}
-
-/**
- * Recursive function to retry connection with exponential backoff.
- * @param {function} fn - The async function to retry.
- * @param {number} attempt - Current retry attempt.
- * @param {number} maxRetries - Maximum retry attempts.
- * @param {number} baseDelay - Initial delay in milliseconds.
- */
-async function retryWithBackoff(
-  fn,
-  attempt = 0,
-  maxRetries = 10,
-  baseDelay = 1000,
-) {
-  try {
-    return await fn();
-  } catch (error) {
-    if (attempt >= maxRetries) {
-      throw error;
-    }
-
-    await new Promise((resolve) =>
-      setTimeout(resolve, baseDelay * Math.pow(2, attempt)),
-    );
-
-    return retryWithBackoff(fn, attempt + 1, maxRetries, baseDelay);
-  }
 }
 
 export { connect, js, jsm, nc };

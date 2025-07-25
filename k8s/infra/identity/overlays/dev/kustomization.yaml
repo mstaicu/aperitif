@@ -5,16 +5,18 @@ namespace: identity
 
 resources:
   - ../../base
-  - identity-ingress.yaml
-  - identity-mongo-depl.yaml
-  - identity-ns.yaml
+
+  - namespace.yaml
+
+  - auth-ing.yaml
+  - auth-mongo-depl.yaml
 
 configMapGenerator:
-  - name: identity-env-cm
+  - name: auth-env-cm
     literals:
-      - MONGO_DB_URI=mongodb://identity-mongo-srv:27017
+      - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
       - ORIGIN=https://tma.com
 
 patches:
-  - path: identity-depl.yaml
+  - path: auth-depl.yaml

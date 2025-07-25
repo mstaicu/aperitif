@@ -7,14 +7,15 @@ metadata:
 build:
   local:
     push: true
+  tagPolicy:
+    gitCommit:
+      variant: AbbrevCommitSha
   artifacts:
-    - image: mdstaicu/identity
-      context: identity
+    - image: mdstaicu/auth
+      context: identity/auth
       docker:
         dockerfile: Dockerfile
         target: prod
-  tagPolicy:
-    gitCommit: {}
 
 profiles:
   - name: local
@@ -22,8 +23,8 @@ profiles:
       local:
         push: false
       artifacts:
-        - image: mdstaicu/identity
-          context: identity
+        - image: mdstaicu/auth
+          context: identity/auth
           docker:
             dockerfile: Dockerfile
             target: dev
@@ -35,7 +36,6 @@ profiles:
       kustomize:
         paths:
           - infra/identity/overlays/dev
-          # - infra/subscription/overlays/dev
 
   - name: identity-prod
     manifests:

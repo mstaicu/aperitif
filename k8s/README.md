@@ -381,7 +381,15 @@ seed linkerd root / intermediary
 
 0. Build and push the Docker image of the microservice in this pull request, tag it and export the file to use in the kustomize build next step. All namespace scoped resources will now use the namespace resources, for example the trafik ingress will now point to the identity instance in this namespace
 
-skaffold render --profile identity-prod --namespace identity-pr-123 --output identity-prod.yaml
+skaffold build \
+  --profile identity-prod \
+  --file-output build.json
+
+skaffold render \
+  --profile identity-prod \
+  --build-artifacts build.json \
+  --namespace identity-pr-123 \
+  --output identity-pr-123.yaml
 
 1. Programmatically create the namespace for the ephemeral microservice
 
@@ -392,13 +400,11 @@ kubectl label namespace identity linkerd.io/inject=enabled
 
 mkdir -p clusters/dev/apps/identity-pr-123
 
-# Host based domain for ingress ( replace the $PR_DOMAIN in the ingress )
-
 export PR_DOMAIN=pr-123.tma.com
 envsubst < identity-pr-123.yaml > clusters/dev/apps/identity-pr-123/identity.yaml
 
 git add clusters/dev/apps/identity-pr-123
-git commit -m "Deploy identity PR preview env for PR #123"
+git commit -m "Deploy identity domain pr preview for pr #123"
 git push
 
 3. Don't forget to clean up this namespace after the PR is merged or closed (automate it in CI).
