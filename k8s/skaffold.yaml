@@ -6,7 +6,7 @@ metadata:
 
 build:
   local:
-    push: false
+    push: true
   tagPolicy:
     gitCommit:
       variant: AbbrevCommitSha
