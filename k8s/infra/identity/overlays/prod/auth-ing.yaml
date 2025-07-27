@@ -16,6 +16,7 @@ spec:
         - name: auth-srv
           port: 3000
   tls:
+    secretName: traefik-tls
     options:
       name: tls-options
       namespace: traefik

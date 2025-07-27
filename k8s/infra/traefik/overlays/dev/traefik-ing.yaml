@@ -13,6 +13,7 @@ spec:
         - name: api@internal
           kind: TraefikService
   tls:
+    secretName: traefik-tls
     options:
       name: tls-options
       namespace: traefik
@@ -33,12 +34,3 @@ spec:
     - CurveP521
     - CurveP384
   sniStrict: true
----
-apiVersion: traefik.io/v1alpha1
-kind: TLSStore
-
-metadata:
-  name: default
-spec:
-  defaultCertificate:
-    secretName: traefik-tls
