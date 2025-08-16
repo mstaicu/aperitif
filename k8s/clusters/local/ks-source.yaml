@@ -5,6 +5,8 @@ metadata:
   name: aperitif-repo
   namespace: flux-system
 spec:
-  url: https://github.com/mstaicu/aperitif
+  url: ssh://git@github.com/mstaicu/aperitif.git
   ref: { branch: main }
   interval: 30s
+  secretRef:
+    name: github-ssh
