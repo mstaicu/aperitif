@@ -14,9 +14,6 @@ spec:
         app: traefik
       annotations:
         linkerd.io/inject: enabled
-        # Linkerd: handle inbound HTTPS traffic opaquely, bypass outbound HTTPS (e.g. Let's Encrypt)
-        # config.linkerd.io/opaque-ports: "443"
-        # config.linkerd.io/skip-outbound-ports: "443"
     spec:
       affinity:
         podAntiAffinity:

@@ -4,7 +4,5 @@ kind: Kustomization
 namespace: linkerd
 
 resources:
-  - ../../base
-  - namespace.yaml
   - linkerd-identity-issuer.yaml
   - linkerd-identity-trust-roots.yaml

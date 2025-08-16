@@ -102,4 +102,4 @@ kubectl create secret tls "$TRAEFIK_TLS_SECRET" \
   --dry-run=client \
   --output yaml | kubectl apply -f -
 
-# grep -q "127.0.0.1 $DOMAIN" /etc/hosts || echo "127.0.0.1 $DOMAIN" | sudo tee -a /etc/hosts
+grep -q "127.0.0.1 $DOMAIN" /etc/hosts || echo "127.0.0.1 $DOMAIN" | sudo tee -a /etc/hosts

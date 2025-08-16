@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+
+metadata:
+  name: aperitif-repo
+  namespace: flux-system
+spec:
+  url: https://github.com/mstaicu/aperitif
+  ref: { branch: main }
+  interval: 30s
