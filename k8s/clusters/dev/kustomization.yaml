@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - cert-manager.yaml
   - cert-manager-cr.yaml
+  - trust-manager.yaml
