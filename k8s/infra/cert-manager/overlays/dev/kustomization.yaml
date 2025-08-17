@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: cert-manager
 
 resources:
-  - linkerd-identity-issuer.yaml
-  - linkerd-trust-anchor.yaml
+  - cert-manager-cr.yaml
+  # - linkerd-identity-issuer.yaml
+  # - linkerd-trust-anchor.yaml

@@ -18,7 +18,7 @@ build:
         target: prod
 
 profiles:
-  - name: local
+  - name: dev
     build:
       local:
         push: false
