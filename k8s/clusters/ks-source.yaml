@@ -7,6 +7,6 @@ metadata:
 spec:
   url: ssh://git@github.com/mstaicu/aperitif.git
   ref: { branch: master }
-  interval: 30s
+  interval: 1m
   secretRef:
     name: github-ssh

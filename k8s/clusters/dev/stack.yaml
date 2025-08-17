@@ -9,7 +9,7 @@ spec:
     kind: GitRepository
     name: aperitif-repo
     namespace: flux-system
-  path: ./k8s/clusters/local/cert-manager
+  path: ./k8s/infra/cert-manager/base
   prune: true
   wait: true
   interval: 5m
