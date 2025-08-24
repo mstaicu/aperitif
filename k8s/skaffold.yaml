@@ -12,7 +12,7 @@ build:
       variant: AbbrevCommitSha
   artifacts:
     - image: mdstaicu/auth
-      context: identity/auth
+      context: auth
       docker:
         dockerfile: Dockerfile
         target: prod
@@ -24,7 +24,7 @@ profiles:
         push: false
       artifacts:
         - image: mdstaicu/auth
-          context: identity/auth
+          context: auth
           docker:
             dockerfile: Dockerfile
             target: dev
