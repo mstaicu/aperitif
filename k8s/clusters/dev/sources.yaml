@@ -12,3 +12,4 @@ spec:
   path: ./k8s/infra/sources
   prune: true
   wait: true
+  interval: 10m

@@ -12,6 +12,7 @@ spec:
   path: ./k8s/infra/trust-manager/base
   prune: true
   wait: true
+  interval: 10m
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

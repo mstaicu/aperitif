@@ -12,6 +12,7 @@ spec:
   path: ./k8s/infra/cert-manager/overlays/dev
   prune: true
   wait: true
+  interval: 10m
   healthChecks:
     - apiVersion: cert-manager.io/v1
       kind: Issuer
