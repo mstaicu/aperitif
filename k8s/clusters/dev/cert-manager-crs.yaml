@@ -2,14 +2,14 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: cert-manager-cr
+  name: cert-manager-crs
   namespace: flux-system
 spec:
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
     namespace: flux-system
-  path: ./k8s/infra/cert-manager/overlays/dev
+  path: ./k8s/infra/cert-manager-crs/overlays/dev
   prune: true
   wait: true
   interval: 10m

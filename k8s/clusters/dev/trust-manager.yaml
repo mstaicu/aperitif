@@ -9,7 +9,7 @@ spec:
     kind: GitRepository
     name: aperitif-repo
     namespace: flux-system
-  path: ./k8s/infra/trust-manager/base
+  path: ./k8s/infra/trust-manager/overlays/dev
   prune: true
   wait: true
   interval: 10m
@@ -22,5 +22,5 @@ spec:
       kind: Deployment
       name: trust-manager
       namespace: cert-manager
-  dependsOn:
-    - name: cert-manager-cr
+  # dependsOn:
+  #   - name: cert-manager-crs
