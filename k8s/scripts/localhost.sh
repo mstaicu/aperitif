@@ -22,13 +22,12 @@ kubectl create secret tls "$TRAEFIK_TLS_SECRET" \
   --dry-run=client \
   --output yaml | kubectl apply -f -
 
-# kubectl -n "$LINKERD_NAMESPACE" create secret generic linkerd-identity-issuer \
+# kubectl create secret generic linkerd-identity-issuer \
 #   --from-file=tls.crt=intermediate_ca.crt \
 #   --from-file=tls.key=intermediate_ca_key.pem \
 #   --from-file=ca.crt=root_ca.crt \
-#   --dry-run=client -o yaml | kubectl apply -f -
+#   --dry-run=client -o yaml > linkerd-identity-issuer.yaml
 
-# # --- ConfigMap for Linkerd trust roots ---
-# kubectl -n "$LINKERD_NAMESPACE" create configmap linkerd-identity-trust-roots \
+# kubectl create configmap linkerd-identity-trust-roots \
 #   --from-file=ca-bundle.crt=root_ca.crt \
-#   --dry-run=client -o yaml | kubectl apply -f -
+#   --dry-run=client -o yaml > linkerd-identity-trust-roots.yaml

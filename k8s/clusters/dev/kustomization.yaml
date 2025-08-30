@@ -3,6 +3,3 @@ kind: Kustomization
 
 resources:
   - ../../infra/sources
-  - cert-manager.yaml
-  - cert-manager-crs.yaml
-  - trust-manager.yaml
