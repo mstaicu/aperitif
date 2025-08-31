@@ -1,4 +1,4 @@
 creation_rules:
-  - encrypted_regex: "^(data)$"
+  - encrypted_regex: "^data$"
     age: >-
       age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
