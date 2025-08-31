@@ -1,4 +1,7 @@
 creation_rules:
-  - encrypted_regex: "^data$"
+  # Note: You must leave metadata, kind or apiVersion in plain text.
+  # An easy way to do this is limiting the encrypted keys with the flag
+  # --encrypted-regex '^(data|stringData)$' in your sops encrypt command.
+  - encrypted_regex: "^(data|stringData)$"
     age: >-
       age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
