@@ -32,10 +32,6 @@ spec:
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
-      name: linkerd-controller
-      namespace: linkerd
-    - apiVersion: apps/v1
-      kind: Deployment
       name: linkerd-destination
       namespace: linkerd
     - apiVersion: apps/v1
