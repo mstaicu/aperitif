@@ -1,28 +1,21 @@
-// @ts-check
 import { Router } from "express";
 import { exportJWK, importSPKI } from "jose";
 import nconf from "nconf";
+import fs from "node:fs";
 
 const router = Router();
 
-// Convert PEM to JWK
-var jwk = await exportJWK(
-  await importSPKI(nconf.get("ACCESS_TOKEN_PUBLIC_KEY"), "RS256"),
+const jwk = await exportJWK(
+  await importSPKI(
+    fs.readFileSync(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
+    "ES256",
+  ),
 );
 
-router.get("/.well-known/jwks.json", async (_, res) => {
-  var jwks = {
-    keys: [
-      {
-        ...jwk,
-        alg: "RS256", // Algorithm used for signing
-        kid: "jwk-1", // Key ID for this key (this is how we match JWTs with their signing keys)
-        use: "sig", // This key is for signing
-      },
-    ],
-  };
+const JWKS = {
+  keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
+};
 
-  res.status(200).send(jwks);
-});
+router.get("/.well-known/jwks.json", (_, res) => res.status(200).json(JWKS));
 
 export { router as jwksRouter };

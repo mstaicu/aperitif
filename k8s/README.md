@@ -408,3 +408,16 @@ git commit -m "Deploy identity domain pr preview for pr #123"
 git push
 
 3. Don't forget to clean up this namespace after the PR is merged or closed (automate it in CI).
+
+# JWT
+
+step crypto keypair jwt-public.pem jwt-private.pem \
+  --kty EC --crv P-256 --use sig --alg ES256
+
+kubectl create secret generic auth-jwt-keys \
+  --from-file=jwt-private.pem \
+  --from-file=jwt-public.pem \
+  -n auth \
+  --dry-run=client -o yaml > secrets/auth-jwt-keys.yaml
+
+sops --encrypt --in-place secrets/auth-jwt-keys.yaml

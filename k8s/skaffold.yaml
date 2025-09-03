@@ -35,13 +35,13 @@ profiles:
     manifests:
       kustomize:
         paths:
-          - infra/identity/overlays/dev
+          - infra/auth/overlays/dev
 
-  - name: identity-prod
+  - name: auth-prod
     manifests:
       kustomize:
         paths:
-          - infra/identity/overlays/prod
+          - infra/auth/overlays/prod
 
     # deploy:
     #   kubectl:

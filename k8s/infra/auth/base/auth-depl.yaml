@@ -27,6 +27,30 @@ spec:
       containers:
         - name: auth
           image: mdstaicu/auth
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MONGO_DB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-env-cm
+                  key: MONGO_DB_URI
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-env-cm
+                  key: DOMAIN
+            - name: JWT_PRIVATE_KEY_PATH
+              value: /app/keys/jwt-private.key
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /app/keys/jwt-public.pub
+
+          volumeMounts:
+            - name: jwt-keys
+              mountPath: /app/keys
+              readOnly: true
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
@@ -48,3 +72,7 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 1
             failureThreshold: 2
+      volumes:
+        - name: jwt-keys
+          secret:
+            secretName: auth-jwt-keys
