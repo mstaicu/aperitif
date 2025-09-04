@@ -1,9 +1,9 @@
 // @ts-check
+import mongoose from "mongoose";
 import nconf from "nconf";
 
 import { app } from "./app.mjs";
 // import { connect } from "./messaging/index.mjs";
-import { createConnection } from "./models/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
 var PORT = 3000;
@@ -12,11 +12,18 @@ var server = addGracefulShutdown(
   app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
 );
 
-var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
+await mongoose.connect(nconf.get("MONGO_DB_URI"), {
   autoIndex: false,
   bufferCommands: false,
   dbName: "auth",
 });
+
+if (!mongoose.get("autoIndex")) {
+  await Promise.all(
+    Object.values(mongoose.models).map((model) => model.syncIndexes()),
+  );
+  console.log("indexes synchronized");
+}
 
 // var nc = await connect();
 
@@ -31,10 +38,10 @@ var connection = await createConnection(nconf.get("MONGO_DB_URI"), {
 //     console.log("closing server connections...");
 //     await server.gracefulShutdown();
 
-//     if (connection.readyState !== 0) {
+//     if (mongoose.connection.readyState !== 0) {
 //       console.log("closing database connection...");
 //       try {
-//         await connection.close();
+//         await mongoose.connection.close();
 //       } catch {
 //         console.error("error closing mongoose connection");
 //       }

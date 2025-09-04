@@ -1,18 +1,15 @@
 import express from "express";
+import mongoose from "mongoose";
 
 // import { nc } from "../messaging/index.mjs";
-import { connection } from "../models/index.mjs";
 
 var router = express.Router();
 
 router.get("/readyz", async (_, res) => {
-  // var dbAvailable = connection && connection.readyState === 1;
+  var dbAvailable = mongoose.connection && mongoose.connection.readyState === 1;
   // var ncAvailable = nc && !nc.isClosed();
 
-  // var serviceUnavailable = !dbAvailable || !ncAvailable;
-
-  // res.sendStatus(serviceUnavailable ? 500 : 200);
-  res.sendStatus(200);
+  res.sendStatus(dbAvailable ? 200 : 500);
 });
 
 router.get("/healthz", (_, res) => {

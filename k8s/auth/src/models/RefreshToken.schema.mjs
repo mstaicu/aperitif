@@ -17,7 +17,7 @@ var RefreshTokenSchema = new Schema(
       type: String,
     },
     expireAt: {
-      expires: 0,
+      index: { expires: 0 },
       required: true,
       type: Date,
     },
