@@ -29,7 +29,6 @@ spec:
     name: aperitif-repo
   dependsOn:
     - name: linkerd-crds
-    - name: linkerd-control-plane
   decryption:
     provider: sops
     secretRef:

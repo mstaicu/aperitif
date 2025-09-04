@@ -3,5 +3,5 @@ kind: Kustomization
 
 resources:
   - ../../infra/sources
-  - linkerd.yaml
+  # - linkerd.yaml
   - traefik.yaml
