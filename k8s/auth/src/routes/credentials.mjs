@@ -1,13 +1,14 @@
 // @ts-check
 import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
+import nconf from "nconf";
 
 import { Challenge, Passkey, User } from "../models/index.mjs";
 
 var router = Router();
 
-router.post("/challenge", async (_, res) => {
-  const challenge = new Challenge();
+router.post("/webauthn/registrations/challenge", async (_, res) => {
+  var challenge = new Challenge();
   await challenge.save();
 
   res.status(200).json({
@@ -16,10 +17,10 @@ router.post("/challenge", async (_, res) => {
   });
 });
 
-router.post("/", async (req, res) => {
-  const { attestation, challengeId } = req.body;
+router.post("/webauthn/registrations", async (req, res) => {
+  var { attestation, challengeId } = req.body;
 
-  const challenge = await Challenge.findById(challengeId);
+  var challenge = await Challenge.findById(challengeId);
 
   if (!challenge) {
     return res.status(400).json();
@@ -31,23 +32,21 @@ router.post("/", async (req, res) => {
    * - domain: must match RP ID (usually your base domain, can cover subdomains)
    */
 
-  const { hostname, origin } = new URL(
-    process.env.WEBAUTHN_RP_URL || "https://tma.com",
-  );
+  var { hostname, origin } = new URL(nconf.get("WEBAUTHN_RP_URL"));
 
-  const expected = {
+  var expected = {
     challenge: challenge.content,
     domain: hostname,
     origin,
   };
 
-  const reg = await server.verifyRegistration(attestation, expected);
+  var reg = await server.verifyRegistration(attestation, expected);
 
   if (!reg.userVerified) {
     return res.status(400).json({ error: "User verification failed" });
   }
 
-  const user = new User();
+  var user = new User();
   await user.save();
 
   var passkey = new Passkey({

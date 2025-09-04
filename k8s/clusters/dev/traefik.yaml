@@ -1,14 +1,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: linkerd-crds
+  name: traefik-crds
   namespace: flux-system
 spec:
   interval: 10m
   retryInterval: 1m
   timeout: 5m
   prune: true
-  path: ./k8s/infra/linkerd/crd
+  path: ./k8s/infra/traefik/crd
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
@@ -16,20 +16,19 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: linkerd-control-plane
+  name: traefik-depl
   namespace: flux-system
 spec:
   interval: 10m
   retryInterval: 1m
   timeout: 5m
   prune: true
-  path: ./k8s/infra/linkerd/overlays/dev
+  path: ./k8s/infra/traefik/overlays/dev
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
   dependsOn:
-    - name: linkerd-crds
-    - name: linkerd-control-plane
+    - name: traefik-crds
   decryption:
     provider: sops
     secretRef:
@@ -37,13 +36,9 @@ spec:
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
-      name: linkerd-destination
-      namespace: linkerd
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: linkerd-identity
-      namespace: linkerd
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: linkerd-proxy-injector
-      namespace: linkerd
+      name: traefik-depl
+      namespace: traefik
+    - apiVersion: v1
+      kind: Service
+      name: traefik-lb
+      namespace: traefik

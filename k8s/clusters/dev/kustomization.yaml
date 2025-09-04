@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ../../infra/sources
   - linkerd.yaml
+  - traefik.yaml
