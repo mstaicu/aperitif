@@ -46,11 +46,11 @@ async function connect(options = {}) {
   }
 
   nc = natsConnect({
-      authenticator,
-      maxReconnectAttempts: -1,
-      servers,
-      ...options,
-    })
+    authenticator,
+    maxReconnectAttempts: -1,
+    servers,
+    ...options,
+  });
 
   jsm = await jetstreamManager(nc);
   js = jetstream(nc);

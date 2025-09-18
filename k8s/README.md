@@ -409,7 +409,9 @@ git push
 
 3. Don't forget to clean up this namespace after the PR is merged or closed (automate it in CI).
 
-# JWT
+# Keys
+
+## JWT
 
 step crypto keypair jwt-public.pem jwt-private.pem \
   --kty EC --crv P-256 --use sig --alg ES256
@@ -417,7 +419,41 @@ step crypto keypair jwt-public.pem jwt-private.pem \
 kubectl create secret generic auth-jwt-keys \
   --from-file=jwt-private.pem \
   --from-file=jwt-public.pem \
-  -n auth \
   --dry-run=client -o yaml > secrets/auth-jwt-keys.yaml
 
 sops --encrypt --in-place secrets/auth-jwt-keys.yaml
+
+## Linkerd
+
+# Generate the Linkerd trust anchor (root CA)
+step certificate create root.linkerd.cluster.local ca.crt ca.key \
+  --profile root-ca --no-password --insecure
+
+# Generate the Linkerd issuer certificate and key signed by the trust anchor
+step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
+  --profile intermediate-ca --not-after=8760h \  # 1 year
+  --ca ca.crt --ca-key ca.key --no-password --insecure
+
+kubectl create secret tls linkerd-identity-issuer \
+  --cert=issuer.crt --key=issuer.key \
+  --dry-run=client -o yaml > linkerd-identity-issuer.yaml
+
+kubectl create secret generic linkerd-trust-anchor \
+  --from-file=ca.crt=ca.crt \
+  --dry-run=client -o yaml > linkerd-trust-anchor.yaml
+
+sops --encrypt --in-place linkerd-identity-issuer.yaml
+sops --encrypt --in-place linkerd-trust-anchor.yaml
+
+## Traefik
+
+mkcert -install
+
+mkcert -cert-file traefik.crt -key-file traefik.key \
+  "tma.com" "*.tma.com" localhost 127.0.0.1 ::1
+
+kubectl create secret tls traefik-tls \
+  --cert=traefik.crt --key=traefik.key \
+  --dry-run=client -o yaml > traefik-tls.yaml
+
+sops --encrypt --in-place traefik-tls.yaml
