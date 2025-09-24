@@ -457,3 +457,7 @@ kubectl create secret tls traefik-tls \
   --dry-run=client -o yaml > traefik-tls.yaml
 
 sops --encrypt --in-place traefik-tls.yaml
+
+# Install Flux
+
+flux install --namespace=flux-system
