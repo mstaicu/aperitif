@@ -10,6 +10,3 @@ configMapGenerator:
   - name: nats-cm
     files:
       - nats-server.conf=nats-server.conf
-
-patches:
-  - path: nats-depl.yaml

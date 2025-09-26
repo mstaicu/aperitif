@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+
+metadata:
+  name: aperitif-repo
+spec:
+  url: ssh://git@github.com/mstaicu/aperitif.git
+  ref:
+    branch: master
+  interval: 1m
+  secretRef:
+    name: github-ssh

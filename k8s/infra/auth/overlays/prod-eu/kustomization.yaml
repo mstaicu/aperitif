@@ -14,3 +14,6 @@ configMapGenerator:
     literals:
       - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
+
+patches:
+  - path: auth-depl.yaml

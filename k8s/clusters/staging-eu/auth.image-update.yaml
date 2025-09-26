@@ -1,0 +1,24 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageUpdateAutomation
+
+metadata:
+  name: auth
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: aperitif-repo
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        email: flux-bot@example.com
+        name: FluxCD Bot
+    push:
+      branch: main
+  update:
+    path: ./infra/auth/overlays/staging-eu
+    strategy: Setters
