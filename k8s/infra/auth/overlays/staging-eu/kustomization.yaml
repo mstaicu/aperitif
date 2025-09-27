@@ -17,4 +17,4 @@ configMapGenerator:
 
 images:
   - name: mdstaicu/auth
-    newTag: latest # TODO: Manually update this to promote the deployment to prod
+    newTag: latest

@@ -6,46 +6,21 @@ metadata:
 
 build:
   local:
-    push: true
-  tagPolicy:
-    gitCommit:
-      variant: AbbrevCommitSha
+    push: false
   artifacts:
     - image: mdstaicu/auth
       context: auth
       docker:
         dockerfile: Dockerfile
-        target: prod
+        target: dev
+      sync:
+        manual:
+          - src: src/**/*.mjs
+            dest: .
 
 profiles:
   - name: dev
-    build:
-      local:
-        push: false
-      artifacts:
-        - image: mdstaicu/auth
-          context: auth
-          docker:
-            dockerfile: Dockerfile
-            target: dev
-          sync:
-            manual:
-              - src: src/**/*.mjs
-                dest: .
     manifests:
       kustomize:
         paths:
           - infra/auth/overlays/dev
-
-  - name: auth-prod
-    manifests:
-      kustomize:
-        paths:
-          - infra/auth/overlays/prod
-
-    # deploy:
-    #   kubectl:
-    #     hooks:
-    #       after:
-    #         - host:
-    #             command: ["./scripts/localhost.sh"]

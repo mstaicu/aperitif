@@ -43,8 +43,6 @@ spec:
             #
             - --api.dashboard=true
             #
-            # https://doc.traefik.io/traefik/observability/access-logs/#configuration
-            #
             - --accesslog
             #
             - --log.level=INFO

@@ -28,7 +28,7 @@ spec:
       serviceAccountName: traefik-controller
       containers:
         - name: traefik
-          image: traefik:v3.4.3
+          image: traefik:v3.5.2
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode

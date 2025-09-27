@@ -15,7 +15,7 @@ spec:
         branch: main
     commit:
       author:
-        email: flux-bot@example.com
+        email: flux@tma.com
         name: FluxCD Bot
     push:
       branch: main

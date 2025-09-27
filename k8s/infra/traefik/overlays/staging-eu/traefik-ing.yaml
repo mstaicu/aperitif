@@ -2,22 +2,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 
 metadata:
-  name: traefik-http-dash
-spec:
-  entryPoints:
-    - http
-  routes:
-    - match: Host(`tma.com`) && PathPrefix(`/api`) || PathPrefix(`/dashboard`)
-      kind: Rule
-      services:
-        - name: api@internal
-          kind: TraefikService
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-
-metadata:
-  name: traefik-https-dash
+  name: traefik-dashboard
 spec:
   entryPoints:
     - https
