@@ -7,6 +7,9 @@ resources:
   - auth.image-policy.yaml
   - auth.image-repo.yaml
   - auth.image-update.yaml
+
   - infra.git-repo.yaml
+  - infra.receiver.yaml
+
   - traefik-crd.kustomization.yaml
   - traefik-depl.kustomization.yaml

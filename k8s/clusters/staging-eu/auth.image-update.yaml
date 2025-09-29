@@ -12,13 +12,13 @@ spec:
   git:
     checkout:
       ref:
-        branch: main
+        branch: master
     commit:
       author:
         email: flux@tma.com
         name: FluxCD Bot
     push:
-      branch: main
+      branch: master
   update:
-    path: ./infra/auth/overlays/staging-eu
+    path: ./k8s/infra/auth/overlays/staging-eu
     strategy: Setters

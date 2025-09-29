@@ -6,5 +6,7 @@ metadata:
 spec:
   imageRepositoryRef:
     name: auth
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
   policy:
     latest: {}
