@@ -18,9 +18,7 @@ build:
           - src: src/**/*.mjs
             dest: .
 
-profiles:
-  - name: dev
-    manifests:
-      kustomize:
-        paths:
-          - infra/auth/overlays/dev
+manifests:
+  kustomize:
+    paths:
+      - infra/auth/overlays/dev

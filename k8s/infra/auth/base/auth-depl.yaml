@@ -37,11 +37,11 @@ spec:
                 configMapKeyRef:
                   name: auth-env-cm
                   key: MONGO_DB_URI
-            - name: DOMAIN
-              valueFrom:
-                configMapKeyRef:
-                  name: auth-env-cm
-                  key: DOMAIN
+            # - name: DOMAIN
+            #   valueFrom:
+            #     configMapKeyRef:
+            #       name: auth-env-cm
+            #       key: DOMAIN
             - name: JWT_PRIVATE_KEY_PATH
               value: /app/keys/jwt-private.key
             - name: JWT_PUBLIC_KEY_PATH

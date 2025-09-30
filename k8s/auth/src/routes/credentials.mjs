@@ -58,4 +58,4 @@ router.post("/webauthn/registrations", async (req, res) => {
   res.status(201);
 });
 
-export default router;
+export { router as webauthnRouter };

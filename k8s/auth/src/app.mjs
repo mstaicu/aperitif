@@ -1,13 +1,19 @@
 // @ts-check
 import express from "express";
 
-import { router } from "./routes/index.mjs";
+import { serviceAvailability } from "./middleware/availability.mjs";
+import { webauthnRouter } from "./routes/credentials.mjs";
+import { healthRouter } from "./routes/health.mjs";
 
 const app = express();
 
 app.disable("x-powered-by");
 app.use(express.json());
 
-app.use(router);
+app.use("/", healthRouter);
+
+app.use(serviceAvailability);
+
+app.use(webauthnRouter);
 
 export { app };

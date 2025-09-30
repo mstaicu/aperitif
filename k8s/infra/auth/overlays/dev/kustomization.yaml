@@ -5,7 +5,7 @@ namespace: auth
 
 resources:
   - ../../base
-  - auth-ing.yaml
+  - auth-ingress.yaml
   - auth-jwt-keys.yaml
   - auth-mongo-depl.yaml
   - auth-ns.yaml

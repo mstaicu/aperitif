@@ -5,7 +5,7 @@ namespace: traefik
 
 resources:
   - ../../base
-  - traefik-ing.yaml
+  - traefik-ingress.yaml
   - traefik-ns.yaml
   - traefik-svc.yaml
   - traefik-tls.yaml
