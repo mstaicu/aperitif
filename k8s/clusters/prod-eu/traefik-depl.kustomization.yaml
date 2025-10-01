@@ -14,7 +14,7 @@ spec:
   prune: true
   dependsOn:
     - name: traefik-crds
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
+  # decryption:
+  #   provider: sops
+  #   secretRef:
+  #     name: sops-age

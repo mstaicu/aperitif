@@ -1,0 +1,95 @@
+# This flips Traefik pods into “deny-all” mode; everything else explicitly opts back in
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: traefik-default-deny
+spec:
+  podSelector:
+    matchLabels:
+      app: traefik
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Allow Ingress Only From The Load Balancer Path
+# On DigitalOcean, traffic leaves the managed load balancer and lands on worker
+# nodes’ private VPC addresses. Grab that CIDR with
+# doctl kubernetes cluster get <name> --output json | jq '.[0].clusterSubnet'
+# (typically 10.240.0.0/16) and plug it in:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: traefik-allow-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: traefik
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.240.0.0/16 # TODO: replace with your worker-node subnet
+      ports:
+        - port: 80
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+---
+# Allow Only The Egress Traefik Needs
+# Traefik itself (and the Linkerd sidecar) must talk to a few control-plane
+# services plus the DigitalOcean API:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: traefik-allow-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: traefik
+  policyTypes:
+    - Egress
+  egress:
+    # Kubernetes API
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.1/32 # replace with `kubectl get svc kubernetes -o jsonpath='{.spec.clusterIP}'`
+      ports:
+        - port: 443
+          protocol: TCP
+    # Cluster DNS (CoreDNS)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # Linkerd control plane (identity, destination, tap)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              linkerd.io/control-plane-ns: linkerd
+      ports:
+        - port: 8080 # identity gRPC
+          protocol: TCP
+        - port: 8086 # destination gRPC
+          protocol: TCP
+        - port: 8088 # tap (optional, drop if unused)
+          protocol: TCP
+    # DigitalOcean API for ACME DNS-01 updates
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+          except:
+            - 10.240.0.0/16 # same VPC CIDR; keep internal traffic governed above
+            - 10.244.0.0/16 # replace with your pod CIDR if different
+      ports:
+        - port: 443
+          protocol: TCP
