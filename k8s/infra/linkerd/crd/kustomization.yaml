@@ -1,6 +1,9 @@
+#
+# helm repo update
+# helm template linkerd-crd linkerd/linkerd-crds --set installGatewayAPI=true > linkerd-crd.yaml
+#
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - gateway-api.yaml
   - linkerd-crds.yaml

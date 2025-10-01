@@ -9,8 +9,8 @@ spec:
       app: traefik
   replicas: 1
   template:
-    metadata:
-      annotations: null
+    # metadata:
+    #   annotations: null
     spec:
       affinity: null
       containers:
