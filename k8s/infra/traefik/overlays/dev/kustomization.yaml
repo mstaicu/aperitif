@@ -9,6 +9,7 @@ resources:
   - traefik-ns.yaml
   - traefik-svc.yaml
   - traefik-tls.yaml
+  - traefik-tlsstore.yaml
 
 patches:
   - path: traefik-depl.yaml

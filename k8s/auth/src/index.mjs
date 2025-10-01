@@ -4,15 +4,15 @@ nconf.env().required([
   "JWT_PRIVATE_KEY_PATH",
   "JWT_PUBLIC_KEY_PATH",
   "MONGO_DB_URI",
-  // "WEBAUTHN_RP_URL",
+  // "ORIGIN",
 ]);
 
-// const rpUrl = nconf.get("WEBAUTHN_RP_URL");
+// const origin = nconf.get("ORIGIN");
 
 // try {
-//   new URL(rpUrl);
+//   new URL(origin);
 // } catch {
-//   throw new Error(`Invalid WEBAUTHN_RP_URL: ${rpUrl}`);
+//   throw new Error(`Invalid ORIGIN: ${origin}`);
 // }
 
 import("./server.mjs");

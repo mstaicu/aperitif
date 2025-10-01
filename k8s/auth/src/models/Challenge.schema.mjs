@@ -12,7 +12,6 @@ var ChallengeSchema = new Schema({
      * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits)
      */
     default: () => randomBytes((32 * 6) / 8).toString("base64url"),
-    index: true,
     type: String,
     unique: true,
   },

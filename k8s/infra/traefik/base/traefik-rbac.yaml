@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: traefik-controller-role
+  name: traefik-ingress-controller
 
 rules:
   - apiGroups:
@@ -15,6 +15,14 @@ rules:
       - get
       - list
       - watch
+  # The pods right is needed to inject k8s.pod.uid and k8s.pod.name OTel attributes.
+  # When OTel tracing/logs/metrics are not enabled, this rule is not needed.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
   - apiGroups:
       - discovery.k8s.io
     resources:
@@ -60,20 +68,19 @@ rules:
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
-
 metadata:
-  name: traefik-controller-rolebinding
+  name: traefik-ingress-controller
+
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: traefik-controller-role
+  name: traefik-ingress-controller
 subjects:
   - kind: ServiceAccount
-    name: traefik-controller
-    namespace: traefik
+    name: traefik-ingress-controller
 ---
 apiVersion: v1
 kind: ServiceAccount
 
 metadata:
-  name: traefik-controller
+  name: traefik-ingress-controller

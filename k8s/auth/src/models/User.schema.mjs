@@ -8,6 +8,7 @@ var UserSchema = new Schema(
       default: randomUUID,
       type: String,
     },
+    email: { required: true, type: String, unique: true },
   },
   { timestamps: true },
 );

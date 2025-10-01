@@ -4,31 +4,10 @@ kind: Deployment
 metadata:
   name: traefik-depl
 spec:
-  selector:
-    matchLabels:
-      app: traefik
-  replicas: 3
   template:
-    metadata:
-      labels:
-        app: traefik
-      annotations:
-        linkerd.io/inject: enabled
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - traefik
-              topologyKey: kubernetes.io/hostname
-      serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik
-          image: traefik:v3.5.3
           args:
             #
             # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
@@ -67,3 +46,20 @@ spec:
             - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd
+            #
+            - --certificatesresolvers.letsencrypt.acme.email=md.staicu@yahoo.com
+            - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+            - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=digitalocean
+          env:
+            - name: DO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: do-dns-token
+                  key: DO_AUTH_TOKEN
+          volumeMounts:
+            - name: acme-data
+              mountPath: /data
+      volumes:
+        - name: acme-data
+          persistentVolumeClaim:
+            claimName: traefik-acme-pvc

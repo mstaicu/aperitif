@@ -1,5 +1,5 @@
 {
-  "name": "auth-srv",
+  "name": "auth-service",
   "scripts": {
     "test": "node --test",
     "lint": "eslint ."

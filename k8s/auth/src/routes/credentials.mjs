@@ -23,7 +23,7 @@ router.post("/webauthn/registrations", async (req, res) => {
   var challenge = await Challenge.findById(challengeId);
 
   if (!challenge) {
-    return res.status(400).json();
+    return res.sendStatus(400);
   }
 
   /**
@@ -32,18 +32,17 @@ router.post("/webauthn/registrations", async (req, res) => {
    * - domain: must match RP ID (usually your base domain, can cover subdomains)
    */
 
-  var { hostname, origin } = new URL(nconf.get("WEBAUTHN_RP_URL"));
+  var { origin } = new URL(nconf.get("ORIGIN"));
 
   var expected = {
     challenge: challenge.content,
-    domain: hostname,
     origin,
   };
 
   var reg = await server.verifyRegistration(attestation, expected);
 
   if (!reg.userVerified) {
-    return res.status(400).json({ error: "User verification failed" });
+    return res.sendStatus(400);
   }
 
   var user = new User();
@@ -54,8 +53,9 @@ router.post("/webauthn/registrations", async (req, res) => {
   });
 
   await passkey.save();
+  await challenge.deleteOne();
 
-  res.status(201);
+  res.sendStatus(201);
 });
 
 export { router as webauthnRouter };
