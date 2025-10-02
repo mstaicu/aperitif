@@ -5,6 +5,9 @@ metadata:
   name: traefik-depl
 spec:
   template:
+    # metadata:
+    #   annotations:
+    #     linkerd.io/inject: enabled
     spec:
       initContainers:
         - name: init-acme

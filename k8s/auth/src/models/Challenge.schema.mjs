@@ -9,7 +9,7 @@ var ChallengeSchema = new Schema({
   },
   content: {
     /**
-     * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits)
+     * 32 characters in base64 represent 192 bits (32 * 6 = 192 bits or 24 bytes)
      */
     default: () => randomBytes((32 * 6) / 8).toString("base64url"),
     type: String,
@@ -20,9 +20,10 @@ var ChallengeSchema = new Schema({
    */
   createdAt: {
     default: Date.now,
-    expires: 60,
+    expires: 60, // seconds
     type: Date,
   },
+  email: { required: false, type: String },
 });
 
 export { ChallengeSchema };

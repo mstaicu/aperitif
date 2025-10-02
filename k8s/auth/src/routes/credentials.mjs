@@ -3,11 +3,11 @@ import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
 import nconf from "nconf";
 
-import { Challenge, Passkey, User } from "../models/index.mjs";
+import { Challenge, Passkey } from "../models/index.mjs";
 
 var router = Router();
 
-router.post("/webauthn/registrations/challenge", async (_, res) => {
+router.post("/webauthn/challenge", async (_, res) => {
   var challenge = new Challenge();
   await challenge.save();
 
@@ -20,42 +20,118 @@ router.post("/webauthn/registrations/challenge", async (_, res) => {
 router.post("/webauthn/registrations", async (req, res) => {
   var { attestation, challengeId } = req.body;
 
+  if (!attestation || !challengeId) {
+    return res.sendStatus(400);
+  }
+
   var challenge = await Challenge.findById(challengeId);
 
   if (!challenge) {
     return res.sendStatus(400);
   }
 
-  /**
-   * Enforce origin + domain in addition to challenge
-   * - origin: must match the full URL origin
-   * - domain: must match RP ID (usually your base domain, can cover subdomains)
-   */
-
-  var { origin } = new URL(nconf.get("ORIGIN"));
-
   var expected = {
     challenge: challenge.content,
-    origin,
+    origin: new URL(nconf.get("ORIGIN")).origin,
   };
 
-  var reg = await server.verifyRegistration(attestation, expected);
+  var reg;
 
-  if (!reg.userVerified) {
+  try {
+    reg = await server.verifyRegistration(attestation, expected);
+  } catch {
+    await challenge.deleteOne();
     return res.sendStatus(400);
   }
 
-  var user = new User();
-  await user.save();
+  if (!reg.userVerified) {
+    await challenge.deleteOne();
+    return res.sendStatus(400);
+  }
+
+  var { algorithm, id: credentialId, publicKey, transports } = reg.credential;
+  var { counter } = reg.authenticator;
+  var { id: userId } = reg.user;
 
   var passkey = new Passkey({
-    user: user._id,
-  });
+    algorithm,
+    counter,
+    credentialId,
+    publicKey,
+    transports,
 
+    userId,
+  });
   await passkey.save();
+
   await challenge.deleteOne();
 
   res.sendStatus(201);
+});
+
+router.post("/webauthn/authenticate", async (req, res) => {
+  var { authentication, challengeId } = req.body;
+
+  if (!authentication || !challengeId) {
+    return res.sendStatus(400);
+  }
+
+  var challenge = await Challenge.findById(challengeId);
+  if (!challenge) {
+    return res.sendStatus(400);
+  }
+
+  var passkey = await Passkey.findOne({ credentialId: authentication.id });
+
+  if (!passkey) {
+    await challenge.deleteOne();
+    return res.sendStatus(401);
+  }
+
+  var expected = {
+    challenge: challenge.content,
+    origin: new URL(nconf.get("ORIGIN")).origin,
+    // userVerified: true,  // should be set if `userVerification` was set to `required` in the authentication options (default)
+    // counter: -1
+  };
+
+  var credential = {
+    algorithm: passkey.algorithm,
+    id: passkey.credentialId,
+    publicKey: passkey.publicKey,
+    transports: passkey.transports,
+  };
+
+  var result;
+
+  try {
+    result = await server.verifyAuthentication(
+      authentication,
+      // @ts-ignore
+      credential,
+      expected,
+    );
+  } catch {
+    await challenge.deleteOne();
+    return res.sendStatus(401);
+  }
+
+  if (!result.userVerified || result.userId !== passkey.userId) {
+    await challenge.deleteOne();
+    return res.sendStatus(401);
+  }
+
+  if (typeof result.counter === "number" && result.counter < passkey.counter) {
+    await challenge.deleteOne();
+    return res.sendStatus(401);
+  }
+
+  passkey.counter = result.counter;
+  await passkey.save();
+
+  await challenge.deleteOne();
+
+  res.sendStatus(200);
 });
 
 export { router as webauthnRouter };
