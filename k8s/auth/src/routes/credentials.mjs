@@ -17,7 +17,7 @@ router.post("/webauthn/challenge", async (_, res) => {
   });
 });
 
-router.post("/webauthn/registrations", async (req, res) => {
+router.post("/webauthn/registration", async (req, res) => {
   var { attestation, challengeId } = req.body;
 
   if (!attestation || !challengeId) {
@@ -30,9 +30,11 @@ router.post("/webauthn/registrations", async (req, res) => {
     return res.sendStatus(400);
   }
 
+  var { origin } = new URL(nconf.get("ORIGIN"));
+
   var expected = {
     challenge: challenge.content,
-    origin: new URL(nconf.get("ORIGIN")).origin,
+    origin,
   };
 
   var reg;
@@ -49,18 +51,19 @@ router.post("/webauthn/registrations", async (req, res) => {
     return res.sendStatus(400);
   }
 
-  var { algorithm, id: credentialId, publicKey, transports } = reg.credential;
+  var { algorithm, id: credentialId, publicKey } = reg.credential;
   var { counter } = reg.authenticator;
   var { id: userId } = reg.user;
+
+  var userIdBase64Url = Buffer.from(userId).toString("base64url");
 
   var passkey = new Passkey({
     algorithm,
     counter,
     credentialId,
     publicKey,
-    transports,
 
-    userId,
+    userId: userIdBase64Url,
   });
   await passkey.save();
 
@@ -69,7 +72,7 @@ router.post("/webauthn/registrations", async (req, res) => {
   res.sendStatus(201);
 });
 
-router.post("/webauthn/authenticate", async (req, res) => {
+router.post("/webauthn/authentication", async (req, res) => {
   var { authentication, challengeId } = req.body;
 
   if (!authentication || !challengeId) {
@@ -88,18 +91,18 @@ router.post("/webauthn/authenticate", async (req, res) => {
     return res.sendStatus(401);
   }
 
+  var { origin } = new URL(nconf.get("ORIGIN"));
+
   var expected = {
     challenge: challenge.content,
-    origin: new URL(nconf.get("ORIGIN")).origin,
-    // userVerified: true,  // should be set if `userVerification` was set to `required` in the authentication options (default)
-    // counter: -1
+    origin,
+    userVerified: true,
   };
 
   var credential = {
     algorithm: passkey.algorithm,
     id: passkey.credentialId,
     publicKey: passkey.publicKey,
-    transports: passkey.transports,
   };
 
   var result;
