@@ -57,6 +57,11 @@ router.post("/webauthn/registration", async (req, res) => {
 
   var userIdBase64Url = Buffer.from(userId).toString("base64url");
 
+  if (await Passkey.findOne({ credentialId })) {
+    await challenge.deleteOne();
+    return res.sendStatus(409);
+  }
+
   var passkey = new Passkey({
     algorithm,
     counter,
@@ -65,8 +70,8 @@ router.post("/webauthn/registration", async (req, res) => {
 
     userId: userIdBase64Url,
   });
-  await passkey.save();
 
+  await passkey.save();
   await challenge.deleteOne();
 
   res.sendStatus(201);
@@ -95,6 +100,7 @@ router.post("/webauthn/authentication", async (req, res) => {
 
   var expected = {
     challenge: challenge.content,
+    counter: passkey.counter,
     origin,
     userVerified: true,
   };
@@ -119,7 +125,12 @@ router.post("/webauthn/authentication", async (req, res) => {
     return res.sendStatus(401);
   }
 
-  if (!result.userVerified || result.userId !== passkey.userId) {
+  if (!result.userVerified) {
+    await challenge.deleteOne();
+    return res.sendStatus(401);
+  }
+
+  if (result.userId !== passkey.userId) {
     await challenge.deleteOne();
     return res.sendStatus(401);
   }
@@ -130,11 +141,66 @@ router.post("/webauthn/authentication", async (req, res) => {
   }
 
   passkey.counter = result.counter;
-  await passkey.save();
 
+  await passkey.save();
   await challenge.deleteOne();
 
   res.sendStatus(200);
 });
 
 export { router as webauthnRouter };
+
+// <script type="module">
+//       import {client} from "https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn";
+
+//       const regChallenge = await fetch("https://tma.com/api/v1/auth/webauthn/challenge",
+//       {
+//           headers: {
+//             'Accept': 'application/json',
+//             'Content-Type': 'application/json'
+//           },
+//           method: "POST"
+//       });
+
+//       let {challenge, challengeId} = await regChallenge.json();
+
+//       const attestation = await client.register({
+//         user: "Mircea Staicu",
+//         challenge,
+//       });
+
+//       await fetch("https://tma.com/api/v1/auth/webauthn/registration",
+//       {
+//           headers: {
+//             'Accept': 'application/json',
+//             'Content-Type': 'application/json'
+//           },
+//           method: "POST",
+//           body: JSON.stringify({challengeId, attestation})
+//       });
+
+//       // const authChallenge = await fetch("https://tma.com/api/v1/auth/webauthn/challenge",
+//       // {
+//       //     headers: {
+//       //       'Accept': 'application/json',
+//       //       'Content-Type': 'application/json'
+//       //     },
+//       //     method: "POST"
+//       // });
+
+//       // let {challenge, challengeId} = await authChallenge.json();
+
+//       // var authentication = await client.authenticate({
+//       //   challenge
+//       // });
+
+//       // await fetch("https://tma.com/api/v1/auth/webauthn/authentication",
+//       // {
+//       //     headers: {
+//       //       'Accept': 'application/json',
+//       //       'Content-Type': 'application/json'
+//       //     },
+//       //     method: "POST",
+//       //     body: JSON.stringify({challengeId, authentication})
+//       // });
+//     </script>
