@@ -15,7 +15,7 @@ var server = addGracefulShutdown(
 await mongoose.connect(nconf.get("MONGO_DB_URI"), {
   autoIndex: false,
   bufferCommands: false,
-  dbName: "auth",
+  dbName: "auth-api",
 });
 
 if (!mongoose.get("autoIndex")) {

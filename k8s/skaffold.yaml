@@ -8,8 +8,8 @@ build:
   local:
     push: false
   artifacts:
-    - image: mdstaicu/auth
-      context: auth
+    - image: mdstaicu/auth-api
+      context: auth-api
       docker:
         dockerfile: Dockerfile
         target: dev

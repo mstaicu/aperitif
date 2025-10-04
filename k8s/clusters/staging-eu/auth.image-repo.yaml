@@ -4,5 +4,5 @@ kind: ImageRepository
 metadata:
   name: auth
 spec:
-  image: docker.io/mdstaicu/auth
+  image: docker.io/mdstaicu/auth-api
   interval: 1m

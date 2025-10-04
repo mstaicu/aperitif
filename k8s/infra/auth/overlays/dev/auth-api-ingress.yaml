@@ -2,7 +2,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 
 metadata:
-  name: auth
+  name: auth-api
 spec:
   entryPoints:
     - https
@@ -11,9 +11,9 @@ spec:
       kind: Rule
       priority: 69
       middlewares:
-        - name: auth-strip-prefix
+        - name: auth-api-strip-prefix
       services:
-        - name: auth-srv
+        - name: auth-api-srv
           port: 3000
   tls: {}
 ---
@@ -21,7 +21,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-strip-prefix
+  name: auth-api-strip-prefix
 spec:
   stripPrefix:
     prefixes:

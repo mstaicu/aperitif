@@ -1,25 +1,25 @@
-name: auth service
+name: auth api
 
 on:
   push:
     paths:
-      - "auth/**"
+      - "auth-api/**"
     branches:
       - master
   pull_request:
     paths:
-      - "auth/**"
+      - "auth-api/**"
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: mdstaicu/auth
+  IMAGE_NAME: mdstaicu/auth-api
 
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: auth
+        working-directory: auth-api
     steps:
       - uses: actions/checkout@v4
       - name: set up node
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: auth
+        working-directory: auth-api
     steps:
       - uses: actions/checkout@v4
       - name: set up Docker Buildx
@@ -65,6 +65,6 @@ jobs:
       - name: build and push image
         uses: docker/build-push-action@v5
         with:
-          context: auth
+          context: auth-api
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}

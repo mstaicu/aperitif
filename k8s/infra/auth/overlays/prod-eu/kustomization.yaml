@@ -5,16 +5,16 @@ namespace: auth
 
 resources:
   - ../../base
-  - auth-ingress.yaml
-  - auth-jwt-keys.yaml
+  - auth-api-ingress.yaml
+  - auth-api-jwts.yaml
   - auth-ns.yaml
 
 configMapGenerator:
   - name: auth-env-cm
     literals:
-      - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
+      # - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com
 
 images:
-  - name: mdstaicu/auth
+  - name: mdstaicu/auth-api
     newTag: latest # TODO: Manually update this to promote the deployment to prod

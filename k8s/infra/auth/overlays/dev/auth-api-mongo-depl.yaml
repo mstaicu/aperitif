@@ -2,19 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: auth-mongo-depl
+  name: auth-api-mongo-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-mongo
+      app: auth-api-mongo
   template:
     metadata:
       labels:
-        app: auth-mongo
+        app: auth-api-mongo
     spec:
       containers:
-        - name: auth-mongo
+        - name: auth-api-mongo
           # This comes from https://hub.docker.com/_/mongo
           image: mongo
 ---
@@ -23,14 +23,14 @@ kind: Service
 
 metadata:
   # The 'name' represents the domain in the URL
-  name: auth-mongo-srv
+  name: auth-api-mongo-srv
 spec:
   type: ClusterIP
   selector:
-    app: auth-mongo
+    app: auth-api-mongo
   ports:
     # The name is for logging purposes
-    - name: auth-mongo
+    - name: auth-api-mongo
       protocol: TCP
       # The port of this service
       port: 27017

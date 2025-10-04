@@ -2,16 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: auth-depl
+  name: auth-api-depl
 spec:
   selector:
     matchLabels:
-      app: auth
+      app: auth-api
   replicas: 3
   template:
     metadata:
       labels:
-        app: auth
+        app: auth-api
     spec:
       # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
       affinity:
@@ -22,11 +22,11 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - auth
+                      - auth-api
               topologyKey: kubernetes.io/hostname
       containers:
-        - name: auth
-          image: mdstaicu/auth
+        - name: auth-api
+          image: mdstaicu/auth-api
           env:
             - name: NAMESPACE
               valueFrom:
@@ -48,7 +48,7 @@ spec:
               value: /app/keys/jwt-public.pub
 
           volumeMounts:
-            - name: jwt-keys
+            - name: auth-api-jwts
               mountPath: /app/keys
               readOnly: true
           #
@@ -73,6 +73,6 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 2
       volumes:
-        - name: jwt-keys
+        - name: auth-api-jwts
           secret:
-            secretName: auth-jwt-keys
+            secretName: auth-api-jwts

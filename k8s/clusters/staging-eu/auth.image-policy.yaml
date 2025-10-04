@@ -2,10 +2,10 @@ apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImagePolicy
 
 metadata:
-  name: auth-latest
+  name: auth-api-latest
 spec:
   imageRepositoryRef:
-    name: auth
+    name: auth-api
   filterTags:
     pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
   policy:

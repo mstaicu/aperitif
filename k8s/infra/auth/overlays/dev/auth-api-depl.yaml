@@ -2,12 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: auth-depl
+  name: auth-api-depl
 spec:
   replicas: 1
   template:
     spec:
       affinity: null
       containers:
-        - name: auth
-          image: mdstaicu/auth
+        - name: auth-api
+          image: mdstaicu/auth-api

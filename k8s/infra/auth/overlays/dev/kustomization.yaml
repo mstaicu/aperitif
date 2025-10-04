@@ -5,16 +5,16 @@ namespace: auth
 
 resources:
   - ../../base
-  - auth-ingress.yaml
-  - auth-jwt-keys.yaml
-  - auth-mongo-depl.yaml
+  - auth-api-ingress.yaml
+  - auth-api-jwts.yaml
+  - auth-api-mongo-depl.yaml
   - auth-ns.yaml
 
 configMapGenerator:
   - name: auth-env-cm
     literals:
-      - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
+      - MONGO_DB_URI=mongodb://auth-api-mongo-srv:27017
       - ORIGIN=https://tma.com
 
 patches:
-  - path: auth-depl.yaml
+  - path: auth-api-depl.yaml
