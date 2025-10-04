@@ -1,3 +1,4 @@
+import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import {
   credsAuthenticator,
   connect as natsConnect,
