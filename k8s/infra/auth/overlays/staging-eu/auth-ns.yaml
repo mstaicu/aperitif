@@ -3,3 +3,5 @@ kind: Namespace
 
 metadata:
   name: auth
+  # annotations:
+  #   linkerd.io/inject: enabled

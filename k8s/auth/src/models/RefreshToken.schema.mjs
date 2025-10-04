@@ -27,7 +27,7 @@ var RefreshTokenSchema = new Schema(
       type: String,
       unique: true,
     },
-    user: { ref: "User", required: true, type: String },
+    userId: { required: true, type: String }, // base64url encoded user id
   },
   {
     timestamps: true,

@@ -30,15 +30,6 @@ spec:
           image: nats:2.11.10-alpine3.22
           args: ["-c", "/etc/nats/nats-server.conf"]
 
-          volumeMounts:
-            - name: nats-conf-cm
-              mountPath: /etc/nats/
-            - name: resolver-volume
-              mountPath: /etc/resolver.conf
-              subPath: resolver.conf
-            - name: nats-storage
-              mountPath: /data
-
           readinessProbe:
             httpGet:
               path: /healthz?js-server-only=true
@@ -68,20 +59,3 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 90
-
-      volumes:
-        - name: nats-conf-cm
-          configMap:
-            name: nats-conf-cm
-        - name: resolver-volume
-          secret:
-            secretName: nats-resolver
-
-  volumeClaimTemplates:
-    - metadata:
-        name: nats-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi

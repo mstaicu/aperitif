@@ -8,9 +8,18 @@ resources:
   - nats-ns.yaml
 
 configMapGenerator:
-  - name: nats-cm
+  - name: nats-conf-cm
     files:
       - nats-server.conf=nats-server.conf
+
+secretGenerator:
+  - name: nats-jwts
+    files:
+      - ./jwts/operator.jwt
+      - ./jwts/SYS.jwt
+
+generatorOptions:
+  disableNameSuffixHash: true
 
 patches:
   - path: nats-depl.yaml

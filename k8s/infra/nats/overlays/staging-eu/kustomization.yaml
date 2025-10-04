@@ -5,8 +5,12 @@ namespace: nats
 
 resources:
   - ../../base
+  - nats-ns.yaml
 
 configMapGenerator:
-  - name: nats-cm
+  - name: nats-conf-cm
     files:
       - nats-server.conf=nats-server.conf
+
+patches:
+  - path: nats-depl.yaml

@@ -4,36 +4,47 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: nats
+  serviceName: nats-headless
+  replicas: 3
   template:
     metadata:
       labels:
         app: nats
     spec:
-      affinity: null
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nats
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: nats
+
           volumeMounts:
             - name: nats-conf-cm
               mountPath: /etc/nats/
             - name: nats-storage
               mountPath: /data
-            - mountPath: /etc/nats/jwt
-              name: nats-jwts
 
       volumes:
         - name: nats-conf-cm
           configMap:
             name: nats-conf-cm
-        - name: nats-jwts
-          secret:
-            secretName: nats-jwts
 
   volumeClaimTemplates:
     - metadata:
         name: nats-storage
       spec:
-        storageClassName: hostpath
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 1Gi
+        storageClassName: do-block-storage

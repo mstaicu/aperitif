@@ -34,7 +34,7 @@ var PasskeySchema = new Schema(
     //   enum: ["ble", "hybrid", "internal", "nfc", "usb", "smart-card"],
     //   type: [String],
     // },
-    userId: { required: true, type: String },
+    userId: { required: true, type: String }, // base64url encoded user id
   },
   { timestamps: true },
 );
