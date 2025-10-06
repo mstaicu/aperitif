@@ -11,6 +11,7 @@ resources:
   - auth-api-nats-creds.yaml
   - auth-ns.yaml
   - auth-stream.yaml
+  - auth-worker-consumer.yaml
 
 configMapGenerator:
   - name: auth-api-cm
@@ -20,3 +21,4 @@ configMapGenerator:
 
 patches:
   - path: auth-api-depl.yaml
+  - path: auth-worker-depl.yaml

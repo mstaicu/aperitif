@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-worker-depl
+spec:
+  selector:
+    matchLabels:
+      app: auth-worker
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: auth-worker
+    spec:
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - auth-worker
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: auth-worker
+          image: mdstaicu/auth-worker
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MONGO_DB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-worker-cm
+                  key: MONGO_DB_URI
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-worker-cm
+                  key: ORIGIN
+
+          volumeMounts:
+            - name: auth-worker-nats-creds
+              mountPath: /nats
+      volumes:
+        - name: auth-worker-nats-creds
+          secret:
+            secretName: auth-worker-nats.creds

@@ -1,11 +1,7 @@
-import { jetstream, jetstreamManager } from "@nats-io/jetstream";
-import {
-  credsAuthenticator,
-  connect as natsConnect,
-} from "@nats-io/transport-node";
-import { readFileSync } from "fs";
 import mongoose from "mongoose";
 import nconf from "nconf";
+
+import { connect } from "./nats.mjs";
 
 await mongoose.connect(nconf.get("MONGO_DB_URI"), {
   autoIndex: false,
@@ -20,26 +16,7 @@ if (!mongoose.get("autoIndex")) {
   console.log("indexes synchronized");
 }
 
-var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync("/secrets/auth.creds")),
-);
-
-var servers = Array.from(Array(3)).map(
-  (_, index) =>
-    `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
-);
-
-var nc = await natsConnect({
-  authenticator,
-  servers,
-});
-
-var js = jetstream(nc);
-var jsm = await jetstreamManager(nc);
-
-console.log(js, jsm);
-
-// Add listeners
+var nc = await connect();
 
 var shutdownInitiated = false;
 

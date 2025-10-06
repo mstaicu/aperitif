@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - auth-api-depl.yaml
   - auth-api-srv.yaml
+  - auth-worker-depl.yaml

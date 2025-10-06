@@ -51,6 +51,8 @@ spec:
             - name: auth-api-jwt
               mountPath: /app/keys
               readOnly: true
+            - name: auth-api-nats-creds
+              mountPath: /nats
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
@@ -76,3 +78,6 @@ spec:
         - name: auth-api-jwt
           secret:
             secretName: auth-api-jwt
+        - name: auth-api-nats-creds
+          secret:
+            secretName: auth-api-nats.creds
