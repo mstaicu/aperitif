@@ -48,7 +48,7 @@ spec:
               value: /app/keys/jwt-public.pub
 
           volumeMounts:
-            - name: auth-api-jwts
+            - name: auth-api-jwt
               mountPath: /app/keys
               readOnly: true
           #
@@ -73,6 +73,6 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 2
       volumes:
-        - name: auth-api-jwts
+        - name: auth-api-jwt
           secret:
-            secretName: auth-api-jwts
+            secretName: auth-api-jwt

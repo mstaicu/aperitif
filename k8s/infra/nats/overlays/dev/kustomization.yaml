@@ -5,21 +5,14 @@ namespace: nats
 
 resources:
   - ../../base
+  - nack-creds.yaml
+  - nats-accounts.yaml
   - nats-ns.yaml
 
 configMapGenerator:
   - name: nats-conf-cm
     files:
       - nats-server.conf=nats-server.conf
-
-secretGenerator:
-  - name: nats-accounts
-    files:
-      - ./accounts/ABEVBBVRYGGFHURMSSELOEAD3MRGK3FV43KRPUWSRABX76KGDPXERHO2.jwt # SYS
-      - ./accounts/ACGC3HECZ7NOTRWKGGLRR43XNRGQ2ANURI6LSQG37BNNJ3B5NRYCDTZH.jwt # TMA
-  - name: nack-creds
-    files:
-      - ./creds/nack.creds
 
 generatorOptions:
   disableNameSuffixHash: true

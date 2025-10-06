@@ -8,13 +8,9 @@ resources:
   - auth-api-ingress.yaml
   - auth-api-jwts.yaml
   - auth-api-mongo-depl.yaml
+  - auth-api-nats-creds.yaml
   - auth-ns.yaml
   - auth-stream.yaml
-
-secretGenerator:
-  - name: auth-api-nats.creds
-    files:
-      - ./auth-api-nats.creds
 
 configMapGenerator:
   - name: auth-api-cm
