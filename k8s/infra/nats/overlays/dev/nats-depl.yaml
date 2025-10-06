@@ -18,15 +18,15 @@ spec:
             - name: nats-storage
               mountPath: /data
             - mountPath: /jwt
-              name: nats-jwts
+              name: nats-accounts
 
       volumes:
         - name: nats-conf-cm
           configMap:
             name: nats-conf-cm
-        - name: nats-jwts
+        - name: nats-accounts
           secret:
-            secretName: nats-jwts
+            secretName: nats-accounts
 
   volumeClaimTemplates:
     - metadata:

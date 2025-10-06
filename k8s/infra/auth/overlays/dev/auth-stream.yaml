@@ -1,0 +1,15 @@
+apiVersion: jetstream.nats.io/v1beta2
+kind: Stream
+
+metadata:
+  name: auth
+spec:
+  name: auth
+  description: The authentication and identity domain events
+  subjects:
+    - "auth.>"
+  retention: limits
+  discard: old
+  storage: file
+  replicas: 3
+  creds: /nack/creds/nack.creds

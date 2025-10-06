@@ -10,7 +10,7 @@ resources:
   - auth-ns.yaml
 
 configMapGenerator:
-  - name: auth-env-cm
+  - name: auth-api-cm
     literals:
       # - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - DOMAIN=tma.com

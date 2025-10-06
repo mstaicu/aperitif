@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import nconf from "nconf";
 
 import { app } from "./app.mjs";
-// import { connect } from "./messaging/index.mjs";
+import { connect } from "./nats.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
 var PORT = 3000;
@@ -25,7 +25,7 @@ if (!mongoose.get("autoIndex")) {
   console.log("indexes synchronized");
 }
 
-// var nc = await connect();
+var nc = await connect();
 
 var shutdownInitiated = false;
 
@@ -47,26 +47,26 @@ var shutdownInitiated = false;
       }
     }
 
-    // if (!nc.isClosed()) {
-    //   console.log("closing nats connection...");
-    //   try {
-    //     await nc.drain();
-    //   } catch {
-    //     console.error("error draining nats");
+    if (!nc.isClosed()) {
+      console.log("closing nats connection...");
+      try {
+        await nc.drain();
+      } catch {
+        console.error("error draining nats");
 
-    //     try {
-    //       await nc.close();
-    //     } catch {
-    //       console.error("error force-closing nats");
-    //     }
-    //   }
+        try {
+          await nc.close();
+        } catch {
+          console.error("error force-closing nats");
+        }
+      }
 
-    //   try {
-    //     await nc.closed();
-    //   } catch {
-    //     console.error("error waiting for nats to close");
-    //   }
-    // }
+      try {
+        await nc.closed();
+      } catch {
+        console.error("error waiting for nats to close");
+      }
+    }
 
     console.log("shutdown complete");
 

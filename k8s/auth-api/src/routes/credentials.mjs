@@ -1,15 +1,20 @@
 // @ts-check
+import { jetstream } from "@nats-io/jetstream";
 import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
 import nconf from "nconf";
 
 import { Challenge, Passkey } from "../models/index.mjs";
+import { connect } from "../nats.mjs";
 
 var router = Router();
+var nc = await connect();
 
 router.post("/webauthn/challenge", async (_, res) => {
   var challenge = new Challenge();
   await challenge.save();
+
+  jetstream(nc).publish("auth.challenge.created");
 
   res.status(200).json({
     challenge: challenge.content,

@@ -1,4 +1,3 @@
-// import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import {
   credsAuthenticator,
   connect as natsConnect,
@@ -6,7 +5,7 @@ import {
 import { readFileSync } from "fs";
 
 var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync("/secrets/auth.creds")),
+  new Uint8Array(readFileSync("/nats/auth-api-nats.creds")),
 );
 
 var servers = Array.from(Array(3)).map(
@@ -24,6 +23,7 @@ export async function connect() {
 
   nc = await natsConnect({
     authenticator,
+    name: "auth-api",
     servers,
   });
 

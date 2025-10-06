@@ -9,9 +9,15 @@ resources:
   - auth-api-jwts.yaml
   - auth-api-mongo-depl.yaml
   - auth-ns.yaml
+  - auth-stream.yaml
+
+secretGenerator:
+  - name: auth-api-nats.creds
+    files:
+      - ./auth-api-nats.creds
 
 configMapGenerator:
-  - name: auth-env-cm
+  - name: auth-api-cm
     literals:
       - MONGO_DB_URI=mongodb://auth-api-mongo-srv:27017
       - ORIGIN=https://tma.com

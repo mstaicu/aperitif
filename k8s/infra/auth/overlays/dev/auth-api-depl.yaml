@@ -11,3 +11,10 @@ spec:
       containers:
         - name: auth-api
           image: mdstaicu/auth-api
+          volumeMounts:
+            - name: auth-api-nats-creds
+              mountPath: /nats
+      volumes:
+        - name: auth-api-nats-creds
+          secret:
+            secretName: auth-api-nats.creds
