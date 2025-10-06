@@ -17,7 +17,7 @@ spec:
               mountPath: /etc/nats/
             - name: nats-storage
               mountPath: /data
-            - mountPath: /etc/nats/jwt
+            - mountPath: /jwt
               name: nats-jwts
 
       volumes:

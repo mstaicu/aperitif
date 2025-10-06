@@ -22,3 +22,9 @@ manifests:
   kustomize:
     paths:
       - infra/auth/overlays/dev
+
+# portForward:
+#   - resourceType: statefulset
+#     resourceName: nats-depl
+#     namespace: nats
+#     port: 4222

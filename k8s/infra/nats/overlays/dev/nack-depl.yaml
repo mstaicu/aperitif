@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: nack
+  labels:
+    app: nack
+spec:
+  template:
+    spec:
+      containers:
+        - name: jsc
+          volumeMounts:
+            - name: runtime
+              mountPath: /nack
+            - name: nack-creds
+              mountPath: /nack/creds
+      volumes:
+        - name: runtime
+          emptyDir: {}
+        - name: nack-creds
+          secret:
+            secretName: nack-creds

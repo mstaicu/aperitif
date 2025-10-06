@@ -16,9 +16,7 @@ nsc edit account TMA --sk generate
 # 3. Enable JetStream (if needed) on your app account
 nsc edit account TMA \
   --js-mem-storage -1 \
-  --js-disk-storage -1 \
-  --js-streams -1 \
-  --js-consumer -1
+  --js-disk-storage -1
 
 # 4. Add users to accounts
 nsc add user --account SYS --name sys

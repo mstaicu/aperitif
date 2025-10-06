@@ -15,11 +15,15 @@ configMapGenerator:
 secretGenerator:
   - name: nats-jwts
     files:
-      - ./jwts/operator.jwt
-      - ./jwts/SYS.jwt
+      - ./jwts/ABEVBBVRYGGFHURMSSELOEAD3MRGK3FV43KRPUWSRABX76KGDPXERHO2.jwt # SYS
+      - ./jwts/ACGC3HECZ7NOTRWKGGLRR43XNRGQ2ANURI6LSQG37BNNJ3B5NRYCDTZH.jwt # TMA
+  - name: nack-creds
+    files:
+      - ./creds/nack.creds
 
 generatorOptions:
   disableNameSuffixHash: true
 
 patches:
   - path: nats-depl.yaml
+  - path: nack-depl.yaml
