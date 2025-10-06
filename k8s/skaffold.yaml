@@ -17,6 +17,15 @@ build:
         manual:
           - src: src/**/*.mjs
             dest: .
+    - image: mdstaicu/auth-worker
+      context: auth-worker
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+      sync:
+        manual:
+          - src: src/**/*.mjs
+            dest: .
 
 manifests:
   kustomize:

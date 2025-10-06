@@ -49,4 +49,4 @@ spec:
       volumes:
         - name: auth-worker-nats-creds
           secret:
-            secretName: auth-worker-nats.creds
+            secretName: auth-worker-nats-creds

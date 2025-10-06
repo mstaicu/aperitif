@@ -5,7 +5,7 @@ import {
 import { readFileSync } from "fs";
 
 var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync("/nats/auth-worker-nats.creds")),
+  new Uint8Array(readFileSync("/nats/auth-worker.creds")),
 );
 
 var servers = Array.from(Array(3)).map(

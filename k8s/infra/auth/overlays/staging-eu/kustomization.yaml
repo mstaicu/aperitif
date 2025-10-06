@@ -6,7 +6,7 @@ namespace: auth
 resources:
   - ../../base
   - auth-api-ingress.yaml
-  - auth-api-jwts.yaml
+  - auth-api-jwt.yaml
   - auth-ns.yaml
 
 configMapGenerator:
