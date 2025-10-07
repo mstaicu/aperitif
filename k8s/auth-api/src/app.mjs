@@ -2,8 +2,8 @@
 import express from "express";
 
 import { serviceAvailability } from "./middleware/availability.mjs";
-import { webauthnRouter } from "./routes/credentials.mjs";
 import { healthRouter } from "./routes/health.mjs";
+import { webauthnRouter } from "./routes/webauthn.mjs";
 
 const app = express();
 

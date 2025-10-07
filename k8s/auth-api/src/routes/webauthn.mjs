@@ -41,9 +41,11 @@ router.post("/webauthn/registration", async (req, res) => {
     return res.sendStatus(400);
   }
 
-  var challenge = await Challenge.findById(challengeId);
+  const challenge = await Challenge.findById(challengeId);
+  if (!challenge) return res.sendStatus(400);
 
-  if (!challenge || !challenge.user) return res.sendStatus(400);
+  const user = await User.findById(challenge.user);
+  if (!user) return res.sendStatus(400);
 
   var { origin } = new URL(nconf.get("ORIGIN"));
 
@@ -105,14 +107,10 @@ router.post("/webauthn/challenge/authentication", async (_, res) => {
 router.post("/webauthn/authentication", async (req, res) => {
   var { authentication, challengeId } = req.body;
 
-  if (!authentication || !challengeId) {
-    return res.sendStatus(400);
-  }
+  if (!authentication || !challengeId) return res.sendStatus(400);
 
   var challenge = await Challenge.findById(challengeId);
-  if (!challenge) {
-    return res.sendStatus(400);
-  }
+  if (!challenge) return res.sendStatus(400);
 
   var passkey = await Passkey.findOne({ credentialId: authentication.id });
 
