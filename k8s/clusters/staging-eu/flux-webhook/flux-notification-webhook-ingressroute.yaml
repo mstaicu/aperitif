@@ -12,8 +12,9 @@ spec:
       services:
         - name: webhook-receiver
           port: 80
-  tls:
-    secretName: traefik-tls
-    options:
-      name: tls-options
-      namespace: traefik
+  # TODO: This will use let's encrypt
+  # tls:
+  #   secretName: traefik-tls
+  #   options:
+  #     name: tls-options
+  #     namespace: traefik
