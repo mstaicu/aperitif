@@ -1,7 +1,9 @@
 // @ts-check
 import mongoose from "mongoose";
 
-// import { nc } from "../messaging/index.mjs";
+import { connect } from "../nats.mjs";
+
+var nc = await connect();
 
 /**
  *
@@ -11,10 +13,9 @@ import mongoose from "mongoose";
  */
 export var serviceAvailability = (req, res, next) => {
   var dbAvailable = mongoose.connection && mongoose.connection.readyState === 1;
-  // var ncAvailable = nc && !nc.isClosed();
+  var ncAvailable = nc && !nc.isClosed();
 
-  // var serviceUnavailable = !dbAvailable || !ncAvailable;
-  var serviceUnavailable = !dbAvailable;
+  var serviceUnavailable = !dbAvailable || !ncAvailable;
 
   serviceUnavailable
     ? res.status(503).json({

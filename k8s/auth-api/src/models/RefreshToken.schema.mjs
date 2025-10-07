@@ -10,7 +10,7 @@ import { createHash, randomUUID } from "node:crypto";
  */
 var hashText = (text) => createHash("sha256").update(text).digest("hex");
 
-var RefreshTokenSchema = new Schema(
+export var RefreshTokenSchema = new Schema(
   {
     _id: {
       default: randomUUID,
@@ -27,14 +27,12 @@ var RefreshTokenSchema = new Schema(
       type: String,
       unique: true,
     },
-    userId: { required: true, type: String }, // base64url encoded user id
+    user: { ref: "User", required: true, type: String },
   },
   {
     timestamps: true,
   },
 );
-
-export { RefreshTokenSchema };
 
 /**
  * 

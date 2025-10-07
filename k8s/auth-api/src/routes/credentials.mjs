@@ -4,14 +4,25 @@ import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
 import nconf from "nconf";
 
-import { Challenge, Passkey } from "../models/index.mjs";
+import { Challenge, Passkey, User } from "../models/index.mjs";
 import { connect } from "../nats.mjs";
 
 var router = Router();
 var nc = await connect();
 
-router.post("/webauthn/challenge", async (_, res) => {
-  var challenge = new Challenge();
+router.post("/webauthn/challenge/registration", async (req, res) => {
+  var { email } = req.body;
+
+  if (!email) return res.sendStatus(400);
+
+  var user = await User.findOne({ email });
+
+  if (!user) {
+    user = new User({ email });
+    await user.save();
+  }
+
+  var challenge = new Challenge({ user: user._id });
   await challenge.save();
 
   jetstream(nc).publish("auth.challenge.created");
@@ -19,6 +30,7 @@ router.post("/webauthn/challenge", async (_, res) => {
   res.status(200).json({
     challenge: challenge.content,
     challengeId: challenge._id,
+    userId: challenge.user,
   });
 });
 
@@ -31,9 +43,7 @@ router.post("/webauthn/registration", async (req, res) => {
 
   var challenge = await Challenge.findById(challengeId);
 
-  if (!challenge) {
-    return res.sendStatus(400);
-  }
+  if (!challenge || !challenge.user) return res.sendStatus(400);
 
   var { origin } = new URL(nconf.get("ORIGIN"));
 
@@ -56,30 +66,40 @@ router.post("/webauthn/registration", async (req, res) => {
     return res.sendStatus(400);
   }
 
-  var { algorithm, id: credentialId, publicKey } = reg.credential;
-  var { counter } = reg.authenticator;
-  var { id: userId } = reg.user;
-
-  var userIdBase64Url = Buffer.from(userId).toString("base64url");
+  var { id: credentialId } = reg.credential;
 
   if (await Passkey.findOne({ credentialId })) {
     await challenge.deleteOne();
     return res.sendStatus(409);
   }
 
+  var { algorithm, publicKey } = reg.credential;
+  var { counter } = reg.authenticator;
+
   var passkey = new Passkey({
     algorithm,
     counter,
     credentialId,
     publicKey,
-
-    userId: userIdBase64Url,
+    user: challenge.user,
   });
 
   await passkey.save();
   await challenge.deleteOne();
 
   res.sendStatus(201);
+});
+
+router.post("/webauthn/challenge/authentication", async (_, res) => {
+  var challenge = new Challenge();
+  await challenge.save();
+
+  jetstream(nc).publish("auth.challenge.created");
+
+  res.status(200).json({
+    challenge: challenge.content,
+    challengeId: challenge._id,
+  });
 });
 
 router.post("/webauthn/authentication", async (req, res) => {
@@ -135,7 +155,9 @@ router.post("/webauthn/authentication", async (req, res) => {
     return res.sendStatus(401);
   }
 
-  if (result.userId !== passkey.userId) {
+  var userIdBase64Url = Buffer.from(passkey.user).toString("base64url");
+
+  if (result.userId !== userIdBase64Url) {
     await challenge.deleteOne();
     return res.sendStatus(401);
   }

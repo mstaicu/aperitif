@@ -2,7 +2,7 @@
 import { Schema } from "mongoose";
 import { randomUUID } from "node:crypto";
 
-var PasskeySchema = new Schema(
+export var PasskeySchema = new Schema(
   {
     _id: {
       default: randomUUID,
@@ -34,9 +34,7 @@ var PasskeySchema = new Schema(
     //   enum: ["ble", "hybrid", "internal", "nfc", "usb", "smart-card"],
     //   type: [String],
     // },
-    userId: { required: true, type: String }, // base64url encoded user id
+    user: { ref: "User", required: true, type: String },
   },
   { timestamps: true },
 );
-
-export { PasskeySchema };
