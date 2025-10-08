@@ -7,7 +7,7 @@ const router = Router();
 
 const jwk = await exportJWK(
   await importSPKI(
-    fs.readFileSync(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
+    fs.readFileSync(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf-8"),
     "ES256",
   ),
 );

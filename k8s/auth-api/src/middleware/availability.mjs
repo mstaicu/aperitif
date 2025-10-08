@@ -11,7 +11,7 @@ var nc = await connect();
  * @param {import("express").Response} res - Express response object
  * @param {import("express").NextFunction} next - Express next middleware function
  */
-export var serviceAvailability = (req, res, next) => {
+export async function serviceAvailability(req, res, next) {
   var dbAvailable = mongoose.connection && mongoose.connection.readyState === 1;
   var ncAvailable = nc && !nc.isClosed();
 
@@ -24,4 +24,4 @@ export var serviceAvailability = (req, res, next) => {
         title: "Service Unavailable",
       })
     : next();
-};
+}

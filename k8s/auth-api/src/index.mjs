@@ -6,6 +6,7 @@ nconf
     "JWT_PRIVATE_KEY_PATH",
     "JWT_PUBLIC_KEY_PATH",
     "MONGO_DB_URI",
+    "NATS_CREDS_KEY_PATH",
     "ORIGIN",
   ]);
 

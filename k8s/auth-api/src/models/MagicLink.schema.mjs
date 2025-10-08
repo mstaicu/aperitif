@@ -7,6 +7,11 @@ export var MagicLinkSchema = new Schema({
     default: randomUUID,
     type: String,
   },
+  createdAt: {
+    default: Date.now,
+    expires: 60 * 15, // document expires at createdAt + 'expires' seconds
+    type: Date,
+  },
   email: {
     index: true,
     required: true,

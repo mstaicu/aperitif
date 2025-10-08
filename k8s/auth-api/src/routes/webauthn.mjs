@@ -1,50 +1,60 @@
-// @ts-check
 import { jetstream } from "@nats-io/jetstream";
 import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
 import nconf from "nconf";
 
+import { requireBearerAuth } from "../middleware/requireAuth.mjs";
 import { Challenge, Passkey, User } from "../models/index.mjs";
 import { connect } from "../nats.mjs";
 
 var router = Router();
 var nc = await connect();
 
-router.post("/webauthn/challenge/registration", async (req, res) => {
-  var { email } = req.body;
+router.post(
+  "/webauthn/challenge/registration",
+  requireBearerAuth,
+  async (req, res) => {
+    /**
+     * @type {import('jose').JWTPayload}
+     */
+    var { scope, sub } = req.user;
 
-  if (!email) return res.sendStatus(400);
+    if (!["registration", "session"].includes(scope))
+      return res.sendStatus(403);
 
-  var user = await User.findOne({ email });
+    var challenge = new Challenge({ user: sub });
+    await challenge.save();
 
-  if (!user) {
-    user = new User({ email });
-    await user.save();
-  }
+    jetstream(nc).publish(
+      "auth.challenge.created",
+      JSON.stringify({
+        scope,
+      }),
+    );
 
-  var challenge = new Challenge({ user: user._id });
-  await challenge.save();
+    res.status(200).json({
+      challenge: challenge.content,
+      challengeId: challenge._id,
+    });
+  },
+);
 
-  jetstream(nc).publish("auth.challenge.created");
+router.post("/webauthn/registration", requireBearerAuth, async (req, res) => {
+  /**
+   * @type {import('jose').JWTPayload}
+   */
+  var { scope, sub } = req.user;
 
-  res.status(200).json({
-    challenge: challenge.content,
-    challengeId: challenge._id,
-    userId: challenge.user,
-  });
-});
+  if (!["registration", "session"].includes(scope)) return res.sendStatus(403);
 
-router.post("/webauthn/registration", async (req, res) => {
   var { attestation, challengeId } = req.body;
 
-  if (!attestation || !challengeId) {
-    return res.sendStatus(400);
-  }
+  if (!attestation || !challengeId) res.sendStatus(400);
 
   const challenge = await Challenge.findById(challengeId);
   if (!challenge) return res.sendStatus(400);
 
-  const user = await User.findById(challenge.user);
+  const user = await User.findById(sub);
   if (!user) return res.sendStatus(400);
 
   var { origin } = new URL(nconf.get("ORIGIN"));

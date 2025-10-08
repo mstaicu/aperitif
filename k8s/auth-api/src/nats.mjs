@@ -3,9 +3,10 @@ import {
   connect as natsConnect,
 } from "@nats-io/transport-node";
 import { readFileSync } from "fs";
+import nconf from "nconf";
 
 var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync("/nats/auth-api-nats.creds")),
+  new Uint8Array(readFileSync(nconf.get("NATS_CREDS_KEY_PATH"))),
 );
 
 var servers = Array.from(Array(3)).map(
