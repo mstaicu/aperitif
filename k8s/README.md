@@ -80,12 +80,54 @@ It leverages GitOps, rapid local iteration, secure secret handling, and producti
 
 - [Docker](https://www.docker.com/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [kustomize](https://formulae.brew.sh/formula/kustomize)
 - [Skaffold](https://skaffold.dev/docs/install/)
 - [Taskfile](https://taskfile.dev/)
 - [SOPS](https://github.com/mozilla/sops)
 - [Age](https://github.com/FiloSottile/age)
 - [Flux CLI](https://fluxcd.io/docs/installation/)
 - [mkcert](https://github.com/FiloSottile/mkcert) (for local TLS)
+- [KSOPS](https://formulae.brew.sh/formula/ksops) (for local SOPS decryption)
+
+### SOPS locally
+
+Onboard a new developer
+
+Generate your key
+
+```sh
+age-keygen -o ~/.config/sops/age/keys.txt
+cat ~/.config/sops/age/keys.txt | age-keygen -y
+```
+
+Add your public key to .sops.yaml in the repo:
+
+```sh
+creation_rules:
+  - encrypted_regex: "^(data|stringData)$"
+    age:
+      - age1examplekeyofanotherdev...
+      - age1yournewpublickey...
+```
+
+Update the encrypted secrets
+
+```sh
+sops updatekeys secret.enc.yaml
+```
+
+Set the SOPS private key location env var so that child processes can access it
+
+```sh
+export SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt
+```
+
+Run it
+
+```sh
+kustomize build --enable-alpha-plugins --enable-exec infra/auth/overlays/dev
+```
+
 
 ### Workflow
 
@@ -93,6 +135,7 @@ It leverages GitOps, rapid local iteration, secure secret handling, and producti
 ```sh
   skaffold dev
 ```
+
 
 
 

@@ -1,8 +1,22 @@
 apiVersion: v1
 kind: Secret
-
 metadata:
-  name: auth-api-jwt
+    name: auth-api-jwt
 data:
-  jwt-private.pem: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZytWcTdjZWtjME0yMUpXUloKT2MrWk1yRFFmNHNaaGVkS2VOV0pkbTZaRHFhaFJBTkNBQVFBb0R3M20xMUJYYitPWm1PdW8yUVdIR3BIcDVYcQo0T0xuVE9tWHIrdmxXOGNBcXBHcUN4dGlEcjVKMmFEK3kzK1VzcUFhQlMzN1NXMEhCVkNzUUFkUAotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
-  jwt-public.pem: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFQUtBOE41dGRRVjIvam1aanJxTmtGaHhxUjZlVgo2dURpNTB6cGw2L3I1VnZIQUtxUnFnc2JZZzYrU2RtZy9zdC9sTEtnR2dVdCswbHRCd1ZRckVBSFR3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+    jwt-private.pem: ENC[AES256_GCM,data:nYJxeGsdvIenfpFCmzBmEovfadP2bqRkf17KBIAxP4Da7Um18L4jgTr+OYg+sxrTmxgCAicVVhRCrROG2yDKOjsq766EOLGKBnzOH2o5FPKlhxIT0U9ssuaxSCNA0Zo1EDLc6qZ2mmcy0U47Ps1AuVUtJ9dh6zkQFiBJBf87sCbgY85Rm9s4aUVDZlECbdrKsWCkBvYNXz8riy1r5wkVgntSkEPQ3+VzggNMHqrWLcpEfNfH6K9hwnHYPY9sYcPlHIltqGqieJ5So9dYLs4K1K39/VRE005lbrPMQD78FdfLcsQfIQzNRK2vmWKp0sHbxqNuEiG7F2RkZU3smFxKuIw8W8ywV5V6arhCT5T030LENag1lCfoXLid8u5l9Lw1cKvY5pbpWBW8CzyYH8FJYJAAtpjJasamf7c5K9vt9vqoJfGP,iv:sUT9S7Gk1LGpJim5OMOQcRSmX4xg+mHq87rqKLEqwAI=,tag:6KwVcNVxHu16RKbY8UxXaQ==,type:str]
+    jwt-public.pem: ENC[AES256_GCM,data:37gsU2UeUt0WkK0o/WCuui1x/g0JfRYgi80Y9j3RQj5hWPvys8GBaLI6MBRTPyM+0nRJgE4hG6+x5MADkCwXOvj7TXIm/uwFQWpMzejsbmqjywCE8+dnasCZZ5z6oPCBMUPaYvb2F9UTekDKpU+eWYCqrWe/uBuH3gCf9ilH+dF9yCmzeDhC8PWO/xe8xTKbeCAS2pJ7TOj0owWoZb5MwimryzmhlpVfJlvCEDaPorqGvK3QHYBmxHWcb67JTksjJo1zofdIipNZMWrXO7RravVyE9q5Eiz2fXQFQ73cXuoWGtzwVT+giXTPH+OU/v3K,iv:xAsiiEehOWxzon2Uadz51A98Ods9EiFeTTpdnAFoZnc=,tag:SoDi6ZGUrs2N2j7YZZ9zIA==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB2M3lJYWxWMDJNRW5lMkQz
+            WlV5Ky9sd1dRN0ZyQXQyQ0VuU1NEZmJMOEhrCjNiWWRMaVkrTGlhWlZWVThmVDVx
+            M2Q0QmFFNWttWFI0M2ZxcTZlZ0U3LzgKLS0tIG1yWWZTbFZWbm1Ka1JWQjVnazBn
+            dDNVOWRkejBiQm81Y1B0b2RlZUJsajQKKZfi1QzHZ8q5tdov5Wb7qVMvV134koTH
+            UHGTp6k8S1dXYYnpcX1JOMnXv4lFllraoj4mYLB0XkJ1ch20BD6glA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-10-08T12:22:21Z"
+    mac: ENC[AES256_GCM,data:uzJzy52EEYiF9hHi7H/F7Ib6F2YKLTguijf7RWlQRLKLFHCqLEVh6kr5PtTb7CRfEvy/0G59Si3n9uFOwilWzXOC4t0GbKeG7UEFokjkCveXTzd+sPUuDe/vmBEPWApcEvqJXJKJ/xbe1ogJKOdGRlrlAu6lZS5bTqFjR3jL1tA=,iv:qQ+TQ8bSoHxSX+thgA+iJOFBUX1H2iy2Sa+OzCjmQHM=,tag:ks1oAAh/zOuOlSI++H1gkg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.10.2

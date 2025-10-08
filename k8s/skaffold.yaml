@@ -31,6 +31,9 @@ manifests:
   kustomize:
     paths:
       - infra/auth/overlays/dev
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
 
 # portForward:
 #   - resourceType: statefulset
