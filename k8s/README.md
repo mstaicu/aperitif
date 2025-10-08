@@ -1,3 +1,121 @@
+# Aperitif Platform
+
+> **Production-Ready, GitOps-First, Secure Microservices Platform**
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Local Development](#local-development)
+- [GitOps & Environments](#gitops--environments)
+- [Secrets Management](#secrets-management)
+- [Service Development Workflow](#service-development-workflow)
+- [Troubleshooting](#troubleshooting)
+- [Security & Compliance](#security--compliance)
+- [Onboarding New Engineers](#onboarding-new-engineers)
+
+---
+
+## Overview
+
+This repository contains the reference implementation for a modern, highly-secure, Kubernetes-native SaaS platform.  
+It leverages GitOps, rapid local iteration, secure secret handling, and production-grade deployment across cloud and local environments.
+
+**Key technologies:**
+
+- **FluxCD** (OCI Helm, Kustomize, GitOps CD)
+- **Skaffold** (Rapid local DX, PR previews)
+- **Kustomize** (Environment overlays)
+- **SOPS + Age** (Secrets management)
+- **Linkerd** (mTLS, SPIFFE service mesh)
+- **Traefik** (Ingress, TLS, JWT/Forward Auth)
+- **NATS JetStream** (Event-driven messaging)
+- **MongoDB** (Per-domain transactional state)
+
+**Supports:**
+
+- Local clusters (Docker Desktop, kind)
+- Remote clusters (DigitalOcean, AWS, Hetzner, etc.)
+- Preview environments (per-PR ephemeral namespaces)
+
+---
+
+## Architecture
+
+**Folder Structure:**
+
+```
+├── auth-api
+├── auth-ui
+├── auth-worker
+├── clusters
+│   ├── prod-eu
+│   └── staging-eu
+├── common
+├── infra
+│   ├── auth
+│   │   ├── base
+│   │   └── overlays
+│   ├── linkerd
+│   │   ├── base
+│   │   ├── crd
+│   │   └── overlays
+│   ├── nats
+│   │   ├── base
+│   │   ├── crd
+│   │   └── overlays
+│   └── traefik
+│       ├── base
+│       ├── crd
+│       └── overlays
+├── scripts
+└── skaffold.yaml
+```
+
+## Local Development
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Skaffold](https://skaffold.dev/docs/install/)
+- [Taskfile](https://taskfile.dev/)
+- [SOPS](https://github.com/mozilla/sops)
+- [Age](https://github.com/FiloSottile/age)
+- [Flux CLI](https://fluxcd.io/docs/installation/)
+- [mkcert](https://github.com/FiloSottile/mkcert) (for local TLS)
+
+### Workflow
+
+- **Start Dev Cluster:**  
+```sh
+  skaffold dev
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Old
+
 # Welcome to k8s!
 
 -> Load Balancer
@@ -382,14 +500,14 @@ seed linkerd root / intermediary
 0. Build and push the Docker image of the microservice in this pull request, tag it and export the file to use in the kustomize build next step. All namespace scoped resources will now use the namespace resources, for example the trafik ingress will now point to the identity instance in this namespace
 
 skaffold build \
-  --profile identity-prod \
-  --file-output build.json
+ --profile identity-prod \
+ --file-output build.json
 
 skaffold render \
-  --profile identity-prod \
-  --build-artifacts build.json \
-  --namespace identity-pr-123 \
-  --output identity-pr-123.yaml
+ --profile identity-prod \
+ --build-artifacts build.json \
+ --namespace identity-pr-123 \
+ --output identity-pr-123.yaml
 
 1. Programmatically create the namespace for the ephemeral microservice
 
@@ -414,33 +532,35 @@ git push
 ## JWT
 
 step crypto keypair jwt-public.pem jwt-private.pem \
-  --kty EC --crv P-256 --use sig --alg ES256
+ --kty EC --crv P-256 --use sig --alg ES256
 
 kubectl create secret generic auth-jwt-keys \
-  --from-file=jwt-private.pem \
-  --from-file=jwt-public.pem \
-  --dry-run=client -o yaml > secrets/auth-jwt-keys.yaml
+ --from-file=jwt-private.pem \
+ --from-file=jwt-public.pem \
+ --dry-run=client -o yaml > secrets/auth-jwt-keys.yaml
 
 sops --encrypt --in-place secrets/auth-jwt-keys.yaml
 
 ## Linkerd
 
 # Generate the Linkerd trust anchor (root CA)
+
 step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca --no-password --insecure
+ --profile root-ca --no-password --insecure
 
 # Generate the Linkerd issuer certificate and key signed by the trust anchor
+
 step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca --not-after=8760h \  # 1 year
-  --ca ca.crt --ca-key ca.key --no-password --insecure
+ --profile intermediate-ca --not-after=8760h \ # 1 year
+--ca ca.crt --ca-key ca.key --no-password --insecure
 
 kubectl create secret tls linkerd-identity-issuer \
-  --cert=issuer.crt --key=issuer.key \
-  --dry-run=client -o yaml > linkerd-identity-issuer.yaml
+ --cert=issuer.crt --key=issuer.key \
+ --dry-run=client -o yaml > linkerd-identity-issuer.yaml
 
 kubectl create secret generic linkerd-trust-anchor \
-  --from-file=ca.crt=ca.crt \
-  --dry-run=client -o yaml > linkerd-trust-anchor.yaml
+ --from-file=ca.crt=ca.crt \
+ --dry-run=client -o yaml > linkerd-trust-anchor.yaml
 
 sops --encrypt --in-place linkerd-identity-issuer.yaml
 sops --encrypt --in-place linkerd-trust-anchor.yaml
@@ -450,11 +570,11 @@ sops --encrypt --in-place linkerd-trust-anchor.yaml
 mkcert -install
 
 mkcert -cert-file traefik.crt -key-file traefik.key \
-  "tma.com" "*.tma.com" localhost 127.0.0.1 ::1
+ "tma.com" "\*.tma.com" localhost 127.0.0.1 ::1
 
 kubectl create secret tls traefik-tls \
-  --cert=traefik.crt --key=traefik.key \
-  --dry-run=client -o yaml > traefik-tls.yaml
+ --cert=traefik.crt --key=traefik.key \
+ --dry-run=client -o yaml > traefik-tls.yaml
 
 sops --encrypt --in-place traefik-tls.yaml
 
