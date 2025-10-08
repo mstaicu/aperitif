@@ -8,8 +8,11 @@ resources:
   - traefik-ingress.yaml
   - traefik-ns.yaml
   - traefik-svc.yaml
-  - traefik-tls.yaml
+  # - traefik-tls.yaml
   - traefik-tlsstore.yaml
 
 patches:
   - path: traefik-depl.yaml
+
+generators:
+  - traefik-ksops-generator.yaml

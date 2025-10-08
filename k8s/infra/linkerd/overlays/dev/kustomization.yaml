@@ -5,6 +5,9 @@ namespace: linkerd
 
 resources:
   - ../../base
-  - linkerd-identity-issuer.yaml
+  # - linkerd-identity-issuer.yaml
   - linkerd-identity-trust-roots.yaml
   - linkerd-ns.yaml
+
+generators:
+  - linkerd-ksops-generator.yaml

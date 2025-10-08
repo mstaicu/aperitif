@@ -2,12 +2,10 @@ apiVersion: viaduct.ai/v1
 kind: KSOPS
 
 metadata:
-  name: auth-ksops-generator
+  name: linkerd-ksops-generator
   annotations:
     config.kubernetes.io/function: |
       exec:
         path: ksops
 files:
-  - auth-api-jwt.yaml
-  - auth-api-nats-creds.yaml
-  - auth-worker-nats-creds.yaml
+  - linkerd-identity-issuer.yaml

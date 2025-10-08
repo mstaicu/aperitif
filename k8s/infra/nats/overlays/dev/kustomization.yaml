@@ -5,8 +5,8 @@ namespace: nats
 
 resources:
   - ../../base
-  - nack-creds.yaml
-  - nats-accounts.yaml
+  # - nack-creds.yaml
+  # - nats-accounts.yaml
   - nats-ns.yaml
 
 configMapGenerator:
@@ -20,3 +20,6 @@ generatorOptions:
 patches:
   - path: nats-depl.yaml
   - path: nack-depl.yaml
+
+generators:
+  - nats-ksops-generator.yaml
