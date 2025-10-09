@@ -6,13 +6,10 @@ namespace: auth
 resources:
   - ../../base
   - auth-api-ingress.yaml
-  # - auth-api-jwt.yaml
   - auth-api-mongo-depl.yaml
-  # - auth-api-nats-creds.yaml
   - auth-ns.yaml
   - auth-stream.yaml
   - auth-worker-consumer.yaml
-  # - auth-worker-nats-creds.yaml
 
 configMapGenerator:
   - name: auth-api-cm

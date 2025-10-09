@@ -1,4 +1,3 @@
-# TODO: Use path regex and use different keys for prod-eu and staging-eu
 creation_rules:
   # Note: You must leave metadata, kind or apiVersion in plain text.
   # An easy way to do this is limiting the encrypted keys with the flag

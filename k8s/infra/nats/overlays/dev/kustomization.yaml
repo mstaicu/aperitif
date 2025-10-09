@@ -5,8 +5,6 @@ namespace: nats
 
 resources:
   - ../../base
-  # - nack-creds.yaml
-  # - nats-accounts.yaml
   - nats-ns.yaml
 
 configMapGenerator:
