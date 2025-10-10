@@ -13,8 +13,10 @@ configMapGenerator:
   - name: auth-api-cm
     literals:
       # - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
-      - DOMAIN=tma.com
+      - ORIGIN=https://tma.com
 
 images:
   - name: mdstaicu/auth-api
     newTag: latest # TODO: Manually update this to promote the deployment to prod
+  # - name: mdstaicu/auth-worker
+  #   newTag: latest # TODO: Manually update this to promote the deployment to prod

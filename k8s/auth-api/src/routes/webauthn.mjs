@@ -3,47 +3,39 @@ import { server } from "@passwordless-id/webauthn";
 import { Router } from "express";
 import nconf from "nconf";
 
-import { requireBearerAuth } from "../middleware/requireAuth.mjs";
 import { Challenge, Passkey, User } from "../models/index.mjs";
 import { connect } from "../nats.mjs";
 
 var router = Router();
 var nc = await connect();
 
-router.post(
-  "/webauthn/challenge/registration",
-  requireBearerAuth,
-  async (req, res) => {
-    /**
-     * @type {import('jose').JWTPayload}
-     */
-    var { scope, sub } = req.user;
+router.post("/webauthn/registration/challenge", async (req, res) => {
+  var userId = req.get("x-user-id");
+  var scope = req.get("x-user-scope");
 
-    if (!["registration", "session"].includes(scope))
-      return res.sendStatus(403);
+  if (!userId || !scope) return res.sendStatus(400);
 
-    var challenge = new Challenge({ user: sub });
-    await challenge.save();
+  if (!["registration", "session"].includes(scope)) return res.sendStatus(403);
 
-    jetstream(nc).publish(
-      "auth.challenge.created",
-      JSON.stringify({
-        scope,
-      }),
-    );
+  var challenge = new Challenge({ user: userId });
+  await challenge.save();
 
-    res.status(200).json({
-      challenge: challenge.content,
-      challengeId: challenge._id,
-    });
-  },
-);
+  jetstream(nc).publish(
+    "auth.challenge.created",
+    JSON.stringify({
+      scope,
+    }),
+  );
 
-router.post("/webauthn/registration", requireBearerAuth, async (req, res) => {
-  /**
-   * @type {import('jose').JWTPayload}
-   */
-  var { scope, sub } = req.user;
+  res.status(200).json({
+    challenge: challenge.content,
+    challengeId: challenge._id,
+  });
+});
+
+router.post("/webauthn/registration", async (req, res) => {
+  var userId = req.get("x-user-id");
+  var scope = req.get("x-user-scope");
 
   if (!["registration", "session"].includes(scope)) return res.sendStatus(403);
 
@@ -54,7 +46,7 @@ router.post("/webauthn/registration", requireBearerAuth, async (req, res) => {
   const challenge = await Challenge.findById(challengeId);
   if (!challenge) return res.sendStatus(400);
 
-  const user = await User.findById(sub);
+  const user = await User.findById(userId);
   if (!user) return res.sendStatus(400);
 
   var { origin } = new URL(nconf.get("ORIGIN"));
@@ -102,7 +94,7 @@ router.post("/webauthn/registration", requireBearerAuth, async (req, res) => {
   res.sendStatus(201);
 });
 
-router.post("/webauthn/challenge/authentication", async (_, res) => {
+router.post("/webauthn/authentication/challenge", async (_, res) => {
   var challenge = new Challenge();
   await challenge.save();
 

@@ -43,3 +43,8 @@ spec:
             - --entrypoints.https.address=:443
             #
             - --providers.kubernetescrd
+            #
+            # Plugins
+            #
+            - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
+            - --experimental.plugins.jwt.version=v0.10.0

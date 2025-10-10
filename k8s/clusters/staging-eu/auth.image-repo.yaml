@@ -2,7 +2,7 @@ apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImageRepository
 
 metadata:
-  name: auth
+  name: auth-api
 spec:
   image: docker.io/mdstaicu/auth-api
   interval: 1m

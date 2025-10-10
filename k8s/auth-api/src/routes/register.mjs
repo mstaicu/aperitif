@@ -21,21 +21,23 @@ router.post("/register/magic-link", async (req, res) => {
 
   if (!email) return res.sendStatus(400);
 
-  if (await User.findOne({ email })) return res.statusCode(400);
+  var user = await User.findOne({ email });
 
-  var ml = new MagicLink({ email });
-  await ml.save();
+  if (!user) {
+    var ml = new MagicLink({ email });
+    await ml.save();
 
-  try {
-    await jetstream(nc).publish(
-      "auth.magic_link.created",
-      JSON.stringify({
-        email,
-        token: ml._id,
-      }),
-    );
-  } catch {
-    await ml.deleteOne();
+    try {
+      await jetstream(nc).publish(
+        "auth.magic_link.created",
+        JSON.stringify({
+          email,
+          token: ml._id,
+        }),
+      );
+    } catch {
+      await ml.deleteOne();
+    }
   }
 
   res.status(200).send({
@@ -52,27 +54,26 @@ router.post("/register/verify-magic-link", async (req, res) => {
   );
   if (!ml) return res.sendStatus(400);
 
-  if (await User.findOne({ email: ml.email })) return res.statusCode(400);
+  if (await User.findOne({ email: ml.email })) return res.sendStatus(400);
 
   var user = new User({ email: ml.email });
   await user.save();
 
+  var { hostname, origin } = new URL(nconf.get("ORIGIN"));
+
   var jwt = new SignJWT({
+    email: user.email,
     scope: "registration",
     sub: user._id,
   })
     .setProtectedHeader({ alg: "ES256", kid: "jwk-1" })
     .setIssuedAt()
-    .setExpirationTime("10m");
-
-  var signed = await jwt.sign(ES256_PRIVATE_KEY);
+    .setExpirationTime("1000m")
+    .setAudience(hostname)
+    .setIssuer(origin);
 
   res.status(200).json({
-    token: signed,
-    user: {
-      email: user.email,
-      id: user._id,
-    },
+    token: await jwt.sign(ES256_PRIVATE_KEY),
   });
 });
 

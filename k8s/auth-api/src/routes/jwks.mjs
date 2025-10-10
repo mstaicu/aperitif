@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { exportJWK, importSPKI } from "jose";
 import nconf from "nconf";
-import fs from "node:fs";
+import { readFile } from "node:fs/promises";
 
 const router = Router();
 
 const jwk = await exportJWK(
   await importSPKI(
-    fs.readFileSync(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf-8"),
+    await readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf-8"),
     "ES256",
   ),
 );

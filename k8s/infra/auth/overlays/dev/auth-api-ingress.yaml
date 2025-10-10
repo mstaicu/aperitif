@@ -7,6 +7,15 @@ spec:
   entryPoints:
     - https
   routes:
+    - match: Host(`tma.com`) && PathPrefix(`/api/v1/auth/webauthn/registration`)
+      kind: Rule
+      priority: 69
+      middlewares:
+        - name: auth-api-jwt
+        - name: auth-api-strip-prefix
+      services:
+        - name: auth-api-srv
+          port: 3000
     - match: Host(`tma.com`) && PathPrefix(`/api/v1/auth`)
       kind: Rule
       priority: 69
@@ -16,13 +25,3 @@ spec:
         - name: auth-api-srv
           port: 3000
   tls: {}
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-
-metadata:
-  name: auth-api-strip-prefix
-spec:
-  stripPrefix:
-    prefixes:
-      - /api/v1/auth
