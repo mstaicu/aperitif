@@ -29,7 +29,6 @@ spec:
         # Custom
         #
         - email # Whatever claims your app requires
-        - scope
       Audiences: # Only accept tokens meant for your API
         - tma.com
       Issuers: # Only accept tokens issued by your auth service
@@ -41,4 +40,3 @@ spec:
       JwtHeaders:
         X-User-Id: sub
         X-User-Email: email
-        X-User-Scope: scope

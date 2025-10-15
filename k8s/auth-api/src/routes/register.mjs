@@ -63,7 +63,6 @@ router.post("/register/verify-magic-link", async (req, res) => {
 
   var jwt = new SignJWT({
     email: user.email,
-    scope: "registration",
     sub: user._id,
   })
     .setProtectedHeader({ alg: "ES256", kid: "jwk-1" })

@@ -13,7 +13,6 @@ export var MagicLinkSchema = new Schema({
     type: Date,
   },
   email: {
-    index: true,
     required: true,
     type: String,
   },

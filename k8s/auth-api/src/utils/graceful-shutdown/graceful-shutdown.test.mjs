@@ -246,10 +246,23 @@ function getExpressServer() {
   return app.listen(3030);
 }
 
+/**
+ *
+ * @param {*} emitter
+ * @param {*} eventName
+ * @returns
+ */
 function waitEvent(emitter, eventName) {
   return new Promise((resolve) => emitter.once(eventName, resolve));
 }
 
+/**
+ *
+ * @param {*} real
+ * @param {*} expected
+ * @param {*} precision
+ * @returns
+ */
 function isAround(real, expected, precision = 200) {
   var diff = Math.abs(real - expected);
   return diff <= precision;

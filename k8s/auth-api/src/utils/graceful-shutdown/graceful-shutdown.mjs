@@ -323,6 +323,9 @@ function addGracefulShutdown(server, options = {}) {
         }
       }
 
+      /**
+       * @type {NodeJS.Timeout}
+       */
       var timeoutEndIdleSocketsId;
 
       if (timeoutEndIdleSockets < timeoutForceEndSockets) {

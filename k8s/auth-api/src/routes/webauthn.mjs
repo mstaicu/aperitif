@@ -11,21 +11,13 @@ var nc = await connect();
 
 router.post("/webauthn/registration/challenge", async (req, res) => {
   var userId = req.get("x-user-id");
-  var scope = req.get("x-user-scope");
 
-  if (!userId || !scope) return res.sendStatus(400);
-
-  if (!["registration", "session"].includes(scope)) return res.sendStatus(403);
+  if (!userId) return res.sendStatus(400);
 
   var challenge = new Challenge({ user: userId });
   await challenge.save();
 
-  jetstream(nc).publish(
-    "auth.challenge.created",
-    JSON.stringify({
-      scope,
-    }),
-  );
+  jetstream(nc).publish("auth.challenge.created");
 
   res.status(200).json({
     challenge: challenge.content,
@@ -35,9 +27,8 @@ router.post("/webauthn/registration/challenge", async (req, res) => {
 
 router.post("/webauthn/registration", async (req, res) => {
   var userId = req.get("x-user-id");
-  var scope = req.get("x-user-scope");
 
-  if (!["registration", "session"].includes(scope)) return res.sendStatus(403);
+  if (!userId) return res.sendStatus(400);
 
   var { attestation, challengeId } = req.body;
 
