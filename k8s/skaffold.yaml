@@ -15,7 +15,7 @@ build:
         target: dev
       sync:
         manual:
-          - src: src/**/*.mjs
+          - src: src/**/*
             dest: .
     - image: mdstaicu/auth-worker
       context: auth-worker
@@ -24,13 +24,13 @@ build:
         target: dev
       sync:
         manual:
-          - src: src/**/*.mjs
+          - src: src/**/*
             dest: .
 
 manifests:
   kustomize:
     paths:
-      - infra/auth/overlays/dev
+      - infra/domains/auth/overlays/dev
 
     buildArgs:
       - --enable-alpha-plugins
