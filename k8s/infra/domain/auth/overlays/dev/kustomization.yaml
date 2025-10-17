@@ -8,9 +8,12 @@ resources:
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
   - auth-api-mongo-depl.yaml
+  # - auth-api-np.yaml
+  # - auth-ns-np.yaml
   - auth-ns.yaml
   - auth-stream.yaml
   - auth-worker-consumer.yaml
+  # - auth-worker-np.yaml
 
 configMapGenerator:
   - name: auth-api-cm

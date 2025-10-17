@@ -21,14 +21,17 @@ spec:
         - http://auth-api-srv.auth.svc.cluster.local:3000/.well-known/jwks.json # Cluster-internal JWKS
       Alg: ES256
       PayloadFields:
-        - exp # Token must expire!
-        - sub # Subject required
-        - aud # Audience check
-        - iss # Issuer check
         #
-        # Custom
+        # Registered claims
         #
-        - email # Whatever claims your app requires
+        - exp
+        - sub
+        - aud
+        - iss
+        #
+        # Private claims
+        #
+        - email
       Audiences: # Only accept tokens meant for your API
         - tma.com
       Issuers: # Only accept tokens issued by your auth service

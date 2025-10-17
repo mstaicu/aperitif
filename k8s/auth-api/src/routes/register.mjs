@@ -64,6 +64,7 @@ router.post("/register/verify-magic-link", async (req, res) => {
   var jwt = new SignJWT({
     email: user.email,
     sub: user._id,
+    // TODO: Restrict this to webauth registration routes
   })
     .setProtectedHeader({ alg: "ES256", kid: "jwk-1" })
     .setIssuedAt()

@@ -30,7 +30,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/domains/auth/overlays/dev
+      - infra/domain/auth/overlays/dev
 
     buildArgs:
       - --enable-alpha-plugins

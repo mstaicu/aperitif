@@ -12,7 +12,6 @@
     "nconf": "^0.13.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
     "@types/express": "^5.0.3",
     "@types/nconf": "^0.10.7",
     "eslint": "^9.37.0",
