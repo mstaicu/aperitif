@@ -82,12 +82,11 @@ It leverages GitOps, rapid local iteration, secure secret handling, and producti
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [kustomize](https://formulae.brew.sh/formula/kustomize)
 - [Skaffold](https://skaffold.dev/docs/install/)
-- [Taskfile](https://taskfile.dev/)
 - [SOPS](https://github.com/mozilla/sops)
 - [Age](https://github.com/FiloSottile/age)
-- [Flux CLI](https://fluxcd.io/docs/installation/)
 - [mkcert](https://github.com/FiloSottile/mkcert) (for local TLS)
 - [KSOPS](https://formulae.brew.sh/formula/ksops) (for local SOPS decryption)
+- [Flux CLI](https://fluxcd.io/docs/installation/)
 
 ### SOPS locally
 

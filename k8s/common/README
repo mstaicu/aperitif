@@ -1,3 +1,0 @@
-Before publishing the package, run the following command to express out intent that we want to publish this package to our public org
-
-$ npm publish --access public
