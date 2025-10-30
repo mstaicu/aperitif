@@ -82,7 +82,7 @@ spec:
       serviceAccountName: jetstream-controller
       containers:
         - name: jsc
-          image: natsio/jetstream-controller:0.19.1
+          image: docker.io/natsio/jetstream-controller:0.20.1
           workingDir: /nack
           command:
             - /jetstream-controller

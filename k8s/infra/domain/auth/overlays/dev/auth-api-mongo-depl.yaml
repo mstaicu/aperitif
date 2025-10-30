@@ -16,7 +16,7 @@ spec:
       containers:
         - name: auth-api-mongo
           # This comes from https://hub.docker.com/_/mongo
-          image: mongo
+          image: docker.io/mongo
 ---
 apiVersion: v1
 kind: Service

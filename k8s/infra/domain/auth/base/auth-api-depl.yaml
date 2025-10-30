@@ -42,12 +42,18 @@ spec:
                 configMapKeyRef:
                   name: auth-api-cm
                   key: ORIGIN
+
             - name: JWT_PRIVATE_KEY_PATH
               value: /app/keys/jwt-private.pem
             - name: JWT_PUBLIC_KEY_PATH
               value: /app/keys/jwt-public.pem
             - name: NATS_CREDS_KEY_PATH
               value: /nats/auth-api-nats.creds
+
+            - name: OTEL_SERVICE_NAME
+              value: auth-api
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://signoz-otel-collector.signoz:4318
 
           volumeMounts:
             - name: auth-api-jwt

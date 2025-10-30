@@ -2,11 +2,18 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: deny-all-ingress
+  name: allow-auth-worker-egress-to-nats
 spec:
   podSelector:
     matchLabels:
       app: auth-worker
   policyTypes:
-    - Ingress
-  ingress: []
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
