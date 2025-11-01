@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 
 import { registerModels } from "./models/index.mjs";
 import { sdk } from "./otel.mjs";
-import { layers } from "./routes/index.mjs";
+import { routes } from "./routes/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
 // MONGOOSE phase
@@ -41,15 +41,15 @@ var nc = await connect({
 
 // APP phase
 
-/** @type {Record<string, Record<string, unknown>>} */
-var openapiPaths = {};
-
 var PORT = 3000;
+
 var app = express();
 app.disable("x-powered-by");
 app.use(express.json());
 
-layers
+var paths = {};
+
+routes
   .map((factory) => factory(connection, nc))
   // @ts-ignore
   .forEach(({ handlers, method, openapi, path }) => {
@@ -62,8 +62,10 @@ layers
     app[method](path, ...handlers);
 
     if (openapi) {
-      openapiPaths[path] ??= {};
-      openapiPaths[path][method] = openapi;
+      // @ts-ignore
+      paths[path] ??= {};
+      // @ts-ignore
+      paths[path][method] = openapi;
     }
   });
 
@@ -75,7 +77,7 @@ app.get("/openapi.json", (_req, res) =>
       version: "1.0.0",
     },
     openapi: "3.0.3",
-    paths: openapiPaths,
+    paths,
     servers: [
       {
         url: `${nconf.get("ORIGIN")}/api/v1/auth/`,

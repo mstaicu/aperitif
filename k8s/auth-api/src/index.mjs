@@ -1,6 +1,6 @@
 import nconf from "nconf";
 
-import "./otel.mjs";
+import { sdk } from "./otel.mjs";
 
 nconf
   .env()
@@ -19,5 +19,7 @@ try {
 } catch {
   throw new Error(`Invalid ORIGIN: ${origin}`);
 }
+
+sdk.start();
 
 import("./server.mjs");

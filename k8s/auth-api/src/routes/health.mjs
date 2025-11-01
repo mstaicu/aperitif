@@ -1,3 +1,7 @@
+/**
+ * @param {import("mongoose").Connection} mc
+ * @param {import("@nats-io/transport-node").NatsConnection} nc
+ */
 export var getHealthzRoute = () => {
   /**
    * @type {import("express").RequestHandler}
@@ -17,7 +21,6 @@ export var getHealthzRoute = () => {
 };
 
 /**
- *
  * @param {import("mongoose").Connection} mc
  * @param {import("@nats-io/transport-node").NatsConnection} nc
  */

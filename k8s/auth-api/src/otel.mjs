@@ -21,6 +21,4 @@ var sdk = new NodeSDK({
   traceExporter,
 });
 
-sdk.start();
-
 export { sdk };
