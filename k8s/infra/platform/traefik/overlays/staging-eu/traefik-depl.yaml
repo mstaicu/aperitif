@@ -5,50 +5,19 @@ metadata:
   name: traefik-depl
 spec:
   template:
-    # metadata:
-    #   annotations:
-    #     linkerd.io/inject: enabled
     spec:
       containers:
         - name: traefik
           args:
             #
-            # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
+            - --entrypoints.http.address=:80/tcp
+            - --entrypoints.https.address=:443/tcp
             #
-            # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
+            - --ping=true
+            - --ping.entryPoint=http
             #
-            - --api=false
-            #
-            # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
-            #
-            # https://doc.traefik.io/traefik/operations/api/#insecure
-            #
-            # Enable the API in insecure mode, which means that the API will be available directly on the entryPoint named 'traefik'.
-            #
-            - --api.insecure=false
-            #
-            # https://doc.traefik.io/traefik/operations/api/#dashboard
-            # https://doc.traefik.io/traefik/operations/dashboard/
-            #
-            # The dashboard is available at the same location as the API
-            # but on the path /dashboard/ by default.
-            #
-            # The trailing slash / in /dashboard/ is mandatory
-            # Optional, Default=true
-            #
-            - --api.dashboard=false
-            #
-            # https://doc.traefik.io/traefik/observability/access-logs/#configuration
-            #
-            - --accesslog
-            #
-            - --log.level=INFO
-            #
-            - --entrypoints.http.address=:80
-            - --entrypoints.https.address=:443
-            #
-            - --providers.kubernetescrd
+            - --providers.kubernetescrd=true
+            - --providers.kubernetescrd.allowEmptyServices=true
             #
             - --certificatesresolvers.letsencrypt.acme.email=md.staicu@yahoo.com
             - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json

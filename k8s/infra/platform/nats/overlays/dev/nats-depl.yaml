@@ -13,17 +13,12 @@ spec:
       containers:
         - name: nats
           volumeMounts:
-            - name: nats-conf-cm
-              mountPath: /etc/nats/
             - name: nats-storage
               mountPath: /data
             - mountPath: /jwt
               name: nats-accounts
 
       volumes:
-        - name: nats-conf-cm
-          configMap:
-            name: nats-conf-cm
         - name: nats-accounts
           secret:
             secretName: nats-accounts

@@ -5,11 +5,11 @@ metadata:
   name: nats-depl
 spec:
   podManagementPolicy: Parallel
+  replicas: 3
   selector:
     matchLabels:
       app: nats
   serviceName: nats-headless
-  replicas: 3
   template:
     metadata:
       labels:
@@ -25,37 +25,62 @@ spec:
                     values:
                       - nats
               topologyKey: kubernetes.io/hostname
+      enableServiceLinks: false
+      shareProcessNamespace: true
+      terminationGracePeriodSeconds: 60
       containers:
         - name: nats
-          image: docker.io/nats:2.12.1
-          args: ["-c", "/etc/nats/nats-server.conf"]
+          image: docker.io/nats:2.12.1-alpine
+          args:
+            - --config
+            - /etc/nats-config/nats.conf
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: SERVER_NAME
+              value: $(POD_NAME)
 
-          readinessProbe:
-            httpGet:
-              path: /healthz?js-server-only=true
-              port: 8222
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+          volumeMounts:
+            - mountPath: /etc/nats-config
+              name: config
+
+          ports:
+            - containerPort: 4222
+              name: nats
+            - containerPort: 8222
+              name: monitor
 
           livenessProbe:
+            failureThreshold: 3
             httpGet:
               path: /healthz?js-enabled-only=true
-              port: 8222
+              port: monitor
             initialDelaySeconds: 10
             periodSeconds: 30
-            timeoutSeconds: 5
             successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
             failureThreshold: 3
-
-          startupProbe:
             httpGet:
-              path: /healthz
-              port: 8222
+              path: /healthz?js-server-only=true
+              port: monitor
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 5
             successThreshold: 1
+            timeoutSeconds: 5
+          startupProbe:
             failureThreshold: 90
+            httpGet:
+              path: /healthz
+              port: monitor
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: nats-config
+  

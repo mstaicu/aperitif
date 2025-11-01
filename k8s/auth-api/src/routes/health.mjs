@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { connect } from "../nats.mjs";
 
 var router = express.Router();
+
 var nc = await connect();
 
 router.get("/readyz", async (_, res) => {

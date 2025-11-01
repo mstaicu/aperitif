@@ -12,7 +12,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json());
 
-app.use("/", healthRouter);
+app.use(healthRouter);
 
 app.use(serviceAvailability);
 

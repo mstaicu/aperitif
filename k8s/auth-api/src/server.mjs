@@ -4,6 +4,7 @@ import nconf from "nconf";
 
 import { app } from "./app.mjs";
 import { connect } from "./nats.mjs";
+import { sdk } from "./otel.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
 var PORT = 3000;
@@ -66,6 +67,13 @@ var shutdownInitiated = false;
       } catch {
         console.error("error waiting for nats to close");
       }
+    }
+
+    try {
+      await sdk.shutdown();
+      console.log("tracing terminated");
+    } catch {
+      console.error("error terminating tracing");
     }
 
     console.log("shutdown complete");

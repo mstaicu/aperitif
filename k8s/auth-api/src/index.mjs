@@ -1,5 +1,7 @@
 import nconf from "nconf";
 
+import "./otel.mjs";
+
 nconf
   .env()
   .required([

@@ -8,9 +8,9 @@ resources:
   - nats-ns.yaml
 
 configMapGenerator:
-  - name: nats-conf-cm
+  - name: nats-config
     files:
-      - nats-server.conf=nats-server.conf
+      - nats.conf=nats.conf
 
 generatorOptions:
   disableNameSuffixHash: true

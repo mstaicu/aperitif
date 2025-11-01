@@ -15,34 +15,27 @@ spec:
         - name: traefik
           args:
             #
-            # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
-            #
-            # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
-            #
-            - --api=true
-            #
-            # https://doc.traefik.io/traefik/operations/api/#dashboard
             # https://doc.traefik.io/traefik/operations/dashboard/
             #
-            # The dashboard is available at the same location as the API
-            # but on the path /dashboard/ by default.
-            #
-            # The trailing slash / in /dashboard/ is mandatory
-            # Optional, Default=true
-            #
+            - --api=true
             - --api.dashboard=true
             #
-            - --accesslog
-            # - --tracing
-            # - --metrics.prometheus=true
+            - --accesslog=true
             #
-            - --log.level=INFO
             #
-            - --entrypoints.http.address=:80
-            - --entrypoints.https.address=:443
+            - --entrypoints.http.address=:80/tcp
+            - --entrypoints.https.address=:443/tcp
             #
-            - --providers.kubernetescrd
+            #
+            - --ping=true
+            - --ping.entryPoint=http
+            #
+            #
+            - --providers.kubernetescrd=true
+            #
+            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
+            #
+            - --providers.kubernetescrd.allowEmptyServices=true
             #
             # Plugins
             #

@@ -1,6 +1,5 @@
 {
   "name": "auth-api",
-  "type": "module",
   "scripts": {
     "test": "node --test",
     "lint": "eslint ."
@@ -8,6 +7,10 @@
   "dependencies": {
     "@nats-io/jetstream": "^3.2.0",
     "@nats-io/transport-node": "^3.2.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.66.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.207.0",
+    "@opentelemetry/sdk-node": "^0.207.0",
     "@passwordless-id/webauthn": "^2.3.1",
     "express": "^5.1.0",
     "jose": "^6.1.0",

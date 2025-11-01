@@ -8,6 +8,11 @@ spec:
     matchLabels:
       app: traefik
   replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -24,44 +29,74 @@ spec:
                       - traefik
               topologyKey: kubernetes.io/hostname
       serviceAccountName: traefik-ingress-controller
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 60
+      hostNetwork: false
       containers:
         - name: traefik
-          image: docker.io/traefik:v3.5.3
+          image: docker.io/traefik:v3.5.4
           args:
             #
-            # https://doc.traefik.io/traefik/operations/dashboard/#secure-mode
+            - --entrypoints.http.address=:80/tcp
+            - --entrypoints.https.address=:443/tcp
             #
-            # 1. Start by enabling the dashboard by using the following option from Traefik's API on the static configuration:
-            # 2. Then define a routing configuration on Traefik itself, with a router attached to the service api@internal in the dynamic configuration, to allow defining:
+            - --ping=true
+            - --ping.entryPoint=http
             #
-            - --api=false
-            #
-            # https://doc.traefik.io/traefik/operations/dashboard/#insecure-mode
-            #
-            # https://doc.traefik.io/traefik/operations/api/#insecure
-            #
-            # Enable the API in insecure mode, which means that the API will be available directly on the entryPoint named 'traefik'.
-            #
-            - --api.insecure=false
-            #
-            # https://doc.traefik.io/traefik/operations/api/#dashboard
-            # https://doc.traefik.io/traefik/operations/dashboard/
-            #
-            # The dashboard is available at the same location as the API
-            # but on the path /dashboard/ by default.
-            #
-            # The trailing slash / in /dashboard/ is mandatory
-            # Optional, Default=true
-            #
-            - --api.dashboard=false
-            #
-            # https://doc.traefik.io/traefik/observability/access-logs/#configuration
-            #
-            - --accesslog
-            #
-            - --log.level=INFO
-            #
-            - --entrypoints.http.address=:80
-            - --entrypoints.https.address=:443
-            #
-            - --providers.kubernetescrd
+            - --providers.kubernetescrd=true
+            - --providers.kubernetescrd.allowEmptyServices=true
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: USER
+              value: traefik-ingress-controller
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+              scheme: HTTP
+            failureThreshold: 1
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+              scheme: HTTP
+            failureThreshold: 3
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+            - name: plugins
+              mountPath: /plugins-storage
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: plugins
+          emptyDir: {}
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
