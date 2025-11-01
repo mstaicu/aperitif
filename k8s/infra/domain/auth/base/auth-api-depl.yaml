@@ -50,9 +50,6 @@ spec:
             - name: NATS_CREDS_KEY_PATH
               value: /nats/auth-api-nats.creds
 
-            # - name: OTEL_LOG_LEVEL
-            #   value: debug
-
           volumeMounts:
             - name: auth-api-jwt
               mountPath: /app/keys

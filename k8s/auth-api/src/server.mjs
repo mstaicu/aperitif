@@ -1,32 +1,102 @@
 // @ts-check
+import { connect, credsAuthenticator } from "@nats-io/transport-node";
+import express from "express";
 import mongoose from "mongoose";
 import nconf from "nconf";
+import { readFileSync } from "node:fs";
 
-import { app } from "./app.mjs";
-import { connect } from "./nats.mjs";
+import { registerModels } from "./models/index.mjs";
 import { sdk } from "./otel.mjs";
+import { layers } from "./routes/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
+// MONGOOSE phase
+
+var connection = await mongoose
+  .createConnection(nconf.get("MONGO_DB_URI"), {
+    autoIndex: false,
+    bufferCommands: false,
+    dbName: "auth-api",
+  })
+  .asPromise();
+
+var models = registerModels(connection);
+
+// NATS phase
+
+var authenticator = credsAuthenticator(
+  new Uint8Array(readFileSync(nconf.get("NATS_CREDS_KEY_PATH"))),
+);
+
+var servers = Array.from(Array(3)).map(
+  (_, index) =>
+    `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
+);
+
+var nc = await connect({
+  authenticator,
+  name: "auth-api",
+  servers,
+});
+
+// APP phase
+
+/** @type {Record<string, Record<string, unknown>>} */
+var openapiPaths = {};
+
 var PORT = 3000;
+var app = express();
+app.disable("x-powered-by");
+app.use(express.json());
+
+layers
+  .map((factory) => factory(connection, nc))
+  // @ts-ignore
+  .forEach(({ handlers, method, openapi, path }) => {
+    if (method === "use") {
+      app.use(...handlers);
+      return;
+    }
+
+    // @ts-ignore
+    app[method](path, ...handlers);
+
+    if (openapi) {
+      openapiPaths[path] ??= {};
+      openapiPaths[path][method] = openapi;
+    }
+  });
+
+app.get("/openapi.json", (_req, res) =>
+  res.json({
+    info: {
+      description: "auth-api description",
+      title: "auth-api",
+      version: "1.0.0",
+    },
+    openapi: "3.0.3",
+    paths: openapiPaths,
+    servers: [
+      {
+        url: `${nconf.get("ORIGIN")}/api/v1/auth/`,
+      },
+    ],
+    tags: [
+      {
+        description: "k8s probes",
+        name: "health",
+      },
+      {
+        description: "jwks related",
+        name: "security",
+      },
+    ],
+  }),
+);
 
 var server = addGracefulShutdown(
   app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
 );
-
-await mongoose.connect(nconf.get("MONGO_DB_URI"), {
-  autoIndex: false,
-  bufferCommands: false,
-  dbName: "auth-api",
-});
-
-if (!mongoose.get("autoIndex")) {
-  await Promise.all(
-    Object.values(mongoose.models).map((model) => model.syncIndexes()),
-  );
-  console.log("indexes synchronized");
-}
-
-var nc = await connect();
 
 var shutdownInitiated = false;
 
@@ -39,10 +109,10 @@ var shutdownInitiated = false;
     console.log("closing server connections...");
     await server.gracefulShutdown();
 
-    if (mongoose.connection.readyState !== 0) {
+    if (connection.readyState !== 0) {
       console.log("closing database connection...");
       try {
-        await mongoose.connection.close();
+        await connection.close();
       } catch {
         console.error("error closing mongoose connection");
       }
@@ -81,5 +151,10 @@ var shutdownInitiated = false;
     process.exit(0);
   }),
 );
+
+if (!connection.get("autoIndex")) {
+  await Promise.all(Object.values(models).map((model) => model.syncIndexes()));
+  console.log("indexes synchronized");
+}
 
 export { server };

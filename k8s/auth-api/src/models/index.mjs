@@ -1,14 +1,19 @@
-// @ts-check
-import mongoose from "mongoose";
-
 import { ChallengeSchema } from "./Challenge.schema.mjs";
 import { MagicLinkSchema } from "./MagicLink.schema.mjs";
 import { PasskeySchema } from "./Passkey.schema.mjs";
 import { RefreshTokenSchema } from "./RefreshToken.schema.mjs";
 import { UserSchema } from "./User.schema.mjs";
 
-export var Challenge = mongoose.model("Challenge", ChallengeSchema);
-export var Passkey = mongoose.model("Passkey", PasskeySchema);
-export var RefreshToken = mongoose.model("RefreshToken", RefreshTokenSchema);
-export var User = mongoose.model("User", UserSchema);
-export var MagicLink = mongoose.model("MagicLink", MagicLinkSchema);
+/**
+ *
+ * @param {import('mongoose').Connection} connection
+ */
+export function registerModels(connection) {
+  var Challenge = connection.model("Challenge", ChallengeSchema);
+  var MagicLink = connection.model("MagicLink", MagicLinkSchema);
+  var Passkey = connection.model("Passkey", PasskeySchema);
+  var RefreshToken = connection.model("RefreshToken", RefreshTokenSchema);
+  var User = connection.model("User", UserSchema);
+
+  return { Challenge, MagicLink, Passkey, RefreshToken, User };
+}

@@ -1,21 +1,34 @@
-import { Router } from "express";
 import { exportJWK, importSPKI } from "jose";
 import nconf from "nconf";
 import { readFile } from "node:fs/promises";
 
-const router = Router();
-
-const jwk = await exportJWK(
+var jwk = await exportJWK(
   await importSPKI(
     await readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf-8"),
     "ES256",
   ),
 );
 
-const JWKS = {
+var JWKS = {
   keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
 };
 
-router.get("/.well-known/jwks.json", (_, res) => res.status(200).json(JWKS));
+export var getJwksRoute = () => {
+  /**
+   * @type {import("express").RequestHandler}
+   */
+  var handler = (_, res) => res.status(200).json(JWKS);
 
-export { router as jwksRouter };
+  return {
+    handlers: [handler],
+    method: "get",
+    openapi: {
+      responses: {
+        200: { description: "JSON Web Key Set" },
+      },
+      summary: "JWKS endpoint",
+      tags: ["security"],
+    },
+    path: "/.well-known/jwks.json",
+  };
+};

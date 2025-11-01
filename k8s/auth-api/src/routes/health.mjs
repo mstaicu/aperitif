@@ -1,23 +1,44 @@
-import express from "express";
-import mongoose from "mongoose";
+export var getHealthzRoute = () => {
+  /**
+   * @type {import("express").RequestHandler}
+   */
+  var handler = (_, res) => res.sendStatus(200);
 
-import { connect } from "../nats.mjs";
+  return {
+    handlers: [handler],
+    method: "get",
+    openapi: {
+      responses: { 200: { description: "Service is healthy" } },
+      summary: "Liveness probe",
+      tags: ["health"],
+    },
+    path: "/healthz",
+  };
+};
 
-var router = express.Router();
+/**
+ *
+ * @param {import("mongoose").Connection} mc
+ * @param {import("@nats-io/transport-node").NatsConnection} nc
+ */
+export var getReadyzRoute = (mc, nc) => {
+  /**
+   * @type {import("express").RequestHandler}
+   */
+  var handler = (_, res) =>
+    res.sendStatus(mc.readyState === 1 && !nc.isClosed() ? 200 : 503);
 
-var nc = await connect();
-
-router.get("/readyz", async (_, res) => {
-  var dbAvailable = mongoose.connection && mongoose.connection.readyState === 1;
-  var ncAvailable = nc && !nc.isClosed();
-
-  var ready = dbAvailable && ncAvailable;
-
-  res.sendStatus(ready ? 200 : 500);
-});
-
-router.get("/healthz", (_, res) => {
-  res.sendStatus(200);
-});
-
-export { router as healthRouter };
+  return {
+    handlers: [handler],
+    method: "get",
+    openapi: {
+      responses: {
+        200: { description: "Service is ready" },
+        503: { description: "Dependencies unavailable" },
+      },
+      summary: "Readiness probe",
+      tags: ["health"],
+    },
+    path: "/readyz",
+  };
+};
