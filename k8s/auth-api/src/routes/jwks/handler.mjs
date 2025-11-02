@@ -13,22 +13,10 @@ var JWKS = {
   keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
 };
 
-export var getJwksRoute = () => {
+export var getJwksHandler =
+  () =>
   /**
    * @type {import("express").RequestHandler}
    */
-  var handler = (_, res) => res.status(200).json(JWKS);
-
-  return {
-    handlers: [handler],
-    method: "get",
-    openapi: {
-      responses: {
-        200: { description: "JSON Web Key Set" },
-      },
-      summary: "JWKS endpoint",
-      tags: ["security"],
-    },
-    path: "/.well-known/jwks.json",
-  };
-};
+  (_, res) =>
+    res.status(200).json(JWKS);

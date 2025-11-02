@@ -7,7 +7,12 @@ import { readFileSync } from "node:fs";
 
 import { registerModels } from "./models/index.mjs";
 import { sdk } from "./otel.mjs";
-import { routes } from "./routes/index.mjs";
+import {
+  getHealthzHandler,
+  getJwksHandler,
+  getOpenApiHandler,
+  getReadyzHandler,
+} from "./routes/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
 // MONGOOSE phase
@@ -47,54 +52,17 @@ var app = express();
 app.disable("x-powered-by");
 app.use(express.json());
 
-var paths = {};
+app.get("/healthz", getHealthzHandler());
+app.get("/readyz", getReadyzHandler(connection, nc));
 
-routes
-  .map((factory) => factory(connection, nc))
-  // @ts-ignore
-  .forEach(({ handlers, method, openapi, path }) => {
-    if (method === "use") {
-      app.use(...handlers);
-      return;
-    }
+app.get("/openapi.json", getOpenApiHandler());
+app.get("/.well-known/jwks.json", getJwksHandler());
 
-    // @ts-ignore
-    app[method](path, ...handlers);
-
-    if (openapi) {
-      // @ts-ignore
-      paths[path] ??= {};
-      // @ts-ignore
-      paths[path][method] = openapi;
-    }
-  });
-
-app.get("/openapi.json", (_req, res) =>
-  res.json({
-    info: {
-      description: "auth-api description",
-      title: "auth-api",
-      version: "1.0.0",
-    },
-    openapi: "3.0.3",
-    paths,
-    servers: [
-      {
-        url: `${nconf.get("ORIGIN")}/api/v1/auth/`,
-      },
-    ],
-    tags: [
-      {
-        description: "k8s probes",
-        name: "health",
-      },
-      {
-        description: "jwks related",
-        name: "security",
-      },
-    ],
-  }),
+app.use((_, res, next) =>
+  connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
 );
+
+// Business logic routes
 
 var server = addGracefulShutdown(
   app.listen(PORT, () => console.log(`listening on port ${PORT}`)),

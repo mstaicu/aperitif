@@ -57,23 +57,6 @@ export var postMagicLink = (mc, nc) => {
     openapi: {
       description:
         "Creates or re-sends a magic link token for the supplied email address.",
-      requestBody: {
-        content: {
-          "application/json": {
-            examples: {
-              default: { value: { email: "user@example.com" } },
-            },
-            schema: {
-              properties: {
-                email: { format: "email", type: "string" },
-              },
-              required: ["email"],
-              type: "object",
-            },
-          },
-        },
-        required: true,
-      },
       responses: {
         200: {
           description: "Magic link issued successfully.",
@@ -137,28 +120,6 @@ export var postMagicLinkVerification = (mc) => {
     openapi: {
       description:
         "Consumes a magic link token and issues a short-lived registration JWT.",
-      requestBody: {
-        content: {
-          "application/json": {
-            examples: {
-              default: {
-                value: { token: "8f2c9d7f-9c3b-49e7-8bc6-12f5e4b2d8ac" },
-              },
-            },
-            schema: {
-              properties: {
-                token: {
-                  description: "Magic link token identifier.",
-                  type: "string",
-                },
-              },
-              required: ["token"],
-              type: "object",
-            },
-          },
-        },
-        required: true,
-      },
       responses: {
         200: {
           description: "Magic link verified and registration JWT issued.",
