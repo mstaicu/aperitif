@@ -13,10 +13,9 @@ var JWKS = {
   keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
 };
 
-export var getJwksHandler =
-  () =>
-  /**
-   * @type {import("express").RequestHandler}
-   */
-  (_, res) =>
-    res.status(200).json(JWKS);
+/**
+ * @param {import("mongoose").Connection} mc
+ * @param {import("@nats-io/transport-node").NatsConnection} nc
+ * @returns {import("express").RequestHandler}
+ */
+export var getJwksHandler = () => (_, res) => res.status(200).json(JWKS);

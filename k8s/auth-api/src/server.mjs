@@ -62,8 +62,6 @@ app.use((_, res, next) =>
   connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
 );
 
-// Business logic routes
-
 var server = addGracefulShutdown(
   app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
 );

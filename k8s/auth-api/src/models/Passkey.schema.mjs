@@ -34,7 +34,7 @@ export var PasskeySchema = new Schema(
     //   enum: ["ble", "hybrid", "internal", "nfc", "usb", "smart-card"],
     //   type: [String],
     // },
-    user: { ref: "User", required: true, type: String },
+    userId: { index: true, required: true, type: String },
   },
   { timestamps: true },
 );

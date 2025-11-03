@@ -16,25 +16,18 @@ metadata:
 spec:
   plugin:
     jwt:
-      Required: true
+      # Required: true
       Keys:
         - http://auth-api-srv.auth.svc.cluster.local:3000/.well-known/jwks.json # Cluster-internal JWKS
       Alg: ES256
       PayloadFields:
-        #
-        # Registered claims
-        #
         - exp
         - sub
         - aud
         - iss
-        #
-        # Private claims
-        #
-        - email
-      Audiences: # Only accept tokens meant for your API
+      Audiences:
         - tma.com
-      Issuers: # Only accept tokens issued by your auth service
+      Issuers:
         - https://tma.com
       ForceRefreshKeys: true
       JwtSources:
@@ -42,4 +35,14 @@ spec:
           key: Authorization
       JwtHeaders:
         X-User-Id: sub
-        X-User-Email: email
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-api-registration
+spec:
+  chain:
+    middlewares:
+      - name: auth-api-jwt
+      - name: auth-api-strip-prefix

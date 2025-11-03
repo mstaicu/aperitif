@@ -23,7 +23,9 @@ var ChallengeSchema = new Schema({
     expires: 60, // seconds
     type: Date,
   },
-  user: { ref: "User", required: false, type: String },
+  userId: {
+    type: String,
+  },
 });
 
 export { ChallengeSchema };
