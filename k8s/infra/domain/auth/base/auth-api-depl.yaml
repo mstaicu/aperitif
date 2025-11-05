@@ -47,6 +47,7 @@ spec:
               value: /app/keys/jwt-private.pem
             - name: JWT_PUBLIC_KEY_PATH
               value: /app/keys/jwt-public.pem
+
             - name: NATS_CREDS_KEY_PATH
               value: /nats/auth-api-nats.creds
 

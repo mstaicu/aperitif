@@ -43,6 +43,9 @@ spec:
                   name: auth-worker-cm
                   key: ORIGIN
 
+            - name: NATS_CREDS_KEY_PATH
+              value: /nats/auth-worker.creds
+
           volumeMounts:
             - name: auth-worker-nats-creds
               mountPath: /nats

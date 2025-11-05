@@ -20,9 +20,17 @@ export var getRegistrationChallengeHandler = (mc, nc) => {
 
     jetstream(nc).publish("auth.challenge.created");
 
+    var { hostname } = new URL(nconf.get("ORIGIN"));
+
     res.status(200).json({
-      challenge: challenge.content,
-      challengeId: challenge._id,
+      challenge: {
+        id: challenge.id,
+        value: challenge.value,
+      },
+      rp: {
+        id: hostname,
+        name: hostname,
+      },
       user: {
         id: userId,
       },
@@ -38,11 +46,22 @@ export var getRegistrationHandler = (mc) => {
   var { Challenge, Passkey } = mc.models;
 
   return async (req, res) => {
-    var { attestation, challengeId } = req.body;
+    var {
+      challenge: { id: challengeId },
+      registration,
+    } = req.body;
 
-    if (!attestation || !challengeId) return res.sendStatus(400);
+    if (!challengeId || !registration) return res.sendStatus(400);
 
-    var userId = attestation?.user?.id;
+    /**
+     * NOTE: If the framework ever decides to remove the user from the registration
+     * we need to send the user id sent with the challenge in this request
+     */
+    var userId = registration?.user?.id;
+    // These come as well in the registration object
+    // var userName = registration?.user?.name;
+    // var userDisplayName = registration?.user?.displayName;
+
     if (!userId) return res.sendStatus(400);
 
     var challenge = await Challenge.findOne({
@@ -51,48 +70,47 @@ export var getRegistrationHandler = (mc) => {
     });
     if (!challenge) return res.sendStatus(400);
 
-    var { origin } = new URL(nconf.get("ORIGIN"));
-
     var expected = {
-      challenge: challenge.content,
-      origin,
+      challenge: challenge.value,
+      origin: new URL(nconf.get("ORIGIN")).origin,
     };
 
-    var reg;
+    var result;
 
     try {
-      reg = await server.verifyRegistration(attestation, expected);
+      result = await server.verifyRegistration(registration, expected);
     } catch {
       await challenge.deleteOne();
       return res.sendStatus(400);
     }
 
-    if (!reg.userVerified) {
+    if (!result.userVerified) {
       await challenge.deleteOne();
       return res.sendStatus(400);
     }
 
-    if (reg.user.id !== challenge.userId) {
+    if (result.user.id !== challenge.userId) {
       await challenge.deleteOne();
       return res.sendStatus(400);
     }
 
-    var { id: credentialId } = reg.credential;
+    var { id: credentialId } = result.credential;
 
-    if (await Passkey.findOne({ credentialId, userId })) {
+    if (await Passkey.findOne({ credentialId, userId: result.user.id })) {
       await challenge.deleteOne();
       return res.sendStatus(409);
     }
 
-    var { algorithm, publicKey } = reg.credential;
-    var { counter } = reg.authenticator;
+    var { algorithm, publicKey, transports } = result.credential;
+    var { counter } = result.authenticator;
 
     var passkey = new Passkey({
       algorithm,
       counter,
       credentialId,
       publicKey,
-      userId: challenge.userId,
+      transports,
+      userId: result.user.id,
     });
 
     await passkey.save();
@@ -116,9 +134,17 @@ export var getAuthenticationChallengeHandler = (mc, nc) => {
 
     jetstream(nc).publish("auth.challenge.created");
 
+    var { hostname } = new URL(nconf.get("ORIGIN"));
+
     res.status(200).json({
-      challenge: challenge.content,
-      challengeId: challenge._id,
+      challenge: {
+        id: challenge.id,
+        value: challenge.value,
+      },
+      rp: {
+        id: hostname,
+        name: hostname,
+      },
     });
   };
 };
@@ -131,7 +157,10 @@ export var getAuthenticationHandler = (mc) => {
   var { Challenge, Passkey } = mc.models;
 
   return async (req, res) => {
-    var { authentication, challengeId } = req.body;
+    var {
+      authentication,
+      challenge: { id: challengeId },
+    } = req.body;
 
     if (!authentication || !challengeId) return res.sendStatus(400);
 
@@ -148,7 +177,7 @@ export var getAuthenticationHandler = (mc) => {
     var { origin } = new URL(nconf.get("ORIGIN"));
 
     var expected = {
-      challenge: challenge.content,
+      challenge: challenge.value,
       counter: passkey.counter,
       origin,
       userVerified: true,
@@ -158,6 +187,7 @@ export var getAuthenticationHandler = (mc) => {
       algorithm: passkey.algorithm,
       id: passkey.credentialId,
       publicKey: passkey.publicKey,
+      transports: passkey.transports,
     };
 
     var result;
@@ -165,7 +195,6 @@ export var getAuthenticationHandler = (mc) => {
     try {
       result = await server.verifyAuthentication(
         authentication,
-        // @ts-ignore
         credential,
         expected,
       );
@@ -179,9 +208,7 @@ export var getAuthenticationHandler = (mc) => {
       return res.sendStatus(401);
     }
 
-    var userIdBase64Url = Buffer.from(passkey.userId).toString("base64url");
-
-    if (result.userId !== userIdBase64Url) {
+    if (result.userId && result.userId !== passkey.userId) {
       await challenge.deleteOne();
       return res.sendStatus(401);
     }

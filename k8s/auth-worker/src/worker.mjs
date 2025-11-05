@@ -1,25 +1,38 @@
+import { connect, credsAuthenticator } from "@nats-io/transport-node";
 import mongoose from "mongoose";
 import nconf from "nconf";
+import { readFileSync } from "node:fs";
 
 import { startAuthConsumer } from "./consumers/auth.mjs";
-import { connect } from "./nats.mjs";
 
-await mongoose.connect(nconf.get("MONGO_DB_URI"), {
-  autoIndex: false,
-  bufferCommands: false,
-  dbName: "auth-api",
+// MONGOOSE phase
+
+var connection = await mongoose
+  .createConnection(nconf.get("MONGO_DB_URI"), {
+    autoIndex: false,
+    bufferCommands: false,
+    dbName: "auth-api",
+  })
+  .asPromise();
+
+// NATS phase
+
+var authenticator = credsAuthenticator(
+  new Uint8Array(readFileSync(nconf.get("NATS_CREDS_KEY_PATH"))),
+);
+
+var servers = Array.from(Array(3)).map(
+  (_, index) =>
+    `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
+);
+
+var nc = await connect({
+  authenticator,
+  name: "auth-worker",
+  servers,
 });
 
-if (!mongoose.get("autoIndex")) {
-  await Promise.all(
-    Object.values(mongoose.models).map((model) => model.syncIndexes()),
-  );
-  console.log("indexes synchronized");
-}
-
-var nc = await connect();
-
-await startAuthConsumer(nc);
+startAuthConsumer(nc);
 
 console.log("listening");
 
@@ -33,10 +46,10 @@ var shutdownInitiated = false;
 
     console.log("closing worker connections...");
 
-    if (mongoose.connection.readyState !== 0) {
+    if (connection.readyState !== 0) {
       console.log("closing database connection...");
       try {
-        await mongoose.connection.close();
+        await connection.close();
       } catch {
         console.error("error closing mongoose connection");
       }

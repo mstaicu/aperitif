@@ -11,11 +11,18 @@ export var webauthnOpenApi = {
                 authentication: {
                   type: "object",
                 },
-                challengeId: {
-                  type: "string",
+                challenge: {
+                  properties: {
+                    id: {
+                      description: "Identifier of the issued challenge",
+                      type: "string",
+                    },
+                  },
+                  required: ["id"],
+                  type: "object",
                 },
               },
-              required: ["challengeId", "authentication"],
+              required: ["challenge", "authentication"],
               type: "object",
             },
           },
@@ -47,13 +54,35 @@ export var webauthnOpenApi = {
               schema: {
                 properties: {
                   challenge: {
-                    type: "string",
+                    properties: {
+                      id: {
+                        description: "Identifier for the stored challenge",
+                        type: "string",
+                      },
+                      value: {
+                        description: "Base64url-encoded challenge",
+                        type: "string",
+                      },
+                    },
+                    required: ["id", "value"],
+                    type: "object",
                   },
-                  challengeId: {
-                    type: "string",
+                  rp: {
+                    properties: {
+                      id: {
+                        description: "Relying-party identifier (hostname)",
+                        type: "string",
+                      },
+                      name: {
+                        description: "Relying-party display name",
+                        type: "string",
+                      },
+                    },
+                    required: ["id", "name"],
+                    type: "object",
                   },
                 },
-                required: ["challenge", "challengeId"],
+                required: ["challenge", "rp"],
                 type: "object",
               },
             },
@@ -72,20 +101,54 @@ export var webauthnOpenApi = {
   "/webauthn/registration": {
     post: {
       description:
-        "Verifies the attestation result and stores the passkey credential.",
+        "Verifies the WebAuthn attestation result and stores the credential.",
       requestBody: {
         content: {
           "application/json": {
             schema: {
               properties: {
-                attestation: {
+                challenge: {
+                  properties: {
+                    id: {
+                      description:
+                        "Identifier of the previously issued challenge",
+                      type: "string",
+                    },
+                  },
+                  required: ["id"],
                   type: "object",
                 },
-                challengeId: {
-                  type: "string",
+                registration: {
+                  description: "WebAuthn registration payload",
+                  properties: {
+                    authenticatorAttachment: { nullable: true, type: "string" },
+                    clientExtensionResults: { type: "object" },
+                    id: { type: "string" },
+                    rawId: { type: "string" },
+                    response: { type: "object" },
+                    type: { enum: ["public-key"], type: "string" },
+                    user: {
+                      properties: {
+                        displayName: { nullable: true, type: "string" },
+                        id: { type: "string" },
+                        name: { nullable: true, type: "string" },
+                      },
+                      required: ["id"],
+                      type: "object",
+                    },
+                  },
+                  required: [
+                    "type",
+                    "id",
+                    "rawId",
+                    "response",
+                    "clientExtensionResults",
+                    "user",
+                  ],
+                  type: "object",
                 },
               },
-              required: ["challengeId", "attestation"],
+              required: ["challenge", "registration"],
               type: "object",
             },
           },
@@ -117,12 +180,32 @@ export var webauthnOpenApi = {
               schema: {
                 properties: {
                   challenge: {
-                    description: "Base64url-encoded challenge",
-                    type: "string",
+                    properties: {
+                      id: {
+                        description: "Identifier of the stored challenge",
+                        type: "string",
+                      },
+                      value: {
+                        description: "Base64url-encoded challenge",
+                        type: "string",
+                      },
+                    },
+                    required: ["id", "value"],
+                    type: "object",
                   },
-                  challengeId: {
-                    description: "Identifier for the stored challenge",
-                    type: "string",
+                  rp: {
+                    properties: {
+                      id: {
+                        description: "Relying party identifier (hostname)",
+                        type: "string",
+                      },
+                      name: {
+                        description: "Relying party display name",
+                        type: "string",
+                      },
+                    },
+                    required: ["id", "name"],
+                    type: "object",
                   },
                   user: {
                     properties: {
@@ -135,12 +218,16 @@ export var webauthnOpenApi = {
                     type: "object",
                   },
                 },
-                required: ["challenge", "challengeId", "user"],
+                required: ["challenge", "rp", "user"],
                 type: "object",
               },
             },
           },
           description: "Challenge issued successfully.",
+        },
+        503: {
+          description:
+            "Challenge could not be issued (dependencies unavailable).",
         },
       },
       summary: "Issue a passkey registration challenge",

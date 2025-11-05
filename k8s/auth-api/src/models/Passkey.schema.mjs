@@ -29,11 +29,10 @@ export var PasskeySchema = new Schema(
       required: true,
       type: String,
     },
-    // transports: {
-    //   default: [],
-    //   enum: ["ble", "hybrid", "internal", "nfc", "usb", "smart-card"],
-    //   type: [String],
-    // },
+    transports: {
+      enum: ["usb", "nfc", "ble", "smart-card", "hybrid", "internal"],
+      type: [String],
+    },
     userId: { index: true, required: true, type: String },
   },
   { timestamps: true },

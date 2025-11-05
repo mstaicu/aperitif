@@ -12,6 +12,7 @@ import {
   getJwksHandler,
   getOpenApiHandler,
   getReadyzHandler,
+  getRegistrationChallengeHandler,
 } from "./routes/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
@@ -60,6 +61,11 @@ app.get("/.well-known/jwks.json", getJwksHandler());
 
 app.use((_, res, next) =>
   connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
+);
+
+app.post(
+  "/webauthn/registration/challenge",
+  getRegistrationChallengeHandler(connection, nc),
 );
 
 var server = addGracefulShutdown(

@@ -20,6 +20,5 @@ export async function startAuthConsumer(nc) {
  */
 async function handler(msg) {
   console.log(msg.subject);
-  console.log(msg.json());
   msg.ack();
 }
