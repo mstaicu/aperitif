@@ -1,8 +1,15 @@
 // @ts-check
 import { jetstream } from "@nats-io/jetstream";
 import { server } from "@passwordless-id/webauthn";
+// import { importPKCS8, SignJWT } from "jose";
 import nconf from "nconf";
 import { randomBytes } from "node:crypto";
+// import { readFile } from "node:fs/promises";
+
+// var ES256_PRIVATE_KEY = await importPKCS8(
+//   await readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
+//   "ES256",
+// );
 
 /**
  * @param {import("mongoose").Connection} mc
@@ -225,6 +232,18 @@ export var getAuthenticationHandler = (mc) => {
 
     await passkey.save();
     await challenge.deleteOne();
+
+    // var { hostname } = new URL(nconf.get("ORIGIN"));
+
+    // var jwt = new SignJWT({
+    //   sub: passkey.userId,
+    // })
+    //   .setProtectedHeader({ alg: "ES256", kid: "jwk-1" })
+    //   .setExpirationTime("1000m")
+    //   .setAudience(hostname)
+    //   .setIssuer(origin);
+
+    // var signed = await jwt.sign(ES256_PRIVATE_KEY);
 
     res.sendStatus(200);
   };

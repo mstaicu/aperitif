@@ -2,11 +2,23 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-api-strip-prefix
+  name: auth-api
 spec:
-  stripPrefix:
-    prefixes:
-      - /api/v1/auth
+  chain:
+    middlewares:
+      - name: auth-api-strip-headers
+      - name: auth-api-jwt
+      - name: auth-api-strip-prefix
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-api-strip-headers
+spec:
+  headers:
+    customRequestHeaders:
+      X-User-Id: ""
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -16,7 +28,7 @@ metadata:
 spec:
   plugin:
     jwt:
-      # Required: true
+      Required: false
       Keys:
         - http://auth-api-srv.auth.svc.cluster.local:3000/.well-known/jwks.json # Cluster-internal JWKS
       Alg: ES256
@@ -40,9 +52,8 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-api-registration
+  name: auth-api-strip-prefix
 spec:
-  chain:
-    middlewares:
-      - name: auth-api-jwt
-      - name: auth-api-strip-prefix
+  stripPrefix:
+    prefixes:
+      - /api/v1/auth

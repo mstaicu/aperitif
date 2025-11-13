@@ -7,19 +7,11 @@ spec:
   entryPoints:
     - https
   routes:
-    # - match: Host(`tma.com`) && PathPrefix(`/api/v1/auth/webauthn/registration`)
-    #   kind: Rule
-    #   priority: 69
-    #   middlewares:
-    #     - name: auth-api-registration
-    #   services:
-    #     - name: auth-api-srv
-    #       port: 3000
     - match: Host(`tma.com`) && PathPrefix(`/api/v1/auth`)
       kind: Rule
-      priority: 69
+      priority: 66
       middlewares:
-        - name: auth-api-strip-prefix
+        - name: auth-api
       services:
         - name: auth-api-srv
           port: 3000
