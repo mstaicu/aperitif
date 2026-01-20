@@ -13,4 +13,3 @@ spec:
   replayPolicy: instant
   maxDeliver: 10
   ackWait: 10s
-  creds: /nack/creds/nack.creds

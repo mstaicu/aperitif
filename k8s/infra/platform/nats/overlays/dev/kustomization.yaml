@@ -17,7 +17,3 @@ generatorOptions:
 
 patches:
   - path: nats-depl.yaml
-  - path: nack-depl.yaml
-
-generators:
-  - nats-ksops-generator.yaml

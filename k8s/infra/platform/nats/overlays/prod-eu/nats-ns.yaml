@@ -3,5 +3,5 @@ kind: Namespace
 
 metadata:
   name: nats
-  # annotations:
-  #   linkerd.io/inject: enabled
+  annotations:
+    linkerd.io/inject: enabled

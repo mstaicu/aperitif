@@ -1,9 +1,8 @@
 // @ts-check
-import { connect, credsAuthenticator } from "@nats-io/transport-node";
+import { connect } from "@nats-io/transport-node";
 import express from "express";
 import mongoose from "mongoose";
 import nconf from "nconf";
-import { readFileSync } from "node:fs";
 
 import { registerModels } from "./models/index.mjs";
 import { sdk } from "./otel.mjs";
@@ -16,8 +15,6 @@ import {
 } from "./routes/index.mjs";
 import { addGracefulShutdown } from "./utils/index.mjs";
 
-// MONGOOSE phase
-
 var connection = await mongoose
   .createConnection(nconf.get("MONGO_DB_URI"), {
     autoIndex: false,
@@ -28,24 +25,15 @@ var connection = await mongoose
 
 var models = registerModels(connection);
 
-// NATS phase
-
-var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync(nconf.get("NATS_CREDS_KEY_PATH"))),
-);
-
 var servers = Array.from(Array(3)).map(
   (_, index) =>
     `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
 );
 
 var nc = await connect({
-  authenticator,
   name: "auth-api",
   servers,
 });
-
-// APP phase
 
 var PORT = 3000;
 

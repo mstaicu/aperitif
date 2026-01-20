@@ -12,4 +12,3 @@ spec:
   discard: old
   storage: file
   replicas: 3
-  creds: /nack/creds/nack.creds

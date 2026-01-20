@@ -1,11 +1,8 @@
-import { connect, credsAuthenticator } from "@nats-io/transport-node";
+import { connect } from "@nats-io/transport-node";
 import mongoose from "mongoose";
 import nconf from "nconf";
-import { readFileSync } from "node:fs";
 
 import { startAuthConsumer } from "./consumers/auth.mjs";
-
-// MONGOOSE phase
 
 var connection = await mongoose
   .createConnection(nconf.get("MONGO_DB_URI"), {
@@ -15,19 +12,12 @@ var connection = await mongoose
   })
   .asPromise();
 
-// NATS phase
-
-var authenticator = credsAuthenticator(
-  new Uint8Array(readFileSync(nconf.get("NATS_CREDS_KEY_PATH"))),
-);
-
 var servers = Array.from(Array(3)).map(
   (_, index) =>
     `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
 );
 
 var nc = await connect({
-  authenticator,
   name: "auth-worker",
   servers,
 });

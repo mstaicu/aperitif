@@ -9,5 +9,3 @@ metadata:
         path: ksops
 files:
   - auth-api-jwt.yaml
-  - auth-api-nats-creds.yaml
-  - auth-worker-nats-creds.yaml

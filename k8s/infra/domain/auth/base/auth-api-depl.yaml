@@ -48,16 +48,11 @@ spec:
             - name: JWT_PUBLIC_KEY_PATH
               value: /app/keys/jwt-public.pem
 
-            - name: NATS_CREDS_KEY_PATH
-              value: /nats/auth-api-nats.creds
-
           volumeMounts:
             - name: auth-api-jwt
               mountPath: /app/keys
               readOnly: true
-            - name: auth-api-nats-creds
-              mountPath: /nats
-              readOnly: true
+
           #
           # total probe time =
           #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
@@ -79,10 +74,8 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 1
             failureThreshold: 2
+
       volumes:
         - name: auth-api-jwt
           secret:
             secretName: auth-api-jwt
-        - name: auth-api-nats-creds
-          secret:
-            secretName: auth-api-nats-creds

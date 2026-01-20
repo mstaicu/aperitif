@@ -15,13 +15,6 @@ spec:
           volumeMounts:
             - name: nats-storage
               mountPath: /data
-            - mountPath: /jwt
-              name: nats-accounts
-
-      volumes:
-        - name: nats-accounts
-          secret:
-            secretName: nats-accounts
 
   volumeClaimTemplates:
     - metadata:
