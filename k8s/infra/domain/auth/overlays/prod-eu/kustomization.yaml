@@ -19,9 +19,3 @@ configMapGenerator:
 
 generators:
   - auth-ksops-gen.yaml
-
-images:
-  - name: mdstaicu/auth-api
-    newTag: latest
-  - name: mdstaicu/auth-worker
-    newTag: latest

@@ -623,3 +623,7 @@ sops --encrypt --in-place traefik-tls.yaml
 # Install Flux
 
 flux install --namespace=flux-system
+
+flux install \
+  --components=source-controller,kustomize-controller,image-reflector-controller,image-automation-controller \
+  --export > gotk-components.yaml

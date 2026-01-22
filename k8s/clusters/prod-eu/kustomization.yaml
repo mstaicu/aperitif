@@ -4,6 +4,10 @@ kind: Kustomization
 namespace: flux-system
 
 resources:
-  - infra.git-repo.yaml
-  - traefik-crd.kustomization.yaml
-  - traefik-depl.kustomization.yaml
+  - gitrepo.yaml
+
+  - auth.ip.yaml
+  - auth.ir.yaml
+  - auth.iua.yaml
+
+  - auth.yaml
