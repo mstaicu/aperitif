@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: traefik-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: traefik
+          args:
+            #
+            - --entrypoints.http.address=:80/tcp
+            - --entrypoints.https.address=:443/tcp
+            #
+            - --ping=true
+            - --ping.entryPoint=http
+            #
+            - --providers.kubernetescrd=true
+            - --providers.kubernetescrd.allowEmptyServices=true
+            #
+            - --certificatesresolvers.letsencrypt.acme.email=md.staicu@yahoo.com
+            - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+            - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=digitalocean
+            - --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+          env:
+            - name: DO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: do-dns-token
+                  key: DO_AUTH_TOKEN
+          volumeMounts:
+            - name: acme-data
+              mountPath: /data
+      volumes:
+        - name: acme-data
+          persistentVolumeClaim:
+            claimName: traefik-acme-pvc

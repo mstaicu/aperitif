@@ -1,0 +1,25 @@
+# Only allow kustomize-controller to get the sops-age key
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sops-age-reader
+  namespace: flux-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["sops-age"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sops-age-reader-binding
+  namespace: flux-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sops-age-reader
+subjects:
+  - kind: ServiceAccount
+    name: kustomize-controller
+    namespace: flux-system
