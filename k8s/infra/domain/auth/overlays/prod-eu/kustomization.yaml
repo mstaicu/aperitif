@@ -6,7 +6,6 @@ namespace: auth
 resources:
   - ../../base
   - auth-api-ingress.yaml
-  - auth-api-jwt.yaml
   - auth-api-np.yaml
   - auth-ns-np.yaml
   - auth-ns.yaml
@@ -15,11 +14,14 @@ resources:
 configMapGenerator:
   - name: auth-api-cm
     literals:
-      # - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
+      - MONGO_DB_URI=mongodb://auth-mongo-srv:27017
       - ORIGIN=https://tma.com
+
+generators:
+  - auth-ksops-gen.yaml
 
 images:
   - name: mdstaicu/auth-api
-    newTag: latest # TODO: Manually update this to promote the deployment to prod
-  # - name: mdstaicu/auth-worker
-  #   newTag: latest # TODO: Manually update this to promote the deployment to prod
+    newTag: latest
+  - name: mdstaicu/auth-worker
+    newTag: latest
