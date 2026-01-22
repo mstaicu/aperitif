@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import nconf from "nconf";
 
 import { registerModels } from "./models/index.mjs";
-import { sdk } from "./otel.mjs";
 import {
   getHealthzHandler,
   getJwksHandler,
@@ -99,13 +98,6 @@ var shutdownInitiated = false;
       } catch {
         console.error("error waiting for nats to close");
       }
-    }
-
-    try {
-      await sdk.shutdown();
-      console.log("tracing terminated");
-    } catch {
-      console.error("error terminating tracing");
     }
 
     console.log("shutdown complete");

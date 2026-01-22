@@ -9,13 +9,12 @@ var jwk = await exportJWK(
   ),
 );
 
-var JWKS = {
-  keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
-};
-
 /**
  * @param {import("mongoose").Connection} mc
  * @param {import("@nats-io/transport-node").NatsConnection} nc
  * @returns {import("express").RequestHandler}
  */
-export var getJwksHandler = () => (_, res) => res.status(200).json(JWKS);
+export var getJwksHandler = () => (_, res) =>
+  res.status(200).json({
+    keys: [{ ...jwk, alg: "ES256", kid: "jwk-1", use: "sig" }],
+  });

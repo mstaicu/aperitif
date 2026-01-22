@@ -35,8 +35,3 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
-# portForward:
-#   - resourceType: statefulset
-#     resourceName: nats-depl
-#     namespace: nats
-#     port: 4222
