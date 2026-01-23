@@ -9,13 +9,16 @@
     "@nats-io/transport-node": "^3.2.0",
     "@passwordless-id/webauthn": "^2.3.1",
     "express": "^5.1.0",
+    "graceful-http": "^1.0.1",
     "jose": "^6.1.0",
     "mongoose": "^8.19.1",
     "nconf": "^0.13.0"
   },
   "devDependencies": {
+    "@types/eslint-config-prettier": "^6.11.3",
     "@types/express": "^5.0.3",
     "@types/nconf": "^0.10.7",
+    "@types/node": "^25.0.10",
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-perfectionist": "^3.8.0",

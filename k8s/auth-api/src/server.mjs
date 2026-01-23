@@ -1,6 +1,7 @@
 // @ts-check
 import { connect } from "@nats-io/transport-node";
 import express from "express";
+import graceful from "graceful-http";
 import mongoose from "mongoose";
 import nconf from "nconf";
 
@@ -12,7 +13,6 @@ import {
   getReadyzHandler,
   getRegistrationChallengeHandler,
 } from "./routes/index.mjs";
-import { addGracefulShutdown } from "./utils/index.mjs";
 
 var connection = await mongoose
   .createConnection(nconf.get("MONGO_DB_URI"), {
@@ -55,7 +55,7 @@ app.post(
   getRegistrationChallengeHandler(connection, nc),
 );
 
-var server = addGracefulShutdown(
+var close = graceful(
   app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
 );
 
@@ -68,7 +68,7 @@ var shutdownInitiated = false;
     shutdownInitiated = true;
 
     console.log("closing server connections...");
-    await server.gracefulShutdown();
+    await close();
 
     if (connection.readyState !== 0) {
       console.log("closing database connection...");
@@ -110,5 +110,3 @@ if (!connection.get("autoIndex")) {
   await Promise.all(Object.values(models).map((model) => model.syncIndexes()));
   console.log("indexes synchronized");
 }
-
-export { server };
