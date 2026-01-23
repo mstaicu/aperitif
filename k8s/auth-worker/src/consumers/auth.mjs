@@ -8,7 +8,7 @@ export async function startAuthConsumer(nc) {
   var c = await jetstream(nc).consumers.get("auth", "auth-worker");
 
   for await (let m of await c.consume({ max_messages: 1 })) {
-    await handler(m);
+    await handleAuthEvent(m);
   }
 }
 
@@ -16,7 +16,7 @@ export async function startAuthConsumer(nc) {
  *
  * @param {import('@nats-io/jetstream').JsMsg} msg
  */
-async function handler(msg) {
+async function handleAuthEvent(msg) {
   console.log(msg.subject);
   msg.ack();
 }
