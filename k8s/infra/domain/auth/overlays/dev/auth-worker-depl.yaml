@@ -5,6 +5,3 @@ metadata:
   name: auth-worker-depl
 spec:
   replicas: 1
-  template:
-    spec:
-      affinity: null

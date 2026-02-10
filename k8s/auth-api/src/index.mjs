@@ -6,7 +6,7 @@ nconf
   .required([
     "JWT_PRIVATE_KEY_PATH",
     "JWT_PUBLIC_KEY_PATH",
-    "MONGO_DB_URI",
+    "DATABASE_URL",
     "ORIGIN",
   ]);
 

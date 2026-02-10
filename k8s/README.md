@@ -627,3 +627,13 @@ flux install --namespace=flux-system
 flux install \
   --components=source-controller,kustomize-controller,image-reflector-controller,image-automation-controller \
   --export > gotk-components.yaml
+
+# 
+
+kubectl get ns signoz -o json | jq
+kubectl get clickhouseinstallations.clickhouse.altinity.com -n signoz
+kubectl patch clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse \
+    -n signoz \
+    --type merge \
+    -p '{"metadata":{"finalizers":null}}'
+kubectl delete clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse -n signoz

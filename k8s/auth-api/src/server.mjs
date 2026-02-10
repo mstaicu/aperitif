@@ -1,11 +1,9 @@
-// @ts-check
-import { connect } from "@nats-io/transport-node";
+// import { connect } from "@nats-io/transport-node";
 import express from "express";
 import graceful from "graceful-http";
-import mongoose from "mongoose";
 import nconf from "nconf";
+import { Pool } from "pg";
 
-import { registerModels } from "./models/index.mjs";
 import {
   getHealthzHandler,
   getJwksHandler,
@@ -14,25 +12,20 @@ import {
   getRegistrationChallengeHandler,
 } from "./routes/index.mjs";
 
-var connection = await mongoose
-  .createConnection(nconf.get("MONGO_DB_URI"), {
-    autoIndex: false,
-    bufferCommands: false,
-    dbName: "auth-api",
-  })
-  .asPromise();
-
-var models = registerModels(connection);
-
-var servers = Array.from(Array(3)).map(
-  (_, index) =>
-    `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
-);
-
-var nc = await connect({
-  name: "auth-api",
-  servers,
+var pool = new Pool({
+  connectionString: nconf.get("DATABASE_URL"),
 });
+// await pool.query("SELECT 1");
+
+// var servers = Array.from(Array(3)).map(
+//   (_, index) =>
+//     `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
+// );
+
+// var nc = await connect({
+//   name: "auth-api",
+//   servers,
+// });
 
 var PORT = 3000;
 
@@ -41,18 +34,18 @@ app.disable("x-powered-by");
 app.use(express.json());
 
 app.get("/healthz", getHealthzHandler());
-app.get("/readyz", getReadyzHandler(connection, nc));
+app.get("/readyz", getReadyzHandler(pool));
 
 app.get("/openapi.json", getOpenApiHandler());
 app.get("/.well-known/jwks.json", getJwksHandler());
 
-app.use((_, res, next) =>
-  connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
-);
+// app.use((_, res, next) =>
+//   connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
+// );
 
 app.post(
   "/webauthn/registration/challenge",
-  getRegistrationChallengeHandler(connection, nc),
+  getRegistrationChallengeHandler(pool),
 );
 
 var close = graceful(
@@ -70,43 +63,20 @@ var shutdownInitiated = false;
     console.log("closing server connections...");
     await close();
 
-    if (connection.readyState !== 0) {
-      console.log("closing database connection...");
-      try {
-        await connection.close();
-      } catch {
-        console.error("error closing mongoose connection");
-      }
-    }
+    console.log("closing postgres pool...");
+    await pool.end();
 
-    if (!nc.isClosed()) {
-      console.log("closing nats connection...");
-      try {
-        await nc.drain();
-      } catch {
-        console.error("error draining nats");
-
-        try {
-          await nc.close();
-        } catch {
-          console.error("error force-closing nats");
-        }
-      }
-
-      try {
-        await nc.closed();
-      } catch {
-        console.error("error waiting for nats to close");
-      }
-    }
+    // if (nc && !nc.isClosed()) {
+    //   console.log("draining NATS...");
+    //   try {
+    //     await nc.drain();
+    //   } catch {
+    //     await nc.close();
+    //   }
+    // }
 
     console.log("shutdown complete");
 
     process.exit(0);
   }),
 );
-
-if (!connection.get("autoIndex")) {
-  await Promise.all(Object.values(models).map((model) => model.syncIndexes()));
-  console.log("indexes synchronized");
-}

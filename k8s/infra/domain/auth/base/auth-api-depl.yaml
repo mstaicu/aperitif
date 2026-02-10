@@ -13,17 +13,6 @@ spec:
       labels:
         app: auth-api
     spec:
-      # https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#more-practical-use-cases
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - auth-api
-              topologyKey: kubernetes.io/hostname
       containers:
         - name: auth-api
           image: mdstaicu/auth-api
@@ -32,11 +21,16 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: MONGO_DB_URI
+            # - name: MONGO_DB_URI
+            #   valueFrom:
+            #     configMapKeyRef:
+            #       name: auth-api-cm
+            #       key: MONGO_DB_URI
+            - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
                   name: auth-api-cm
-                  key: MONGO_DB_URI
+                  key: DATABASE_URL
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:

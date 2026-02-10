@@ -7,27 +7,25 @@ resources:
   - ../../base
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
-  - auth-api-mongo-depl.yaml
-  - auth-api-np.yaml
-  - auth-ns-np.yaml
+  # - auth-api-mongo-depl.yaml
+  - auth-api-postgres-depl.yaml
   - auth-ns.yaml
-  - auth-stream.yaml
-  - auth-worker-consumer.yaml
-  - auth-worker-np.yaml
+  # - auth-stream.yaml
+  # - auth-worker-consumer.yaml
 
 configMapGenerator:
   - name: auth-api-cm
     literals:
-      - MONGO_DB_URI=mongodb://auth-api-mongo-srv:27017
+      - DATABASE_URL=postgres://postgres@auth-api-postgres-srv:5432/auth
       - ORIGIN=https://tma.com
   - name: auth-worker-cm
     literals:
-      - MONGO_DB_URI=mongodb://auth-api-mongo-srv:27017
+      - DATABASE_URL=postgres://postgres@auth-api-postgres-srv:5432/auth
       - ORIGIN=https://tma.com
 
 patches:
   - path: auth-api-depl.yaml
-  - path: auth-worker-depl.yaml
+  # - path: auth-worker-depl.yaml
 
 generators:
   - auth-ksops-generator.yaml

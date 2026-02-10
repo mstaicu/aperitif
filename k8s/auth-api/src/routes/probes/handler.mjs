@@ -6,9 +6,14 @@
 export var getHealthzHandler = () => (_, res) => res.sendStatus(200);
 
 /**
- * @param {import("mongoose").Connection} mc
- * @param {import("@nats-io/transport-node").NatsConnection} nc
+ * @param {import("pg").Pool} pool
  * @returns {import("express").RequestHandler}
  */
-export var getReadyzHandler = (mc, nc) => (_, res) =>
-  res.sendStatus(mc.readyState === 1 && !nc.isClosed() ? 200 : 503);
+export var getReadyzHandler = (pool) => async (_, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.sendStatus(200);
+  } catch {
+    res.sendStatus(503);
+  }
+};

@@ -5,6 +5,3 @@ metadata:
   name: auth-api-depl
 spec:
   replicas: 1
-  template:
-    spec:
-      affinity: null

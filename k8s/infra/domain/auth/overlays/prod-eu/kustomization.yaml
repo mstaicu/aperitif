@@ -6,8 +6,6 @@ namespace: auth
 resources:
   - ../../base
   - auth-api-ingress.yaml
-  - auth-api-np.yaml
-  - auth-ns-np.yaml
   - auth-ns.yaml
   - auth-worker-np.yaml
 
