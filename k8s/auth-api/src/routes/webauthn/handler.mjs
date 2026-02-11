@@ -2,10 +2,12 @@
 // import { jetstream } from "@nats-io/jetstream";
 import { server } from "@passwordless-id/webauthn";
 import nconf from "nconf";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { DatabaseError } from "pg";
 
-var ORIGIN = nconf.get("ORIGIN");
+var { hostname, origin } = new URL(nconf.get("ORIGIN"));
+
+// jetstream(nc).publish("auth.challenge.created");
 
 /**
  * @param {import("pg").Pool} pool
@@ -14,30 +16,26 @@ var ORIGIN = nconf.get("ORIGIN");
 export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
   var userId = req.get("x-user-id") ?? randomUUID();
 
-  var challengeValue = randomBytes(32);
-  var expiresAt = new Date(Date.now() + 60_000);
-
-  var { rows } = await pool.query(
+  var {
+    rows: [challenge],
+  } = await pool.query(
     `
-      INSERT INTO webauthn_challenges (user_id, value, expires_at)
-      VALUES ($1, $2, $3)
+      INSERT INTO webauthn_challenges (user_id)
+      VALUES ($1)
       RETURNING id, value
     `,
-    [userId, challengeValue, expiresAt],
+    [userId],
   );
-
-  var [challenge] = rows;
-  // TODO: Pass 'ORIGIN' as a param
-  var { hostname } = new URL(ORIGIN);
 
   var response = {
     challengeId: challenge.id,
     publicKey: {
       attestation: "none",
       authenticatorSelection: {
-        residentKey: "preferred",
+        residentKey: "required",
         userVerification: "required",
       },
+      // Convert this to Uint8Array on the client, serialized for in-transit
       challenge: challenge.value.toString("base64url"),
       pubKeyCredParams: [
         { alg: -7, type: "public-key" },
@@ -48,8 +46,9 @@ export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
         id: hostname,
         name: hostname,
       },
-      timeout: 60000,
       user: {
+        // Convert this to Uint8Array on the client, serialized for in-transit
+        // Add 'name' and/or 'displayName'
         id: Buffer.from(userId).toString("base64url"),
       },
     },
@@ -74,7 +73,9 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    var { rows } = await client.query(
+    var {
+      rows: [challenge],
+    } = await client.query(
       `
         DELETE FROM webauthn_challenges
         WHERE id = $1
@@ -84,8 +85,6 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       [challengeId],
     );
 
-    var [challenge] = rows;
-
     if (!challenge) {
       await client.query("ROLLBACK");
       return res.sendStatus(400);
@@ -93,8 +92,7 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
 
     var expected = {
       challenge: challenge.value.toString("base64url"),
-      origin: ORIGIN,
-      rpId: new URL(ORIGIN).hostname,
+      origin,
     };
 
     var result;
@@ -127,12 +125,8 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       [decodedUserId],
     );
 
-    const credentialIdBuffer = Buffer.from(result.credential.id, "base64url");
-
-    const publicKeyBuffer = Buffer.from(
-      result.credential.publicKey,
-      "base64url",
-    );
+    var credentialIdBuffer = Buffer.from(result.credential.id, "base64url");
+    var publicKeyBuffer = Buffer.from(result.credential.publicKey, "base64url");
 
     try {
       await client.query(
@@ -142,8 +136,8 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
             credential_id,
             public_key,
             algorithm,
-            sign_count,
-            transports
+            transports,
+            sign_count
           )
           VALUES ($1, $2, $3, $4, $5, $6)
           `,
@@ -152,8 +146,8 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
           credentialIdBuffer,
           publicKeyBuffer,
           result.credential.algorithm,
+          result.credential.transports,
           result.authenticator.counter,
-          result.credential.transports ?? [],
         ],
       );
     } catch (err) {
@@ -176,115 +170,154 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
   }
 };
 
-// /**
-//  * @param {import("mongoose").Connection} mc
-//  * @param {import("@nats-io/transport-node").NatsConnection} nc
-//  * @returns {import("express").RequestHandler}
-//  */
-// export var getAuthenticationChallengeHandler = (mc, nc) => {
-//   var { Challenge } = mc.models;
+/**
+ * @param {import("pg").Pool} pool
+ * @returns {import("express").RequestHandler}
+ */
+export var getAuthenticationChallengeHandler = (pool) => async (_, res) => {
+  var {
+    rows: [challenge],
+  } = await pool.query(
+    `
+      INSERT INTO webauthn_challenges
+      DEFAULT VALUES
+      RETURNING id, value
+    `,
+  );
 
-//   return async (_, res) => {
-//     var challenge = new Challenge();
-//     await challenge.save();
+  var response = {
+    challengeId: challenge.id,
+    publicKey: {
+      challenge: challenge.value.toString("base64url"),
+      rpId: hostname,
+      userVerification: "required",
+    },
+  };
 
-//     jetstream(nc).publish("auth.challenge.created");
+  res.status(200).json(response);
+};
 
-//     var { hostname } = new URL(nconf.get("ORIGIN"));
+/**
+ * @param {import("pg").Pool} pool
+ * @returns {import("express").RequestHandler}
+ */
+export var getAuthenticationHandler = (pool) => async (req, res) => {
+  var { authentication, challengeId } = req.body;
 
-//     res.status(200).json({
-//       challenge: {
-//         id: challenge.id,
-//         value: challenge.value,
-//       },
-//       rp: {
-//         id: hostname,
-//         name: hostname,
-//       },
-//     });
-//   };
-// };
+  if (!challengeId || !authentication) return res.sendStatus(400);
 
-// /**
-//  * @param {import("mongoose").Connection} mc
-//  * @returns {import("express").RequestHandler}
-//  */
-// export var getAuthenticationHandler = (mc) => {
-//   var { Challenge, Passkey } = mc.models;
+  var client = await pool.connect();
 
-//   return async (req, res) => {
-//     var {
-//       authentication,
-//       challenge: { id: challengeId },
-//     } = req.body;
+  try {
+    await client.query("BEGIN");
 
-//     if (!authentication || !challengeId) return res.sendStatus(400);
+    var {
+      rows: [challenge],
+    } = await client.query(
+      `
+        DELETE FROM webauthn_challenges
+        WHERE id = $1
+          AND expires_at > NOW()
+        RETURNING id, value
+      `,
+      [challengeId],
+    );
 
-//     var challenge = await Challenge.findById(challengeId);
-//     if (!challenge) return res.sendStatus(400);
+    if (!challenge) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
 
-//     var passkey = await Passkey.findOne({ credentialId: authentication.id });
+    if (typeof authentication?.id !== "string") {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
 
-//     if (!passkey) {
-//       await challenge.deleteOne();
-//       return res.sendStatus(401);
-//     }
+    var credentialId = Buffer.from(authentication.id, "base64url");
 
-//     var { origin } = new URL(nconf.get("ORIGIN"));
+    var {
+      rows: [credential],
+    } = await client.query(
+      `
+        SELECT user_id, credential_id, public_key, algorithm, transports, sign_count
+        FROM webauthn_credentials
+        WHERE credential_id = $1
+        FOR UPDATE
+      `,
+      [credentialId],
+    );
 
-//     var expected = {
-//       challenge: challenge.value,
-//       counter: passkey.counter,
-//       origin,
-//       userVerified: true,
-//     };
+    if (!credential) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(401);
+    }
 
-//     var credential = {
-//       algorithm: passkey.algorithm,
-//       id: passkey.credentialId,
-//       publicKey: passkey.publicKey,
-//       transports: passkey.transports,
-//     };
+    var expected = {
+      challenge: challenge.value.toString("base64url"),
+      counter: Number(credential.sign_count),
+      origin,
+      rpId: hostname,
+      userVerified: true,
+    };
 
-//     var result;
+    var expectedCredential = {
+      algorithm: credential.algorithm,
+      id: Buffer.from(credential.credential_id).toString("base64url"),
+      publicKey: Buffer.from(credential.public_key).toString("base64url"),
+      transports: credential.transports ?? [],
+    };
 
-//     try {
-//       result = await server.verifyAuthentication(
-//         authentication,
-//         credential,
-//         expected,
-//       );
-//     } catch {
-//       await challenge.deleteOne();
-//       return res.sendStatus(401);
-//     }
+    var result;
 
-//     if (!result.userVerified) {
-//       await challenge.deleteOne();
-//       return res.sendStatus(401);
-//     }
+    try {
+      result = await server.verifyAuthentication(
+        authentication,
+        expectedCredential,
+        expected,
+      );
+    } catch {
+      await client.query("ROLLBACK");
+      return res.sendStatus(401);
+    }
 
-//     if (result.userId && result.userId !== passkey.userId) {
-//       await challenge.deleteOne();
-//       return res.sendStatus(401);
-//     }
+    if (!result.userVerified) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(401);
+    }
 
-//     if (
-//       typeof result.counter === "number" &&
-//       result.counter < passkey.counter
-//     ) {
-//       await challenge.deleteOne();
-//       return res.sendStatus(401);
-//     }
+    // 5) Enforce monotonic sign_count if provided by authenticator
+    // Some authenticators always return 0; treat 0 as "no signal".
+    if (typeof result.counter === "number") {
+      var newCounter = result.counter;
+      var oldCounter = Number(credential.sign_count);
 
-//     passkey.counter = result.counter;
+      // If authenticator supports a counter, it should increase.
+      // If it returns 0 always, do not brick users; just store 0 and skip strictness.
+      if (newCounter !== 0 && newCounter <= oldCounter) {
+        await client.query("ROLLBACK");
+        return res.sendStatus(401);
+      }
 
-//     await passkey.save();
-//     await challenge.deleteOne();
+      await client.query(
+        `
+          UPDATE webauthn_credentials
+          SET sign_count = $2
+          WHERE credential_id = $1
+        `,
+        [credentialId, newCounter],
+      );
+    }
 
-//     res.sendStatus(200);
-//   };
-// };
+    await client.query("COMMIT");
+
+    return res.sendStatus(200);
+  } catch {
+    await client.query("ROLLBACK");
+    return res.sendStatus(500);
+  } finally {
+    client.release();
+  }
+};
 
 // <script type="module">
 //       import {client} from "https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn";

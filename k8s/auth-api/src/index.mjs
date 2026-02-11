@@ -10,7 +10,7 @@ nconf
     "ORIGIN",
   ]);
 
-const origin = nconf.get("ORIGIN");
+var origin = nconf.get("ORIGIN");
 
 try {
   new URL(origin);

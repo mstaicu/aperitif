@@ -4,8 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id UUID PRIMARY KEY
 );
 
 CREATE TABLE webauthn_credentials (
@@ -17,16 +16,23 @@ CREATE TABLE webauthn_credentials (
     credential_id BYTEA NOT NULL UNIQUE,
     public_key BYTEA NOT NULL,
 
-    sign_count BIGINT NOT NULL DEFAULT 0,
+-- Verify what that library returns.
+
+-- Some libraries return numeric COSE values:
+
+-- -7 (ES256)
+
+-- -257 (RS256)
+
+-- -8 (EdDSA)
+
+-- If it returns numeric, this check will fail.
 
     algorithm TEXT NOT NULL
         CHECK (algorithm IN ('RS256', 'ES256', 'EdDSA')),
+    transports TEXT[] DEFAULT '{}',
 
-    credential_type TEXT NOT NULL DEFAULT 'public-key',
-
-    transports TEXT[],
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    sign_count BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_webauthn_credentials_user_id
@@ -37,13 +43,11 @@ CREATE TABLE webauthn_challenges (
 
     user_id UUID,
 
-    value BYTEA NOT NULL UNIQUE,
+    value BYTEA NOT NULL UNIQUE DEFAULT gen_random_bytes(32),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMPTZ NOT NULL
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '60 seconds'
 );
 
+-- useful if periodically cleaning expired challenges
 CREATE INDEX idx_webauthn_challenges_expires_at
     ON webauthn_challenges(expires_at);
-
--- Down Migration
