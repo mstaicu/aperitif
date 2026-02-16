@@ -30,7 +30,9 @@ var pool = new Pool({
 var PORT = 3000;
 
 var app = express();
+
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "20kb", strict: true }));
 
 app.get("/healthz", getHealthzHandler());

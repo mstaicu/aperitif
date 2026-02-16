@@ -1,46 +1,55 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
+
 metadata:
   name: auth-api
 spec:
   entryPoints:
     - https
   routes:
-    # Registration Challenge
-    - match: Host(`tma.com`) && Path(`/api/v1/auth/webauthn/registration/challenge`)
+    - match: Host(`tma.com`) &&
+             Path(`/api/v1/auth/webauthn/registration/challenge`) &&
+             Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-ratelimit-reg-challenge
+        - name: auth-ratelimit-challenge
+        - name: auth-bodylimit-challenge
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
           port: 3000
 
-    # Registration Finalize
-    - match: Host(`tma.com`) && Path(`/api/v1/auth/webauthn/registration`)
+    - match: Host(`tma.com`) &&
+             Path(`/api/v1/auth/webauthn/registration`) &&
+             Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-ratelimit-reg-finalize
+        - name: auth-ratelimit-finalize
+        - name: auth-bodylimit-finalize
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
           port: 3000
 
-    # Authentication Challenge
-    - match: Host(`tma.com`) && Path(`/api/v1/auth/webauthn/authentication/challenge`)
+    - match: Host(`tma.com`) &&
+             Path(`/api/v1/auth/webauthn/authentication/challenge`) &&
+             Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-ratelimit-auth-challenge
+        - name: auth-ratelimit-challenge
+        - name: auth-bodylimit-challenge
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
           port: 3000
 
-    # Authentication Finalize
-    - match: Host(`tma.com`) && Path(`/api/v1/auth/webauthn/authentication`)
+    - match: Host(`tma.com`) &&
+             Path(`/api/v1/auth/webauthn/authentication`) &&
+             Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-ratelimit-auth-finalize
+        - name: auth-ratelimit-finalize
+        - name: auth-bodylimit-finalize
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv

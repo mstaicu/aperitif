@@ -7,7 +7,6 @@ resources:
   - ../../base
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
-  # - auth-api-mongo-depl.yaml
   - auth-api-postgres-depl.yaml
   - auth-ns.yaml
   # - auth-stream.yaml
@@ -24,7 +23,6 @@ configMapGenerator:
       - ORIGIN=https://tma.com
 
 patches:
-  - path: auth-api-depl.yaml
   # - path: auth-worker-depl.yaml
 
 generators:

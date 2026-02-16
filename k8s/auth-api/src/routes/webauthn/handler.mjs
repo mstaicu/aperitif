@@ -6,9 +6,6 @@ import { randomUUID } from "node:crypto";
 
 var { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
-var UUID_REGEX =
-  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
-
 // jetstream(nc).publish("auth.challenge.created");
 
 /**
@@ -17,68 +14,77 @@ var UUID_REGEX =
  */
 export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
   var userId = randomUUID();
+  var client = await pool.connect();
 
-  var {
-    rows: [challenge],
-  } = await pool.query(
-    `
-      INSERT INTO webauthn_challenges (user_id)
-      VALUES ($1)
-      RETURNING id, value
-    `,
-    [userId],
-  );
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL statement_timeout = '1s'");
 
-  var response = {
-    challengeId: challenge.id,
-    publicKey: {
-      attestation: "none",
-      authenticatorSelection: {
-        residentKey: "required",
-        userVerification: "required",
+    var {
+      rows: [challenge],
+    } = await client.query(
+      `
+        INSERT INTO webauthn_challenges (user_id)
+        VALUES ($1)
+        RETURNING id, value
+      `,
+      [userId],
+    );
+
+    await client.query("COMMIT");
+
+    var response = {
+      challengeId: challenge.id,
+      publicKey: {
+        attestation: "none",
+        authenticatorSelection: {
+          residentKey: "required",
+          userVerification: "required",
+        },
+        challenge: challenge.value.toString("base64url"),
+        pubKeyCredParams: [
+          { alg: -7, type: "public-key" },
+          { alg: -8, type: "public-key" },
+          { alg: -257, type: "public-key" },
+        ],
+        rp: { id: hostname, name: hostname },
+        user: {
+          id: Buffer.from(userId).toString("base64url"),
+        },
       },
-      // Convert this to Uint8Array on the client, serialized for in-transit
-      challenge: challenge.value.toString("base64url"),
-      pubKeyCredParams: [
-        { alg: -7, type: "public-key" },
-        { alg: -8, type: "public-key" },
-        { alg: -257, type: "public-key" },
-      ],
-      rp: {
-        id: hostname,
-        name: hostname,
-      },
-      user: {
-        // Convert this to Uint8Array on the client, serialized for in-transit
-        // Add 'name' and/or 'displayName'
-        id: Buffer.from(userId).toString("base64url"),
-      },
-    },
-  };
+    };
 
-  res.set("Cache-Control", "no-store");
-  res.set("Pragma", "no-cache");
+    res.set("Cache-Control", "no-store");
+    res.set("Pragma", "no-cache");
+    return res.status(200).json(response);
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      //
+    }
 
-  return res.status(200).json(response);
+    var err = /** @type {any} */ (error);
+
+    if (err?.code === "22P02") return res.sendStatus(400); // invalid UUID / casting
+    if (err?.code === "55P03") return res.sendStatus(429); // lock timeout
+    if (err?.code === "57014") return res.sendStatus(503); // statement timeout
+
+    return res.sendStatus(500);
+  } finally {
+    client.release();
+  }
 };
 
 /**
  * @param {import("pg").Pool} pool
  * @returns {import("express").RequestHandler}
  */
-export var getRegistrationHandlerz = (pool) => async (req, res) => {
+export var getRegistrationHandler = (pool) => async (req, res) => {
   var { challengeId, credential } = req.body;
 
   // TODO: Add zod validation
-  if (
-    !challengeId ||
-    typeof challengeId !== "string" ||
-    !UUID_REGEX.test(challengeId)
-  ) {
-    return res.sendStatus(400);
-  }
-
-  if (!credential) {
+  if (!challengeId || typeof challengeId !== "string") {
     return res.sendStatus(400);
   }
 
@@ -100,17 +106,16 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
 
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL lock_timeout = '50ms'");
-    await client.query("SET LOCAL statement_timeout = '250ms'");
+    await client.query("SET LOCAL statement_timeout = '1s'");
 
     var {
       rows: [challenge],
     } = await client.query(
       `
         DELETE FROM webauthn_challenges
-        WHERE id = $1
+        WHERE id = $1::uuid
           AND expires_at > NOW()
-        RETURNING *
+        RETURNING user_id, value
       `,
       [challengeId],
     );
@@ -132,6 +137,11 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
     try {
       result = await server.verifyRegistration(credential, expected);
     } catch {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
+
+    if (!result?.credential) {
       await client.query("ROLLBACK");
       return res.sendStatus(400);
     }
@@ -161,6 +171,11 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       return res.sendStatus(400);
     }
 
+    if (credentialIdBuffer.length === 0) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
+
     var publicKeyBuffer;
 
     try {
@@ -170,11 +185,19 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       return res.sendStatus(400);
     }
 
-    // 🔐 NOTE: algorithm TEXT may mismatch COSE ints
-    // 🔧 RECOMMENDED: change DB column to INT (see migration note below)
+    if (publicKeyBuffer.length === 0) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
 
-    await client.query(
-      `
+    if (!["EdDSA", "ES256", "RS256"].includes(result.credential.algorithm)) {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
+
+    try {
+      await client.query(
+        `
           INSERT INTO webauthn_credentials (
             user_id,
             credential_id,
@@ -184,16 +207,26 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
             sign_count
           )
           VALUES ($1, $2, $3, $4, $5, $6)
-          `,
-      [
-        userId,
-        credentialIdBuffer,
-        publicKeyBuffer,
-        result.credential.algorithm,
-        result.credential.transports,
-        result.authenticator.counter,
-      ],
-    );
+        `,
+        [
+          userId,
+          credentialIdBuffer,
+          publicKeyBuffer,
+          result.credential.algorithm,
+          result.credential.transports,
+          result.authenticator.counter,
+        ],
+      );
+    } catch (e) {
+      var err = /** @type {any} */ (e);
+
+      if (err?.code === "23505") {
+        await client.query("ROLLBACK");
+        return res.sendStatus(409);
+      }
+
+      throw e;
+    }
 
     await client.query("COMMIT");
 
@@ -208,8 +241,10 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       /* empty */
     }
 
+    // eslint-disable-next-line
     var err = /** @type {any} */ (error);
 
+    if (err?.code === "22P02") return res.sendStatus(400);
     if (err?.code === "55P03") return res.sendStatus(429);
     if (err?.code === "57014") return res.sendStatus(503);
 
@@ -224,29 +259,53 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
  * @returns {import("express").RequestHandler}
  */
 export var getAuthenticationChallengeHandler = (pool) => async (_, res) => {
-  var {
-    rows: [challenge],
-  } = await pool.query(
-    `
-      INSERT INTO webauthn_challenges
-      DEFAULT VALUES
-      RETURNING id, value
-    `,
-  );
+  var client = await pool.connect();
 
-  var response = {
-    challengeId: challenge.id,
-    publicKey: {
-      challenge: challenge.value.toString("base64url"),
-      rpId: hostname,
-      userVerification: "required",
-    },
-  };
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL statement_timeout = '1s'");
 
-  res.set("Cache-Control", "no-store");
-  res.set("Pragma", "no-cache");
+    var {
+      rows: [challenge],
+    } = await client.query(
+      `
+        INSERT INTO webauthn_challenges
+        DEFAULT VALUES
+        RETURNING id, value
+      `,
+    );
 
-  return res.status(200).json(response);
+    await client.query("COMMIT");
+
+    var response = {
+      challengeId: challenge.id,
+      publicKey: {
+        challenge: challenge.value.toString("base64url"),
+        rpId: hostname,
+        userVerification: "required",
+      },
+    };
+
+    res.set("Cache-Control", "no-store");
+    res.set("Pragma", "no-cache");
+    return res.status(200).json(response);
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      //
+    }
+
+    var err = /** @type {any} */ (error);
+
+    if (err?.code === "22P02") return res.sendStatus(400);
+    if (err?.code === "55P03") return res.sendStatus(429);
+    if (err?.code === "57014") return res.sendStatus(503);
+
+    return res.sendStatus(500);
+  } finally {
+    client.release();
+  }
 };
 
 /**
@@ -257,15 +316,7 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
   var { authentication, challengeId } = req.body;
 
   // TODO: Add zod validation
-  if (
-    !challengeId ||
-    typeof challengeId !== "string" ||
-    !UUID_REGEX.test(challengeId)
-  ) {
-    return res.sendStatus(400);
-  }
-
-  if (!authentication) {
+  if (!challengeId || typeof challengeId !== "string") {
     return res.sendStatus(400);
   }
 
@@ -288,15 +339,14 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
 
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL lock_timeout = '50ms'");
-    await client.query("SET LOCAL statement_timeout = '250ms'");
+    await client.query("SET LOCAL statement_timeout = '1s'");
 
     var {
       rows: [challenge],
     } = await client.query(
       `
         DELETE FROM webauthn_challenges
-        WHERE id = $1
+        WHERE id = $1::uuid
           AND expires_at > NOW()
         RETURNING id, value
       `,
@@ -371,21 +421,37 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
       var newCounter = result.counter;
       var oldCounter = Number(credential.sign_count);
 
-      if (newCounter !== 0 && newCounter <= oldCounter) {
-        // console.log("auth.counter_violation", { userId: credential.user_id });
-
+      // If we have EVER seen a non-zero counter, never accept 0 again.
+      if (oldCounter > 0 && newCounter === 0) {
         await client.query("ROLLBACK");
         return res.sendStatus(401);
       }
 
-      await client.query(
-        `
-          UPDATE webauthn_credentials
-          SET sign_count = $2
-          WHERE credential_id = $1
-        `,
-        [credentialId, newCounter],
-      );
+      // If authenticator provides counters (newCounter > 0), enforce strict monotonicity.
+      if (newCounter > 0 && newCounter <= oldCounter) {
+        await client.query("ROLLBACK");
+        return res.sendStatus(401);
+      }
+
+      // Only update when it moves forward; never move backwards.
+      if (newCounter > oldCounter) {
+        var { rowCount } = await client.query(
+          `
+            UPDATE webauthn_credentials
+            SET sign_count = $2
+            WHERE credential_id = $1
+              AND sign_count < $2
+          `,
+          [credentialId, newCounter],
+        );
+
+        // If rowCount is 0, someone updated concurrently OR we had a counter issue.
+        // Treat as suspicious and fail closed.
+        if (rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.sendStatus(401);
+        }
+      }
     }
 
     await client.query("COMMIT");
@@ -404,8 +470,9 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
 
     var err = /** @type {any} */ (error);
 
-    if (err?.code === "55P03") return res.sendStatus(429); // lock contention
-    if (err?.code === "57014") return res.sendStatus(503); // statement timeout
+    if (err?.code === "22P02") return res.sendStatus(400);
+    if (err?.code === "55P03") return res.sendStatus(429);
+    if (err?.code === "57014") return res.sendStatus(503);
 
     return res.sendStatus(500);
   } finally {

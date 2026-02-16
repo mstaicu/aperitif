@@ -19,19 +19,13 @@ spec:
             - --api=true
             - --api.dashboard=true
             #
+            # TODO: Keep both until we figure out if we do TLS termination
+            # at the LB or at Traefik
             - --entrypoints.http.address=:80/tcp
             - --entrypoints.https.address=:443/tcp
-
-            # Trust only internal VPC ranges (DigitalOcean)
-            # This is so that the rate limiter uses the correct
-            # client IP address, not the load balancer IP address
-            # in order to create the token buckets per client IP
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
             #
-            # Keep trustedIPs even in dev
-
-            # So Traefik sees:
             # Request coming from 192.168.65.3 ( local machine )
             # That IP is in trustedIPs
             # Therefore: trust X-Forwarded-For
@@ -42,23 +36,24 @@ spec:
 
             - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.https.forwardedHeaders.insecure=true
-
+            #
+            #
             - --providers.kubernetescrd=true
             #
-            # Accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
+            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
             #
             - --providers.kubernetescrd.allowEmptyServices=true
-
+            #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
             - --log.level=DEBUG
-
+            #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#accesslogs
             - --accesslog=true
-
+            #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
-
+            #
             #
             # Plugins
             #

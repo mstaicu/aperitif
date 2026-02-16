@@ -62,39 +62,25 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-ratelimit-reg-challenge
+  name: auth-bodylimit-challenge
 spec:
-  rateLimit:
-    average: 5
-    burst: 10
-    # This means:
-    # Use first IP in X-Forwarded-For chain.
-    # Which is correct since:
-    # You configured forwardedHeaders.trustedIPs properly.
-    # Only your load balancer is trusted.
-    # If you ever chain proxies → you revisit depth.
-    sourceCriterion:
-      ipStrategy:
-        depth: 1
+  buffering:
+    maxRequestBodyBytes: 4096
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-ratelimit-reg-finalize
+  name: auth-bodylimit-finalize
 spec:
-  rateLimit:
-    average: 3
-    burst: 5
-    sourceCriterion:
-      ipStrategy:
-        depth: 1
+  buffering:
+    maxRequestBodyBytes: 32768
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-ratelimit-auth-challenge
+  name: auth-ratelimit-challenge
 spec:
   rateLimit:
     average: 10
@@ -107,7 +93,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
 metadata:
-  name: auth-ratelimit-auth-finalize
+  name: auth-ratelimit-finalize
 spec:
   rateLimit:
     average: 5
