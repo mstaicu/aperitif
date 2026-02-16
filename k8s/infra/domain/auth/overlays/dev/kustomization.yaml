@@ -8,6 +8,7 @@ resources:
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
   - auth-api-postgres-depl.yaml
+  - auth-np.yaml
   - auth-ns.yaml
   # - auth-stream.yaml
   # - auth-worker-consumer.yaml

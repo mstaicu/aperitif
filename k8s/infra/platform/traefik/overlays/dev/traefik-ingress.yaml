@@ -29,9 +29,6 @@ spec:
           kind: TraefikService
   tls: {}
 ---
-# You don’t need to manually specify cipher suites
-# unless you have a compliance requirement.
-# Modern defaults are secure.
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 

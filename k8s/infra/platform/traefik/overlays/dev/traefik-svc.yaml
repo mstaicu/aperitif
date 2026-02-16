@@ -7,7 +7,6 @@ spec:
   type: LoadBalancer
   selector:
     app: traefik
-  externalTrafficPolicy: Local
   ports:
     - name: http
       port: 80

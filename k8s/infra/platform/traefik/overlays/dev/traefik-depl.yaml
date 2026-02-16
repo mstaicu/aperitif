@@ -30,13 +30,12 @@ spec:
             # That IP is in trustedIPs
             # Therefore: trust X-Forwarded-For
             # Therefore: replace client IP with spoofed value
-
+            #
             # Trust X-Forwarded-* headers from any source IP.
             # curl -H "X-Forwarded-For: 1.2.3.4" https://tma.com
-
+            #
             - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.https.forwardedHeaders.insecure=true
-            #
             #
             - --providers.kubernetescrd=true
             #
@@ -53,7 +52,6 @@ spec:
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
-            #
             #
             # Plugins
             #
