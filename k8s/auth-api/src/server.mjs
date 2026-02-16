@@ -31,7 +31,7 @@ var PORT = 3000;
 
 var app = express();
 app.disable("x-powered-by");
-app.use(express.json());
+app.use(express.json({ limit: "20kb", strict: true }));
 
 app.get("/healthz", getHealthzHandler());
 app.get("/readyz", getReadyzHandler(pool));

@@ -124,7 +124,7 @@ export SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt
 Run it
 
 ```sh
-kustomize build --enable-alpha-plugins --enable-exec infra/traefik/overlays/dev | kubectl apply -f -
+kustomize build --enable-alpha-plugins --enable-exec infra/platform/traefik/overlays/dev | kubectl apply -f -
 ```
 
 

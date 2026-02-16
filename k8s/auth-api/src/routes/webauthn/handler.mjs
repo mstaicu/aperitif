@@ -3,9 +3,11 @@
 import { server } from "@passwordless-id/webauthn";
 import nconf from "nconf";
 import { randomUUID } from "node:crypto";
-import { DatabaseError } from "pg";
 
 var { hostname, origin } = new URL(nconf.get("ORIGIN"));
+
+var UUID_REGEX =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
 // jetstream(nc).publish("auth.challenge.created");
 
@@ -14,7 +16,7 @@ var { hostname, origin } = new URL(nconf.get("ORIGIN"));
  * @returns {import("express").RequestHandler}
  */
 export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
-  var userId = req.get("x-user-id") ?? randomUUID();
+  var userId = randomUUID();
 
   var {
     rows: [challenge],
@@ -54,7 +56,10 @@ export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
     },
   };
 
-  res.status(200).json(response);
+  res.set("Cache-Control", "no-store");
+  res.set("Pragma", "no-cache");
+
+  return res.status(200).json(response);
 };
 
 /**
@@ -64,7 +69,30 @@ export var getRegistrationChallengeHandler = (pool) => async (req, res) => {
 export var getRegistrationHandlerz = (pool) => async (req, res) => {
   var { challengeId, credential } = req.body;
 
-  if (!challengeId || !credential) {
+  // TODO: Add zod validation
+  if (
+    !challengeId ||
+    typeof challengeId !== "string" ||
+    !UUID_REGEX.test(challengeId)
+  ) {
+    return res.sendStatus(400);
+  }
+
+  if (!credential) {
+    return res.sendStatus(400);
+  }
+
+  // TODO: Add zod validation
+  if (
+    typeof credential !== "object" ||
+    credential === null ||
+    credential.type !== "public-key" ||
+    typeof credential.id !== "string" ||
+    typeof credential.response !== "object" ||
+    credential.response === null ||
+    typeof credential.response.clientDataJSON !== "string" ||
+    typeof credential.response.attestationObject !== "string"
+  ) {
     return res.sendStatus(400);
   }
 
@@ -72,6 +100,8 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
 
   try {
     await client.query("BEGIN");
+    await client.query("SET LOCAL lock_timeout = '50ms'");
+    await client.query("SET LOCAL statement_timeout = '250ms'");
 
     var {
       rows: [challenge],
@@ -93,6 +123,8 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
     var expected = {
       challenge: challenge.value.toString("base64url"),
       origin,
+      // The library doesn't need this
+      rpId: hostname,
     };
 
     var result;
@@ -109,12 +141,7 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
       return res.sendStatus(400);
     }
 
-    var decodedUserId = Buffer.from(result.user.id, "base64url").toString();
-
-    if (decodedUserId !== challenge.user_id) {
-      await client.query("ROLLBACK");
-      return res.sendStatus(400);
-    }
+    var userId = challenge.user_id;
 
     await client.query(
       `
@@ -122,15 +149,32 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
         VALUES ($1)
         ON CONFLICT (id) DO NOTHING
       `,
-      [decodedUserId],
+      [userId],
     );
 
-    var credentialIdBuffer = Buffer.from(result.credential.id, "base64url");
-    var publicKeyBuffer = Buffer.from(result.credential.publicKey, "base64url");
+    var credentialIdBuffer;
 
     try {
-      await client.query(
-        `
+      credentialIdBuffer = Buffer.from(result.credential.id, "base64url");
+    } catch {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
+
+    var publicKeyBuffer;
+
+    try {
+      publicKeyBuffer = Buffer.from(result.credential.publicKey, "base64url");
+    } catch {
+      await client.query("ROLLBACK");
+      return res.sendStatus(400);
+    }
+
+    // 🔐 NOTE: algorithm TEXT may mismatch COSE ints
+    // 🔧 RECOMMENDED: change DB column to INT (see migration note below)
+
+    await client.query(
+      `
           INSERT INTO webauthn_credentials (
             user_id,
             credential_id,
@@ -141,30 +185,35 @@ export var getRegistrationHandlerz = (pool) => async (req, res) => {
           )
           VALUES ($1, $2, $3, $4, $5, $6)
           `,
-        [
-          decodedUserId,
-          credentialIdBuffer,
-          publicKeyBuffer,
-          result.credential.algorithm,
-          result.credential.transports,
-          result.authenticator.counter,
-        ],
-      );
-    } catch (err) {
-      if (err instanceof DatabaseError && err.code === "23505") {
-        await client.query("ROLLBACK");
-        return res.sendStatus(409);
-      }
-
-      throw err;
-    }
+      [
+        userId,
+        credentialIdBuffer,
+        publicKeyBuffer,
+        result.credential.algorithm,
+        result.credential.transports,
+        result.authenticator.counter,
+      ],
+    );
 
     await client.query("COMMIT");
 
+    res.set("Cache-Control", "no-store");
+    res.set("Pragma", "no-cache");
+
     return res.sendStatus(201);
-  } catch {
-    await client.query("ROLLBACK");
-    res.sendStatus(500);
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* empty */
+    }
+
+    var err = /** @type {any} */ (error);
+
+    if (err?.code === "55P03") return res.sendStatus(429);
+    if (err?.code === "57014") return res.sendStatus(503);
+
+    return res.sendStatus(500);
   } finally {
     client.release();
   }
@@ -194,7 +243,10 @@ export var getAuthenticationChallengeHandler = (pool) => async (_, res) => {
     },
   };
 
-  res.status(200).json(response);
+  res.set("Cache-Control", "no-store");
+  res.set("Pragma", "no-cache");
+
+  return res.status(200).json(response);
 };
 
 /**
@@ -204,12 +256,40 @@ export var getAuthenticationChallengeHandler = (pool) => async (_, res) => {
 export var getAuthenticationHandler = (pool) => async (req, res) => {
   var { authentication, challengeId } = req.body;
 
-  if (!challengeId || !authentication) return res.sendStatus(400);
+  // TODO: Add zod validation
+  if (
+    !challengeId ||
+    typeof challengeId !== "string" ||
+    !UUID_REGEX.test(challengeId)
+  ) {
+    return res.sendStatus(400);
+  }
+
+  if (!authentication) {
+    return res.sendStatus(400);
+  }
+
+  // TODO: Add zod validation
+  if (
+    typeof authentication !== "object" ||
+    authentication === null ||
+    authentication.type !== "public-key" ||
+    typeof authentication.id !== "string" ||
+    typeof authentication.response !== "object" ||
+    authentication.response === null ||
+    typeof authentication.response.clientDataJSON !== "string" ||
+    typeof authentication.response.authenticatorData !== "string" ||
+    typeof authentication.response.signature !== "string"
+  ) {
+    return res.sendStatus(400);
+  }
 
   var client = await pool.connect();
 
   try {
     await client.query("BEGIN");
+    await client.query("SET LOCAL lock_timeout = '50ms'");
+    await client.query("SET LOCAL statement_timeout = '250ms'");
 
     var {
       rows: [challenge],
@@ -228,12 +308,14 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
       return res.sendStatus(400);
     }
 
-    if (typeof authentication?.id !== "string") {
+    var credentialId;
+
+    try {
+      credentialId = Buffer.from(authentication.id, "base64url");
+    } catch {
       await client.query("ROLLBACK");
       return res.sendStatus(400);
     }
-
-    var credentialId = Buffer.from(authentication.id, "base64url");
 
     var {
       rows: [credential],
@@ -285,15 +367,13 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
       return res.sendStatus(401);
     }
 
-    // 5) Enforce monotonic sign_count if provided by authenticator
-    // Some authenticators always return 0; treat 0 as "no signal".
     if (typeof result.counter === "number") {
       var newCounter = result.counter;
       var oldCounter = Number(credential.sign_count);
 
-      // If authenticator supports a counter, it should increase.
-      // If it returns 0 always, do not brick users; just store 0 and skip strictness.
       if (newCounter !== 0 && newCounter <= oldCounter) {
+        // console.log("auth.counter_violation", { userId: credential.user_id });
+
         await client.query("ROLLBACK");
         return res.sendStatus(401);
       }
@@ -310,66 +390,25 @@ export var getAuthenticationHandler = (pool) => async (req, res) => {
 
     await client.query("COMMIT");
 
+    // console.log("auth.authentication.success", { userId: credential.user_id });
+
+    res.set("Cache-Control", "no-store");
+    res.set("Pragma", "no-cache");
     return res.sendStatus(200);
-  } catch {
-    await client.query("ROLLBACK");
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* empty */
+    }
+
+    var err = /** @type {any} */ (error);
+
+    if (err?.code === "55P03") return res.sendStatus(429); // lock contention
+    if (err?.code === "57014") return res.sendStatus(503); // statement timeout
+
     return res.sendStatus(500);
   } finally {
     client.release();
   }
 };
-
-// <script type="module">
-//       import {client} from "https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn";
-
-//       var regChallenge = await fetch("https://tma.com/api/v1/auth/webauthn/challenge",
-//       {
-//           headers: {
-//             'Accept': 'application/json',
-//             'Content-Type': 'application/json'
-//           },
-//           method: "POST"
-//       });
-
-//       let {challenge, challengeId} = await regChallenge.json();
-
-//       var attestation = await client.register({
-//         user: "Mircea Staicu",
-//         challenge,
-//       });
-
-//       await fetch("https://tma.com/api/v1/auth/webauthn/registration",
-//       {
-//           headers: {
-//             'Accept': 'application/json',
-//             'Content-Type': 'application/json'
-//           },
-//           method: "POST",
-//           body: JSON.stringify({challengeId, attestation})
-//       });
-
-//       // var authChallenge = await fetch("https://tma.com/api/v1/auth/webauthn/challenge",
-//       // {
-//       //     headers: {
-//       //       'Accept': 'application/json',
-//       //       'Content-Type': 'application/json'
-//       //     },
-//       //     method: "POST"
-//       // });
-
-//       // let {challenge, challengeId} = await authChallenge.json();
-
-//       // var authentication = await client.authenticate({
-//       //   challenge
-//       // });
-
-//       // await fetch("https://tma.com/api/v1/auth/webauthn/authentication",
-//       // {
-//       //     headers: {
-//       //       'Accept': 'application/json',
-//       //       'Content-Type': 'application/json'
-//       //     },
-//       //     method: "POST",
-//       //     body: JSON.stringify({challengeId, authentication})
-//       // });
-//     </script>

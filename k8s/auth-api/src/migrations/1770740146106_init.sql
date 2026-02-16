@@ -16,18 +16,7 @@ CREATE TABLE webauthn_credentials (
     credential_id BYTEA NOT NULL UNIQUE,
     public_key BYTEA NOT NULL,
 
--- Verify what that library returns.
-
--- Some libraries return numeric COSE values:
-
--- -7 (ES256)
-
--- -257 (RS256)
-
--- -8 (EdDSA)
-
--- If it returns numeric, this check will fail.
-
+    -- The current library converts COSE algo ints to these text representations
     algorithm TEXT NOT NULL
         CHECK (algorithm IN ('RS256', 'ES256', 'EdDSA')),
     transports TEXT[] DEFAULT '{}',

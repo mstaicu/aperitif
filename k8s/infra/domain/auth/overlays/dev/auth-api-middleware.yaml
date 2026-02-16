@@ -1,15 +1,15 @@
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
+# apiVersion: traefik.io/v1alpha1
+# kind: Middleware
 
-metadata:
-  name: auth-api
-spec:
-  chain:
-    middlewares:
-      - name: auth-api-strip-headers
-      - name: auth-api-jwt
-      - name: auth-api-strip-prefix
----
+# metadata:
+#   name: auth-api
+# spec:
+#   chain:
+#     middlewares:
+#       - name: auth-api-strip-headers
+#       - name: auth-api-jwt
+#       - name: auth-api-strip-prefix
+# ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 
@@ -57,3 +57,61 @@ spec:
   stripPrefix:
     prefixes:
       - /api/v1/auth
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-ratelimit-reg-challenge
+spec:
+  rateLimit:
+    average: 5
+    burst: 10
+    # This means:
+    # Use first IP in X-Forwarded-For chain.
+    # Which is correct since:
+    # You configured forwardedHeaders.trustedIPs properly.
+    # Only your load balancer is trusted.
+    # If you ever chain proxies → you revisit depth.
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-ratelimit-reg-finalize
+spec:
+  rateLimit:
+    average: 3
+    burst: 5
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-ratelimit-auth-challenge
+spec:
+  rateLimit:
+    average: 10
+    burst: 20
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: auth-ratelimit-auth-finalize
+spec:
+  rateLimit:
+    average: 5
+    burst: 10
+    sourceCriterion:
+      ipStrategy:
+        depth: 1

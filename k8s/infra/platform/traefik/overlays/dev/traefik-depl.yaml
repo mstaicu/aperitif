@@ -10,7 +10,6 @@ spec:
   replicas: 1
   template:
     spec:
-      affinity: null
       containers:
         - name: traefik
           args:
@@ -20,22 +19,46 @@ spec:
             - --api=true
             - --api.dashboard=true
             #
-            - --accesslog=true
-            #
-            #
             - --entrypoints.http.address=:80/tcp
             - --entrypoints.https.address=:443/tcp
+
+            # Trust only internal VPC ranges (DigitalOcean)
+            # This is so that the rate limiter uses the correct
+            # client IP address, not the load balancer IP address
+            # in order to create the token buckets per client IP
             #
+            # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
             #
-            - --ping=true
-            - --ping.entryPoint=http
-            #
-            #
+            # Keep trustedIPs even in dev
+
+            # So Traefik sees:
+            # Request coming from 192.168.65.3 ( local machine )
+            # That IP is in trustedIPs
+            # Therefore: trust X-Forwarded-For
+            # Therefore: replace client IP with spoofed value
+
+            # Trust X-Forwarded-* headers from any source IP.
+            # curl -H "X-Forwarded-For: 1.2.3.4" https://tma.com
+
+            - --entrypoints.http.forwardedHeaders.insecure=true
+            - --entrypoints.https.forwardedHeaders.insecure=true
+
             - --providers.kubernetescrd=true
             #
-            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
+            # Accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
             #
             - --providers.kubernetescrd.allowEmptyServices=true
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
+            - --log.level=DEBUG
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#accesslogs
+            - --accesslog=true
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
+            - --ping=true
+            - --ping.entryPoint=http
+
             #
             # Plugins
             #

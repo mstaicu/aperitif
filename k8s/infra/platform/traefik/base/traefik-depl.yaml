@@ -18,70 +18,72 @@ spec:
       labels:
         app: traefik
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - traefik
-              topologyKey: kubernetes.io/hostname
       serviceAccountName: traefik-ingress-controller
-      automountServiceAccountToken: true
       terminationGracePeriodSeconds: 60
-      hostNetwork: false
       containers:
         - name: traefik
-          image: docker.io/traefik:v3.5.4
+          image: docker.io/traefik:v3.6.8
           args:
-            #
             - --entrypoints.http.address=:80/tcp
             - --entrypoints.https.address=:443/tcp
+
+            # Trust only internal VPC ranges (DigitalOcean)
+            # This is so that the rate limiter uses the correct
+            # client IP address, not the load balancer IP address
+            # in order to create the token buckets per client IP
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
+
+            - --entrypoints.http.forwardedHeaders.trustedIPs=<DO_VPC_CIDR>
+            - --entrypoints.https.forwardedHeaders.trustedIPs=<DO_VPC_CIDR>
+
+            - --providers.kubernetescrd=true
             #
+            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
+            #
+            - --providers.kubernetescrd.allowEmptyServices=true
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
+            - --log.level=INFO
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#accesslogs
+            - --accesslog=true
+
+            # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
+
             #
-            - --providers.kubernetescrd=true
-            - --providers.kubernetescrd.allowEmptyServices=true
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: USER
-              value: traefik-ingress-controller
+            # Plugins
+            #
+            - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
+            - --experimental.plugins.jwt.version=v0.10.0
+
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+
           readinessProbe:
             httpGet:
               path: /ping
               port: 80
-              scheme: HTTP
-            failureThreshold: 1
-            initialDelaySeconds: 2
             periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 2
+
           livenessProbe:
             httpGet:
               path: /ping
               port: 80
-              scheme: HTTP
-            failureThreshold: 3
-            initialDelaySeconds: 2
             periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 2
+
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
-            readOnlyRootFilesystem: true
+
           volumeMounts:
             - name: data
               mountPath: /data
@@ -89,6 +91,12 @@ spec:
               mountPath: /tmp
             - name: plugins
               mountPath: /plugins-storage
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+
       volumes:
         - name: data
           emptyDir: {}
@@ -96,7 +104,3 @@ spec:
           emptyDir: {}
         - name: plugins
           emptyDir: {}
-      securityContext:
-        runAsGroup: 65532
-        runAsNonRoot: true
-        runAsUser: 65532
