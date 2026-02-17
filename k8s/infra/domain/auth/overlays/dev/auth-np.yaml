@@ -13,23 +13,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-same-namespace
-spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - podSelector: {}
-  egress:
-    - to:
-        - podSelector: {}
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
   name: allow-dns
 spec:
   podSelector: {}
@@ -53,7 +36,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-api-ingress
+  name: allow-traefik-to-auth-api
 spec:
   podSelector:
     matchLabels:
@@ -76,7 +59,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-ui-ingress
+  name: allow-traefik-to-auth-ui
 spec:
   podSelector:
     matchLabels:
@@ -99,9 +82,31 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-egress-to-nats
+  name: allow-auth-ui-to-auth-api
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      app: auth-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth-ui
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-auth-api-to-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-api
   policyTypes:
     - Egress
   egress:
@@ -109,6 +114,32 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: nats
+          podSelector:
+            matchLabels:
+              app: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-auth-worker-to-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-worker
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nats
+          podSelector:
+            matchLabels:
+              app: nats
       ports:
         - protocol: TCP
           port: 4222

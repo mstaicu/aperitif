@@ -5,10 +5,13 @@
     "migrate:up": "node-pg-migrate up -m ./src/migrations"
   },
   "dependencies": {
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
     "@nats-io/jetstream": "^3.2.0",
     "@nats-io/transport-node": "^3.2.0",
     "@passwordless-id/webauthn": "^2.3.1",
     "express": "^5.1.0",
+    "fastify": "^5.7.4",
     "graceful-http": "^1.0.1",
     "jose": "^6.1.0",
     "mongoose": "^8.19.1",

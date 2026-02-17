@@ -12,6 +12,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-api-strip-headers
+        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
@@ -22,6 +24,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-api-strip-headers
+        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
@@ -32,6 +36,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-api-strip-headers
+        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv
@@ -42,6 +48,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-api-strip-headers
+        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
       services:
         - name: auth-api-srv

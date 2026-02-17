@@ -1,21 +1,37 @@
+// @ts-check
+import swagger from "@fastify/swagger";
 // import { connect } from "@nats-io/transport-node";
-import express from "express";
-import graceful from "graceful-http";
+import swaggerUI from "@fastify/swagger-ui";
+import Fastify from "fastify";
 import nconf from "nconf";
 import { Pool } from "pg";
 
-import {
-  getHealthzHandler,
-  getJwksHandler,
-  getOpenApiHandler,
-  getReadyzHandler,
-  getRegistrationChallengeHandler,
-} from "./routes/index.mjs";
+import { routes as auth } from "./routes/auth.mjs";
+import { routes as jwks } from "./routes/jwks.mjs";
+
+var fastify = Fastify({
+  bodyLimit: 20 * 1024, // 20kb
+  logger: true,
+  trustProxy: true,
+});
+
+await fastify.register(swagger, {
+  openapi: {
+    info: {
+      description: "Passkey-only authentication service",
+      title: "TODO",
+      version: "1.0.0",
+    },
+    openapi: "3.1.0",
+  },
+});
+await fastify.register(swaggerUI, {
+  routePrefix: "/docs",
+});
 
 var pool = new Pool({
   connectionString: nconf.get("DATABASE_URL"),
 });
-// await pool.query("SELECT 1");
 
 // var servers = Array.from(Array(3)).map(
 //   (_, index) =>
@@ -27,58 +43,39 @@ var pool = new Pool({
 //   servers,
 // });
 
-var PORT = 3000;
-
-var app = express();
-
-app.disable("x-powered-by");
-app.set("trust proxy", 1);
-app.use(express.json({ limit: "20kb", strict: true }));
-
-app.get("/healthz", getHealthzHandler());
-app.get("/readyz", getReadyzHandler(pool));
-
-app.get("/openapi.json", getOpenApiHandler());
-app.get("/.well-known/jwks.json", getJwksHandler());
-
 // app.use((_, res, next) =>
 //   connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
 // );
 
-app.post(
-  "/webauthn/registration/challenge",
-  getRegistrationChallengeHandler(pool),
-);
+fastify.get("/healthz", async () => ({ ok: true }));
+fastify.get("/readyz", async (_req, reply) => {
+  try {
+    await pool.query("SELECT 1");
+    return reply.code(200).send({ ok: true });
+  } catch {
+    return reply.code(503).send({ ok: false });
+  }
+});
 
-var close = graceful(
-  app.listen(PORT, () => console.log(`listening on port ${PORT}`)),
-);
+await fastify.register(jwks);
+await fastify.register(auth, { pool });
 
-var shutdownInitiated = false;
+fastify.addHook("onClose", async function onClose() {
+  // if (nc && !nc.isClosed()) {
+  //   console.log("draining NATS...");
+  //   try {
+  //     await nc.drain();
+  //   } catch {
+  //     await nc.close();
+  //   }
+  // }
 
-["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-  process.on(signal, async () => {
-    if (shutdownInitiated) return;
+  await pool.end();
+});
 
-    shutdownInitiated = true;
+await fastify.ready();
 
-    console.log("closing server connections...");
-    await close();
-
-    console.log("closing postgres pool...");
-    await pool.end();
-
-    // if (nc && !nc.isClosed()) {
-    //   console.log("draining NATS...");
-    //   try {
-    //     await nc.drain();
-    //   } catch {
-    //     await nc.close();
-    //   }
-    // }
-
-    console.log("shutdown complete");
-
-    process.exit(0);
-  }),
-);
+await fastify.listen({
+  host: "0.0.0.0",
+  port: 3000,
+});

@@ -13,23 +13,15 @@ spec:
       containers:
         - name: traefik
           args:
+            - --entrypoints.http.address=:80/tcp
+            - --entrypoints.https.address=:443/tcp
             #
             # https://doc.traefik.io/traefik/operations/dashboard/
             #
             - --api=true
             - --api.dashboard=true
             #
-            # TODO: Keep both until we figure out if we do TLS termination
-            # at the LB or at Traefik
-            - --entrypoints.http.address=:80/tcp
-            - --entrypoints.https.address=:443/tcp
-            #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
-            #
-            # Request coming from 192.168.65.3 ( local machine )
-            # That IP is in trustedIPs
-            # Therefore: trust X-Forwarded-For
-            # Therefore: replace client IP with spoofed value
             #
             # Trust X-Forwarded-* headers from any source IP.
             # curl -H "X-Forwarded-For: 1.2.3.4" https://tma.com

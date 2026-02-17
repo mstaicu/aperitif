@@ -24,16 +24,15 @@ spec:
         - name: traefik
           image: docker.io/traefik:v3.6.8
           args:
-            # TODO: Keep both until we figure out if we do TLS termination
-            # at the LB or at Traefik
-            - --entrypoints.http.address=:80/tcp
             - --entrypoints.https.address=:443/tcp
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
             #
-            # TRUST ONLY LB/WAF SOURCE RANGES
-            - --entrypoints.http.forwardedHeaders.trustedIPs=<LB_OR_WAF_SOURCE_RANGES>
             - --entrypoints.https.forwardedHeaders.trustedIPs=<LB_OR_WAF_SOURCE_RANGES>
+            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
+            - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
+            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=30s
+            - --entrypoints.https.transport.maxHeaderBytes=16384
             #
             - --providers.kubernetescrd=true
             #
@@ -49,10 +48,8 @@ spec:
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
-            - --ping.entryPoint=http
+            - --ping.entryPoint=https
             #
-            #
-            # Plugins
             #
             - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
             - --experimental.plugins.jwt.version=v0.10.0
