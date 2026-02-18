@@ -733,177 +733,204 @@ The DB never saturates.
 
 This protects infrastructure stability.
 
+# 7️⃣ Throughput (Validation, Not Enforcement)
+
+Given:
+
+safe_concurrency = 36  
+p95 = 0.07 seconds  
+
+Each concurrency slot completes:
+
+1 / 0.07 ≈ 14.28 requests per second  
+
+Total sustainable throughput:
+
+throughput ≈ safe_concurrency / p95  
+throughput ≈ 36 / 0.07 ≈ 514 RPS  
+
+## Unit Check
+
+36 requests / 0.07 seconds  
+= 514 requests / second  
+
+Units simplify to:
+
+RPS  
+
+This is theoretical sustainable throughput under current latency.
+
+Important:
+
+- This validates your concurrency model.
+- It does NOT enforce it.
+- inFlight enforces concurrency.
+- Throughput math just tells you the ceiling.
+
+If p95 changes, throughput changes.  
+inFlight still protects you.
+
 ---
 
-# 7) Measure p95 (Speed of the System)
+# 8️⃣ Designing rateLimit (Abuse Friction Layer)
 
-p95 means:
+We design rate limits not to protect the DB (inFlight does that),  
+but to increase attacker cost and reduce noise.
 
-95% of requests finish faster than this.
+Define:
+
+C = sustainable_rps      (requests / second)  
+L = per_ip_limit_rps     (requests / second / IP)  
+
+We want to know:
+
+How many IPs are required to saturate the system?
+
+Formula:
+
+N = C / L  
+
+## Dimensional Analysis
+
+N = (RPS) / (RPS / IP)  
+
+Dividing by a fraction means multiplying by its reciprocal:
+
+= RPS × (IP / RPS)  
+
+Cancel RPS:
+
+= IP  
+
+So:
+
+N = number of IPs required to saturate the system  
+
+---
+
+## Example
+
+C = 500 RPS  
+L = 0.3 RPS per IP   (≈20 per minute)  
+
+Then:
+
+N = 500 / 0.3 ≈ 1667 IPs  
+
+Meaning:
+
+An attacker needs ~1700 distinct IPs to fully saturate theoretical throughput.
+
+That is economically non-trivial.
+
+So rateLimit is chosen to:
+
+- Allow legitimate human behavior  
+- Force large botnet scale to cause trouble  
+- Reduce edge waste and noise  
+
+It is an economic lever, not a capacity lever.
+
+---
+
+# 9️⃣ Burst Logic (Token Bucket Model)
+
+average = sustained refill rate  
+burst   = bucket capacity  
 
 Example:
 
-p95 = 70ms = 0.07 seconds
+average: 20/min  
+burst: 40  
 
-This is how long one request occupies a concurrency slot.
+Interpretation:
 
----
+- Client may send 40 requests immediately.  
+- Bucket refills at 20 per minute.  
+- Sustained rate becomes:
 
-# 8) Throughput = Concurrency / p95
+20 / 60 = 0.33 RPS  
 
-If:
+Units:
 
-- 36 requests can run simultaneously
-- Each takes 0.07 seconds
+20 requests / 60 seconds  
+= 0.33 requests / second  
 
-Then each slot completes:
+Burst:
 
-1 / 0.07 ≈ 14 requests per second
-
-So total system throughput:
-
-36 × 14 ≈ 504 rps
-
-Which is the same as:
-
-36 / 0.07 ≈ 514 rps
-
-This is theoretical sustainable throughput.
-
-Important:
-Throughput does NOT set limits.
-It validates them.
-
-It tells you:
-
-“With this concurrency and latency, this is the ceiling.”
+- Improves UX for short spikes.  
+- Does not increase sustained throughput.  
+- Does not override inFlight.  
 
 ---
 
-# 9) Deriving Rate Limits From Capacity
+# 🔟 Do You Technically Need rateLimit?
 
-Now we anchor rate limits.
+## Question 1
 
-We know:
+Will my DB die without rateLimit if inFlight exists?
 
-sustainable_rps ≈ 500
+Answer:
 
-Now assume worst case:
+No.
 
-1000 simultaneous attacking IPs
-
-Each IP share:
-
-500 / 1000 = 0.5 rps
-
-Convert to per minute:
-
-0.5 × 60 = 30 per minute
-
-So a safe rate limit:
-
-average = 20 per minute
-period = 1 minute
-
-20 / 60 = 0.33 rps per IP
-
-If 1000 IPs attack:
-
-1000 × 0.33 ≈ 333 rps
-
-That is below 500 rps system capacity.
-
-Now rate limits are mathematically anchored.
+If inFlight is correct, the DB remains safe.  
+inFlight caps concurrency.  
+Pool caps connections.  
+The system survives.
 
 ---
 
-# 10) What Is burst?
+## Question 2
 
-Think bucket.
+Should I remove rateLimit entirely?
 
-average = refill speed  
-burst = bucket size
+Answer:
 
-If:
+No.
 
-average = 20/min  
-burst = 40
+Because without rateLimit:
 
-That means:
+- TLS termination cost increases  
+- Traefik CPU increases  
+- Log volume explodes  
+- Bandwidth waste increases  
+- Error rate becomes noisy  
+- Observability degrades  
 
-- Client can send 40 immediately.
-- Then refills at 20 per minute.
-- After burst is used, sustained rate applies.
+rateLimit reduces attack surface cost.  
+inFlight guarantees survival.  
 
-Burst allows short spikes.
-It does not increase sustained load.
-
----
-
-# 11) Why inFlight Still Matters
-
-Rate limits can be bypassed by:
-
-- Many IPs
-- Botnets
-
-inFlight is the final protection.
-
-It caps:
-
-Total concurrent work across everyone.
-
-Regardless of IP count.
+They solve different problems.
 
 ---
 
-# 12) When Do You Add Read Replicas?
+# 1️⃣1️⃣ Clean Final Mental Model
 
-If Postgres is the bottleneck:
+## Hard Physics (Cannot Be Violated)
 
-You can:
+DB connections  
+→ pool caps  
+→ safe_concurrency  
+→ inFlight  
 
-1. Increase max_connections
-2. Add read replicas
-
-Read replicas add more lanes for read traffic.
-
-More lanes → higher safe_concurrency → higher inFlight → higher throughput.
-
-Writes still go to primary.
+This guarantees survival.
 
 ---
 
-# Final Simple Flow
+## Economic Friction (Can Be Tuned)
 
-Postgres max_connections
-↓
-Reserve buffer
-↓
-Service DB budget
-↓
-pg.Pool.max per pod
-↓
-Total DB pool across replicas
-↓
-Safe concurrency (~60%)
-↓
-inFlight (enforced concurrency)
-↓
-p95 (measured latency)
-↓
-Throughput = concurrency / p95
-↓
-rateLimit derived from sustainable_rps / assumed_attack_ips
+rateLimit per IP  
+→ increase attacker cost  
+→ reduce noise  
+→ improve fairness  
+
+This guarantees sanity.
 
 ---
 
-# One Sentence Summary
+# Final One-Line Summary
 
-Database capacity defines pool size.
-Pool size defines safe concurrency.
-Safe concurrency defines inFlight.
-p95 converts concurrency into throughput.
-Throughput divided by expected attackers defines rate limits.
-inFlight protects the system.
-rateLimit protects fairness.
+Throughput math validates concurrency.  
+inFlight enforces capacity.  
+Rate limits price the cost of abuse.

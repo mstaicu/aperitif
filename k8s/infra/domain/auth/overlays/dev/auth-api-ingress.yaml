@@ -11,9 +11,16 @@ spec:
         Path(`/auth/webauthn/registration/challenge`) &&
         Method(`POST`)
       kind: Rule
+      #
+      # middlewares execute in the order you attach them to the route
+      # rateLimit runs first
+      # If allowed → request proceeds
+      # Then inFlight checks concurrency
+      # If concurrency slot available → request forwarded to service
+      #
       middlewares:
-        - name: auth-inflight
         - name: auth-ratelimit
+        - name: auth-inflight
       services:
         - name: auth-api-srv
           port: 3000
@@ -23,8 +30,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-inflight
         - name: auth-ratelimit
+        - name: auth-inflight
       services:
         - name: auth-api-srv
           port: 3000
@@ -34,8 +41,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-inflight
         - name: auth-ratelimit
+        - name: auth-inflight
       services:
         - name: auth-api-srv
           port: 3000
@@ -45,8 +52,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-inflight
         - name: auth-ratelimit
+        - name: auth-inflight
       services:
         - name: auth-api-srv
           port: 3000
