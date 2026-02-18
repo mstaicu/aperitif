@@ -256,6 +256,9 @@ export var routes = async (fastify, opts) => {
       try {
         await client.query("BEGIN");
 
+        await client.query("SET LOCAL lock_timeout = '75ms'");
+        await client.query("SET LOCAL statement_timeout = '1s'");
+
         // Ensure user exists
         await client.query(
           `INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`,
@@ -390,6 +393,9 @@ export var routes = async (fastify, opts) => {
 
       try {
         await client.query("BEGIN");
+
+        await client.query("SET LOCAL lock_timeout = '75ms'");
+        await client.query("SET LOCAL statement_timeout = '1s'");
 
         var challengeBytes = Buffer.from(clientData.challenge, "base64url");
 

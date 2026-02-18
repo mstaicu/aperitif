@@ -10,16 +10,15 @@ import { routes as auth } from "./routes/auth.mjs";
 import { routes as jwks } from "./routes/jwks.mjs";
 
 var fastify = Fastify({
-  bodyLimit: 20 * 1024, // 20kb
-  logger: true,
-  trustProxy: true,
+  bodyLimit: 64 * 1024,
+  requestTimeout: 10_000,
 });
 
 await fastify.register(swagger, {
   openapi: {
     info: {
       description: "Passkey-only authentication service",
-      title: "TODO",
+      title: "auth-api",
       version: "1.0.0",
     },
     openapi: "3.1.0",
@@ -32,8 +31,11 @@ await fastify.register(swaggerUI, {
 
 var pool = new Pool({
   connectionString: nconf.get("DATABASE_URL"),
+  connectionTimeoutMillis: 250,
+  idleTimeoutMillis: 30000,
   // https://node-postgres.com/apis/pool
-  max: 10,
+  // max_connections on postgres = 100, minus 20 for other services = 80 * 75% budget for auth-api = 60 / 3 = 20
+  max: 20,
 });
 
 // var servers = Array.from(Array(3)).map(

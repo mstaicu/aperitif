@@ -13,33 +13,39 @@ spec:
       containers:
         - name: traefik
           args:
-            - --entrypoints.http.address=:80/tcp
-            - --entrypoints.https.address=:443/tcp
+            - --entrypoints.http.address=:80
+            - --entrypoints.https.address=:443
             #
-            # https://doc.traefik.io/traefik/operations/dashboard/
-            - --api=true
-            - --api.dashboard=true
+            # SCS
+            - --entrypoints.http-auth.address=:8081
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
-            - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.https.forwardedHeaders.insecure=true
             #
-            - --providers.kubernetescrd=true
+            - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s
+            - --entrypoints.http.transport.respondingTimeouts.writeTimeout=10s
+            - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s
+            - --entrypoints.http.transport.maxHeaderBytes=16384
+            #
+            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
+            - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
+            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
+            - --entrypoints.https.transport.maxHeaderBytes=16384
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
-            - --providers.kubernetescrd.allowEmptyServices=true
+            - --providers.kubernetescrd=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
             - --log.level=DEBUG
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#accesslogs
             - --accesslog=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
             #
-            # Plugins
-            #
             - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
             - --experimental.plugins.jwt.version=v0.10.0
+            #
+            # https://doc.traefik.io/traefik/operations/dashboard/
+            - --api=true
+            - --api.dashboard=true

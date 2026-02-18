@@ -127,34 +127,13 @@ Run it
 kustomize build --enable-alpha-plugins --enable-exec infra/platform/traefik/overlays/dev | kubectl apply -f -
 ```
 
-
 ### Workflow
 
-- **Start Dev Cluster:**  
+- **Start Dev Cluster:**
+
 ```sh
   skaffold dev
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Old
 
@@ -625,189 +604,306 @@ sops --encrypt --in-place traefik-tls.yaml
 flux install --namespace=flux-system
 
 flux install \
-  --components=source-controller,kustomize-controller,image-reflector-controller,image-automation-controller \
-  --export > gotk-components.yaml
+ --components=source-controller,kustomize-controller,image-reflector-controller,image-automation-controller \
+ --export > gotk-components.yaml
 
-# 
+#
 
 kubectl get ns signoz -o json | jq
 kubectl get clickhouseinstallations.clickhouse.altinity.com -n signoz
 kubectl patch clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse \
-    -n signoz \
-    --type merge \
-    -p '{"metadata":{"finalizers":null}}'
+ -n signoz \
+ --type merge \
+ -p '{"metadata":{"finalizers":null}}'
 kubectl delete clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse -n signoz
 
-# ============================================================
-# FROM POSTGRES TO TRAEFIK — SIMPLE CAPACITY CHAIN
-# ============================================================
+# From Postgres to Rate Limits — Clean, Cohesive, Easy Math
 
+Think of the system like this:
 
-# ------------------------------------------------------------
-# 1) POSTGRES IS THE HARD LIMIT
-# ------------------------------------------------------------
+- Postgres = total lanes
+- pg.Pool.max = lanes per pod
+- inFlight = cars allowed on the road
+- p95 = travel time
+- throughput = cars finishing per second
+- rateLimit = how aggressive one driver can be
 
-Postgres max_connections = 100
+We calculate from the database upward.
 
-This means:
-→ The database can only handle 100 simultaneous connections.
-→ If you exceed this, everything blocks or fails.
+---
 
-So everything must fit under this number.
+# 1) Start With Postgres (Hard Limit)
 
+Default:
 
-# ------------------------------------------------------------
-# 2) RESERVE SOME CONNECTIONS
-# ------------------------------------------------------------
+max_connections = 100
 
-We never give all 100 to the app.
+You cannot exceed this. Ever.
 
-Reserve 20 for:
-- migrations
-- psql sessions
-- monitoring
-- unexpected spikes
+If you do:
 
-usable = 100 - 20 = 80
+- Connections block
+- Latency spikes
+- Things break
 
-Now 80 is the maximum all applications combined should use.
+So everything must fit under 100.
 
+---
 
-# ------------------------------------------------------------
-# 3) SERVICE SHARE (auth)
-# ------------------------------------------------------------
+# 2) Reserve Some Safety Buffer
 
-We decide auth gets 75% of usable:
+Never give all 100 to the app.
+
+Reserve 20:
+
+usable = 100 − 20 = 80
+
+Now the entire system must stay under 80.
+
+---
+
+# 3) Allocate Budget to Auth
+
+Let’s give auth 75%:
 
 auth_budget = 80 × 0.75 = 60
 
 This means:
-→ Across ALL auth-api replicas combined,
-  they are allowed to open 60 DB connections.
 
+All auth pods combined may open at most 60 DB connections.
 
-# ------------------------------------------------------------
-# 4) DIVIDE BY REPLICAS
-# ------------------------------------------------------------
+---
 
-If auth-api replicas = 3:
+# 4) Divide by Replicas → pg.Pool.max
+
+If you run 3 pods:
 
 pg.Pool.max = 60 / 3 = 20
 
-Each pod can open at most 20 DB connections.
+Each pod can open 20 connections.
 
-Total possible auth DB usage:
+Across all pods:
+
 3 × 20 = 60
 
-We are still within the 60 budget.
+Still within safe DB budget.
 
+Why this matters:
+Without pg.Pool.max, one pod could consume all 100 connections and kill the database.
 
-# ------------------------------------------------------------
-# 5) SAFE CONCURRENCY
-# ------------------------------------------------------------
+---
 
-Even though we have 60 DB connections,
-we never want to run at 100%.
+# 5) Choose Safe Concurrency (Don’t Use 100%)
 
-Use ~60% to avoid saturation.
+Even though 60 connections exist,
+don’t run at 100%.
+
+Use ~60% to avoid saturation:
 
 safe_concurrency = 60 × 0.6 = 36
 
 This means:
-→ At most 36 requests should hit the DB concurrently.
 
+At most 36 DB operations should run simultaneously.
 
-# ------------------------------------------------------------
-# 6) inFlight (CONCURRENCY CAP)
-# ------------------------------------------------------------
+This prevents:
 
-inFlightReq limits how many HTTP requests
-are allowed to execute at the same time.
+- Lock storms
+- Queue buildup
+- Latency explosions
 
-So:
+---
+
+# 6) inFlight = Enforce That Concurrency
+
+inFlight limits how many HTTP requests execute at once.
+
+Set:
 
 inFlight_cluster = safe_concurrency = 36
 
-If we have 2 Traefik replicas:
+If 2 Traefik pods:
 
-inFlight_per_traefik = 36 / 2 = 18
+per_instance = 36 / 2 = 18
 
 Now:
-→ No more than 36 concurrent DB-hitting requests exist.
-→ DB never saturates.
 
+No more than 36 DB-heavy requests run at once.
+The DB never saturates.
 
-# ------------------------------------------------------------
-# 7) p95 (LATENCY ANCHOR)
-# ------------------------------------------------------------
+This protects infrastructure stability.
 
-p95 = time where 95% of requests complete faster.
+---
+
+# 7) Measure p95 (Speed of the System)
+
+p95 means:
+
+95% of requests finish faster than this.
 
 Example:
+
 p95 = 70ms = 0.07 seconds
 
-Throughput ≈ concurrency / p95
+This is how long one request occupies a concurrency slot.
 
-36 / 0.07 ≈ 514 requests per second theoretical
+---
 
-This validates:
-→ Our concurrency cap is reasonable.
-→ DB is not overloaded.
-→ Latency remains stable.
+# 8) Throughput = Concurrency / p95
 
+If:
 
-# ------------------------------------------------------------
-# 8) rateLimit (ABUSE CONTROL)
-# ------------------------------------------------------------
+- 36 requests can run simultaneously
+- Each takes 0.07 seconds
 
-rateLimit is NOT about capacity.
-It controls how fast a single client can try.
+Then each slot completes:
 
-average = sustained rate per period
-burst   = spike tolerance
-period  = time window (usually 1 minute)
+1 / 0.07 ≈ 14 requests per second
 
-Example:
-average = 20
-period  = 60 seconds
+So total system throughput:
 
-20 / 60 = 0.33 requests per second sustained.
+36 × 14 ≈ 504 rps
 
+Which is the same as:
+
+36 / 0.07 ≈ 514 rps
+
+This is theoretical sustainable throughput.
+
+Important:
+Throughput does NOT set limits.
+It validates them.
+
+It tells you:
+
+“With this concurrency and latency, this is the ceiling.”
+
+---
+
+# 9) Deriving Rate Limits From Capacity
+
+Now we anchor rate limits.
+
+We know:
+
+sustainable_rps ≈ 500
+
+Now assume worst case:
+
+1000 simultaneous attacking IPs
+
+Each IP share:
+
+500 / 1000 = 0.5 rps
+
+Convert to per minute:
+
+0.5 × 60 = 30 per minute
+
+So a safe rate limit:
+
+average = 20 per minute
+period = 1 minute
+
+20 / 60 = 0.33 rps per IP
+
+If 1000 IPs attack:
+
+1000 × 0.33 ≈ 333 rps
+
+That is below 500 rps system capacity.
+
+Now rate limits are mathematically anchored.
+
+---
+
+# 10) What Is burst?
+
+Think bucket.
+
+average = refill speed  
+burst = bucket size
+
+If:
+
+average = 20/min  
 burst = 40
 
-This means:
-→ A client can send up to 40 quickly.
-→ Then it refills at 1 token every 3 seconds.
+That means:
 
+- Client can send 40 immediately.
+- Then refills at 20 per minute.
+- After burst is used, sustained rate applies.
 
-# ------------------------------------------------------------
-# HOW EVERYTHING INFLUENCES EVERYTHING
-# ------------------------------------------------------------
+Burst allows short spikes.
+It does not increase sustained load.
+
+---
+
+# 11) Why inFlight Still Matters
+
+Rate limits can be bypassed by:
+
+- Many IPs
+- Botnets
+
+inFlight is the final protection.
+
+It caps:
+
+Total concurrent work across everyone.
+
+Regardless of IP count.
+
+---
+
+# 12) When Do You Add Read Replicas?
+
+If Postgres is the bottleneck:
+
+You can:
+
+1. Increase max_connections
+2. Add read replicas
+
+Read replicas add more lanes for read traffic.
+
+More lanes → higher safe_concurrency → higher inFlight → higher throughput.
+
+Writes still go to primary.
+
+---
+
+# Final Simple Flow
 
 Postgres max_connections
-    ↓
+↓
+Reserve buffer
+↓
 Service DB budget
-    ↓
+↓
 pg.Pool.max per pod
-    ↓
+↓
 Total DB pool across replicas
-    ↓
-Safe concurrency (60%)
-    ↓
-inFlightReq (concurrency cap)
-    ↓
-p95 validates throughput
-    ↓
-rateLimit protects against abuse
+↓
+Safe concurrency (~60%)
+↓
+inFlight (enforced concurrency)
+↓
+p95 (measured latency)
+↓
+Throughput = concurrency / p95
+↓
+rateLimit derived from sustainable_rps / assumed_attack_ips
 
+---
 
-# ------------------------------------------------------------
-# SUMMARY IN ONE SENTENCE
-# ------------------------------------------------------------
+# One Sentence Summary
 
-Database capacity determines pool size.
-Pool size determines safe concurrency.
-Safe concurrency determines inFlight.
-p95 validates throughput.
-rateLimit protects clients from abusing it.
-# ============================================================
+Database capacity defines pool size.
+Pool size defines safe concurrency.
+Safe concurrency defines inFlight.
+p95 converts concurrency into throughput.
+Throughput divided by expected attackers defines rate limits.
+inFlight protects the system.
+rateLimit protects fairness.

@@ -8,6 +8,7 @@ resources:
   - traefik-ingress.yaml
   - traefik-ns.yaml
   - traefik-svc.yaml
+  - traefik-lb.yaml
   - traefik-tlsstore.yaml
 
 patches:
