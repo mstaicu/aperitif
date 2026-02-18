@@ -637,3 +637,177 @@ kubectl patch clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse 
     --type merge \
     -p '{"metadata":{"finalizers":null}}'
 kubectl delete clickhouseinstallations.clickhouse.altinity.com signoz-clickhouse -n signoz
+
+# ============================================================
+# FROM POSTGRES TO TRAEFIK — SIMPLE CAPACITY CHAIN
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1) POSTGRES IS THE HARD LIMIT
+# ------------------------------------------------------------
+
+Postgres max_connections = 100
+
+This means:
+→ The database can only handle 100 simultaneous connections.
+→ If you exceed this, everything blocks or fails.
+
+So everything must fit under this number.
+
+
+# ------------------------------------------------------------
+# 2) RESERVE SOME CONNECTIONS
+# ------------------------------------------------------------
+
+We never give all 100 to the app.
+
+Reserve 20 for:
+- migrations
+- psql sessions
+- monitoring
+- unexpected spikes
+
+usable = 100 - 20 = 80
+
+Now 80 is the maximum all applications combined should use.
+
+
+# ------------------------------------------------------------
+# 3) SERVICE SHARE (auth)
+# ------------------------------------------------------------
+
+We decide auth gets 75% of usable:
+
+auth_budget = 80 × 0.75 = 60
+
+This means:
+→ Across ALL auth-api replicas combined,
+  they are allowed to open 60 DB connections.
+
+
+# ------------------------------------------------------------
+# 4) DIVIDE BY REPLICAS
+# ------------------------------------------------------------
+
+If auth-api replicas = 3:
+
+pg.Pool.max = 60 / 3 = 20
+
+Each pod can open at most 20 DB connections.
+
+Total possible auth DB usage:
+3 × 20 = 60
+
+We are still within the 60 budget.
+
+
+# ------------------------------------------------------------
+# 5) SAFE CONCURRENCY
+# ------------------------------------------------------------
+
+Even though we have 60 DB connections,
+we never want to run at 100%.
+
+Use ~60% to avoid saturation.
+
+safe_concurrency = 60 × 0.6 = 36
+
+This means:
+→ At most 36 requests should hit the DB concurrently.
+
+
+# ------------------------------------------------------------
+# 6) inFlight (CONCURRENCY CAP)
+# ------------------------------------------------------------
+
+inFlightReq limits how many HTTP requests
+are allowed to execute at the same time.
+
+So:
+
+inFlight_cluster = safe_concurrency = 36
+
+If we have 2 Traefik replicas:
+
+inFlight_per_traefik = 36 / 2 = 18
+
+Now:
+→ No more than 36 concurrent DB-hitting requests exist.
+→ DB never saturates.
+
+
+# ------------------------------------------------------------
+# 7) p95 (LATENCY ANCHOR)
+# ------------------------------------------------------------
+
+p95 = time where 95% of requests complete faster.
+
+Example:
+p95 = 70ms = 0.07 seconds
+
+Throughput ≈ concurrency / p95
+
+36 / 0.07 ≈ 514 requests per second theoretical
+
+This validates:
+→ Our concurrency cap is reasonable.
+→ DB is not overloaded.
+→ Latency remains stable.
+
+
+# ------------------------------------------------------------
+# 8) rateLimit (ABUSE CONTROL)
+# ------------------------------------------------------------
+
+rateLimit is NOT about capacity.
+It controls how fast a single client can try.
+
+average = sustained rate per period
+burst   = spike tolerance
+period  = time window (usually 1 minute)
+
+Example:
+average = 20
+period  = 60 seconds
+
+20 / 60 = 0.33 requests per second sustained.
+
+burst = 40
+
+This means:
+→ A client can send up to 40 quickly.
+→ Then it refills at 1 token every 3 seconds.
+
+
+# ------------------------------------------------------------
+# HOW EVERYTHING INFLUENCES EVERYTHING
+# ------------------------------------------------------------
+
+Postgres max_connections
+    ↓
+Service DB budget
+    ↓
+pg.Pool.max per pod
+    ↓
+Total DB pool across replicas
+    ↓
+Safe concurrency (60%)
+    ↓
+inFlightReq (concurrency cap)
+    ↓
+p95 validates throughput
+    ↓
+rateLimit protects against abuse
+
+
+# ------------------------------------------------------------
+# SUMMARY IN ONE SENTENCE
+# ------------------------------------------------------------
+
+Database capacity determines pool size.
+Pool size determines safe concurrency.
+Safe concurrency determines inFlight.
+p95 validates throughput.
+rateLimit protects clients from abusing it.
+# ============================================================

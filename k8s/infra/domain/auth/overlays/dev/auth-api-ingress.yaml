@@ -13,8 +13,9 @@ spec:
       kind: Rule
       middlewares:
         - name: auth-api-strip-headers
-        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
+        - name: auth-inflight
+        - name: auth-ratelimit
       services:
         - name: auth-api-srv
           port: 3000
@@ -25,8 +26,9 @@ spec:
       kind: Rule
       middlewares:
         - name: auth-api-strip-headers
-        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
+        - name: auth-inflight
+        - name: auth-ratelimit
       services:
         - name: auth-api-srv
           port: 3000
@@ -37,8 +39,9 @@ spec:
       kind: Rule
       middlewares:
         - name: auth-api-strip-headers
-        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
+        - name: auth-inflight
+        - name: auth-ratelimit
       services:
         - name: auth-api-srv
           port: 3000
@@ -49,8 +52,9 @@ spec:
       kind: Rule
       middlewares:
         - name: auth-api-strip-headers
-        - name: auth-api-bodylimit
         - name: auth-api-strip-prefix
+        - name: auth-inflight
+        - name: auth-ratelimit
       services:
         - name: auth-api-srv
           port: 3000

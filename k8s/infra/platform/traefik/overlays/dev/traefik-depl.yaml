@@ -17,22 +17,16 @@ spec:
             - --entrypoints.https.address=:443/tcp
             #
             # https://doc.traefik.io/traefik/operations/dashboard/
-            #
             - --api=true
             - --api.dashboard=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
-            #
-            # Trust X-Forwarded-* headers from any source IP.
-            # curl -H "X-Forwarded-For: 1.2.3.4" https://tma.com
-            #
             - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.https.forwardedHeaders.insecure=true
             #
             - --providers.kubernetescrd=true
             #
-            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
-            #
+            # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
             - --providers.kubernetescrd.allowEmptyServices=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs

@@ -25,12 +25,15 @@ await fastify.register(swagger, {
     openapi: "3.1.0",
   },
 });
+
 await fastify.register(swaggerUI, {
   routePrefix: "/docs",
 });
 
 var pool = new Pool({
   connectionString: nconf.get("DATABASE_URL"),
+  // https://node-postgres.com/apis/pool
+  max: 10,
 });
 
 // var servers = Array.from(Array(3)).map(

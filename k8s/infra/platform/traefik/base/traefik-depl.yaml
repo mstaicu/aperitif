@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: traefik
-  replicas: 3
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -24,6 +24,7 @@ spec:
         - name: traefik
           image: docker.io/traefik:v3.6.8
           args:
+            - --entrypoints.http.address=:80/tcp
             - --entrypoints.https.address=:443/tcp
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
@@ -32,12 +33,10 @@ spec:
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=30s
-            - --entrypoints.https.transport.maxHeaderBytes=16384
+            - --entrypoints.https.transport.maxHeaderBytes=16384 # 16 KiB
             #
+            # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
             - --providers.kubernetescrd=true
-            #
-            # accept IngressRoutes that reference a Service that might not exist at deployment time (useful for zero-downtime deployments)
-            #
             - --providers.kubernetescrd.allowEmptyServices=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
@@ -53,7 +52,6 @@ spec:
             #
             - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
             - --experimental.plugins.jwt.version=v0.10.0
-            #
           ports:
             - containerPort: 80
               name: http
