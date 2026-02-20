@@ -19,6 +19,7 @@ spec:
       # If concurrency slot available → request forwarded to service
       #
       middlewares:
+        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
       services:
@@ -30,6 +31,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
       services:
@@ -41,6 +43,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
       services:
@@ -52,6 +55,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
       services:
@@ -67,12 +71,13 @@ metadata:
   name: auth-api-internal
 spec:
   entryPoints:
-    - http-auth
+    - http
   routes:
     - match: Path(`/auth/webauthn/registration/challenge`) &&
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-inflight
       services:
         - name: auth-api-srv
@@ -82,6 +87,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-inflight
       services:
         - name: auth-api-srv
@@ -91,6 +97,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-inflight
       services:
         - name: auth-api-srv
@@ -100,6 +107,7 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
+        - name: auth-body-limit
         - name: auth-inflight
       services:
         - name: auth-api-srv

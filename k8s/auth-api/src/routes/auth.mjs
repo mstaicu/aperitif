@@ -193,13 +193,6 @@ export var routes = async (fastify, opts) => {
         return reply.code(400).send();
       }
 
-      if (
-        clientData.type !== "webauthn.create" ||
-        clientData.origin !== origin
-      ) {
-        return reply.code(400).send();
-      }
-
       var challengeBytes = Buffer.from(clientData.challenge, "base64url");
 
       var {
@@ -209,7 +202,7 @@ export var routes = async (fastify, opts) => {
         DELETE FROM webauthn_challenges
         WHERE value = $1
           AND expires_at > NOW()
-        RETURNING user_id
+        RETURNING user_id, value
       `,
         [challengeBytes],
       );
@@ -219,27 +212,15 @@ export var routes = async (fastify, opts) => {
       }
 
       var userId = challengeRow.user_id;
-
-      var {
-        rows: [{ count: earlyCount }],
-      } = await pool.query(
-        `
-        SELECT COUNT(*)::int AS count
-        FROM webauthn_credentials
-        WHERE user_id = $1
-      `,
-        [userId],
+      var expectedChallenge = Buffer.from(challengeRow.value).toString(
+        "base64url",
       );
 
-      if (earlyCount >= 5) {
-        return reply.code(409).send();
-      }
-
-      let result;
+      var result;
 
       try {
         result = await server.verifyRegistration(credential, {
-          challenge: clientData.challenge,
+          challenge: expectedChallenge,
           origin,
           // rpId: hostname,
         });
@@ -259,45 +240,51 @@ export var routes = async (fastify, opts) => {
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        // Ensure user exists
         await client.query(
           `INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`,
           [userId],
         );
 
+        // Lock user row to serialize credential inserts
         await client.query(`SELECT id FROM users WHERE id = $1 FOR UPDATE`, [
           userId,
         ]);
 
-        var {
-          rows: [{ count }],
-        } = await client.query(
+        var insertResult = await client.query(
           `
-          SELECT COUNT(*)::int AS count
-          FROM webauthn_credentials
-          WHERE user_id = $1
-        `,
-          [userId],
-        );
-
-        if (count >= 5) {
-          await client.query("ROLLBACK");
-          return reply.code(409).send();
-        }
-
-        await client.query(
-          `
-          INSERT INTO webauthn_credentials
-          (
-            user_id,
-            credential_id,
-            public_key,
-            algorithm,
-            transports,
-            sign_count
-          )
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `,
+            WITH next_index AS (
+              SELECT s
+              FROM generate_series(1, 5) AS s
+              WHERE NOT EXISTS (
+                SELECT 1
+                FROM webauthn_credentials
+                WHERE user_id = $1
+                  AND credential_index = s
+              )
+              ORDER BY s
+              LIMIT 1
+            )
+            INSERT INTO webauthn_credentials
+            (
+              user_id,
+              credential_index,
+              credential_id,
+              public_key,
+              algorithm,
+              transports,
+              sign_count
+            )
+            SELECT
+              $1,
+              s,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6
+            FROM next_index
+            RETURNING id
+          `,
           [
             userId,
             Buffer.from(result.credential.id, "base64url"),
@@ -307,6 +294,12 @@ export var routes = async (fastify, opts) => {
             result.authenticator.counter,
           ],
         );
+
+        // If no slot available → user already has 5
+        if (insertResult.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return reply.code(409).send();
+        }
 
         await client.query("COMMIT");
         return reply.code(201).send();
@@ -385,10 +378,6 @@ export var routes = async (fastify, opts) => {
         return reply.code(401).send();
       }
 
-      if (clientData.type !== "webauthn.get" || clientData.origin !== origin) {
-        return reply.code(401).send();
-      }
-
       var client = await pool.connect();
 
       try {
@@ -406,7 +395,7 @@ export var routes = async (fastify, opts) => {
             DELETE FROM webauthn_challenges
             WHERE value = $1
               AND expires_at > NOW()
-            RETURNING 1
+            RETURNING value
           `,
           [challengeBytes],
         );
@@ -437,7 +426,7 @@ export var routes = async (fastify, opts) => {
         }
 
         var expected = {
-          challenge: clientData.challenge,
+          challenge: challengeRow.value,
           counter: Number(credential.sign_count),
           origin,
           rpId: hostname,

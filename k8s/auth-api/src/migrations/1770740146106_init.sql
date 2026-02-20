@@ -14,6 +14,9 @@ CREATE TABLE webauthn_credentials (
         REFERENCES users(id) ON DELETE CASCADE,
 
     credential_id BYTEA NOT NULL UNIQUE,
+    credential_index SMALLINT NOT NULL
+        CHECK (credential_index BETWEEN 1 AND 5),
+
     public_key BYTEA NOT NULL,
 
     algorithm TEXT NOT NULL
@@ -25,6 +28,9 @@ CREATE TABLE webauthn_credentials (
 
 CREATE INDEX idx_webauthn_credentials_user_id
     ON webauthn_credentials(user_id);
+
+CREATE UNIQUE INDEX unique_user_credential_index
+    ON webauthn_credentials(user_id, credential_index);
 
 CREATE TABLE webauthn_challenges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

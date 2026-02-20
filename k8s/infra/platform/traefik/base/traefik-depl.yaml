@@ -27,10 +27,6 @@ spec:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
             #
-            # SCS
-            - --entrypoints.http-auth.address=:8081
-            # SCS
-            #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
             #
             - --entrypoints.https.forwardedHeaders.trustedIPs=<LB_OR_WAF_SOURCE_RANGES>
@@ -63,8 +59,6 @@ spec:
               name: http
             - containerPort: 443
               name: https
-            - containerPort: 8081
-              name: http-auth
 
           readinessProbe:
             httpGet:

@@ -16,9 +16,6 @@ spec:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
             #
-            # SCS
-            - --entrypoints.http-auth.address=:8081
-            #
             # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
             - --entrypoints.https.forwardedHeaders.insecure=true
             #
