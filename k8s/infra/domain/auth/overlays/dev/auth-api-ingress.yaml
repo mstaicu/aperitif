@@ -19,9 +19,9 @@ spec:
       # If concurrency slot available → request forwarded to service
       #
       middlewares:
-        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -31,9 +31,9 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -43,9 +43,9 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -55,9 +55,9 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-ratelimit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -77,8 +77,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -87,8 +87,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -97,8 +97,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000
@@ -107,8 +107,8 @@ spec:
         Method(`POST`)
       kind: Rule
       middlewares:
-        - name: auth-body-limit
         - name: auth-inflight
+        - name: auth-body-limit
       services:
         - name: auth-api-srv
           port: 3000

@@ -26,8 +26,8 @@ CREATE TABLE webauthn_credentials (
     sign_count BIGINT NOT NULL DEFAULT 0
 );
 
-CREATE INDEX idx_webauthn_credentials_user_id
-    ON webauthn_credentials(user_id);
+-- CREATE INDEX idx_webauthn_credentials_user_id
+--     ON webauthn_credentials(user_id);
 
 CREATE UNIQUE INDEX unique_user_credential_index
     ON webauthn_credentials(user_id, credential_index);

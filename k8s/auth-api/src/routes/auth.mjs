@@ -128,10 +128,10 @@ export var routes = async (fastify, opts) => {
         rows: [row],
       } = await pool.query(
         `
-        INSERT INTO webauthn_challenges (user_id)
-        VALUES ($1)
-        RETURNING value
-      `,
+          INSERT INTO webauthn_challenges (user_id)
+          VALUES ($1)
+          RETURNING value
+        `,
         [userId],
       );
 
@@ -199,11 +199,11 @@ export var routes = async (fastify, opts) => {
         rows: [challengeRow],
       } = await pool.query(
         `
-        DELETE FROM webauthn_challenges
-        WHERE value = $1
-          AND expires_at > NOW()
-        RETURNING user_id, value
-      `,
+          DELETE FROM webauthn_challenges
+          WHERE value = $1
+            AND expires_at > NOW()
+          RETURNING user_id, value
+        `,
         [challengeBytes],
       );
 
@@ -222,7 +222,8 @@ export var routes = async (fastify, opts) => {
         result = await server.verifyRegistration(credential, {
           challenge: expectedChallenge,
           origin,
-          // rpId: hostname,
+          // @ts-ignore
+          rpId: hostname,
         });
       } catch {
         return reply.code(400).send();
@@ -236,19 +237,22 @@ export var routes = async (fastify, opts) => {
 
       try {
         await client.query("BEGIN");
-
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
         await client.query(
-          `INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`,
+          `
+            INSERT INTO users (id)
+            VALUES ($1)
+            ON CONFLICT DO NOTHING
+          `,
           [userId],
         );
 
-        // Lock user row to serialize credential inserts
-        await client.query(`SELECT id FROM users WHERE id = $1 FOR UPDATE`, [
-          userId,
-        ]);
+        await client.query(
+          `SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`,
+          [userId],
+        );
 
         var insertResult = await client.query(
           `
@@ -358,6 +362,7 @@ export var routes = async (fastify, opts) => {
           200: EmptyResponse,
           401: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
       },
     },
@@ -378,32 +383,28 @@ export var routes = async (fastify, opts) => {
         return reply.code(401).send();
       }
 
-      var client = await pool.connect();
+      var challengeBytes = Buffer.from(clientData.challenge, "base64url");
 
-      try {
-        await client.query("BEGIN");
-
-        await client.query("SET LOCAL lock_timeout = '75ms'");
-        await client.query("SET LOCAL statement_timeout = '1s'");
-
-        var challengeBytes = Buffer.from(clientData.challenge, "base64url");
-
-        var {
-          rows: [challengeRow],
-        } = await client.query(
-          `
+      var {
+        rows: [challengeRow],
+      } = await pool.query(
+        `
             DELETE FROM webauthn_challenges
             WHERE value = $1
               AND expires_at > NOW()
             RETURNING value
           `,
-          [challengeBytes],
-        );
+        [challengeBytes],
+      );
 
-        if (!challengeRow) {
-          await client.query("ROLLBACK");
-          return reply.code(401).send();
-        }
+      if (!challengeRow) return reply.code(401).send();
+
+      var client = await pool.connect();
+
+      try {
+        await client.query("BEGIN");
+        await client.query("SET LOCAL lock_timeout = '75ms'");
+        await client.query("SET LOCAL statement_timeout = '1s'");
 
         var credentialId = Buffer.from(authentication.id, "base64url");
 
@@ -415,7 +416,6 @@ export var routes = async (fastify, opts) => {
                   transports, sign_count
             FROM webauthn_credentials
             WHERE credential_id = $1
-            FOR UPDATE
           `,
           [credentialId],
         );
@@ -425,8 +425,12 @@ export var routes = async (fastify, opts) => {
           return reply.code(401).send();
         }
 
+        var expectedChallenge = Buffer.from(challengeRow.value).toString(
+          "base64url",
+        );
+
         var expected = {
-          challenge: challengeRow.value,
+          challenge: expectedChallenge,
           counter: Number(credential.sign_count),
           origin,
           rpId: hostname,
@@ -440,7 +444,7 @@ export var routes = async (fastify, opts) => {
           transports: credential.transports ?? [],
         };
 
-        let result;
+        var result;
 
         try {
           result = await server.verifyAuthentication(
@@ -477,7 +481,7 @@ export var routes = async (fastify, opts) => {
               WHERE credential_id = $1
                 AND sign_count < $2
             `,
-            [credentialId, newCounter],
+            [credential.credential_id, newCounter],
           );
 
           if (rowCount === 0) {
@@ -488,8 +492,15 @@ export var routes = async (fastify, opts) => {
 
         await client.query("COMMIT");
         return reply.code(200).send();
-      } catch {
+      } catch (err) {
         await client.query("ROLLBACK");
+
+        /** @type {any} */
+        var e = err;
+
+        if (e?.code === "57014") return reply.code(503).send();
+        if (e?.code === "55P03") return reply.code(503).send();
+
         return reply.code(500).send();
       } finally {
         client.release();

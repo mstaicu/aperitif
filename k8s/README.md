@@ -738,25 +738,25 @@ This protects infrastructure stability.
 Given:
 
 safe_concurrency = 36  
-p95 = 0.07 seconds  
+p95 = 70ms
 
 Each concurrency slot completes:
 
-1 / 0.07 ≈ 14.28 requests per second  
+1 / 0.07 (in seconds) = 1000 / 70 ( in ms ) = 14.28 requests per second
 
 Total sustainable throughput:
 
 throughput ≈ safe_concurrency / p95  
-throughput ≈ 36 / 0.07 ≈ 514 RPS  
+throughput ≈ 36 requests / (70ms/1000 ms in 1 second, convert to seconds) ≈ 514 RPS
 
 ## Unit Check
 
 36 requests / 0.07 seconds  
-= 514 requests / second  
+= 514 requests / second
 
 Units simplify to:
 
-RPS  
+RPS
 
 This is theoretical sustainable throughput under current latency.
 
@@ -779,8 +779,8 @@ but to increase attacker cost and reduce noise.
 
 Define:
 
-C = sustainable_rps      (requests / second)  
-L = per_ip_limit_rps     (requests / second / IP)  
+C = sustainable_rps (requests / second)  
+L = per_ip_limit_rps (requests / second / IP)
 
 We want to know:
 
@@ -788,34 +788,34 @@ How many IPs are required to saturate the system?
 
 Formula:
 
-N = C / L  
+N = C / L
 
 ## Dimensional Analysis
 
-N = (RPS) / (RPS / IP)  
+N = (RPS) / (RPS / IP)
 
 Dividing by a fraction means multiplying by its reciprocal:
 
-= RPS × (IP / RPS)  
+= RPS × (IP / RPS)
 
 Cancel RPS:
 
-= IP  
+= IP
 
 So:
 
-N = number of IPs required to saturate the system  
+N = number of IPs required to saturate the system
 
 ---
 
 ## Example
 
 C = 500 RPS  
-L = 0.3 RPS per IP   (≈20 per minute)  
+L = 0.3 RPS per IP (≈20 per minute)
 
 Then:
 
-N = 500 / 0.3 ≈ 1667 IPs  
+N = 500 / 0.3 ≈ 1667 IPs
 
 Meaning:
 
@@ -825,9 +825,9 @@ That is economically non-trivial.
 
 So rateLimit is chosen to:
 
-- Allow legitimate human behavior  
-- Force large botnet scale to cause trouble  
-- Reduce edge waste and noise  
+- Allow legitimate human behavior
+- Force large botnet scale to cause trouble
+- Reduce edge waste and noise
 
 It is an economic lever, not a capacity lever.
 
@@ -836,31 +836,31 @@ It is an economic lever, not a capacity lever.
 # 9️⃣ Burst Logic (Token Bucket Model)
 
 average = sustained refill rate  
-burst   = bucket capacity  
+burst = bucket capacity
 
 Example:
 
 average: 20/min  
-burst: 40  
+burst: 40
 
 Interpretation:
 
-- Client may send 40 requests immediately.  
-- Bucket refills at 20 per minute.  
+- Client may send 40 requests immediately.
+- Bucket refills at 20 per minute.
 - Sustained rate becomes:
 
-20 / 60 = 0.33 RPS  
+20 / 60 = 0.33 RPS
 
 Units:
 
 20 requests / 60 seconds  
-= 0.33 requests / second  
+= 0.33 requests / second
 
 Burst:
 
-- Improves UX for short spikes.  
-- Does not increase sustained throughput.  
-- Does not override inFlight.  
+- Improves UX for short spikes.
+- Does not increase sustained throughput.
+- Does not override inFlight.
 
 ---
 
@@ -891,15 +891,15 @@ No.
 
 Because without rateLimit:
 
-- TLS termination cost increases  
-- Traefik CPU increases  
-- Log volume explodes  
-- Bandwidth waste increases  
-- Error rate becomes noisy  
-- Observability degrades  
+- TLS termination cost increases
+- Traefik CPU increases
+- Log volume explodes
+- Bandwidth waste increases
+- Error rate becomes noisy
+- Observability degrades
 
 rateLimit reduces attack surface cost.  
-inFlight guarantees survival.  
+inFlight guarantees survival.
 
 They solve different problems.
 
@@ -912,7 +912,7 @@ They solve different problems.
 DB connections  
 → pool caps  
 → safe_concurrency  
-→ inFlight  
+→ inFlight
 
 This guarantees survival.
 
@@ -923,7 +923,7 @@ This guarantees survival.
 rateLimit per IP  
 → increase attacker cost  
 → reduce noise  
-→ improve fairness  
+→ improve fairness
 
 This guarantees sanity.
 

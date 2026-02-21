@@ -9,26 +9,6 @@ import { Pool } from "pg";
 import { routes as auth } from "./routes/auth.mjs";
 import { routes as jwks } from "./routes/jwks.mjs";
 
-var fastify = Fastify({
-  bodyLimit: 64 * 1024,
-  requestTimeout: 10_000,
-});
-
-await fastify.register(swagger, {
-  openapi: {
-    info: {
-      description: "Passkey-only authentication service",
-      title: "auth-api",
-      version: "1.0.0",
-    },
-    openapi: "3.1.0",
-  },
-});
-
-await fastify.register(swaggerUI, {
-  routePrefix: "/docs",
-});
-
 var pool = new Pool({
   connectionString: nconf.get("DATABASE_URL"),
   connectionTimeoutMillis: 250,
@@ -51,6 +31,25 @@ var pool = new Pool({
 // app.use((_, res, next) =>
 //   connection.readyState !== 1 || nc.isClosed() ? res.sendStatus(503) : next(),
 // );
+
+var fastify = Fastify({
+  bodyLimit: 64 * 1024,
+  requestTimeout: 10_000,
+});
+
+await fastify.register(swagger, {
+  openapi: {
+    info: {
+      description: "Passkey-only authentication service",
+      title: "auth-api",
+      version: "1.0.0",
+    },
+    openapi: "3.1.0",
+  },
+});
+await fastify.register(swaggerUI, {
+  routePrefix: "/docs",
+});
 
 fastify.get("/healthz", async () => ({ ok: true }));
 fastify.get("/readyz", async (_req, reply) => {
