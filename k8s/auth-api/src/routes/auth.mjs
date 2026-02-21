@@ -7,12 +7,10 @@ import fs from "node:fs";
 
 var { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
-var ISSUER = nconf.get("JWT_ISSUER") || "https://tma.com";
-var ACCESS_TTL_SECONDS = Number(nconf.get("ACCESS_TTL_SECONDS") || 900); // 15m
-var REFRESH_TTL_SECONDS = Number(
-  nconf.get("REFRESH_TTL_SECONDS") || 30 * 24 * 60 * 60, // 30d
-);
-var JWT_KID = nconf.get("JWT_KID") || "k1";
+var ISSUER = "https://tma.com";
+var ACCESS_TTL_SECONDS = 900; // 15m
+var REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
+var JWT_KID = "k1";
 
 var privateKeyPem = fs.readFileSync(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8");
 var privateKey = await importPKCS8(privateKeyPem, "ES256");
@@ -94,9 +92,7 @@ var AuthenticationFinalizeBody = {
             authenticatorData: Base64Url,
             clientDataJSON: Base64Url,
             signature: Base64Url,
-            userHandle: {
-              anyOf: [Base64Url, { type: "null" }],
-            },
+            userHandle: { anyOf: [Base64Url, { type: "null" }] },
           },
           required: ["clientDataJSON", "authenticatorData", "signature"],
           type: "object",
@@ -114,55 +110,29 @@ var AuthenticationFinalizeBody = {
 var RefreshBody = {
   additionalProperties: false,
   properties: {
-    aud: {
-      items: { maxLength: 64, minLength: 1, type: "string" },
-      maxItems: 8,
-      minItems: 1,
-      type: "array",
-    },
     refresh_token: { maxLength: 2048, minLength: 20, type: "string" },
   },
-  required: ["refresh_token", "aud"],
+  required: ["refresh_token"],
   type: "object",
 };
 
 var RegistrationChallengeResponse = {
   additionalProperties: false,
-  properties: {
-    publicKey: {
-      additionalProperties: true,
-      properties: {
-        challenge: Base64Url,
-      },
-      required: ["challenge"],
-      type: "object",
-    },
-  },
+  properties: { publicKey: { additionalProperties: true, type: "object" } },
   required: ["publicKey"],
   type: "object",
 };
 
 var AuthenticationChallengeResponse = {
   additionalProperties: false,
-  properties: {
-    publicKey: {
-      additionalProperties: true,
-      properties: {
-        challenge: Base64Url,
-      },
-      required: ["challenge"],
-      type: "object",
-    },
-  },
+  properties: { publicKey: { additionalProperties: true, type: "object" } },
   required: ["publicKey"],
   type: "object",
 };
 
 var AuthSuccessResponse = {
   additionalProperties: false,
-  properties: {
-    refresh_token: { type: "string" },
-  },
+  properties: { refresh_token: { type: "string" } },
   required: ["refresh_token"],
   type: "object",
 };
@@ -266,23 +236,46 @@ export var routes = async (fastify, opts) => {
         return reply.code(400).send();
       }
 
-      var challengeBytes = Buffer.from(clientData.challenge, "base64url");
+      if (clientData?.type !== "webauthn.create") return reply.code(400).send();
 
-      var {
-        rows: [challenge],
-      } = await pool.query(
-        `
-          DELETE FROM webauthn_challenges
-          WHERE value = $1
-            AND expires_at > NOW()
-          RETURNING user_id, value
-        `,
-        [challengeBytes],
-      );
+      var challengeBytes;
 
-      if (!challenge) {
+      try {
+        challengeBytes = Buffer.from(clientData.challenge, "base64url");
+      } catch {
         return reply.code(400).send();
       }
+
+      var challenge;
+      var challengeClient = await pool.connect();
+
+      try {
+        await challengeClient.query("BEGIN");
+        await challengeClient.query(`SET LOCAL lock_timeout = '75ms'`);
+        await challengeClient.query(`SET LOCAL statement_timeout = '1s'`);
+
+        var {
+          rows: [row],
+        } = await challengeClient.query(
+          `
+            DELETE FROM webauthn_challenges
+            WHERE value = $1
+              AND expires_at > NOW()
+            RETURNING user_id, value
+          `,
+          [challengeBytes],
+        );
+
+        await challengeClient.query("COMMIT");
+        challenge = row;
+      } catch {
+        await challengeClient.query("ROLLBACK");
+        return reply.code(400).send();
+      } finally {
+        challengeClient.release();
+      }
+
+      if (!challenge) return reply.code(400).send();
 
       var userId = challenge.user_id;
       var expectedChallenge = Buffer.from(challenge.value).toString(
@@ -424,6 +417,7 @@ export var routes = async (fastify, opts) => {
         body: AuthenticationFinalizeBody,
         response: {
           200: AuthSuccessResponse,
+          400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
           503: ErrorResponse,
@@ -447,21 +441,46 @@ export var routes = async (fastify, opts) => {
         return reply.code(401).send();
       }
 
-      var challengeBytes = Buffer.from(clientData.challenge, "base64url");
+      if (clientData?.type !== "webauthn.get") return reply.code(401).send();
 
-      var {
-        rows: [challenge],
-      } = await pool.query(
-        `
-          DELETE FROM webauthn_challenges
-          WHERE value = $1
-            AND expires_at > NOW()
-          RETURNING value
-        `,
-        [challengeBytes],
-      );
+      var challengeBytes;
 
-      if (!challenge) return reply.code(401).send();
+      try {
+        challengeBytes = Buffer.from(clientData.challenge, "base64url");
+      } catch {
+        return reply.code(400).send();
+      }
+
+      var challenge;
+      var challengeClient = await pool.connect();
+
+      try {
+        await challengeClient.query("BEGIN");
+        await challengeClient.query(`SET LOCAL lock_timeout = '75ms'`);
+        await challengeClient.query(`SET LOCAL statement_timeout = '1s'`);
+
+        var {
+          rows: [row],
+        } = await challengeClient.query(
+          `
+            DELETE FROM webauthn_challenges
+            WHERE value = $1
+              AND expires_at > NOW()
+            RETURNING user_id, value
+          `,
+          [challengeBytes],
+        );
+
+        await challengeClient.query("COMMIT");
+        challenge = row;
+      } catch {
+        await challengeClient.query("ROLLBACK");
+        return reply.code(400).send();
+      } finally {
+        challengeClient.release();
+      }
+
+      if (!challenge) return reply.code(400).send();
 
       var client = await pool.connect();
 
@@ -477,7 +496,7 @@ export var routes = async (fastify, opts) => {
         } = await client.query(
           `
             SELECT user_id, credential_id, public_key, algorithm,
-                  transports, sign_count
+              transports, sign_count
             FROM webauthn_credentials
             WHERE credential_id = $1
             FOR UPDATE
@@ -530,7 +549,7 @@ export var routes = async (fastify, opts) => {
         var oldCounter = Number(credential.sign_count);
         var newCounter = result.counter;
 
-        // Monotonic counter enforcement (bank-grade invariant)
+        // Monotonic counter enforcement
         if (
           (oldCounter > 0 && newCounter === 0) ||
           (newCounter > 0 && newCounter <= oldCounter)
@@ -562,9 +581,26 @@ export var routes = async (fastify, opts) => {
           `
             INSERT INTO sessions (user_id)
             VALUES ($1)
-            RETURNING id
+            RETURNING id, user_id
           `,
           [credential.user_id],
+        );
+
+        await client.query(
+          `
+            WITH to_revoke AS (
+              SELECT id
+              FROM sessions
+              WHERE user_id = $1
+                AND revoked_at IS NULL
+              ORDER BY created_at DESC, id DESC
+              OFFSET $2
+            )
+            UPDATE sessions
+            SET revoked_at = NOW()
+            WHERE id IN (SELECT id FROM to_revoke)
+          `,
+          [credential.user_id, 5],
         );
 
         var { hash: refreshHash, token: refreshToken } = generateRefreshToken();
@@ -579,9 +615,10 @@ export var routes = async (fastify, opts) => {
 
         await client.query("COMMIT");
 
-        return reply.code(200).send({
-          refresh_token: refreshToken,
-        });
+        reply.header("Cache-Control", "no-store");
+        reply.header("Pragma", "no-cache");
+
+        return reply.code(200).send({ refresh_token: refreshToken });
       } catch (err) {
         await client.query("ROLLBACK");
 
@@ -611,7 +648,8 @@ export var routes = async (fastify, opts) => {
       },
     },
     async (request, reply) => {
-      var { aud, refresh_token } = request.body;
+      // TODO: Add aud to request.body
+      var { refresh_token } = request.body;
 
       var client = await pool.connect();
 
@@ -623,16 +661,16 @@ export var routes = async (fastify, opts) => {
         var tokenHash = createHash("sha256").update(refresh_token).digest();
 
         var {
-          rows: [row],
+          rows: [token],
         } = await client.query(
           `
             SELECT
-              rt.id          AS token_id,
-              rt.session_id  AS session_id,
-              rt.revoked_at  AS token_revoked_at,
-              rt.expires_at  AS token_expires_at,
-              s.user_id      AS user_id,
-              s.revoked_at   AS session_revoked_at
+              rt.id         AS id,
+              rt.session_id AS session_id,
+              rt.revoked_at AS revoked_at,
+              rt.expires_at AS expires_at,
+              s.user_id     AS user_id,
+              s.revoked_at  AS session_revoked_at
             FROM refresh_tokens rt
             JOIN sessions s
               ON s.id = rt.session_id
@@ -642,38 +680,36 @@ export var routes = async (fastify, opts) => {
           [tokenHash],
         );
 
-        if (!row || row.session_revoked_at) {
+        if (!token || token.session_revoked_at) {
           await client.query("ROLLBACK");
           return reply.code(401).send();
         }
 
-        if (new Date(row.token_expires_at).getTime() <= Date.now()) {
+        if (new Date(token.expires_at).getTime() <= Date.now()) {
           await client.query("ROLLBACK");
           return reply.code(401).send();
         }
 
-        // Reuse detection: token already revoked but presented again => revoke the session
-        if (row.token_revoked_at) {
+        if (token.revoked_at) {
           await client.query(
             `
-              UPDATE sessions 
-              SET revoked_at = NOW() 
-              WHERE id = $1 
-                AND revoked_at IS NULL`,
-            [row.session_id],
+              UPDATE sessions
+              SET revoked_at = NOW()
+              WHERE id = $1
+                AND revoked_at IS NULL
+            `,
+            [token.session_id],
           );
 
           await client.query("COMMIT");
           return reply.code(401).send();
         }
 
-        // Rotation: revoke current refresh
         await client.query(
           `UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`,
-          [row.token_id],
+          [token.id],
         );
 
-        // Issue next refresh token
         var { hash: nextHash, token: nextRefresh } = generateRefreshToken();
 
         await client.query(
@@ -681,19 +717,20 @@ export var routes = async (fastify, opts) => {
             INSERT INTO refresh_tokens (session_id, token_hash, expires_at)
             VALUES ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
           `,
-          [row.session_id, nextHash, REFRESH_TTL_SECONDS],
+          [token.session_id, nextHash, REFRESH_TTL_SECONDS],
         );
 
-        // TODO: Check if user can access the requested aud domain
-
         var accessToken = await mintAccessToken({
-          aud,
+          aud: ["auth"],
           scope: [],
-          sessionId: row.session_id,
-          userId: row.user_id,
+          sessionId: token.session_id,
+          userId: token.user_id,
         });
 
         await client.query("COMMIT");
+
+        reply.header("Cache-Control", "no-store");
+        reply.header("Pragma", "no-cache");
 
         return reply.code(200).send({
           access_token: accessToken,
