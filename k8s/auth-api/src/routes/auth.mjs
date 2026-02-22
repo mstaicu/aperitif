@@ -128,21 +128,10 @@ const EmptyResponse = Type.Null();
 const ErrorResponse = Type.Null();
 
 /**
- * @typedef {import("fastify").FastifyInstance<
- *   import("fastify").RawServerDefault,
- *   import("fastify").RawRequestDefaultExpression,
- *   import("fastify").RawReplyDefaultExpression,
- *   import("fastify").FastifyBaseLogger,
- *   import("@fastify/type-provider-typebox").TypeBoxTypeProvider
- * >} TypeBoxFastify
+ * @param {import('../fastify.js').Instance} fastify
  */
-
-/**
- * @param {TypeBoxFastify} fastify
- * @param {{ pool: import("pg").Pool }} opts
- */
-export const routes = async (fastify, opts) => {
-  const { pool } = opts;
+export const routes = async (fastify) => {
+  const { pool } = fastify;
 
   fastify.post(
     "/webauthn/registration/challenge",
@@ -255,6 +244,9 @@ export const routes = async (fastify, opts) => {
         "base64url",
       );
 
+      /**
+       * @type {import('@passwordless-id/webauthn').RegistrationInfo}
+       */
       let result;
 
       try {
@@ -489,6 +481,9 @@ export const routes = async (fastify, opts) => {
           transports: credential.transports ?? [],
         };
 
+        /**
+         * @type {import('@passwordless-id/webauthn').AuthenticationInfo}
+         */
         let result;
 
         try {
