@@ -2,8 +2,8 @@ import fp from "fastify-plugin";
 import nconf from "nconf";
 import { Pool } from "pg";
 
-export const pgPlugin = fp(function (fastify) {
-  const max = Number(nconf.get("DB_POOL_MAX") || 10);
+export const pgPlugin = fp(async (fastify) => {
+  const max = Number(nconf.get("DB_POOL_MAX") || 20);
 
   const pool = new Pool({
     connectionString: nconf.get("DATABASE_URL"),

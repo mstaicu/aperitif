@@ -1,10 +1,7 @@
 import fp from "fastify-plugin";
 
-export const probesPlugin = fp(function (fastify) {
-  fastify.get("/healthz", async () => {
-    return { ok: true };
-  });
-
+export const probesPlugin = fp(async (fastify) => {
+  fastify.get("/healthz", () => ({ ok: true }));
   fastify.get("/readyz", async (_, reply) => {
     try {
       await fastify.pool.query("SELECT 1");

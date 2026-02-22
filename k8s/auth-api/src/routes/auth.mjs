@@ -59,17 +59,57 @@ const Base64Url = Type.String({
   pattern: "^[A-Za-z0-9_-]+$",
 });
 
+const ClientExtensionResults = Type.Record(Type.String(), Type.Any());
+
+const UserShape = Type.Object(
+  {
+    displayName: Type.Optional(Type.String({ maxLength: 256 })),
+    id: Type.Optional(Base64Url),
+    name: Type.String({ maxLength: 256, minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
+const Transport = Type.Union([
+  Type.Literal("ble"),
+  Type.Literal("hybrid"),
+  Type.Literal("internal"),
+  Type.Literal("nfc"),
+  Type.Literal("usb"),
+  Type.Literal("smart-card"),
+]);
+
+const AuthenticatorAttachment = Type.Union([
+  Type.Literal("cross-platform"),
+  Type.Literal("platform"),
+]);
+
 const RegistrationFinalizeBody = Type.Object(
   {
     credential: Type.Object(
       {
+        clientExtensionResults: ClientExtensionResults,
+
         id: Base64Url,
         rawId: Base64Url,
-        response: Type.Object({
-          attestationObject: Base64Url,
-          clientDataJSON: Base64Url,
-        }),
+
+        response: Type.Object(
+          {
+            attestationObject: Base64Url,
+            authenticatorData: Base64Url,
+            clientDataJSON: Base64Url,
+
+            publicKey: Base64Url,
+            publicKeyAlgorithm: Type.Integer(),
+            transports: Type.Array(Transport),
+          },
+          { additionalProperties: false },
+        ),
+
         type: Type.Literal("public-key"),
+
+        // required by this library’s RegistrationJSON
+        user: UserShape,
       },
       { additionalProperties: false },
     ),
@@ -81,14 +121,19 @@ const AuthenticationFinalizeBody = Type.Object(
   {
     authentication: Type.Object(
       {
+        authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+        clientExtensionResults: ClientExtensionResults,
         id: Base64Url,
         rawId: Base64Url,
-        response: Type.Object({
-          authenticatorData: Base64Url,
-          clientDataJSON: Base64Url,
-          signature: Base64Url,
-          userHandle: Type.Union([Base64Url, Type.Null()]),
-        }),
+        response: Type.Object(
+          {
+            authenticatorData: Base64Url,
+            clientDataJSON: Base64Url,
+            signature: Base64Url,
+            userHandle: Type.Optional(Base64Url),
+          },
+          { additionalProperties: false },
+        ),
         type: Type.Literal("public-key"),
       },
       { additionalProperties: false },
@@ -199,7 +244,6 @@ export const routes = async (fastify) => {
       },
     },
     async function (request, reply) {
-      /** @type {any} */
       const { credential } = request.body;
 
       let clientData;
@@ -231,6 +275,7 @@ export const routes = async (fastify) => {
         `
             DELETE FROM webauthn_challenges
             WHERE value = $1
+              AND user_id IS NOT NULL
               AND expires_at > NOW()
             RETURNING user_id, value
           `,
@@ -252,9 +297,8 @@ export const routes = async (fastify) => {
       try {
         result = await server.verifyRegistration(credential, {
           challenge: expectedChallenge,
+          domain: hostname,
           origin,
-          // @ts-ignore
-          rpId: hostname,
         });
       } catch {
         return reply.code(400).send(null);
@@ -394,7 +438,6 @@ export const routes = async (fastify) => {
       },
     },
     async function (request, reply) {
-      /** @type {any} */
       const { authentication } = request.body;
 
       let clientData;
@@ -592,8 +635,6 @@ export const routes = async (fastify) => {
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        const oldHash = createHash("sha256").update(refresh_token).digest();
-
         const { hash: newHash, token: newRefresh } = generateRefreshToken();
 
         const {
@@ -610,7 +651,11 @@ export const routes = async (fastify) => {
               AND refresh_expires_at > NOW()
             RETURNING id, user_id
           `,
-          [oldHash, newHash, REFRESH_TTL_SECONDS],
+          [
+            createHash("sha256").update(refresh_token).digest(),
+            newHash,
+            REFRESH_TTL_SECONDS,
+          ],
         );
 
         if (!session) {
