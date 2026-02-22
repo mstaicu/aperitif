@@ -1,34 +1,43 @@
-// @ts-check
 import { server } from "@passwordless-id/webauthn";
+import { Type } from "@sinclair/typebox";
 import { importPKCS8, SignJWT } from "jose";
 import nconf from "nconf";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 
-var { hostname, origin } = new URL(nconf.get("ORIGIN"));
+const { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
-var ISSUER = "https://tma.com";
-var ACCESS_TTL_SECONDS = 900; // 15m
-var REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
-var JWT_KID = "k1";
+const ISSUER = "https://tma.com";
+const ACCESS_TTL_SECONDS = 900;
+const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60;
+const JWT_KID = "k1";
 
-var privateKeyPem = fs.readFileSync(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8");
-var privateKey = await importPKCS8(privateKeyPem, "ES256");
+const privateKeyPem = fs.readFileSync(
+  nconf.get("JWT_PRIVATE_KEY_PATH"),
+  "utf8",
+);
 
-function generateRefreshToken() {
-  var token = randomBytes(32).toString("base64url");
-  var hash = createHash("sha256").update(token).digest();
+const privateKey = await importPKCS8(privateKeyPem, "ES256");
+
+const generateRefreshToken = () => {
+  const token = randomBytes(32).toString("base64url");
+  const hash = createHash("sha256").update(token).digest();
   return { hash, token };
-}
+};
 
 /**
+ * @param {{
+ *   userId: string,
+ *   sessionId: string,
+ *   aud: string[],
+ *   scope?: string[]
+ * }} p
  *
- * @param {any} p
- * @returns
+ * @returns {Promise<string>}
  */
-async function mintAccessToken(p) {
-  var now = Math.floor(Date.now() / 1000);
-  var exp = now + ACCESS_TTL_SECONDS;
+const mintAccessToken = async (p) => {
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + ACCESS_TTL_SECONDS;
 
   return new SignJWT({
     scope: p.scope ?? [],
@@ -42,120 +51,98 @@ async function mintAccessToken(p) {
     .setExpirationTime(exp)
     .setJti(randomBytes(16).toString("base64url"))
     .sign(privateKey);
-}
+};
 
-var Base64Url = {
+const Base64Url = Type.String({
   maxLength: 4096,
   minLength: 1,
   pattern: "^[A-Za-z0-9_-]+$",
-  type: "string",
-};
+});
 
-var RegistrationFinalizeBody = {
-  additionalProperties: false,
-  properties: {
-    credential: {
-      additionalProperties: false,
-      properties: {
+const RegistrationFinalizeBody = Type.Object(
+  {
+    credential: Type.Object(
+      {
         id: Base64Url,
         rawId: Base64Url,
-        response: {
-          additionalProperties: false,
-          properties: {
-            attestationObject: Base64Url,
-            clientDataJSON: Base64Url,
-          },
-          required: ["clientDataJSON", "attestationObject"],
-          type: "object",
-        },
-        type: { const: "public-key" },
+        response: Type.Object({
+          attestationObject: Base64Url,
+          clientDataJSON: Base64Url,
+        }),
+        type: Type.Literal("public-key"),
       },
-      required: ["id", "rawId", "type", "response"],
-      type: "object",
-    },
+      { additionalProperties: false },
+    ),
   },
-  required: ["credential"],
-  type: "object",
-};
+  { additionalProperties: false },
+);
 
-var AuthenticationFinalizeBody = {
-  additionalProperties: false,
-  properties: {
-    authentication: {
-      additionalProperties: false,
-      properties: {
+const AuthenticationFinalizeBody = Type.Object(
+  {
+    authentication: Type.Object(
+      {
         id: Base64Url,
         rawId: Base64Url,
-        response: {
-          additionalProperties: false,
-          properties: {
-            authenticatorData: Base64Url,
-            clientDataJSON: Base64Url,
-            signature: Base64Url,
-            userHandle: { anyOf: [Base64Url, { type: "null" }] },
-          },
-          required: ["clientDataJSON", "authenticatorData", "signature"],
-          type: "object",
-        },
-        type: { const: "public-key" },
+        response: Type.Object({
+          authenticatorData: Base64Url,
+          clientDataJSON: Base64Url,
+          signature: Base64Url,
+          userHandle: Type.Union([Base64Url, Type.Null()]),
+        }),
+        type: Type.Literal("public-key"),
       },
-      required: ["id", "rawId", "type", "response"],
-      type: "object",
-    },
+      { additionalProperties: false },
+    ),
   },
-  required: ["authentication"],
-  type: "object",
-};
+  { additionalProperties: false },
+);
 
-var RefreshBody = {
-  additionalProperties: false,
-  properties: {
-    refresh_token: { maxLength: 2048, minLength: 20, type: "string" },
+const RefreshBody = Type.Object(
+  {
+    refresh_token: Type.String({
+      maxLength: 2048,
+      minLength: 20,
+    }),
   },
-  required: ["refresh_token"],
-  type: "object",
-};
+  { additionalProperties: false },
+);
 
-var RegistrationChallengeResponse = {
-  additionalProperties: false,
-  properties: { publicKey: { additionalProperties: true, type: "object" } },
-  required: ["publicKey"],
-  type: "object",
-};
+const RegistrationChallengeResponse = Type.Object({
+  publicKey: Type.Any(),
+});
 
-var AuthenticationChallengeResponse = {
-  additionalProperties: false,
-  properties: { publicKey: { additionalProperties: true, type: "object" } },
-  required: ["publicKey"],
-  type: "object",
-};
+const AuthenticationChallengeResponse = Type.Object({
+  publicKey: Type.Any(),
+});
 
-var AuthSuccessResponse = {
-  additionalProperties: false,
-  properties: { refresh_token: { type: "string" } },
-  required: ["refresh_token"],
-  type: "object",
-};
+const AuthSuccessResponse = Type.Object({
+  refresh_token: Type.String(),
+});
 
-var RefreshResponse = {
-  additionalProperties: false,
-  properties: {
-    access_token: { type: "string" },
-    refresh_token: { type: "string" },
-  },
-  required: ["access_token", "refresh_token"],
-  type: "object",
-};
+const RefreshResponse = Type.Object({
+  access_token: Type.String(),
+  refresh_token: Type.String(),
+});
 
-var EmptyResponse = { type: "null" };
-var ErrorResponse = { type: "null" };
+const EmptyResponse = Type.Null();
+const ErrorResponse = Type.Null();
 
 /**
- * @param {import("fastify").FastifyInstance} fastify
+ * @typedef {import("fastify").FastifyInstance<
+ *   import("fastify").RawServerDefault,
+ *   import("fastify").RawRequestDefaultExpression,
+ *   import("fastify").RawReplyDefaultExpression,
+ *   import("fastify").FastifyBaseLogger,
+ *   import("@fastify/type-provider-typebox").TypeBoxTypeProvider
+ * >} TypeBoxFastify
+ */
+
+/**
+ * @param {TypeBoxFastify} fastify
  * @param {{ pool: import("pg").Pool }} opts
  */
-export var routes = async (fastify, opts) => {
-  var { pool } = opts;
+export const routes = async (fastify, opts) => {
+  const { pool } = opts;
 
   fastify.post(
     "/webauthn/registration/challenge",
@@ -167,9 +154,9 @@ export var routes = async (fastify, opts) => {
       },
     },
     async (_, reply) => {
-      var userId = randomUUID();
+      const userId = randomUUID();
 
-      var {
+      const {
         rows: [challenge],
       } = await pool.query(
         `
@@ -182,6 +169,8 @@ export var routes = async (fastify, opts) => {
 
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
+
+      reply.header("Content-Type", "application/json");
 
       return reply.code(200).send({
         publicKey: {
@@ -222,9 +211,9 @@ export var routes = async (fastify, opts) => {
     },
     async function (request, reply) {
       /** @type {any} */
-      var { credential } = request.body;
+      const { credential } = request.body;
 
-      var clientData;
+      let clientData;
 
       try {
         clientData = JSON.parse(
@@ -233,56 +222,40 @@ export var routes = async (fastify, opts) => {
           ),
         );
       } catch {
-        return reply.code(400).send();
+        return reply.code(400).send(null);
       }
 
-      if (clientData?.type !== "webauthn.create") return reply.code(400).send();
+      if (clientData?.type !== "webauthn.create")
+        return reply.code(400).send(null);
 
-      var challengeBytes;
+      let challengeBytes;
 
       try {
         challengeBytes = Buffer.from(clientData.challenge, "base64url");
       } catch {
-        return reply.code(400).send();
+        return reply.code(400).send(null);
       }
 
-      var challenge;
-      var challengeClient = await pool.connect();
-
-      try {
-        await challengeClient.query("BEGIN");
-        await challengeClient.query(`SET LOCAL lock_timeout = '75ms'`);
-        await challengeClient.query(`SET LOCAL statement_timeout = '1s'`);
-
-        var {
-          rows: [row],
-        } = await challengeClient.query(
-          `
+      const {
+        rows: [challenge],
+      } = await pool.query(
+        `
             DELETE FROM webauthn_challenges
             WHERE value = $1
               AND expires_at > NOW()
             RETURNING user_id, value
           `,
-          [challengeBytes],
-        );
+        [challengeBytes],
+      );
 
-        await challengeClient.query("COMMIT");
-        challenge = row;
-      } catch {
-        await challengeClient.query("ROLLBACK");
-        return reply.code(400).send();
-      } finally {
-        challengeClient.release();
-      }
+      if (!challenge) return reply.code(400).send(null);
 
-      if (!challenge) return reply.code(400).send();
-
-      var userId = challenge.user_id;
-      var expectedChallenge = Buffer.from(challenge.value).toString(
+      const userId = challenge.user_id;
+      const expectedChallenge = Buffer.from(challenge.value).toString(
         "base64url",
       );
 
-      var result;
+      let result;
 
       try {
         result = await server.verifyRegistration(credential, {
@@ -292,14 +265,14 @@ export var routes = async (fastify, opts) => {
           rpId: hostname,
         });
       } catch {
-        return reply.code(400).send();
+        return reply.code(400).send(null);
       }
 
       if (!result?.credential || !result.userVerified) {
-        return reply.code(400).send();
+        return reply.code(400).send(null);
       }
 
-      var client = await pool.connect();
+      const client = await pool.connect();
 
       try {
         await client.query("BEGIN");
@@ -316,7 +289,7 @@ export var routes = async (fastify, opts) => {
           [userId],
         );
 
-        var { rowCount } = await client.query(
+        const { rowCount } = await client.query(
           `
             WITH next_index AS (
               SELECT s
@@ -364,19 +337,21 @@ export var routes = async (fastify, opts) => {
         // If no slot available → user already has 5
         if (rowCount === 0) {
           await client.query("ROLLBACK");
-          return reply.code(409).send();
+          return reply.code(409).send(null);
         }
 
         await client.query("COMMIT");
-        return reply.code(201).send();
+        return reply.code(201).send(null);
+
+        // TODO: Send refresh token here?
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ var error = err;
+        /** @type {any} */ const error = err;
 
-        if (error.code === "23505") return reply.code(409).send();
+        if (error.code === "23505") return reply.code(409).send(null);
 
-        return reply.code(500).send();
+        return reply.code(500).send(null);
       } finally {
         client.release();
       }
@@ -387,7 +362,7 @@ export var routes = async (fastify, opts) => {
     "/webauthn/authentication/challenge",
     { schema: { response: { 200: AuthenticationChallengeResponse } } },
     async (_, reply) => {
-      var {
+      const {
         rows: [challenge],
       } = await pool.query(
         `
@@ -399,6 +374,8 @@ export var routes = async (fastify, opts) => {
 
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
+
+      reply.header("Content-Type", "application/json");
 
       return reply.code(200).send({
         publicKey: {
@@ -426,7 +403,7 @@ export var routes = async (fastify, opts) => {
     },
     async function (request, reply) {
       /** @type {any} */
-      var { authentication } = request.body;
+      const { authentication } = request.body;
 
       let clientData;
 
@@ -438,60 +415,44 @@ export var routes = async (fastify, opts) => {
           ).toString("utf8"),
         );
       } catch {
-        return reply.code(401).send();
+        return reply.code(401).send(null);
       }
 
-      if (clientData?.type !== "webauthn.get") return reply.code(401).send();
+      if (clientData?.type !== "webauthn.get")
+        return reply.code(401).send(null);
 
-      var challengeBytes;
+      let challengeBytes;
 
       try {
         challengeBytes = Buffer.from(clientData.challenge, "base64url");
       } catch {
-        return reply.code(400).send();
+        return reply.code(400).send(null);
       }
 
-      var challenge;
-      var challengeClient = await pool.connect();
-
-      try {
-        await challengeClient.query("BEGIN");
-        await challengeClient.query(`SET LOCAL lock_timeout = '75ms'`);
-        await challengeClient.query(`SET LOCAL statement_timeout = '1s'`);
-
-        var {
-          rows: [row],
-        } = await challengeClient.query(
-          `
+      const {
+        rows: [challenge],
+      } = await pool.query(
+        `
             DELETE FROM webauthn_challenges
             WHERE value = $1
               AND expires_at > NOW()
             RETURNING user_id, value
           `,
-          [challengeBytes],
-        );
+        [challengeBytes],
+      );
 
-        await challengeClient.query("COMMIT");
-        challenge = row;
-      } catch {
-        await challengeClient.query("ROLLBACK");
-        return reply.code(400).send();
-      } finally {
-        challengeClient.release();
-      }
+      if (!challenge) return reply.code(400).send(null);
 
-      if (!challenge) return reply.code(400).send();
-
-      var client = await pool.connect();
+      const client = await pool.connect();
 
       try {
         await client.query("BEGIN");
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        var credentialId = Buffer.from(authentication.id, "base64url");
+        const credentialId = Buffer.from(authentication.id, "base64url");
 
-        var {
+        const {
           rows: [credential],
         } = await client.query(
           `
@@ -506,14 +467,14 @@ export var routes = async (fastify, opts) => {
 
         if (!credential) {
           await client.query("ROLLBACK");
-          return reply.code(401).send();
+          return reply.code(401).send(null);
         }
 
-        var expectedChallenge = Buffer.from(challenge.value).toString(
+        const expectedChallenge = Buffer.from(challenge.value).toString(
           "base64url",
         );
 
-        var expected = {
+        const expected = {
           challenge: expectedChallenge,
           counter: Number(credential.sign_count),
           origin,
@@ -521,7 +482,7 @@ export var routes = async (fastify, opts) => {
           userVerified: true,
         };
 
-        var expectedCredential = {
+        const expectedCredential = {
           algorithm: credential.algorithm,
           id: Buffer.from(credential.credential_id).toString("base64url"),
           publicKey: Buffer.from(credential.public_key).toString("base64url"),
@@ -538,16 +499,16 @@ export var routes = async (fastify, opts) => {
           );
         } catch {
           await client.query("ROLLBACK");
-          return reply.code(401).send();
+          return reply.code(401).send(null);
         }
 
         if (!result.userVerified) {
           await client.query("ROLLBACK");
-          return reply.code(401).send();
+          return reply.code(401).send(null);
         }
 
-        var oldCounter = Number(credential.sign_count);
-        var newCounter = result.counter;
+        const oldCounter = Number(credential.sign_count);
+        const newCounter = result.counter;
 
         // Monotonic counter enforcement
         if (
@@ -555,11 +516,11 @@ export var routes = async (fastify, opts) => {
           (newCounter > 0 && newCounter <= oldCounter)
         ) {
           await client.query("ROLLBACK");
-          return reply.code(401).send();
+          return reply.code(401).send(null);
         }
 
         if (newCounter > oldCounter) {
-          var { rowCount } = await client.query(
+          const { rowCount } = await client.query(
             `
               UPDATE webauthn_credentials
               SET sign_count = $2
@@ -571,46 +532,22 @@ export var routes = async (fastify, opts) => {
 
           if (rowCount === 0) {
             await client.query("ROLLBACK");
-            return reply.code(401).send();
+            return reply.code(401).send(null);
           }
         }
 
-        var {
-          rows: [session],
-        } = await client.query(
+        const { hash: refreshHash, token: refreshToken } =
+          generateRefreshToken();
+
+        await client.query(
           `
-            INSERT INTO sessions (user_id)
-            VALUES ($1)
+            INSERT INTO sessions
+              (user_id, refresh_token_hash, refresh_expires_at)
+            VALUES
+              ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
             RETURNING id, user_id
           `,
-          [credential.user_id],
-        );
-
-        await client.query(
-          `
-            WITH to_revoke AS (
-              SELECT id
-              FROM sessions
-              WHERE user_id = $1
-                AND revoked_at IS NULL
-              ORDER BY created_at DESC, id DESC
-              OFFSET $2
-            )
-            UPDATE sessions
-            SET revoked_at = NOW()
-            WHERE id IN (SELECT id FROM to_revoke)
-          `,
-          [credential.user_id, 5],
-        );
-
-        var { hash: refreshHash, token: refreshToken } = generateRefreshToken();
-
-        await client.query(
-          `
-            INSERT INTO refresh_tokens (session_id, token_hash, expires_at)
-            VALUES ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
-          `,
-          [session.id, refreshHash, REFRESH_TTL_SECONDS],
+          [credential.user_id, refreshHash, REFRESH_TTL_SECONDS],
         );
 
         await client.query("COMMIT");
@@ -618,15 +555,18 @@ export var routes = async (fastify, opts) => {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
+        reply.header("Content-Type", "application/json");
+
         return reply.code(200).send({ refresh_token: refreshToken });
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ var e = err;
+        /** @type {any} */ const e = err;
 
-        if (["55P03", "57014"].includes(e?.code)) return reply.code(503).send();
+        if (["55P03", "57014"].includes(e?.code))
+          return reply.code(503).send(null);
 
-        return reply.code(500).send();
+        return reply.code(500).send(null);
       } finally {
         client.release();
       }
@@ -648,83 +588,46 @@ export var routes = async (fastify, opts) => {
       },
     },
     async (request, reply) => {
-      // TODO: Add aud to request.body
-      var { refresh_token } = request.body;
+      const { refresh_token } = request.body;
 
-      var client = await pool.connect();
+      const client = await pool.connect();
 
       try {
         await client.query("BEGIN");
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        var tokenHash = createHash("sha256").update(refresh_token).digest();
+        const oldHash = createHash("sha256").update(refresh_token).digest();
 
-        var {
-          rows: [token],
+        const { hash: newHash, token: newRefresh } = generateRefreshToken();
+
+        const {
+          rows: [session],
         } = await client.query(
           `
-            SELECT
-              rt.id         AS id,
-              rt.session_id AS session_id,
-              rt.revoked_at AS revoked_at,
-              rt.expires_at AS expires_at,
-              s.user_id     AS user_id,
-              s.revoked_at  AS session_revoked_at
-            FROM refresh_tokens rt
-            JOIN sessions s
-              ON s.id = rt.session_id
-            WHERE rt.token_hash = $1
-            FOR UPDATE
+            UPDATE sessions
+            SET
+              refresh_token_hash = $2,
+              refresh_expires_at = NOW() + ($3::int * INTERVAL '1 second')
+            WHERE
+              refresh_token_hash = $1
+              AND revoked_at IS NULL
+              AND refresh_expires_at > NOW()
+            RETURNING id, user_id
           `,
-          [tokenHash],
+          [oldHash, newHash, REFRESH_TTL_SECONDS],
         );
 
-        if (!token || token.session_revoked_at) {
+        if (!session) {
           await client.query("ROLLBACK");
-          return reply.code(401).send();
+          return reply.code(401).send(null);
         }
 
-        if (new Date(token.expires_at).getTime() <= Date.now()) {
-          await client.query("ROLLBACK");
-          return reply.code(401).send();
-        }
-
-        if (token.revoked_at) {
-          await client.query(
-            `
-              UPDATE sessions
-              SET revoked_at = NOW()
-              WHERE id = $1
-                AND revoked_at IS NULL
-            `,
-            [token.session_id],
-          );
-
-          await client.query("COMMIT");
-          return reply.code(401).send();
-        }
-
-        await client.query(
-          `UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`,
-          [token.id],
-        );
-
-        var { hash: nextHash, token: nextRefresh } = generateRefreshToken();
-
-        await client.query(
-          `
-            INSERT INTO refresh_tokens (session_id, token_hash, expires_at)
-            VALUES ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
-          `,
-          [token.session_id, nextHash, REFRESH_TTL_SECONDS],
-        );
-
-        var accessToken = await mintAccessToken({
+        const accessToken = await mintAccessToken({
           aud: ["auth"],
           scope: [],
-          sessionId: token.session_id,
-          userId: token.user_id,
+          sessionId: session.id,
+          userId: session.user_id,
         });
 
         await client.query("COMMIT");
@@ -732,18 +635,20 @@ export var routes = async (fastify, opts) => {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
+        reply.header("Content-Type", "application/json");
+
         return reply.code(200).send({
           access_token: accessToken,
-          refresh_token: nextRefresh,
+          refresh_token: newRefresh,
         });
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ var e = err;
+        /** @type {any} */ const e = err;
         if (e?.code === "57014" || e?.code === "55P03")
-          return reply.code(503).send();
+          return reply.code(503).send(null);
 
-        return reply.code(500).send();
+        return reply.code(500).send(null);
       } finally {
         client.release();
       }

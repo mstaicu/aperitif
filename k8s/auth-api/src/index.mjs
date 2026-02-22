@@ -1,4 +1,3 @@
-// @ts-check
 import nconf from "nconf";
 
 nconf

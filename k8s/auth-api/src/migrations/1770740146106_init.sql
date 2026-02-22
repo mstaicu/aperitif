@@ -44,47 +44,26 @@ CREATE INDEX idx_webauthn_challenges_expires_at
     ON webauthn_challenges(expires_at);
 
 CREATE TABLE sessions (
-    id UUID PRIMARY KEY 
+    id UUID PRIMARY KEY
         DEFAULT gen_random_uuid(),
+
     user_id UUID NOT NULL
-        REFERENCES users(id) 
+        REFERENCES users(id)
         ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL 
+
+    created_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW(),
-    revoked_at TIMESTAMPTZ
+
+    revoked_at TIMESTAMPTZ,
+
+    refresh_token_hash BYTEA NOT NULL UNIQUE,
+
+    refresh_expires_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_sessions_user_id
-    ON sessions(user_id);
-
--- Supports max active sessions enforcement
 CREATE INDEX idx_sessions_active_by_user_created
     ON sessions(user_id, created_at DESC, id DESC)
     WHERE revoked_at IS NULL;
 
-CREATE TABLE refresh_tokens (
-    id UUID PRIMARY KEY
-        DEFAULT gen_random_uuid(),
-
-    session_id UUID NOT NULL
-        REFERENCES sessions(id)
-        ON DELETE CASCADE,
-
-    token_hash BYTEA NOT NULL UNIQUE,
-
-    expires_at TIMESTAMPTZ NOT NULL,
-
-    revoked_at TIMESTAMPTZ
-);
-
-CREATE INDEX idx_refresh_tokens_session
-    ON refresh_tokens(session_id);
-
-CREATE INDEX idx_refresh_tokens_expiration
-    ON refresh_tokens(expires_at);
-
--- Enforce at most one "active" refresh token per session at any time.
--- Rotation must revoke old token before inserting new.
-CREATE UNIQUE INDEX uniq_active_refresh_per_session
-    ON refresh_tokens(session_id)
-    WHERE revoked_at IS NULL;
+CREATE INDEX idx_sessions_refresh_expiration
+    ON sessions(refresh_expires_at);
