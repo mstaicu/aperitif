@@ -72,6 +72,12 @@ const AuthenticatorAttachment = Type.Union([
   Type.Literal("cross-platform"),
 ]);
 
+const UserVerificationRequirement = Type.Union([
+  Type.Literal("required"),
+  Type.Literal("preferred"),
+  Type.Literal("discouraged"),
+]);
+
 const ClientExtensionResults = Type.Record(Type.String(), Type.Any());
 
 const RegistrationResponseJSON = Type.Object(
@@ -88,7 +94,7 @@ const RegistrationResponseJSON = Type.Object(
       { additionalProperties: true },
     ),
 
-    clientExtensionResults: ClientExtensionResults,
+    clientExtensionResults: Type.Optional(ClientExtensionResults),
     authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
   },
   { additionalProperties: false },
@@ -110,7 +116,7 @@ const AuthenticationResponseJSON = Type.Object(
       { additionalProperties: true },
     ),
 
-    clientExtensionResults: ClientExtensionResults,
+    clientExtensionResults: Type.Optional(ClientExtensionResults),
     authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
   },
   { additionalProperties: false },
@@ -137,41 +143,49 @@ const RefreshBody = Type.Object(
 );
 
 const RegistrationChallengeResponse = Type.Object({
-  publicKey: Type.Object({
-    challenge: Base64Url,
+  publicKey: Type.Object(
+    {
+      challenge: Base64Url,
 
-    rp: Type.Object({
-      id: Type.String(),
-      name: Type.String(),
-    }),
-
-    user: Type.Object({
-      id: Base64Url,
-      name: Type.String(),
-      displayName: Type.String(),
-    }),
-
-    pubKeyCredParams: Type.Array(
-      Type.Object({
-        alg: Type.Integer(),
-        type: Type.Literal("public-key"),
+      rp: Type.Object({
+        id: Type.String(),
+        name: Type.String(),
       }),
-    ),
 
-    attestation: Type.String(),
-    authenticatorSelection: Type.Object({
-      residentKey: Type.String(),
-      userVerification: Type.String(),
-    }),
-  }),
+      user: Type.Object({
+        id: Base64Url,
+        name: Type.String(),
+        displayName: Type.String(),
+      }),
+
+      pubKeyCredParams: Type.Array(
+        Type.Object({
+          alg: Type.Integer(),
+          type: Type.Literal("public-key"),
+        }),
+      ),
+
+      attestation: Type.String(),
+      authenticatorSelection: Type.Object({
+        residentKey: Type.String(),
+        userVerification: UserVerificationRequirement,
+      }),
+      timeout: Type.Optional(Type.Integer({ minimum: 1 })),
+    },
+    { additionalProperties: true },
+  ),
 });
 
 const AuthenticationChallengeResponse = Type.Object({
-  publicKey: Type.Object({
-    challenge: Base64Url,
-    rpId: Type.String(),
-    userVerification: Type.String(),
-  }),
+  publicKey: Type.Object(
+    {
+      challenge: Base64Url,
+      rpId: Type.String(),
+      userVerification: UserVerificationRequirement,
+      timeout: Type.Optional(Type.Integer({ minimum: 1 })),
+    },
+    { additionalProperties: true },
+  ),
 });
 
 const AuthSuccessResponse = Type.Object({
@@ -234,6 +248,7 @@ export const routes = async (fastify) => {
             id: Buffer.from(userId).toString("base64url"),
             name: userId,
           },
+          timeout: 60000,
         },
       });
     },
@@ -250,11 +265,26 @@ export const routes = async (fastify) => {
           401: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
       },
     },
     async function (request, reply) {
       const { credential } = request.body;
+
+      // WebAuthn invariant: `id` and `rawId` must represent the same bytes.
+      // Many libs set them equal (same base64url string). Reject mismatches early.
+      let idBytes;
+      let rawIdBytes;
+
+      try {
+        idBytes = Buffer.from(credential.id, "base64url");
+        rawIdBytes = Buffer.from(credential.rawId, "base64url");
+      } catch {
+        return reply.code(400).send(null);
+      }
+
+      if (!idBytes.equals(rawIdBytes)) return reply.code(400).send(null);
 
       let clientDataJSON;
 
@@ -289,7 +319,7 @@ export const routes = async (fastify) => {
         [challengeBytes],
       );
 
-      if (!challenge) return reply.code(400).send(null);
+      if (!challenge) return reply.code(401).send(null);
 
       const userId = challenge.user_id;
       const expectedChallenge = Buffer.from(challenge.value).toString(
@@ -301,7 +331,10 @@ export const routes = async (fastify) => {
 
       try {
         verification = await verifyRegistrationResponse({
-          response: credential,
+          response: {
+            ...credential,
+            clientExtensionResults: credential.clientExtensionResults ?? {},
+          },
           expectedChallenge,
           expectedOrigin: origin,
           expectedRPID: hostname,
@@ -309,10 +342,10 @@ export const routes = async (fastify) => {
           expectedType: "webauthn.create",
         });
       } catch {
-        return reply.code(400).send(null);
+        return reply.code(401).send(null);
       }
 
-      if (!verification?.verified) return reply.code(400).send(null);
+      if (!verification?.verified) return reply.code(401).send(null);
 
       const { registrationInfo } = verification;
 
@@ -389,7 +422,9 @@ export const routes = async (fastify) => {
 
         /** @type {any} */ const error = err;
 
-        if (error.code === "23505") return reply.code(409).send(null);
+        if (error?.code === "23505") return reply.code(409).send(null);
+        if (["55P03", "57014"].includes(error?.code))
+          return reply.code(503).send(null);
 
         return reply.code(500).send(null);
       } finally {
@@ -420,6 +455,7 @@ export const routes = async (fastify) => {
           challenge: challenge.value.toString("base64url"),
           rpId: hostname,
           userVerification: "required",
+          timeout: 60000,
         },
       });
     },
@@ -442,6 +478,18 @@ export const routes = async (fastify) => {
     async function (request, reply) {
       const { authentication } = request.body;
 
+      let idBytes;
+      let rawIdBytes;
+
+      try {
+        idBytes = Buffer.from(authentication.id, "base64url");
+        rawIdBytes = Buffer.from(authentication.rawId, "base64url");
+      } catch {
+        return reply.code(400).send(null);
+      }
+
+      if (!idBytes.equals(rawIdBytes)) return reply.code(400).send(null);
+
       let clientDataJSON;
 
       try {
@@ -452,7 +500,7 @@ export const routes = async (fastify) => {
           ).toString("utf8"),
         );
       } catch {
-        return reply.code(401).send(null);
+        return reply.code(400).send(null);
       }
 
       let providedChallengeBytes;
@@ -479,7 +527,7 @@ export const routes = async (fastify) => {
         [providedChallengeBytes],
       );
 
-      if (!challenge) return reply.code(400).send(null);
+      if (!challenge) return reply.code(401).send(null);
 
       const client = await pool.connect();
 
@@ -506,7 +554,10 @@ export const routes = async (fastify) => {
         }
 
         const verification = await verifyAuthenticationResponse({
-          response: authentication,
+          response: {
+            ...authentication,
+            clientExtensionResults: authentication.clientExtensionResults ?? {},
+          },
           expectedChallenge: Buffer.from(challenge.value).toString("base64url"),
           expectedOrigin: origin,
           expectedRPID: hostname,
@@ -536,14 +587,20 @@ export const routes = async (fastify) => {
           return reply.code(401).send(null);
         }
 
-        await client.query(
+        const { rowCount } = await client.query(
           `
             UPDATE webauthn_credentials
             SET sign_count = $2
             WHERE credential_id = $1
+              AND (sign_count = 0 OR $2 > sign_count)
           `,
           [credential.credential_id, newCounter],
         );
+
+        if (rowCount === 0) {
+          await client.query("ROLLBACK");
+          return reply.code(401).send(null);
+        }
 
         const { hash: refreshHash, token: refreshToken } =
           generateRefreshToken();
