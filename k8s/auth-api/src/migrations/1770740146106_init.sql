@@ -18,10 +18,6 @@ CREATE TABLE webauthn_credentials (
     credential_index SMALLINT NOT NULL
         CHECK (credential_index BETWEEN 1 AND 5),
     public_key BYTEA NOT NULL,
-    algorithm TEXT NOT NULL
-        CHECK (algorithm IN ('RS256', 'ES256', 'EdDSA')),
-    transports TEXT[] 
-        DEFAULT '{}',
     sign_count BIGINT NOT NULL 
         DEFAULT 0
 );

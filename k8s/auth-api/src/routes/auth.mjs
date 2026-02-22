@@ -1,4 +1,7 @@
-import { server } from "@passwordless-id/webauthn";
+import {
+  verifyRegistrationResponse,
+  verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
 import { Type } from "@sinclair/typebox";
 import { importPKCS8, SignJWT } from "jose";
 import nconf from "nconf";
@@ -53,111 +56,122 @@ const mintAccessToken = async (p) => {
     .sign(privateKey);
 };
 
+// Base64url sometimes comes padded from non-browser clients.
+// Accept unpadded + optional "==" padding.
 const Base64Url = Type.String({
-  maxLength: 4096,
   minLength: 1,
-  pattern: "^[A-Za-z0-9_-]+$",
+  maxLength: 8192,
+  pattern: "^[A-Za-z0-9_-]+={0,2}$",
 });
+
+const EmptyResponse = Type.Null();
+const ErrorResponse = Type.Null();
+
+const AuthenticatorAttachment = Type.Union([
+  Type.Literal("platform"),
+  Type.Literal("cross-platform"),
+]);
 
 const ClientExtensionResults = Type.Record(Type.String(), Type.Any());
 
-const UserShape = Type.Object(
+const RegistrationResponseJSON = Type.Object(
   {
-    displayName: Type.Optional(Type.String({ maxLength: 256 })),
-    id: Type.Optional(Base64Url),
-    name: Type.String({ maxLength: 256, minLength: 1 }),
+    id: Base64Url,
+    rawId: Base64Url,
+    type: Type.Literal("public-key"),
+
+    response: Type.Object(
+      {
+        clientDataJSON: Base64Url,
+        attestationObject: Base64Url,
+      },
+      { additionalProperties: true },
+    ),
+
+    clientExtensionResults: ClientExtensionResults,
+    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
   },
   { additionalProperties: false },
 );
 
-const Transport = Type.Union([
-  Type.Literal("ble"),
-  Type.Literal("hybrid"),
-  Type.Literal("internal"),
-  Type.Literal("nfc"),
-  Type.Literal("usb"),
-  Type.Literal("smart-card"),
-]);
+const AuthenticationResponseJSON = Type.Object(
+  {
+    id: Base64Url,
+    rawId: Base64Url,
+    type: Type.Literal("public-key"),
 
-const AuthenticatorAttachment = Type.Union([
-  Type.Literal("cross-platform"),
-  Type.Literal("platform"),
-]);
+    response: Type.Object(
+      {
+        clientDataJSON: Base64Url,
+        authenticatorData: Base64Url,
+        signature: Base64Url,
+        userHandle: Type.Optional(Base64Url),
+      },
+      { additionalProperties: true },
+    ),
+
+    clientExtensionResults: ClientExtensionResults,
+    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+  },
+  { additionalProperties: false },
+);
 
 const RegistrationFinalizeBody = Type.Object(
-  {
-    credential: Type.Object(
-      {
-        clientExtensionResults: ClientExtensionResults,
-
-        id: Base64Url,
-        rawId: Base64Url,
-
-        response: Type.Object(
-          {
-            attestationObject: Base64Url,
-            authenticatorData: Base64Url,
-            clientDataJSON: Base64Url,
-
-            publicKey: Base64Url,
-            publicKeyAlgorithm: Type.Integer(),
-            transports: Type.Array(Transport),
-          },
-          { additionalProperties: false },
-        ),
-
-        type: Type.Literal("public-key"),
-
-        // required by this library’s RegistrationJSON
-        user: UserShape,
-      },
-      { additionalProperties: false },
-    ),
-  },
+  { credential: RegistrationResponseJSON },
   { additionalProperties: false },
 );
 
 const AuthenticationFinalizeBody = Type.Object(
-  {
-    authentication: Type.Object(
-      {
-        authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
-        clientExtensionResults: ClientExtensionResults,
-        id: Base64Url,
-        rawId: Base64Url,
-        response: Type.Object(
-          {
-            authenticatorData: Base64Url,
-            clientDataJSON: Base64Url,
-            signature: Base64Url,
-            userHandle: Type.Optional(Base64Url),
-          },
-          { additionalProperties: false },
-        ),
-        type: Type.Literal("public-key"),
-      },
-      { additionalProperties: false },
-    ),
-  },
+  { authentication: AuthenticationResponseJSON },
   { additionalProperties: false },
 );
 
 const RefreshBody = Type.Object(
   {
     refresh_token: Type.String({
-      maxLength: 2048,
       minLength: 20,
+      maxLength: 2048,
     }),
   },
   { additionalProperties: false },
 );
 
 const RegistrationChallengeResponse = Type.Object({
-  publicKey: Type.Any(),
+  publicKey: Type.Object({
+    challenge: Base64Url,
+
+    rp: Type.Object({
+      id: Type.String(),
+      name: Type.String(),
+    }),
+
+    user: Type.Object({
+      id: Base64Url,
+      name: Type.String(),
+      displayName: Type.String(),
+    }),
+
+    pubKeyCredParams: Type.Array(
+      Type.Object({
+        alg: Type.Integer(),
+        type: Type.Literal("public-key"),
+      }),
+    ),
+
+    attestation: Type.String(),
+    authenticatorSelection: Type.Object({
+      residentKey: Type.String(),
+      userVerification: Type.String(),
+    }),
+  }),
 });
 
 const AuthenticationChallengeResponse = Type.Object({
-  publicKey: Type.Any(),
+  publicKey: Type.Object({
+    challenge: Base64Url,
+    rpId: Type.String(),
+    userVerification: Type.String(),
+  }),
 });
 
 const AuthSuccessResponse = Type.Object({
@@ -168,9 +182,6 @@ const RefreshResponse = Type.Object({
   access_token: Type.String(),
   refresh_token: Type.String(),
 });
-
-const EmptyResponse = Type.Null();
-const ErrorResponse = Type.Null();
 
 /**
  * @param {import('../fastify.js').Instance} fastify
@@ -204,8 +215,6 @@ export const routes = async (fastify) => {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      reply.header("Content-Type", "application/json");
-
       return reply.code(200).send({
         publicKey: {
           attestation: "none",
@@ -238,6 +247,7 @@ export const routes = async (fastify) => {
         response: {
           201: EmptyResponse,
           400: ErrorResponse,
+          401: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
         },
@@ -246,10 +256,10 @@ export const routes = async (fastify) => {
     async function (request, reply) {
       const { credential } = request.body;
 
-      let clientData;
+      let clientDataJSON;
 
       try {
-        clientData = JSON.parse(
+        clientDataJSON = JSON.parse(
           Buffer.from(credential.response.clientDataJSON, "base64url").toString(
             "utf8",
           ),
@@ -258,13 +268,10 @@ export const routes = async (fastify) => {
         return reply.code(400).send(null);
       }
 
-      if (clientData?.type !== "webauthn.create")
-        return reply.code(400).send(null);
-
       let challengeBytes;
 
       try {
-        challengeBytes = Buffer.from(clientData.challenge, "base64url");
+        challengeBytes = Buffer.from(clientDataJSON.challenge, "base64url");
       } catch {
         return reply.code(400).send(null);
       }
@@ -273,12 +280,12 @@ export const routes = async (fastify) => {
         rows: [challenge],
       } = await pool.query(
         `
-            DELETE FROM webauthn_challenges
-            WHERE value = $1
-              AND user_id IS NOT NULL
-              AND expires_at > NOW()
-            RETURNING user_id, value
-          `,
+          DELETE FROM webauthn_challenges
+          WHERE value = $1
+            AND user_id IS NOT NULL
+            AND expires_at > NOW()
+          RETURNING user_id, value
+        `,
         [challengeBytes],
       );
 
@@ -289,24 +296,27 @@ export const routes = async (fastify) => {
         "base64url",
       );
 
-      /**
-       * @type {import('@passwordless-id/webauthn').RegistrationInfo}
-       */
-      let result;
+      /** @type {import('@simplewebauthn/server').VerifiedRegistrationResponse} */
+      let verification;
 
       try {
-        result = await server.verifyRegistration(credential, {
-          challenge: expectedChallenge,
-          domain: hostname,
-          origin,
+        verification = await verifyRegistrationResponse({
+          response: credential,
+          expectedChallenge,
+          expectedOrigin: origin,
+          expectedRPID: hostname,
+          requireUserVerification: true,
+          expectedType: "webauthn.create",
         });
       } catch {
         return reply.code(400).send(null);
       }
 
-      if (!result?.credential || !result.userVerified) {
-        return reply.code(400).send(null);
-      }
+      if (!verification?.verified) return reply.code(400).send(null);
+
+      const { registrationInfo } = verification;
+
+      if (!registrationInfo?.credential) return reply.code(400).send(null);
 
       const client = await pool.connect();
 
@@ -320,6 +330,7 @@ export const routes = async (fastify) => {
           [userId],
         );
 
+        // serialize slot allocation for this user
         await client.query(
           `SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`,
           [userId],
@@ -327,50 +338,43 @@ export const routes = async (fastify) => {
 
         const { rowCount } = await client.query(
           `
-            WITH next_index AS (
-              SELECT s
-              FROM generate_series(1, 5) AS s
-              WHERE NOT EXISTS (
-                SELECT 1
-                FROM webauthn_credentials
-                WHERE user_id = $1
-                  AND credential_index = s
-              )
-              ORDER BY s
-              LIMIT 1
+          WITH next_index AS (
+            SELECT s
+            FROM generate_series(1, 5) AS s
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM webauthn_credentials
+              WHERE user_id = $1
+                AND credential_index = s
             )
-            INSERT INTO webauthn_credentials
-            (
-              user_id,
-              credential_index,
-              credential_id,
-              public_key,
-              algorithm,
-              transports,
-              sign_count
-            )
-            SELECT
-              $1,
-              s,
-              $2,
-              $3,
-              $4,
-              $5,
-              $6
-            FROM next_index
-            RETURNING id
-          `,
+            ORDER BY s
+            LIMIT 1
+          )
+          INSERT INTO webauthn_credentials
+          (
+            user_id,
+            credential_index,
+            credential_id,
+            public_key,
+            sign_count
+          )
+          SELECT
+            $1,
+            s,
+            $2,
+            $3,
+            $4
+          FROM next_index
+        `,
           [
             userId,
-            Buffer.from(result.credential.id, "base64url"),
-            Buffer.from(result.credential.publicKey, "base64url"),
-            result.credential.algorithm,
-            result.credential.transports,
-            result.authenticator.counter,
+            Buffer.from(registrationInfo.credential.id, "base64url"),
+            Buffer.from(registrationInfo.credential.publicKey),
+            registrationInfo.credential.counter,
           ],
         );
 
-        // If no slot available → user already has 5
+        // No slot available → user already has 5
         if (rowCount === 0) {
           await client.query("ROLLBACK");
           return reply.code(409).send(null);
@@ -379,7 +383,7 @@ export const routes = async (fastify) => {
         await client.query("COMMIT");
         return reply.code(201).send(null);
 
-        // TODO: Send refresh token here?
+        // Issue refresh token?
       } catch (err) {
         await client.query("ROLLBACK");
 
@@ -411,8 +415,6 @@ export const routes = async (fastify) => {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      reply.header("Content-Type", "application/json");
-
       return reply.code(200).send({
         publicKey: {
           challenge: challenge.value.toString("base64url"),
@@ -440,10 +442,10 @@ export const routes = async (fastify) => {
     async function (request, reply) {
       const { authentication } = request.body;
 
-      let clientData;
+      let clientDataJSON;
 
       try {
-        clientData = JSON.parse(
+        clientDataJSON = JSON.parse(
           Buffer.from(
             authentication.response.clientDataJSON,
             "base64url",
@@ -453,13 +455,13 @@ export const routes = async (fastify) => {
         return reply.code(401).send(null);
       }
 
-      if (clientData?.type !== "webauthn.get")
-        return reply.code(401).send(null);
-
-      let challengeBytes;
+      let providedChallengeBytes;
 
       try {
-        challengeBytes = Buffer.from(clientData.challenge, "base64url");
+        providedChallengeBytes = Buffer.from(
+          clientDataJSON.challenge,
+          "base64url",
+        );
       } catch {
         return reply.code(400).send(null);
       }
@@ -468,12 +470,13 @@ export const routes = async (fastify) => {
         rows: [challenge],
       } = await pool.query(
         `
-            DELETE FROM webauthn_challenges
-            WHERE value = $1
-              AND expires_at > NOW()
-            RETURNING user_id, value
-          `,
-        [challengeBytes],
+          DELETE FROM webauthn_challenges
+          WHERE value = $1
+            AND user_id IS NULL
+            AND expires_at > NOW()
+          RETURNING user_id, value
+        `,
+        [providedChallengeBytes],
       );
 
       if (!challenge) return reply.code(400).send(null);
@@ -485,19 +488,16 @@ export const routes = async (fastify) => {
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        const credentialId = Buffer.from(authentication.id, "base64url");
-
         const {
           rows: [credential],
         } = await client.query(
           `
-            SELECT user_id, credential_id, public_key, algorithm,
-              transports, sign_count
+            SELECT user_id, credential_id, public_key, sign_count
             FROM webauthn_credentials
             WHERE credential_id = $1
             FOR UPDATE
           `,
-          [credentialId],
+          [Buffer.from(authentication.id, "base64url")],
         );
 
         if (!credential) {
@@ -505,48 +505,27 @@ export const routes = async (fastify) => {
           return reply.code(401).send(null);
         }
 
-        const expectedChallenge = Buffer.from(challenge.value).toString(
-          "base64url",
-        );
+        const verification = await verifyAuthenticationResponse({
+          response: authentication,
+          expectedChallenge: Buffer.from(challenge.value).toString("base64url"),
+          expectedOrigin: origin,
+          expectedRPID: hostname,
+          credential: {
+            id: Buffer.from(credential.credential_id).toString("base64url"),
+            publicKey: new Uint8Array(credential.public_key),
+            counter: Number(credential.sign_count),
+          },
+          requireUserVerification: true,
+          expectedType: "webauthn.get",
+        });
 
-        const expected = {
-          challenge: expectedChallenge,
-          counter: Number(credential.sign_count),
-          origin,
-          rpId: hostname,
-          userVerified: true,
-        };
-
-        const expectedCredential = {
-          algorithm: credential.algorithm,
-          id: Buffer.from(credential.credential_id).toString("base64url"),
-          publicKey: Buffer.from(credential.public_key).toString("base64url"),
-          transports: credential.transports ?? [],
-        };
-
-        /**
-         * @type {import('@passwordless-id/webauthn').AuthenticationInfo}
-         */
-        let result;
-
-        try {
-          result = await server.verifyAuthentication(
-            authentication,
-            expectedCredential,
-            expected,
-          );
-        } catch {
+        if (!verification.verified) {
           await client.query("ROLLBACK");
           return reply.code(401).send(null);
         }
 
-        if (!result.userVerified) {
-          await client.query("ROLLBACK");
-          return reply.code(401).send(null);
-        }
-
+        const { newCounter } = verification.authenticationInfo;
         const oldCounter = Number(credential.sign_count);
-        const newCounter = result.counter;
 
         // Monotonic counter enforcement
         if (
@@ -557,22 +536,14 @@ export const routes = async (fastify) => {
           return reply.code(401).send(null);
         }
 
-        if (newCounter > oldCounter) {
-          const { rowCount } = await client.query(
-            `
-              UPDATE webauthn_credentials
-              SET sign_count = $2
-              WHERE credential_id = $1
-                AND sign_count < $2
-            `,
-            [credential.credential_id, newCounter],
-          );
-
-          if (rowCount === 0) {
-            await client.query("ROLLBACK");
-            return reply.code(401).send(null);
-          }
-        }
+        await client.query(
+          `
+            UPDATE webauthn_credentials
+            SET sign_count = $2
+            WHERE credential_id = $1
+          `,
+          [credential.credential_id, newCounter],
+        );
 
         const { hash: refreshHash, token: refreshToken } =
           generateRefreshToken();
@@ -583,7 +554,7 @@ export const routes = async (fastify) => {
               (user_id, refresh_token_hash, refresh_expires_at)
             VALUES
               ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
-            RETURNING id, user_id
+            RETURNING id
           `,
           [credential.user_id, refreshHash, REFRESH_TTL_SECONDS],
         );
@@ -592,8 +563,6 @@ export const routes = async (fastify) => {
 
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
-
-        reply.header("Content-Type", "application/json");
 
         return reply.code(200).send({ refresh_token: refreshToken });
       } catch (err) {
@@ -674,8 +643,6 @@ export const routes = async (fastify) => {
 
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
-
-        reply.header("Content-Type", "application/json");
 
         return reply.code(200).send({
           access_token: accessToken,
