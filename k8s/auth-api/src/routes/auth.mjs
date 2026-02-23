@@ -605,7 +605,9 @@ export const routes = async (fastify) => {
         const { hash: refreshHash, token: refreshToken } =
           generateRefreshToken();
 
-        await client.query(
+        const {
+          rows: [session],
+        } = await client.query(
           `
             INSERT INTO sessions
               (user_id, refresh_token_hash, refresh_expires_at)
@@ -614,6 +616,16 @@ export const routes = async (fastify) => {
             RETURNING id
           `,
           [credential.user_id, refreshHash, REFRESH_TTL_SECONDS],
+        );
+
+        await client.query(
+          `
+            INSERT INTO refresh_tokens
+              (session_id, token_hash)
+            VALUES
+              ($1, $2)
+          `,
+          [session.id, refreshHash],
         );
 
         await client.query("COMMIT");
@@ -654,6 +666,8 @@ export const routes = async (fastify) => {
     async (request, reply) => {
       const { refresh_token } = request.body;
 
+      const incomingHash = createHash("sha256").update(refresh_token).digest();
+
       const client = await pool.connect();
 
       try {
@@ -661,39 +675,105 @@ export const routes = async (fastify) => {
         await client.query("SET LOCAL lock_timeout = '75ms'");
         await client.query("SET LOCAL statement_timeout = '1s'");
 
-        const { hash: newHash, token: newRefresh } = generateRefreshToken();
-
         const {
-          rows: [session],
+          rows: [tokenRow],
         } = await client.query(
           `
-            UPDATE sessions
-            SET
-              refresh_token_hash = $2,
-              refresh_expires_at = NOW() + ($3::int * INTERVAL '1 second')
-            WHERE
-              refresh_token_hash = $1
-              AND revoked_at IS NULL
-              AND refresh_expires_at > NOW()
-            RETURNING id, user_id
+            SELECT
+              s.id AS session_id,
+              s.user_id,
+              s.revoked_at
+            FROM refresh_tokens t
+            JOIN sessions s ON s.id = t.session_id
+            WHERE t.token_hash = $1
+              AND s.refresh_expires_at > NOW()
+            FOR UPDATE OF t, s
           `,
-          [
-            createHash("sha256").update(refresh_token).digest(),
-            newHash,
-            REFRESH_TTL_SECONDS,
-          ],
+          [incomingHash],
         );
 
-        if (!session) {
+        if (!tokenRow || tokenRow.revoked_at) {
           await client.query("ROLLBACK");
           return reply.code(401).send(null);
         }
 
+        /*
+          Attempt to mark token as used.
+          If rowCount === 0, token was already used -> reuse detected.
+        */
+        const { rowCount: marked } = await client.query(
+          `
+            UPDATE refresh_tokens
+            SET used_at = NOW()
+            WHERE token_hash = $1
+              AND used_at IS NULL
+          `,
+          [incomingHash],
+        );
+
+        if (marked === 0) {
+          // Reuse detected
+          await client.query(
+            `
+              UPDATE refresh_tokens
+              SET reused_at = NOW()
+              WHERE token_hash = $1
+                AND reused_at IS NULL
+            `,
+            [incomingHash],
+          );
+
+          await client.query(
+            `
+              UPDATE sessions
+              SET revoked_at = NOW()
+              WHERE id = $1
+                AND revoked_at IS NULL
+            `,
+            [tokenRow.session_id],
+          );
+
+          await client.query("COMMIT");
+          return reply.code(401).send(null);
+        }
+
+        /*
+          Normal rotation
+        */
+        const { hash: newHash, token: newRefresh } = generateRefreshToken();
+
+        const { rowCount: updated } = await client.query(
+          `
+            UPDATE sessions
+            SET refresh_token_hash = $2,
+                refresh_expires_at =
+                  NOW() + ($3::int * INTERVAL '1 second')
+            WHERE id = $1
+              AND revoked_at IS NULL
+          `,
+          [tokenRow.session_id, newHash, REFRESH_TTL_SECONDS],
+        );
+
+        if (updated === 0) {
+          await client.query("ROLLBACK");
+          return reply.code(401).send(null);
+        }
+
+        await client.query(
+          `
+            INSERT INTO refresh_tokens
+              (session_id, token_hash)
+            VALUES
+              ($1, $2)
+          `,
+          [tokenRow.session_id, newHash],
+        );
+
         const accessToken = await mintAccessToken({
           aud: ["auth"],
           scope: [],
-          sessionId: session.id,
-          userId: session.user_id,
+          sessionId: tokenRow.session_id,
+          userId: tokenRow.user_id,
         });
 
         await client.query("COMMIT");
@@ -709,8 +789,9 @@ export const routes = async (fastify) => {
         await client.query("ROLLBACK");
 
         /** @type {any} */ const e = err;
-        if (e?.code === "57014" || e?.code === "55P03")
+        if (e?.code === "57014" || e?.code === "55P03") {
           return reply.code(503).send(null);
+        }
 
         return reply.code(500).send(null);
       } finally {

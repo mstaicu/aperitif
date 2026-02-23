@@ -2,7 +2,6 @@
   "name": "auth-api",
   "private": true,
   "scripts": {
-    "test": "node --test",
     "migrate:up": "node-pg-migrate up -m ./src/migrations"
   },
   "overrides": {

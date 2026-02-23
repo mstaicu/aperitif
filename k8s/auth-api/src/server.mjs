@@ -1,10 +1,8 @@
-import { buildApp } from "./app.mjs";
+import { app } from "./app.mjs";
 
-const server = await buildApp();
+await app.ready();
 
-await server.listen({
+await app.listen({
   host: "0.0.0.0",
   port: 3000,
 });
-
-export { server };
