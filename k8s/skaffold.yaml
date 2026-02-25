@@ -2,30 +2,73 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: k8s
+  name: crds
+
+manifests:
+  kustomize:
+    paths:
+      - infra/platform/traefik/crds
+
+deploy:
+  kubectl: {}
+  # REQUIRED for manifest-only modules in multi-config graphs.
+  # This forces Skaffold to actually APPLY the rendered manifests.
+  # Without this, Skaffold may render but skip deploy when used via `requires`.
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: infra
+
+requires:
+  - configs: ["crds"]
+
+manifests:
+  kustomize:
+    paths:
+      - infra/platform/traefik/overlays/dev
+
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+      # Required because you're using ksops/SOPS plugin.
+      # Enables exec plugins during kustomize build.
+
+deploy:
+  kubectl: {}
+  # Explicit deploy stage.
+  # Makes this module always execute a deploy phase,
+  # even when used only as a dependency.
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: app
+
+requires:
+  - configs: ["infra"]
 
 build:
   local:
     push: false
+    # For local dev: do not push images to a registry.
+    # Images stay in Docker Desktop / local daemon.
+
   artifacts:
     - image: mdstaicu/auth-api
       context: auth-api
       docker:
         dockerfile: Dockerfile
         target: dev
+
       sync:
         manual:
           - src: src/**/*
             dest: .
-    # - image: mdstaicu/auth-worker
-    #   context: auth-worker
-    #   docker:
-    #     dockerfile: Dockerfile
-    #     target: dev
-    #   sync:
-    #     manual:
-    #       - src: src/**/*
-    #         dest: .
 
 manifests:
   kustomize:
@@ -35,3 +78,4 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
+      # Needed if ksops is used here too.

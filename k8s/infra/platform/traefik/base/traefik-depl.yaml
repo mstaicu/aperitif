@@ -7,12 +7,7 @@ spec:
   selector:
     matchLabels:
       app: traefik
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+  replicas: 1
   template:
     metadata:
       labels:
@@ -23,37 +18,6 @@ spec:
       containers:
         - name: traefik
           image: docker.io/traefik:v3.6.8
-          args:
-            - --entrypoints.http.address=:80
-            - --entrypoints.https.address=:443
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
-            #
-            - --entrypoints.https.forwardedHeaders.trustedIPs=<LB_OR_WAF_SOURCE_RANGES>
-            #
-            - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s
-            - --entrypoints.http.transport.respondingTimeouts.writeTimeout=10s
-            - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s
-            - --entrypoints.http.transport.maxHeaderBytes=16384
-            #
-            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
-            - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
-            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
-            - --entrypoints.https.transport.maxHeaderBytes=16384
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
-            - --providers.kubernetescrd=true
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
-            - --log.level=INFO
-            - --accesslog=true
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
-            - --ping=true
-            - --ping.entryPoint=http
-            #
-            - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
-            - --experimental.plugins.jwt.version=v0.10.0
           ports:
             - containerPort: 80
               name: http
@@ -76,16 +40,13 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
-              drop:
-                - ALL
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
 
           volumeMounts:
-            - name: data
-              mountPath: /data
             - name: tmp
               mountPath: /tmp
-            - name: plugins
-              mountPath: /plugins-storage
 
       securityContext:
         runAsNonRoot: true
@@ -93,9 +54,5 @@ spec:
         runAsGroup: 65532
 
       volumes:
-        - name: data
-          emptyDir: {}
         - name: tmp
-          emptyDir: {}
-        - name: plugins
           emptyDir: {}

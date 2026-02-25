@@ -16,18 +16,15 @@ spec:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
             #
-            # https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#configuration-options
-            - --entrypoints.https.forwardedHeaders.insecure=true
-            #
+            - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s
             - --entrypoints.http.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s
-            - --entrypoints.http.transport.maxHeaderBytes=16384
             #
+            - --entrypoints.https.forwardedHeaders.insecure=true
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
-            - --entrypoints.https.transport.maxHeaderBytes=16384
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
             - --providers.kubernetescrd=true
@@ -46,3 +43,11 @@ spec:
             # https://doc.traefik.io/traefik/operations/dashboard/
             - --api=true
             - --api.dashboard=true
+
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins-storage
+
+      volumes:
+        - name: plugins
+          emptyDir: {}
