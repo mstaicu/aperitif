@@ -1,21 +1,31 @@
+# Because this module has no build section,
+# we must explicitly define deploy.kubectl or
+# Skaffold may render but skip applying when used via `requires`.
+#
+# skaffold run -m crds
+#
 apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
   name: crds
 
+# Skaffold will run: kustomize build <path>
+# and pass output to deploy phase.
 manifests:
   kustomize:
     paths:
       - infra/platform/traefik/crds
 
+# REQUIRED for manifest-only modules,
+# ensures build output is applied to the cluster
 deploy:
   kubectl: {}
-  # REQUIRED for manifest-only modules in multi-config graphs.
-  # This forces Skaffold to actually APPLY the rendered manifests.
-  # Without this, Skaffold may render but skip deploy when used via `requires`.
 
 ---
+#
+# skaffold run -m infra
+#
 apiVersion: skaffold/v4beta11
 kind: Config
 
@@ -25,6 +35,8 @@ metadata:
 requires:
   - configs: ["crds"]
 
+# Skaffold will run: kustomize build <path>
+# and pass output to deploy phase.
 manifests:
   kustomize:
     paths:
@@ -33,14 +45,13 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
-      # Required because you're using ksops/SOPS plugin.
-      # Enables exec plugins during kustomize build.
+      # Required because ksops (SOPS plugin) is used.
+      # Allows Kustomize to execute external plugin binaries.
 
+# REQUIRED for manifest-only modules,
+# ensures build output is applied to the cluster
 deploy:
   kubectl: {}
-  # Explicit deploy stage.
-  # Makes this module always execute a deploy phase,
-  # even when used only as a dependency.
 
 ---
 apiVersion: skaffold/v4beta11
@@ -55,8 +66,8 @@ requires:
 build:
   local:
     push: false
-    # For local dev: do not push images to a registry.
-    # Images stay in Docker Desktop / local daemon.
+    # Images stay in local Docker daemon.
+    # No registry push for local dev.
 
   artifacts:
     - image: mdstaicu/auth-api
@@ -78,4 +89,11 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
-      # Needed if ksops is used here too.
+      # Needed if ksops is also used in domain layer.
+
+# Explicit deploy step.
+# Ensures consistent behavior across modules.
+# Not strictly required here (because build exists),
+# but recommended for consistency and future-proofing.
+deploy:
+  kubectl: {}
