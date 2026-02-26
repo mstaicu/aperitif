@@ -4,12 +4,6 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
-  podManagementPolicy: Parallel
-  selector:
-    matchLabels:
-      app: nats
-  serviceName: nats-headless
-  replicas: 3
   template:
     metadata:
       labels:
@@ -25,26 +19,17 @@ spec:
                     values:
                       - nats
               topologyKey: kubernetes.io/hostname
+
       containers:
         - name: nats
-
+          args:
+            - --config
+            - /etc/nats-config/nats.conf
           volumeMounts:
-            - name: nats-conf-cm
-              mountPath: /etc/nats/
-            - name: nats-storage
-              mountPath: /data
+            - mountPath: /etc/nats-config
+              name: config
 
       volumes:
-        - name: nats-conf-cm
+        - name: config
           configMap:
-            name: nats-conf-cm
-
-  volumeClaimTemplates:
-    - metadata:
-        name: nats-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
-        storageClassName: do-block-storage
+            name: nats-config

@@ -4,7 +4,6 @@ kind: StatefulSet
 metadata:
   name: nats-depl
 spec:
-  podManagementPolicy: Parallel
   replicas: 3
   selector:
     matchLabels:
@@ -15,25 +14,11 @@ spec:
       labels:
         app: nats
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - nats
-              topologyKey: kubernetes.io/hostname
-      enableServiceLinks: false
-      shareProcessNamespace: true
       terminationGracePeriodSeconds: 60
       containers:
         - name: nats
           image: docker.io/nats:2.12.1-alpine
-          args:
-            - --config
-            - /etc/nats-config/nats.conf
+
           env:
             - name: POD_NAME
               valueFrom:
@@ -41,10 +26,6 @@ spec:
                   fieldPath: metadata.name
             - name: SERVER_NAME
               value: $(POD_NAME)
-
-          volumeMounts:
-            - mountPath: /etc/nats-config
-              name: config
 
           ports:
             - containerPort: 4222
@@ -79,7 +60,3 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-      volumes:
-        - name: config
-          configMap:
-            name: nats-config

@@ -9,12 +9,21 @@ spec:
       labels:
         app: nats
     spec:
-      affinity: null
       containers:
         - name: nats
+          args:
+            - --config
+            - /etc/nats-config/nats.conf
           volumeMounts:
             - name: nats-storage
               mountPath: /data
+            - name: config
+              mountPath: /etc/nats-config
+
+      volumes:
+        - name: config
+          configMap:
+            name: nats-config
 
   volumeClaimTemplates:
     - metadata:
