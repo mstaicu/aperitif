@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+
+metadata:
+  name: nack-nats-creds
+type: Opaque
+stringData:
+  user: nack
+  password: d5a23e8f358bfe83056211ea883dd560752d14c6eb0582ccaaa15e26cf9d91a0

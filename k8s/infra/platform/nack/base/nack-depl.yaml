@@ -25,7 +25,7 @@ spec:
           command:
             - /jetstream-controller
           args:
-            - -s=nats://nats-depl-0.nats-headless.$(POD_NAMESPACE).svc.cluster.local:4222
+            - --crd-connect
             - --control-loop
           env:
             - name: POD_NAME
