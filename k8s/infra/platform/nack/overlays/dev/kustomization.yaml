@@ -5,6 +5,4 @@ namespace: nats
 
 resources:
   - ../../base
-  - nack-account.yaml
-  - nack-nats-creds.yaml
   - nack-ns.yaml

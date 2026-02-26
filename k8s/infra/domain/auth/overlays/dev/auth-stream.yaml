@@ -8,6 +8,7 @@ spec:
   description: The authentication and identity domain events
   subjects:
     - "auth.>"
+  account: auth-api
   retention: limits
   discard: old
   storage: file

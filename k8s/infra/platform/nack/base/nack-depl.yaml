@@ -27,15 +27,6 @@ spec:
           args:
             - --crd-connect
             - --control-loop
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
           volumeMounts:
             - name: runtime
               mountPath: /nack

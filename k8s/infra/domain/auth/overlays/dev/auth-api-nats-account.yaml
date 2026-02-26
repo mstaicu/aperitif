@@ -2,12 +2,12 @@ apiVersion: jetstream.nats.io/v1beta2
 kind: Account
 
 metadata:
-  name: nack
+  name: auth-api
 spec:
   servers:
-    - nats://nats-depl-0.nats-headless.nats.svc.cluster.local:4222
+    - nats://nats-headless.nats.svc.cluster.local:4222
   user:
     secret:
-      name: nack-nats-creds
+      name: auth-api-nats-creds
     user: user
     password: password

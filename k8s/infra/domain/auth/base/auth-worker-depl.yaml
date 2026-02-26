@@ -31,3 +31,16 @@ spec:
                 configMapKeyRef:
                   name: auth-worker-cm
                   key: ORIGIN
+
+            - name: NATS_URL
+              value: nats://nats-headless.nats.svc.cluster.local:4222
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: auth-worker-nats-secrets
+                  key: user
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-worker-nats-secrets
+                  key: password

@@ -7,11 +7,14 @@ resources:
   - ../../base
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
+  - auth-api-nats-account.yaml
+  - auth-api-nats-creds.yaml
   - auth-api-postgres-depl.yaml
   - auth-np.yaml
   - auth-ns.yaml
-  # - auth-stream.yaml
-  # - auth-worker-consumer.yaml
+  - auth-stream.yaml
+  - auth-worker-consumer.yaml
+  - auth-worker-nats-secret.yaml
 
 configMapGenerator:
   - name: auth-api-cm
@@ -24,7 +27,7 @@ configMapGenerator:
       - ORIGIN=https://tma.com
 
 patches:
-  # - path: auth-worker-depl.yaml
+  - path: auth-worker-depl.yaml
 
 generators:
   - auth-ksops-generator.yaml

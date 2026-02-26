@@ -38,6 +38,19 @@ spec:
             - name: JWT_PUBLIC_KEY_PATH
               value: /app/keys/jwt-public.pem
 
+            - name: NATS_URL
+              value: nats://nats-headless.nats.svc.cluster.local:4222
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: auth-api-nats-creds
+                  key: user
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-api-nats-creds
+                  key: password
+
           volumeMounts:
             - name: auth-api-jwt
               mountPath: /app/keys
