@@ -1,74 +1,66 @@
 import { connect } from "@nats-io/transport-node";
-import mongoose from "mongoose";
 import nconf from "nconf";
+import { Pool } from "pg";
 
 import { startAuthConsumer } from "./consumers/auth.mjs";
 
-var connection = await mongoose
-  .createConnection(nconf.get("MONGO_DB_URI"), {
-    autoIndex: false,
-    bufferCommands: false,
-    dbName: "auth-api",
-  })
-  .asPromise();
-
-var servers = Array.from(Array(3)).map(
-  (_, index) =>
-    `nats://nats-depl-${index}.nats-headless.nats.svc.cluster.local:4222`,
-);
-
-var nc = await connect({
-  name: "auth-worker",
-  servers,
+const pool = new Pool({
+  connectionString: nconf.get("DATABASE_URL"),
+  connectionTimeoutMillis: 250,
+  idleTimeoutMillis: 30000,
+  // https://node-postgres.com/apis/pool
+  // max_connections on postgres = 100,
+  //  minus 80 for auth-api = 20
+  //  budget for auth-worker = 20 * 75% = 15
+  //  per auth-worker replica = 15 / 3 replicas = 5
+  max: 5,
 });
 
-startAuthConsumer(nc);
+const nc = await connect({
+  name: "auth-api",
+  servers: [nconf.get("NATS_URL")],
+  user: nconf.get("NATS_USER"),
+  pass: nconf.get("NATS_PASSWORD"),
+});
+
+const stopAuthConsumer = await startAuthConsumer(nc);
 
 console.log("listening");
 
-var shutdownInitiated = false;
+let shutdownInitiated = false;
 
 ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
   process.on(signal, async () => {
     if (shutdownInitiated) return;
-
     shutdownInitiated = true;
 
-    console.log("closing worker connections...");
+    console.log("shutdown initiated");
 
-    if (connection.readyState !== 0) {
-      console.log("closing database connection...");
-      try {
-        await connection.close();
-      } catch {
-        console.error("error closing mongoose connection");
-      }
+    try {
+      console.log("stopping auth consumer...");
+      await stopAuthConsumer();
+    } catch (err) {
+      console.error("error stopping auth consumer", err);
     }
 
-    if (!nc.isClosed()) {
-      console.log("closing nats connection...");
-
-      try {
+    try {
+      if (!nc.isClosed()) {
+        console.log("draining nats...");
         await nc.drain();
-      } catch {
-        console.error("error draining nats");
-
-        try {
-          await nc.close();
-        } catch {
-          console.error("error force-closing nats");
-        }
-      }
-
-      try {
         await nc.closed();
-      } catch {
-        console.error("error waiting for nats to close");
       }
+    } catch (err) {
+      console.error("error draining nats", err);
+    }
+
+    try {
+      console.log("closing postgres pool...");
+      await pool.end();
+    } catch (err) {
+      console.error("error closing pg pool", err);
     }
 
     console.log("shutdown complete");
-
     process.exit(0);
   }),
 );

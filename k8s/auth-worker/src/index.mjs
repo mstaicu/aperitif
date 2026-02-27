@@ -1,5 +1,7 @@
 import nconf from "nconf";
 
-nconf.env().required(["MONGO_DB_URI"]);
+nconf
+  .env()
+  .required(["DATABASE_URL", "NATS_URL", "NATS_USER", "NATS_PASSWORD"]);
 
 import("./worker.mjs");
