@@ -1,4 +1,3 @@
-// @ts-check
 import { jetstream } from "@nats-io/jetstream";
 
 /**

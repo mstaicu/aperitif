@@ -18,9 +18,9 @@ const pool = new Pool({
 
 const nc = await connect({
   name: "auth-api",
+  pass: nconf.get("NATS_PASSWORD"),
   servers: [nconf.get("NATS_URL")],
   user: nconf.get("NATS_USER"),
-  pass: nconf.get("NATS_PASSWORD"),
 });
 
 const stopAuthConsumer = await startAuthConsumer(nc);

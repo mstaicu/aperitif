@@ -38,8 +38,9 @@ spec:
             - name: JWT_PUBLIC_KEY_PATH
               value: /app/keys/jwt-public.pem
 
+            # Clients will learn the cluster topology, use the ClientIP hostname
             - name: NATS_URL
-              value: nats://nats-headless.nats.svc.cluster.local:4222
+              value: nats://nats-srv.nats.svc.cluster.local:4222
             - name: NATS_USER
               valueFrom:
                 secretKeyRef:
