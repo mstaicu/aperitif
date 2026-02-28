@@ -18,10 +18,10 @@ spec:
             - secretRef:
                 name: nats-secrets
           volumeMounts:
-            - name: nats-storage
-              mountPath: /data
             - name: config
               mountPath: /etc/nats-config
+            - name: nats-storage
+              mountPath: /data
 
       volumes:
         - name: config

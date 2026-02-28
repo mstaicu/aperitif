@@ -9,15 +9,19 @@ spec:
       labels:
         app: nats
     spec:
+      topologySpreadConstraints:
+        - labelSelector:
+            matchLabels:
+              app: nats
+          maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - nats
+                matchLabels:
+                  app: nats
               topologyKey: kubernetes.io/hostname
 
       containers:
@@ -25,9 +29,12 @@ spec:
           args:
             - --config
             - /etc/nats-config/nats.conf
+          envFrom:
+            - secretRef:
+                name: nats-secrets
           volumeMounts:
-            - mountPath: /etc/nats-config
-              name: config
+            - name: config
+              mountPath: /etc/nats-config
 
       volumes:
         - name: config

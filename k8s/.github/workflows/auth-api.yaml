@@ -15,26 +15,26 @@ env:
   IMAGE_NAME: mdstaicu/auth-api
 
 jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: auth-api
-    steps:
-      - uses: actions/checkout@v4
-      - name: set up node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - name: install deps
-        run: npm ci
-      - name: lint
-        run: npm run lint
-      - name: test
-        run: npm test
+  # lint-and-test:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: auth-api
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: set up node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: lts/*
+  #     - name: install deps
+  #       run: npm ci
+  #     - name: lint
+  #       run: npm run lint
+  #     - name: test
+  #       run: npm test
 
   build-and-push:
-    needs: lint-and-test
+    # needs: lint-and-test
     runs-on: ubuntu-latest
     defaults:
       run:

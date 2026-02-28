@@ -25,8 +25,3 @@ spec:
     - name: nats
       port: 4222
       targetPort: 4222
-    - name: nats-monitor
-      protocol: TCP
-      appProtocol: HTTP
-      port: 8222
-      targetPort: 8222

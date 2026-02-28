@@ -6,7 +6,6 @@ namespace: nats
 resources:
   - ../../base
   - nats-ns.yaml
-  - nats-pdb.yaml
   - nats-secrets.yaml
 
 configMapGenerator:
@@ -19,3 +18,4 @@ generatorOptions:
 
 patches:
   - path: nats-depl.yaml
+  - path: nats-srv.yaml
