@@ -12,6 +12,8 @@ spec:
   retryInterval: 1m
   timeout: 5m
   prune: true
+  dependsOn:
+    - name: traefik
   decryption:
     provider: sops
     secretRef:

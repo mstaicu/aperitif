@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: flux-system
 
 resources:
-  - gitrepo.yaml
-  - platform
   - domain
+  - image-automation
+  - platform
+  - sources
