@@ -53,3 +53,14 @@ flux install \
  --components=source-controller,kustomize-controller \
  --components-extra=image-reflector-controller,image-automation-controller \
  --export > flux-install.yaml
+
+# 3
+
+| Secret       | Used By              | Required For        |
+| ------------ | -------------------- | ------------------- |
+| `github-ssh` | source-controller    | Pulling/pushing Git |
+| `sops-age`   | kustomize-controller | Decrypting secrets  |
+
+source-controller → uses github-ssh
+kustomize-controller → uses sops-age
+image-automation-controller → also uses github-ssh
