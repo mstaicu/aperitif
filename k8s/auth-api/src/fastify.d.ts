@@ -13,9 +13,9 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 declare module "fastify" {
   interface FastifyInstance {
     pool: Pool;
-    nc: NatsConnection;
+    // nc: NatsConnection;
     js: JetStreamClient;
-    jsm: JetStreamManager;
+    // jsm: JetStreamManager;
   }
 }
 

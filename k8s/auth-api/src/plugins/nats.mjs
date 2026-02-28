@@ -23,9 +23,9 @@ export const natsPlugin = fp(async (fastify) => {
     });
   } catch {}
 
-  fastify.decorate("nc", nc);
+  // fastify.decorate("nc", nc);
   fastify.decorate("js", js);
-  fastify.decorate("jsm", jsm);
+  // fastify.decorate("jsm", jsm);
 
   fastify.addHook("onClose", async () => {
     if (!nc.isClosed()) {
