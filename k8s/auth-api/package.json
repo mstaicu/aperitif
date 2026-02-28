@@ -5,7 +5,7 @@
     "migrate:up": "node-pg-migrate up -m ./src/migrations"
   },
   "overrides": {
-    "minimatch": "^10.2.2",
+    "minimatch": "^10.2.4",
     "glob": "^13.0.6"
   },
   "dependencies": {
