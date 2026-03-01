@@ -1,6 +1,6 @@
-import type { Route } from "./+types/login.authenticate";
+import type { Route } from "./+types/register.account";
 
-const UPSTREAM = "http://traefik-srv/auth/webauthn/authentication";
+const UPSTREAM = "http://traefik-srv/auth/webauthn/registration";
 
 export async function action({ request }: Route.ActionArgs) {
   const upstream = await fetch(UPSTREAM, {

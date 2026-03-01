@@ -1,12 +1,9 @@
-import type { Route } from "./+types/login.authenticate";
+const UPSTREAM = "http://traefik-srv/auth/webauthn/registration/challenge";
 
-const UPSTREAM = "http://traefik-srv/auth/webauthn/authentication";
-
-export async function action({ request }: Route.ActionArgs) {
+export async function action() {
   const upstream = await fetch(UPSTREAM, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(await request.json()),
   });
 
   const body = await upstream.text();

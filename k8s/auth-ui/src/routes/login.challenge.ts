@@ -1,10 +1,18 @@
-import type { Route } from "./+types/login.challenge";
+const UPSTREAM = "http://traefik-srv/auth/webauthn/authentication/challenge";
 
-export async function action(params: Route.ActionArgs) {
-  const res = await fetch(
-    "http://traefik-srv/auth/webauthn/authentication/challenge",
-    { method: "POST", headers: { "Content-Type": "application/json" } },
-  );
+export async function action() {
+  const upstream = await fetch(UPSTREAM, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
 
-  return await res.json();
+  const body = await upstream.text();
+
+  return new Response(body, {
+    status: upstream.status,
+    headers: {
+      "Content-Type":
+        upstream.headers.get("Content-Type") ?? "application/json",
+    },
+  });
 }
