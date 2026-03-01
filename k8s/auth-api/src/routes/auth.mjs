@@ -355,8 +355,6 @@ export const routes = async (fastify) => {
 
       try {
         await client.query("BEGIN");
-        await client.query("SET LOCAL lock_timeout = '75ms'");
-        await client.query("SET LOCAL statement_timeout = '1s'");
 
         await client.query(
           `INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`,
@@ -410,6 +408,12 @@ export const routes = async (fastify) => {
         // No slot available → user already has 5
         if (rowCount === 0) {
           await client.query("ROLLBACK");
+
+          request.log.info(
+            { userId },
+            "user reached maximum WebAuthn credentials",
+          );
+
           return reply.code(409).send(null);
         }
 
@@ -421,9 +425,16 @@ export const routes = async (fastify) => {
         /** @type {any} */ const error = err;
 
         if (error?.code === "23505") return reply.code(409).send(null);
-        if (["55P03", "57014"].includes(error?.code))
-          return reply.code(503).send(null);
 
+        if (["55P03", "57014"].includes(error?.code)) {
+          request.log.warn(
+            { code: error.code },
+            "transient database failure during registration",
+          );
+          return reply.code(503).send(null);
+        }
+
+        request.log.error({ err }, "unexpected error during registration");
         return reply.code(500).send(null);
       } finally {
         client.release();
@@ -531,8 +542,6 @@ export const routes = async (fastify) => {
 
       try {
         await client.query("BEGIN");
-        await client.query("SET LOCAL lock_timeout = '75ms'");
-        await client.query("SET LOCAL statement_timeout = '1s'");
 
         const {
           rows: [credential],
@@ -635,11 +644,17 @@ export const routes = async (fastify) => {
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ const e = err;
+        /** @type {any} */ const error = err;
 
-        if (["55P03", "57014"].includes(e?.code))
+        if (["55P03", "57014"].includes(error?.code)) {
+          request.log.warn(
+            { code: error.code },
+            "transient database failure during authentication",
+          );
           return reply.code(503).send(null);
+        }
 
+        request.log.error({ err }, "unexpected error during authentication");
         return reply.code(500).send(null);
       } finally {
         client.release();
@@ -670,8 +685,6 @@ export const routes = async (fastify) => {
 
       try {
         await client.query("BEGIN");
-        await client.query("SET LOCAL lock_timeout = '75ms'");
-        await client.query("SET LOCAL statement_timeout = '1s'");
 
         const {
           rows: [tokenRow],
@@ -732,6 +745,12 @@ export const routes = async (fastify) => {
           );
 
           await client.query("COMMIT");
+
+          request.log.warn(
+            { sessionId: tokenRow.session_id },
+            "refresh token reuse detected",
+          );
+
           return reply.code(401).send(null);
         }
 
@@ -786,11 +805,17 @@ export const routes = async (fastify) => {
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ const e = err;
-        if (e?.code === "57014" || e?.code === "55P03") {
+        /** @type {any} */ const error = err;
+
+        if (["55P03", "57014"].includes(error?.code)) {
+          request.log.warn(
+            { code: error.code },
+            "transient database failure during token refresh",
+          );
           return reply.code(503).send(null);
         }
 
+        request.log.error({ err }, "unexpected error during token refresh");
         return reply.code(500).send(null);
       } finally {
         client.release();
