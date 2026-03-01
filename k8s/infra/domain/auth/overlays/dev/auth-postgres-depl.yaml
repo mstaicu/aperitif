@@ -2,19 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: auth-api-postgres-depl
+  name: auth-postgres-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-api-postgres
+      app: auth-postgres
   template:
     metadata:
       labels:
-        app: auth-api-postgres
+        app: auth-postgres
     spec:
       containers:
-        - name: auth-api-postgres
+        - name: auth-postgres
           image: docker.io/postgres:18
           env:
             - name: POSTGRES_HOST_AUTH_METHOD
@@ -26,11 +26,11 @@ apiVersion: v1
 kind: Service
 
 metadata:
-  name: auth-api-postgres-srv
+  name: auth-postgres-srv
 spec:
   type: ClusterIP
   selector:
-    app: auth-api-postgres
+    app: auth-postgres
   ports:
     - name: postgres
       protocol: TCP

@@ -4,14 +4,12 @@ kind: Kustomization
 metadata:
   name: auth
 spec:
+  interval: 10m
+  path: ./k8s/infra/domain/auth/overlays/prod-eu
+  prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
-  path: ./k8s/infra/domain/auth/overlays/prod-eu
-  interval: 10m
-  retryInterval: 1m
-  timeout: 5m
-  prune: true
   dependsOn:
     - name: traefik
   decryption:

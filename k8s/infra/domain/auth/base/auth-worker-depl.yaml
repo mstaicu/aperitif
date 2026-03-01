@@ -7,12 +7,16 @@ spec:
   selector:
     matchLabels:
       app: auth-worker
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
         app: auth-worker
     spec:
+      serviceAccountName: auth-worker
+      # Defense in deep, disable this at the pod level to prevent overwrites at the
+      # service account level
+      automountServiceAccountToken: false
       containers:
         - name: auth-worker
           image: mdstaicu/auth-worker
@@ -21,16 +25,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+
             - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: auth-api-cm
-                  key: DATABASE_URL
-            - name: ORIGIN
-              valueFrom:
-                configMapKeyRef:
                   name: auth-worker-cm
-                  key: ORIGIN
+                  key: DATABASE_URL
 
             # Clients will learn the cluster topology, use the ClientIP hostname
             - name: NATS_URL
@@ -45,3 +45,33 @@ spec:
                 secretKeyRef:
                   name: auth-worker-nats-secrets
                   key: password
+
+          securityContext:
+            runAsNonRoot: true
+            # This will override the Docker image USER
+            # if you get this right, there will be issues
+            # uncommenting this to let the Dockerfile decide the USER
+            # runAsUser: 10001
+            allowPrivilegeEscalation: false
+
+            # Node sometimes writes to:
+            #   /tmp
+            #   $HOME
+            #   npm cache
+            # If your app ever crashes with:
+            #   EROFS: read-only file system
+            # You need to mount writable tmp.
+
+            # volumeMounts:
+            #   - name: tmp
+            #     mountPath: /tmp
+            # volumes:
+            #   - name: tmp
+            #     emptyDir: {}
+
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault

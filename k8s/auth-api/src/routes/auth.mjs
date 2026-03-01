@@ -1,6 +1,6 @@
 import {
-  verifyRegistrationResponse,
   verifyAuthenticationResponse,
+  verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { Type } from "@sinclair/typebox";
 import { importPKCS8, SignJWT } from "jose";
@@ -59,8 +59,8 @@ const mintAccessToken = async (p) => {
 // Base64url sometimes comes padded from non-browser clients.
 // Accept unpadded + optional "==" padding.
 const Base64Url = Type.String({
-  minLength: 1,
   maxLength: 8192,
+  minLength: 1,
   pattern: "^[A-Za-z0-9_-]+={0,2}$",
 });
 
@@ -82,42 +82,42 @@ const ClientExtensionResults = Type.Record(Type.String(), Type.Any());
 
 const RegistrationResponseJSON = Type.Object(
   {
+    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+    clientExtensionResults: Type.Optional(ClientExtensionResults),
     id: Base64Url,
+
     rawId: Base64Url,
-    type: Type.Literal("public-key"),
 
     response: Type.Object(
       {
-        clientDataJSON: Base64Url,
         attestationObject: Base64Url,
+        clientDataJSON: Base64Url,
       },
       { additionalProperties: true },
     ),
-
-    clientExtensionResults: Type.Optional(ClientExtensionResults),
-    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+    type: Type.Literal("public-key"),
   },
   { additionalProperties: false },
 );
 
 const AuthenticationResponseJSON = Type.Object(
   {
+    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+    clientExtensionResults: Type.Optional(ClientExtensionResults),
     id: Base64Url,
+
     rawId: Base64Url,
-    type: Type.Literal("public-key"),
 
     response: Type.Object(
       {
-        clientDataJSON: Base64Url,
         authenticatorData: Base64Url,
+        clientDataJSON: Base64Url,
         signature: Base64Url,
         userHandle: Type.Optional(Base64Url),
       },
       { additionalProperties: true },
     ),
-
-    clientExtensionResults: Type.Optional(ClientExtensionResults),
-    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
+    type: Type.Literal("public-key"),
   },
   { additionalProperties: false },
 );
@@ -135,8 +135,8 @@ const AuthenticationFinalizeBody = Type.Object(
 const RefreshBody = Type.Object(
   {
     refresh_token: Type.String({
-      minLength: 20,
       maxLength: 2048,
+      minLength: 20,
     }),
   },
   { additionalProperties: false },
@@ -145,18 +145,14 @@ const RefreshBody = Type.Object(
 const RegistrationChallengeResponse = Type.Object({
   publicKey: Type.Object(
     {
+      attestation: Type.String(),
+
+      authenticatorSelection: Type.Object({
+        residentKey: Type.String(),
+        userVerification: UserVerificationRequirement,
+      }),
+
       challenge: Base64Url,
-
-      rp: Type.Object({
-        id: Type.String(),
-        name: Type.String(),
-      }),
-
-      user: Type.Object({
-        id: Base64Url,
-        name: Type.String(),
-        displayName: Type.String(),
-      }),
 
       pubKeyCredParams: Type.Array(
         Type.Object({
@@ -165,12 +161,16 @@ const RegistrationChallengeResponse = Type.Object({
         }),
       ),
 
-      attestation: Type.String(),
-      authenticatorSelection: Type.Object({
-        residentKey: Type.String(),
-        userVerification: UserVerificationRequirement,
+      rp: Type.Object({
+        id: Type.String(),
+        name: Type.String(),
       }),
       timeout: Type.Optional(Type.Integer({ minimum: 1 })),
+      user: Type.Object({
+        displayName: Type.String(),
+        id: Base64Url,
+        name: Type.String(),
+      }),
     },
     { additionalProperties: true },
   ),
@@ -181,8 +181,8 @@ const AuthenticationChallengeResponse = Type.Object({
     {
       challenge: Base64Url,
       rpId: Type.String(),
-      userVerification: UserVerificationRequirement,
       timeout: Type.Optional(Type.Integer({ minimum: 1 })),
+      userVerification: UserVerificationRequirement,
     },
     { additionalProperties: true },
   ),
@@ -243,12 +243,12 @@ export const routes = async (fastify) => {
             { alg: -257, type: "public-key" },
           ],
           rp: { id: hostname, name: hostname },
+          timeout: 60000,
           user: {
             displayName: userId,
             id: Buffer.from(userId).toString("base64url"),
             name: userId,
           },
-          timeout: 60000,
         },
       });
     },
@@ -331,15 +331,15 @@ export const routes = async (fastify) => {
 
       try {
         verification = await verifyRegistrationResponse({
+          expectedChallenge,
+          expectedOrigin: origin,
+          expectedRPID: hostname,
+          expectedType: "webauthn.create",
+          requireUserVerification: true,
           response: {
             ...credential,
             clientExtensionResults: credential.clientExtensionResults ?? {},
           },
-          expectedChallenge,
-          expectedOrigin: origin,
-          expectedRPID: hostname,
-          requireUserVerification: true,
-          expectedType: "webauthn.create",
         });
       } catch {
         return reply.code(401).send(null);
@@ -415,8 +415,6 @@ export const routes = async (fastify) => {
 
         await client.query("COMMIT");
         return reply.code(201).send(null);
-
-        // Issue refresh token?
       } catch (err) {
         await client.query("ROLLBACK");
 
@@ -454,8 +452,8 @@ export const routes = async (fastify) => {
         publicKey: {
           challenge: challenge.value.toString("base64url"),
           rpId: hostname,
-          userVerification: "required",
           timeout: 60000,
+          userVerification: "required",
         },
       });
     },
@@ -554,20 +552,20 @@ export const routes = async (fastify) => {
         }
 
         const verification = await verifyAuthenticationResponse({
-          response: {
-            ...authentication,
-            clientExtensionResults: authentication.clientExtensionResults ?? {},
+          credential: {
+            counter: Number(credential.sign_count),
+            id: Buffer.from(credential.credential_id).toString("base64url"),
+            publicKey: new Uint8Array(credential.public_key),
           },
           expectedChallenge: Buffer.from(challenge.value).toString("base64url"),
           expectedOrigin: origin,
           expectedRPID: hostname,
-          credential: {
-            id: Buffer.from(credential.credential_id).toString("base64url"),
-            publicKey: new Uint8Array(credential.public_key),
-            counter: Number(credential.sign_count),
-          },
-          requireUserVerification: true,
           expectedType: "webauthn.get",
+          requireUserVerification: true,
+          response: {
+            ...authentication,
+            clientExtensionResults: authentication.clientExtensionResults ?? {},
+          },
         });
 
         if (!verification.verified) {
