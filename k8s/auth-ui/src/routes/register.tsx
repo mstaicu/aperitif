@@ -58,7 +58,7 @@ async function handleRegister() {
   const attestation = credential.response as AuthenticatorAttestationResponse;
 
   const payload = {
-    registration: {
+    credential: {
       id: credential.id,
       rawId: arrayBufferToBase64url(credential.rawId),
       type: credential.type,

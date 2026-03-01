@@ -16,3 +16,8 @@ helm template traefik traefik/traefik \
   --version 39.0.2 \
   -n traefik \
   > controller.yaml
+
+# Cloudflare
+
+1. Cloudflare custom token -> Zone → DNS → Edit AND Zone → Zone → Read
+2. Add it to traefik-cf, encrypt it with with age

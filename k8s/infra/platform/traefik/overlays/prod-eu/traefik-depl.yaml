@@ -4,12 +4,7 @@ kind: Deployment
 metadata:
   name: traefik-depl
 spec:
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+  replicas: 1
   template:
     spec:
       containers:
@@ -32,6 +27,10 @@ spec:
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
             - --entrypoints.https.transport.maxHeaderBytes=16384
             #
+            - --certificatesresolvers.le.acme.dnschallenge=true
+            - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
+            - --certificatesresolvers.le.acme.storage=/data/acme.json
+            #
             # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
             - --providers.kubernetescrd=true
             #
@@ -42,3 +41,19 @@ spec:
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
+
+          env:
+            - name: CF_DNS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-dns
+                  key: CF_DNS_API_TOKEN
+
+          volumeMounts:
+            - name: traefik-acme-volume
+              mountPath: /data
+
+      volumes:
+        - name: traefik-acme-volume
+          persistentVolumeClaim:
+            claimName: traefik-acme-pvc

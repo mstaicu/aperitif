@@ -5,7 +5,8 @@ namespace: traefik
 
 resources:
   - ../../base
-  - traefik-acme-pvc.yaml
+  - traefik-cf.yaml
+  - traefik-do-pvc.yaml
   - traefik-ingress.yaml
   - traefik-ns.yaml
   - traefik-svc.yaml
