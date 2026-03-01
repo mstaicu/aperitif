@@ -53,6 +53,9 @@ manifests:
 deploy:
   kubectl: {}
 
+# skaffold dev -m app
+# Do not add requires and run skaffold dev as this will destroy stuff
+
 ---
 apiVersion: skaffold/v4beta11
 kind: Config

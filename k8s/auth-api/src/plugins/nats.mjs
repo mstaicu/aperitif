@@ -11,7 +11,6 @@ export const natsPlugin = fp(async (fastify) => {
     user: nconf.get("NATS_USER"),
   });
 
-  const js = jetstream(nc);
   const jsm = await jetstreamManager(nc);
 
   // max_bytes, retention, and discard
@@ -32,7 +31,7 @@ export const natsPlugin = fp(async (fastify) => {
   }
 
   // fastify.decorate("nc", nc);
-  fastify.decorate("js", js);
+  fastify.decorate("js", jetstream(nc));
   // fastify.decorate("jsm", jsm);
 
   fastify.addHook("onClose", async () => {

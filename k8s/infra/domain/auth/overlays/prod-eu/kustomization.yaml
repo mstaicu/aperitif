@@ -19,6 +19,9 @@ configMapGenerator:
 generators:
   - auth-ksops-gen.yaml
 
+patches:
+  - path: auth-api-depl.yaml
+
 images:
   - name: docker.io/mdstaicu/auth-api
     # Translation: This field is managed by this ImagePolicy:

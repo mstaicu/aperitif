@@ -56,38 +56,6 @@ spec:
                   name: auth-api-nats-creds
                   key: password
 
-          securityContext:
-            runAsNonRoot: true
-            # This will override the Docker image USER
-            # if you get this right, there will be issues
-            # uncommenting this to let the Dockerfile decide the USER
-            runAsUser: 1000
-            runAsGroup: 1000
-
-            allowPrivilegeEscalation: false
-
-            # Node sometimes writes to:
-            #   /tmp
-            #   $HOME
-            #   npm cache
-            # If your app ever crashes with:
-            #   EROFS: read-only file system
-            # You need to mount writable tmp.
-
-            # volumeMounts:
-            #   - name: tmp
-            #     mountPath: /tmp
-            # volumes:
-            #   - name: tmp
-            #     emptyDir: {}
-
-            # readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
-
           volumeMounts:
             - name: auth-api-jwt
               mountPath: /app/keys

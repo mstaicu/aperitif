@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-api-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: auth-api
+          securityContext:
+            runAsNonRoot: true
+            # This will override the Docker image USER
+            # if you get this right, there will be issues
+            # uncommenting this to let the Dockerfile decide the USER
+            runAsUser: 1000
+            runAsGroup: 1000
+
+            allowPrivilegeEscalation: false
+
+            # Node sometimes writes to:
+            #   /tmp
+            #   $HOME
+            #   npm cache
+            # If your app ever crashes with:
+            #   EROFS: read-only file system
+            # You need to mount writable tmp.
+
+            # volumeMounts:
+            #   - name: tmp
+            #     mountPath: /tmp
+            # volumes:
+            #   - name: tmp
+            #     emptyDir: {}
+
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+          volumeMounts:
+            - name: auth-api-jwt
+              mountPath: /app/keys
+              readOnly: true
+
+          #
+          # total probe time =
+          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
+          #
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+      volumes:
+        - name: auth-api-jwt
+          secret:
+            secretName: auth-api-jwt
