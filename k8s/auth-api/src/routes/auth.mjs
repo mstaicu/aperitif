@@ -204,7 +204,7 @@ export const routes = async (fastify) => {
   const { pool } = fastify;
 
   fastify.post(
-    "/webauthn/registration/challenge",
+    "/auth/webauthn/registration/challenge",
     {
       schema: {
         response: {
@@ -255,7 +255,7 @@ export const routes = async (fastify) => {
   );
 
   fastify.post(
-    "/webauthn/registration",
+    "/auth/webauthn/registration",
     {
       schema: {
         body: RegistrationFinalizeBody,
@@ -432,7 +432,7 @@ export const routes = async (fastify) => {
   );
 
   fastify.post(
-    "/webauthn/authentication/challenge",
+    "/auth/webauthn/authentication/challenge",
     { schema: { response: { 200: AuthenticationChallengeResponse } } },
     async (_, reply) => {
       const {
@@ -460,7 +460,7 @@ export const routes = async (fastify) => {
   );
 
   fastify.post(
-    "/webauthn/authentication",
+    "/auth/webauthn/authentication",
     {
       schema: {
         body: AuthenticationFinalizeBody,

@@ -61,7 +61,9 @@ spec:
             # This will override the Docker image USER
             # if you get this right, there will be issues
             # uncommenting this to let the Dockerfile decide the USER
-            # runAsUser: 10001
+            runAsUser: 1000
+            runAsGroup: 1000
+
             allowPrivilegeEscalation: false
 
             # Node sometimes writes to:
@@ -79,7 +81,7 @@ spec:
             #   - name: tmp
             #     emptyDir: {}
 
-            readOnlyRootFilesystem: true
+            # readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL

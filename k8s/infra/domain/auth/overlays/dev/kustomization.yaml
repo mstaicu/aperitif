@@ -21,9 +21,12 @@ configMapGenerator:
     literals:
       - DATABASE_URL=postgres://postgres@auth-postgres-srv:5432/auth
       - ORIGIN=https://tma.com
-  - name: auth-worker-cm
-    literals:
-      - DATABASE_URL=postgres://postgres@auth-postgres-srv:5432/auth
+  # - name: auth-worker-cm
+  #   literals:
+  #     - DATABASE_URL=postgres://postgres@auth-postgres-srv:5432/auth
+
+patches:
+  - path: auth-api-depl.yaml
 
 generators:
   - auth-ksops-generator.yaml
