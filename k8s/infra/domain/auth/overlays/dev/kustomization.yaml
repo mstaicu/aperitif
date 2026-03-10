@@ -9,7 +9,6 @@ resources:
   - auth-api-middleware.yaml
   # - auth-api-nats-account.yaml
   - auth-api-nats-creds.yaml
-  - auth-np.yaml
   - auth-ns.yaml
   - auth-postgres-depl.yaml
   # - auth-stream.yaml

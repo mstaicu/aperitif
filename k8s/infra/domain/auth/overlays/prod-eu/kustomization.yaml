@@ -23,8 +23,7 @@ patches:
   - path: auth-api-depl.yaml
 
 images:
-  - name: docker.io/mdstaicu/auth-api
-    # Translation: This field is managed by this ImagePolicy:
-    # <namespace>:<imagepolicy-name>
+  - name: mdstaicu/auth-api
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
     # meaning: flux-system:auth-api-latest
     newTag: latest # {"$imagepolicy": "flux-system:auth-api-latest"}

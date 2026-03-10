@@ -14,8 +14,8 @@ spec:
         app: auth-api
     spec:
       serviceAccountName: auth-api
-      # Defense in deep, disable this at the pod level to prevent overwrites at the
-      # service account level
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
       containers:
         - name: auth-api
@@ -55,6 +55,21 @@ spec:
                 secretKeyRef:
                   name: auth-api-nats-creds
                   key: password
+
+          securityContext:
+            # if this container resolves to UID 0 (root), fail startup
+            runAsNonRoot: true
+
+            # prevents a process from gaining more privileges via setuid binaries
+            allowPrivilegeEscalation: false
+
+            capabilities:
+              drop:
+                - ALL
+
+            # filters allowed syscalls, uses container runtime’s default hardened profile
+            seccompProfile:
+              type: RuntimeDefault
 
           volumeMounts:
             - name: auth-api-jwt

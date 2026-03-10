@@ -31,7 +31,6 @@ const generateRefreshToken = () => {
 /**
  * @param {{
  *   userId: string,
- *   sessionId: string,
  *   aud: string[],
  *   scope?: string[]
  * }} p
@@ -44,7 +43,6 @@ const mintAccessToken = async (p) => {
 
   return new SignJWT({
     scope: p.scope ?? [],
-    sid: p.sessionId,
   })
     .setProtectedHeader({ alg: "ES256", kid: JWT_KID, typ: "JWT" })
     .setIssuer(ISSUER)
@@ -686,111 +684,122 @@ export const routes = async (fastify) => {
       try {
         await client.query("BEGIN");
 
-        const {
-          rows: [tokenRow],
-        } = await client.query(
+        const consumeResult = await client.query(
           `
+          UPDATE refresh_tokens t
+          SET used_at = NOW()
+          FROM sessions s
+          WHERE t.token_hash = $1
+            AND t.used_at IS NULL
+            AND t.reused_at IS NULL
+            AND t.session_id = s.id
+            AND s.revoked_at IS NULL
+            AND s.refresh_expires_at > NOW()
+          RETURNING
+            t.id AS token_id,
+            s.id AS session_id,
+            s.user_id
+        `,
+          [incomingHash],
+        );
+
+        const consumed = consumeResult.rows[0];
+
+        if (!consumed) {
+          const existingResult = await client.query(
+            `
             SELECT
-              s.id AS session_id,
-              s.user_id,
-              s.revoked_at
+              t.session_id,
+              t.used_at,
+              t.reused_at,
+              s.revoked_at,
+              s.refresh_expires_at
             FROM refresh_tokens t
             JOIN sessions s ON s.id = t.session_id
             WHERE t.token_hash = $1
-              AND s.refresh_expires_at > NOW()
             FOR UPDATE OF t, s
           `,
-          [incomingHash],
-        );
+            [incomingHash],
+          );
 
-        if (!tokenRow || tokenRow.revoked_at) {
-          await client.query("ROLLBACK");
-          return reply.code(401).send(null);
-        }
+          const existing = existingResult.rows[0];
 
-        /*
-          Attempt to mark token as used.
-          If rowCount === 0, token was already used -> reuse detected.
-        */
-        const { rowCount: marked } = await client.query(
-          `
-            UPDATE refresh_tokens
-            SET used_at = NOW()
-            WHERE token_hash = $1
-              AND used_at IS NULL
-          `,
-          [incomingHash],
-        );
+          if (!existing) {
+            await client.query("ROLLBACK");
+            return reply.code(401).send(null);
+          }
 
-        if (marked === 0) {
-          // Reuse detected
+          const isReplay =
+            existing.used_at !== null || existing.reused_at !== null;
+
+          if (!isReplay) {
+            await client.query("ROLLBACK");
+            return reply.code(401).send(null);
+          }
+
           await client.query(
             `
-              UPDATE refresh_tokens
-              SET reused_at = NOW()
-              WHERE token_hash = $1
-                AND reused_at IS NULL
-            `,
+            UPDATE refresh_tokens
+            SET reused_at = NOW()
+            WHERE token_hash = $1
+              AND reused_at IS NULL
+          `,
             [incomingHash],
           );
 
           await client.query(
             `
-              UPDATE sessions
-              SET revoked_at = NOW()
-              WHERE id = $1
-                AND revoked_at IS NULL
-            `,
-            [tokenRow.session_id],
+            UPDATE sessions
+            SET revoked_at = NOW()
+            WHERE id = $1
+              AND revoked_at IS NULL
+          `,
+            [existing.session_id],
           );
 
           await client.query("COMMIT");
 
           request.log.warn(
-            { sessionId: tokenRow.session_id },
+            { sessionId: existing.session_id },
             "refresh token reuse detected",
           );
 
           return reply.code(401).send(null);
         }
 
-        /*
-          Normal rotation
-        */
         const { hash: newHash, token: newRefresh } = generateRefreshToken();
 
-        const { rowCount: updated } = await client.query(
+        const sessionUpdateResult = await client.query(
           `
-            UPDATE sessions
-            SET refresh_token_hash = $2,
-                refresh_expires_at =
-                  NOW() + ($3::int * INTERVAL '1 second')
-            WHERE id = $1
-              AND revoked_at IS NULL
-          `,
-          [tokenRow.session_id, newHash, REFRESH_TTL_SECONDS],
+          UPDATE sessions
+          SET refresh_expires_at =
+            NOW() + ($2::int * INTERVAL '1 second')
+          WHERE id = $1
+            AND revoked_at IS NULL
+          RETURNING id
+        `,
+          [consumed.session_id, REFRESH_TTL_SECONDS],
         );
 
-        if (updated === 0) {
+        if (sessionUpdateResult.rowCount === 0) {
           await client.query("ROLLBACK");
           return reply.code(401).send(null);
         }
 
         await client.query(
           `
-            INSERT INTO refresh_tokens
-              (session_id, token_hash)
-            VALUES
-              ($1, $2)
-          `,
-          [tokenRow.session_id, newHash],
+          INSERT INTO refresh_tokens
+            (session_id, token_hash, parent_token_id)
+          VALUES
+            ($1, $2, $3)
+        `,
+          [consumed.session_id, newHash, consumed.token_id],
         );
 
         const accessToken = await mintAccessToken({
           aud: ["auth"],
           scope: [],
-          sessionId: tokenRow.session_id,
-          userId: tokenRow.user_id,
+          userId: consumed.user_id,
         });
 
         await client.query("COMMIT");
@@ -805,7 +814,8 @@ export const routes = async (fastify) => {
       } catch (err) {
         await client.query("ROLLBACK");
 
-        /** @type {any} */ const error = err;
+        /** @type {any} */
+        const error = err;
 
         if (["55P03", "57014"].includes(error?.code)) {
           request.log.warn(
@@ -813,6 +823,14 @@ export const routes = async (fastify) => {
             "transient database failure during token refresh",
           );
           return reply.code(503).send(null);
+        }
+
+        if (error?.code === "23505") {
+          request.log.warn(
+            { code: error.code },
+            "refresh token rotation conflict",
+          );
+          return reply.code(401).send(null);
         }
 
         request.log.error({ err }, "unexpected error during token refresh");

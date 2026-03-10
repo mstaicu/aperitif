@@ -58,18 +58,15 @@ CREATE TABLE sessions (
 
     revoked_at TIMESTAMPTZ,
 
-    -- pointer to current active refresh token
-    refresh_token_hash BYTEA NOT NULL UNIQUE,
-
     refresh_expires_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_sessions_active_by_user_created
-    ON sessions(user_id, created_at DESC, id DESC)
-    WHERE revoked_at IS NULL;
+-- CREATE INDEX idx_sessions_refresh_expiration
+--     ON sessions(refresh_expires_at);
 
-CREATE INDEX idx_sessions_refresh_expiration
-    ON sessions(refresh_expires_at);
+-- CREATE INDEX idx_sessions_active_by_user_created
+--     ON sessions(user_id, created_at DESC, id DESC)
+--     WHERE revoked_at IS NULL;
 
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY
@@ -78,6 +75,9 @@ CREATE TABLE refresh_tokens (
     session_id UUID NOT NULL
         REFERENCES sessions(id)
         ON DELETE CASCADE,
+
+    parent_token_id UUID
+        REFERENCES refresh_tokens(id),
 
     token_hash BYTEA NOT NULL UNIQUE,
 
@@ -89,11 +89,13 @@ CREATE TABLE refresh_tokens (
     reused_at TIMESTAMPTZ
 );
 
--- 🔥 Enforce exactly ONE active refresh token per session
--- Active token = used_at IS NULL
+-- Exactly one active refresh token per session
 CREATE UNIQUE INDEX unique_active_refresh_per_session
     ON refresh_tokens(session_id)
-    WHERE used_at IS NULL;
+    WHERE used_at IS NULL AND reused_at IS NULL;
+
+-- CREATE INDEX idx_refresh_tokens_session_id
+--     ON refresh_tokens(session_id);
 
 CREATE INDEX idx_refresh_reuse_detected
     ON refresh_tokens(reused_at)
