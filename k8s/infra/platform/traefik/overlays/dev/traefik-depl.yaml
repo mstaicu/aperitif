@@ -47,21 +47,24 @@ spec:
             - --metrics.otlp=true
             - --metrics.otlp.serviceName=traefik
             - --metrics.otlp.grpc=true
-            - --metrics.otlp.grpc.endpoint=$(NODE_IP):4317
+            - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT):4317
             - --metrics.otlp.grpc.insecure=true
+
+            # Reduce cardinality
             - --metrics.otlp.addEntryPointsLabels=false
             - --metrics.otlp.addRoutersLabels=false
-            - --metrics.otlp.addServicesLabels=true
+            - --metrics.otlp.addServicesLabels=false
 
             - --tracing.otlp=true
             - --tracing.serviceName=traefik
             - --tracing.otlp.grpc=true
-            - --tracing.otlp.grpc.endpoint=$(NODE_IP):4317
+            - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT):4317
             - --tracing.otlp.grpc.insecure=true
+
             - --tracing.sampleRate=1.0
 
           env:
-            - name: NODE_IP
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP

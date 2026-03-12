@@ -56,6 +56,11 @@ spec:
                   name: auth-api-nats-creds
                   key: password
 
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+
           # securityContext:
           #   # if this container resolves to UID 0 (root), fail startup
           #   runAsNonRoot: true

@@ -19,7 +19,6 @@ data:
         include:
           - /var/log/pods/*_traefik_*/*.log
           - /var/log/pods/*_nats_*/*.log
-
         include_file_path: true
         start_at: end
         operators:
@@ -39,6 +38,16 @@ data:
             - k8s.namespace.name
             - k8s.deployment.name
 
+      transform/traefik:
+        error_mode: ignore
+        metric_statements:
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "entrypoint")
+              - delete_key(attributes, "protocol")
+              - delete_key(attributes, "tls_cipher")
+              - delete_key(attributes, "tls_version")
+
       batch:
 
     exporters:
@@ -46,22 +55,39 @@ data:
         verbosity: detailed
 
     service:
-      extensions: [health_check]
+      extensions:
+        - health_check
       pipelines:
         traces:
-          receivers: [otlp]
-          processors: [memory_limiter, k8s_attributes, batch]
-          exporters: [debug]
+          receivers:
+            - otlp
+          processors:
+            - memory_limiter
+            - k8s_attributes
+            - batch
+          exporters:
+            - debug
 
         metrics:
-          receivers: [otlp]
-          processors: [memory_limiter, k8s_attributes, batch]
-          exporters: [debug]
+          receivers:
+            - otlp
+          processors:
+            - memory_limiter
+            - k8s_attributes
+            - transform/traefik
+            - batch
+          exporters:
+            - debug
 
         logs:
-          receivers: [filelog]
-          processors: [memory_limiter, k8s_attributes, batch]
-          exporters: [debug]
+          receivers:
+            - filelog
+          processors:
+            - memory_limiter
+            - k8s_attributes
+            - batch
+          exporters:
+            - debug
 
 ---
 apiVersion: v1
@@ -99,7 +125,6 @@ roleRef:
 ---
 apiVersion: apps/v1
 kind: DaemonSet
-
 metadata:
   name: otel-collector
 spec:
