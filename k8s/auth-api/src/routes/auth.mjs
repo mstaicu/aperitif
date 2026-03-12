@@ -28,32 +28,6 @@ const generateRefreshToken = () => {
   return { hash, token };
 };
 
-/**
- * @param {{
- *   userId: string,
- *   aud: string[],
- *   scope?: string[]
- * }} p
- *
- * @returns {Promise<string>}
- */
-const mintAccessToken = async (p) => {
-  const now = Math.floor(Date.now() / 1000);
-  const exp = now + ACCESS_TTL_SECONDS;
-
-  return new SignJWT({
-    scope: p.scope ?? [],
-  })
-    .setProtectedHeader({ alg: "ES256", kid: JWT_KID, typ: "JWT" })
-    .setIssuer(ISSUER)
-    .setSubject(p.userId)
-    .setAudience(p.aud)
-    .setIssuedAt(now)
-    .setExpirationTime(exp)
-    .setJti(randomBytes(16).toString("base64url"))
-    .sign(privateKey);
-};
-
 // Base64url sometimes comes padded from non-browser clients.
 // Accept unpadded + optional "==" padding.
 const Base64Url = Type.String({
@@ -359,7 +333,6 @@ export const routes = async (fastify) => {
           [userId],
         );
 
-        // serialize slot allocation for this user
         await client.query(
           `SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`,
           [userId],
@@ -584,25 +557,59 @@ export const routes = async (fastify) => {
         const oldCounter = Number(credential.sign_count);
 
         // Monotonic counter enforcement
-        if (
-          (oldCounter > 0 && newCounter === 0) ||
-          (newCounter > 0 && newCounter <= oldCounter)
-        ) {
-          await client.query("ROLLBACK");
-          return reply.code(401).send(null);
+        // if (
+        //   (oldCounter > 0 && newCounter === 0) ||
+        //   (newCounter > 0 && newCounter <= oldCounter)
+        // ) {
+        //   await client.query("ROLLBACK");
+        //   return reply.code(401).send(null);
+        // }
+
+        /**
+         * 1. If the device supports a counter (newCounter > 0),
+         * it MUST be greater than the old one.
+         * 2. If the device reports 0, it's a synced passkey (or a 0-counter device).
+         * We accept it, but we don't 'downgrade' our stored counter.
+         */
+        if (newCounter > 0) {
+          if (newCounter <= oldCounter) {
+            await client.query("ROLLBACK");
+            return reply.code(401).send(null);
+          }
         }
+
+        // const { rowCount } = await client.query(
+        //   `
+        //     UPDATE webauthn_credentials
+        //     SET sign_count = $2
+        //     WHERE credential_id = $1
+        //       AND (sign_count = 0 OR $2 > sign_count)
+        //   `,
+        //   [credential.credential_id, newCounter],
+        // );
+
+        // if (rowCount === 0) {
+        //   await client.query("ROLLBACK");
+        //   return reply.code(401).send(null);
+        // }
 
         const { rowCount } = await client.query(
           `
             UPDATE webauthn_credentials
-            SET sign_count = $2
+            SET sign_count = CASE 
+              -- If new counter is greater, use it
+              WHEN $2 > sign_count THEN $2 
+              -- Otherwise, keep the existing count
+              ELSE sign_count 
+            END
             WHERE credential_id = $1
-              AND (sign_count = 0 OR $2 > sign_count)
           `,
           [credential.credential_id, newCounter],
         );
 
+        // rowCount will now be 1 as long as the credential_id exists
         if (rowCount === 0) {
+          // This would only trigger if the credential was deleted during the transaction
           await client.query("ROLLBACK");
           return reply.code(401).send(null);
         }
@@ -796,11 +803,22 @@ export const routes = async (fastify) => {
           [consumed.session_id, newHash, consumed.token_id],
         );
 
-        const accessToken = await mintAccessToken({
-          aud: ["auth"],
+        // Mint
+        const now = Math.floor(Date.now() / 1000);
+        const exp = now + ACCESS_TTL_SECONDS;
+
+        const accessToken = await new SignJWT({
           scope: [],
-          userId: consumed.user_id,
-        });
+        })
+          .setProtectedHeader({ alg: "ES256", kid: JWT_KID, typ: "JWT" })
+          .setIssuer(ISSUER)
+          .setSubject(consumed.user_id)
+          // TODO: Set 'aud' per claims of his plan
+          .setAudience([])
+          .setIssuedAt(now)
+          .setExpirationTime(exp)
+          .setJti(randomBytes(16).toString("base64url"))
+          .sign(privateKey);
 
         await client.query("COMMIT");
 

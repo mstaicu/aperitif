@@ -44,21 +44,27 @@ spec:
             - --api=true
             - --api.dashboard=true
 
-            # Metrics
-            # - --metrics.otlp=true
+            - --metrics.otlp=true
             - --metrics.otlp.serviceName=traefik
-            - --metrics.otlp.grpc.endpoint=otel-collector.signoz.svc.cluster.local:4317
+            - --metrics.otlp.grpc=true
+            - --metrics.otlp.grpc.endpoint=$(NODE_IP):4317
             - --metrics.otlp.grpc.insecure=true
-            # - --metrics.addEntryPointsLabels=true
-            # - --metrics.addServicesLabels=true
-            - --metrics.addRoutersLabels=true
+            - --metrics.otlp.addEntryPointsLabels=false
+            - --metrics.otlp.addRoutersLabels=false
+            - --metrics.otlp.addServicesLabels=true
 
-            # Tracing
-            # - --tracing.otlp=true
+            - --tracing.otlp=true
             - --tracing.serviceName=traefik
-            - --tracing.otlp.grpc.endpoint=otel-collector.signoz.svc.cluster.local:4317
+            - --tracing.otlp.grpc=true
+            - --tracing.otlp.grpc.endpoint=$(NODE_IP):4317
             - --tracing.otlp.grpc.insecure=true
-            - --tracing.sampleRate=0.1
+            - --tracing.sampleRate=1.0
+
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
 
           volumeMounts:
             - name: plugins

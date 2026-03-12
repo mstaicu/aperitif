@@ -36,22 +36,22 @@ spec:
               port: 80
             periodSeconds: 10
 
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   readOnlyRootFilesystem: true
+          #   capabilities:
+          #     drop: ["ALL"]
+          #   seccompProfile:
+          #     type: RuntimeDefault
 
           volumeMounts:
             - name: tmp
               mountPath: /tmp
 
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 65532
+      #   runAsGroup: 65532
 
       volumes:
         - name: tmp

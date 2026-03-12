@@ -15,15 +15,15 @@ export const pgPlugin = fp(async (fastify) => {
     max: 20,
   });
 
-  pool.on("connect", async (client) => {
-    try {
-      await client.query("SET statement_timeout = '1500ms'");
-      await client.query("SET lock_timeout = '250ms'");
-      await client.query("SET idle_in_transaction_session_timeout = '5s'");
-    } catch (err) {
-      fastify.log.error({ err }, "pg: failed to configure session defaults");
-    }
-  });
+  // pool.on("connect", async (client) => {
+  //   try {
+  //     await client.query("SET statement_timeout = '1500ms'");
+  //     await client.query("SET lock_timeout = '250ms'");
+  //     await client.query("SET idle_in_transaction_session_timeout = '5s'");
+  //   } catch (err) {
+  //     fastify.log.error({ err }, "pg: failed to configure session defaults");
+  //   }
+  // });
 
   pool.on("error", (err) =>
     fastify.log.error({ err }, "pg: unexpected pool error"),
