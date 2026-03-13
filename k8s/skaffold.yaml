@@ -45,16 +45,11 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
-      # Required because ksops (SOPS plugin) is used.
-      # Allows Kustomize to execute external plugin binaries.
 
-# REQUIRED for manifest-only modules,
-# ensures build output is applied to the cluster
 deploy:
   kubectl: {}
 
 # skaffold dev -m app
-# Do not add requires and run skaffold dev as this will destroy stuff
 
 ---
 apiVersion: skaffold/v4beta11
@@ -63,14 +58,9 @@ kind: Config
 metadata:
   name: app
 
-# requires:
-#   - configs: ["infra"]
-
 build:
   local:
     push: false
-    # Images stay in local Docker daemon.
-    # No registry push for local dev.
 
   artifacts:
     - image: mdstaicu/auth-api
@@ -92,11 +82,6 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
-      # Needed if ksops is also used in domain layer.
 
-# Explicit deploy step.
-# Ensures consistent behavior across modules.
-# Not strictly required here (because build exists),
-# but recommended for consistency and future-proofing.
 deploy:
   kubectl: {}
