@@ -56,19 +56,15 @@ spec:
                   name: auth-api-nats-creds
                   key: password
 
-            - name: OTEL_SERVICE_NAME
-              value: auth-api
-
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://otel-collector.otel.svc.cluster.local:4318
 
-            - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: http/protobuf
+            # - name: OTEL_EXPORTER_OTLP_PROTOCOL
+            #   value: http/protobuf
 
             - name: OTEL_METRICS_EXPORTER
               value: none
 
-            # Disable the logger exporter as we aggregate them from the node's stdout
             - name: OTEL_LOGS_EXPORTER
               value: none
 

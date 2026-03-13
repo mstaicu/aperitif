@@ -12,25 +12,28 @@ data:
         protocols:
           http:
             endpoint: 0.0.0.0:4318
+          grpc:
+            endpoint: 0.0.0.0:4317
 
     processors:
-      k8s_attributes:
-        filter:
-          node_from_env_var: KUBE_NODE_NAME
-        extract:
-          metadata:
-            - k8s.namespace.name
-            - k8s.deployment.name
 
-      transform/traefik:
+      transform/resources:
         error_mode: ignore
-        metric_statements:
-          - context: datapoint
+        trace_statements:
+          - context: resource
             statements:
-              - delete_key(attributes, "entrypoint")
-              - delete_key(attributes, "protocol")
-              - delete_key(attributes, "tls_cipher")
-              - delete_key(attributes, "tls_version")
+              - keep_keys(attributes, ["service.name"])
+        metric_statements:
+          - context: resource
+            statements:
+              - keep_keys(attributes, ["service.name"])
+
+      transform/spans:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+              - keep_keys(attributes, ["http.method", "http.route", "http.status_code"])
 
       batch:
 
@@ -48,16 +51,8 @@ data:
           receivers:
             - otlp
           processors:
-            - k8s_attributes
-            - batch
-          exporters:
-            - debug
-
-        logs:
-          receivers:
-            - otlp
-          processors:
-            - k8s_attributes
+            - transform/resources
+            - transform/spans
             - batch
           exporters:
             - debug
@@ -66,50 +61,19 @@ data:
           receivers:
             - otlp
           processors:
-            - k8s_attributes
-            - transform/traefik
+            - transform/resources
             - batch
           exporters:
             - debug
 
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: otel-collector
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: otel-collector
-rules:
-  - apiGroups: [""]
-    resources: ["pods", "namespaces"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["replicasets"]
-    verbs: ["get", "list", "watch"]
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: otel-collector
-subjects:
-  - kind: ServiceAccount
-    name: otel-collector
-roleRef:
-  kind: ClusterRole
-  name: otel-collector
-  apiGroup: rbac.authorization.k8s.io
-
----
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
+
 metadata:
   name: otel-collector
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: otel-collector
@@ -118,28 +82,18 @@ spec:
       labels:
         app: otel-collector
     spec:
-      serviceAccountName: otel-collector
-      tolerations:
-        - operator: Exists
+      automountServiceAccountToken: false
       containers:
         - name: otel-collector
           image: otel/opentelemetry-collector-contrib:0.147.0
           args:
             - --config=/conf/otel-config.yaml
-          env:
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-
           ports:
             - containerPort: 4318
             - containerPort: 4317
-
           volumeMounts:
             - name: config
               mountPath: /conf
-
       volumes:
         - name: config
           configMap:
@@ -148,6 +102,7 @@ spec:
 ---
 apiVersion: v1
 kind: Service
+
 metadata:
   name: otel-collector
 spec:
