@@ -10,26 +10,39 @@ data:
     receivers:
       otlp:
         protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
 
       filelog:
         include:
-          - /var/log/pods/*_traefik_*/*.log
-          - /var/log/pods/*_nats_*/*.log
-        include_file_path: true
+          - /var/log/pods/*auth*/*/*.log
         start_at: end
+        include_file_path: true
+
         operators:
           - type: container
 
-    processors:
-      memory_limiter:
-        check_interval: 1s
-        limit_mib: 400
-        spike_limit_mib: 100
+          - type: json_parser
+            parse_from: body
+            on_error: send
 
+          - type: move
+            from: body.trace_id
+            to: attributes.trace_id
+            if: body.trace_id != nil
+
+          - type: move
+            from: body.span_id
+            to: attributes.span_id
+            if: body.span_id != nil
+
+          - type: trace_parser
+            trace_id:
+              parse_from: attributes.trace_id
+            span_id:
+              parse_from: attributes.span_id
+
+    processors:
       k8s_attributes:
         filter:
           node_from_env_var: KUBE_NODE_NAME
@@ -57,12 +70,13 @@ data:
     service:
       extensions:
         - health_check
+
       pipelines:
+
         traces:
           receivers:
             - otlp
           processors:
-            - memory_limiter
             - k8s_attributes
             - batch
           exporters:
@@ -72,7 +86,6 @@ data:
           receivers:
             - otlp
           processors:
-            - memory_limiter
             - k8s_attributes
             - transform/traefik
             - batch
@@ -83,7 +96,6 @@ data:
           receivers:
             - filelog
           processors:
-            - memory_limiter
             - k8s_attributes
             - batch
           exporters:
@@ -116,7 +128,6 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: otel-collector
-    namespace: default
 roleRef:
   kind: ClusterRole
   name: otel-collector
@@ -149,11 +160,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          ports:
-            - containerPort: 4317
-              hostPort: 4317
-            - containerPort: 4318
-              hostPort: 4318
+
+          # ports:
+          #   - containerPort: 4317
+          #     hostPort: 4317
+          #   - containerPort: 4318
+          #     hostPort: 4318
+
           # resources:
           #   requests:
           #     cpu: 100m
@@ -164,14 +177,39 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /conf
+
             - name: varlogpods
               mountPath: /var/log/pods
+              readOnly: true
+
+            - name: vardockercontainers
+              mountPath: /var/lib/docker/containers
               readOnly: true
 
       volumes:
         - name: config
           configMap:
             name: otel-collector
+
         - name: varlogpods
           hostPath:
             path: /var/log/pods
+            type: Directory
+
+        - name: vardockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+            type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318

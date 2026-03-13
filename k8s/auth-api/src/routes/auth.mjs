@@ -184,7 +184,7 @@ export const routes = async (fastify) => {
         },
       },
     },
-    async (_, reply) => {
+    async (request, reply) => {
       const userId = randomUUID();
 
       const {
@@ -200,6 +200,8 @@ export const routes = async (fastify) => {
 
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
+
+      request.log.info({ challenge }, "challenge handler after db");
 
       return reply.code(200).send({
         publicKey: {

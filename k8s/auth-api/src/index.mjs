@@ -13,7 +13,6 @@ nconf
     "NATS_PASSWORD",
 
     "ORIGIN",
-    "OTEL_EXPORTER_OTLP_ENDPOINT",
   ]);
 
 var origin = nconf.get("ORIGIN");
@@ -24,5 +23,4 @@ try {
   throw new Error(`Invalid ORIGIN: ${origin}`);
 }
 
-import("./otel.mjs");
 import("./server.mjs");

@@ -9,7 +9,8 @@ const fastify = Fastify({
   bodyLimit: 64 * 1024,
   keepAliveTimeout: 5_000,
   logger: {
-    level: "info",
+    enabled: true,
+    level: "debug",
   },
   requestTimeout: 10_000,
   // Only enable if you explicitly trust Traefik subnet
