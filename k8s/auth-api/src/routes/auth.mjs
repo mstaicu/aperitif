@@ -186,10 +186,11 @@ export const routes = async (fastify) => {
       },
     },
     async (_, reply) => {
-      const span = trace.getActiveSpan();
-      span?.updateName("auth.challenge.create");
-
       const userId = randomUUID();
+
+      const dbSpan = trace
+        .getTracer("auth-api")
+        .startSpan("auth.challenge.persist");
 
       const {
         rows: [challenge],
@@ -201,6 +202,8 @@ export const routes = async (fastify) => {
         `,
         [userId],
       );
+
+      dbSpan.end();
 
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");

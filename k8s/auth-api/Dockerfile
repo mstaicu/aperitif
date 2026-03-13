@@ -29,7 +29,7 @@ USER node
 # tini
 #   └── nodemon
 #         └── node
-CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
+CMD ["./node_modules/.bin/nodemon", "-r", "./src/otel.mjs", "src/index.mjs"]
 
 # PROD
 FROM base AS prod

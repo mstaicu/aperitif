@@ -25,17 +25,7 @@ export const pgPlugin = fp(async (fastify) => {
   //   }
   // });
 
-  pool.on("error", (err) =>
-    fastify.log.error({ err }, "pg: unexpected pool error"),
-  );
-
-  try {
-    await pool.query("SELECT 1");
-  } catch (err) {
-    fastify.log.fatal({ err }, "pg: failed to connect at startup");
-    throw err;
-  }
-
+  // await pool.query("SELECT 1");
   fastify.decorate("pool", pool);
 
   fastify.addHook("onClose", async () => {

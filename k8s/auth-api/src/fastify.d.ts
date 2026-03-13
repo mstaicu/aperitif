@@ -1,14 +1,13 @@
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import type { JetStreamClient } from "@nats-io/jetstream";
 import type {
-  RawServerDefault,
-  RawRequestDefaultExpression,
-  RawReplyDefaultExpression,
   FastifyBaseLogger,
   FastifyInstance,
+  RawReplyDefaultExpression,
+  RawRequestDefaultExpression,
+  RawServerDefault,
 } from "fastify";
 import type { Pool } from "pg";
-import type { NatsConnection } from "@nats-io/transport-node";
-import type { JetStreamClient, JetStreamManager } from "@nats-io/jetstream";
-import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 
 declare module "fastify" {
   interface FastifyInstance {

@@ -12,6 +12,7 @@
     "@fastify/type-provider-typebox": "^6.1.0",
     "@nats-io/jetstream": "^3.3.1",
     "@nats-io/transport-node": "^3.3.1",
+    "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.71.0",
     "@opentelemetry/sdk-node": "^0.213.0",
     "@simplewebauthn/server": "^13.2.3",

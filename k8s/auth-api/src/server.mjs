@@ -1,4 +1,4 @@
-// import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
 
 import { app } from "./app.mjs";
 
@@ -9,4 +9,4 @@ await app.listen({
   port: 3000,
 });
 
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
