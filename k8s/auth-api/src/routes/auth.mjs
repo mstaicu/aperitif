@@ -1,3 +1,4 @@
+import { trace } from "@opentelemetry/api";
 import {
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
@@ -184,7 +185,7 @@ export const routes = async (fastify) => {
         },
       },
     },
-    async (request, reply) => {
+    async (_, reply) => {
       const userId = randomUUID();
 
       const {
@@ -198,10 +199,11 @@ export const routes = async (fastify) => {
         [userId],
       );
 
+      const span = trace.getActiveSpan();
+      span?.addEvent("challenge_created");
+
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
-
-      request.log.info({ challenge }, "challenge handler after db");
 
       return reply.code(200).send({
         publicKey: {
