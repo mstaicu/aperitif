@@ -26,6 +26,7 @@ export const pgPlugin = fp(async (fastify) => {
   // });
 
   // await pool.query("SELECT 1");
+
   fastify.decorate("pool", pool);
 
   fastify.addHook("onClose", async () => {

@@ -69,67 +69,106 @@
 #           key: Authorization
 
 ---
-# ------------------------------------------------------------
-# 3) Example IngressRoute using the chain:
-#    strip spoofable headers → validate JWT + inject headers → rateLimit/inFlight
-#
-# Order matters:
-#   - Strip FIRST
-#   - JWT SECOND (so injected headers are trusted)
-#   - Then your protection middlewares (rateLimit/inFlight/etc)
-# ------------------------------------------------------------
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
-
 metadata:
   name: auth-ratelimit
 spec:
   rateLimit:
-    # safe_concurrency = ((max_conn - other connections) * budget) * safe_budget
-    # average_per_minute ≈ (safe_concurrency / p95) / assumed_IPs * 60
-    # average_per_minute = 36 / 0.08 / 500 * 60
-    # burst = average_per_minute * 2
+    # ------------------------------------------------------------
+    # Rate limit sizing memory (DO NOT DELETE)
+    #
+    # safe_concurrency =
+    #   ((max_connections - other_system_usage) * auth_budget) * safety_factor
+    #
+    # Example:
+    # max_connections = 100
+    # other_usage = 20
+    # auth_budget = 0.75
+    # safety_factor = 0.6
+    #
+    # safe_concurrency = ((100 - 20) * 0.75) * 0.6
+    #                  = 36 concurrent auth requests (cluster-wide)
+    #
+    # Throughput estimate:
+    #
+    # p95_latency = 80ms = 0.08s
+    #
+    # max_rps ≈ safe_concurrency / p95
+    #        ≈ 36 / 0.08
+    #        ≈ 450 rps cluster capacity
+    #
+    # Per-IP shaping assumption:
+    #
+    # assumed_active_ips = 500
+    #
+    # per_ip_rps ≈ 450 / 500
+    #            ≈ 0.9 rps
+    #
+    # per_ip_per_minute ≈ 0.9 * 60 ≈ 54
+    #
+    # Therefore bootstrap config:
+    # average ≈ 50/min
+    # burst   ≈ 2x average
+    #
+    # IMPORTANT:
+    # These are GUESS NUMBERS until real metrics exist.
+    # Tune after observing:
+    # - real p95
+    # - real concurrency
+    # - real IP distribution
+    # ------------------------------------------------------------
     average: 50
     burst: 100
     period: 1m
+
     sourceCriterion:
       ipStrategy:
         depth: 1
+
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
-
 metadata:
   name: auth-inflight
 spec:
   inFlightReq:
-    # safe_concurrency = ((max_conn - other connections) * budget) * safe_budget
-    # safe_concurrency = ((100 - 20) * 0.75) * 0.6 = 36 (cluster-wide)
+    # ------------------------------------------------------------
+    # Bootstrap concurrency guard
+    #
+    # Using safe_concurrency ≈ 36 → rounded up to 40
+    #
+    # This protects:
+    # - DB connection pool
+    # - WebAuthn verification CPU
+    # - downstream signing / token issuance
+    #
+    # Tune when real metrics exist.
+    # ------------------------------------------------------------
+    amount: 40
 
-    # With 1 Traefik replica, inFlight per pod = 36 / 1 = 36
-
-    # Throughput estimate:
-    # p95 = 80ms = 80 / 1000ms (1s) = 0.08
-    # 36 / 0.08 = 450 rps
-    # 450 * 60 * 60 * 24 * 30 ≈ 1.16B requests/month
-    amount: 36
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
-
 metadata:
   name: auth-body-limit
 spec:
   buffering:
+    # WebAuthn payloads are small but can include attestation blobs.
+    # 64 KiB is a safe ceiling.
     maxRequestBodyBytes: 65536
 
-# ------------------------------------------------------------
-# 5) What your service should trust
-#
-# - X-User-Id (string UUID)
-# - X-Scope   (string or list depending on how your auth issues it)
-# - X-Aud     (ai/billing/auth)
-#
-# And it should IGNORE any incoming Authorization header
-# because Traefik cleared it and you don't accept direct pod access anyway.
-# ------------------------------------------------------------
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: auth-api-timeouts
+spec:
+  forwardingTimeouts:
+    dialTimeout: 2s
+    responseHeaderTimeout: 5s
+    idleConnTimeout: 15s
+
+# timeout = f(p99_latency, failure_budget, user_patience)
+# concurrency = f(database_capacity, safety_factor)
+# rate_limit = f(concurrency, fairness_model)

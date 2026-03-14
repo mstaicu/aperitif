@@ -31,3 +31,20 @@ CREATE TABLE challenges (
     expires_at TIMESTAMPTZ NOT NULL 
         DEFAULT NOW() + INTERVAL '2 minutes'
 );
+
+CREATE TABLE sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id BYTEA NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    refresh_token_hash BYTEA NOT NULL UNIQUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    expires_at TIMESTAMPTZ NOT NULL,
+
+    revoked_at TIMESTAMPTZ
+);

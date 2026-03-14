@@ -14,7 +14,6 @@ declare module "fastify" {
     pool: Pool;
     // nc: NatsConnection;
     js: JetStreamClient;
-    // jsm: JetStreamManager;
   }
 }
 
