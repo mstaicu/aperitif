@@ -642,7 +642,7 @@ export const routes = async (fastify) => {
   );
 
   fastify.post(
-    "/v1/refresh",
+    "/v1/sessions/refresh",
     {
       schema: {
         body: RefreshBody,
@@ -671,13 +671,13 @@ export const routes = async (fastify) => {
           rows: [session],
         } = await client.query(
           `
-          SELECT id, user_id
-          FROM sessions
-          WHERE refresh_token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-          FOR UPDATE
-        `,
+            SELECT id, user_id
+            FROM sessions
+            WHERE refresh_token_hash = $1
+              AND revoked_at IS NULL
+              AND expires_at > NOW()
+            FOR UPDATE
+          `,
           [hash],
         );
 

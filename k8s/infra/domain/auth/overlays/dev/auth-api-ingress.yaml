@@ -2,25 +2,69 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 
 metadata:
-  name: auth-api-external
+  name: auth-api-public
 
 spec:
   entryPoints:
     - https
 
   routes:
-    - match: Host(`api.tma.com`) &&
-        PathPrefix(`/v1/passkeys`) &&
-        Method(`POST`)
+    - match: Host(`tma.com`) && PathPrefix(`/auth/v1`)
       kind: Rule
+
       middlewares:
+        - name: auth-strip-prefix
         - name: auth-ratelimit
         - name: auth-inflight
         - name: auth-body-limit
+
       services:
         - name: auth-api-srv
           port: 3000
           serversTransport: auth-api-timeouts
+
+  tls: {}
+
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: IngressRoute
+
+# metadata:
+#   name: auth-ui
+# spec:
+#   entryPoints:
+#     - https
+
+#   routes:
+#     - match: Host(`tma.com`) && PathPrefix(`/auth`)
+#       kind: Rule
+
+#       services:
+#         - name: auth-ui-srv
+#           port: 3000
+
+#   tls: {}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: auth-docs
+spec:
+  entryPoints:
+    - https
+
+  routes:
+    - match: Host(`tma.com`) && PathPrefix(`/auth/docs`)
+      kind: Rule
+
+      middlewares:
+        - name: auth-strip-prefix
+
+      services:
+        - name: auth-api-srv
+          port: 3000
 
   tls: {}
 
@@ -36,12 +80,15 @@ spec:
     - http
 
   routes:
-    - match: PathPrefix(`/v1/passkeys`) &&
-        Method(`POST`)
+    - match: PathPrefix(`/v1`)
       kind: Rule
+
       middlewares:
+        - name: auth-strip-prefix
+        # - name: auth-ratelimit
         - name: auth-inflight
         - name: auth-body-limit
+
       services:
         - name: auth-api-srv
           port: 3000

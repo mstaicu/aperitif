@@ -9,6 +9,8 @@
     "glob": "^13.0.6"
   },
   "dependencies": {
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
     "@fastify/type-provider-typebox": "^6.1.0",
     "@nats-io/jetstream": "^3.3.1",
     "@nats-io/transport-node": "^3.3.1",

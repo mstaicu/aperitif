@@ -169,6 +169,17 @@ spec:
     responseHeaderTimeout: 5s
     idleConnTimeout: 15s
 
+
 # timeout = f(p99_latency, failure_budget, user_patience)
 # concurrency = f(database_capacity, safety_factor)
 # rate_limit = f(concurrency, fairness_model)
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-strip-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /auth

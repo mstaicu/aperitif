@@ -9,6 +9,7 @@ spec:
   routes:
     - match: Host(`tma.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
+
       services:
         - name: api@internal
           kind: TraefikService
@@ -24,10 +25,12 @@ spec:
   routes:
     - match: Host(`tma.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
+
       services:
         - name: api@internal
           kind: TraefikService
   tls: {}
+
 ---
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
