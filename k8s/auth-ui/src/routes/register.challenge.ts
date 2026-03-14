@@ -1,10 +1,11 @@
-const UPSTREAM = "http://traefik-srv/auth/webauthn/registration/challenge";
-
 export async function action() {
-  const upstream = await fetch(UPSTREAM, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
+  const upstream = await fetch(
+    "http://traefik-srv/auth/webauthn/registration/challenge",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 
   const body = await upstream.text();
 

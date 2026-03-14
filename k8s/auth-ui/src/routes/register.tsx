@@ -1,90 +1,69 @@
-function base64urlToArrayBuffer(base64url: string): ArrayBuffer {
-  const padded = base64url.replace(/-/g, "+").replace(/_/g, "/");
-  const padLength = (4 - (padded.length % 4)) % 4;
-  const base64 = padded + "=".repeat(padLength);
+import {
+  startRegistration,
+  type RegistrationResponseJSON,
+  type PublicKeyCredentialCreationOptionsJSON,
+} from "@simplewebauthn/browser";
 
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
+export async function action({ request }: { request: Request }) {
+  const body = (await request.json()) as {
+    credential: RegistrationResponseJSON;
+  };
 
-function arrayBufferToBase64url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++)
-    binary += String.fromCharCode(bytes[i]);
-  const base64 = btoa(binary);
-  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const upstream = await fetch(
+    "http://traefik-srv/auth/webauthn/registration",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  return new Response(await upstream.text(), {
+    status: upstream.status,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 async function handleRegister() {
-  const challengeRes = await fetch("/register/challenge", { method: "POST" });
-  if (!challengeRes.ok) {
-    console.error("Registration challenge failed");
-    return;
-  }
+  try {
+    const res = await fetch("/register/challenge", {
+      method: "POST",
+    });
 
-  const { publicKey } = (await challengeRes.json()) as {
-    publicKey: PublicKeyCredentialCreationOptions;
-  };
+    if (!res.ok) {
+      console.error("Challenge failed");
+      return;
+    }
 
-  // WebAuthn expects ArrayBuffers for these fields
-  publicKey.challenge = base64urlToArrayBuffer(
-    publicKey.challenge as unknown as string,
-  );
+    const { publicKey } = (await res.json()) as {
+      publicKey: PublicKeyCredentialCreationOptionsJSON;
+    };
 
-  publicKey.user = {
-    ...publicKey.user,
-    id: base64urlToArrayBuffer((publicKey.user as any).id as unknown as string),
-  };
+    const registrationResponse = await startRegistration({
+      optionsJSON: publicKey,
+    });
 
-  if (publicKey.excludeCredentials?.length) {
-    publicKey.excludeCredentials = publicKey.excludeCredentials.map((c) => ({
-      ...c,
-      id: base64urlToArrayBuffer(c.id as unknown as string),
-    }));
-  }
-
-  const credential = (await navigator.credentials.create({
-    publicKey,
-  })) as PublicKeyCredential;
-
-  if (!credential) {
-    console.error("No credential created");
-    return;
-  }
-
-  const attestation = credential.response as AuthenticatorAttestationResponse;
-
-  const payload = {
-    credential: {
-      id: credential.id,
-      rawId: arrayBufferToBase64url(credential.rawId),
-      type: credential.type,
-      response: {
-        clientDataJSON: arrayBufferToBase64url(attestation.clientDataJSON),
-        attestationObject: arrayBufferToBase64url(
-          attestation.attestationObject,
-        ),
+    const finish = await fetch("/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      clientExtensionResults: credential.getClientExtensionResults(),
-      authenticatorAttachment: credential.authenticatorAttachment ?? undefined,
-    },
-  };
+      body: JSON.stringify({
+        credential: registrationResponse,
+      }),
+    });
 
-  const finishRes = await fetch("/register/account", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+    if (!finish.ok) {
+      console.error("Finalize failed");
+      return;
+    }
 
-  if (!finishRes.ok) {
-    console.error("Registration finish failed", await finishRes.text());
-    return;
+    console.log("Registered");
+  } catch (err) {
+    console.error(err);
   }
-
-  console.log("Registration complete:", await finishRes.json());
 }
 
 export default function Register() {

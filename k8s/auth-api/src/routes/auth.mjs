@@ -29,110 +29,157 @@ const { hostname, origin } = new URL(nconf.get("ORIGIN"));
 //   return { hash, token };
 // };
 
-const Base64Url = Type.String({
+const Base64URLString = Type.String({
   maxLength: 8192,
   minLength: 1,
   pattern: "^[A-Za-z0-9_-]+={0,2}$",
 });
-
-const EmptyResponse = Type.Null();
-const ErrorResponse = Type.Null();
-
-const AuthenticatorAttachment = Type.Union([
-  Type.Literal("platform"),
-  Type.Literal("cross-platform"),
+export const AuthenticatorTransport = Type.Union([
+  Type.Literal("ble"),
+  Type.Literal("cable"),
+  Type.Literal("hybrid"),
+  Type.Literal("internal"),
+  Type.Literal("nfc"),
+  Type.Literal("smart-card"),
+  Type.Literal("usb"),
 ]);
 
-const ClientExtensionResults = Type.Record(Type.String(), Type.Any());
+const PublicKeyCredentialDescriptorJSON = Type.Object({
+  id: Base64URLString,
+  transports: Type.Optional(Type.Array(AuthenticatorTransport)),
+  type: Type.Literal("public-key"),
+});
 
-const RegistrationResponseJSON = Type.Object(
-  {
-    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
-    clientExtensionResults: Type.Optional(ClientExtensionResults),
-    id: Base64Url,
+const PublicKeyCredentialUserEntityJSON = Type.Object({
+  displayName: Type.String(),
+  id: Base64URLString,
+  name: Type.String(),
+});
 
-    rawId: Base64Url,
+const PublicKeyCredentialParameters = Type.Object({
+  alg: Type.Integer(),
+  type: Type.Literal("public-key"),
+});
 
-    response: Type.Object(
-      {
-        attestationObject: Base64Url,
-        clientDataJSON: Base64Url,
-      },
-      { additionalProperties: true },
-    ),
-    type: Type.Literal("public-key"),
-  },
-  { additionalProperties: false },
-);
-
-const AuthenticationResponseJSON = Type.Object(
-  {
-    authenticatorAttachment: Type.Optional(AuthenticatorAttachment),
-    clientExtensionResults: Type.Optional(ClientExtensionResults),
-    id: Base64Url,
-
-    rawId: Base64Url,
-
-    response: Type.Object(
-      {
-        authenticatorData: Base64Url,
-        clientDataJSON: Base64Url,
-        signature: Base64Url,
-        userHandle: Type.Optional(Base64Url),
-      },
-      { additionalProperties: true },
-    ),
-    type: Type.Literal("public-key"),
-  },
-  { additionalProperties: false },
-);
-
-const RegistrationFinalizeBody = Type.Object(
-  { credential: RegistrationResponseJSON },
-  { additionalProperties: false },
-);
-
-const AuthenticationFinalizeBody = Type.Object(
-  { authentication: AuthenticationResponseJSON },
-  { additionalProperties: false },
-);
-
-const RegistrationChallengeResponse = Type.Object({
-  publicKey: Type.Object(
-    {
-      challenge: Base64Url,
-      pubKeyCredParams: Type.Array(
-        Type.Object({
-          alg: Type.Integer(),
-          type: Type.Literal("public-key"),
-        }),
-      ),
-      rp: Type.Object({
-        id: Type.Optional(Type.String()),
-        name: Type.String(),
-      }),
-      user: Type.Object({
-        displayName: Type.String(),
-        id: Base64Url,
-        name: Type.String(),
-      }),
-    },
-    { additionalProperties: true },
+const AuthenticatorSelectionCriteria = Type.Object({
+  authenticatorAttachment: Type.Optional(
+    Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")]),
+  ),
+  requireResidentKey: Type.Optional(Type.Boolean()),
+  residentKey: Type.Optional(Type.String()),
+  userVerification: Type.Optional(
+    Type.Union([
+      Type.Literal("required"),
+      Type.Literal("preferred"),
+      Type.Literal("discouraged"),
+    ]),
   ),
 });
 
+const RegistrationChallengeResponse = Type.Object({
+  publicKey: Type.Object({
+    attestation: Type.Optional(Type.String()),
+
+    authenticatorSelection: Type.Optional(AuthenticatorSelectionCriteria),
+
+    challenge: Base64URLString,
+
+    excludeCredentials: Type.Optional(
+      Type.Array(PublicKeyCredentialDescriptorJSON),
+    ),
+
+    extensions: Type.Optional(Type.Unknown()),
+
+    pubKeyCredParams: Type.Array(PublicKeyCredentialParameters),
+
+    rp: Type.Object({
+      id: Type.Optional(Type.String()),
+      name: Type.String(),
+    }),
+
+    timeout: Type.Optional(Type.Integer()),
+
+    user: PublicKeyCredentialUserEntityJSON,
+  }),
+});
+
 const AuthenticationChallengeResponse = Type.Object({
-  publicKey: Type.Object(
-    {
-      challenge: Base64Url,
-    },
-    { additionalProperties: true },
+  publicKey: Type.Object({
+    allowCredentials: Type.Optional(
+      Type.Array(PublicKeyCredentialDescriptorJSON),
+    ),
+
+    challenge: Base64URLString,
+
+    extensions: Type.Optional(Type.Unknown()),
+
+    rpId: Type.Optional(Type.String()),
+
+    timeout: Type.Optional(Type.Integer()),
+
+    userVerification: Type.Optional(
+      Type.Union([
+        Type.Literal("required"),
+        Type.Literal("preferred"),
+        Type.Literal("discouraged"),
+      ]),
+    ),
+  }),
+});
+
+const AuthenticatorAttestationResponseJSON = Type.Object({
+  attestationObject: Base64URLString,
+  authenticatorData: Type.Optional(Base64URLString),
+  clientDataJSON: Base64URLString,
+  publicKey: Type.Optional(Base64URLString),
+  publicKeyAlgorithm: Type.Optional(Type.Integer()),
+  transports: Type.Optional(Type.Array(AuthenticatorTransport)),
+});
+
+const AuthenticatorAssertionResponseJSON = Type.Object({
+  authenticatorData: Base64URLString,
+  clientDataJSON: Base64URLString,
+  signature: Base64URLString,
+  userHandle: Type.Optional(Base64URLString),
+});
+
+const RegistrationResponseJSON = Type.Object({
+  authenticatorAttachment: Type.Optional(
+    Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")]),
   ),
+  clientExtensionResults: Type.Record(Type.String(), Type.Any()),
+  id: Base64URLString,
+  rawId: Base64URLString,
+  response: AuthenticatorAttestationResponseJSON,
+  type: Type.Literal("public-key"),
+});
+
+const AuthenticationResponseJSON = Type.Object({
+  authenticatorAttachment: Type.Optional(
+    Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")]),
+  ),
+  clientExtensionResults: Type.Record(Type.String(), Type.Any()),
+  id: Base64URLString,
+  rawId: Base64URLString,
+  response: AuthenticatorAssertionResponseJSON,
+  type: Type.Literal("public-key"),
+});
+
+const RegistrationFinalizeBody = Type.Object({
+  credential: RegistrationResponseJSON,
+});
+
+const AuthenticationFinalizeBody = Type.Object({
+  authentication: AuthenticationResponseJSON,
 });
 
 const AuthSuccessResponse = Type.Object({
   refresh_token: Type.String(),
 });
+
+const ErrorResponse = Type.Null();
+
+const EmptyResponse = Type.Null();
 
 /**
  * @param {import('../fastify.js').Instance} fastify
