@@ -186,11 +186,13 @@ export const routes = async (fastify) => {
       },
     },
     async (_, reply) => {
+      trace.getActiveSpan()?.updateName("auth.registration.challenge");
+
       const userId = randomUUID();
 
       const dbSpan = trace
         .getTracer("auth-api")
-        .startSpan("auth.challenge.persist");
+        .startSpan("auth.registration.challenge_persist");
 
       const {
         rows: [challenge],
@@ -251,20 +253,6 @@ export const routes = async (fastify) => {
     async function (request, reply) {
       const { credential } = request.body;
 
-      // WebAuthn invariant: `id` and `rawId` must represent the same bytes.
-      // Many libs set them equal (same base64url string). Reject mismatches early.
-      let idBytes;
-      let rawIdBytes;
-
-      try {
-        idBytes = Buffer.from(credential.id, "base64url");
-        rawIdBytes = Buffer.from(credential.rawId, "base64url");
-      } catch {
-        return reply.code(400).send(null);
-      }
-
-      if (!idBytes.equals(rawIdBytes)) return reply.code(400).send(null);
-
       let clientDataJSON;
 
       try {
@@ -274,6 +262,14 @@ export const routes = async (fastify) => {
           ),
         );
       } catch {
+        return reply.code(400).send(null);
+      }
+
+      if (
+        !clientDataJSON ||
+        typeof clientDataJSON !== "object" ||
+        typeof clientDataJSON.challenge !== "string"
+      ) {
         return reply.code(400).send(null);
       }
 
@@ -347,34 +343,34 @@ export const routes = async (fastify) => {
 
         const { rowCount } = await client.query(
           `
-          WITH next_index AS (
-            SELECT s
-            FROM generate_series(1, 5) AS s
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM webauthn_credentials
-              WHERE user_id = $1
-                AND credential_index = s
+            WITH next_index AS (
+              SELECT s
+              FROM generate_series(1, 5) AS s
+              WHERE NOT EXISTS (
+                SELECT 1
+                FROM webauthn_credentials
+                WHERE user_id = $1
+                  AND credential_index = s
+              )
+              ORDER BY s
+              LIMIT 1
             )
-            ORDER BY s
-            LIMIT 1
-          )
-          INSERT INTO webauthn_credentials
-          (
-            user_id,
-            credential_index,
-            credential_id,
-            public_key,
-            sign_count
-          )
-          SELECT
-            $1,
-            s,
-            $2,
-            $3,
-            $4
-          FROM next_index
-        `,
+            INSERT INTO webauthn_credentials
+            (
+              user_id,
+              credential_index,
+              credential_id,
+              public_key,
+              sign_count
+            )
+            SELECT
+              $1,
+              s,
+              $2,
+              $3,
+              $4
+            FROM next_index
+          `,
           [
             userId,
             Buffer.from(registrationInfo.credential.id, "base64url"),
@@ -383,19 +379,13 @@ export const routes = async (fastify) => {
           ],
         );
 
-        // No slot available → user already has 5
         if (rowCount === 0) {
           await client.query("ROLLBACK");
-
-          request.log.info(
-            { userId },
-            "user reached maximum WebAuthn credentials",
-          );
-
           return reply.code(409).send(null);
         }
 
         await client.query("COMMIT");
+
         return reply.code(201).send(null);
       } catch (err) {
         await client.query("ROLLBACK");
@@ -465,18 +455,6 @@ export const routes = async (fastify) => {
     async function (request, reply) {
       const { authentication } = request.body;
 
-      let idBytes;
-      let rawIdBytes;
-
-      try {
-        idBytes = Buffer.from(authentication.id, "base64url");
-        rawIdBytes = Buffer.from(authentication.rawId, "base64url");
-      } catch {
-        return reply.code(400).send(null);
-      }
-
-      if (!idBytes.equals(rawIdBytes)) return reply.code(400).send(null);
-
       let clientDataJSON;
 
       try {
@@ -487,6 +465,14 @@ export const routes = async (fastify) => {
           ).toString("utf8"),
         );
       } catch {
+        return reply.code(400).send(null);
+      }
+
+      if (
+        !clientDataJSON ||
+        typeof clientDataJSON !== "object" ||
+        typeof clientDataJSON.challenge !== "string"
+      ) {
         return reply.code(400).send(null);
       }
 
@@ -563,15 +549,6 @@ export const routes = async (fastify) => {
         const { newCounter } = verification.authenticationInfo;
         const oldCounter = Number(credential.sign_count);
 
-        // Monotonic counter enforcement
-        // if (
-        //   (oldCounter > 0 && newCounter === 0) ||
-        //   (newCounter > 0 && newCounter <= oldCounter)
-        // ) {
-        //   await client.query("ROLLBACK");
-        //   return reply.code(401).send(null);
-        // }
-
         /**
          * 1. If the device supports a counter (newCounter > 0),
          * it MUST be greater than the old one.
@@ -584,21 +561,6 @@ export const routes = async (fastify) => {
             return reply.code(401).send(null);
           }
         }
-
-        // const { rowCount } = await client.query(
-        //   `
-        //     UPDATE webauthn_credentials
-        //     SET sign_count = $2
-        //     WHERE credential_id = $1
-        //       AND (sign_count = 0 OR $2 > sign_count)
-        //   `,
-        //   [credential.credential_id, newCounter],
-        // );
-
-        // if (rowCount === 0) {
-        //   await client.query("ROLLBACK");
-        //   return reply.code(401).send(null);
-        // }
 
         const { rowCount } = await client.query(
           `
@@ -629,12 +591,12 @@ export const routes = async (fastify) => {
         } = await client.query(
           `
             INSERT INTO sessions
-              (user_id, refresh_token_hash, refresh_expires_at)
+              (user_id, refresh_expires_at)
             VALUES
-              ($1, $2, NOW() + ($3::int * INTERVAL '1 second'))
+              ($1, NOW() + ($3::int * INTERVAL '1 second'))
             RETURNING id
           `,
-          [credential.user_id, refreshHash, REFRESH_TTL_SECONDS],
+          [credential.user_id, REFRESH_TTL_SECONDS],
         );
 
         await client.query(

@@ -16,13 +16,21 @@ data:
             endpoint: 0.0.0.0:4317
 
     processors:
+      transform/edge:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+              - set(name, "edge.request")
+                where resource.attributes["service.name"] == "traefik"
+                and kind == SPAN_KIND_SERVER
 
-      filter/traefik_red:
-        metrics:
-          include:
-            match_type: strict
-            metric_names:
-              - http.server.request.duration
+      transform/spans:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+              - keep_keys(attributes, ["http.method", "http.route", "http.status_code"])
 
       transform/resources:
         error_mode: ignore
@@ -35,12 +43,18 @@ data:
             statements:
               - keep_keys(attributes, ["service.name"])
 
-      transform/spans:
+      filter/traefik_red:
+        metrics:
+          include:
+            match_type: strict
+            metric_names:
+              - http.server.request.duration
+
+      filter/drop_noise:
         error_mode: ignore
-        trace_statements:
-          - context: span
-            statements:
-              - keep_keys(attributes, ["http.method", "http.route", "http.status_code"])
+        traces:
+          span:
+            - name == "ReverseProxy"
 
       batch:
 
@@ -58,8 +72,10 @@ data:
           receivers:
             - otlp
           processors:
-            - transform/resources
+            - filter/drop_noise
+            - transform/edge
             - transform/spans
+            - transform/resources
             - batch
           exporters:
             - debug
@@ -96,9 +112,18 @@ spec:
           image: otel/opentelemetry-collector-contrib:0.147.0
           args:
             - --config=/conf/otel-config.yaml
+
           ports:
             - containerPort: 4318
             - containerPort: 4317
+
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 13133
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+
           volumeMounts:
             - name: config
               mountPath: /conf

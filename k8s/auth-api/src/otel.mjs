@@ -18,6 +18,8 @@ const sdk = new NodeSDK({
 
 sdk.start();
 
+console.log("otel started");
+
 // process.once("SIGTERM", async () => {
 //   await sdk.shutdown();
 // });
