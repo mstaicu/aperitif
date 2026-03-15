@@ -26,8 +26,8 @@ export const natsPlugin = fp(async (fastify) => {
       storage: "file",
       subjects: ["auth.>"],
     });
-  } catch {
-    //
+  } catch (e) {
+    fastify.log.error(e, "stream creation");
   }
 
   // fastify.decorate("nc", nc);

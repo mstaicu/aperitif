@@ -6,6 +6,16 @@ export const probesPlugin = fp(async (fastify) => {
     try {
       await fastify.pool.query("SELECT 1");
 
+      /**
+       * This is like Math.min(pg, default)
+       */
+      // await Promise.race([
+      //   fastify.pool.query("SELECT 1"),
+      //   new Promise((_, reject) =>
+      //     setTimeout(() => reject(new Error("timeout")), 500),
+      //   ),
+      // ]);
+
       // if (fastify.nc && fastify.nc.isClosed()) {
       //   throw new Error();
       // }
