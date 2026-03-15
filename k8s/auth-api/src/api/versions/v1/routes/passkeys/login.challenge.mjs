@@ -6,7 +6,7 @@ import { AuthenticationChallengeResponse, hostname } from "./shared.mjs";
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function loginChallenge(fastify) {
+export default async function (fastify) {
   fastify.post(
     "/login/challenge",
     {
@@ -17,7 +17,7 @@ export default async function loginChallenge(fastify) {
         tags: ["passkeys"],
       },
     },
-    async function loginChallengeHandler(_, reply) {
+    async function (_, reply) {
       const { pool } = this;
 
       const challenge = randomBytes(32);

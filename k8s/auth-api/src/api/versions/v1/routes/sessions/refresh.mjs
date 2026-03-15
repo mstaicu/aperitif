@@ -90,3 +90,7 @@ export default async function (fastify) {
     },
   );
 }
+
+// passkey → session
+// session → access token
+// access token → domain authorization

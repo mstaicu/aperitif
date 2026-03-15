@@ -6,7 +6,7 @@ import register from "./register.mjs";
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function passkeyRoutes(fastify) {
+export default async function (fastify) {
   await fastify.register(loginChallenge);
   await fastify.register(login);
   await fastify.register(registerChallenge);

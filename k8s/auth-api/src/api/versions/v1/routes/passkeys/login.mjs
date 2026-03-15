@@ -11,7 +11,7 @@ import {
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function login(fastify) {
+export default async function (fastify) {
   fastify.post(
     "/login",
     {
@@ -26,7 +26,7 @@ export default async function login(fastify) {
         tags: ["passkeys"],
       },
     },
-    async function loginHandler(request, reply) {
+    async function (request, reply) {
       const { pool } = this;
 
       const { authentication } = request.body;
@@ -68,18 +68,16 @@ export default async function login(fastify) {
         rows: [challengeRow],
       } = await pool.query(
         `
-        DELETE FROM challenges
-        WHERE challenge = $1
-          AND user_id IS NULL
-          AND expires_at > NOW()
-        RETURNING challenge
-      `,
+          DELETE FROM challenges
+          WHERE challenge = $1
+            AND user_id IS NULL
+            AND expires_at > NOW()
+          RETURNING challenge
+        `,
         [challengeBytes],
       );
 
-      if (!challengeRow) {
-        return reply.code(401).send(null);
-      }
+      if (!challengeRow) return reply.code(401).send(null);
 
       const client = await pool.connect();
 
@@ -109,7 +107,12 @@ export default async function login(fastify) {
             "base64url",
           );
 
-          if (!userHandle.equals(credential.user_id)) {
+          const expectedHandle = Buffer.from(
+            credential.user_id.replace(/-/g, ""),
+            "hex",
+          );
+
+          if (!userHandle.equals(expectedHandle)) {
             await client.query("ROLLBACK");
             return reply.code(401).send(null);
           }

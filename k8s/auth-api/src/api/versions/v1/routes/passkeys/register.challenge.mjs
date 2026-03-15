@@ -1,13 +1,13 @@
-import { trace } from "@opentelemetry/api";
+// import { trace } from "@opentelemetry/api";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 import { hostname, RegistrationChallengeResponse } from "./shared.mjs";
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function registerChallenge(fastify) {
+export default async function (fastify) {
   fastify.post(
     "/register/challenge",
     {
@@ -18,12 +18,13 @@ export default async function registerChallenge(fastify) {
         tags: ["passkeys"],
       },
     },
-    async function registerChallengeHandler(_, reply) {
+    async function (_, reply) {
       const { pool } = this;
 
-      trace.getActiveSpan()?.updateName("auth.registration.challenge");
+      // trace.getActiveSpan()?.updateName("auth.registration.challenge");
 
-      const userID = randomBytes(32);
+      const userId = randomUUID();
+      const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
       const challenge = randomBytes(32);
 
       const options = await generateRegistrationOptions({
@@ -36,16 +37,16 @@ export default async function registerChallenge(fastify) {
         rpID: hostname,
         rpName: hostname,
         timeout: 60000,
-        userID,
-        userName: userID.toString("base64url"),
+        userID: webauthnUserHandle,
+        userName: "",
       });
 
       await pool.query(
         `
-        INSERT INTO challenges (user_id, challenge)
-        VALUES ($1, $2)
-      `,
-        [userID, challenge],
+          INSERT INTO challenges (user_id, challenge)
+          VALUES ($1, $2)
+        `,
+        [userId, challenge],
       );
 
       reply.header("Cache-Control", "no-store");

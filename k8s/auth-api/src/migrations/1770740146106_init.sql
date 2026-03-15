@@ -4,7 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
-    id BYTEA PRIMARY KEY
+    id UUID PRIMARY KEY
 );
 
 CREATE TABLE credentials (
@@ -12,7 +12,7 @@ CREATE TABLE credentials (
 
     credential_id BYTEA NOT NULL UNIQUE,
 
-    user_id BYTEA NOT NULL
+    user_id UUID NOT NULL
         REFERENCES users(id) 
         ON DELETE CASCADE,
 
@@ -24,7 +24,7 @@ CREATE TABLE credentials (
 CREATE TABLE challenges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    user_id BYTEA,
+    user_id UUID,
 
     challenge BYTEA NOT NULL UNIQUE,
 
@@ -35,7 +35,7 @@ CREATE TABLE challenges (
 CREATE TABLE sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    user_id BYTEA NOT NULL
+    user_id UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
 

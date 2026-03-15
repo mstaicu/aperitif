@@ -11,7 +11,7 @@ import {
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function register(fastify) {
+export default async function (fastify) {
   fastify.post(
     "/register",
     {
@@ -27,7 +27,7 @@ export default async function register(fastify) {
         tags: ["passkeys"],
       },
     },
-    async function registerHandler(request, reply) {
+    async function (request, reply) {
       const { pool } = this;
 
       const { credential } = request.body;
@@ -81,8 +81,6 @@ export default async function register(fastify) {
         return reply.code(401).send(null);
       }
 
-      /** @type {Buffer} */
-      const userId = challengeRow.user_id;
       const expectedChallenge = challengeRow.challenge.toString("base64url");
 
       let verification;
@@ -125,6 +123,9 @@ export default async function register(fastify) {
       const credentialId = Buffer.from(registrationCredential.id, "base64url");
       const publicKey = Buffer.from(registrationCredential.publicKey);
       const signCount = registrationCredential.counter;
+
+      /** @type {String} */
+      const userId = challengeRow.user_id;
 
       const client = await pool.connect();
 
