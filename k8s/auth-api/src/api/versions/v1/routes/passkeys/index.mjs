@@ -190,7 +190,7 @@ const ErrorResponse = Type.Null();
 const EmptyResponse = Type.Null();
 
 /**
- * @param {import('../fastify.js').Instance} fastify
+ * @param {import('../../../../../fastify.js').Instance} fastify
  */
 export const routes = async (fastify) => {
   const { pool } = fastify;
@@ -717,3 +717,16 @@ export const routes = async (fastify) => {
     },
   );
 };
+
+// import registerChallenge from "./register.challenge.mjs"
+// import registerFinalize from "./register.finalize.mjs"
+// import loginChallenge from "./login.challenge.mjs"
+// import loginFinalize from "./login.finalize.mjs"
+
+// export default async function passkeys(fastify) {
+//   fastify.post("/register/challenge", registerChallenge)
+//   fastify.post("/register", registerFinalize)
+
+//   fastify.post("/login/challenge", loginChallenge)
+//   fastify.post("/login", loginFinalize)
+// }

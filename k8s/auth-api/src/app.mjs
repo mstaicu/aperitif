@@ -1,8 +1,8 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 
-import { pgPlugin, probesPlugin, v1 } from "./plugins/index.mjs";
-import { routes as jwks } from "./routes/jwks.mjs";
+import { v1 } from "./api/versions/v1/index.mjs";
+import { pgPlugin, probesPlugin } from "./plugins/index.mjs";
 
 const fastify = Fastify({
   logger: {
@@ -22,7 +22,6 @@ await app.register(pgPlugin);
 // await app.register(natsPlugin);
 await app.register(probesPlugin);
 
-await app.register(jwks);
 await app.register(v1);
 
 export { app };

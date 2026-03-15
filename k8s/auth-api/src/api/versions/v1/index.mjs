@@ -1,30 +1,32 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 import fp from "fastify-plugin";
+import nconf from "nconf";
 
-import { routes } from "../routes/auth.v1.mjs";
+import { routes as jwks } from "./routes/jwks/index.mjs";
+import { routes as passkeys } from "./routes/passkeys/index.mjs";
+
+const { origin } = new URL(nconf.get("ORIGIN"));
 
 export const v1 = fp(async (fastify) => {
   await fastify.register(swagger, {
     openapi: {
       info: {
-        description: "Passkey authentication domain",
         title: "Authentication",
-        version: "1.0.0",
+        version: "v1",
       },
       servers: [
         {
-          description: "Production server",
-          url: "https://tma.com/auth",
+          url: `${origin}/auth`,
         },
       ],
     },
   });
 
   await fastify.register(swaggerUI, {
-    indexPrefix: "/auth",
     routePrefix: "/docs/v1",
   });
 
-  await fastify.register(routes);
+  await fastify.register(passkeys);
+  await fastify.register(jwks);
 });
