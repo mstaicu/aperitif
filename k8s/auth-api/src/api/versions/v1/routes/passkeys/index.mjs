@@ -190,7 +190,7 @@ const ErrorResponse = Type.Null();
 const EmptyResponse = Type.Null();
 
 /**
- * @param {import('../../../../../fastify.js').Instance} fastify
+ * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
 export const routes = async (fastify) => {
   const { pool } = fastify;

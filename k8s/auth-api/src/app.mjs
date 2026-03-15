@@ -12,7 +12,7 @@ const fastify = Fastify({
 });
 
 /**
- * @type {import('./fastify.js').Instance}
+ * @type {import('./fastify.js').FastifyInstance}
  */
 const app = fastify
   .setValidatorCompiler(TypeBoxValidatorCompiler)

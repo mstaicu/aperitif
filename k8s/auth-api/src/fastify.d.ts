@@ -2,7 +2,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { JetStreamClient } from "@nats-io/jetstream";
 import type {
   FastifyBaseLogger,
-  FastifyInstance,
+  FastifyInstance as Instance,
   RawReplyDefaultExpression,
   RawRequestDefaultExpression,
   RawServerDefault,
@@ -17,7 +17,7 @@ declare module "fastify" {
   }
 }
 
-export type Instance = FastifyInstance<
+export type FastifyInstance = Instance<
   RawServerDefault,
   RawRequestDefaultExpression,
   RawReplyDefaultExpression,
