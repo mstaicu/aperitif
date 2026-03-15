@@ -12,11 +12,12 @@ const jwk = await exportJWK(
 );
 
 /**
- * @param {import('../../../../../fastify.js').Instance} fastify
+ * @param {import('../../fastify.js').FastifyInstance} fastify
  */
-export const routes = async (fastify) => {
-  fastify.get("/v1/.well-known/jwks.json", async (_, reply) => {
+export default (fastify) => {
+  fastify.get("/.well-known/jwks.json", async (_, reply) => {
     reply.header("Cache-Control", "public, max-age=300, immutable");
+
     return reply.code(200).send({
       keys: [{ ...jwk, alg: "ES256", kid: JWT_KID, use: "sig" }],
     });

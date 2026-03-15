@@ -11,9 +11,9 @@ import {
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
-export default async function (fastify) {
+export default async function register(fastify) {
   fastify.post(
-    "/passkeys/login",
+    "/register",
     {
       schema: {
         body: RegistrationFinalizeBody,
@@ -24,10 +24,10 @@ export default async function (fastify) {
           409: ErrorResponse,
           500: ErrorResponse,
         },
-        tags: ["v1"],
+        tags: ["passkeys"],
       },
     },
-    async function (request, reply) {
+    async function registerHandler(request, reply) {
       const { pool } = this;
 
       const { credential } = request.body;
@@ -68,12 +68,12 @@ export default async function (fastify) {
         rows: [challengeRow],
       } = await pool.query(
         `
-        DELETE FROM challenges
-        WHERE challenge = $1
-          AND user_id IS NOT NULL
-          AND expires_at > NOW()
-        RETURNING user_id, challenge
-      `,
+          DELETE FROM challenges
+          WHERE challenge = $1
+            AND user_id IS NOT NULL
+            AND expires_at > NOW()
+          RETURNING user_id, challenge
+        `,
         [challengeBytes],
       );
 
@@ -133,24 +133,24 @@ export default async function (fastify) {
 
         await client.query(
           `
-          INSERT INTO users (id)
-          VALUES ($1)
-          ON CONFLICT DO NOTHING
-        `,
+            INSERT INTO users (id)
+            VALUES ($1)
+            ON CONFLICT DO NOTHING
+          `,
           [userId],
         );
 
         await client.query(
           `
-          INSERT INTO credentials
-          (
-            user_id,
-            credential_id,
-            public_key,
-            sign_count
-          )
-          VALUES ($1, $2, $3, $4)
-        `,
+            INSERT INTO credentials
+            (
+              user_id,
+              credential_id,
+              public_key,
+              sign_count
+            )
+            VALUES ($1, $2, $3, $4)
+          `,
           [userId, credentialId, publicKey, signCount],
         );
 

@@ -39,8 +39,8 @@ spec:
     - match: Host(`tma.com`) && PathPrefix(`/auth/docs`)
       kind: Rule
 
-      # middlewares:
-      #   - name: auth-strip-prefix
+      middlewares:
+        - name: auth-strip-prefix
 
       services:
         - name: auth-api-srv
