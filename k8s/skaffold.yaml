@@ -15,7 +15,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - infra/platform/traefik/crds
+      - infra/traefik/crds
 
 # REQUIRED for manifest-only modules,
 # ensures build output is applied to the cluster
@@ -40,7 +40,7 @@ requires:
 manifests:
   kustomize:
     paths:
-      - infra/platform/traefik/overlays/dev
+      - infra/traefik/overlays/dev
 
     buildArgs:
       - --enable-alpha-plugins
@@ -48,6 +48,7 @@ manifests:
 
 deploy:
   kubectl: {}
+
 
 # skaffold dev -m app
 
@@ -64,7 +65,7 @@ build:
 
   artifacts:
     - image: mdstaicu/auth-api
-      context: auth-api
+      context: domains/auth/api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -77,7 +78,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/domain/auth/overlays/dev
+      - domains/auth/infra/overlays/dev
 
     buildArgs:
       - --enable-alpha-plugins

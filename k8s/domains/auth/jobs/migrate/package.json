@@ -1,0 +1,11 @@
+{
+  "private": "true",
+  "type": "module",
+  "overrides": {
+    "glob": "^13.0.6"
+  },
+  "dependencies": {
+    "node-pg-migrate": "^8.0.4",
+    "pg": "^8.20.0"
+  }
+}

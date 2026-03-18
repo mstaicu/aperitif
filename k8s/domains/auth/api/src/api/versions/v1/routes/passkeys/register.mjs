@@ -124,13 +124,13 @@ export default async function (fastify) {
       const publicKey = Buffer.from(registrationCredential.publicKey);
       const signCount = registrationCredential.counter;
 
-      /** @type {String} */
-      const userId = challengeRow.user_id;
-
       const client = await pool.connect();
 
       try {
         await client.query("BEGIN");
+
+        /** @type {String} */
+        const userId = challengeRow.user_id;
 
         await client.query(
           `
@@ -171,9 +171,8 @@ export default async function (fastify) {
 
         // reply.header("Cache-Control", "no-store");
         // reply.header("Pragma", "no-cache");
-
+        // TODO: Exchange with access token?
         // return reply.code(200).send({
-        //   access_token,
         //   refresh_token: refreshToken,
         // });
 
