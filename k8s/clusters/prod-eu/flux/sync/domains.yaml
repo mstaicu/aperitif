@@ -1,3 +1,5 @@
+# These point to clusters/prod-eu/domains
+# That's where the dependsOn DAG is defined
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 

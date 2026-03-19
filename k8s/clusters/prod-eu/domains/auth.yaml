@@ -10,8 +10,8 @@ spec:
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
-  # dependsOn:
-  #   - name: traefik
+  dependsOn:
+    - name: ingress
   decryption:
     provider: sops
     secretRef:
