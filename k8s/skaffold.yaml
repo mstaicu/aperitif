@@ -50,10 +50,10 @@ manifests:
 deploy:
   kubectl: {}
 
-
-# skaffold dev -m app
-
 ---
+#
+# skaffold dev -m app
+#
 apiVersion: skaffold/v4beta11
 kind: Config
 

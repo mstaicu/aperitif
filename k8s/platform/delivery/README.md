@@ -1,5 +1,6 @@
 brew install fluxcd/tap/flux
 flux check --pre
+kubectl-slice -o wtfa -f flux-install.yaml
 
 # https://github.com/fluxcd/flux2/releases
 
@@ -64,3 +65,4 @@ flux install \
 source-controller → uses github-ssh
 kustomize-controller → uses sops-age
 image-automation-controller → also uses github-ssh
+

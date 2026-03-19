@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - customresourcedefinition-buckets.source.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-externalartifacts.source.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-gitrepositories.source.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-helmcharts.source.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-helmrepositories.source.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-imagepolicies.image.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-imagerepositories.image.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-imageupdateautomations.image.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-kustomizations.kustomize.toolkit.fluxcd.io.yaml
+  - customresourcedefinition-ocirepositories.source.toolkit.fluxcd.io.yaml

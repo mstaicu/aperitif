@@ -1,0 +1,19 @@
+# Source: linkerd-control-plane/templates/destination.yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: linkerd-sp-validator
+  namespace: linkerd
+  labels:
+    linkerd.io/control-plane-component: destination
+    linkerd.io/control-plane-ns: linkerd
+  annotations:
+    linkerd.io/created-by: linkerd/helm stable-2.14.10
+spec:
+  type: ClusterIP
+  selector:
+    linkerd.io/control-plane-component: destination
+  ports:
+  - name: sp-validator
+    port: 443
+    targetPort: sp-validator

@@ -1,0 +1,20 @@
+# Source: linkerd-control-plane/templates/identity-rbac.yaml
+###
+### Identity Controller Service RBAC
+###
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: linkerd-linkerd-identity
+  labels:
+    linkerd.io/control-plane-component: identity
+    linkerd.io/control-plane-ns: linkerd
+rules:
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
+# TODO(ver) Restrict this to the Linkerd namespace. See
+# https://github.com/linkerd/linkerd2/issues/9367
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]

@@ -1,0 +1,22 @@
+# Source: linkerd-control-plane/templates/destination.yaml
+###
+### Destination Controller Service
+###
+kind: Service
+apiVersion: v1
+metadata:
+  name: linkerd-dst
+  namespace: linkerd
+  labels:
+    linkerd.io/control-plane-component: destination
+    linkerd.io/control-plane-ns: linkerd
+  annotations:
+    linkerd.io/created-by: linkerd/helm stable-2.14.10
+spec:
+  type: ClusterIP
+  selector:
+    linkerd.io/control-plane-component: destination
+  ports:
+  - name: grpc
+    port: 8086
+    targetPort: 8086

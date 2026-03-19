@@ -2,5 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - crds.yaml
-  - gateway.yaml
+  - customresourcedefinition-authorizationpolicies.policy.linkerd.io.yaml
+  - customresourcedefinition-httproutes.gateway.networking.k8s.io.yaml
+  - customresourcedefinition-httproutes.policy.linkerd.io.yaml
+  - customresourcedefinition-meshtlsauthentications.policy.linkerd.io.yaml
+  - customresourcedefinition-networkauthentications.policy.linkerd.io.yaml
+  - customresourcedefinition-serverauthorizations.policy.linkerd.io.yaml
+  - customresourcedefinition-servers.policy.linkerd.io.yaml
+  - customresourcedefinition-serviceprofiles.linkerd.io.yaml

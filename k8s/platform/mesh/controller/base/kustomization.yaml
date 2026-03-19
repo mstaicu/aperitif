@@ -4,5 +4,42 @@ kind: Kustomization
 namespace: linkerd
 
 resources:
-  - linkerd-ns.yaml
-  - linkerd-depl.yaml
+  - clusterrole-linkerd-heartbeat.yaml
+  - clusterrole-linkerd-linkerd-destination.yaml
+  - clusterrole-linkerd-linkerd-identity.yaml
+  - clusterrole-linkerd-linkerd-proxy-injector.yaml
+  - clusterrole-linkerd-policy.yaml
+  - clusterrolebinding-linkerd-destination-policy.yaml
+  - clusterrolebinding-linkerd-heartbeat.yaml
+  - clusterrolebinding-linkerd-linkerd-destination.yaml
+  - clusterrolebinding-linkerd-linkerd-identity.yaml
+  - clusterrolebinding-linkerd-linkerd-proxy-injector.yaml
+  - configmap-linkerd-config.yaml
+  - cronjob-linkerd-heartbeat.yaml
+  - deployment-linkerd-destination.yaml
+  - deployment-linkerd-identity.yaml
+  - deployment-linkerd-proxy-injector.yaml
+  - mutatingwebhookconfiguration-linkerd-proxy-injector-webhook-config.yaml
+  - namespace-linkerd.yaml
+  - role-ext-namespace-metadata-linkerd-config.yaml
+  - role-linkerd-heartbeat.yaml
+  - role-remote-discovery.yaml
+  - rolebinding-linkerd-destination-remote-discovery.yaml
+  - rolebinding-linkerd-heartbeat.yaml
+  - secret-linkerd-policy-validator-k8s-tls.yaml
+  - secret-linkerd-proxy-injector-k8s-tls.yaml
+  - secret-linkerd-sp-validator-k8s-tls.yaml
+  - service-linkerd-dst-headless.yaml
+  - service-linkerd-dst.yaml
+  - service-linkerd-identity-headless.yaml
+  - service-linkerd-identity.yaml
+  - service-linkerd-policy-validator.yaml
+  - service-linkerd-policy.yaml
+  - service-linkerd-proxy-injector.yaml
+  - service-linkerd-sp-validator.yaml
+  - serviceaccount-linkerd-destination.yaml
+  - serviceaccount-linkerd-heartbeat.yaml
+  - serviceaccount-linkerd-identity.yaml
+  - serviceaccount-linkerd-proxy-injector.yaml
+  - validatingwebhookconfiguration-linkerd-policy-validator-webhook-config.yaml
+  - validatingwebhookconfiguration-linkerd-sp-validator-webhook-config.yaml
