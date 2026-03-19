@@ -7,6 +7,8 @@ spec:
   backoffLimit: 4
   activeDeadlineSeconds: 300
   template:
+    ttlSecondsAfterFinished: 600
+
     spec:
       restartPolicy: Never
 
@@ -26,14 +28,6 @@ spec:
       containers:
         - name: migrate
           image: mdstaicu/auth-migrate:latest
-          command:
-            - sh
-            - -c
-            - |
-              migrate \
-                -path=/migrations \
-                -database="$DATABASE_URL" \
-                up
 
           env:
             - name: DATABASE_URL

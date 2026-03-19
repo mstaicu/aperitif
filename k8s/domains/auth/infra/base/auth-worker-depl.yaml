@@ -17,6 +17,32 @@ spec:
       # Defense in deep, disable this at the pod level to prevent overwrites at the
       # service account level
       automountServiceAccountToken: false
+
+      initContainers:
+        - name: wait-schema
+          image: postgres:18
+          command:
+            - sh
+            - -c
+            - |
+              echo "waiting for schema..."
+
+              until psql "$DATABASE_URL" -tAc \
+                "select 1 from information_schema.tables where table_name='schema_migrations'" \
+                | grep -q 1
+              do
+                sleep 2
+              done
+
+              echo "schema ready"
+
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auth-db
+                  key: DATABASE_URL
+
       containers:
         - name: auth-worker
           image: mdstaicu/auth-worker
@@ -28,50 +54,20 @@ spec:
 
             - name: DATABASE_URL
               valueFrom:
-                configMapKeyRef:
-                  name: auth-worker-cm
+                secretKeyRef:
+                  name: auth-db
                   key: DATABASE_URL
 
             # Clients will learn the cluster topology, use the ClientIP hostname
-            - name: NATS_URL
-              value: nats://nats-srv.nats.svc.cluster.local:4222
-            - name: NATS_USER
-              valueFrom:
-                secretKeyRef:
-                  name: auth-worker-nats-secrets
-                  key: user
-            - name: NATS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: auth-worker-nats-secrets
-                  key: password
-
-          securityContext:
-            runAsNonRoot: true
-            # This will override the Docker image USER
-            # if you get this right, there will be issues
-            # uncommenting this to let the Dockerfile decide the USER
-            # runAsUser: 10001
-            allowPrivilegeEscalation: false
-
-            # Node sometimes writes to:
-            #   /tmp
-            #   $HOME
-            #   npm cache
-            # If your app ever crashes with:
-            #   EROFS: read-only file system
-            # You need to mount writable tmp.
-
-            # volumeMounts:
-            #   - name: tmp
-            #     mountPath: /tmp
-            # volumes:
-            #   - name: tmp
-            #     emptyDir: {}
-
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
+            # - name: NATS_URL
+            #   value: nats://nats-srv.nats.svc.cluster.local:4222
+            # - name: NATS_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: auth-worker-nats-secrets
+            #       key: user
+            # - name: NATS_PASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: auth-worker-nats-secrets
+            #       key: password
