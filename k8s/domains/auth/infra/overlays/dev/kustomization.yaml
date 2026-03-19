@@ -8,7 +8,7 @@ resources:
   - auth-api-ingress.yaml
   - auth-api-middleware.yaml
   # - auth-api-nats-account.yaml
-  # - auth-api-nats-creds.yaml
+  - auth-api-nats-creds.yaml
   - auth-migrate-job.yaml
   - auth-ns.yaml
   - auth-postgres-depl.yaml
@@ -24,7 +24,7 @@ configMapGenerator:
 secretGenerator:
   - name: auth-db
     literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true
