@@ -2,10 +2,10 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: traefik-crds
+  name: ingress-crds
 spec:
   interval: 10m
-  path: ./platform/traefik/crds
+  path: ./platform/ingress/crds
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
@@ -18,10 +18,10 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: traefik
+  name: ingress
 spec:
   interval: 10m
-  path: ./platform/traefik/overlays/prod-eu
+  path: ./platform/ingress/deployment/overlays/prod-eu
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
@@ -29,4 +29,22 @@ spec:
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready
   dependsOn:
-    - name: traefik-crds
+    - name: ingress-crds
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: ingress-crs
+spec:
+  interval: 10m
+  path: ./platform/ingress/crs/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: aperitif-repo
+  wait: true
+  timeout: 5m
+  dependsOn:
+    - name: ingress

@@ -51,12 +51,12 @@ CREATE TABLE sessions (
 
 -- Authority topology snapshot
 
-CREATE TABLE access_projection (
-    user_id UUID NOT NULL
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-    tenant_id UUID NULL,
-    roles TEXT[] NOT NULL DEFAULT '{}',
+-- CREATE TABLE access_projection (
+--     user_id UUID NOT NULL
+--         REFERENCES users(id)
+--         ON DELETE CASCADE,
+--     tenant_id UUID NULL,
+--     roles TEXT[] NOT NULL DEFAULT '{}',
 
-    PRIMARY KEY (user_id, tenant_id)
-);
+--     PRIMARY KEY (user_id, tenant_id)
+-- );

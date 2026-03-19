@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: traefik
+
+resources:
+  # - ../../base
+  - traefik-ingress.yaml
+  - traefik-lb.yaml
+  - traefik-svc.yaml
+  - traefik-tlsstore.yaml
+
+generators:
+  - traefik-ksops-generator.yaml

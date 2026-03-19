@@ -1,58 +1,59 @@
-# # Because this module has no build section,
-# # we must explicitly define deploy.kubectl or
-# # Skaffold may render but skip applying when used via `requires`.
-# #
-# # skaffold run -m crds
-# #
-# apiVersion: skaffold/v4beta11
-# kind: Config
+# Because this module has no build section,
+# we must explicitly define deploy.kubectl or
+# Skaffold may render but skip applying when used via `requires`.
+#
+# skaffold run -m crds
+#
+apiVersion: skaffold/v4beta11
+kind: Config
 
-# metadata:
-#   name: crds
+metadata:
+  name: crds
 
-# # Skaffold will run: kustomize build <path>
-# # and pass output to deploy phase.
-# manifests:
-#   kustomize:
-#     paths:
-#       - infra/traefik/crds
+# Skaffold will run: kustomize build <path>
+# and pass output to deploy phase.
+manifests:
+  kustomize:
+    paths:
+      - platform/ingress/crds
 
-# # REQUIRED for manifest-only modules,
-# # ensures build output is applied to the cluster
-# deploy:
-#   kubectl: {}
+# REQUIRED for manifest-only modules,
+# ensures build output is applied to the cluster
+deploy:
+  kubectl: {}
 
-# ---
-# #
-# # skaffold run -m infra
-# #
-# apiVersion: skaffold/v4beta11
-# kind: Config
+---
+#
+# skaffold run -m platform
+#
+apiVersion: skaffold/v4beta11
+kind: Config
 
-# metadata:
-#   name: infra
+metadata:
+  name: platform
 
 # requires:
 #   - configs: ["crds"]
 
-# # Skaffold will run: kustomize build <path>
-# # and pass output to deploy phase.
-# manifests:
-#   kustomize:
-#     paths:
-#       - infra/traefik/overlays/dev
+# Skaffold will run: kustomize build <path>
+# and pass output to deploy phase.
+manifests:
+  kustomize:
+    paths:
+      - platform/ingress/deployment/overlays/dev
+      - platform/ingress/crs/overlays/dev
 
-#     buildArgs:
-#       - --enable-alpha-plugins
-#       - --enable-exec
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
 
-# deploy:
-#   kubectl: {}
+deploy:
+  kubectl: {}
 
 
-# # skaffold dev -m app
+# skaffold dev -m app
 
-# ---
+---
 apiVersion: skaffold/v4beta11
 kind: Config
 
