@@ -9,11 +9,11 @@ metadata:
   namespace: flux-system
 spec:
   ingress:
-  - from:
-    - namespaceSelector: {}
-    ports:
-    - port: 8080
-      protocol: TCP
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - port: 8080
+          protocol: TCP
   podSelector: {}
   policyTypes:
-  - Ingress
+    - Ingress

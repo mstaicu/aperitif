@@ -9,11 +9,11 @@ metadata:
   namespace: flux-system
 spec:
   egress:
-  - {}
+    - {}
   ingress:
-  - from:
-    - podSelector: {}
+    - from:
+        - podSelector: {}
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress

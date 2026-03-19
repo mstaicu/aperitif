@@ -18,31 +18,6 @@ spec:
       # service account level
       automountServiceAccountToken: false
 
-      initContainers:
-        - name: wait-schema
-          image: postgres:18
-          command:
-            - sh
-            - -c
-            - |
-              echo "waiting for schema..."
-
-              until psql "$DATABASE_URL" -tAc \
-                "select 1 from information_schema.tables where table_name='schema_migrations'" \
-                | grep -q 1
-              do
-                sleep 2
-              done
-
-              echo "schema ready"
-
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: auth-db
-                  key: DATABASE_URL
-
       containers:
         - name: auth-worker
           image: mdstaicu/auth-worker
@@ -59,8 +34,8 @@ spec:
                   key: DATABASE_URL
 
             # Clients will learn the cluster topology, use the ClientIP hostname
-            # - name: NATS_URL
-            #   value: nats://nats-srv.nats.svc.cluster.local:4222
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
             # - name: NATS_USER
             #   valueFrom:
             #     secretKeyRef:
