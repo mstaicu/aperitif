@@ -21,16 +21,12 @@ spec:
         - name: auth-api
           image: mdstaicu/auth-api
           env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-
             - name: DATABASE_URL
               valueFrom:
-                configMapKeyRef:
-                  name: auth-api-cm
+                secretKeyRef:
+                  name: auth-db
                   key: DATABASE_URL
+
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:

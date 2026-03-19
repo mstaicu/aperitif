@@ -1,0 +1,33 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: auth
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/auth-api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: .
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/dev
+
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
