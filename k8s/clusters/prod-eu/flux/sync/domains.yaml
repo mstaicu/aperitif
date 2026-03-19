@@ -2,17 +2,15 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: auth
+  name: cluster-domains
 spec:
   interval: 10m
-  path: ./k8s/infra/domain/auth/overlays/prod-eu
+  path: ./clusters/prod-eu/domains
   prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
+  wait: true
+  timeout: 10m
   dependsOn:
-    - name: traefik
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
+    - name: cluster-platform

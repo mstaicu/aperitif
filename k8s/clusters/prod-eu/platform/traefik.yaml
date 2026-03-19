@@ -5,13 +5,14 @@ metadata:
   name: traefik-crds
 spec:
   interval: 10m
-  path: ./infra/platform/traefik/crds
+  path: ./platform/traefik/crds
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready
+
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -20,7 +21,7 @@ metadata:
   name: traefik
 spec:
   interval: 10m
-  path: ./infra/platform/traefik/overlays/prod-eu
+  path: ./platform/traefik/overlays/prod-eu
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository

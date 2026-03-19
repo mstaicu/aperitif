@@ -1,0 +1,18 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: aperitif-repo
+  # dependsOn:
+  #   - name: traefik
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

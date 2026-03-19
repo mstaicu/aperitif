@@ -1,5 +1,5 @@
 {
-  "private": "true",
+  "private": true,
   "type": "module",
   "overrides": {
     "glob": "^13.0.6"
