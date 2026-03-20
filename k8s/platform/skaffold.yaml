@@ -8,4 +8,4 @@ requires:
   - path: ingress
   # - path: event-bus
   # - path: mesh
-  # - path: observability
+  - path: observability

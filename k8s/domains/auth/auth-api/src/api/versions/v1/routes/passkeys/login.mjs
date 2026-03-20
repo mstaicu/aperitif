@@ -1,12 +1,13 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
+import nconf from "nconf";
 
 import {
   AuthenticationFinalizeBody,
   AuthSuccessResponse,
   ErrorResponse,
-  hostname,
-  origin,
-} from "./shared.mjs";
+} from "../../schemas.mjs";
+
+const { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify

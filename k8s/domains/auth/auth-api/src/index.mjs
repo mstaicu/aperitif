@@ -9,8 +9,6 @@ nconf
     "JWT_PUBLIC_KEY_PATH",
 
     "NATS_URL",
-    "NATS_USER",
-    "NATS_PASSWORD",
 
     "ORIGIN",
   ]);

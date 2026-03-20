@@ -41,5 +41,5 @@ spec:
     push:
       branch: master
   update:
-    path: ./k8s/domains/auth/infra/overlays/prod-eu
+    path: ./k8s/domains/auth/infra/overlays/cluster
     strategy: Setters

@@ -1,11 +1,8 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
-import nconf from "nconf";
 
 import passkeyRoutes from "./routes/passkeys/index.mjs";
 import sessionRoutes from "./routes/sessions/index.mjs";
-
-const { origin } = new URL(nconf.get("ORIGIN"));
 
 /**
  * @param {import('../../../fastify.js').FastifyInstance} fastify
@@ -19,7 +16,7 @@ export default async (fastify) => {
       },
       servers: [
         {
-          url: `${origin}/auth`,
+          url: "/auth",
         },
       ],
       tags: [
@@ -38,6 +35,8 @@ export default async (fastify) => {
   await fastify.register(swaggerUI, {
     routePrefix: "/docs",
   });
+
+  fastify.get("/docs/json", async () => fastify.swagger());
 
   await fastify.register(passkeyRoutes, {
     prefix: "/passkeys",

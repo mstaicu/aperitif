@@ -5,7 +5,7 @@ metadata:
   name: auth
 spec:
   interval: 10m
-  path: ./k8s/domains/auth/infra/overlays/prod-eu
+  path: ./k8s/domains/auth/infra/overlays/cluster
   prune: true
   sourceRef:
     kind: GitRepository

@@ -7,7 +7,7 @@ resources:
   - ../../base
   - auth-migrate-job.yaml
   - auth-postgres-depl.yaml
-  - nats-depl.yaml
+  - auth-nats-depl.yaml
 
 configMapGenerator:
   - name: auth-api-cm

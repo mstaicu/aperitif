@@ -1,11 +1,7 @@
 import { createHash } from "node:crypto";
 
-import {
-  EmptyResponse,
-  generateRefreshToken,
-  RefreshBody,
-  RefreshResponse,
-} from "../passkeys/shared.mjs";
+import { EmptyResponse, RefreshBody, RefreshResponse } from "../../schemas.mjs";
+import { generateRefreshToken } from "../passkeys/shared.mjs";
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify

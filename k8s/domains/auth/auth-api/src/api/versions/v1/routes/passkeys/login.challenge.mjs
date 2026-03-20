@@ -1,7 +1,10 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import nconf from "nconf";
 import { randomBytes } from "node:crypto";
 
-import { AuthenticationChallengeResponse, hostname } from "./shared.mjs";
+import { AuthenticationChallengeResponse } from "../../schemas.mjs";
+
+const { hostname } = new URL(nconf.get("ORIGIN"));
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify

@@ -18,7 +18,7 @@ spec:
           image: mdstaicu/auth-api
           env:
             - name: NATS_URL
-              value: nats://nats-srv:4222
+              value: nats://auth-nats-srv:4222
 
             - name: OTEL_SERVICE_NAME
               value: auth-api

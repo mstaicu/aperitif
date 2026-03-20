@@ -9,11 +9,11 @@ helm repo update
 helm search repo traefik/traefik --versions
 
 helm show crds traefik/traefik \
-  --version 39.0.2 \
+  --version 39.0.6 \
   > crds.yaml
 
 helm template traefik traefik/traefik \
-  --version 39.0.2 \
+  --version 39.0.6 \
   -n traefik \
   > controller.yaml
 

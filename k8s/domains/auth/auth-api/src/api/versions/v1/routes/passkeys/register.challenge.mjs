@@ -1,8 +1,11 @@
 // import { trace } from "@opentelemetry/api";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
+import nconf from "nconf";
 import { randomBytes, randomUUID } from "node:crypto";
 
-import { hostname, RegistrationChallengeResponse } from "./shared.mjs";
+import { RegistrationChallengeResponse } from "../../schemas.mjs";
+
+const { hostname } = new URL(nconf.get("ORIGIN"));
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
