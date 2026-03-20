@@ -6,7 +6,7 @@ spec:
   selector:
     app: nats
   ports:
-    - name: nats-monitor
+    - name: monitor
       protocol: TCP
       appProtocol: HTTP
       port: 8222

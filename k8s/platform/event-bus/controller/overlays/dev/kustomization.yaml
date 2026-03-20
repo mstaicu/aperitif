@@ -1,8 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: nats
+
 resources:
   - ../../base
+  - nats-ns.yaml
+  - nats-secrets.yaml
 
 configMapGenerator:
   - name: nats-config
@@ -14,3 +18,4 @@ generatorOptions:
 
 patches:
   - path: nats-depl.yaml
+  - path: nats-srv.yaml

@@ -1,24 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: flux-system
-
 resources:
-  - flux-system.yaml
-  - clusterrole-crd-controller-flux-system.yaml
-  - clusterrole-flux-edit-flux-system.yaml
-  - clusterrole-flux-view-flux-system.yaml
-  - clusterrolebinding-cluster-reconciler-flux-system.yaml
-  - clusterrolebinding-crd-controller-flux-system.yaml
+  - clusterrolebinding-flux-cluster-admin.yaml
   - deployment-image-automation-controller.yaml
   - deployment-image-reflector-controller.yaml
   - deployment-kustomize-controller.yaml
   - deployment-source-controller.yaml
-  - namespace-flux-system.yaml
-  - networkpolicy-allow-egress.yaml
-  - networkpolicy-allow-scraping.yaml
-  - networkpolicy-allow-webhooks.yaml
-  - resourcequota-critical-pods-flux-system.yaml
   - service-source-controller.yaml
   - serviceaccount-image-automation-controller.yaml
   - serviceaccount-image-reflector-controller.yaml
