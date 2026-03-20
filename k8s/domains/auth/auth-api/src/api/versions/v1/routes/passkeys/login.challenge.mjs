@@ -14,9 +14,13 @@ export default async function (fastify) {
     "/login/challenge",
     {
       schema: {
+        description:
+          "Generates a WebAuthn authentication challenge for passkey login",
+        operationId: "createPasskeyLoginChallenge",
         response: {
           200: AuthenticationChallengeResponse,
         },
+        summary: "Create authentication challenge",
         tags: ["passkeys"],
       },
     },

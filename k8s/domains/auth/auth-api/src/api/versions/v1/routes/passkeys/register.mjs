@@ -18,6 +18,9 @@ export default async function (fastify) {
     {
       schema: {
         body: RegistrationFinalizeBody,
+        description:
+          "Verifies the WebAuthn registration response and stores the credential.",
+        operationId: "registerPasskey",
         response: {
           201: EmptyResponse,
           400: ErrorResponse,
@@ -25,6 +28,7 @@ export default async function (fastify) {
           409: ErrorResponse,
           500: ErrorResponse,
         },
+        summary: "Finalize passkey registration",
         tags: ["passkeys"],
       },
     },

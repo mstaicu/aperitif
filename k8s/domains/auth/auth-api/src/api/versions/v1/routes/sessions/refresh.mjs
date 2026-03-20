@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { EmptyResponse, RefreshBody, RefreshResponse } from "../../schemas.mjs";
+import { ErrorResponse, RefreshBody, RefreshResponse } from "../../schemas.mjs";
 import { generateRefreshToken } from "../passkeys/shared.mjs";
 
 /**
@@ -12,11 +12,15 @@ export default async function (fastify) {
     {
       schema: {
         body: RefreshBody,
+        description:
+          "Exchanges a valid refresh token for a new access token and refresh token pair.",
+        operationId: "refreshSession",
         response: {
           200: RefreshResponse,
-          401: EmptyResponse,
-          500: EmptyResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
         },
+        summary: "Refresh session",
         tags: ["sessions"],
       },
     },

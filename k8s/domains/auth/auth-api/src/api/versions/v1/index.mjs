@@ -10,6 +10,15 @@ import sessionRoutes from "./routes/sessions/index.mjs";
 export default async (fastify) => {
   await fastify.register(swagger, {
     openapi: {
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            bearerFormat: "JWT",
+            scheme: "bearer",
+            type: "http",
+          },
+        },
+      },
       info: {
         title: "Authentication",
         version: "v1",
@@ -35,8 +44,6 @@ export default async (fastify) => {
   await fastify.register(swaggerUI, {
     routePrefix: "/docs",
   });
-
-  fastify.get("/docs/json", async () => fastify.swagger());
 
   await fastify.register(passkeyRoutes, {
     prefix: "/passkeys",
