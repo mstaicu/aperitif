@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Secret
-
-metadata:
-  name: auth-api-nats-creds
-type: Opaque
-stringData:
-  user: auth-api
-  password: e418e2f274fc4cd8bc3889990c10b5ffeef7f72fb09d4a796696ce6d58ee0eac

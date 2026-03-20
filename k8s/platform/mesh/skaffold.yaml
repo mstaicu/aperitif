@@ -1,0 +1,33 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: mesh-crds
+
+manifests:
+  kustomize:
+    paths:
+      - crds
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: mesh
+
+requires:
+  - configs: ["mesh-crds"]
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/local
+
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

@@ -1,0 +1,17 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: event-bus
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/local
+
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

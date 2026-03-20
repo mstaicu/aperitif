@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: nats
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - image: nats:2.12-alpine
+          args:
+            - "-js"
+
+---
+kind: Service
+metadata:
+  name: nats-srv

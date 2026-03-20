@@ -20,14 +20,42 @@ build:
           - src: src/**/*
             dest: .
 
-manifests:
-  kustomize:
-    paths:
-      - infra/overlays/dev
+profiles:
+  #
+  # Local cluster runtime
+  #
+  - name: local
 
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/local
+        buildArgs:
+          - --enable-alpha-plugins
+          - --enable-exec
 
-deploy:
-  kubectl: {}
+    deploy:
+      kubectl: {}
+
+  #
+  # Independent runtime
+  #
+  - name: preview
+
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/preview
+        buildArgs:
+          - --enable-alpha-plugins
+          - --enable-exec
+
+    deploy:
+      kubectl: {}
+
+    portForward:
+      - resourceType: service
+        resourceName: auth-api-srv
+        namespace: auth
+        port: 3000
+        localPort: 4300

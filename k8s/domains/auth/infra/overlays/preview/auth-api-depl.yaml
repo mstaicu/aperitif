@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-api-depl
+spec:
+  selector:
+    matchLabels:
+      app: auth-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth-api
+    spec:
+      containers:
+        - name: auth-api
+          image: mdstaicu/auth-api
+          env:
+            - name: NATS_URL
+              value: nats://nats-srv:4222
+
+            - name: OTEL_SERVICE_NAME
+              value: auth-api
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: ""
+
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+
+            - name: OTEL_LOGS_EXPORTER
+              value: none

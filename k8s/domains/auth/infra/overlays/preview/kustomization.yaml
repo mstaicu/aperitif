@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth-preview
+
+resources:
+  - ../../base
+  - auth-migrate-job.yaml
+  - auth-postgres-depl.yaml
+  - nats-depl.yaml
+
+configMapGenerator:
+  - name: auth-api-cm
+    literals:
+      - ORIGIN=https://tma.com
+
+secretGenerator:
+  - name: auth-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+patches:
+  - path: auth-api-depl.yaml
+
+generators:
+  - auth-ksops-generator.yaml

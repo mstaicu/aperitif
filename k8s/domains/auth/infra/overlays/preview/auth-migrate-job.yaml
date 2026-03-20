@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: auth-migrate
+
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 300
+  template:
+    ttlSecondsAfterFinished: 600
+
+    spec:
+      restartPolicy: Never
+
+      initContainers:
+        - name: wait-postgres
+          image: postgres:18
+          command:
+            - sh
+            - -c
+            - |
+              echo "waiting for postgres..."
+              until pg_isready -h postgres-srv -p 5432 -d auth; do
+                sleep 2
+              done
+              echo "postgres ready"
+
+      containers:
+        - name: migrate
+          image: mdstaicu/auth-migrate:latest
+
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auth-db
+                  key: DATABASE_URL

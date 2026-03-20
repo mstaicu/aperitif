@@ -6,5 +6,6 @@ resources:
   - auth-api-sa.yaml
   - auth-api-srv.yaml
   # - auth-np.yaml
+  - auth-ns.yaml
   # - auth-worker-depl.yaml
   # - auth-worker-sa.yaml

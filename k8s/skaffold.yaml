@@ -1,30 +1,7 @@
-# Because this module has no build section,
-# we must explicitly define deploy.kubectl or
-# Skaffold may render but skip applying when used via `requires`.
 #
-# skaffold run -m crds
-#
-apiVersion: skaffold/v4beta11
-kind: Config
-
-metadata:
-  name: crds
-
-# Skaffold will run: kustomize build <path>
-# and pass output to deploy phase.
-manifests:
-  kustomize:
-    paths:
-      - platform/ingress/crds
-
-# REQUIRED for manifest-only modules,
-# ensures build output is applied to the cluster
-deploy:
-  kubectl: {}
-
----
-#
-# skaffold run -m platform
+# skaffold run -m ingress-crds
+# skaffold run -m ingress
+# skaffold run -m event-bus
 #
 apiVersion: skaffold/v4beta11
 kind: Config
@@ -32,27 +9,17 @@ kind: Config
 metadata:
   name: platform
 
-# requires:
-#   - configs: ["crds"]
-
-# Skaffold will run: kustomize build <path>
-# and pass output to deploy phase.
-manifests:
-  kustomize:
-    paths:
-      - platform/ingress/deployment/overlays/dev
-      - platform/ingress/crs/overlays/dev
-
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
-
-deploy:
-  kubectl: {}
+requires:
+  - path: platform/ingress/skaffold.yaml
+  - path: platform/event-bus/skaffold.yaml
+  # - path: platform/mesh/skaffold.yaml
+  # - path: platform/observability/skaffold.yaml
 
 ---
 #
 # skaffold dev -m app
+# skaffold dev -m app -p local
+# skaffold dev -m app -p preview
 #
 apiVersion: skaffold/v4beta11
 kind: Config
