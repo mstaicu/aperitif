@@ -1,26 +1,5 @@
 #
-# skaffold run -m ingress-crds
-# skaffold run -m ingress
-# skaffold run -m event-bus
-#
-apiVersion: skaffold/v4beta11
-kind: Config
-
-metadata:
-  name: bootstrap
-
-requires:
-  - path: platform
-
----
-#
-# skaffold dev -m app
-#
-# skaffold dev -m app -p local
-# skaffold dev -m app -p preview
-#
 # skaffold dev -m auth -p preview
-# skaffold dev -m auth -p local
 #
 apiVersion: skaffold/v4beta11
 kind: Config
@@ -30,3 +9,28 @@ metadata:
 
 requires:
   - path: domains
+
+profiles:
+  - name: local
+
+    activation:
+      - command: dev
+
+    requires:
+      - path: domains
+        activeProfiles:
+          - name: local
+
+---
+#
+# skaffold run -m ingress-crds
+# skaffold run -m ingress
+#
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: bootstrap
+
+requires:
+  - path: platform
