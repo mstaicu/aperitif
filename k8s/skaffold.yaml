@@ -7,19 +7,20 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: platform
+  name: bootstrap
 
 requires:
-  - path: platform/ingress/skaffold.yaml
-  - path: platform/event-bus/skaffold.yaml
-  # - path: platform/mesh/skaffold.yaml
-  # - path: platform/observability/skaffold.yaml
+  - path: platform
 
 ---
 #
 # skaffold dev -m app
+#
 # skaffold dev -m app -p local
 # skaffold dev -m app -p preview
+#
+# skaffold dev -m auth -p preview
+# skaffold dev -m auth -p local
 #
 apiVersion: skaffold/v4beta11
 kind: Config
@@ -28,4 +29,4 @@ metadata:
   name: app
 
 requires:
-  - path: domains/auth/skaffold.yaml
+  - path: domains

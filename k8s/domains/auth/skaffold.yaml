@@ -21,9 +21,6 @@ build:
             dest: .
 
 profiles:
-  #
-  # Local cluster runtime
-  #
   - name: local
 
     manifests:
@@ -37,9 +34,6 @@ profiles:
     deploy:
       kubectl: {}
 
-  #
-  # Independent runtime
-  #
   - name: preview
 
     manifests:
