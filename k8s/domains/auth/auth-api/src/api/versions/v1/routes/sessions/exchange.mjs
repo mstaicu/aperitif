@@ -5,13 +5,33 @@ import { readFileSync } from "node:fs";
 
 import { EmptyResponse, ErrorResponse, ExchangeBody } from "../../schemas.mjs";
 
-const privateKeyPem = readFileSync(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8");
-const privateKey = await importPKCS8(privateKeyPem, "ES256");
+const privateKey = await importPKCS8(
+  readFileSync(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
+  "ES256",
+);
 
 const ALLOWED = new Map([["auth", "auth"]]);
 
+const ACCESS_TOKEN_TTL_S = 60;
+const CACHE_TTL_MS = 10_000;
+const MAX_CACHE_SIZE = 10_000;
+
 /**
- *
+ * Small bounded cache. Evict oldest entry when full.
+ * @param {Map<string, { exp: number, token: string }>} cache
+ * @param {string} key
+ * @param {{ exp: number, token: string }} value
+ */
+function cacheSet(cache, key, value) {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) cache.delete(oldestKey);
+  }
+
+  cache.set(key, value);
+}
+
+/**
  * @param {string | undefined} v
  * @returns {string | undefined}
  */
@@ -19,7 +39,6 @@ function extractBearer(v) {
   if (!v) return;
 
   const parts = v.split(" ");
-
   if (parts.length !== 2) return;
   if (parts[0] !== "Bearer") return;
 
@@ -27,10 +46,33 @@ function extractBearer(v) {
 }
 
 /**
+ * @param {string} sub
+ * @param {string} audience
+ */
+async function mintAccessToken(sub, audience) {
+  const now = Math.floor(Date.now() / 1000);
+
+  return new SignJWT({ sub })
+    .setProtectedHeader({
+      alg: "ES256",
+      kid: "k1",
+      typ: "JWT",
+    })
+    .setIssuedAt(now)
+    .setIssuer(nconf.get("JWT_ISSUER"))
+    .setAudience(audience)
+    .setExpirationTime(now + ACCESS_TOKEN_TTL_S)
+    .sign(privateKey);
+}
+
+/**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
 export default async function (fastify) {
+  /** @type {Map<string, { exp: number, token: string }>} */
   const cache = new Map();
+
+  /** @type {Map<string, Promise<{ exp: number, token: string }>>} */
   const inflight = new Map();
 
   fastify.post(
@@ -38,53 +80,45 @@ export default async function (fastify) {
     {
       schema: {
         body: ExchangeBody,
-        description:
-          "Gateway-facing endpoint that exchanges a valid refresh session for a short-lived audience-scoped access token.",
-        operationId: "exchangeSessionToken",
+        hide: true,
         response: {
           200: EmptyResponse,
           401: ErrorResponse,
           403: ErrorResponse,
           500: ErrorResponse,
         },
-        summary: "Exchange refresh token for access token",
-        tags: ["sessions"],
       },
     },
     async function (request, reply) {
       const { pool } = this;
 
+      /**
+       * Audience
+       */
       const raw = request.headers["x-forwarded-uri"];
-
       const uri = Array.isArray(raw) ? raw[0] : raw;
 
-      if (typeof uri !== "string") {
-        return reply.code(403).send(null);
-      }
+      if (typeof uri !== "string") return reply.code(403).send(null);
 
-      const segment = uri.startsWith("/")
-        ? uri.slice(1).split("/", 1)[0]
-        : uri.split("/", 1)[0];
+      const segment = uri.split("/")[uri.startsWith("/") ? 0 : 1];
 
       const audience = ALLOWED.get(segment);
 
-      if (!audience) {
-        return reply.code(403).send(null);
-      }
+      if (!audience) return reply.code(403).send(null);
 
-      const refresh =
-        request.headers["x-session-token"] ??
-        extractBearer(request.headers.authorization);
+      /**
+       * Refresh token bearer
+       */
+      const refresh = extractBearer(request.headers.authorization);
 
-      if (!refresh || typeof refresh !== "string") {
+      if (!refresh || typeof refresh !== "string")
         return reply.code(401).send(null);
-      }
 
       const {
         rows: [session],
       } = await pool.query(
         `
-          SELECT id, user_id
+          SELECT id, user_id, last_refreshed_at
           FROM sessions
           WHERE refresh_token_hash = $1
             AND revoked_at IS NULL
@@ -95,50 +129,43 @@ export default async function (fastify) {
 
       if (!session) return reply.code(401).send(null);
 
-      const cacheKey = `${session.id}:${audience}`;
+      // Cache correctness is now derived from DB-validated session state.
+      // When refresh rotates, last_refreshed_at changes and the cache key changes too.
+      const version = session.last_refreshed_at
+        ? new Date(session.last_refreshed_at).toISOString()
+        : "initial";
+
+      const cacheKey = `${session.id}:${version}:${audience}`;
+      const now = Date.now();
+
       const cached = cache.get(cacheKey);
 
-      if (cached && cached.exp > Date.now()) {
+      if (cached && cached.exp > now) {
         reply.header("Authorization", `Bearer ${cached.token}`);
         return reply.code(200).send(null);
       }
 
-      if (inflight.has(cacheKey)) {
-        const entry = await inflight.get(cacheKey);
-        reply.header("Authorization", `Bearer ${entry.token}`);
-        return reply.code(200).send(null);
+      let pending = inflight.get(cacheKey);
+
+      if (!pending) {
+        pending = mintAccessToken(session.user_id, audience)
+          .then((token) => {
+            const entry = {
+              exp: Date.now() + CACHE_TTL_MS,
+              token,
+            };
+
+            cacheSet(cache, cacheKey, entry);
+            return entry;
+          })
+          .finally(() => {
+            inflight.delete(cacheKey);
+          });
+
+        inflight.set(cacheKey, pending);
       }
 
-      const p = (async () => {
-        const now = Math.floor(Date.now() / 1000);
-
-        const token = await new SignJWT({
-          sub: session.user_id,
-        })
-          .setProtectedHeader({
-            alg: "ES256",
-            kid: "k1",
-            typ: "JWT",
-          })
-          .setIssuedAt(now)
-          .setIssuer(nconf.get("JWT_ISSUER"))
-          .setAudience(audience)
-          .setExpirationTime(now + 60)
-          .sign(privateKey);
-
-        const entry = {
-          exp: Date.now() + 10_000,
-          token,
-        };
-
-        cache.set(cacheKey, entry);
-
-        return entry;
-      })().finally(() => inflight.delete(cacheKey));
-
-      inflight.set(cacheKey, p);
-
-      const entry = await p;
+      const entry = await pending;
 
       reply.header("Authorization", `Bearer ${entry.token}`);
       return reply.code(200).send(null);

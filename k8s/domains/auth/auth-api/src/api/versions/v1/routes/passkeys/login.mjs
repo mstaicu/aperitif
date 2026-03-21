@@ -6,6 +6,7 @@ import {
   LoginBody,
   LoginSuccessResponse,
 } from "../../schemas.mjs";
+import { generateRefreshToken } from "./shared.mjs";
 
 const { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
@@ -173,33 +174,28 @@ export default async function (fastify) {
           [credential.credential_id, newCounter],
         );
 
+        const { hash, token: refreshToken } = generateRefreshToken();
+
+        await client.query(
+          `
+            INSERT INTO sessions 
+            (
+              user_id,
+              refresh_token_hash,
+              expires_at
+            )
+            VALUES ($1, $2, NOW() + INTERVAL '30 days')
+          `,
+          [credential.user_id, hash],
+        );
+
         await client.query("COMMIT");
-
-        // const { hash, token: refreshToken } = generateRefreshToken();
-
-        // await client.query(
-        //   `
-        //     INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
-        //     VALUES ($1, $2, NOW() + INTERVAL '30 days')
-        //   `,
-        //   [userId, hash],
-        // );
-
-        // await client.query("COMMIT");
-
-        // reply.header("Cache-Control", "no-store");
-        // reply.header("Pragma", "no-cache");
-
-        // return reply.code(200).send({
-        //   access_token,
-        //   refresh_token: refreshToken,
-        // });
 
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
         return reply.code(200).send({
-          refresh_token: "TODO",
+          refresh_token: refreshToken,
         });
       } catch {
         await client.query("ROLLBACK");

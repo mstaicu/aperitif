@@ -135,7 +135,7 @@ export default async function (fastify) {
       try {
         await client.query("BEGIN");
 
-        /** @type {String} */
+        /** @type {string} */
         const userId = challengeRow.user_id;
 
         await client.query(
@@ -161,13 +161,16 @@ export default async function (fastify) {
           [userId, credentialId, publicKey, signCount],
         );
 
-        await client.query("COMMIT");
-
         const { hash, token: refreshToken } = generateRefreshToken();
 
         await client.query(
           `
-            INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
+            INSERT INTO sessions 
+            (
+              user_id,
+              refresh_token_hash,
+              expires_at
+            )
             VALUES ($1, $2, NOW() + INTERVAL '30 days')
           `,
           [userId, hash],

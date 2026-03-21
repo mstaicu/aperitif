@@ -28,9 +28,8 @@ export default async function (fastify) {
 
       const { refresh_token } = request.body;
 
-      if (!refresh_token || typeof refresh_token !== "string") {
+      if (!refresh_token || typeof refresh_token !== "string")
         return reply.code(401).send(null);
-      }
 
       const client = await pool.connect();
 
