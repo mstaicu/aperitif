@@ -1,0 +1,40 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+
+metadata:
+  name: traefik-gatewayclass
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+
+metadata:
+  name: traefik-gw
+spec:
+  gatewayClassName: traefik-gatewayclass
+
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: tma.com
+
+      allowedRoutes:
+        namespaces:
+          from: All
+
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: traefik-tls
+
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: tma.com
+
+      allowedRoutes:
+        namespaces:
+          from: All

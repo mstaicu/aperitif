@@ -4,6 +4,49 @@ metadata:
   name: traefik-ingress-controller
 
 rules:
+  #
+  # Gateway
+  #
+  - apiGroups: [""]
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses
+      - gateways
+      - httproutes
+      - grpcroutes
+      - tcproutes
+      - tlsroutes
+      - referencegrants
+      - backendtlspolicies
+    verbs:
+      - get
+      - list
+      - watch
+
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses/status
+      - gateways/status
+      - httproutes/status
+      - grpcroutes/status
+      - tcproutes/status
+      - tlsroutes/status
+      - referencegrants/status
+      - backendtlspolicies/status
+    verbs:
+      - update
+  #
+  # Gateway
+  #
   - apiGroups:
       - ""
     resources:

@@ -6,10 +6,3 @@ metadata:
 
 requires:
   - path: auth
-
-profiles:
-  - name: local
-    requires:
-      - path: auth
-        activeProfiles:
-          - name: local

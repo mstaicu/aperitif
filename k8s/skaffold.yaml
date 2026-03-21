@@ -1,28 +1,4 @@
 #
-# skaffold dev -m auth -p preview
-#
-apiVersion: skaffold/v4beta11
-kind: Config
-
-metadata:
-  name: app
-
-requires:
-  - path: domains
-
-profiles:
-  - name: local
-
-    activation:
-      - command: dev
-
-    requires:
-      - path: domains
-        activeProfiles:
-          - name: local
-
----
-#
 # skaffold run -m ingress-crds
 # skaffold run -m ingress
 #
@@ -34,3 +10,16 @@ metadata:
 
 requires:
   - path: platform
+
+---
+#
+# skaffold dev -m auth -p preview
+#
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: app
+
+requires:
+  - path: domains

@@ -26,8 +26,7 @@ spec:
             - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
             #
-            # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
-            - --providers.kubernetescrd=true
+            - --providers.kubernetesgateway=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
             - --log.level=DEBUG

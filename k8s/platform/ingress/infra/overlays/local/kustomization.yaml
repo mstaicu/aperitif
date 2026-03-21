@@ -5,10 +5,10 @@ namespace: traefik
 
 resources:
   - ../../base
+  - traefik-gateway.yaml
   - traefik-ingress.yaml
   - traefik-lb.yaml
   - traefik-svc.yaml
-  - traefik-tlsstore.yaml
 
 patches:
   - path: traefik-depl.yaml
