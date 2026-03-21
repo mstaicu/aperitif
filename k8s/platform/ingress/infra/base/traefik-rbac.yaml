@@ -1,17 +1,40 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
-metadata:
-  name: traefik-ingress-controller
 
+metadata:
+  name: traefik-gateway-controller
 rules:
-  #
-  # Gateway
-  #
-  - apiGroups: [""]
+  - apiGroups:
+      - ""
     resources:
       - namespaces
     verbs:
+      - list
+      - watch
+
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
       - get
+
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - secrets
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
       - list
       - watch
 
@@ -44,90 +67,24 @@ rules:
       - backendtlspolicies/status
     verbs:
       - update
-  #
-  # Gateway
-  #
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-      - nodes
-      - services
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - discovery.k8s.io
-    resources:
-      - endpointslices
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-      - networking.k8s.io
-    resources:
-      - ingressclasses
-      - ingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - update
-  - apiGroups:
-      - traefik.io
-    resources:
-      - ingressroutes
-      - ingressroutetcps
-      - ingressrouteudps
-      - middlewares
-      - middlewaretcps
-      - serverstransports
-      - serverstransporttcps
-      - tlsoptions
-      - tlsstores
-      - traefikservices
-    verbs:
-      - get
-      - list
-      - watch
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
-metadata:
-  name: traefik-ingress-controller
 
+metadata:
+  name: traefik-gateway-controller
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: traefik-ingress-controller
+  name: traefik-gateway-controller
 subjects:
   - kind: ServiceAccount
-    name: traefik-ingress-controller
+    name: traefik-gateway
+
 ---
 apiVersion: v1
 kind: ServiceAccount
 
 metadata:
-  name: traefik-ingress-controller
+  name: traefik-gateway

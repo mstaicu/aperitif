@@ -13,7 +13,7 @@ spec:
       labels:
         app: traefik
     spec:
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: traefik-gateway
       terminationGracePeriodSeconds: 60
       containers:
         - name: traefik
