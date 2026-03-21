@@ -26,7 +26,10 @@ metadata:
   name: auth-api
 spec:
   parentRefs:
-    - name: traefik-gw
+    - name: traefik-pgw
+      namespace: traefik
+
+    - name: traefik-igw
       namespace: traefik
 
   rules:

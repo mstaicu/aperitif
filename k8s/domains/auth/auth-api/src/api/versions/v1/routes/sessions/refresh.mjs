@@ -12,8 +12,7 @@ export default async function (fastify) {
     {
       schema: {
         body: RefreshBody,
-        description:
-          "Exchanges a valid refresh token for a new access token and refresh token pair.",
+        description: "Exchanges a valid refresh token for a new refresh token.",
         operationId: "refreshSession",
         response: {
           200: RefreshResponse,
@@ -33,8 +32,6 @@ export default async function (fastify) {
         return reply.code(401).send(null);
       }
 
-      const hash = createHash("sha256").update(refresh_token).digest();
-
       const client = await pool.connect();
 
       try {
@@ -51,7 +48,7 @@ export default async function (fastify) {
               AND expires_at > NOW()
             FOR UPDATE
           `,
-          [hash],
+          [createHash("sha256").update(refresh_token).digest()],
         );
 
         if (!session) {
@@ -73,12 +70,9 @@ export default async function (fastify) {
           [session.id, newHash],
         );
 
-        // const accessToken = signAccessToken(session.user_id);
-
         await client.query("COMMIT");
 
         return reply.send({
-          access_token: "",
           refresh_token: newRefreshToken,
         });
       } catch {

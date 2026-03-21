@@ -2,9 +2,9 @@ import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import nconf from "nconf";
 
 import {
-  AuthenticationFinalizeBody,
-  AuthSuccessResponse,
   ErrorResponse,
+  LoginBody,
+  LoginSuccessResponse,
 } from "../../schemas.mjs";
 
 const { hostname, origin } = new URL(nconf.get("ORIGIN"));
@@ -17,12 +17,12 @@ export default async function (fastify) {
     "/login",
     {
       schema: {
-        body: AuthenticationFinalizeBody,
+        body: LoginBody,
         description:
           "Verifies the WebAuthn authentication response and issues a refresh token if successful.",
         operationId: "loginWithPasskey",
         response: {
-          200: AuthSuccessResponse,
+          200: LoginSuccessResponse,
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,

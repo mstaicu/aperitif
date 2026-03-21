@@ -137,26 +137,54 @@ export const AuthenticationChallengeResponse = Type.Object({
   }),
 });
 
-export const RegistrationFinalizeBody = Type.Object({
-  credential: RegistrationResponseJSON,
-});
+export const RegistrationBody = Type.Object(
+  {
+    credential: RegistrationResponseJSON,
+  },
+  { additionalProperties: false },
+);
 
-export const AuthenticationFinalizeBody = Type.Object({
-  authentication: AuthenticationResponseJSON,
-});
+export const LoginBody = Type.Object(
+  {
+    authentication: AuthenticationResponseJSON,
+  },
+  { additionalProperties: false },
+);
 
-export const AuthSuccessResponse = Type.Object({
-  refresh_token: Type.String(),
-});
+export const RegistrationSuccessResponse = Type.Object(
+  {
+    refresh_token: Type.String(),
+  },
+  { additionalProperties: false },
+);
 
-export const RefreshBody = Type.Object({
-  refresh_token: Type.String(),
-});
+export const LoginSuccessResponse = Type.Object(
+  {
+    refresh_token: Type.String(),
+  },
+  { additionalProperties: false },
+);
 
-export const RefreshResponse = Type.Object({
-  access_token: Type.String(),
-  refresh_token: Type.String(),
-});
+export const RefreshBody = Type.Object(
+  {
+    refresh_token: Type.String(),
+  },
+  { additionalProperties: false },
+);
+
+export const RefreshResponse = Type.Object(
+  {
+    refresh_token: Type.String(),
+  },
+  { additionalProperties: false },
+);
+
+export const ExchangeBody = Type.Object(
+  {
+    refresh_token: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
 export const ErrorResponse = Type.Null();
 export const EmptyResponse = Type.Null();

@@ -2,10 +2,11 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import nconf from "nconf";
 
 import {
-  EmptyResponse,
   ErrorResponse,
-  RegistrationFinalizeBody,
+  RegistrationBody,
+  RegistrationSuccessResponse,
 } from "../../schemas.mjs";
+import { generateRefreshToken } from "./shared.mjs";
 
 const { hostname, origin } = new URL(nconf.get("ORIGIN"));
 
@@ -17,12 +18,12 @@ export default async function (fastify) {
     "/register",
     {
       schema: {
-        body: RegistrationFinalizeBody,
+        body: RegistrationBody,
         description:
           "Verifies the WebAuthn registration response and stores the credential.",
         operationId: "registerPasskey",
         response: {
-          201: EmptyResponse,
+          201: RegistrationSuccessResponse,
           400: ErrorResponse,
           401: ErrorResponse,
           409: ErrorResponse,
@@ -162,26 +163,24 @@ export default async function (fastify) {
 
         await client.query("COMMIT");
 
-        // const { hash, token: refreshToken } = generateRefreshToken();
+        const { hash, token: refreshToken } = generateRefreshToken();
 
-        // await client.query(
-        //   `
-        //     INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
-        //     VALUES ($1, $2, NOW() + INTERVAL '30 days')
-        //   `,
-        //   [userId, hash],
-        // );
+        await client.query(
+          `
+            INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
+            VALUES ($1, $2, NOW() + INTERVAL '30 days')
+          `,
+          [userId, hash],
+        );
 
-        // await client.query("COMMIT");
+        await client.query("COMMIT");
 
-        // reply.header("Cache-Control", "no-store");
-        // reply.header("Pragma", "no-cache");
-        // TODO: Exchange with access token?
-        // return reply.code(200).send({
-        //   refresh_token: refreshToken,
-        // });
+        reply.header("Cache-Control", "no-store");
+        reply.header("Pragma", "no-cache");
 
-        return reply.code(201).send(null);
+        return reply.code(201).send({
+          refresh_token: refreshToken,
+        });
       } catch (err) {
         await client.query("ROLLBACK");
 

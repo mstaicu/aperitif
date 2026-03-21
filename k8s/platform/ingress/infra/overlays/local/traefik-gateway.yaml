@@ -2,7 +2,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 
 metadata:
-  name: traefik-gatewayclass
+  name: traefik-gwc
 spec:
   controllerName: traefik.io/gateway-controller
 
@@ -11,9 +11,9 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 
 metadata:
-  name: traefik-gw
+  name: traefik-pgw
 spec:
-  gatewayClassName: traefik-gatewayclass
+  gatewayClassName: traefik-gwc
 
   listeners:
     - name: https
@@ -34,6 +34,25 @@ spec:
       port: 80
       protocol: HTTP
       hostname: tma.com
+
+      allowedRoutes:
+        namespaces:
+          from: All
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+
+metadata:
+  name: traefik-igw
+spec:
+  gatewayClassName: traefik-gwc
+
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: traefik-srv
 
       allowedRoutes:
         namespaces:

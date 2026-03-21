@@ -5,10 +5,10 @@ metadata:
   name: traefik-dashboard
 spec:
   parentRefs:
-    - name: traefik-gw
+    - name: traefik-pgw
       sectionName: http
 
-    - name: traefik-gw
+    - name: traefik-pgw
       sectionName: https
 
   rules:
