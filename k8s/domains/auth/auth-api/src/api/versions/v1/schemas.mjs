@@ -186,5 +186,23 @@ export const ExchangeBody = Type.Object(
   { additionalProperties: false },
 );
 
+export const SessionTokenBody = Type.Object(
+  {
+    audience: Type.String({
+      maxLength: 128,
+      minLength: 1,
+    }),
+  },
+  { additionalProperties: false },
+);
+
+export const SessionTokenResponse = Type.Object(
+  {
+    access_token: Type.String(),
+    expires_in: Type.Integer(),
+  },
+  { additionalProperties: false },
+);
+
 export const ErrorResponse = Type.Null();
 export const EmptyResponse = Type.Null();

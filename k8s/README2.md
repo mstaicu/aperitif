@@ -3082,3 +3082,699 @@ Keep answers concrete.
 Avoid storytelling.
 Avoid overengineering.
 Optimize for conceptual clarity.
+
+---
+
+# Auth Route Contract Design
+
+## Purpose
+
+This document defines a minimal, stable authentication route contract for the auth domain.
+
+The goal is to collapse the current passkey-specific public surface:
+
+- `POST /auth/v1/passkeys/register/challenge`
+- `POST /auth/v1/passkeys/register`
+- `POST /auth/v1/passkeys/login/challenge`
+- `POST /auth/v1/passkeys/login`
+
+into a provider-agnostic surface that can support:
+
+- WebAuthn / passkeys
+- external identity providers (OIDC / SAML style)
+- magic link authentication
+
+without changing the session and projection model.
+
+---
+
+## Non-goals
+
+This document does not redesign:
+
+- `POST /auth/v1/sessions/refresh`
+- `POST /auth/v1/sessions/token`
+- session rotation semantics
+- audience-scoped access token projection
+- domain JWT validation model
+- step-up flow routes
+- authenticator enrollment management routes
+
+Those remain unchanged.
+
+---
+
+## Architectural principle
+
+Authentication is split into two layers.
+
+### Layer 1: identity proof
+
+This is method-specific and may vary by provider.
+
+Examples:
+
+- WebAuthn registration ceremony
+- WebAuthn authentication ceremony
+- OIDC redirect and code exchange
+- magic link issuance and verification
+
+### Layer 2: platform session issuance
+
+Once identity proof succeeds, the auth domain:
+
+1. resolves the internal user
+2. creates or upgrades a platform session
+3. returns a platform refresh token
+
+All downstream auth behavior remains the same:
+
+- refresh token rotates session
+- refresh token exchanges for audience-scoped access token
+- domains validate access JWTs locally
+
+---
+
+## Stable public routes
+
+The public authentication surface is reduced to two routes:
+
+- `POST /auth/v1/auth/begin`
+- `POST /auth/v1/auth/complete`
+
+These routes describe the lifecycle of an authentication ceremony.
+
+`begin` starts the ceremony.
+
+`complete` submits proof and, on success, returns a platform refresh token.
+
+---
+
+## Route 1: POST /auth/v1/auth/begin
+
+### Semantics
+
+Starts an authentication ceremony.
+
+The caller specifies the authentication method and any method-specific initiation data.
+
+The auth service returns instructions for the next step.
+
+### Request contract
+
+```json
+{
+  "method": "passkey | oidc | magic_link",
+  "intent": "login | register",
+  "provider": "string",
+  "email": "string"
+}
+```
+
+### Field meanings
+
+#### `method`
+
+Required.
+
+Identifies the authentication mechanism.
+
+Allowed values in the current design:
+
+- `passkey`
+- `oidc`
+- `magic_link`
+
+#### `intent`
+
+Optional globally, but required for passkeys in this design.
+
+Used to distinguish between WebAuthn registration and WebAuthn authentication ceremonies.
+
+Allowed values:
+
+- `login`
+- `register`
+
+For `oidc` and `magic_link`, this field may be omitted.
+
+#### `provider`
+
+Optional.
+
+Used when `method = "oidc"`.
+
+Examples:
+
+- `google`
+- `auth0`
+- `okta`
+- `entra`
+
+#### `email`
+
+Optional.
+
+Used when `method = "magic_link"`.
+
+---
+
+## Begin response contract
+
+The response is shape-driven. The `type` field tells the client what to do next.
+
+```json
+{
+  "type": "webauthn_options | redirect | email_sent",
+  "payload": {}
+}
+```
+
+### Field meanings
+
+#### `type`
+
+Required.
+
+Defines the next client action.
+
+Allowed values in the current design:
+
+- `webauthn_options`
+- `redirect`
+- `email_sent`
+
+#### `payload`
+
+Required.
+
+Method-specific object containing what the client needs for the next step.
+
+---
+
+## Begin examples
+
+### Passkey login begin
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "intent": "login"
+}
+```
+
+Response:
+
+```json
+{
+  "type": "webauthn_options",
+  "payload": {
+    "intent": "login",
+    "publicKey": {}
+  }
+}
+```
+
+Notes:
+
+- server generates authentication challenge
+- server stores challenge state exactly like current login challenge flow
+- client must call `navigator.credentials.get()` / `startAuthentication()`
+
+### Passkey register begin
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "intent": "register"
+}
+```
+
+Response:
+
+```json
+{
+  "type": "webauthn_options",
+  "payload": {
+    "intent": "register",
+    "publicKey": {}
+  }
+}
+```
+
+Notes:
+
+- server generates registration challenge
+- server stores challenge state exactly like current registration challenge flow
+- client must call `navigator.credentials.create()` / `startRegistration()`
+
+### OIDC begin
+
+Request:
+
+```json
+{
+  "method": "oidc",
+  "provider": "google"
+}
+```
+
+Response:
+
+```json
+{
+  "type": "redirect",
+  "payload": {
+    "url": "https://provider.example/authorize?..."
+  }
+}
+```
+
+Notes:
+
+- client navigates to `payload.url`
+- provider callback handling is implementation-specific
+- final proof is submitted through `auth/complete`
+
+### Magic link begin
+
+Request:
+
+```json
+{
+  "method": "magic_link",
+  "email": "user@example.com"
+}
+```
+
+Response:
+
+```json
+{
+  "type": "email_sent",
+  "payload": {}
+}
+```
+
+Notes:
+
+- server sends one-time magic link or code
+- final proof is submitted through `auth/complete`
+
+---
+
+## Route 2: POST /auth/v1/auth/complete
+
+### Semantics
+
+Submits proof for a previously started authentication ceremony.
+
+If proof succeeds, the auth service creates or upgrades a platform session and returns a platform refresh token.
+
+This route always terminates in platform session issuance.
+
+### Request contract
+
+```json
+{
+  "method": "passkey | oidc | magic_link",
+  "payload": {}
+}
+```
+
+### Field meanings
+
+#### `method`
+
+Required.
+
+Identifies which verifier should process the submitted proof.
+
+#### `payload`
+
+Required.
+
+Method-specific proof object.
+
+---
+
+## Complete response contract
+
+```json
+{
+  "refresh_token": "string",
+  "new_user": true
+}
+```
+
+### Field meanings
+
+#### `refresh_token`
+
+Required.
+
+A platform refresh token representing the newly created or upgraded platform session.
+
+This token is then used with:
+
+- `POST /auth/v1/sessions/refresh`
+- `POST /auth/v1/sessions/token`
+
+#### `new_user`
+
+Optional but recommended.
+
+Indicates whether this completion created a new internal user during identity resolution.
+
+Useful for onboarding UX.
+
+---
+
+## Complete examples
+
+### Passkey login complete
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "payload": {
+    "intent": "login",
+    "authentication": {}
+  }
+}
+```
+
+Server behavior:
+
+- parse WebAuthn authentication response
+- verify against stored login challenge
+- resolve internal user from credential
+- create session
+- return refresh token
+
+Response:
+
+```json
+{
+  "refresh_token": "...",
+  "new_user": false
+}
+```
+
+### Passkey register complete
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "payload": {
+    "intent": "register",
+    "credential": {}
+  }
+}
+```
+
+Server behavior:
+
+- parse WebAuthn registration response
+- verify against stored registration challenge
+- create internal user if needed
+- store authenticator credential
+- create session
+- return refresh token
+
+Response:
+
+```json
+{
+  "refresh_token": "...",
+  "new_user": true
+}
+```
+
+### OIDC complete
+
+Request:
+
+```json
+{
+  "method": "oidc",
+  "payload": {
+    "provider": "google",
+    "code": "...",
+    "state": "..."
+  }
+}
+```
+
+Server behavior:
+
+- exchange authorization code with provider
+- verify returned identity proof
+- resolve internal user from external identity
+- create session
+- return refresh token
+
+Response:
+
+```json
+{
+  "refresh_token": "...",
+  "new_user": false
+}
+```
+
+### Magic link complete
+
+Request:
+
+```json
+{
+  "method": "magic_link",
+  "payload": {
+    "token": "..."
+  }
+}
+```
+
+Server behavior:
+
+- verify magic link token or code
+- resolve or create internal user
+- create session
+- return refresh token
+
+Response:
+
+```json
+{
+  "refresh_token": "...",
+  "new_user": true
+}
+```
+
+---
+
+## Why passkeys still need login vs register
+
+Passkeys remain the only currently supported method that requires explicit distinction between two different ceremonies:
+
+- registration ceremony
+- authentication ceremony
+
+Those are fundamentally different WebAuthn operations.
+
+This design keeps only two public routes, but still allows the server to branch internally based on:
+
+- `method = passkey`
+- `payload.intent = login | register`
+
+So the public surface is simplified without pretending the WebAuthn ceremonies are identical.
+
+---
+
+## Why there is no universal industry-standard JSON contract
+
+There is no universal cross-vendor REST standard for auth broker routes.
+
+What is standard is:
+
+- OIDC protocol semantics
+- SAML protocol semantics
+- WebAuthn client and verification semantics
+
+What is common across platforms is conceptual structure:
+
+- begin authentication
+- complete authentication
+- create session
+
+This document therefore standardizes the auth domain’s platform contract, not an industry-mandated schema.
+
+---
+
+## Why session routes remain unchanged
+
+These authentication routes only affect identity proof and session creation.
+
+They do not change the platform session model.
+
+Therefore these routes remain stable and frozen:
+
+- `POST /auth/v1/sessions/refresh`
+- `POST /auth/v1/sessions/token`
+
+That remains true even when adding:
+
+- external IdPs
+- magic links
+- step-up later
+- additional authentication methods
+
+The downstream contract is still:
+
+1. complete authentication
+2. receive refresh token
+3. refresh rotates platform session
+4. exchange refresh for audience-scoped access token
+
+---
+
+## Migration mapping from current passkey routes
+
+### Current
+
+- `POST /auth/v1/passkeys/register/challenge`
+- `POST /auth/v1/passkeys/register`
+- `POST /auth/v1/passkeys/login/challenge`
+- `POST /auth/v1/passkeys/login`
+
+### New
+
+#### Register challenge
+
+Maps to:
+
+```http
+POST /auth/v1/auth/begin
+```
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "intent": "register"
+}
+```
+
+#### Register complete
+
+Maps to:
+
+```http
+POST /auth/v1/auth/complete
+```
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "payload": {
+    "intent": "register",
+    "credential": {}
+  }
+}
+```
+
+#### Login challenge
+
+Maps to:
+
+```http
+POST /auth/v1/auth/begin
+```
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "intent": "login"
+}
+```
+
+#### Login complete
+
+Maps to:
+
+```http
+POST /auth/v1/auth/complete
+```
+
+Request:
+
+```json
+{
+  "method": "passkey",
+  "payload": {
+    "intent": "login",
+    "authentication": {}
+  }
+}
+```
+
+---
+
+## Recommended implementation guidance
+
+### Keep internally separate services
+
+Even if the public surface collapses to two routes, internal implementation should remain explicit:
+
+- create passkey registration challenge
+- verify passkey registration
+- create passkey authentication challenge
+- verify passkey authentication
+- start oidc redirect
+- complete oidc callback
+- send magic link
+- consume magic link
+
+The route unification is a contract simplification, not a mandate to merge internal logic.
+
+### Keep sessions as the stable platform contract
+
+The important system invariant is preserved:
+
+- authentication methods evolve
+- session management stays stable
+- projection stays stable
+
+---
+
+## Final summary
+
+This design intentionally freezes a minimal, provider-agnostic authentication surface:
+
+- `POST /auth/v1/auth/begin`
+- `POST /auth/v1/auth/complete`
+
+It supports:
+
+- passkey login
+- passkey registration
+- OIDC / external IdP login
+- magic link login
+
+while preserving the existing session and projection architecture unchanged.
+
+This is the main reason to adopt it: identity proof evolves, but platform session and capability projection remain stable.

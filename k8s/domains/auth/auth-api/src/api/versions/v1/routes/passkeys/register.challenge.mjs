@@ -31,6 +31,7 @@ export default async function (fastify) {
       // trace.getActiveSpan()?.updateName("auth.registration.challenge");
 
       const userId = randomUUID();
+
       const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
       const challenge = randomBytes(32);
 

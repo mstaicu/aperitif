@@ -6,9 +6,7 @@ import nconf from "nconf";
 export const natsPlugin = fp(async (fastify) => {
   const nc = await connect({
     name: "auth-api",
-    pass: nconf.get("NATS_PASSWORD"),
     servers: nconf.get("NATS_URL"),
-    user: nconf.get("NATS_USER"),
   });
 
   const jsm = await jetstreamManager(nc);

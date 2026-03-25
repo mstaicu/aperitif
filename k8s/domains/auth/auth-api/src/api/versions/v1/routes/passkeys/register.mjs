@@ -122,9 +122,8 @@ export default async function (fastify) {
         return reply.code(400).send(null);
       }
 
-      if (credential.id !== registrationCredential.id) {
-        return reply.code(400).send(null);
-      }
+      if (credential.id !== registrationCredential.id)
+        reply.code(400).send(null);
 
       const credentialId = Buffer.from(registrationCredential.id, "base64url");
       const publicKey = Buffer.from(registrationCredential.publicKey);

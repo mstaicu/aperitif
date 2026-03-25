@@ -6,8 +6,7 @@ import { startAuthConsumer } from "./consumers/auth.mjs";
 
 const pool = new Pool({
   connectionString: nconf.get("DATABASE_URL"),
-  connectionTimeoutMillis: 250,
-  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
   // https://node-postgres.com/apis/pool
   // max_connections on postgres = 100,
   //  minus 80 for auth-api = 20
@@ -18,9 +17,7 @@ const pool = new Pool({
 
 const nc = await connect({
   name: "auth-api",
-  pass: nconf.get("NATS_PASSWORD"),
   servers: [nconf.get("NATS_URL")],
-  user: nconf.get("NATS_USER"),
 });
 
 const stopAuthConsumer = await startAuthConsumer(nc);

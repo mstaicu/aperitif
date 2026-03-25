@@ -1,10 +1,10 @@
-import exchange from "./exchange.mjs";
 import refresh from "./refresh.mjs";
+import token from "./token.mjs";
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
  */
 export default async function sessionRoutes(fastify) {
   await fastify.register(refresh);
-  await fastify.register(exchange);
+  await fastify.register(token);
 }
