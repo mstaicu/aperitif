@@ -6,8 +6,11 @@ import sessionRoutes from "./routes/sessions/index.mjs";
 
 /**
  * @param {import('../../../fastify.js').FastifyInstance} fastify
+ * @param {import("../../../fastify.js").WithRuntime} opts
  */
-export default async (fastify) => {
+export default async (fastify, opts) => {
+  const { runtime } = opts;
+
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -47,8 +50,10 @@ export default async (fastify) => {
 
   await fastify.register(passkeyRoutes, {
     prefix: "/passkeys",
+    runtime,
   });
   await fastify.register(sessionRoutes, {
     prefix: "/sessions",
+    runtime,
   });
 };

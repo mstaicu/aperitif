@@ -1,14 +1,38 @@
-// import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
+import Fastify from "fastify";
 
-import { app } from "./app.mjs";
+import jwks from "./api/jwks/index.mjs";
+import probes from "./api/probes/index.mjs";
+import v1 from "./api/versions/v1/index.mjs";
+import { createContext } from "./context.mjs";
+import { createRuntime } from "./runtime/index.mjs";
+
+const ctx = await createContext();
+const runtime = createRuntime(ctx);
+
+const fastify = Fastify({
+  logger: {
+    enabled: true,
+    level: "debug",
+  },
+});
+
+/**
+ * @type {import('./fastify.js').FastifyInstance}
+ */
+const app = fastify
+  .setValidatorCompiler(TypeBoxValidatorCompiler)
+  .withTypeProvider();
+
+await app.register(probes, { ctx });
+await app.register(jwks);
+await app.register(v1, { prefix: "/v1", runtime });
+
+app.addHook("onClose", () => ctx.close());
 
 await app.ready();
-
-// console.log(app.printRoutes());
 
 await app.listen({
   host: "0.0.0.0",
   port: 3000,
 });
-
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);

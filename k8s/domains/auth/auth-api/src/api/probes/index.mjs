@@ -1,10 +1,14 @@
-import fp from "fastify-plugin";
+/**
+ * @param {import("fastify").FastifyInstance} fastify
+ * @param {import("../../fastify.js").WithCtx} opts
+ */
+export default async (fastify, opts) => {
+  const { ctx } = opts;
 
-export const probesPlugin = fp(async (fastify) => {
   fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {
-      await fastify.pool.query("SELECT 1");
+      await ctx.db.query("SELECT 1");
 
       // if (fastify.nc && fastify.nc.isClosed()) {
       //   throw new Error();
@@ -15,4 +19,4 @@ export const probesPlugin = fp(async (fastify) => {
       return reply.code(503).send({ ok: false });
     }
   });
-});
+};

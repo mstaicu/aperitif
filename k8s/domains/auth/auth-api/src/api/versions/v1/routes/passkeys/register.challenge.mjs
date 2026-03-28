@@ -1,16 +1,12 @@
-// import { trace } from "@opentelemetry/api";
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import nconf from "nconf";
-import { randomBytes, randomUUID } from "node:crypto";
-
 import { RegistrationChallengeResponse } from "../../schemas.mjs";
-
-const { hostname } = new URL(nconf.get("ORIGIN"));
 
 /**
  * @param {import('../../../../../fastify.js').FastifyInstance} fastify
+ * @param {import('../../../../../fastify.js').WithRuntime} opts
  */
-export default async function (fastify) {
+export default async function (fastify, opts) {
+  const { runtime } = opts;
+
   fastify.post(
     "/register/challenge",
     {
@@ -26,41 +22,12 @@ export default async function (fastify) {
       },
     },
     async function (_, reply) {
-      const { pool } = this;
-
-      // trace.getActiveSpan()?.updateName("auth.registration.challenge");
-
-      const userId = randomUUID();
-
-      const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
-      const challenge = randomBytes(32);
-
-      const options = await generateRegistrationOptions({
-        attestationType: "none",
-        authenticatorSelection: {
-          residentKey: "required",
-          userVerification: "required",
-        },
-        challenge,
-        rpID: hostname,
-        rpName: hostname,
-        timeout: 60000,
-        userID: webauthnUserHandle,
-        userName: "",
-      });
-
-      await pool.query(
-        `
-          INSERT INTO challenges (user_id, challenge)
-          VALUES ($1, $2)
-        `,
-        [userId, challenge],
-      );
+      const publicKey = await runtime.passkeys.createRegisterChallenge();
 
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply.code(200).send({ publicKey: options });
+      return reply.code(200).send({ publicKey });
     },
   );
 }

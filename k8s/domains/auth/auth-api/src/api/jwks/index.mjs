@@ -12,7 +12,7 @@ const jwk = await exportJWK(
 );
 
 /**
- * @param {import('../../fastify.js').FastifyInstance} fastify
+ * @param {import("fastify").FastifyInstance} fastify
  */
 export default (fastify) => {
   fastify.get("/.well-known/jwks.json", async (_, reply) => {
