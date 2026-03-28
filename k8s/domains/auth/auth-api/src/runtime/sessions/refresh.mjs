@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { generateRefreshToken } from "../../api/versions/v1/routes/passkeys/shared.mjs";
+import { generateRefreshToken } from "../shared.mjs";
 
 /**
  * @param {import("../../fastify.js").Ctx} ctx

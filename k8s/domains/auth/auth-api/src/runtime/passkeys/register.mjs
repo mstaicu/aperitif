@@ -1,6 +1,6 @@
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
-import { generateRefreshToken } from "../../api/versions/v1/routes/passkeys/shared.mjs";
+import { generateRefreshToken } from "../shared.mjs";
 
 /**
  * @typedef {import("@simplewebauthn/server").RegistrationResponseJSON} RegistrationResponseJSON

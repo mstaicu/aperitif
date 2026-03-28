@@ -1,6 +1,6 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 
-import { generateRefreshToken } from "../../api/versions/v1/routes/passkeys/shared.mjs";
+import { generateRefreshToken } from "../shared.mjs";
 
 /**
  * @typedef {import("@simplewebauthn/server").AuthenticationResponseJSON} AuthenticationResponseJSON
@@ -122,10 +122,7 @@ export const login =
           expectedOrigin: origin,
           expectedRPID: hostname,
           requireUserVerification: true,
-          response: {
-            ...authentication,
-            clientExtensionResults: authentication.clientExtensionResults ?? {},
-          },
+          response: authentication,
         });
       } catch {
         throw new Error("VERIFICATION_FAILED");

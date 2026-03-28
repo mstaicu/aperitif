@@ -12,7 +12,6 @@ const runtime = createRuntime(ctx);
 
 const fastify = Fastify({
   logger: {
-    enabled: true,
     level: "debug",
   },
 });
@@ -33,6 +32,5 @@ app.addHook("onClose", () => ctx.close());
 await app.ready();
 
 await app.listen({
-  host: "0.0.0.0",
   port: 3000,
 });

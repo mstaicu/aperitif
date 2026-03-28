@@ -22,12 +22,12 @@ export default async function (fastify, opts) {
       },
     },
     async function (_, reply) {
-      const publicKey = await runtime.passkeys.createRegisterChallenge();
-
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply.code(200).send({ publicKey });
+      return reply
+        .code(200)
+        .send({ publicKey: await runtime.passkeys.createRegisterChallenge() });
     },
   );
 }

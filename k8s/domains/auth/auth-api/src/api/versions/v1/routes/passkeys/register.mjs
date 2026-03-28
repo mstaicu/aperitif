@@ -32,12 +32,12 @@ export default async function (fastify, opts) {
     },
     async function (request, reply) {
       try {
-        const result = await runtime.passkeys.register(request.body);
-
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
-        return reply.code(201).send(result);
+        return reply
+          .code(201)
+          .send(await runtime.passkeys.register(request.body));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

@@ -16,11 +16,9 @@ export const createLoginChallenge = async (ctx) => {
     [challenge],
   );
 
-  const { hostname } = new URL(ctx.conf.origin);
-
   return generateAuthenticationOptions({
     challenge,
-    rpID: hostname,
+    rpID: new URL(ctx.conf.origin).hostname,
     userVerification: "required",
   });
 };

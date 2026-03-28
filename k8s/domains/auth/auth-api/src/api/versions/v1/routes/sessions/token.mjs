@@ -37,14 +37,14 @@ export default async function (fastify, opts) {
       }
 
       try {
-        const result = await runtime.sessions.createAccessToken({
-          audience: req.body.audience,
-          refresh_token: token,
-        });
-
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(result);
+        return reply.send(
+          await runtime.sessions.createAccessToken({
+            audience: req.body.audience,
+            refresh_token: token,
+          }),
+        );
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

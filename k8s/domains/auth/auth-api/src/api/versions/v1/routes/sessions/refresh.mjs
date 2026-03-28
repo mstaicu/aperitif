@@ -25,11 +25,9 @@ export default async function (fastify, opts) {
     },
     async function (request, reply) {
       try {
-        const result = await runtime.sessions.refresh(request.body);
-
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(result);
+        return reply.send(await runtime.sessions.refresh(request.body));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 
