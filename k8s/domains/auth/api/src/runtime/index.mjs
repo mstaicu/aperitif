@@ -6,14 +6,11 @@ import { createSessionsRuntime } from "./sessions/index.mjs";
  */
 
 /**
- * @typedef {ReturnType<typeof createPasskeysRuntime>} PasskeysRuntime
- * @typedef {ReturnType<typeof createSessionsRuntime>} SessionsRuntime
- * @typedef {{ passkeys: PasskeysRuntime, sessions: SessionsRuntime }} Runtime
+ * @typedef {ReturnType<typeof createRuntime>} Runtime
  */
 
 /**
  * @param {Context} ctx
- * @returns {Runtime}
  */
 export const createRuntime = (ctx) => ({
   passkeys: createPasskeysRuntime(ctx),

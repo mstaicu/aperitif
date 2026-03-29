@@ -2,10 +2,14 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 
 /**
- * @param {import("../../context.mjs").Context} ctx
- * @returns {Promise<import("@simplewebauthn/server").PublicKeyCredentialRequestOptionsJSON>}
+ * @typedef {import("@simplewebauthn/server").PublicKeyCredentialRequestOptionsJSON} PublicKeyCredentialRequestOptionsJSON
  */
-export const createLoginChallenge = async (ctx) => {
+
+/**
+ * @param {import("../../context.mjs").Context} ctx
+ * @returns {() => Promise<PublicKeyCredentialRequestOptionsJSON>}
+ */
+export const createLoginChallenge = (ctx) => async () => {
   const challenge = randomBytes(32);
 
   await ctx.db.query(

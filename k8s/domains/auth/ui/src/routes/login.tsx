@@ -10,7 +10,7 @@ export async function action({ request }: { request: Request }) {
   };
 
   const upstream = await fetch(
-    "http://traefik-srv/auth/webauthn/authentication",
+    "http://traefik-srv.traefik/auth/v1/passkeys/login",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -21,7 +21,8 @@ export async function action({ request }: { request: Request }) {
   return new Response(await upstream.text(), {
     status: upstream.status,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type":
+        upstream.headers.get("Content-Type") ?? "application/json",
     },
   });
 }

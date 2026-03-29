@@ -7,8 +7,8 @@ import { register } from "./register.mjs";
  * @param {import("../../context.mjs").Context} ctx
  */
 export const createPasskeysRuntime = (ctx) => ({
-  createLoginChallenge: () => createLoginChallenge(ctx),
-  createRegisterChallenge: () => createRegisterChallenge(ctx),
+  createLoginChallenge: createLoginChallenge(ctx),
+  createRegisterChallenge: createRegisterChallenge(ctx),
   login: login(ctx),
   register: register(ctx),
 });

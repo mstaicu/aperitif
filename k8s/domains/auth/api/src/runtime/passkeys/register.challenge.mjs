@@ -2,10 +2,14 @@ import { generateRegistrationOptions } from "@simplewebauthn/server";
 import { randomBytes, randomUUID } from "node:crypto";
 
 /**
- * @param {import("../../context.mjs").Context} ctx
- * @returns {Promise<import("@simplewebauthn/server").PublicKeyCredentialCreationOptionsJSON>}
+ * @typedef {import("@simplewebauthn/server").PublicKeyCredentialCreationOptionsJSON} PublicKeyCredentialCreationOptionsJSON
  */
-export const createRegisterChallenge = async (ctx) => {
+
+/**
+ * @param {import("../../context.mjs").Context} ctx
+ * @returns {() => Promise<PublicKeyCredentialCreationOptionsJSON>}
+ */
+export const createRegisterChallenge = (ctx) => async () => {
   const userId = randomUUID();
 
   const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");

@@ -18,7 +18,7 @@ import { Pool } from "pg";
  *   privateKey: CryptoKey,
  *   jwks: { keys: import("jose").JWK[] },
  * }} jwt
- * @property {() => Promise<PromiseSettledResult<void>[]>} close
+ * @property {() => Promise<void>} close
  */
 
 export const createNatsContext = async () => {
@@ -70,9 +70,10 @@ const createPgContext = () => {
   };
 };
 
-const createJwtContext = async () => {
-  const { origin } = new URL(nconf.get("ORIGIN"));
-
+/**
+ * @param {string} origin
+ */
+const createJwtContext = async (origin) => {
   const [privatePem, publicPem] = await Promise.all([
     readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
     readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
@@ -97,16 +98,18 @@ const createJwtContext = async () => {
  * @returns {Promise<Context>}
  */
 export const createContext = async () => {
-  const jwt = await createJwtContext();
+  const { origin } = new URL(nconf.get("ORIGIN"));
+
+  const jwt = await createJwtContext(origin);
   // const nats = await createNatsContext();
   const pg = createPgContext();
 
   return {
     // close: () => Promise.allSettled([pg.close(), nats.close()]),
-    close: () => Promise.allSettled([pg.close()]),
+    close: () => pg.close(),
     conf: {
-      origin: nconf.get("ORIGIN"),
-      region: nconf.get("REGION") ?? "dev",
+      origin,
+      region: nconf.get("REGION") ?? "local",
     },
     db: pg.db,
     jwt,
