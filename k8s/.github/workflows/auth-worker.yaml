@@ -3,12 +3,12 @@ name: auth worker
 on:
   push:
     paths:
-      - "auth-worker/**"
+      - "domains/auth/worker/**"
     branches:
       - master
   pull_request:
     paths:
-      - "auth-worker/**"
+      - "domains/auth/worker/**"
 
 env:
   REGISTRY: docker.io
@@ -19,7 +19,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   defaults:
   #     run:
-  #       working-directory: auth-worker
+  #       working-directory: domains/auth/worker
   #   steps:
   #     - uses: actions/checkout@v4
   #     - name: set up node
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: auth-worker
+        working-directory: domains/auth/worker
     steps:
       - uses: actions/checkout@v4
       - name: set up Docker Buildx
@@ -65,6 +65,6 @@ jobs:
       - name: build and push image
         uses: docker/build-push-action@v5
         with:
-          context: auth-worker
+          context: domains/auth/worker
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}

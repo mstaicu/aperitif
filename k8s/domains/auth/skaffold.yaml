@@ -10,7 +10,7 @@ build:
 
   artifacts:
     - image: mdstaicu/auth-api
-      context: auth-api
+      context: api
       docker:
         dockerfile: Dockerfile
         target: dev

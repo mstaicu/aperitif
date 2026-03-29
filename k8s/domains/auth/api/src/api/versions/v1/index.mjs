@@ -5,7 +5,7 @@ import passkeyRoutes from "./routes/passkeys/index.mjs";
 import sessionRoutes from "./routes/sessions/index.mjs";
 
 /**
- * @typedef {import("../../../server.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("../../../runtime/index.mjs").Runtime} Runtime
  */
 

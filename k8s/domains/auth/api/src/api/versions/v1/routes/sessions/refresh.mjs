@@ -1,7 +1,7 @@
 import { ErrorResponse, RefreshBody, RefreshResponse } from "../../schemas.mjs";
 
 /**
- * @typedef {import("../../../../../server.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
  */
 

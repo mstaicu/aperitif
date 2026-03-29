@@ -47,28 +47,34 @@ It leverages GitOps, rapid local iteration, secure secret handling, and producti
 **Folder Structure:**
 
 ```
-├── auth-api
-├── auth-ui
-├── auth-worker
 ├── clusters
 │   ├── prod-eu
 │   └── staging-eu
-├── common
-├── infra
-│   ├── auth
+├── domains
+│   └── auth
+│       ├── api
+│       ├── infra
+│       ├── migrations
+│       ├── ui
+│       └── worker
+├── platform
+│   ├── delivery
+│   │   ├── base
+│   │   ├── crds
+│   │   └── overlays
+│   ├── event-bus
 │   │   ├── base
 │   │   └── overlays
-│   ├── linkerd
+│   ├── ingress
 │   │   ├── base
-│   │   ├── crd
+│   │   ├── crds
 │   │   └── overlays
-│   ├── nats
+│   ├── mesh
 │   │   ├── base
-│   │   ├── crd
+│   │   ├── crds
 │   │   └── overlays
-│   └── traefik
+│   └── observability
 │       ├── base
-│       ├── crd
 │       └── overlays
 ├── scripts
 └── skaffold.yaml
@@ -124,7 +130,7 @@ export SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt
 Run it
 
 ```sh
-kustomize build --enable-alpha-plugins --enable-exec infra/platform/traefik/overlays/dev | kubectl apply -f -
+kustomize build --enable-alpha-plugins --enable-exec platform/ingress/overlays/local | kubectl apply -f -
 ```
 
 ### Workflow

@@ -4,7 +4,7 @@ import registerChallenge from "./register.challenge.mjs";
 import register from "./register.mjs";
 
 /**
- * @typedef {import("../../../../../server.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
  */
 

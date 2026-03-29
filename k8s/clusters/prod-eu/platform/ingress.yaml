@@ -21,7 +21,7 @@ metadata:
   name: ingress
 spec:
   interval: 10m
-  path: ./platform/ingress/infra/overlays/cluster
+  path: ./platform/ingress/overlays/cluster
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository

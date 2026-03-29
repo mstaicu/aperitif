@@ -5,13 +5,14 @@
     "glob": "^13.0.6"
   },
   "dependencies": {
+    "@fastify/otel": "^0.18.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
     "@fastify/type-provider-typebox": "^6.1.0",
     "@nats-io/jetstream": "^3.3.1",
     "@nats-io/transport-node": "^3.3.1",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/auto-instrumentations-node": "^0.71.0",
+    "@opentelemetry/instrumentation-http": "^0.214.0",
     "@opentelemetry/sdk-node": "^0.213.0",
     "@simplewebauthn/server": "^13.2.3",
     "@sinclair/typebox": "^0.34.48",
@@ -26,6 +27,7 @@
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/nconf": "^0.10.7",
     "@types/node": "^25.3.0",
+    "@types/pg": "^8.20.0",
     "eslint": "^10.0.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-perfectionist": "^5.6.0",

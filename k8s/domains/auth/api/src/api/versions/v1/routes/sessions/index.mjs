@@ -2,7 +2,7 @@ import refresh from "./refresh.mjs";
 import token from "./token.mjs";
 
 /**
- * @typedef {import("../../../../../server.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
  */
 
