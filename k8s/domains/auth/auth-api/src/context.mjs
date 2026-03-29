@@ -1,7 +1,25 @@
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
+import { exportJWK, importPKCS8, importSPKI } from "jose";
 import nconf from "nconf";
+import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
+
+/**
+ * @typedef {object} Context
+ * @property {Pool} db
+ * @property {{
+ *   region: string,
+ *   origin: string,
+ * }} conf
+ * @property {{
+ *   issuer: string,
+ *   kid: string,
+ *   privateKey: CryptoKey,
+ *   jwks: { keys: import("jose").JWK[] },
+ * }} jwt
+ * @property {() => Promise<PromiseSettledResult<void>[]>} close
+ */
 
 export const createNatsContext = async () => {
   const nc = await connect({
@@ -52,20 +70,46 @@ const createPgContext = () => {
   };
 };
 
+const createJwtContext = async () => {
+  const { origin } = new URL(nconf.get("ORIGIN"));
+
+  const [privatePem, publicPem] = await Promise.all([
+    readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
+    readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
+  ]);
+
+  const [privateKey, publicJwk] = await Promise.all([
+    importPKCS8(privatePem, "ES256"),
+    importSPKI(publicPem, "ES256").then(exportJWK),
+  ]);
+
+  return {
+    issuer: origin,
+    jwks: {
+      keys: [{ ...publicJwk, alg: "ES256", kid: "k1", use: "sig" }],
+    },
+    kid: "k1",
+    privateKey,
+  };
+};
+
+/**
+ * @returns {Promise<Context>}
+ */
 export const createContext = async () => {
-  const pg = createPgContext();
+  const jwt = await createJwtContext();
   // const nats = await createNatsContext();
+  const pg = createPgContext();
 
   return {
     // close: () => Promise.allSettled([pg.close(), nats.close()]),
     close: () => Promise.allSettled([pg.close()]),
     conf: {
-      jwtPrivateKeyPath: nconf.get("JWT_PRIVATE_KEY_PATH"),
-      jwtPublicKeyPath: nconf.get("JWT_PUBLIC_KEY_PATH"),
       origin: nconf.get("ORIGIN"),
+      region: nconf.get("REGION") ?? "dev",
     },
     db: pg.db,
+    jwt,
     // js: nats.js,
-    // region: nconf.get("REGION") ?? "dev", // CHANGE THIS
   };
 };

@@ -4,7 +4,7 @@ import { createRegisterChallenge } from "./register.challenge.mjs";
 import { register } from "./register.mjs";
 
 /**
- * @param {import('../../fastify.js').Ctx} ctx
+ * @param {import("../../context.mjs").Context} ctx
  */
 export const createPasskeysRuntime = (ctx) => ({
   createLoginChallenge: () => createLoginChallenge(ctx),

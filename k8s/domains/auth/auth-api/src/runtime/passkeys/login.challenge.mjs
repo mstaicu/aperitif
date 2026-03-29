@@ -2,7 +2,7 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 
 /**
- * @param {import('../../fastify.js').Ctx} ctx
+ * @param {import("../../context.mjs").Context} ctx
  * @returns {Promise<import("@simplewebauthn/server").PublicKeyCredentialRequestOptionsJSON>}
  */
 export const createLoginChallenge = async (ctx) => {

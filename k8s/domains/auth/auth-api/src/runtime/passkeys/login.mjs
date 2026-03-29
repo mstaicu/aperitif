@@ -12,7 +12,7 @@ import { generateRefreshToken } from "../shared.mjs";
  */
 
 /**
- * @param {import('../../fastify.js').Ctx} ctx
+ * @param {import("../../context.mjs").Context} ctx
  * @returns {(input: LoginInput) => Promise<{refresh_token: string}>}
  */
 export const login =

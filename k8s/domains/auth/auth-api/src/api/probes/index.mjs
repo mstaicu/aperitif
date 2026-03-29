@@ -1,10 +1,12 @@
 /**
- * @param {import("fastify").FastifyInstance} fastify
- * @param {import("../../fastify.js").WithCtx} opts
+ * @typedef { import("../../context.mjs").Context} Ctx
  */
-export default async (fastify, opts) => {
-  const { ctx } = opts;
 
+/**
+ * @param {import("fastify").FastifyInstance} fastify
+ * @param {{ctx: Ctx}} opts
+ */
+export default async (fastify, { ctx }) => {
   fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {

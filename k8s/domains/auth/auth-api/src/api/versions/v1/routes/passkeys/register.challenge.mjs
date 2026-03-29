@@ -1,12 +1,15 @@
 import { RegistrationChallengeResponse } from "../../schemas.mjs";
 
 /**
- * @param {import('../../../../../fastify.js').FastifyInstance} fastify
- * @param {import('../../../../../fastify.js').WithRuntime} opts
+ * @typedef {import("../../../../../server.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
  */
-export default async function (fastify, opts) {
-  const { runtime } = opts;
 
+/**
+ * @param {Fastify} fastify
+ * @param {{runtime: Runtime}} opts
+ */
+export default async function (fastify, { runtime }) {
   fastify.post(
     "/register/challenge",
     {
@@ -25,9 +28,9 @@ export default async function (fastify, opts) {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply
-        .code(200)
-        .send({ publicKey: await runtime.passkeys.createRegisterChallenge() });
+      const publicKey = await runtime.passkeys.createRegisterChallenge();
+
+      return reply.code(200).send({ publicKey });
     },
   );
 }

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { generateRefreshToken } from "../shared.mjs";
 
 /**
- * @param {import("../../fastify.js").Ctx} ctx
+ * @param {import("../../context.mjs").Context} ctx
  * @returns {(args: { refresh_token: string }) => Promise<{ refresh_token: string }>}
  */
 export const refresh =

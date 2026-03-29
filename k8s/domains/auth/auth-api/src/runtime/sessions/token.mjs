@@ -1,6 +1,5 @@
-import { importPKCS8, SignJWT } from "jose";
+import { SignJWT } from "jose";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
 
 const TTL_SECONDS = 60;
 const REUSE_WINDOW_MS = 10_000;
@@ -39,14 +38,11 @@ function cacheSet(key, value) {
 }
 
 /**
- * @param {import("../../fastify.js").Ctx} ctx
+ * @param {import("../../context.mjs").Context} ctx
  * @returns {(args: { refresh_token: string; audience: string }) => Promise<{ access_token: string; expires_in: number }>}
  */
 export const createAccessToken = (ctx) => {
-  const privateKeyPromise = importPKCS8(
-    readFileSync(ctx.conf.jwtPrivateKeyPath, "utf8"),
-    "ES256",
-  );
+  const privateKey = ctx.jwt.privateKey;
 
   return async ({ audience, refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
@@ -90,17 +86,15 @@ export const createAccessToken = (ctx) => {
     if (!pending) {
       pending = (async () => {
         const now = Math.floor(Date.now() / 1000);
-        const privateKey = await privateKeyPromise;
 
         const token = await new SignJWT({
           sub: session.user_id,
         })
           .setProtectedHeader({
             alg: "ES256",
-            kid: "k1",
-            typ: "at+jwt",
+            kid: ctx.jwt.kid,
           })
-          .setIssuer("ISSUER")
+          .setIssuer(ctx.jwt.issuer)
           .setAudience(audience)
           .setIssuedAt(now)
           .setExpirationTime(now + TTL_SECONDS)
