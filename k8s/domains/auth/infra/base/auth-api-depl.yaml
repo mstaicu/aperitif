@@ -42,16 +42,6 @@ spec:
             # Clients will learn the cluster topology, use the ClientIP hostname
             - name: NATS_URL
               value: nats://nats-srv.nats.svc.cluster.local:4222
-            # - name: NATS_USER
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: auth-api-nats-creds
-            #       key: user
-            # - name: NATS_PASSWORD
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: auth-api-nats-creds
-            #       key: password
 
             - name: OTEL_SERVICE_NAME
               value: auth-api

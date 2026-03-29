@@ -26,9 +26,6 @@ spec:
           args:
             - --config
             - /etc/nats-config/nats.conf
-          envFrom:
-            - secretRef:
-                name: nats-secrets
           volumeMounts:
             - name: config
               mountPath: /etc/nats-config
