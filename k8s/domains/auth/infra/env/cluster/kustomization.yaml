@@ -4,10 +4,14 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - ../../base
+  - namespace.yaml
+  - ../../api
+  - auth-np.yaml
   - auth-api-ingress.yaml
   - auth-api-jwt.yaml
-  - auth-api-middleware.yaml
+
+patches:
+  - path: auth-api-depl.yaml
 
 configMapGenerator:
   - name: auth-api-cm
@@ -18,12 +22,6 @@ secretGenerator:
   - name: auth-db
     literals:
       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
-
-generators:
-  - auth-ksops-gen.yaml
-
-patches:
-  - path: auth-api-depl.yaml
 
 images:
   - name: mdstaicu/auth-api

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-nats-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-nats
+  template:
+    metadata:
+      labels:
+        app: auth-nats
+    spec:
+      containers:
+        - name: auth-nats
+          image: docker.io/nats:2.12-alpine
+          args:
+            - -js
+            - -sd=/data
+          ports:
+            - name: client
+              containerPort: 4222
+          volumeMounts:
+            - name: data
+              mountPath: /data
+
+      volumes:
+        - name: data
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: auth-nats-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-nats
+  ports:
+    - name: nats
+      protocol: TCP
+      port: 4222
+      targetPort: 4222

@@ -1,7 +1,3 @@
-#
-# skaffold run -m ingress-crds
-# skaffold run -m ingress
-#
 apiVersion: skaffold/v4beta11
 kind: Config
 
@@ -9,9 +5,6 @@ requires:
   - path: platform
 
 ---
-#
-# skaffold dev -m auth -p preview
-#
 apiVersion: skaffold/v4beta11
 kind: Config
 

@@ -5,13 +5,14 @@ metadata:
   name: auth
 spec:
   interval: 10m
-  path: ./k8s/domains/auth/infra/overlays/cluster
+  path: ./k8s/domains/auth/infra/env/cluster
   prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
   dependsOn:
     - name: ingress
+    - name: auth-migrate
   decryption:
     provider: sops
     secretRef:

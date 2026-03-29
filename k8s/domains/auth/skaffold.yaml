@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: auth
+  name: auth-local
 
 build:
   local:
@@ -20,36 +20,53 @@ build:
           - src: src/**/*
             dest: .
 
-profiles:
-  - name: local
+manifests:
+  kustomize:
+    paths:
+      - infra/env/local
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
 
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/local
-        buildArgs:
-          - --enable-alpha-plugins
-          - --enable-exec
+deploy:
+  kubectl: {}
 
-    deploy:
-      kubectl: {}
+---
+apiVersion: skaffold/v4beta11
+kind: Config
 
-  - name: preview
+metadata:
+  name: auth-preview
 
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/preview
-        buildArgs:
-          - --enable-alpha-plugins
-          - --enable-exec
+build:
+  local:
+    push: false
 
-    deploy:
-      kubectl: {}
+  artifacts:
+    - image: mdstaicu/auth-api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
 
-    portForward:
-      - resourceType: service
-        resourceName: auth-api-srv
-        namespace: auth
-        port: 3000
-        localPort: 4300
+      sync:
+        manual:
+          - src: src/**/*
+            dest: .
+
+manifests:
+  kustomize:
+    paths:
+      - infra/env/preview
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+portForward:
+  - resourceType: service
+    resourceName: auth-api-srv
+    port: 3000
+    localPort: 4300

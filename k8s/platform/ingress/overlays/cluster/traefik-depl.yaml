@@ -31,8 +31,7 @@ spec:
             - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
             - --certificatesresolvers.le.acme.storage=/data/acme.json
             #
-            # https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-crd/#configuration-options
-            - --providers.kubernetescrd=true
+            - --providers.kubernetesgateway=true
             #
             # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
             - --log.level=INFO

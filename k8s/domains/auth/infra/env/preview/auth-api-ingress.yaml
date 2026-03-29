@@ -1,0 +1,89 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: auth-api-public
+spec:
+  parentRefs:
+    - name: traefik-pgw
+      namespace: traefik
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /auth/v1/passkeys
+
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /v1/passkeys
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: auth-jwks-public
+spec:
+  parentRefs:
+    - name: traefik-pgw
+      namespace: traefik
+
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /.well-known/jwks.json
+
+      backendRefs:
+        - name: auth-api-srv
+          port: 3000
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: auth-api-internal
+spec:
+  parentRefs:
+    - name: traefik-igw
+      namespace: traefik
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /auth/v1
+
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /v1
+
+      backendRefs:
+        - name: auth-api-srv
+          port: 3000
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: auth-jwks-internal
+spec:
+  parentRefs:
+    - name: traefik-igw
+      namespace: traefik
+
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /.well-known/jwks.json
+
+      backendRefs:
+        - name: auth-api-srv
+          port: 3000

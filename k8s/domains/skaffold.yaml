@@ -1,5 +1,10 @@
 apiVersion: skaffold/v4beta11
 kind: Config
 
+metadata:
+  name: app
+
 requires:
   - path: auth
+    configs:
+      - auth-local

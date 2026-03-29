@@ -5,8 +5,3 @@ resources:
   - auth-api-depl.yaml
   - auth-api-sa.yaml
   - auth-api-srv.yaml
-  - auth-ingress.yaml
-  # - auth-np.yaml
-  - auth-ns.yaml
-  # - auth-worker-depl.yaml
-  # - auth-worker-sa.yaml

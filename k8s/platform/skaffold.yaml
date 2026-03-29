@@ -1,11 +1,5 @@
 apiVersion: skaffold/v4beta11
 kind: Config
 
-metadata:
-  name: platform
-
 requires:
   - path: ingress
-  # - path: event-bus
-  # - path: mesh
-  # - path: observability

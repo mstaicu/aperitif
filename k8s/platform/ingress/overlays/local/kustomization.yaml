@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: traefik
 
 resources:
+  - namespace.yaml
   - ../../base
   - traefik-gateway.yaml
   - traefik-ingress.yaml
