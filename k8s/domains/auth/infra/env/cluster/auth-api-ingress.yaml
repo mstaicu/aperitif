@@ -4,8 +4,8 @@ kind: HTTPRoute
 metadata:
   name: auth-api-public
 spec:
-  hostnames:
-    - tma.com
+  # hostnames:
+  #   - tma.com
   parentRefs:
     - name: traefik-pgw
       namespace: traefik
@@ -15,14 +15,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /api/v1/auth
+            value: /auth
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /v1
+              replacePrefixMatch: /
 
       backendRefs:
         - name: auth-api-srv
@@ -35,8 +35,8 @@ kind: HTTPRoute
 metadata:
   name: auth-jwks-public
 spec:
-  hostnames:
-    - tma.com
+  # hostnames:
+  #   - tma.com
   parentRefs:
     - name: traefik-pgw
       namespace: traefik
@@ -68,14 +68,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /auth/v1
+            value: /auth
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /v1
+              replacePrefixMatch: /
 
       backendRefs:
         - name: auth-api-srv

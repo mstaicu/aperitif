@@ -18,10 +18,11 @@ configMapGenerator:
     literals:
       - ORIGIN=https://tma.com
 
-secretGenerator:
-  - name: auth-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+# TODO: Add and encrypt secret
+# secretGenerator:
+#   - name: auth-db
+#     literals:
+#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
 
 images:
   - name: mdstaicu/auth-api

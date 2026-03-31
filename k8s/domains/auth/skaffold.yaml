@@ -31,42 +31,42 @@ manifests:
 deploy:
   kubectl: {}
 
----
-apiVersion: skaffold/v4beta11
-kind: Config
+# ---
+# apiVersion: skaffold/v4beta11
+# kind: Config
 
-metadata:
-  name: auth-preview
+# metadata:
+#   name: auth-preview
 
-build:
-  local:
-    push: false
+# build:
+#   local:
+#     push: false
 
-  artifacts:
-    - image: mdstaicu/auth-api
-      context: api
-      docker:
-        dockerfile: Dockerfile
-        target: dev
+#   artifacts:
+#     - image: mdstaicu/auth-api
+#       context: api
+#       docker:
+#         dockerfile: Dockerfile
+#         target: dev
 
-      sync:
-        manual:
-          - src: src/**/*
-            dest: .
+#       sync:
+#         manual:
+#           - src: src/**/*
+#             dest: .
 
-manifests:
-  kustomize:
-    paths:
-      - infra/env/preview
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
+# manifests:
+#   kustomize:
+#     paths:
+#       - infra/env/preview
+#     buildArgs:
+#       - --enable-alpha-plugins
+#       - --enable-exec
 
-deploy:
-  kubectl: {}
+# deploy:
+#   kubectl: {}
 
-portForward:
-  - resourceType: service
-    resourceName: auth-api-srv
-    port: 3000
-    localPort: 4300
+# portForward:
+#   - resourceType: service
+#     resourceName: auth-api-srv
+#     port: 3000
+#     localPort: 4300

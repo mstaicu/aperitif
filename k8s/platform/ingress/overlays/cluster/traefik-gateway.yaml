@@ -24,7 +24,10 @@ spec:
       hostname: tma.com
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: auth
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -41,4 +44,7 @@ spec:
       protocol: HTTP
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: auth

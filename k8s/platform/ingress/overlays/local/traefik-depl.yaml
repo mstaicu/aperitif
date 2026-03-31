@@ -15,31 +15,19 @@ spec:
           args:
             - --entrypoints.http.address=:80
             - --entrypoints.https.address=:443
-            #
             - --entrypoints.http.forwardedHeaders.insecure=true
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s
             - --entrypoints.http.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s
-            #
             - --entrypoints.https.forwardedHeaders.insecure=true
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.writeTimeout=10s
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s
-            #
             - --providers.kubernetesgateway=true
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#logs
             - --log.level=DEBUG
             - --accesslog=true
-            #
-            # https://doc.traefik.io/traefik/reference/install-configuration/observability/healthcheck/ping/#ping
             - --ping=true
             - --ping.entryPoint=http
-            #
-            - --experimental.plugins.jwt.moduleName=github.com/traefik-plugins/traefik-jwt-plugin
-            - --experimental.plugins.jwt.version=v0.10.0
-            #
-            # https://doc.traefik.io/traefik/operations/dashboard/
             - --api=true
             - --api.dashboard=true
 
@@ -48,8 +36,6 @@ spec:
             - --metrics.otlp.grpc=true
             - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT)
             - --metrics.otlp.grpc.insecure=true
-
-            # Reduce cardinality
             - --metrics.otlp.addEntryPointsLabels=false
             - --metrics.otlp.addRoutersLabels=false
             - --metrics.otlp.addServicesLabels=false
@@ -59,17 +45,8 @@ spec:
             - --tracing.otlp.grpc=true
             - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT)
             - --tracing.otlp.grpc.insecure=true
-
             - --tracing.sampleRate=1.0
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: otel-srv.otel.svc.cluster.local:4317
-
-          volumeMounts:
-            - name: plugins
-              mountPath: /plugins-storage
-
-      volumes:
-        - name: plugins
-          emptyDir: {}

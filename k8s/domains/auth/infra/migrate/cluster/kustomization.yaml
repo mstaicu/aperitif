@@ -7,10 +7,11 @@ resources:
   - namespace.yaml
   - auth-migrate-job.yaml
 
-secretGenerator:
-  - name: auth-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+# TODO: Add and encrypt secret
+# secretGenerator:
+#   - name: auth-db
+#     literals:
+#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true
