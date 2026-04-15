@@ -19,7 +19,7 @@ spec:
     - name: https
       port: 443
       protocol: HTTPS
-      hostname: tma.com
+      # hostname: tma.com
 
       allowedRoutes:
         namespaces:
@@ -33,7 +33,7 @@ spec:
     - name: http
       port: 80
       protocol: HTTP
-      hostname: tma.com
+      # hostname: tma.com
 
       allowedRoutes:
         namespaces:

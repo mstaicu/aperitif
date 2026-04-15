@@ -1,8 +1,8 @@
 apiVersion: batch/v1
 kind: Job
-metadata:
-  name: auth-migrate
 
+metadata:
+  name: migrate
 spec:
   backoffLimit: 4
   activeDeadlineSeconds: 300
@@ -18,7 +18,7 @@ spec:
             - -c
             - |
               echo "waiting for postgres..."
-              until pg_isready -h postgres-srv -p 5432 -d auth; do
+              until pg_isready -h postgres-srv -p 5432 -U postgres -d auth; do
                 sleep 2
               done
               echo "postgres ready"

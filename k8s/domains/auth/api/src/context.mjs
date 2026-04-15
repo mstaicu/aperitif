@@ -74,15 +74,11 @@ const createPgContext = () => {
  * @param {string} origin
  */
 const createJwtContext = async (origin) => {
-  const [privatePem, publicPem] = await Promise.all([
-    readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
-    readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
-  ]);
+  const privatePem = await readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8");
+  const publicPem = await readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8");
 
-  const [privateKey, publicJwk] = await Promise.all([
-    importPKCS8(privatePem, "ES256"),
-    importSPKI(publicPem, "ES256").then(exportJWK),
-  ]);
+  const privateKey = await importPKCS8(privatePem, "ES256");
+  const publicJwk = await importSPKI(publicPem, "ES256").then(exportJWK);
 
   return {
     issuer: origin,

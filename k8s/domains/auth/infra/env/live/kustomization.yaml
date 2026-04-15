@@ -4,11 +4,11 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - namespace.yaml
   - ../../api
-  - auth-np.yaml
   - auth-api-ingress.yaml
   - auth-api-jwt.yaml
+  - auth-np.yaml
+  - auth-ns.yaml
 
 patches:
   - path: auth-api-depl.yaml

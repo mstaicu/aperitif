@@ -44,11 +44,6 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
-      - grpcroutes
-      - tcproutes
-      - tlsroutes
-      - referencegrants
-      - backendtlspolicies
     verbs:
       - get
       - list
@@ -60,11 +55,6 @@ rules:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
-      - grpcroutes/status
-      - tcproutes/status
-      - tlsroutes/status
-      - referencegrants/status
-      - backendtlspolicies/status
     verbs:
       - update
 

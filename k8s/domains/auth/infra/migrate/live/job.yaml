@@ -1,12 +1,11 @@
 apiVersion: batch/v1
 kind: Job
-metadata:
-  name: auth-migrate
 
+metadata:
+  name: migrate
 spec:
   backoffLimit: 4
   activeDeadlineSeconds: 300
-  ttlSecondsAfterFinished: 600
   template:
     spec:
       restartPolicy: Never

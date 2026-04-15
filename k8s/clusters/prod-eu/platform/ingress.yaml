@@ -5,7 +5,7 @@ metadata:
   name: ingress-crds
 spec:
   interval: 10m
-  path: ./platform/ingress/crds
+  path: ./k8s/platform/ingress/crds
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
@@ -21,7 +21,7 @@ metadata:
   name: ingress
 spec:
   interval: 10m
-  path: ./platform/ingress/overlays/cluster
+  path: ./k8s/platform/ingress/overlays/live
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository

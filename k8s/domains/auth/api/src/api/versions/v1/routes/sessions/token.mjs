@@ -25,7 +25,6 @@ export default async function (fastify, { runtime }) {
         response: {
           200: SessionTokenResponse,
           401: ErrorResponse,
-          403: ErrorResponse,
           500: ErrorResponse,
         },
         summary: "Mint access token",
@@ -53,10 +52,6 @@ export default async function (fastify, { runtime }) {
 
         if (code === "INVALID_REFRESH_TOKEN" || code === "SESSION_NOT_FOUND") {
           return reply.code(401).send(null);
-        }
-
-        if (code === "INVALID_AUDIENCE") {
-          return reply.code(403).send(null);
         }
 
         return reply.code(500).send(null);

@@ -5,10 +5,10 @@ metadata:
   name: auth-migrate
 spec:
   interval: 10m
-  path: ./k8s/domains/auth/infra/migrate/cluster
+  path: ./k8s/domains/auth/infra/migrate/live
   prune: true
-  wait: true
-  timeout: 10m
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
+  wait: true
+  timeout: 5m # wait ( wait=true ) 5m for resources to become ready

@@ -51,12 +51,21 @@ CREATE TABLE sessions (
 
 -- Authority topology snapshot
 
--- CREATE TABLE access_projection (
---     user_id UUID NOT NULL
---         REFERENCES users(id)
---         ON DELETE CASCADE,
---     tenant_id UUID NULL,
---     roles TEXT[] NOT NULL DEFAULT '{}',
+CREATE TABLE workspaces (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL
+);
 
---     PRIMARY KEY (user_id, tenant_id)
--- );
+CREATE TABLE workspace_memberships (
+    user_id UUID NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    workspace_id UUID NOT NULL
+        REFERENCES workspaces(id)
+        ON DELETE CASCADE,
+
+    role TEXT NOT NULL,
+
+    PRIMARY KEY (user_id, workspace_id)
+);

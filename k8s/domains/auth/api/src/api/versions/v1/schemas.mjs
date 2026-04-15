@@ -199,7 +199,6 @@ export const SessionTokenBody = Type.Object(
 export const SessionTokenResponse = Type.Object(
   {
     access_token: Type.String(),
-    expires_in: Type.Integer(),
   },
   { additionalProperties: false },
 );

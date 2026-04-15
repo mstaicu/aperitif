@@ -4,13 +4,13 @@ kind: Kustomization
 namespace: traefik
 
 resources:
-  - namespace.yaml
   - ../../base
   - traefik-cf.yaml
   - traefik-do-pvc.yaml
   - traefik-gateway.yaml
   - traefik-ingress.yaml
   - traefik-lb.yaml
+  - traefik-ns.yaml
   - traefik-svc.yaml
 
 patches:

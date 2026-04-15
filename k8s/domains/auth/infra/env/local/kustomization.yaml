@@ -4,11 +4,11 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - namespace.yaml
   - ../../api
   - ../../migrate/local
-  - auth-postgres-depl.yaml
   - auth-api-ingress.yaml
+  - auth-ns.yaml
+  - auth-postgres-depl.yaml
 
 generators:
   - auth-ksops-generator.yaml
