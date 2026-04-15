@@ -18,9 +18,9 @@ import { generateRefreshToken } from "../shared.mjs";
 export const register =
   (ctx) =>
   async ({ credential }) => {
-    const { conf, db } = ctx;
+    const { app, data } = ctx;
 
-    const { hostname, origin } = new URL(conf.origin);
+    const { hostname, origin } = new URL(app.origin);
 
     if (credential.id !== credential.rawId) {
       throw new Error("INVALID_CREDENTIAL");
@@ -56,7 +56,7 @@ export const register =
 
     const {
       rows: [challengeRow],
-    } = await db.query(
+    } = await data.db.query(
       `
         DELETE FROM challenges
         WHERE challenge = $1
@@ -111,7 +111,7 @@ export const register =
     const publicKey = Buffer.from(registrationCredential.publicKey);
     const signCount = registrationCredential.counter;
 
-    const client = await db.connect();
+    const client = await data.db.connect();
 
     try {
       await client.query("BEGIN");

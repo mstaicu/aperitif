@@ -32,7 +32,7 @@ const app = await createApp({
 });
 
 app.addHook("onClose", () => otel.shutdown());
-app.addHook("onClose", () => ctx.close());
+app.addHook("onClose", () => ctx.lifecycle.close());
 
 await app.ready();
 await app.listen({ port: 3000 });

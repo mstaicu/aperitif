@@ -8,7 +8,7 @@ resources:
   - auth-api-ingress.yaml
   - auth-api-jwt.yaml
   - auth-np.yaml
-  - auth-ns.yaml
+  - namespace.yaml
 
 patches:
   - path: auth-api-depl.yaml

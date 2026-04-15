@@ -1,4 +1,4 @@
-import { AuthenticationChallengeResponse } from "../../schemas.mjs";
+import { AuthenticationChallengeResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify

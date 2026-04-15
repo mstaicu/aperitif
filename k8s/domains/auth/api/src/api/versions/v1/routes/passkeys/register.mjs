@@ -1,8 +1,5 @@
-import {
-  ErrorResponse,
-  RegistrationBody,
-  RegistrationSuccessResponse,
-} from "../../schemas.mjs";
+import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -34,13 +31,15 @@ export default async function (fastify, { runtime }) {
       },
     },
     async function (request, reply) {
+      const input = {
+        credential: request.body.credential,
+      };
+
       try {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
-        return reply
-          .code(201)
-          .send(await runtime.passkeys.register(request.body));
+        return reply.code(201).send(await runtime.passkeys.register(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

@@ -49,23 +49,23 @@ CREATE TABLE sessions (
     revoked_at TIMESTAMPTZ
 );
 
--- Authority topology snapshot
-
-CREATE TABLE workspaces (
+CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL
 );
 
-CREATE TABLE workspace_memberships (
+CREATE TABLE organization_memberships (
     user_id UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    workspace_id UUID NOT NULL
-        REFERENCES workspaces(id)
+    organization_id UUID NOT NULL
+        REFERENCES organizations(id)
         ON DELETE CASCADE,
 
-    role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
 
-    PRIMARY KEY (user_id, workspace_id)
+    PRIMARY KEY (user_id, organization_id)
+
+    CHECK (status IN ('active')) -- add more statuses
 );

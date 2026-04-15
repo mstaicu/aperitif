@@ -89,26 +89,18 @@ const AuthenticationResponseJSON = Type.Object({
 export const RegistrationChallengeResponse = Type.Object({
   publicKey: Type.Object({
     attestation: Type.Optional(Type.String()),
-
     authenticatorSelection: Type.Optional(AuthenticatorSelectionCriteria),
-
     challenge: Base64URLString,
-
     excludeCredentials: Type.Optional(
       Type.Array(PublicKeyCredentialDescriptorJSON),
     ),
-
     extensions: Type.Optional(Type.Unknown()),
-
     pubKeyCredParams: Type.Array(PublicKeyCredentialParameters),
-
     rp: Type.Object({
       id: Type.Optional(Type.String()),
       name: Type.String(),
     }),
-
     timeout: Type.Optional(Type.Integer()),
-
     user: PublicKeyCredentialUserEntityJSON,
   }),
 });
@@ -118,15 +110,10 @@ export const AuthenticationChallengeResponse = Type.Object({
     allowCredentials: Type.Optional(
       Type.Array(PublicKeyCredentialDescriptorJSON),
     ),
-
     challenge: Base64URLString,
-
     extensions: Type.Optional(Type.Unknown()),
-
     rpId: Type.Optional(Type.String()),
-
     timeout: Type.Optional(Type.Integer()),
-
     userVerification: Type.Optional(
       Type.Union([
         Type.Literal("required"),
@@ -164,44 +151,3 @@ export const LoginSuccessResponse = Type.Object(
   },
   { additionalProperties: false },
 );
-
-export const RefreshBody = Type.Object(
-  {
-    refresh_token: Type.String(),
-  },
-  { additionalProperties: false },
-);
-
-export const RefreshResponse = Type.Object(
-  {
-    refresh_token: Type.String(),
-  },
-  { additionalProperties: false },
-);
-
-export const ExchangeBody = Type.Object(
-  {
-    refresh_token: Type.Optional(Type.String()),
-  },
-  { additionalProperties: false },
-);
-
-export const SessionTokenBody = Type.Object(
-  {
-    audience: Type.String({
-      maxLength: 128,
-      minLength: 1,
-    }),
-  },
-  { additionalProperties: false },
-);
-
-export const SessionTokenResponse = Type.Object(
-  {
-    access_token: Type.String(),
-  },
-  { additionalProperties: false },
-);
-
-export const ErrorResponse = Type.Null();
-export const EmptyResponse = Type.Null();

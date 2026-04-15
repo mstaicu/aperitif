@@ -16,15 +16,6 @@ import sessionRoutes from "./routes/sessions/index.mjs";
 export default async (fastify, { runtime }) => {
   await fastify.register(swagger, {
     openapi: {
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            bearerFormat: "JWT",
-            scheme: "bearer",
-            type: "http",
-          },
-        },
-      },
       info: {
         title: "Authentication",
         version: "v1",

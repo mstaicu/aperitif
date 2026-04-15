@@ -7,21 +7,27 @@ import { Pool } from "pg";
 
 /**
  * @typedef {object} Context
- * @property {Pool} db
  * @property {{
- *   region: string,
  *   origin: string,
- * }} conf
+ *   region: string,
+ * }} app
  * @property {{
- *   issuer: string,
- *   kid: string,
- *   privateKey: CryptoKey,
+ *   db: Pool,
+ * }} data
+ * @property {{
  *   jwks: { keys: import("jose").JWK[] },
- * }} jwt
- * @property {() => Promise<void>} close
+ *   signing: {
+ *     kid: string,
+ *     privateKey: CryptoKey,
+ *   },
+ * }} tokens
+ * @property {{
+ *   close: () => Promise<void>,
+ * }} lifecycle
  */
 
-export const createNatsContext = async () => {
+// eslint-disable-next-line
+const createNatsContext = async () => {
   const nc = await connect({
     name: "auth-api",
     servers: nconf.get("NATS_URL"),
@@ -70,23 +76,26 @@ const createPgContext = () => {
   };
 };
 
-/**
- * @param {string} origin
- */
-const createJwtContext = async (origin) => {
-  const privatePem = await readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8");
-  const publicPem = await readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8");
+const createJwtContext = async () => {
+  const jwtPrivateKeyPath = nconf.get("JWT_PRIVATE_KEY_PATH");
+  const jwtPublicKeyPath = nconf.get("JWT_PUBLIC_KEY_PATH");
+
+  const kid = "k1";
+
+  const privatePem = await readFile(jwtPrivateKeyPath, "utf8");
+  const publicPem = await readFile(jwtPublicKeyPath, "utf8");
 
   const privateKey = await importPKCS8(privatePem, "ES256");
   const publicJwk = await importSPKI(publicPem, "ES256").then(exportJWK);
 
   return {
-    issuer: origin,
     jwks: {
-      keys: [{ ...publicJwk, alg: "ES256", kid: "k1", use: "sig" }],
+      keys: [{ ...publicJwk, alg: "ES256", kid, use: "sig" }],
     },
-    kid: "k1",
-    privateKey,
+    signing: {
+      kid,
+      privateKey,
+    },
   };
 };
 
@@ -94,21 +103,23 @@ const createJwtContext = async (origin) => {
  * @returns {Promise<Context>}
  */
 export const createContext = async () => {
-  const { origin } = new URL(nconf.get("ORIGIN"));
-
-  const jwt = await createJwtContext(origin);
-  // const nats = await createNatsContext();
   const pg = createPgContext();
+  const tokens = await createJwtContext();
+  // const nats = await createNatsContext(config);
 
   return {
     // close: () => Promise.allSettled([pg.close(), nats.close()]),
-    close: () => pg.close(),
-    conf: {
-      origin,
+    app: {
+      origin: nconf.get("ORIGIN"),
       region: nconf.get("REGION") ?? "local",
     },
-    db: pg.db,
-    jwt,
+    data: {
+      db: pg.db,
+    },
+    lifecycle: {
+      close: () => pg.close(),
+    },
+    tokens,
     // js: nats.js,
   };
 };

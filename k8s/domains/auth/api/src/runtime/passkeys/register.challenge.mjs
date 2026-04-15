@@ -15,7 +15,7 @@ export const createRegisterChallenge = (ctx) => async () => {
   const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
   const challenge = randomBytes(32);
 
-  await ctx.db.query(
+  await ctx.data.db.query(
     `
       INSERT INTO challenges (user_id, challenge)
       VALUES ($1, $2)
@@ -23,7 +23,7 @@ export const createRegisterChallenge = (ctx) => async () => {
     [userId, challenge],
   );
 
-  const { hostname } = new URL(ctx.conf.origin);
+  const { hostname } = new URL(ctx.app.origin);
 
   return generateRegistrationOptions({
     attestationType: "none",

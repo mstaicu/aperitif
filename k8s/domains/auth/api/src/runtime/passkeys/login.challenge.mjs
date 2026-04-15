@@ -12,7 +12,7 @@ import { randomBytes } from "node:crypto";
 export const createLoginChallenge = (ctx) => async () => {
   const challenge = randomBytes(32);
 
-  await ctx.db.query(
+  await ctx.data.db.query(
     `
       INSERT INTO challenges (user_id, challenge)
       VALUES (NULL, $1)
@@ -22,7 +22,7 @@ export const createLoginChallenge = (ctx) => async () => {
 
   return generateAuthenticationOptions({
     challenge,
-    rpID: new URL(ctx.conf.origin).hostname,
+    rpID: new URL(ctx.app.origin).hostname,
     userVerification: "required",
   });
 };

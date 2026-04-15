@@ -1,8 +1,5 @@
-import {
-  ErrorResponse,
-  SessionTokenBody,
-  SessionTokenResponse,
-} from "../../schemas.mjs";
+import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { SessionTokenBody, SessionTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -20,7 +17,7 @@ export default async function (fastify, { runtime }) {
       schema: {
         body: SessionTokenBody,
         description:
-          "Exchange a refresh token for a short-lived audience-scoped access token.",
+          "Exchange a refresh token provided in the Authorization bearer header for a short-lived audience-scoped access token. The request body should contain only the target audience.",
         operationId: "exchangeSessionToken",
         response: {
           200: SessionTokenResponse,
@@ -38,15 +35,15 @@ export default async function (fastify, { runtime }) {
         return reply.code(401).send(null);
       }
 
+      const input = {
+        audience: req.body.audience,
+        refresh_token: token,
+      };
+
       try {
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(
-          await runtime.sessions.createAccessToken({
-            audience: req.body.audience,
-            refresh_token: token,
-          }),
-        );
+        return reply.send(await runtime.sessions.createAccessToken(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

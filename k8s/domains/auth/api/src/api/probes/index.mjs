@@ -10,7 +10,7 @@ export default async (fastify, { ctx }) => {
   fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {
-      await ctx.db.query("SELECT 1");
+      await ctx.data.db.query("SELECT 1");
 
       // if (fastify.nc && fastify.nc.isClosed()) {
       //   throw new Error();

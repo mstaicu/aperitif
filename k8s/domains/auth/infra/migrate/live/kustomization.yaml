@@ -4,8 +4,8 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - job.yaml
-  - ns.yaml
+  - auth-migrate-job.yaml
+  - namespace.yaml
 
 # TODO: Add and encrypt secret
 # secretGenerator:

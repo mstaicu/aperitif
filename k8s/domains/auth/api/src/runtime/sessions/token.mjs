@@ -7,17 +7,16 @@ const TTL_SECONDS = 60;
  * @param {import("../../context.mjs").Context} ctx
  * @returns {(args: { refresh_token: string; audience: string }) => Promise<{ access_token: string }>}
  */
-export const createAccessToken = (ctx) => {
-  const privateKey = ctx.jwt.privateKey;
-
-  return async ({ audience, refresh_token }) => {
+export const createAccessToken =
+  (ctx) =>
+  async ({ audience, refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
     const {
       rows: [session],
-    } = await ctx.db.query(
+    } = await ctx.data.db.query(
       `
         SELECT user_id
         FROM sessions
@@ -38,16 +37,14 @@ export const createAccessToken = (ctx) => {
     })
       .setProtectedHeader({
         alg: "ES256",
-        kid: ctx.jwt.kid,
+        kid: ctx.tokens.signing.kid,
       })
-      .setIssuer(ctx.jwt.issuer)
       .setAudience(audience)
       .setIssuedAt(now)
       .setExpirationTime(now + TTL_SECONDS)
-      .sign(privateKey);
+      .sign(ctx.tokens.signing.privateKey);
 
     return {
       access_token,
     };
   };
-};

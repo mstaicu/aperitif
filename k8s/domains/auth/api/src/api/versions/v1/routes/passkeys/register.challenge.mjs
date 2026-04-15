@@ -1,4 +1,4 @@
-import { RegistrationChallengeResponse } from "../../schemas.mjs";
+import { RegistrationChallengeResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify

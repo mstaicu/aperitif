@@ -1,4 +1,5 @@
-import { ErrorResponse, RefreshBody, RefreshResponse } from "../../schemas.mjs";
+import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { RefreshBody, RefreshResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -27,10 +28,14 @@ export default async function (fastify, { runtime }) {
       },
     },
     async function (request, reply) {
+      const input = {
+        refresh_token: request.body.refresh_token,
+      };
+
       try {
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(await runtime.sessions.refresh(request.body));
+        return reply.send(await runtime.sessions.refresh(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 
