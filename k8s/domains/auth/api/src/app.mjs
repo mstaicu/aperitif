@@ -47,8 +47,8 @@ export const createApp = async ({ ctx, fastifyOtel, runtime }) => {
     .withTypeProvider();
 
   await app.register(fastifyOtel.plugin());
-  await app.register(probes, { ctx });
-  await app.register(jwks, { ctx });
+  await app.register(probes, { db: ctx.data.db });
+  await app.register(jwks, { jwks: ctx.tokens.jwks });
   await app.register(v1, { prefix: "/v1", runtime });
 
   return app;

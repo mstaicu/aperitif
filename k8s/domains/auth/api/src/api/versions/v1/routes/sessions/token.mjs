@@ -3,14 +3,14 @@ import { SessionTokenBody, SessionTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
+ * @typedef {import("../../../../../runtime/sessions/index.mjs").SessionsRuntime} SessionsRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: Runtime}} opts
+ * @param {{sessions: SessionsRuntime}} opts
  */
-export default async function (fastify, { runtime }) {
+export default async function (fastify, { sessions }) {
   fastify.post(
     "/token",
     {
@@ -44,7 +44,7 @@ export default async function (fastify, { runtime }) {
       try {
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(await runtime.sessions.createAccessToken(input));
+        return reply.send(await sessions.createAccessToken(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

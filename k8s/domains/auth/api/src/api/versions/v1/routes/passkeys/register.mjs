@@ -3,14 +3,14 @@ import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
+ * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: Runtime}} opts
+ * @param {{passkeys: PasskeysRuntime}} opts
  */
-export default async function (fastify, { runtime }) {
+export default async function (fastify, { passkeys }) {
   fastify.post(
     "/register",
     {
@@ -39,7 +39,7 @@ export default async function (fastify, { runtime }) {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
-        return reply.code(201).send(await runtime.passkeys.register(input));
+        return reply.code(201).send(await passkeys.register(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

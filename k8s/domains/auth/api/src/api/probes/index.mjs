@@ -1,16 +1,16 @@
 /**
- * @typedef { import("../../context.mjs").Context} Ctx
+ * @typedef { import("pg").Pool } Db
  */
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
- * @param {{ctx: Ctx}} opts
+ * @param {{db: Db}} opts
  */
-export default async (fastify, { ctx }) => {
+export default async (fastify, { db }) => {
   fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {
-      await ctx.data.db.query("SELECT 1");
+      await db.query("SELECT 1");
 
       // if (fastify.nc && fastify.nc.isClosed()) {
       //   throw new Error();

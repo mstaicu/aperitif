@@ -2,14 +2,14 @@ import { AuthenticationChallengeResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
+ * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: Runtime}} opts
+ * @param {{passkeys: PasskeysRuntime}} opts
  */
-export default async function (fastify, { runtime }) {
+export default async function (fastify, { passkeys }) {
   fastify.post(
     "/login/challenge",
     {
@@ -28,7 +28,7 @@ export default async function (fastify, { runtime }) {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      const publicKey = await runtime.passkeys.createLoginChallenge();
+      const publicKey = await passkeys.createLoginChallenge();
 
       return reply.send({
         publicKey,

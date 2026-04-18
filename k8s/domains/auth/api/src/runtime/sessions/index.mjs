@@ -8,3 +8,7 @@ export const createSessionsRuntime = (ctx) => ({
   createAccessToken: createAccessToken(ctx),
   refresh: refresh(ctx),
 });
+
+/**
+ * @typedef {ReturnType<typeof createSessionsRuntime>} SessionsRuntime
+ */

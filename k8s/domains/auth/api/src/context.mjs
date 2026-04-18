@@ -77,7 +77,7 @@ const createPgContext = () => {
   };
 };
 
-const createJwtContext = async () => {
+const createTokensContext = async () => {
   const jwtPrivateKeyPath = nconf.get("JWT_PRIVATE_KEY_PATH");
   const jwtPublicKeyPath = nconf.get("JWT_PUBLIC_KEY_PATH");
   /**
@@ -119,7 +119,7 @@ const createJwtContext = async () => {
  */
 export const createContext = async () => {
   const pg = createPgContext();
-  const tokens = await createJwtContext();
+  const tokens = await createTokensContext();
   // const nats = await createNatsContext(config);
 
   return {
@@ -134,9 +134,7 @@ export const createContext = async () => {
     lifecycle: {
       close: () => pg.close(),
     },
-    tokens: {
-      ...tokens,
-    },
+    tokens,
     // js: nats.js,
   };
 };

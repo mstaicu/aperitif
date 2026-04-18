@@ -12,3 +12,7 @@ export const createPasskeysRuntime = (ctx) => ({
   login: login(ctx),
   register: register(ctx),
 });
+
+/**
+ * @typedef {ReturnType<typeof createPasskeysRuntime>} PasskeysRuntime
+ */

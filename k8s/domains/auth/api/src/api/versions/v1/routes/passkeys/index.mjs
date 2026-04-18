@@ -5,16 +5,16 @@ import register from "./register.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
+ * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: Runtime}} opts
+ * @param {{passkeys: PasskeysRuntime}} opts
  */
-export default async function (fastify, { runtime }) {
-  await fastify.register(loginChallenge, { runtime });
-  await fastify.register(login, { runtime });
-  await fastify.register(registerChallenge, { runtime });
-  await fastify.register(register, { runtime });
+export default async function (fastify, { passkeys }) {
+  await fastify.register(loginChallenge, { passkeys });
+  await fastify.register(login, { passkeys });
+  await fastify.register(registerChallenge, { passkeys });
+  await fastify.register(register, { passkeys });
 }

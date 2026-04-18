@@ -1,15 +1,15 @@
 /**
- * @typedef { import("../../context.mjs").Context} Ctx
+ * @typedef {{ keys: import("jose").JWK[] }} Jwks
  */
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
- * @param {{ctx: Ctx}} opts
+ * @param {{jwks: Jwks}} opts
  */
-export default (fastify, { ctx }) => {
+export default (fastify, { jwks }) => {
   fastify.get("/.well-known/jwks.json", async (_, reply) => {
     reply.header("Cache-Control", "public, max-age=300, immutable");
 
-    return reply.code(200).send(ctx.tokens.jwks);
+    return reply.code(200).send(jwks);
   });
 };

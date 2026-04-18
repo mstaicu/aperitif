@@ -3,14 +3,14 @@ import token from "./token.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/index.mjs").Runtime} Runtime
+ * @typedef {import("../../../../../runtime/sessions/index.mjs").SessionsRuntime} SessionsRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: Runtime}} opts
+ * @param {{sessions: SessionsRuntime}} opts
  */
-export default async function (fastify, { runtime }) {
-  await fastify.register(refresh, { runtime });
-  await fastify.register(token, { runtime });
+export default async function (fastify, { sessions }) {
+  await fastify.register(refresh, { sessions });
+  await fastify.register(token, { sessions });
 }

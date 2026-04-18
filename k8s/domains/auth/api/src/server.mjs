@@ -1,5 +1,4 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
 import { createApp } from "./app.mjs";
@@ -11,13 +10,7 @@ const fastifyOtel = new FastifyOtelInstrumentation({
 });
 
 const otel = new NodeSDK({
-  instrumentations: [
-    new HttpInstrumentation({
-      ignoreIncomingRequestHook: (req) =>
-        req.url === "/healthz" || req.url === "/readyz",
-    }),
-    fastifyOtel,
-  ],
+  instrumentations: [fastifyOtel],
 });
 
 otel.start();
