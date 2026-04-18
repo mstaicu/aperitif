@@ -1,0 +1,29 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: spaces-local
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/spaces-api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: .
+
+manifests:
+  kustomize:
+    paths:
+      - infra/env/local
+
+deploy:
+  kubectl: {}

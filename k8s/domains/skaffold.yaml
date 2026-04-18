@@ -8,3 +8,6 @@ requires:
   - path: auth
     configs:
       - auth-local
+  - path: spaces
+    configs:
+      - spaces-local

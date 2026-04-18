@@ -10,9 +10,6 @@ resources:
   - auth-np.yaml
   - namespace.yaml
 
-patches:
-  - path: auth-api-depl.yaml
-
 configMapGenerator:
   - name: auth-api-cm
     literals:

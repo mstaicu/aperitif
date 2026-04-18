@@ -1,0 +1,19 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: spaces
+spec:
+  interval: 10m
+  path: ./k8s/domains/spaces/infra/env/live
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: aperitif-repo
+  dependsOn:
+    - name: ingress
+    - name: spaces-migrate
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

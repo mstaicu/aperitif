@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: spaces-postgres-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spaces-postgres
+  template:
+    metadata:
+      labels:
+        app: spaces-postgres
+    spec:
+      containers:
+        - name: spaces-postgres
+          image: docker.io/postgres:18
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+            - name: POSTGRES_DB
+              value: spaces
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: postgres-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: spaces-postgres
+  ports:
+    - name: postgres
+      protocol: TCP
+      port: 5432
+      targetPort: 5432

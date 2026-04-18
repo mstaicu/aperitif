@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: spaces-api-depl
+spec:
+  selector:
+    matchLabels:
+      app: spaces-api
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: spaces-api
+    spec:
+      serviceAccountName: spaces-api
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
+      automountServiceAccountToken: false
+
+      containers:
+        - name: spaces-api
+          image: mdstaicu/spaces-api
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: spaces-db
+                  key: DATABASE_URL
+
+            - name: OTEL_SERVICE_NAME
+              value: spaces-api
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-srv.otel.svc.cluster.local:4318
+
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
