@@ -33,6 +33,11 @@ spec:
                 configMapKeyRef:
                   name: auth-api-cm
                   key: ORIGIN
+            - name: JWT_ALLOWED_AUDIENCES
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-api-cm
+                  key: JWT_ALLOWED_AUDIENCES
 
             - name: JWT_PRIVATE_KEY_PATH
               value: /app/keys/jwt-private.pem

@@ -16,6 +16,7 @@ import { Pool } from "pg";
  * }} data
  * @property {{
  *   jwks: { keys: import("jose").JWK[] },
+ *   allowedAudiences: string[],
  *   signing: {
  *     kid: string,
  *     privateKey: CryptoKey,
@@ -79,6 +80,19 @@ const createPgContext = () => {
 const createJwtContext = async () => {
   const jwtPrivateKeyPath = nconf.get("JWT_PRIVATE_KEY_PATH");
   const jwtPublicKeyPath = nconf.get("JWT_PUBLIC_KEY_PATH");
+  /**
+   * @type {string}
+   */
+  const rawAllowedAudiences = nconf.get("JWT_ALLOWED_AUDIENCES");
+
+  const allowedAudiences = rawAllowedAudiences
+    .split(",")
+    .map((audience) => audience.trim())
+    .filter(Boolean);
+
+  if (!allowedAudiences.length) {
+    throw new Error("No JWT_ALLOWED_AUDIENCES provided");
+  }
 
   const kid = "k1";
 
@@ -89,6 +103,7 @@ const createJwtContext = async () => {
   const publicJwk = await importSPKI(publicPem, "ES256").then(exportJWK);
 
   return {
+    allowedAudiences,
     jwks: {
       keys: [{ ...publicJwk, alg: "ES256", kid, use: "sig" }],
     },
@@ -119,7 +134,9 @@ export const createContext = async () => {
     lifecycle: {
       close: () => pg.close(),
     },
-    tokens,
+    tokens: {
+      ...tokens,
+    },
     // js: nats.js,
   };
 };

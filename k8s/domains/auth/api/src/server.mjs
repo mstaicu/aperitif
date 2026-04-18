@@ -34,5 +34,27 @@ const app = await createApp({
 app.addHook("onClose", () => otel.shutdown());
 app.addHook("onClose", () => ctx.lifecycle.close());
 
-await app.ready();
+var shutdownInitiated = false;
+
+// SIGUSR2 is for nodemon
+["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
+  process.once(signal, async () => {
+    if (shutdownInitiated) return;
+
+    shutdownInitiated = true;
+
+    console.log("closing server...");
+
+    try {
+      await app.close(); // triggers onClose hooks
+
+      console.log("shutdown complete");
+
+      process.exit(0);
+    } catch {
+      process.exit(1);
+    }
+  }),
+);
+
 await app.listen({ port: 3000 });

@@ -65,7 +65,7 @@ CREATE TABLE organization_memberships (
 
     status TEXT NOT NULL DEFAULT 'active',
 
-    PRIMARY KEY (user_id, organization_id)
+    PRIMARY KEY (user_id, organization_id),
 
     CHECK (status IN ('active')) -- add more statuses
 );

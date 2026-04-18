@@ -17,6 +17,7 @@ configMapGenerator:
   - name: auth-api-cm
     literals:
       - ORIGIN=https://tma.com
+      - JWT_ALLOWED_AUDIENCES=organizations
 
 # TODO: Add and encrypt secret
 # secretGenerator:

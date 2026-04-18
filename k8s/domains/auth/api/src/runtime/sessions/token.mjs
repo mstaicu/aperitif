@@ -14,6 +14,10 @@ export const createAccessToken =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
+    if (!ctx.tokens.allowedAudiences.includes(audience)) {
+      throw new Error("INVALID_AUDIENCE");
+    }
+
     const {
       rows: [session],
     } = await ctx.data.db.query(

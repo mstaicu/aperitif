@@ -21,6 +21,7 @@ export default async function (fastify, { runtime }) {
         operationId: "exchangeSessionToken",
         response: {
           200: SessionTokenResponse,
+          400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
         },
@@ -46,6 +47,10 @@ export default async function (fastify, { runtime }) {
         return reply.send(await runtime.sessions.createAccessToken(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
+
+        if (code === "INVALID_AUDIENCE") {
+          return reply.code(400).send(null);
+        }
 
         if (code === "INVALID_REFRESH_TOKEN" || code === "SESSION_NOT_FOUND") {
           return reply.code(401).send(null);
