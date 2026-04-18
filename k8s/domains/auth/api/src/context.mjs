@@ -5,28 +5,6 @@ import nconf from "nconf";
 import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
 
-/**
- * @typedef {object} Context
- * @property {{
- *   origin: string,
- *   region: string,
- * }} app
- * @property {{
- *   db: Pool,
- * }} data
- * @property {{
- *   jwks: { keys: import("jose").JWK[] },
- *   allowedAudiences: string[],
- *   signing: {
- *     kid: string,
- *     privateKey: CryptoKey,
- *   },
- * }} tokens
- * @property {{
- *   close: () => Promise<void>,
- * }} lifecycle
- */
-
 // eslint-disable-next-line
 const createNatsContext = async () => {
   const nc = await connect({
@@ -114,16 +92,12 @@ const createTokensContext = async () => {
   };
 };
 
-/**
- * @returns {Promise<Context>}
- */
 export const createContext = async () => {
   const pg = createPgContext();
   const tokens = await createTokensContext();
   // const nats = await createNatsContext(config);
 
   return {
-    // close: () => Promise.allSettled([pg.close(), nats.close()]),
     app: {
       origin: nconf.get("ORIGIN"),
       region: nconf.get("REGION") ?? "local",
@@ -132,9 +106,14 @@ export const createContext = async () => {
       db: pg.db,
     },
     lifecycle: {
+      // close: () => Promise.allSettled([pg.close(), nats.close()]),
       close: () => pg.close(),
     },
     tokens,
     // js: nats.js,
   };
 };
+
+/**
+ * @typedef {Awaited<ReturnType<typeof createContext>>} Context
+ */
