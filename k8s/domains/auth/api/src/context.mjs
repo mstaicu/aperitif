@@ -55,7 +55,7 @@ const createPgContext = () => {
   };
 };
 
-const createTokensContext = async () => {
+const createSecurityContext = async () => {
   const jwtPrivateKeyPath = nconf.get("JWT_PRIVATE_KEY_PATH");
   const jwtPublicKeyPath = nconf.get("JWT_PUBLIC_KEY_PATH");
   /**
@@ -94,7 +94,7 @@ const createTokensContext = async () => {
 
 export const createContext = async () => {
   const pg = createPgContext();
-  const tokens = await createTokensContext();
+  const security = await createSecurityContext();
   // const nats = await createNatsContext(config);
 
   return {
@@ -109,7 +109,7 @@ export const createContext = async () => {
       // close: () => Promise.allSettled([pg.close(), nats.close()]),
       close: () => pg.close(),
     },
-    tokens,
+    security,
     // js: nats.js,
   };
 };

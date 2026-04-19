@@ -127,7 +127,11 @@ export const claim =
             id: nextSpaceId,
           },
         };
-      } else if (admission.space_id && admission.user_id && admission.status === "completed") {
+      } else if (
+        admission.space_id &&
+        admission.user_id &&
+        admission.status === "completed"
+      ) {
         const {
           rows: [membership],
         } = await client.query(

@@ -56,7 +56,11 @@ export const get =
         })),
       };
 
-      if (!admission.space_id || !admission.user_id || admission.status !== "completed") {
+      if (
+        !admission.space_id ||
+        !admission.user_id ||
+        admission.status !== "completed"
+      ) {
         return response;
       }
 

@@ -14,7 +14,7 @@ export const createAccessToken =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
-    if (!ctx.tokens.allowedAudiences.includes(audience)) {
+    if (!ctx.security.allowedAudiences.includes(audience)) {
       throw new Error("INVALID_AUDIENCE");
     }
 
@@ -41,12 +41,12 @@ export const createAccessToken =
     })
       .setProtectedHeader({
         alg: "ES256",
-        kid: ctx.tokens.signing.kid,
+        kid: ctx.security.signing.kid,
       })
       .setAudience(audience)
       .setIssuedAt(now)
       .setExpirationTime(now + TTL_SECONDS)
-      .sign(ctx.tokens.signing.privateKey);
+      .sign(ctx.security.signing.privateKey);
 
     return {
       access_token,

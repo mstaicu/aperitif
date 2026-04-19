@@ -1,5 +1,10 @@
 {
   "private": true,
+  "scripts": {
+    "start": "node src/index.mjs",
+    "dev": "nodemon src/index.mjs",
+    "typecheck": "tsc -p jsconfig.json --noEmit --pretty false"
+  },
   "overrides": {
     "minimatch": "^10.2.4",
     "glob": "^13.0.6"
@@ -13,6 +18,7 @@
     "@opentelemetry/sdk-node": "^0.215.0",
     "@sinclair/typebox": "^0.34.48",
     "fastify": "^5.8.5",
+    "jose": "^6.2.2",
     "nconf": "^0.13.0",
     "pg": "^8.18.0"
   },

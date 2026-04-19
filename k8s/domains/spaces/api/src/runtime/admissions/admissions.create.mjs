@@ -4,7 +4,12 @@
  */
 export const create =
   (ctx) =>
-  async ({ currentUserId, requested_role, requirements = [], space_id = null }) => {
+  async ({
+    currentUserId,
+    requested_role,
+    requirements = [],
+    space_id = null,
+  }) => {
     const dedupedRequirements = Array.from(new Set(requirements));
     const canCompleteImmediately =
       !!currentUserId && dedupedRequirements.length === 0;

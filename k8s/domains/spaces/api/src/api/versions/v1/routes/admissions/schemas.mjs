@@ -55,14 +55,6 @@ export const AdmissionSpace = Type.Object(
   { additionalProperties: false },
 );
 
-export const AdmissionArtifacts = Type.Object(
-  {
-    membership: Type.Optional(AdmissionMembership),
-    space: Type.Optional(AdmissionSpace),
-  },
-  { additionalProperties: false },
-);
-
 export const CreateAdmissionResponse = Type.Object(
   {
     admission: Admission,
@@ -83,7 +75,10 @@ export const GetAdmissionResponse = Type.Object(
   { additionalProperties: false },
 );
 
-export const ClaimAdmissionBody = Type.Object({}, { additionalProperties: false });
+export const ClaimAdmissionBody = Type.Object(
+  {},
+  { additionalProperties: false },
+);
 
 export const ClaimAdmissionResponse = Type.Object(
   {

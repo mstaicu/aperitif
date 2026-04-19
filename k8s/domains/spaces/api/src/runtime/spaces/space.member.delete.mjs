@@ -5,6 +5,10 @@
 export const deleteMember =
   (ctx) =>
   async ({ currentUserId, spaceId, userId }) => {
+    if (userId === currentUserId) {
+      throw new Error("USE_LEAVE_ROUTE");
+    }
+
     const client = await ctx.data.db.connect();
 
     try {
@@ -83,6 +87,10 @@ export const deleteMember =
         `,
         [spaceId, userId],
       );
+
+      // TODO: When eventing is wired, insert an outbox row in this transaction for:
+      // - spaces.membership.deleted
+      // Use targetMembership.role together with spaceId and userId.
 
       await client.query("COMMIT");
     } catch (err) {

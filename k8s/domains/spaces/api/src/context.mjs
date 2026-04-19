@@ -1,3 +1,4 @@
+import { createRemoteJWKSet } from "jose";
 import nconf from "nconf";
 import { Pool } from "pg";
 
@@ -31,6 +32,9 @@ export const createContext = async () => {
     },
     lifecycle: {
       close: () => pg.close(),
+    },
+    security: {
+      jwks: createRemoteJWKSet(new URL(nconf.get("AUTH_JWKS_URL"))),
     },
   };
 };

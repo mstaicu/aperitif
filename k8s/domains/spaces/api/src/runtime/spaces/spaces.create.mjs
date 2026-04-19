@@ -27,6 +27,10 @@ export const create =
         [space.id, currentUserId],
       );
 
+      // TODO: When eventing is wired, insert outbox rows in this transaction for:
+      // - spaces.space.created
+      // - spaces.membership.created
+
       await client.query("COMMIT");
 
       return {

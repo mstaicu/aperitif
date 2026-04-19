@@ -6,6 +6,7 @@ import spaceRoutes from "./routes/spaces/index.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
+ * @typedef {import("jose").JWTVerifyGetKey} Jwks
  * @typedef {import("../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
  * @typedef {import("../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
  */
@@ -15,19 +16,11 @@ import spaceRoutes from "./routes/spaces/index.mjs";
  * @param {{runtime: {
  *   admissions: AdmissionsRuntime,
  *   spaces: SpacesRuntime,
- * }}} opts
+ * }, jwks: Jwks}} opts
  */
-export default async (fastify, { runtime }) => {
+export default async (fastify, { jwks, runtime }) => {
   await fastify.register(swagger, {
     openapi: {
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            scheme: "bearer",
-            type: "http",
-          },
-        },
-      },
       info: {
         title: "Spaces",
         version: "v1",
@@ -55,11 +48,13 @@ export default async (fastify, { runtime }) => {
   });
 
   await fastify.register(spaceRoutes, {
+    jwks,
     prefix: "/spaces",
     spaces: runtime.spaces,
   });
   await fastify.register(admissionRoutes, {
     admissions: runtime.admissions,
+    jwks,
     prefix: "/admissions",
   });
 };

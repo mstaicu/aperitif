@@ -28,6 +28,9 @@ spec:
                   name: spaces-db
                   key: DATABASE_URL
 
+            - name: AUTH_JWKS_URL
+              value: http://traefik-srv.traefik.svc.cluster.local/.well-known/jwks.json
+
             - name: OTEL_SERVICE_NAME
               value: spaces-api
 

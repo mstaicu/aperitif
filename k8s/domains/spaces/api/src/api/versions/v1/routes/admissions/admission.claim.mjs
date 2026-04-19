@@ -1,3 +1,4 @@
+import { authenticate } from "../../../../../jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import {
   AdmissionParams,
@@ -5,19 +6,17 @@ import {
   ClaimAdmissionResponse,
 } from "./schemas.mjs";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
+ * @typedef {import("jose").JWTVerifyGetKey} Jwks
  * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsRuntime}} opts
+ * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
  */
-export default async function (fastify, { admissions }) {
+export default async function (fastify, { admissions, jwks }) {
   fastify.post(
     "/:admissionId/claim",
     {
@@ -41,21 +40,23 @@ export default async function (fastify, { admissions }) {
     },
     async function (req, reply) {
       try {
-        // TODO: Replace this bearer-token-as-user-id placeholder with JWT sub extraction.
-        const [type, token] = (req.headers.authorization || "").split(" ");
-
-        if (type !== "Bearer" || !token || !UUID_PATTERN.test(token)) {
-          return reply.code(401).send(null);
-        }
+        const currentUserId = await authenticate({
+          authorization: req.headers.authorization,
+          jwks,
+        });
 
         return reply.send(
           await admissions.claim({
             admissionId: req.params.admissionId,
-            currentUserId: token,
+            currentUserId,
           }),
         );
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
+
+        if (code === "INVALID_ACCESS_TOKEN") {
+          return reply.code(401).send(null);
+        }
 
         if (code === "ADMISSION_NOT_FOUND") {
           return reply.code(404).send(null);

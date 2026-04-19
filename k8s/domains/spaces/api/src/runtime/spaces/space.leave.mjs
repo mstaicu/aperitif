@@ -53,6 +53,10 @@ export const leave =
         [spaceId, currentUserId],
       );
 
+      // TODO: When eventing is wired, insert an outbox row in this transaction for:
+      // - spaces.membership.deleted
+      // Use membership.role together with spaceId and currentUserId.
+
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");

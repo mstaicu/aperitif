@@ -1,10 +1,10 @@
-import { create } from "./spaces.create.mjs";
-import { createMember } from "./space.members.create.mjs";
-import { deleteMember } from "./space.member.delete.mjs";
 import { get } from "./space.get.mjs";
 import { leave } from "./space.leave.mjs";
-import { list } from "./spaces.list.mjs";
+import { deleteMember } from "./space.member.delete.mjs";
+import { createMember } from "./space.members.create.mjs";
 import { listMembers } from "./space.members.list.mjs";
+import { create } from "./spaces.create.mjs";
+import { list } from "./spaces.list.mjs";
 
 /**
  * @param {import("../../context.mjs").Context} ctx

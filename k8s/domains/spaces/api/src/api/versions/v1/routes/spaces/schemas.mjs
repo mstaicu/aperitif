@@ -21,6 +21,8 @@ export const SpaceMemberParams = Type.Object(
 
 export const CreateSpaceBody = Type.Object({}, { additionalProperties: false });
 
+// NOTE: user_id is assumed to be a valid global identity UUID resolved
+// outside this domain. Spaces does not verify user existence yet.
 export const CreateSpaceMemberBody = Type.Object(
   {
     role: Role,
