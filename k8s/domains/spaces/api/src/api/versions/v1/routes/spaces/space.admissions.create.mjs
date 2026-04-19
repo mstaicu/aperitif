@@ -9,14 +9,14 @@ import { SpaceParams } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
+ * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
+ * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
  */
-export default async function (fastify, { admissions, jwks }) {
+export default async function (fastify, { jwks, spaces }) {
   fastify.post(
     "/:spaceId/admissions",
     {
@@ -47,7 +47,7 @@ export default async function (fastify, { admissions, jwks }) {
         });
 
         return reply.code(201).send(
-          await admissions.createForSpace({
+          await spaces.createAdmission({
             currentUserId,
             requested_role: req.body.requested_role,
             spaceId: req.params.spaceId,

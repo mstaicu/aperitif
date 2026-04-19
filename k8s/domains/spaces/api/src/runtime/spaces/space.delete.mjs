@@ -52,6 +52,24 @@ export const destroy =
         throw new Error("ANOTHER_SPACE_REQUIRED");
       }
 
+      const {
+        rows: [openAdmission],
+      } = await client.query(
+        `
+          SELECT id
+          FROM space_admissions
+          WHERE space_id = $1
+            AND status = 'open'
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [spaceId],
+      );
+
+      if (openAdmission) {
+        throw new Error("OPEN_ADMISSIONS_PRESENT");
+      }
+
       await client.query(
         `
           DELETE FROM spaces

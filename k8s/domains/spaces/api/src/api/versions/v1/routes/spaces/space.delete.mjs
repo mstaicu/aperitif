@@ -67,6 +67,10 @@ export default async function (fastify, { jwks, spaces }) {
           return reply.code(409).send(null);
         }
 
+        if (code === "OPEN_ADMISSIONS_PRESENT") {
+          return reply.code(409).send(null);
+        }
+
         return reply.code(500).send(null);
       }
     },

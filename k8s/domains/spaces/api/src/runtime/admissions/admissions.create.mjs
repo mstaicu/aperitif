@@ -1,10 +1,12 @@
 /**
  * @param {import("../../context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string | null }) => Promise<{ admission: { id: string, requested_role: string, space_id: null, status: string, user_id: string | null }, requirements: { requirement: string, status: string }[] }>}
+ * @returns {(args: { currentUserId: string | null }) => Promise<{ admission: { id: string, requested_role: string, space_id: null, status: "open", user_id: string | null }, requirements: { requirement: string, status: "pending" }[] }>}
  */
 export const create =
   (ctx) =>
   async ({ currentUserId }) => {
+    // Add or remove business steps here. Owning domains should publish
+    // status updates for these requirement names; spaces only tracks status.
     const requirements = ["profile", "terms"];
     const client = await ctx.data.db.connect();
 
@@ -39,12 +41,12 @@ export const create =
           id: admission.id,
           requested_role: admission.requested_role,
           space_id: admission.space_id,
-          status: admission.status,
+          status: /** @type {"open"} */ ("open"),
           user_id: admission.user_id,
         },
         requirements: requirements.map((requirement) => ({
           requirement,
-          status: "pending",
+          status: /** @type {"pending"} */ ("pending"),
         })),
       };
     } catch (err) {

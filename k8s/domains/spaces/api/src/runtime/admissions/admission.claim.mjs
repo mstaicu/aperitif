@@ -58,18 +58,7 @@ export const claim =
         admission = claimedAdmission;
       }
 
-      const { rows: requirements } = await client.query(
-        `
-          SELECT requirement, status
-          FROM space_admission_requirements
-          WHERE admission_id = $1
-          ORDER BY requirement
-        `,
-        [admission.id],
-      );
-
-      /** @type {any} */
-      let response = {
+      const response = {
         admission: {
           id: admission.id,
           requested_role: admission.requested_role,
@@ -77,41 +66,7 @@ export const claim =
           status: admission.status,
           user_id: admission.user_id,
         },
-        requirements: requirements.map((requirement) => ({
-          requirement: requirement.requirement,
-          status: requirement.status,
-        })),
       };
-
-      if (
-        admission.space_id &&
-        admission.user_id &&
-        admission.status === "completed"
-      ) {
-        const {
-          rows: [membership],
-        } = await client.query(
-          `
-            SELECT role
-            FROM space_memberships
-            WHERE space_id = $1
-              AND user_id = $2
-          `,
-          [admission.space_id, admission.user_id],
-        );
-
-        if (membership) {
-          response = {
-            ...response,
-            membership: {
-              role: membership.role,
-            },
-            space: {
-              id: admission.space_id,
-            },
-          };
-        }
-      }
 
       // TODO: When the worker is added, write an outbox row in this transaction for:
       // - spaces.admission.claimed

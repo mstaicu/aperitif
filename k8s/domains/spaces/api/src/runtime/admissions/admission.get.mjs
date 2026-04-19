@@ -23,6 +23,36 @@ export const get =
         throw new Error("ADMISSION_NOT_FOUND");
       }
 
+      if (admission.user_id && admission.user_id !== currentUserId) {
+        throw new Error("FORBIDDEN");
+      }
+
+      if (!admission.user_id && admission.space_id) {
+        if (!currentUserId) {
+          throw new Error("FORBIDDEN");
+        }
+
+        const {
+          rows: [membership],
+        } = await client.query(
+          `
+            SELECT role
+            FROM space_memberships
+            WHERE space_id = $1
+              AND user_id = $2
+          `,
+          [admission.space_id, currentUserId],
+        );
+
+        if (!membership || membership.role !== "owner") {
+          throw new Error("FORBIDDEN");
+        }
+      }
+
+      // NOTE: Unclaimed self-started admissions remain capability-style reads
+      // for now. Tightening that later will need a separate access token or
+      // a different client flow for anonymous onboarding.
+
       const { rows: requirements } = await client.query(
         `
           SELECT requirement, status
@@ -32,10 +62,6 @@ export const get =
         `,
         [admission.id],
       );
-
-      if (admission.user_id && admission.user_id !== currentUserId) {
-        throw new Error("FORBIDDEN");
-      }
 
       const response = {
         admission: {
@@ -51,39 +77,7 @@ export const get =
         })),
       };
 
-      if (
-        !admission.space_id ||
-        !admission.user_id ||
-        admission.status !== "completed"
-      ) {
-        return response;
-      }
-
-      const {
-        rows: [membership],
-      } = await client.query(
-        `
-          SELECT role
-          FROM space_memberships
-          WHERE space_id = $1
-            AND user_id = $2
-        `,
-        [admission.space_id, admission.user_id],
-      );
-
-      if (!membership) {
-        return response;
-      }
-
-      return {
-        ...response,
-        membership: {
-          role: membership.role,
-        },
-        space: {
-          id: admission.space_id,
-        },
-      };
+      return response;
     } finally {
       client.release();
     }
