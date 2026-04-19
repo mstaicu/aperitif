@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkerd-webhook-trust-roots
+data:
+  ca-bundle.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIBwzCCAWmgAwIBAgIUQFcrsxpV/DGf4dY9AQzre8m4PCMwCgYIKoZIzj0EAwIw
+    NzE1MDMGA1UEAwwsbGlua2VyZC13ZWJob29rcy5sb2NhbC5saW5rZXJkLmNsdXN0
+    ZXIubG9jYWwwHhcNMjYwNDE5MTcwMTU5WhcNMzYwNDE2MTcwMTU5WjA3MTUwMwYD
+    VQQDDCxsaW5rZXJkLXdlYmhvb2tzLmxvY2FsLmxpbmtlcmQuY2x1c3Rlci5sb2Nh
+    bDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDOK+VfQWHDc/GCKWrMrJ9h2WGmf
+    T1NCgJTAEn7o9oHQlLaOAm44Fvmpjo2vBCMJ6mlldWzZfIVileYN27zNfs6jUzBR
+    MB0GA1UdDgQWBBTJljUntGeuO8ISi+fNo4QOmrUbgTAfBgNVHSMEGDAWgBTJljUn
+    tGeuO8ISi+fNo4QOmrUbgTAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMCA0gA
+    MEUCIQDmTcrdC6Cxnm7ETmm3OCvkcEfiwhfQQoNKkgkkPTY5fAIgPKE0fwm0fWj/
+    kUfjnkgxNPwnCVwTloHR/2Wz4KFGWt8=
+    -----END CERTIFICATE-----

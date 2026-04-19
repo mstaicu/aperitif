@@ -18,9 +18,6 @@ resources:
   - role-ext-namespace-metadata-linkerd-config.yaml
   - role-remote-discovery.yaml
   - rolebinding-linkerd-destination-remote-discovery.yaml
-  - secret-linkerd-policy-validator-k8s-tls.yaml
-  - secret-linkerd-proxy-injector-k8s-tls.yaml
-  - secret-linkerd-sp-validator-k8s-tls.yaml
   - service-linkerd-dst-headless.yaml
   - service-linkerd-dst.yaml
   - service-linkerd-identity-headless.yaml

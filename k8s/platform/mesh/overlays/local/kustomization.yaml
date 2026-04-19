@@ -7,6 +7,10 @@ resources:
   - ../../base
   - linkerd-identity-trust-roots.yaml
   - linkerd-ns.yaml
+  - linkerd-webhook-trust-roots.yaml
+
+patches:
+  - path: linkerd-webhook-ca-bundle-patches.yaml
 
 generators:
   - linkerd-ksops-generator.yaml
