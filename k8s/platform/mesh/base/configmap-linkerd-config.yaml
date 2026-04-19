@@ -33,7 +33,7 @@ data:
       rollingUpdate:
         maxSurge: 25%
         maxUnavailable: 25%
-    disableHeartBeat: false
+    disableHeartBeat: true
     enableEndpointSlices: true
     enableH2Upgrade: true
     enablePSP: false
