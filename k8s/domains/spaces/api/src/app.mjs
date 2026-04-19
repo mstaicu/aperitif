@@ -1,7 +1,7 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 
-import system from "./api/system/index.mjs";
+import probes from "./api/probes/index.mjs";
 import v1 from "./api/versions/v1/index.mjs";
 
 /**
@@ -45,7 +45,7 @@ export const createApp = async ({ ctx, fastifyOtel, runtime }) => {
     .withTypeProvider();
 
   await app.register(fastifyOtel.plugin());
-  await app.register(system, { db: ctx.data.db });
+  await app.register(probes, { db: ctx.data.db });
   await app.register(v1, { jwks: ctx.security.jwks, prefix: "/v1", runtime });
 
   return app;
