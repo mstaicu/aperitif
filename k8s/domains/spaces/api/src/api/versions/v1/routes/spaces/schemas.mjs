@@ -19,14 +19,11 @@ export const SpaceMemberParams = Type.Object(
   { additionalProperties: false },
 );
 
-export const CreateSpaceBody = Type.Object({}, { additionalProperties: false });
-
 // NOTE: user_id is assumed to be a valid global identity UUID resolved
 // outside this domain. Spaces does not verify user existence yet.
 export const CreateSpaceMemberBody = Type.Object(
   {
     role: Role,
-    user_id: UserId,
   },
   { additionalProperties: false },
 );
@@ -71,6 +68,13 @@ export const SpacesResponse = Type.Object(
 export const SpaceResponse = Type.Object(
   {
     membership: Membership,
+    space: Space,
+  },
+  { additionalProperties: false },
+);
+
+export const SpaceCreateResponse = Type.Object(
+  {
     space: Space,
   },
   { additionalProperties: false },

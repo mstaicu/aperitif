@@ -13,11 +13,9 @@ export const AdmissionParams = Type.Object(
   { additionalProperties: false },
 );
 
-export const CreateAdmissionBody = Type.Object(
+export const SpaceAdmissionBody = Type.Object(
   {
     requested_role: Role,
-    requirements: Type.Optional(Type.Array(Requirement)),
-    space_id: Type.Optional(Type.Union([SpaceId, Type.Null()])),
   },
   { additionalProperties: false },
 );
@@ -58,9 +56,7 @@ export const AdmissionSpace = Type.Object(
 export const CreateAdmissionResponse = Type.Object(
   {
     admission: Admission,
-    membership: Type.Optional(AdmissionMembership),
     requirements: Type.Array(AdmissionRequirement),
-    space: Type.Optional(AdmissionSpace),
   },
   { additionalProperties: false },
 );
@@ -75,16 +71,4 @@ export const GetAdmissionResponse = Type.Object(
   { additionalProperties: false },
 );
 
-export const ClaimAdmissionBody = Type.Object(
-  {},
-  { additionalProperties: false },
-);
-
-export const ClaimAdmissionResponse = Type.Object(
-  {
-    admission: Admission,
-    membership: Type.Optional(AdmissionMembership),
-    space: Type.Optional(AdmissionSpace),
-  },
-  { additionalProperties: false },
-);
+export const ClaimAdmissionResponse = GetAdmissionResponse;

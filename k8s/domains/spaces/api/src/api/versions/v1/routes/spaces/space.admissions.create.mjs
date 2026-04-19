@@ -1,43 +1,42 @@
 import { authenticate } from "../../../../../jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import {
-  CreateSpaceMemberBody,
-  SpaceMemberParams,
-  SpaceMemberResponse,
-} from "./schemas.mjs";
+  CreateAdmissionResponse,
+  SpaceAdmissionBody,
+} from "../admissions/schemas.mjs";
+import { SpaceParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
+ * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
  */
-export default async function (fastify, { jwks, spaces }) {
-  fastify.put(
-    "/:spaceId/members/:userId",
+export default async function (fastify, { admissions, jwks }) {
+  fastify.post(
+    "/:spaceId/admissions",
     {
       schema: {
-        body: CreateSpaceMemberBody,
+        body: SpaceAdmissionBody,
         description:
-          "Create an immediate membership in a space for an existing global user identity.",
-        operationId: "createSpaceMember",
-        params: SpaceMemberParams,
+          "Create an admission for an existing space. Intended for owners. Requirement rows are derived server-side.",
+        operationId: "createSpaceAdmission",
+        params: SpaceParams,
         response: {
-          201: SpaceMemberResponse,
+          201: CreateAdmissionResponse,
           400: ErrorResponse,
           401: ErrorResponse,
           403: ErrorResponse,
           404: ErrorResponse,
-          409: ErrorResponse,
           500: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create membership",
-        tags: ["spaces"],
+        summary: "Create space admission",
+        tags: ["admissions"],
       },
     },
     async function (req, reply) {
@@ -48,11 +47,10 @@ export default async function (fastify, { jwks, spaces }) {
         });
 
         return reply.code(201).send(
-          await spaces.createMember({
+          await admissions.createForSpace({
             currentUserId,
-            role: req.body.role,
+            requested_role: req.body.requested_role,
             spaceId: req.params.spaceId,
-            userId: req.params.userId,
           }),
         );
       } catch (err) {
@@ -68,10 +66,6 @@ export default async function (fastify, { jwks, spaces }) {
 
         if (code === "SPACE_NOT_FOUND") {
           return reply.code(404).send(null);
-        }
-
-        if (code === "MEMBERSHIP_ALREADY_EXISTS") {
-          return reply.code(409).send(null);
         }
 
         return reply.code(500).send(null);

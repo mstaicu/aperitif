@@ -1,13 +1,15 @@
 import { claim } from "./admission.claim.mjs";
 import { get } from "./admission.get.mjs";
 import { create } from "./admissions.create.mjs";
+import { createForSpace } from "./space.admissions.create.mjs";
 
 /**
  * @param {import("../../context.mjs").Context} ctx
  */
 export const createAdmissionsRuntime = (ctx) => ({
   claim: claim(ctx),
-  create: create(ctx),
+  createForSpace: createForSpace(ctx),
+  createSelfStarted: create(ctx),
   get: get(ctx),
 });
 

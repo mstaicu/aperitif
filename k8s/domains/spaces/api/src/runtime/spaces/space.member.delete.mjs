@@ -6,7 +6,7 @@ export const deleteMember =
   (ctx) =>
   async ({ currentUserId, spaceId, userId }) => {
     if (userId === currentUserId) {
-      throw new Error("USE_LEAVE_ROUTE");
+      throw new Error("FORBIDDEN_SELF_TARGET");
     }
 
     const client = await ctx.data.db.connect();

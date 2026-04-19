@@ -1,5 +1,5 @@
+import { destroy } from "./space.delete.mjs";
 import { get } from "./space.get.mjs";
-import { leave } from "./space.leave.mjs";
 import { deleteMember } from "./space.member.delete.mjs";
 import { createMember } from "./space.members.create.mjs";
 import { listMembers } from "./space.members.list.mjs";
@@ -12,9 +12,9 @@ import { list } from "./spaces.list.mjs";
 export const createSpacesRuntime = (ctx) => ({
   create: create(ctx),
   createMember: createMember(ctx),
+  delete: destroy(ctx),
   deleteMember: deleteMember(ctx),
   get: get(ctx),
-  leave: leave(ctx),
   list: list(ctx),
   listMembers: listMembers(ctx),
 });

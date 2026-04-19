@@ -38,7 +38,7 @@ CREATE TABLE space_admission_requirements (
     -- This specifies the business step associated with the completion of this space admission requirement, can be 'kyc', 'profile', etc
     requirement TEXT NOT NULL,
 
-    status TEXT NOT NULL CHECK (status IN ('pending', 'satisfied', 'failed')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed')),
 
     PRIMARY KEY (admission_id, requirement)
 );

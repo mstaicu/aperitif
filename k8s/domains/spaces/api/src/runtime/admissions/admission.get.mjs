@@ -33,12 +33,7 @@ export const get =
         [admission.id],
       );
 
-      // TODO: Tighten access once auth is fully wired.
-      if (
-        currentUserId &&
-        admission.user_id &&
-        admission.user_id !== currentUserId
-      ) {
+      if (admission.user_id && admission.user_id !== currentUserId) {
         throw new Error("FORBIDDEN");
       }
 

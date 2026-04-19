@@ -1,10 +1,10 @@
 /**
  * @param {import("../../context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string | null }) => Promise<{ admission: { id: string, requested_role: string, space_id: null, status: string, user_id: string | null }, requirements: { requirement: string, status: string }[] }>}
+ * @returns {(args: { currentUserId: string, requested_role: string, spaceId: string }) => Promise<{ admission: { id: string, requested_role: string, space_id: string, status: string, user_id: null }, requirements: { requirement: string, status: string }[] }>}
  */
-export const create =
+export const createForSpace =
   (ctx) =>
-  async ({ currentUserId }) => {
+  async ({ currentUserId, requested_role, spaceId }) => {
     const requirements = ["profile", "terms"];
     const client = await ctx.data.db.connect();
 
@@ -12,14 +12,46 @@ export const create =
       await client.query("BEGIN");
 
       const {
+        rows: [space],
+      } = await client.query(
+        `
+          SELECT id
+          FROM spaces
+          WHERE id = $1
+        `,
+        [spaceId],
+      );
+
+      if (!space) {
+        throw new Error("SPACE_NOT_FOUND");
+      }
+
+      const {
+        rows: [membership],
+      } = await client.query(
+        `
+          SELECT role
+          FROM space_memberships
+          WHERE space_id = $1
+            AND user_id = $2
+          FOR UPDATE
+        `,
+        [spaceId, currentUserId],
+      );
+
+      if (!membership || membership.role !== "owner") {
+        throw new Error("FORBIDDEN");
+      }
+
+      const {
         rows: [admission],
       } = await client.query(
         `
           INSERT INTO space_admissions (space_id, user_id, requested_role, status)
-          VALUES (NULL, $1, 'owner', 'open')
+          VALUES ($1, NULL, $2, 'open')
           RETURNING id, space_id, user_id, requested_role, status
         `,
-        [currentUserId],
+        [spaceId, requested_role],
       );
 
       if (requirements.length > 0) {

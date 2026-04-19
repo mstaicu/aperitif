@@ -67,8 +67,8 @@ export default async function (fastify, { jwks, spaces }) {
           return reply.code(409).send(null);
         }
 
-        if (code === "USE_LEAVE_ROUTE") {
-          return reply.code(409).send(null);
+        if (code === "FORBIDDEN_SELF_TARGET") {
+          return reply.code(403).send(null);
         }
 
         return reply.code(500).send(null);

@@ -48,6 +48,7 @@ export default async (fastify, { jwks, runtime }) => {
   });
 
   await fastify.register(spaceRoutes, {
+    admissions: runtime.admissions,
     jwks,
     prefix: "/spaces",
     spaces: runtime.spaces,

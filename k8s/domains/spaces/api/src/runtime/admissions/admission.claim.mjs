@@ -26,6 +26,16 @@ export const claim =
         throw new Error("ADMISSION_NOT_FOUND");
       }
 
+      if (
+        existingAdmission.status !== "open" &&
+        !(
+          existingAdmission.status === "completed" &&
+          existingAdmission.user_id === currentUserId
+        )
+      ) {
+        throw new Error("ADMISSION_NOT_OPEN");
+      }
+
       let admission = existingAdmission;
 
       if (admission.user_id && admission.user_id !== currentUserId) {
@@ -58,10 +68,6 @@ export const claim =
         [admission.id],
       );
 
-      const canCompleteAdmission =
-        admission.status !== "completed" &&
-        requirements.every((requirement) => requirement.status === "satisfied");
-
       /** @type {any} */
       let response = {
         admission: {
@@ -71,63 +77,13 @@ export const claim =
           status: admission.status,
           user_id: admission.user_id,
         },
+        requirements: requirements.map((requirement) => ({
+          requirement: requirement.requirement,
+          status: requirement.status,
+        })),
       };
 
-      if (canCompleteAdmission) {
-        let nextSpaceId = admission.space_id;
-
-        if (!nextSpaceId) {
-          const {
-            rows: [space],
-          } = await client.query(
-            `
-              INSERT INTO spaces DEFAULT VALUES
-              RETURNING id
-            `,
-          );
-
-          nextSpaceId = space.id;
-        }
-
-        await client.query(
-          `
-            INSERT INTO space_memberships (space_id, user_id, role)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (space_id, user_id) DO NOTHING
-          `,
-          [nextSpaceId, admission.user_id, admission.requested_role],
-        );
-
-        const {
-          rows: [completedAdmission],
-        } = await client.query(
-          `
-            UPDATE space_admissions
-            SET
-              space_id = $2,
-              status = 'completed'
-            WHERE id = $1
-            RETURNING id, space_id, user_id, requested_role, status
-          `,
-          [admission.id, nextSpaceId],
-        );
-
-        response = {
-          admission: {
-            id: completedAdmission.id,
-            requested_role: completedAdmission.requested_role,
-            space_id: completedAdmission.space_id,
-            status: completedAdmission.status,
-            user_id: completedAdmission.user_id,
-          },
-          membership: {
-            role: completedAdmission.requested_role,
-          },
-          space: {
-            id: nextSpaceId,
-          },
-        };
-      } else if (
+      if (
         admission.space_id &&
         admission.user_id &&
         admission.status === "completed"
@@ -156,6 +112,9 @@ export const claim =
           };
         }
       }
+
+      // TODO: When the worker is added, write an outbox row in this transaction for:
+      // - spaces.admission.claimed
 
       await client.query("COMMIT");
 

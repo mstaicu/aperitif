@@ -1,6 +1,6 @@
 import { authenticateOptional } from "../../../../../jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
-import { CreateAdmissionBody, CreateAdmissionResponse } from "./schemas.mjs";
+import { CreateAdmissionResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,15 +17,13 @@ export default async function (fastify, { admissions, jwks }) {
     "/",
     {
       schema: {
-        body: CreateAdmissionBody,
         description:
-          "Create a pending admission. Authentication is optional at this stage.",
+          "Create a self-started admission for first-space onboarding. Authentication is optional at this stage. Requirement rows are derived server-side.",
         operationId: "createAdmission",
         response: {
           201: CreateAdmissionResponse,
           400: ErrorResponse,
           401: ErrorResponse,
-          404: ErrorResponse,
           500: ErrorResponse,
         },
         summary: "Create admission",
@@ -40,11 +38,8 @@ export default async function (fastify, { admissions, jwks }) {
         });
 
         return reply.code(201).send(
-          await admissions.create({
+          await admissions.createSelfStarted({
             currentUserId,
-            requested_role: req.body.requested_role,
-            requirements: req.body.requirements,
-            space_id: req.body.space_id,
           }),
         );
       } catch (err) {
@@ -52,10 +47,6 @@ export default async function (fastify, { admissions, jwks }) {
 
         if (code === "INVALID_ACCESS_TOKEN") {
           return reply.code(401).send(null);
-        }
-
-        if (code === "SPACE_NOT_FOUND") {
-          return reply.code(404).send(null);
         }
 
         return reply.code(500).send(null);

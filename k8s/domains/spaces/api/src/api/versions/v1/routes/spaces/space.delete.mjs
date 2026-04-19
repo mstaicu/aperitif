@@ -14,11 +14,12 @@ import { SpaceParams } from "./schemas.mjs";
  */
 export default async function (fastify, { jwks, spaces }) {
   fastify.delete(
-    "/:spaceId/members",
+    "/:spaceId",
     {
       schema: {
-        description: "Leave a space as the authenticated caller.",
-        operationId: "leaveSpace",
+        description:
+          "Delete a space. The caller must own the space and still belong to another space.",
+        operationId: "deleteSpace",
         params: SpaceParams,
         response: {
           204: EmptyResponse,
@@ -30,7 +31,7 @@ export default async function (fastify, { jwks, spaces }) {
           500: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Leave space",
+        summary: "Delete space",
         tags: ["spaces"],
       },
     },
@@ -41,7 +42,7 @@ export default async function (fastify, { jwks, spaces }) {
           jwks,
         });
 
-        await spaces.leave({
+        await spaces.delete({
           currentUserId,
           spaceId: req.params.spaceId,
         });
@@ -58,7 +59,11 @@ export default async function (fastify, { jwks, spaces }) {
           return reply.code(403).send(null);
         }
 
-        if (code === "LAST_OWNER") {
+        if (code === "SPACE_NOT_FOUND") {
+          return reply.code(404).send(null);
+        }
+
+        if (code === "ANOTHER_SPACE_REQUIRED") {
           return reply.code(409).send(null);
         }
 

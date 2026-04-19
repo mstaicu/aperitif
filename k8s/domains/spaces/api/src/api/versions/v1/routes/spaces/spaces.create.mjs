@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
-import { CreateSpaceBody, SpaceResponse } from "./schemas.mjs";
+import { SpaceCreateResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,12 +17,11 @@ export default async function (fastify, { jwks, spaces }) {
     "/",
     {
       schema: {
-        body: CreateSpaceBody,
         description:
           "Create a new space. The creator becomes the initial owner.",
         operationId: "createSpace",
         response: {
-          201: SpaceResponse,
+          201: SpaceCreateResponse,
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,

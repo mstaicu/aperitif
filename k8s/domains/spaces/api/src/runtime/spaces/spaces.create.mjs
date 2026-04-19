@@ -1,6 +1,6 @@
 /**
  * @param {import("../../context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string }) => Promise<{ membership: { role: string }, space: { id: string } }>}
+ * @returns {(args: { currentUserId: string }) => Promise<{ space: { id: string } }>}
  */
 export const create =
   (ctx) =>
@@ -34,9 +34,6 @@ export const create =
       await client.query("COMMIT");
 
       return {
-        membership: {
-          role: "owner",
-        },
         space: {
           id: space.id,
         },

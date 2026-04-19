@@ -1,10 +1,6 @@
 import { authenticate } from "../../../../../jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
-import {
-  AdmissionParams,
-  ClaimAdmissionBody,
-  ClaimAdmissionResponse,
-} from "./schemas.mjs";
+import { AdmissionParams, ClaimAdmissionResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -21,8 +17,8 @@ export default async function (fastify, { admissions, jwks }) {
     "/:admissionId/claim",
     {
       schema: {
-        body: ClaimAdmissionBody,
-        description: "Bind the authenticated subject to an admission.",
+        description:
+          "Bind the authenticated subject to an admission and return the current admission state.",
         operationId: "claimAdmission",
         params: AdmissionParams,
         response: {
@@ -63,6 +59,10 @@ export default async function (fastify, { admissions, jwks }) {
         }
 
         if (code === "ADMISSION_CLAIMED") {
+          return reply.code(409).send(null);
+        }
+
+        if (code === "ADMISSION_NOT_OPEN") {
           return reply.code(409).send(null);
         }
 
