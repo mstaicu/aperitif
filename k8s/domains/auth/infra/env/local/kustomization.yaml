@@ -7,6 +7,7 @@ resources:
   - ../../api
   - ../../migrate/local
   - auth-api-ingress.yaml
+  - auth-np.yaml
   - namespace.yaml
   - auth-postgres-depl.yaml
 

@@ -2,11 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: default-deny-auth-api
+  name: default-deny-spaces-api
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Ingress
     - Egress
@@ -15,11 +15,11 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-api-dns
+  name: allow-spaces-api-dns
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Egress
   egress:
@@ -37,11 +37,11 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-traefik-to-auth-api
+  name: allow-traefik-to-spaces-api
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Ingress
   ingress:
@@ -60,41 +60,41 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-api-to-nats
+  name: allow-spaces-api-to-traefik
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Egress
   egress:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: nats
+              kubernetes.io/metadata.name: traefik
           podSelector:
             matchLabels:
-              app: nats
+              app: traefik
       ports:
         - protocol: TCP
-          port: 4222
+          port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-api-to-postgres
+  name: allow-spaces-api-to-postgres
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Egress
   egress:
     - to:
         - podSelector:
             matchLabels:
-              app: auth-postgres
+              app: spaces-postgres
       ports:
         - protocol: TCP
           port: 5432
@@ -103,11 +103,11 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-api-to-otel
+  name: allow-spaces-api-to-otel
 spec:
   podSelector:
     matchLabels:
-      app: auth-api
+      app: spaces-api
   policyTypes:
     - Egress
   egress:

@@ -8,6 +8,7 @@ resources:
   - ../../migrate/local
   - spaces-api-ingress.yaml
   - namespace.yaml
+  - spaces-np.yaml
   - spaces-postgres-depl.yaml
 
 patches:

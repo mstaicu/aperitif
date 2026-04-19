@@ -16,45 +16,13 @@ data:
             endpoint: 0.0.0.0:4317
 
     processors:
-      transform/edge:
-        error_mode: ignore
-        trace_statements:
-          - context: span
-            statements:
-              - set(name, "edge.request")
-                where resource.attributes["service.name"] == "traefik"
-                and kind == SPAN_KIND_SERVER
-
-      transform/spans:
-        error_mode: ignore
-        trace_statements:
-          - context: span
-            statements:
-              - keep_keys(attributes, ["http.method", "http.route", "http.status_code"])
-
-      transform/resources:
-        error_mode: ignore
-        trace_statements:
-          - context: resource
-            statements:
-              - keep_keys(attributes, ["service.name"])
-        metric_statements:
-          - context: resource
-            statements:
-              - keep_keys(attributes, ["service.name"])
-
-      filter/traefik_red:
+      filter/edge_metrics:
         metrics:
           include:
             match_type: strict
             metric_names:
-              - http.server.request.duration
-
-      filter/drop_noise:
-        error_mode: ignore
-        traces:
-          span:
-            - name == "ReverseProxy"
+              - traefik_entrypoint_request_duration_seconds
+              - traefik_entrypoint_requests_total
 
       batch:
 
@@ -72,10 +40,6 @@ data:
           receivers:
             - otlp
           processors:
-            - filter/drop_noise
-            - transform/edge
-            - transform/spans
-            - transform/resources
             - batch
           exporters:
             - debug
@@ -84,8 +48,7 @@ data:
           receivers:
             - otlp
           processors:
-            - filter/traefik_red
-            - transform/resources
+            - filter/edge_metrics
             - batch
           exporters:
             - debug

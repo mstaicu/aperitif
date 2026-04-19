@@ -12,6 +12,8 @@ const createPgContext = () => {
     //  budget for spaces-api = 80 * 75% = 60
     //  per spaces-api replica = 60 / 3 replicas = 20
     max: 20,
+    query_timeout: 2000,
+    statement_timeout: 2000,
   });
 
   return {

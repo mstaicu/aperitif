@@ -12,10 +12,6 @@ export default async (fastify, { db }) => {
     try {
       await db.query("SELECT 1");
 
-      // if (fastify.nc && fastify.nc.isClosed()) {
-      //   throw new Error();
-      // }
-
       return { ok: true };
     } catch {
       return reply.code(503).send({ ok: false });

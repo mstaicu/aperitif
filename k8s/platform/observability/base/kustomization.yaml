@@ -5,4 +5,5 @@ namespace: otel
 
 resources:
   - otel-depl.yaml
+  - otel-np.yaml
   - otel-ns.yaml
