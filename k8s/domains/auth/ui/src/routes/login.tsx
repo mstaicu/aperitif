@@ -3,15 +3,14 @@ import {
   type PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/browser";
 
-export async function action({ request }: { request: Request }) {
-  return fetch("http://traefik-srv.traefik/auth/v1/passkeys/login", {
+export const action = async ({ request }: { request: Request }) =>
+  fetch("http://traefik-srv.traefik/auth/v1/passkeys/login", {
     method: request.method,
     headers: {
-      "Content-Type": request.headers.get("Content-Type") ?? "application/json",
+      "Content-Type": "application/json",
     },
     body: await request.text(),
   });
-}
 
 async function handleLogin() {
   try {
