@@ -6,9 +6,6 @@ metadata:
 spec:
   parentRefs:
     - name: traefik-pgw
-      sectionName: http
-
-    - name: traefik-pgw
       sectionName: https
 
   rules:

@@ -1,19 +1,9 @@
 export async function action() {
-  const upstream = await fetch(
+  return fetch(
     "http://traefik-srv.traefik/auth/v1/passkeys/register/challenge",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     },
   );
-
-  const body = await upstream.text();
-
-  return new Response(body, {
-    status: upstream.status,
-    headers: {
-      "Content-Type":
-        upstream.headers.get("Content-Type") ?? "application/json",
-    },
-  });
 }

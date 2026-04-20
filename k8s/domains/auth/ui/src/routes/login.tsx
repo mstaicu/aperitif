@@ -1,29 +1,15 @@
 import {
   startAuthentication,
-  type AuthenticationResponseJSON,
   type PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/browser";
 
 export async function action({ request }: { request: Request }) {
-  const body = (await request.json()) as {
-    authentication: AuthenticationResponseJSON;
-  };
-
-  const upstream = await fetch(
-    "http://traefik-srv.traefik/auth/v1/passkeys/login",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
-
-  return new Response(await upstream.text(), {
-    status: upstream.status,
+  return fetch("http://traefik-srv.traefik/auth/v1/passkeys/login", {
+    method: request.method,
     headers: {
-      "Content-Type":
-        upstream.headers.get("Content-Type") ?? "application/json",
+      "Content-Type": request.headers.get("Content-Type") ?? "application/json",
     },
+    body: await request.text(),
   });
 }
 

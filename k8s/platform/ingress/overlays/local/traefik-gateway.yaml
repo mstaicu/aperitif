@@ -1,3 +1,18 @@
+# Traefik entrypoints are the real network listeners opened by the Traefik pod
+# (for example http=:80 and https=:443).
+#
+# Gateway listeners do not create those sockets themselves;
+# they bind logical Gateway API traffic surfaces onto the
+# existing Traefik entrypoints by matching protocol/port.
+#
+# HTTPRoutes then attach routing rules to a specific Gateway listener
+# via parentRefs/sectionName.
+#
+# So the layering is:
+#   Traefik Deployment -> defines entrypoints
+#   Gateway            -> binds listeners to those entrypoints
+#   HTTPRoute          -> attaches routes to a specific listener
+
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 
@@ -29,15 +44,6 @@ spec:
         mode: Terminate
         certificateRefs:
           - name: traefik-tls
-
-    - name: http
-      port: 80
-      protocol: HTTP
-      # hostname: tma.com
-
-      allowedRoutes:
-        namespaces:
-          from: All
 
 ---
 apiVersion: gateway.networking.k8s.io/v1

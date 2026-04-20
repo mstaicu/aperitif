@@ -5,10 +5,13 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "NODE_OPTIONS='--import=./src/otel.server.mjs' react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@opentelemetry/instrumentation-http": "^0.204.0",
+    "@opentelemetry/instrumentation-undici": "^0.14.0",
+    "@opentelemetry/sdk-node": "^0.215.0",
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
     "@simplewebauthn/browser": "^13.3.0",
@@ -25,7 +28,6 @@
     "@types/react-dom": "^19.2.3",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
-    "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite": "^7.1.7"
   }
 }
