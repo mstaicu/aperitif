@@ -14,7 +14,7 @@ nconf
     "ORIGIN",
   ]);
 
-var origin = nconf.get("ORIGIN");
+const origin = nconf.get("ORIGIN");
 
 try {
   new URL(origin);
@@ -22,4 +22,4 @@ try {
   throw new Error(`Invalid ORIGIN: ${origin}`);
 }
 
-import("./server.mjs");
+await import("./server.mjs");

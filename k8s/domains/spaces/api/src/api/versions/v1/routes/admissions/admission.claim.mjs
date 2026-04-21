@@ -1,16 +1,16 @@
-import { authenticate } from "../../../../../jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import { AdmissionParams, ClaimAdmissionResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
+ * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
+ * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
  */
 export default async function (fastify, { admissions, jwks }) {
   fastify.post(
@@ -28,6 +28,7 @@ export default async function (fastify, { admissions, jwks }) {
           404: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Claim admission",
@@ -64,6 +65,10 @@ export default async function (fastify, { admissions, jwks }) {
 
         if (code === "ADMISSION_NOT_OPEN") {
           return reply.code(409).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

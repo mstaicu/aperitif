@@ -6,18 +6,18 @@ import sessionRoutes from "./routes/sessions/index.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
- * @typedef {import("../../../runtime/sessions/index.mjs").SessionsRuntime} SessionsRuntime
+ * @typedef {import("../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
+ * @typedef {import("../../../domains/sessions/index.mjs").SessionsDomain} SessionsDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: {
- *   passkeys: PasskeysRuntime,
- *   sessions: SessionsRuntime,
+ * @param {{domains: {
+ *   passkeys: PasskeysDomain,
+ *   sessions: SessionsDomain,
  * }}} opts
  */
-export default async (fastify, { runtime }) => {
+export default async (fastify, { domains }) => {
   await fastify.register(swagger, {
     openapi: {
       info: {
@@ -47,11 +47,11 @@ export default async (fastify, { runtime }) => {
   });
 
   await fastify.register(passkeyRoutes, {
-    passkeys: runtime.passkeys,
+    passkeys: domains.passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(sessionRoutes, {
-    sessions: runtime.sessions,
     prefix: "/sessions",
+    sessions: domains.sessions,
   });
 };

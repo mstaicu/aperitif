@@ -3,12 +3,12 @@ import { SessionTokenBody, SessionTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/sessions/index.mjs").SessionsRuntime} SessionsRuntime
+ * @typedef {import("../../../../../domains/sessions/index.mjs").SessionsDomain} SessionsDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{sessions: SessionsRuntime}} opts
+ * @param {{sessions: SessionsDomain}} opts
  */
 export default async function (fastify, { sessions }) {
   fastify.post(
@@ -24,6 +24,7 @@ export default async function (fastify, { sessions }) {
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Mint access token",
         tags: ["sessions"],
@@ -54,6 +55,10 @@ export default async function (fastify, { sessions }) {
 
         if (code === "INVALID_REFRESH_TOKEN" || code === "SESSION_NOT_FOUND") {
           return reply.code(401).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

@@ -3,12 +3,12 @@ import { LoginBody, LoginSuccessResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
+ * @typedef {import("../../../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysRuntime}} opts
+ * @param {{passkeys: PasskeysDomain}} opts
  */
 export default async function (fastify, { passkeys }) {
   fastify.post(
@@ -24,6 +24,7 @@ export default async function (fastify, { passkeys }) {
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Finalize passkey login",
         tags: ["passkeys"],
@@ -59,6 +60,10 @@ export default async function (fastify, { passkeys }) {
           code === "COUNTER_REPLAY"
         ) {
           return reply.code(401).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

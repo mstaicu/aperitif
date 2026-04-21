@@ -11,12 +11,12 @@ import list from "./spaces.list.mjs";
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
  *
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
   await fastify.register(list, { jwks, spaces });

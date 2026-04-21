@@ -7,18 +7,18 @@ import spaceRoutes from "./routes/spaces/index.mjs";
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
- * @typedef {import("../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
+ * @typedef {import("../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{runtime: {
- *   admissions: AdmissionsRuntime,
- *   spaces: SpacesRuntime,
+ * @param {{domains: {
+ *   admissions: AdmissionsDomain,
+ *   spaces: SpacesDomain,
  * }, jwks: Jwks}} opts
  */
-export default async (fastify, { jwks, runtime }) => {
+export default async (fastify, { domains, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
       info: {
@@ -50,10 +50,10 @@ export default async (fastify, { jwks, runtime }) => {
   await fastify.register(spaceRoutes, {
     jwks,
     prefix: "/spaces",
-    spaces: runtime.spaces,
+    spaces: domains.spaces,
   });
   await fastify.register(admissionRoutes, {
-    admissions: runtime.admissions,
+    admissions: domains.admissions,
     jwks,
     prefix: "/admissions",
   });

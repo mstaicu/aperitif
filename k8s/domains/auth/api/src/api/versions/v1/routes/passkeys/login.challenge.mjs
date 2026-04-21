@@ -1,13 +1,14 @@
+import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import { AuthenticationChallengeResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
+ * @typedef {import("../../../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysRuntime}} opts
+ * @param {{passkeys: PasskeysDomain}} opts
  */
 export default async function (fastify, { passkeys }) {
   fastify.post(
@@ -19,20 +20,30 @@ export default async function (fastify, { passkeys }) {
         operationId: "createPasskeyLoginChallenge",
         response: {
           200: AuthenticationChallengeResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Create authentication challenge",
         tags: ["passkeys"],
       },
     },
     async function (_, reply) {
-      reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
+      try {
+        reply.header("Cache-Control", "no-store");
+        reply.header("Pragma", "no-cache");
 
-      const publicKey = await passkeys.createLoginChallenge();
+        const publicKey = await passkeys.createLoginChallenge();
 
-      return reply.send({
-        publicKey,
-      });
+        return reply.send({
+          publicKey,
+        });
+      } catch (err) {
+        if (/** @type {Error} */ (err).message === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
+        }
+
+        return reply.code(500).send(null);
+      }
     },
   );
 }

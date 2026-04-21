@@ -1,16 +1,16 @@
-import { authenticate } from "../../../../../jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { EmptyResponse, ErrorResponse } from "../../../../shared/schemas.mjs";
 import { SpaceMemberParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
   fastify.delete(
@@ -28,6 +28,7 @@ export default async function (fastify, { jwks, spaces }) {
           404: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Delete membership",
@@ -69,6 +70,10 @@ export default async function (fastify, { jwks, spaces }) {
 
         if (code === "FORBIDDEN_SELF_TARGET") {
           return reply.code(403).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

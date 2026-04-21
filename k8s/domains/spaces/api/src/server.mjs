@@ -1,53 +1,67 @@
-import { FastifyOtelInstrumentation } from "@fastify/otel";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-
 import { createApp } from "./app.mjs";
-import { createContext } from "./context.mjs";
-import { createRuntime } from "./runtime/index.mjs";
+import { createDomains } from "./domains/index.mjs";
+import { createContext } from "./platform/context.mjs";
+import { createOtelContext } from "./platform/observability/otel.mjs";
 
-const fastifyOtel = new FastifyOtelInstrumentation({
-  ignorePaths: ({ url }) => url === "/healthz" || url === "/readyz",
-});
+const otel = createOtelContext();
 
-const otel = new NodeSDK({
-  instrumentations: [fastifyOtel],
-});
+let shutdownInitiated = false;
 
-otel.start();
+/** @type {import("./platform/context.mjs").Context | undefined} */
+let ctx;
+/** @type {import("./app.mjs").FastifyInstance | undefined} */
+let app;
 
-const ctx = await createContext();
-const runtime = createRuntime(ctx);
+const shutdown = async () => {
+  if (shutdownInitiated) return;
 
-const app = await createApp({
-  ctx,
-  fastifyOtel,
-  runtime,
-});
+  shutdownInitiated = true;
 
-app.addHook("onClose", () => otel.shutdown());
-app.addHook("onClose", () => ctx.lifecycle.close());
+  if (app) {
+    await app.close();
+  } else if (ctx) {
+    await Promise.allSettled([ctx.lifecycle.close(), otel.close()]);
+  } else {
+    await otel.close();
+  }
+};
 
-var shutdownInitiated = false;
+try {
+  otel.start();
 
-// SIGUSR2 is for nodemon
-["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-  process.once(signal, async () => {
-    if (shutdownInitiated) return;
+  ctx = await createContext();
 
-    shutdownInitiated = true;
+  const domains = createDomains(ctx);
+  const lifecycle = ctx.lifecycle;
 
-    console.log("closing server...");
+  app = await createApp({
+    ctx,
+    domains,
+    fastifyOtel: otel.fastifyOtel,
+  });
 
-    try {
-      await app.close(); // triggers onClose hooks
+  app.addHook("onClose", () => otel.close());
+  app.addHook("onClose", () => lifecycle.close());
 
-      console.log("shutdown complete");
+  // SIGUSR2 is for nodemon
+  ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
+    process.once(signal, async () => {
+      console.log("closing server...");
 
-      process.exit(0);
-    } catch {
-      process.exit(1);
-    }
-  }),
-);
+      try {
+        await shutdown();
 
-await app.listen({ host: "0.0.0.0", port: 3000 });
+        console.log("shutdown complete");
+
+        process.exit(0);
+      } catch {
+        process.exit(1);
+      }
+    }),
+  );
+
+  await app.listen({ host: "0.0.0.0", port: 3000 });
+} catch (err) {
+  await shutdown();
+  throw err;
+}

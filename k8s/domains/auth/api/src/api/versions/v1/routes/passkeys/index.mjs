@@ -5,12 +5,12 @@ import register from "./register.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
+ * @typedef {import("../../../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysRuntime}} opts
+ * @param {{passkeys: PasskeysDomain}} opts
  */
 export default async function (fastify, { passkeys }) {
   await fastify.register(loginChallenge, { passkeys });

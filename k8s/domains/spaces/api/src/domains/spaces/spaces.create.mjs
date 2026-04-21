@@ -1,0 +1,55 @@
+import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
+
+/**
+ * @param {import("../../platform/context.mjs").Context} ctx
+ * @returns {(args: { currentUserId: string }) => Promise<{ space: { id: string } }>}
+ */
+export const create =
+  (ctx) =>
+  async ({ currentUserId }) => {
+    let client;
+
+    try {
+      client = await ctx.persistence.db.connect();
+      await client.query("BEGIN");
+
+      const {
+        rows: [space],
+      } = await client.query(
+        `
+          INSERT INTO spaces DEFAULT VALUES
+          RETURNING id
+        `,
+      );
+
+      await client.query(
+        `
+          INSERT INTO space_memberships (space_id, user_id, role)
+          VALUES ($1, $2, 'owner')
+        `,
+        [space.id, currentUserId],
+      );
+
+      // TODO: When eventing is wired, insert outbox rows in this transaction for:
+      // - spaces.space.created
+      // - spaces.membership.created
+
+      await client.query("COMMIT");
+
+      return {
+        space: {
+          id: space.id,
+        },
+      };
+    } catch (err) {
+      await client?.query("ROLLBACK").catch(() => {});
+
+      if (isDatabaseUnavailable(err)) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      }
+
+      throw err;
+    } finally {
+      client?.release();
+    }
+  };

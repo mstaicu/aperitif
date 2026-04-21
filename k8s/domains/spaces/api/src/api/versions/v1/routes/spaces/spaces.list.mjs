@@ -1,16 +1,16 @@
-import { authenticate } from "../../../../../jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import { SpacesResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
   fastify.get(
@@ -24,6 +24,7 @@ export default async function (fastify, { jwks, spaces }) {
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "List spaces",
@@ -39,8 +40,14 @@ export default async function (fastify, { jwks, spaces }) {
 
         return reply.send(await spaces.list({ currentUserId }));
       } catch (err) {
-        if (/** @type {Error} */ (err).message === "INVALID_ACCESS_TOKEN") {
+        const code = /** @type {Error} */ (err).message;
+
+        if (code === "INVALID_ACCESS_TOKEN") {
           return reply.code(401).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

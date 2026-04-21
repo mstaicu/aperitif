@@ -1,16 +1,16 @@
-import { authenticateOptional } from "../../../../../jwt.mjs";
+import { authenticateOptional } from "../../../../../platform/security/jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import { CreateAdmissionResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
+ * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
+ * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
  */
 export default async function (fastify, { admissions, jwks }) {
   fastify.post(
@@ -25,6 +25,7 @@ export default async function (fastify, { admissions, jwks }) {
           400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Create admission",
         tags: ["admissions"],
@@ -47,6 +48,10 @@ export default async function (fastify, { admissions, jwks }) {
 
         if (code === "INVALID_ACCESS_TOKEN") {
           return reply.code(401).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

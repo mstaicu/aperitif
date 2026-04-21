@@ -1,4 +1,4 @@
-import { authenticate } from "../../../../../jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ErrorResponse } from "../../../../shared/schemas.mjs";
 import {
   CreateSpaceMemberBody,
@@ -9,12 +9,12 @@ import {
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/spaces/index.mjs").SpacesRuntime} SpacesRuntime
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{jwks: Jwks, spaces: SpacesRuntime}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
   fastify.put(
@@ -34,6 +34,7 @@ export default async function (fastify, { jwks, spaces }) {
           404: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Create membership",
@@ -72,6 +73,10 @@ export default async function (fastify, { jwks, spaces }) {
 
         if (code === "MEMBERSHIP_ALREADY_EXISTS") {
           return reply.code(409).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

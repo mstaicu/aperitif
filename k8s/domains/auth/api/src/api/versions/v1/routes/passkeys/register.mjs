@@ -3,12 +3,12 @@ import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../runtime/passkeys/index.mjs").PasskeysRuntime} PasskeysRuntime
+ * @typedef {import("../../../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysRuntime}} opts
+ * @param {{passkeys: PasskeysDomain}} opts
  */
 export default async function (fastify, { passkeys }) {
   fastify.post(
@@ -25,6 +25,7 @@ export default async function (fastify, { passkeys }) {
           401: ErrorResponse,
           409: ErrorResponse,
           500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Finalize passkey registration",
         tags: ["passkeys"],
@@ -63,6 +64,10 @@ export default async function (fastify, { passkeys }) {
 
         if (code === "CREDENTIAL_ALREADY_EXISTS") {
           return reply.code(409).send(null);
+        }
+
+        if (code === "DATABASE_UNAVAILABLE") {
+          return reply.code(503).send(null);
         }
 
         return reply.code(500).send(null);

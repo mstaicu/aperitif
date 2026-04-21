@@ -8,8 +8,8 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
  *
- * @typedef {import('./context.mjs').Context} Ctx
- * @typedef {import('./runtime/index.mjs').Runtime} Runtime
+ * @typedef {import('./platform/context.mjs').Context} Ctx
+ * @typedef {import('./domains/index.mjs').Domains} Domains
  */
 
 /**
@@ -25,28 +25,26 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @param {{
  *  ctx: Ctx,
- *  runtime: Runtime,
+ *  domains: Domains,
  *  fastifyOtel: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ ctx, fastifyOtel, runtime }) => {
-  const fastify = Fastify({
-    logger: {
-      level: "debug",
-    },
-  });
-
+export const createApp = async ({ ctx, domains, fastifyOtel }) => {
   /**
    * @type {FastifyInstance}
    */
-  const app = fastify
+  const app = Fastify({
+    logger: {
+      level: "debug",
+    },
+  })
     .setValidatorCompiler(TypeBoxValidatorCompiler)
     .withTypeProvider();
 
   await app.register(fastifyOtel.plugin());
   await app.register(probes, { db: ctx.persistence.db });
-  await app.register(v1, { jwks: ctx.security.jwks, prefix: "/v1", runtime });
+  await app.register(v1, { domains, jwks: ctx.security.jwks, prefix: "/v1" });
 
   return app;
 };

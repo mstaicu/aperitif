@@ -5,12 +5,12 @@ import create from "./admissions.create.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../runtime/admissions/index.mjs").AdmissionsRuntime} AdmissionsRuntime
+ * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsRuntime, jwks: Jwks}} opts
+ * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
  */
 export default async function (fastify, { admissions, jwks }) {
   await fastify.register(create, { admissions, jwks });
