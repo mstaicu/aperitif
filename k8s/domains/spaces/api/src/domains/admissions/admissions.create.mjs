@@ -1,19 +1,34 @@
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
+// Add or remove business steps here. Owning domains should publish
+// status updates for these requirement names; spaces only tracks status.
+
+const requirements = ["profile", "terms"];
+
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string | null }) => Promise<{ admission: { id: string, requested_role: string, space_id: null, status: "open", user_id: string | null }, requirements: { requirement: string, status: "pending" }[] }>}
+ * @returns {(args: { currentUserId: string | null }) => Promise<{
+ *   admission: {
+ *     id: string,
+ *     requested_role: string,
+ *     space_id: null,
+ *     status: "open",
+ *     user_id: string | null,
+ *   },
+ *   requirements: {
+ *     requirement: string,
+ *     status: "pending",
+ *   }[],
+ * }>}
  */
 export const create =
   (ctx) =>
   async ({ currentUserId }) => {
-    // Add or remove business steps here. Owning domains should publish
-    // status updates for these requirement names; spaces only tracks status.
-    const requirements = ["profile", "terms"];
     let client;
 
     try {
       client = await ctx.persistence.db.connect();
+
       await client.query("BEGIN");
 
       const {
@@ -44,12 +59,12 @@ export const create =
           id: admission.id,
           requested_role: admission.requested_role,
           space_id: admission.space_id,
-          status: /** @type {"open"} */ ("open"),
+          status: "open",
           user_id: admission.user_id,
         },
         requirements: requirements.map((requirement) => ({
           requirement,
-          status: /** @type {"pending"} */ ("pending"),
+          status: "pending",
         })),
       };
     } catch (err) {

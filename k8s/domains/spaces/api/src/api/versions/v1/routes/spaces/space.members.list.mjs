@@ -17,7 +17,8 @@ export default async function (fastify, { jwks, spaces }) {
     "/:spaceId/members",
     {
       schema: {
-        description: "List memberships for a space.",
+        description:
+          "List all memberships attached to a space. Only owners can inspect other memberships.",
         operationId: "listSpaceMembers",
         params: SpaceParams,
         response: {
@@ -30,7 +31,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List space members",
+        summary: "List space memberships",
         tags: ["spaces"],
       },
     },

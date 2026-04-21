@@ -2,7 +2,19 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, requested_role: string, spaceId: string }) => Promise<{ admission: { id: string, requested_role: string, space_id: string, status: "open", user_id: null }, requirements: { requirement: string, status: "pending" }[] }>}
+ * @returns {(args: { currentUserId: string, requested_role: string, spaceId: string }) => Promise<{
+ *   admission: {
+ *     id: string,
+ *     requested_role: string,
+ *     space_id: string,
+ *     status: "open",
+ *     user_id: null,
+ *   },
+ *   requirements: {
+ *     requirement: string,
+ *     status: "pending",
+ *   }[],
+ * }>}
  */
 export const createAdmission =
   (ctx) =>

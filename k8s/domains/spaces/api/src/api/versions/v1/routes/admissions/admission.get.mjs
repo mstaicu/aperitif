@@ -5,6 +5,7 @@ import { AdmissionParams, GetAdmissionResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
+ * @typedef {import("@sinclair/typebox").Static<typeof GetAdmissionResponse>} GetAdmissionResponseType
  * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
@@ -17,7 +18,8 @@ export default async function (fastify, { admissions, jwks }) {
     "/:admissionId",
     {
       schema: {
-        description: "Fetch the current state of an admission.",
+        description:
+          "Fetch the current state of an admission together with the currently known requirement rows.",
         operationId: "getAdmission",
         params: AdmissionParams,
         response: {
@@ -29,7 +31,7 @@ export default async function (fastify, { admissions, jwks }) {
           500: ErrorResponse,
           503: ErrorResponse,
         },
-        summary: "Get admission",
+        summary: "Get admission state",
         tags: ["admissions"],
       },
     },
@@ -40,12 +42,12 @@ export default async function (fastify, { admissions, jwks }) {
           jwks,
         });
 
-        return reply.send(
-          await admissions.get({
-            admissionId: req.params.admissionId,
-            currentUserId,
-          }),
-        );
+        const result = await admissions.get({
+          admissionId: req.params.admissionId,
+          currentUserId,
+        });
+
+        return reply.send(result);
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

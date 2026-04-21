@@ -17,7 +17,8 @@ export default async function (fastify, { jwks, spaces }) {
     "/:spaceId/members/:userId",
     {
       schema: {
-        description: "Remove a member from a space. Intended for owners.",
+        description:
+          "Remove a membership from a space. Only owners can remove other members, and owners cannot self-target through this endpoint.",
         operationId: "deleteSpaceMember",
         params: SpaceMemberParams,
         response: {
@@ -31,7 +32,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete membership",
+        summary: "Delete space membership",
         tags: ["spaces"],
       },
     },

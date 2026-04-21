@@ -5,6 +5,7 @@ import { AdmissionParams, ClaimAdmissionResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
+ * @typedef {import("@sinclair/typebox").Static<typeof ClaimAdmissionResponse>} ClaimAdmissionResponseType
  * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
@@ -18,7 +19,7 @@ export default async function (fastify, { admissions, jwks }) {
     {
       schema: {
         description:
-          "Bind the authenticated subject to an admission and return the current admission state.",
+          "Bind the authenticated subject to an admission and return the full admission state, including the current requirement rows.",
         operationId: "claimAdmission",
         params: AdmissionParams,
         response: {
@@ -31,7 +32,7 @@ export default async function (fastify, { admissions, jwks }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Claim admission",
+        summary: "Claim admission and return state",
         tags: ["admissions"],
       },
     },
@@ -42,12 +43,15 @@ export default async function (fastify, { admissions, jwks }) {
           jwks,
         });
 
-        return reply.send(
+        /** @type {ClaimAdmissionResponseType} */
+        const result = /** @type {ClaimAdmissionResponseType} */ (
           await admissions.claim({
             admissionId: req.params.admissionId,
             currentUserId,
-          }),
+          })
         );
+
+        return reply.send(result);
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
 

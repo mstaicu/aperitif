@@ -2,7 +2,17 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, spaceId: string }) => Promise<{ members: { user_id: string, role: string }[] }>}
+ * @returns {(args: { currentUserId: string, spaceId: string }) => Promise<{
+ *   count: number,
+ *   members: {
+ *     role: string,
+ *     space_id: string,
+ *     user_id: string,
+ *   }[],
+ *   space: {
+ *     id: string,
+ *   },
+ * }>}
  */
 export const listMembers =
   (ctx) =>
@@ -53,7 +63,15 @@ export const listMembers =
       );
 
       return {
-        members: rows,
+        count: rows.length,
+        members: rows.map((row) => ({
+          role: row.role,
+          space_id: spaceId,
+          user_id: row.user_id,
+        })),
+        space: {
+          id: spaceId,
+        },
       };
     } catch (err) {
       if (isDatabaseUnavailable(err)) {

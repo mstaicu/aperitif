@@ -23,7 +23,7 @@ export default async function (fastify, { jwks, spaces }) {
       schema: {
         body: SpaceAdmissionBody,
         description:
-          "Create an admission for an existing space. Intended for owners. Requirement rows are derived server-side.",
+          "Create an admission for an existing space. Intended for owners. The response includes the admission resource and the derived requirement rows.",
         operationId: "createSpaceAdmission",
         params: SpaceParams,
         response: {
@@ -36,7 +36,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create space admission",
+        summary: "Create space-bound admission",
         tags: ["admissions"],
       },
     },

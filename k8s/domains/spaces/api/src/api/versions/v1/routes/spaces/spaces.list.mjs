@@ -17,17 +17,17 @@ export default async function (fastify, { jwks, spaces }) {
     "/",
     {
       schema: {
-        description: "List spaces for the authenticated caller.",
+        description:
+          "List the spaces the authenticated caller belongs to. Each item includes the space resource and the caller membership in that space.",
         operationId: "listSpaces",
         response: {
           200: SpacesResponse,
-          400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List spaces",
+        summary: "List caller spaces",
         tags: ["spaces"],
       },
     },

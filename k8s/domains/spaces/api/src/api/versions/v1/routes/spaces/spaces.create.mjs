@@ -18,17 +18,16 @@ export default async function (fastify, { jwks, spaces }) {
     {
       schema: {
         description:
-          "Create a new space. The creator becomes the initial owner.",
+          "Create a new space and bootstrap the authenticated caller as its initial owner.",
         operationId: "createSpace",
         response: {
           201: SpaceCreateResponse,
-          400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create space",
+        summary: "Create caller-owned space",
         tags: ["spaces"],
       },
     },

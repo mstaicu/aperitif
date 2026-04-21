@@ -23,7 +23,7 @@ export default async function (fastify, { jwks, spaces }) {
       schema: {
         body: CreateSpaceMemberBody,
         description:
-          "Create an immediate membership in a space for an existing global user identity.",
+          "Create an immediate membership in a space for an existing global user identity. Only owners can grant memberships.",
         operationId: "createSpaceMember",
         params: SpaceMemberParams,
         response: {
@@ -37,7 +37,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create membership",
+        summary: "Create space membership",
         tags: ["spaces"],
       },
     },

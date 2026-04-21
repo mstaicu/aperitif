@@ -17,7 +17,8 @@ export default async function (fastify, { jwks, spaces }) {
     "/:spaceId",
     {
       schema: {
-        description: "Fetch a single space and the caller membership.",
+        description:
+          "Fetch a single space together with the authenticated caller membership in that space.",
         operationId: "getSpace",
         params: SpaceParams,
         response: {
@@ -30,7 +31,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Get space",
+        summary: "Get space context",
         tags: ["spaces"],
       },
     },

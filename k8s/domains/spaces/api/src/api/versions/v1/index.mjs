@@ -22,6 +22,8 @@ export default async (fastify, { domains, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
       info: {
+        description:
+          "Authority API for space lifecycle, memberships, and admissions.",
         title: "Spaces",
         version: "v1",
       },

@@ -18,7 +18,7 @@ export default async function (fastify, { jwks, spaces }) {
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space and still belong to another space.",
+          "Delete a space. The caller must own the space, still belong to another space, and the target space must have no open admissions.",
         operationId: "deleteSpace",
         params: SpaceParams,
         response: {

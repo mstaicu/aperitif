@@ -18,16 +18,15 @@ export default async function (fastify, { admissions, jwks }) {
     {
       schema: {
         description:
-          "Create a self-started admission for first-space onboarding. Authentication is optional at this stage. Requirement rows are derived server-side.",
+          "Create a self-started admission for first-space onboarding. Authentication is optional at this stage. The response includes the admission resource and the derived requirement rows.",
         operationId: "createAdmission",
         response: {
           201: CreateAdmissionResponse,
-          400: ErrorResponse,
           401: ErrorResponse,
           500: ErrorResponse,
           503: ErrorResponse,
         },
-        summary: "Create admission",
+        summary: "Create self-started admission",
         tags: ["admissions"],
       },
     },
