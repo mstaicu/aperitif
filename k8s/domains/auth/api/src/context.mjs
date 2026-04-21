@@ -104,15 +104,15 @@ export const createContext = async () => {
       origin: nconf.get("ORIGIN"),
       region: nconf.get("REGION") ?? "local",
     },
-    data: {
-      db: pg.db,
-    },
     lifecycle: {
       // close: () => Promise.allSettled([pg.close(), nats.close()]),
       close: () => pg.close(),
     },
+    messaging: {},
+    persistence: {
+      db: pg.db,
+    },
     security,
-    // js: nats.js,
   };
 };
 

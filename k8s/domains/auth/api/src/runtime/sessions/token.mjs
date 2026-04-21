@@ -20,7 +20,7 @@ export const createAccessToken =
 
     const {
       rows: [session],
-    } = await ctx.data.db.query(
+    } = await ctx.persistence.db.query(
       `
         SELECT user_id
         FROM sessions

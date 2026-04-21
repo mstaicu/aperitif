@@ -5,7 +5,7 @@
 export const claim =
   (ctx) =>
   async ({ admissionId, currentUserId }) => {
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

@@ -5,7 +5,7 @@
 export const createMember =
   (ctx) =>
   async ({ currentUserId, role, spaceId, userId }) => {
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

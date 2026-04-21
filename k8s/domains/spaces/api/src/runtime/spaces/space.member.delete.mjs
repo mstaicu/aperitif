@@ -9,7 +9,7 @@ export const deleteMember =
       throw new Error("FORBIDDEN_SELF_TARGET");
     }
 
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

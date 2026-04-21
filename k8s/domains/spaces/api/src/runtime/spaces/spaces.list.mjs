@@ -5,7 +5,7 @@
 export const list =
   (ctx) =>
   async ({ currentUserId }) => {
-    const { rows } = await ctx.data.db.query(
+    const { rows } = await ctx.persistence.db.query(
       `
         SELECT space_id AS id, role
         FROM space_memberships

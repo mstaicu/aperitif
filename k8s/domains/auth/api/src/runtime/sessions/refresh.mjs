@@ -13,7 +13,7 @@ export const refresh =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

@@ -12,7 +12,7 @@ import { randomBytes } from "node:crypto";
 export const createLoginChallenge = (ctx) => async () => {
   const challenge = randomBytes(32);
 
-  await ctx.data.db.query(
+  await ctx.persistence.db.query(
     `
       INSERT INTO challenges (user_id, challenge)
       VALUES (NULL, $1)

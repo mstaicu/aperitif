@@ -8,7 +8,7 @@ export const createAdmission =
     // Add or remove business steps here. Owning domains should publish
     // status updates for these requirement names; spaces only tracks status.
     const requirements = ["profile", "terms"];
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

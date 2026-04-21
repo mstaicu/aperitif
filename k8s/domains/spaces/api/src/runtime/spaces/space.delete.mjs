@@ -5,7 +5,7 @@
 export const destroy =
   (ctx) =>
   async ({ currentUserId, spaceId }) => {
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

@@ -18,7 +18,7 @@ import { generateRefreshToken } from "../shared.mjs";
 export const register =
   (ctx) =>
   async ({ credential }) => {
-    const { app, data } = ctx;
+    const { app, persistence } = ctx;
 
     const { hostname, origin } = new URL(app.origin);
 
@@ -56,7 +56,7 @@ export const register =
 
     const {
       rows: [challengeRow],
-    } = await data.db.query(
+    } = await persistence.db.query(
       `
         DELETE FROM challenges
         WHERE challenge = $1
@@ -111,7 +111,7 @@ export const register =
     const publicKey = Buffer.from(registrationCredential.publicKey);
     const signCount = registrationCredential.counter;
 
-    const client = await data.db.connect();
+    const client = await persistence.db.connect();
 
     try {
       await client.query("BEGIN");

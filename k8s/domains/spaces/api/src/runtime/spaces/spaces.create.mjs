@@ -5,7 +5,7 @@
 export const create =
   (ctx) =>
   async ({ currentUserId }) => {
-    const client = await ctx.data.db.connect();
+    const client = await ctx.persistence.db.connect();
 
     try {
       await client.query("BEGIN");

@@ -22,22 +22,31 @@ const createPgContext = () => {
   };
 };
 
+const createSecurityContext = () => {
+  const jwksUrl = nconf.get("AUTH_JWKS_URL");
+  const remotejwkSet = createRemoteJWKSet(new URL(jwksUrl));
+
+  return {
+    jwks: remotejwkSet,
+  };
+};
+
 export const createContext = async () => {
   const pg = createPgContext();
+  const security = createSecurityContext();
 
   return {
     app: {
       region: nconf.get("REGION") ?? "local",
     },
-    data: {
-      db: pg.db,
-    },
     lifecycle: {
       close: () => pg.close(),
     },
-    security: {
-      jwks: createRemoteJWKSet(new URL(nconf.get("AUTH_JWKS_URL"))),
+    messaging: {},
+    persistence: {
+      db: pg.db,
     },
+    security,
   };
 };
 

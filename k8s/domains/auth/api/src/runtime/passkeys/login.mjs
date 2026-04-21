@@ -18,7 +18,7 @@ import { generateRefreshToken } from "../shared.mjs";
 export const login =
   (ctx) =>
   async ({ authentication }) => {
-    const { app, data } = ctx;
+    const { app, persistence } = ctx;
 
     const { hostname, origin } = new URL(app.origin);
 
@@ -57,7 +57,7 @@ export const login =
 
     const {
       rows: [challengeRow],
-    } = await data.db.query(
+    } = await persistence.db.query(
       `
         DELETE FROM challenges
         WHERE challenge = $1
@@ -72,7 +72,7 @@ export const login =
       throw new Error("CHALLENGE_NOT_FOUND");
     }
 
-    const client = await data.db.connect();
+    const client = await persistence.db.connect();
 
     try {
       await client.query("BEGIN");
