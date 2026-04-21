@@ -23,6 +23,7 @@ export const get =
 
     try {
       client = await ctx.persistence.db.connect();
+
       const {
         rows: [admission],
       } = await client.query(
@@ -78,40 +79,18 @@ export const get =
         [admission.id],
       );
 
-      /** @type {"open" | "completed" | "failed" | "cancelled" | "expired"} */
-      const admissionStatus = admission.status;
-
-      /** @type {{
-       *   admission: {
-       *     id: string,
-       *     requested_role: string,
-       *     space_id: string | null,
-       *     status: "open" | "completed" | "failed" | "cancelled" | "expired",
-       *     user_id: string | null,
-       *   },
-       *   requirements: {
-       *     requirement: string,
-       *     status: "pending" | "completed" | "failed",
-       *   }[],
-       * }}
-       */
       const response = {
         admission: {
           id: admission.id,
           requested_role: admission.requested_role,
           space_id: admission.space_id,
-          status: admissionStatus,
+          status: admission.status,
           user_id: admission.user_id,
         },
-        requirements: requirements.map((requirement) => {
-          /** @type {"pending" | "completed" | "failed"} */
-          const requirementStatus = requirement.status;
-
-          return {
-            requirement: requirement.requirement,
-            status: requirementStatus,
-          };
-        }),
+        requirements: requirements.map((requirement) => ({
+          requirement: requirement.requirement,
+          status: requirement.status,
+        })),
       };
 
       return response;

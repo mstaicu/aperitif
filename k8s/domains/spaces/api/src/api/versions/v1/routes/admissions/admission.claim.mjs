@@ -43,13 +43,10 @@ export default async function (fastify, { admissions, jwks }) {
           jwks,
         });
 
-        /** @type {ClaimAdmissionResponseType} */
-        const result = /** @type {ClaimAdmissionResponseType} */ (
-          await admissions.claim({
-            admissionId: req.params.admissionId,
-            currentUserId,
-          })
-        );
+        const result = await admissions.claim({
+          admissionId: req.params.admissionId,
+          currentUserId,
+        });
 
         return reply.send(result);
       } catch (err) {
