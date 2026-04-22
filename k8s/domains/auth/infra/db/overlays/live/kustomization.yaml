@@ -5,3 +5,4 @@ namespace: auth
 
 resources:
   - namespace.yaml
+  - auth-postgres-depl.yaml

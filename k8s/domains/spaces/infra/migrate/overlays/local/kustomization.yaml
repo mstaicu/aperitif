@@ -6,9 +6,6 @@ namespace: spaces
 resources:
   - ../../base
 
-patches:
-  - path: spaces-migrate-job.yaml
-
 secretGenerator:
   - name: spaces-migrate-db
     literals:
