@@ -5,13 +5,17 @@ namespace: auth
 
 resources:
   - ../../base
-  - namespace.yaml
 
-# TODO: Add and encrypt secret
-# secretGenerator:
-#   - name: auth-db
-#     literals:
-#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+secretGenerator:
+  - name: auth-migrate-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true
+
+images:
+  - name: mdstaicu/auth-migrate
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:auth-migrate-latest
+    newTag: latest # {"$imagepolicy": "flux-system:auth-migrate-latest"}

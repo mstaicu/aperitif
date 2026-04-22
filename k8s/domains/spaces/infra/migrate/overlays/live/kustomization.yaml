@@ -5,13 +5,17 @@ namespace: spaces
 
 resources:
   - ../../base
-  - namespace.yaml
 
-# TODO: Add and encrypt secret
-# secretGenerator:
-#   - name: spaces-db
-#     literals:
-#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
+secretGenerator:
+  - name: spaces-migrate-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true
+
+images:
+  - name: mdstaicu/spaces-migrate
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:spaces-migrate-latest
+    newTag: latest # {"$imagepolicy": "flux-system:spaces-migrate-latest"}

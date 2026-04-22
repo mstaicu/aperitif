@@ -6,9 +6,12 @@ metadata:
 spec:
   interval: 10m
   path: ./k8s/domains/auth/infra/migrate/overlays/live
+  force: true
   prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
+  dependsOn:
+    - name: auth-db
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready

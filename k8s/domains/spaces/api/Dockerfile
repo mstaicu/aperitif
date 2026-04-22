@@ -16,6 +16,8 @@ FROM base AS dev
 
 ENV NODE_ENV=development
 
+RUN chown node:node /home/node/app
+
 COPY --chown=node:node package*.json ./
 RUN npm ci
 

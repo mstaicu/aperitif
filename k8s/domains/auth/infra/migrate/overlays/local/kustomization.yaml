@@ -9,5 +9,10 @@ resources:
 patches:
   - path: auth-migrate-job.yaml
 
+secretGenerator:
+  - name: auth-migrate-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+
 generatorOptions:
   disableNameSuffixHash: true

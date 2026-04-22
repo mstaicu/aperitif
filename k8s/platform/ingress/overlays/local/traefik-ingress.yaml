@@ -4,6 +4,9 @@ kind: HTTPRoute
 metadata:
   name: traefik-dashboard
 spec:
+  hostnames:
+    - tma.com
+
   parentRefs:
     - name: traefik-pgw
       sectionName: https

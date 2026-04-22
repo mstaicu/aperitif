@@ -12,11 +12,11 @@ spec:
 
       containers:
         - name: migrate
-          image: mdstaicu/auth-migrate:latest
+          image: mdstaicu/auth-migrate
 
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: auth-db
+                  name: auth-migrate-db
                   key: DATABASE_URL

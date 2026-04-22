@@ -8,6 +8,15 @@ spec:
   interval: 1m
 ---
 apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+
+metadata:
+  name: auth-migrate
+spec:
+  image: docker.io/mdstaicu/auth-migrate
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImagePolicy
 
 metadata:
@@ -15,6 +24,19 @@ metadata:
 spec:
   imageRepositoryRef:
     name: auth-api
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+
+metadata:
+  name: auth-migrate-latest
+spec:
+  imageRepositoryRef:
+    name: auth-migrate
   filterTags:
     pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
   policy:
@@ -41,5 +63,5 @@ spec:
     push:
       branch: master
   update:
-    path: ./k8s/domains/auth/infra/api/overlays/live
+    path: ./k8s/domains/auth/infra
     strategy: Setters

@@ -6,19 +6,19 @@ namespace: auth
 resources:
   - ../../base
   - auth-api-jwt.yaml
-  - namespace.yaml
 
 configMapGenerator:
   - name: auth-api-cm
     literals:
       - ORIGIN=https://tma.com
-      - JWT_ALLOWED_AUDIENCES=organizations
+      - JWT_ALLOWED_AUDIENCES=spaces
 
-# TODO: Add and encrypt secret
-# secretGenerator:
-#   - name: auth-db
-#     literals:
-#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+secretGenerator:
+  - name: auth-api-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
+    options:
+      disableNameSuffixHash: true
 
 images:
   - name: mdstaicu/auth-api

@@ -26,7 +26,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: spaces-db
+                  name: spaces-api-db
                   key: DATABASE_URL
 
             - name: AUTH_JWKS_URL

@@ -5,15 +5,13 @@ namespace: spaces
 
 resources:
   - ../../base
-  - ../../../migrate/overlays/local
   - namespace.yaml
-  - spaces-postgres-depl.yaml
 
 patches:
   - path: spaces-api-depl.yaml
 
 secretGenerator:
-  - name: spaces-db
+  - name: spaces-api-db
     literals:
       - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
 

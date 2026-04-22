@@ -12,11 +12,11 @@ spec:
 
       containers:
         - name: migrate
-          image: mdstaicu/spaces-migrate:latest
+          image: mdstaicu/spaces-migrate
 
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: spaces-db
+                  name: spaces-migrate-db
                   key: DATABASE_URL

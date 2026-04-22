@@ -9,5 +9,10 @@ resources:
 patches:
   - path: spaces-migrate-job.yaml
 
+secretGenerator:
+  - name: spaces-migrate-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
+
 generatorOptions:
   disableNameSuffixHash: true

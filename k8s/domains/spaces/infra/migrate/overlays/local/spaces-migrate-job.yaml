@@ -31,5 +31,5 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: spaces-db
+                  name: spaces-migrate-db
                   key: DATABASE_URL

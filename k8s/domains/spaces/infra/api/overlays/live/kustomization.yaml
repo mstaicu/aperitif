@@ -5,13 +5,13 @@ namespace: spaces
 
 resources:
   - ../../base
-  - namespace.yaml
 
-# TODO: Add and encrypt secret
-# secretGenerator:
-#   - name: spaces-db
-#     literals:
-#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
+secretGenerator:
+  - name: spaces-api-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
+    options:
+      disableNameSuffixHash: true
 
 images:
   - name: mdstaicu/spaces-api
