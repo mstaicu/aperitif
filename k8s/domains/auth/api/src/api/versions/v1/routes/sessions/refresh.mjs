@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { RefreshBody, RefreshResponse } from "./schemas.mjs";
+import { RefreshResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -15,8 +15,8 @@ export default async function (fastify, { sessions }) {
     "/refresh",
     {
       schema: {
-        body: RefreshBody,
-        description: "Exchanges a valid refresh token for a new refresh token.",
+        description:
+          "Exchange a refresh token provided in the Authorization bearer header for a new refresh token.",
         operationId: "refreshSession",
         response: {
           200: RefreshResponse,
@@ -24,21 +24,36 @@ export default async function (fastify, { sessions }) {
           500: ProblemResponse,
           503: ProblemResponse,
         },
+        security: [{ refreshTokenAuth: [] }],
         summary: "Refresh session",
         tags: ["sessions"],
       },
     },
-    async function (request, reply) {
-      const input = {
-        refresh_token: request.body.refresh_token,
-      };
-
+    async function (req, reply) {
       try {
+        const [type, token] = (req.headers.authorization || "").split(" ");
+
+        if (type !== "Bearer" || !token) {
+          throw new Error("INVALID_AUTHORIZATION_HEADER");
+        }
+
         reply.header("Cache-Control", "no-store");
 
-        return reply.send(await sessions.refresh(input));
+        return reply.send(
+          await sessions.refresh({
+            refresh_token: token,
+          }),
+        );
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
+
+        if (code === "INVALID_AUTHORIZATION_HEADER") {
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid authorization header",
+            type: "/problems/invalid-authorization-header",
+          });
+        }
 
         if (code === "INVALID_REFRESH_TOKEN" || code === "SESSION_NOT_FOUND") {
           return reply.type("application/problem+json").code(401).send({

@@ -1,12 +1,5 @@
 import { Type } from "@sinclair/typebox";
 
-export const RefreshBody = Type.Object(
-  {
-    refresh_token: Type.String(),
-  },
-  { additionalProperties: false },
-);
-
 export const RefreshResponse = Type.Object(
   {
     refresh_token: Type.String(),

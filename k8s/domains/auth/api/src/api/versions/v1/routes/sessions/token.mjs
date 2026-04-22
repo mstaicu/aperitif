@@ -32,27 +32,31 @@ export default async function (fastify, { sessions }) {
       },
     },
     async function (req, reply) {
-      const [type, token] = (req.headers.authorization || "").split(" ");
-
-      if (type !== "Bearer" || !token) {
-        return reply.type("application/problem+json").code(401).send({
-          status: 401,
-          title: "Invalid authorization header",
-          type: "/problems/invalid-authorization-header",
-        });
-      }
-
-      const input = {
-        audience: req.body.audience,
-        refresh_token: token,
-      };
-
       try {
+        const [type, token] = (req.headers.authorization || "").split(" ");
+
+        if (type !== "Bearer" || !token) {
+          throw new Error("INVALID_AUTHORIZATION_HEADER");
+        }
+
+        const input = {
+          audience: req.body.audience,
+          refresh_token: token,
+        };
+
         reply.header("Cache-Control", "no-store");
 
         return reply.send(await sessions.createAccessToken(input));
       } catch (err) {
         const code = /** @type {Error} */ (err).message;
+
+        if (code === "INVALID_AUTHORIZATION_HEADER") {
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid authorization header",
+            type: "/problems/invalid-authorization-header",
+          });
+        }
 
         if (code === "INVALID_AUDIENCE") {
           return reply.type("application/problem+json").code(400).send({
