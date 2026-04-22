@@ -51,10 +51,10 @@ if (!hostsContent.includes(`127.0.0.1 ${DOMAIN}`)) {
 //   --js-consumer -1
 
 // nsc add user --account SYS sys
-// nsc add user --account TMA auth
+// nsc add user --account TMA identities
 
 // nsc generate creds --account SYS --name sys > /secrets/sys.creds
-// nsc generate creds --account TMA --name auth > /secrets/auth.creds
+// nsc generate creds --account TMA --name identities > /secrets/identities.creds
 
 // nsc generate config --mem-resolver --sys-account SYS > /secrets/resolver.conf
 
@@ -63,8 +63,8 @@ if (!hostsContent.includes(`127.0.0.1 ${DOMAIN}`)) {
 //   -n $NAMESPACE \
 //   --dry-run=client -o yaml | kubectl apply -f -
 
-// kubectl create secret generic nats-auth-creds \
-//   --from-file=/secrets/auth.creds \
+// kubectl create secret generic nats-identities-creds \
+//   --from-file=/secrets/identities.creds \
 //   -n $NAMESPACE \
 //   --dry-run=client -o yaml | kubectl apply -f -
 

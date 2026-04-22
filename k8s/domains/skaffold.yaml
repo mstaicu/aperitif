@@ -2,5 +2,5 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 requires:
-  - path: auth
+  - path: identities
   - path: spaces

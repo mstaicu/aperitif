@@ -1,0 +1,72 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: identities-db-local
+
+manifests:
+  kustomize:
+    paths:
+      - infra/db/overlays/local
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: identities-migrate-local
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/identities-migrate
+      context: migrations
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - infra/migrate/overlays/local
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: identities-api-local
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/identities-api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/api/overlays/local
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

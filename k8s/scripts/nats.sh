@@ -20,10 +20,10 @@ nsc edit account TMA \
 
 # 4. Add users to accounts
 nsc add user --account SYS --name sys
-nsc add user --account TMA --name auth-api
+nsc add user --account TMA --name identities-api
 
 # nsc generate creds --account SYS --name sys > sys.creds
-nsc generate creds --account TMA --name auth-api > auth-api.creds
+nsc generate creds --account TMA --name identities-api > identities-api.creds
 
 # These go on the nats instances
 nsc describe operator --name TMA --raw

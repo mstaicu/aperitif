@@ -14,7 +14,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-auth-and-spaces-to-otel-http
+  name: allow-identities-and-spaces-to-otel-http
 spec:
   podSelector:
     matchLabels:
@@ -25,10 +25,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: auth
+              kubernetes.io/metadata.name: identities
           podSelector:
             matchLabels:
-              app: auth-api
+              app: identities-api
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: spaces

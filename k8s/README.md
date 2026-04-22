@@ -205,13 +205,13 @@ $ nats server report js --creds /tmp/sys.creds
 
 $ nats server ls --creds /tmp/sys.creds
 
-$ nats subscribe --stream=math --creds /tmp/auth.creds
+$ nats subscribe --stream=math --creds /tmp/identities.creds
 
-$ nats consumer add math worker-1 --filter "math.>" --deliver all --ack all --creds /tmp/auth.creds
+$ nats consumer add math worker-1 --filter "math.>" --deliver all --ack all --creds /tmp/identities.creds
 
-$ nats consumer next math worker-1 --creds /tmp/auth.creds
+$ nats consumer next math worker-1 --creds /tmp/identities.creds
 
-$ nats pub math.add '{"id": 1}' --creds /tmp/auth.creds
+$ nats pub math.add '{"id": 1}' --creds /tmp/identities.creds
 ```
 
 ### Adding a new service:
@@ -561,12 +561,12 @@ git push
 step crypto keypair jwt-public.pem jwt-private.pem \
  --kty EC --crv P-256 --use sig --alg ES256
 
-kubectl create secret generic auth-jwt-keys \
+kubectl create secret generic identities-jwt-keys \
  --from-file=jwt-private.pem \
  --from-file=jwt-public.pem \
- --dry-run=client -o yaml > secrets/auth-jwt-keys.yaml
+ --dry-run=client -o yaml > secrets/identities-jwt-keys.yaml
 
-sops --encrypt --in-place secrets/auth-jwt-keys.yaml
+sops --encrypt --in-place secrets/identities-jwt-keys.yaml
 
 ## Linkerd
 

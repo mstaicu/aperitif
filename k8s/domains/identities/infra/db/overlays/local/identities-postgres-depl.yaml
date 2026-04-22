@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: identities-postgres-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identities-postgres
+  template:
+    metadata:
+      labels:
+        app: identities-postgres
+    spec:
+      containers:
+        - name: identities-postgres
+          image: docker.io/postgres:18
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+            - name: POSTGRES_DB
+              value: identities
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d identities
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d identities
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: postgres-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: identities-postgres
+  ports:
+    - name: postgres
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
