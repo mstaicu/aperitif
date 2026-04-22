@@ -29,8 +29,20 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/nats-config
+            - name: nats-storage
+              mountPath: /data
 
       volumes:
         - name: config
           configMap:
             name: nats-config
+
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

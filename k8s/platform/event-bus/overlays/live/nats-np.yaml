@@ -1,0 +1,113 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: default-deny-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-nats-cluster
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nats
+      ports:
+        - port: 6222
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nats
+      ports:
+        - port: 6222
+          protocol: TCP
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-nats-dns
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+  policyTypes:
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-auth-api-to-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: auth
+          podSelector:
+            matchLabels:
+              app: auth-api
+      ports:
+        - port: 4222
+          protocol: TCP
+  policyTypes:
+    - Ingress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-spaces-api-to-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: spaces
+          podSelector:
+            matchLabels:
+              app: spaces-api
+      ports:
+        - port: 4222
+          protocol: TCP
+  policyTypes:
+    - Ingress
