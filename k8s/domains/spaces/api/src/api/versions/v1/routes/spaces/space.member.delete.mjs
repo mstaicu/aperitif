@@ -18,7 +18,7 @@ export default async function (fastify, { jwks, spaces }) {
     {
       schema: {
         description:
-          "Remove a membership from a space. Only owners can remove other members, and owners cannot self-target through this endpoint.",
+          "Remove a membership from a space. Only owners can remove other members, owners cannot self-target through this endpoint, and removing an already-absent membership is treated as a no-op.",
         operationId: "deleteSpaceMember",
         params: SpaceMemberParams,
         response: {
@@ -74,14 +74,6 @@ export default async function (fastify, { jwks, spaces }) {
             status: 404,
             title: "Space not found",
             type: "/problems/space-not-found",
-          });
-        }
-
-        if (code === "MEMBERSHIP_NOT_FOUND") {
-          return reply.type("application/problem+json").code(404).send({
-            status: 404,
-            title: "Membership not found",
-            type: "/problems/membership-not-found",
           });
         }
 

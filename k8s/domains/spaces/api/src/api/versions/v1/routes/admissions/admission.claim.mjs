@@ -1,11 +1,10 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { AdmissionParams, ClaimAdmissionResponse } from "./schemas.mjs";
+import { AdmissionParams, AdmissionStateResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("@sinclair/typebox").Static<typeof ClaimAdmissionResponse>} ClaimAdmissionResponseType
  * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  */
 
@@ -23,7 +22,7 @@ export default async function (fastify, { admissions, jwks }) {
         operationId: "claimAdmission",
         params: AdmissionParams,
         response: {
-          200: ClaimAdmissionResponse,
+          200: AdmissionStateResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           404: ProblemResponse,

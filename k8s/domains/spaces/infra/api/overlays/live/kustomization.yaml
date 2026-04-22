@@ -5,9 +5,7 @@ namespace: spaces
 
 resources:
   - ../../base
-  - spaces-api-ingress.yaml
   - namespace.yaml
-  - spaces-np.yaml
 
 # TODO: Add and encrypt secret
 # secretGenerator:

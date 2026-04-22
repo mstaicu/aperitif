@@ -119,17 +119,6 @@ export const SpaceResponse = Type.Object(
   },
 );
 
-export const SpaceCreateResponse = Type.Object(
-  {
-    membership: SpaceMembership,
-    space: Space,
-  },
-  {
-    additionalProperties: false,
-    description: "Created space plus the bootstrap owner membership.",
-  },
-);
-
 export const SpaceMembersResponse = Type.Object(
   {
     count: Count,

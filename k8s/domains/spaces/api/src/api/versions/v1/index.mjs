@@ -21,6 +21,17 @@ import spaceRoutes from "./routes/spaces/index.mjs";
 export default async (fastify, { domains, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            bearerFormat: "JWT",
+            description:
+              "Access token carried in the Authorization header as Bearer <token>.",
+            scheme: "bearer",
+            type: "http",
+          },
+        },
+      },
       info: {
         description:
           "Authority API for space lifecycle, memberships, and admissions.",

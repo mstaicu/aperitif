@@ -54,25 +54,47 @@ export const createMember =
         throw new Error("FORBIDDEN");
       }
 
-      // TODO: This assumes userId is a valid global identity UUID.
-      // When an identity projection exists locally, validate it here.
-      try {
-        await client.query(
-          `
-            INSERT INTO space_memberships (space_id, user_id, role)
-            VALUES ($1, $2, $3)
-          `,
-          [spaceId, userId, role],
-        );
-      } catch (err) {
-        const error = /** @type {{ code?: string }} */ (err);
+      const {
+        rows: [existingMembership],
+      } = await client.query(
+        `
+          SELECT role
+          FROM space_memberships
+          WHERE space_id = $1
+            AND user_id = $2
+          FOR UPDATE
+        `,
+        [spaceId, userId],
+      );
 
-        if (error.code === "23505") {
-          throw new Error("MEMBERSHIP_ALREADY_EXISTS", { cause: err });
+      if (existingMembership) {
+        if (existingMembership.role !== role) {
+          throw new Error("MEMBERSHIP_ALREADY_EXISTS");
         }
 
-        throw err;
+        await client.query("COMMIT");
+
+        return {
+          membership: {
+            role: existingMembership.role,
+            space_id: spaceId,
+            user_id: userId,
+          },
+          space: {
+            id: spaceId,
+          },
+        };
       }
+
+      // TODO: This assumes userId is a valid global identity UUID.
+      // When an identity projection exists locally, validate it here.
+      await client.query(
+        `
+          INSERT INTO space_memberships (space_id, user_id, role)
+          VALUES ($1, $2, $3)
+        `,
+        [spaceId, userId, role],
+      );
 
       // TODO: When eventing is wired, insert an outbox row in this transaction for:
       // - spaces.membership.created

@@ -1,6 +1,6 @@
 import { authenticateOptional } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { CreateAdmissionResponse } from "./schemas.mjs";
+import { AdmissionStateResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -21,7 +21,7 @@ export default async function (fastify, { admissions, jwks }) {
           "Create a self-started admission for first-space onboarding. Authentication is optional at this stage. The response includes the admission resource and the derived requirement rows.",
         operationId: "createAdmission",
         response: {
-          201: CreateAdmissionResponse,
+          201: AdmissionStateResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,

@@ -26,6 +26,7 @@ export default async function (fastify, { sessions }) {
           500: ProblemResponse,
           503: ProblemResponse,
         },
+        security: [{ refreshTokenAuth: [] }],
         summary: "Mint access token",
         tags: ["sessions"],
       },

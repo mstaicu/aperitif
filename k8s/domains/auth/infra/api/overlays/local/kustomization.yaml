@@ -6,8 +6,6 @@ namespace: auth
 resources:
   - ../../base
   - ../../../migrate/overlays/local
-  - auth-api-ingress.yaml
-  - auth-np.yaml
   - namespace.yaml
   - auth-postgres-depl.yaml
 

@@ -2,6 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - spaces-api-ingress.yaml
+  - spaces-np.yaml
   - spaces-api-depl.yaml
   - spaces-api-sa.yaml
   - spaces-api-srv.yaml

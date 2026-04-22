@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceCreateResponse } from "./schemas.mjs";
+import { SpaceResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -21,7 +21,7 @@ export default async function (fastify, { jwks, spaces }) {
           "Create a new space and bootstrap the authenticated caller as its initial owner.",
         operationId: "createSpace",
         response: {
-          201: SpaceCreateResponse,
+          201: SpaceResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,

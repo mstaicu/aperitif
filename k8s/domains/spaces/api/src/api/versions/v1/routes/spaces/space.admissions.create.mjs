@@ -1,7 +1,7 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import {
-  CreateAdmissionResponse,
+  AdmissionStateResponse,
   SpaceAdmissionBody,
 } from "../admissions/schemas.mjs";
 import { SpaceParams } from "./schemas.mjs";
@@ -27,7 +27,7 @@ export default async function (fastify, { jwks, spaces }) {
         operationId: "createSpaceAdmission",
         params: SpaceParams,
         response: {
-          201: CreateAdmissionResponse,
+          201: AdmissionStateResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,

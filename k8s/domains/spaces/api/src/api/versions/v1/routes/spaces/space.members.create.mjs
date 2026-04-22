@@ -23,11 +23,11 @@ export default async function (fastify, { jwks, spaces }) {
       schema: {
         body: CreateSpaceMemberBody,
         description:
-          "Create an immediate membership in a space for an existing global user identity. Only owners can grant memberships.",
+          "Ensure a direct membership exists in a space for an existing global user identity. Repeating the same request with the same role is a no-op. Changing an existing role is not supported here.",
         operationId: "createSpaceMember",
         params: SpaceMemberParams,
         response: {
-          201: SpaceMemberResponse,
+          200: SpaceMemberResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -48,7 +48,7 @@ export default async function (fastify, { jwks, spaces }) {
           jwks,
         });
 
-        return reply.code(201).send(
+        return reply.code(200).send(
           await spaces.createMember({
             currentUserId,
             role: req.body.role,

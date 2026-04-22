@@ -62,7 +62,8 @@ export const deleteMember =
       );
 
       if (!targetMembership) {
-        throw new Error("MEMBERSHIP_NOT_FOUND");
+        await client.query("COMMIT");
+        return;
       }
 
       if (targetMembership.role === "owner") {

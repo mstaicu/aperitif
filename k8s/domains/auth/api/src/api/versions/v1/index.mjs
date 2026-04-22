@@ -20,6 +20,17 @@ import sessionRoutes from "./routes/sessions/index.mjs";
 export default async (fastify, { domains }) => {
   await fastify.register(swagger, {
     openapi: {
+      components: {
+        securitySchemes: {
+          refreshTokenAuth: {
+            bearerFormat: "RefreshToken",
+            description:
+              "Refresh token carried in the Authorization header as Bearer <token>.",
+            scheme: "bearer",
+            type: "http",
+          },
+        },
+      },
       info: {
         title: "Authentication",
         version: "v1",

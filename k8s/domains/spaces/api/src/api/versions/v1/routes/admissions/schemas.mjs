@@ -101,7 +101,3 @@ export const AdmissionStateResponse = Type.Object(
       "Admission state together with the currently known requirement rows.",
   },
 );
-
-export const CreateAdmissionResponse = AdmissionStateResponse;
-export const GetAdmissionResponse = AdmissionStateResponse;
-export const ClaimAdmissionResponse = AdmissionStateResponse;

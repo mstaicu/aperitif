@@ -6,9 +6,7 @@ namespace: spaces
 resources:
   - ../../base
   - ../../../migrate/overlays/local
-  - spaces-api-ingress.yaml
   - namespace.yaml
-  - spaces-np.yaml
   - spaces-postgres-depl.yaml
 
 patches:
