@@ -4,8 +4,8 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - ../../api
-  - ../../migrate/local
+  - ../../base
+  - ../../../migrate/overlays/local
   - auth-api-ingress.yaml
   - auth-np.yaml
   - namespace.yaml

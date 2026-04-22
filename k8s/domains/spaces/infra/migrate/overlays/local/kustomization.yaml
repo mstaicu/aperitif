@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: spaces
+
+resources:
+  - ../../base
+
+patches:
+  - path: spaces-migrate-job.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

@@ -23,7 +23,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/env/local
+      - infra/api/overlays/local
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec

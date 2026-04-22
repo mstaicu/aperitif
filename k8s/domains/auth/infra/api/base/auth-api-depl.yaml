@@ -13,6 +13,7 @@ spec:
       labels:
         app: auth-api
     spec:
+      terminationGracePeriodSeconds: 15
       serviceAccountName: auth-api
       # Defense in deep, disable this at the pod level
       # to prevent overwrites at the service account level
@@ -75,7 +76,7 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 1
+            timeoutSeconds: 3
             failureThreshold: 2
 
           livenessProbe:

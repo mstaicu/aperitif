@@ -1,17 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: spaces
+namespace: auth
 
 resources:
-  - spaces-migrate-job.yaml
+  - ../../base
   - namespace.yaml
 
 # TODO: Add and encrypt secret
 # secretGenerator:
-#   - name: spaces-db
+#   - name: auth-db
 #     literals:
-#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/spaces?sslmode=disable
+#       - DATABASE_URL=postgres://postgres@postgres-srv:5432/auth?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true

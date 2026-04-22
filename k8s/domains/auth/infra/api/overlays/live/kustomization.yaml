@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: auth
 
 resources:
-  - ../../api
+  - ../../base
   - auth-api-ingress.yaml
   - auth-api-jwt.yaml
   - auth-np.yaml

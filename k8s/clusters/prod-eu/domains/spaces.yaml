@@ -5,7 +5,7 @@ metadata:
   name: spaces
 spec:
   interval: 10m
-  path: ./k8s/domains/spaces/infra/env/live
+  path: ./k8s/domains/spaces/infra/api/overlays/live
   prune: true
   sourceRef:
     kind: GitRepository

@@ -5,7 +5,7 @@ metadata:
   name: auth
 spec:
   interval: 10m
-  path: ./k8s/domains/auth/infra/env/live
+  path: ./k8s/domains/auth/infra/api/overlays/live
   prune: true
   sourceRef:
     kind: GitRepository

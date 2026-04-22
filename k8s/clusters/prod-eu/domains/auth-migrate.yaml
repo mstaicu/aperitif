@@ -5,7 +5,7 @@ metadata:
   name: auth-migrate
 spec:
   interval: 10m
-  path: ./k8s/domains/auth/infra/migrate/live
+  path: ./k8s/domains/auth/infra/migrate/overlays/live
   prune: true
   sourceRef:
     kind: GitRepository

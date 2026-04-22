@@ -41,5 +41,5 @@ spec:
     push:
       branch: master
   update:
-    path: ./k8s/domains/auth/infra/env/live
+    path: ./k8s/domains/auth/infra/api/overlays/live
     strategy: Setters
