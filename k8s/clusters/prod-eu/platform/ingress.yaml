@@ -26,7 +26,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
-  wait: true
-  timeout: 5m # wait ( wait=true ) 5m for resources to become ready
   dependsOn:
     - name: ingress-crds
+  wait: true
+  timeout: 5m # wait ( wait=true ) 5m for resources to become ready

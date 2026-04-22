@@ -29,7 +29,6 @@ spaces-run:
 local-platform:
 	skaffold run -m ingress-crds,ingress
 
-
 local-bootstrap:
 	$(MAKE) local-platform
 	skaffold run -m identities-db-local,spaces-db-local

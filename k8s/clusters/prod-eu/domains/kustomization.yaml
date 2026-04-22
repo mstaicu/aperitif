@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - identities-db.yaml
   - identities-migrate.yaml
-  - identities.yaml
+  - identities-api.yaml
   - spaces-db.yaml
   - spaces-migrate.yaml
-  - spaces.yaml
+  - spaces-api.yaml

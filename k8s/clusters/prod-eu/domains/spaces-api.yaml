@@ -2,16 +2,20 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: spaces-migrate
+  name: spaces-api
 spec:
   interval: 10m
-  path: ./k8s/domains/spaces/infra/migrate/overlays/live
+  path: ./k8s/domains/spaces/infra/api/overlays/live
   prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   dependsOn:
-    - name: spaces-db
-  force: true
+    - name: ingress
+    - name: spaces-migrate
   wait: true
   timeout: 5m

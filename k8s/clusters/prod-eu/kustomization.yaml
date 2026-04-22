@@ -4,4 +4,7 @@ kind: Kustomization
 namespace: flux-system
 
 resources:
-  - flux
+  - sources
+  - automation
+  - platform.yaml
+  - domains.yaml

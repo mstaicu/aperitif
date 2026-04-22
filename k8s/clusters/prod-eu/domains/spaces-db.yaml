@@ -6,9 +6,9 @@ metadata:
 spec:
   interval: 10m
   path: ./k8s/domains/spaces/infra/db/overlays/live
-  wait: true
-  timeout: 5m
   prune: true
   sourceRef:
     kind: GitRepository
     name: aperitif-repo
+  wait: true
+  timeout: 5m
