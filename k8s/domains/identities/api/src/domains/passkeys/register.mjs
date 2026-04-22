@@ -31,7 +31,7 @@ export const register =
     const { hostname, origin } = new URL(app.origin);
 
     if (credential.id !== credential.rawId) {
-      throw new Error("INVALID_CREDENTIAL");
+      throw new Error("INVALID_REGISTRATION_RESPONSE");
     }
 
     let clientDataJSON;
@@ -43,7 +43,7 @@ export const register =
         ),
       );
     } catch {
-      throw new Error("INVALID_CLIENT_DATA");
+      throw new Error("INVALID_REGISTRATION_RESPONSE");
     }
 
     if (
@@ -51,7 +51,7 @@ export const register =
       typeof clientDataJSON !== "object" ||
       typeof clientDataJSON.challenge !== "string"
     ) {
-      throw new Error("INVALID_CLIENT_DATA");
+      throw new Error("INVALID_REGISTRATION_RESPONSE");
     }
 
     let challengeBytes;
@@ -59,7 +59,7 @@ export const register =
     try {
       challengeBytes = Buffer.from(clientDataJSON.challenge, "base64url");
     } catch {
-      throw new Error("INVALID_CHALLENGE");
+      throw new Error("INVALID_REGISTRATION_RESPONSE");
     }
 
     let client;
@@ -79,7 +79,7 @@ export const register =
       );
 
       if (!challengeRow?.user_id || !challengeRow?.challenge) {
-        throw new Error("CHALLENGE_NOT_FOUND");
+        throw new Error("REGISTRATION_VERIFICATION_FAILED");
       }
 
       const expectedChallenge = challengeRow.challenge.toString("base64url");
@@ -98,14 +98,14 @@ export const register =
           },
         });
       } catch {
-        throw new Error("VERIFICATION_FAILED");
+        throw new Error("REGISTRATION_VERIFICATION_FAILED");
       }
 
       if (
         !verification?.verified ||
         !verification.registrationInfo?.credential
       ) {
-        throw new Error("NOT_VERIFIED");
+        throw new Error("REGISTRATION_VERIFICATION_FAILED");
       }
 
       const registrationCredential = verification.registrationInfo.credential;
@@ -114,11 +114,11 @@ export const register =
         typeof registrationCredential.id !== "string" ||
         !registrationCredential.publicKey
       ) {
-        throw new Error("INVALID_REGISTRATION_CREDENTIAL");
+        throw new Error("INVALID_REGISTRATION_RESPONSE");
       }
 
       if (credential.id !== registrationCredential.id) {
-        throw new Error("CREDENTIAL_ID_MISMATCH");
+        throw new Error("INVALID_REGISTRATION_RESPONSE");
       }
 
       const credentialId = Buffer.from(registrationCredential.id, "base64url");

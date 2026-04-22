@@ -37,75 +37,17 @@ export default async function (fastify, { jwks, spaces }) {
       },
     },
     async function (req, reply) {
-      try {
-        const currentUserId = await authenticate({
-          authorization: req.headers.authorization,
-          jwks,
-        });
+      const currentUserId = await authenticate({
+        authorization: req.headers.authorization,
+        jwks,
+      });
 
-        await spaces.delete({
-          currentUserId,
-          spaceId: req.params.spaceId,
-        });
+      await spaces.delete({
+        currentUserId,
+        spaceId: req.params.spaceId,
+      });
 
-        return reply.code(204).send(null);
-      } catch (err) {
-        const code = /** @type {Error} */ (err).message;
-
-        if (code === "INVALID_ACCESS_TOKEN") {
-          return reply.type("application/problem+json").code(401).send({
-            status: 401,
-            title: "Invalid access token",
-            type: "/problems/invalid-access-token",
-          });
-        }
-
-        if (code === "FORBIDDEN") {
-          return reply.type("application/problem+json").code(403).send({
-            status: 403,
-            title: "Forbidden",
-            type: "/problems/forbidden",
-          });
-        }
-
-        if (code === "SPACE_NOT_FOUND") {
-          return reply.type("application/problem+json").code(404).send({
-            status: 404,
-            title: "Space not found",
-            type: "/problems/space-not-found",
-          });
-        }
-
-        if (code === "ANOTHER_SPACE_REQUIRED") {
-          return reply.type("application/problem+json").code(409).send({
-            status: 409,
-            title: "Another space required",
-            type: "/problems/another-space-required",
-          });
-        }
-
-        if (code === "OPEN_ADMISSIONS_PRESENT") {
-          return reply.type("application/problem+json").code(409).send({
-            status: 409,
-            title: "Open admissions present",
-            type: "/problems/open-admissions-present",
-          });
-        }
-
-        if (code === "DATABASE_UNAVAILABLE") {
-          return reply.type("application/problem+json").code(503).send({
-            status: 503,
-            title: "Database unavailable",
-            type: "/problems/database-unavailable",
-          });
-        }
-
-        return reply.type("application/problem+json").code(500).send({
-          status: 500,
-          title: "Internal server error",
-          type: "/problems/internal-server-error",
-        });
-      }
+      return reply.code(204).send(null);
     },
   );
 }

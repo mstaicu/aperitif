@@ -2,9 +2,72 @@ import fp from "fastify-plugin";
 
 const VALIDATION_CONTEXTS = new Set(["body", "params", "query", "querystring"]);
 
+/** @type {Record<string, { status: number, title: string, type: string }>} */
+const PROBLEMS = {
+  ADMISSION_CLAIMED: {
+    status: 409,
+    title: "Admission already claimed",
+    type: "/problems/admission-claimed",
+  },
+  ADMISSION_NOT_FOUND: {
+    status: 404,
+    title: "Admission not found",
+    type: "/problems/admission-not-found",
+  },
+  ADMISSION_NOT_OPEN: {
+    status: 409,
+    title: "Admission not open",
+    type: "/problems/admission-not-open",
+  },
+  ANOTHER_SPACE_REQUIRED: {
+    status: 409,
+    title: "Another space required",
+    type: "/problems/another-space-required",
+  },
+  DATABASE_UNAVAILABLE: {
+    status: 503,
+    title: "Database unavailable",
+    type: "/problems/database-unavailable",
+  },
+  FORBIDDEN: {
+    status: 403,
+    title: "Forbidden",
+    type: "/problems/forbidden",
+  },
+  FORBIDDEN_SELF_TARGET: {
+    status: 403,
+    title: "Cannot self-target membership removal",
+    type: "/problems/forbidden-self-target",
+  },
+  INVALID_ACCESS_TOKEN: {
+    status: 401,
+    title: "Invalid access token",
+    type: "/problems/invalid-access-token",
+  },
+  LAST_OWNER: {
+    status: 409,
+    title: "Cannot remove last owner",
+    type: "/problems/last-owner",
+  },
+  MEMBERSHIP_ALREADY_EXISTS: {
+    status: 409,
+    title: "Membership already exists",
+    type: "/problems/membership-already-exists",
+  },
+  OPEN_ADMISSIONS_PRESENT: {
+    status: 409,
+    title: "Open admissions present",
+    type: "/problems/open-admissions-present",
+  },
+  SPACE_NOT_FOUND: {
+    status: 404,
+    title: "Space not found",
+    type: "/problems/space-not-found",
+  },
+};
+
 /**
- * Normalize Fastify request-layer failures to Problem Details.
- * Domain and application errors stay owned by the routes.
+ * Normalize request-layer and known application/domain failures to Problem Details.
  */
 export default fp(async function requestProblemDetails(fastify) {
   fastify.setNotFoundHandler((_, reply) =>
@@ -33,14 +96,28 @@ export default fp(async function requestProblemDetails(fastify) {
       });
     }
 
-    if (typeof status !== "number" || status < 400 || status >= 500) {
-      throw err;
+    const problem = PROBLEMS[err.code || err.message];
+
+    if (problem) {
+      return reply.type("application/problem+json").code(problem.status).send({
+        status: problem.status,
+        title: problem.title,
+        type: problem.type,
+      });
     }
 
-    return reply.type("application/problem+json").code(status).send({
-      status,
-      title: "Request rejected",
-      type: "/problems/request-rejected",
+    if (typeof status === "number" && status >= 400 && status < 500) {
+      return reply.type("application/problem+json").code(status).send({
+        status,
+        title: "Request rejected",
+        type: "/problems/request-rejected",
+      });
+    }
+
+    return reply.type("application/problem+json").code(500).send({
+      status: 500,
+      title: "Internal server error",
+      type: "/problems/internal-server-error",
     });
   };
 

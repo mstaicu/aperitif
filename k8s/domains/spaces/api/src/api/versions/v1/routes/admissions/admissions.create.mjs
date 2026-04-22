@@ -31,42 +31,16 @@ export default async function (fastify, { admissions, jwks }) {
       },
     },
     async function (req, reply) {
-      try {
-        const currentUserId = await authenticateOptional({
-          authorization: req.headers.authorization,
-          jwks,
-        });
+      const currentUserId = await authenticateOptional({
+        authorization: req.headers.authorization,
+        jwks,
+      });
 
-        return reply.code(201).send(
-          await admissions.createSelfStarted({
-            currentUserId,
-          }),
-        );
-      } catch (err) {
-        const code = /** @type {Error} */ (err).message;
-
-        if (code === "INVALID_ACCESS_TOKEN") {
-          return reply.type("application/problem+json").code(401).send({
-            status: 401,
-            title: "Invalid access token",
-            type: "/problems/invalid-access-token",
-          });
-        }
-
-        if (code === "DATABASE_UNAVAILABLE") {
-          return reply.type("application/problem+json").code(503).send({
-            status: 503,
-            title: "Database unavailable",
-            type: "/problems/database-unavailable",
-          });
-        }
-
-        return reply.type("application/problem+json").code(500).send({
-          status: 500,
-          title: "Internal server error",
-          type: "/problems/internal-server-error",
-        });
-      }
+      return reply.code(201).send(
+        await admissions.createSelfStarted({
+          currentUserId,
+        }),
+      );
     },
   );
 }

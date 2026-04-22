@@ -31,7 +31,7 @@ export const login =
     const { hostname, origin } = new URL(app.origin);
 
     if (authentication.id !== authentication.rawId) {
-      throw new Error("INVALID_CREDENTIAL");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     let clientDataJSON;
@@ -44,7 +44,7 @@ export const login =
         ).toString("utf8"),
       );
     } catch {
-      throw new Error("INVALID_CLIENT_DATA");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     if (
@@ -52,7 +52,7 @@ export const login =
       typeof clientDataJSON !== "object" ||
       typeof clientDataJSON.challenge !== "string"
     ) {
-      throw new Error("INVALID_CLIENT_DATA");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     let challengeBytes;
@@ -60,7 +60,7 @@ export const login =
     try {
       challengeBytes = Buffer.from(clientDataJSON.challenge, "base64url");
     } catch {
-      throw new Error("INVALID_CHALLENGE");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     let client;
@@ -80,7 +80,7 @@ export const login =
       );
 
       if (!challengeRow) {
-        throw new Error("CHALLENGE_NOT_FOUND");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       client = await persistence.db.connect();
@@ -99,7 +99,7 @@ export const login =
       );
 
       if (!credential) {
-        throw new Error("CREDENTIAL_NOT_FOUND");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       if (authentication.response.userHandle) {
@@ -114,7 +114,7 @@ export const login =
         );
 
         if (!userHandle.equals(expectedHandle)) {
-          throw new Error("INVALID_USER_HANDLE");
+          throw new Error("AUTHENTICATION_FAILED");
         }
       }
 
@@ -134,18 +134,18 @@ export const login =
           response: authentication,
         });
       } catch {
-        throw new Error("VERIFICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       if (!verification.verified) {
-        throw new Error("NOT_VERIFIED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       const newCounter = verification.authenticationInfo.newCounter;
       const oldCounter = Number(credential.sign_count);
 
       if (newCounter > 0 && newCounter <= oldCounter) {
-        throw new Error("COUNTER_REPLAY");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       await client.query(
