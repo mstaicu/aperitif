@@ -1,5 +1,5 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { SpacesResponse } from "./schemas.mjs";
 
 /**
@@ -22,9 +22,9 @@ export default async function (fastify, { jwks, spaces }) {
         operationId: "listSpaces",
         response: {
           200: SpacesResponse,
-          401: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          401: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "List caller spaces",
@@ -43,14 +43,26 @@ export default async function (fastify, { jwks, spaces }) {
         const code = /** @type {Error} */ (err).message;
 
         if (code === "INVALID_ACCESS_TOKEN") {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid access token",
+            type: "/problems/invalid-access-token",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

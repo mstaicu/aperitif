@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
 
 /**
@@ -21,11 +21,11 @@ export default async function (fastify, { passkeys }) {
         operationId: "registerPasskey",
         response: {
           201: RegistrationSuccessResponse,
-          400: ErrorResponse,
-          401: ErrorResponse,
-          409: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          400: ProblemResponse,
+          401: ProblemResponse,
+          409: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         summary: "Finalize passkey registration",
         tags: ["passkeys"],
@@ -51,7 +51,11 @@ export default async function (fastify, { passkeys }) {
           code === "INVALID_REGISTRATION_CREDENTIAL" ||
           code === "CREDENTIAL_ID_MISMATCH"
         ) {
-          return reply.code(400).send(null);
+          return reply.type("application/problem+json").code(400).send({
+            status: 400,
+            title: "Invalid registration response",
+            type: "/problems/invalid-registration-response",
+          });
         }
 
         if (
@@ -59,18 +63,34 @@ export default async function (fastify, { passkeys }) {
           code === "VERIFICATION_FAILED" ||
           code === "NOT_VERIFIED"
         ) {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Registration verification failed",
+            type: "/problems/registration-verification-failed",
+          });
         }
 
         if (code === "CREDENTIAL_ALREADY_EXISTS") {
-          return reply.code(409).send(null);
+          return reply.type("application/problem+json").code(409).send({
+            status: 409,
+            title: "Passkey already exists",
+            type: "/problems/credential-already-exists",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

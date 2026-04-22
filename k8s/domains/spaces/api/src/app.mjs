@@ -2,6 +2,7 @@ import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 
 import probes from "./api/probes/index.mjs";
+import validationProblemDetails from "./api/shared/validation-problem-details.mjs";
 import v1 from "./api/versions/v1/index.mjs";
 
 /**
@@ -42,6 +43,7 @@ export const createApp = async ({ ctx, domains, fastifyOtel }) => {
     .setValidatorCompiler(TypeBoxValidatorCompiler)
     .withTypeProvider();
 
+  await app.register(validationProblemDetails);
   await app.register(fastifyOtel.plugin());
   await app.register(probes, { db: ctx.persistence.db });
   await app.register(v1, { domains, jwks: ctx.security.jwks, prefix: "/v1" });

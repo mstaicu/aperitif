@@ -3,7 +3,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 // Add or remove business steps here. Owning domains should publish
 // status updates for these requirement names; spaces only tracks status.
 
-const requirements = ["profile", "terms"];
+const requirements = ["profile"];
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -11,8 +11,8 @@ const requirements = ["profile", "terms"];
  *   admission: {
  *     id: string,
  *     requested_role: string,
- *     space_id: null,
- *     status: "open",
+ *     space_id: string | null,
+ *     status: "open" | "completed",
  *     user_id: string | null,
  *   },
  *   requirements: {
@@ -52,15 +52,49 @@ export const create =
         );
       }
 
+      let finalizedAdmission = admission;
+
+      if (requirements.length === 0 && currentUserId) {
+        const {
+          rows: [space],
+        } = await client.query(
+          `
+            INSERT INTO spaces DEFAULT VALUES
+            RETURNING id
+          `,
+        );
+
+        await client.query(
+          `
+            INSERT INTO space_memberships (space_id, user_id, role)
+            VALUES ($1, $2, $3)
+          `,
+          [space.id, currentUserId, admission.requested_role],
+        );
+
+        ({
+          rows: [finalizedAdmission],
+        } = await client.query(
+          `
+            UPDATE space_admissions
+            SET space_id = $2,
+                status = 'completed'
+            WHERE id = $1
+            RETURNING id, space_id, user_id, requested_role, status
+          `,
+          [admission.id, space.id],
+        ));
+      }
+
       await client.query("COMMIT");
 
       return {
         admission: {
-          id: admission.id,
-          requested_role: admission.requested_role,
-          space_id: admission.space_id,
-          status: "open",
-          user_id: admission.user_id,
+          id: finalizedAdmission.id,
+          requested_role: finalizedAdmission.requested_role,
+          space_id: finalizedAdmission.space_id,
+          status: finalizedAdmission.status,
+          user_id: finalizedAdmission.user_id,
         },
         requirements: requirements.map((requirement) => ({
           requirement,

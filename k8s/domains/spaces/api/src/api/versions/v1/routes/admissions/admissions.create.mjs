@@ -1,5 +1,5 @@
 import { authenticateOptional } from "../../../../../platform/security/jwt.mjs";
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { CreateAdmissionResponse } from "./schemas.mjs";
 
 /**
@@ -22,9 +22,9 @@ export default async function (fastify, { admissions, jwks }) {
         operationId: "createAdmission",
         response: {
           201: CreateAdmissionResponse,
-          401: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          401: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         summary: "Create self-started admission",
         tags: ["admissions"],
@@ -46,14 +46,26 @@ export default async function (fastify, { admissions, jwks }) {
         const code = /** @type {Error} */ (err).message;
 
         if (code === "INVALID_ACCESS_TOKEN") {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid access token",
+            type: "/problems/invalid-access-token",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

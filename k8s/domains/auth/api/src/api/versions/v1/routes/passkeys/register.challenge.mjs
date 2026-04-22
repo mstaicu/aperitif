@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { RegistrationChallengeResponse } from "./schemas.mjs";
 
 /**
@@ -20,8 +20,8 @@ export default async function (fastify, { passkeys }) {
         operationId: "createPasskeyRegistrationChallenge",
         response: {
           200: RegistrationChallengeResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         summary: "Create passkey registration challenge",
         tags: ["passkeys"],
@@ -37,10 +37,18 @@ export default async function (fastify, { passkeys }) {
         return reply.code(200).send({ publicKey });
       } catch (err) {
         if (/** @type {Error} */ (err).message === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

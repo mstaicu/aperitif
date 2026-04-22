@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { SessionTokenBody, SessionTokenResponse } from "./schemas.mjs";
 
 /**
@@ -21,10 +21,10 @@ export default async function (fastify, { sessions }) {
         operationId: "exchangeSessionToken",
         response: {
           200: SessionTokenResponse,
-          400: ErrorResponse,
-          401: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          400: ProblemResponse,
+          401: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         summary: "Mint access token",
         tags: ["sessions"],
@@ -34,7 +34,11 @@ export default async function (fastify, { sessions }) {
       const [type, token] = (req.headers.authorization || "").split(" ");
 
       if (type !== "Bearer" || !token) {
-        return reply.code(401).send(null);
+        return reply.type("application/problem+json").code(401).send({
+          status: 401,
+          title: "Invalid authorization header",
+          type: "/problems/invalid-authorization-header",
+        });
       }
 
       const input = {
@@ -50,18 +54,34 @@ export default async function (fastify, { sessions }) {
         const code = /** @type {Error} */ (err).message;
 
         if (code === "INVALID_AUDIENCE") {
-          return reply.code(400).send(null);
+          return reply.type("application/problem+json").code(400).send({
+            status: 400,
+            title: "Invalid audience",
+            type: "/problems/invalid-audience",
+          });
         }
 
         if (code === "INVALID_REFRESH_TOKEN" || code === "SESSION_NOT_FOUND") {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid refresh token",
+            type: "/problems/invalid-refresh-token",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

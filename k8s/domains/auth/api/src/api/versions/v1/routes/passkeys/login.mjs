@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { LoginBody, LoginSuccessResponse } from "./schemas.mjs";
 
 /**
@@ -21,10 +21,10 @@ export default async function (fastify, { passkeys }) {
         operationId: "loginWithPasskey",
         response: {
           200: LoginSuccessResponse,
-          400: ErrorResponse,
-          401: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          400: ProblemResponse,
+          401: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         summary: "Finalize passkey login",
         tags: ["passkeys"],
@@ -48,7 +48,11 @@ export default async function (fastify, { passkeys }) {
           code === "INVALID_CLIENT_DATA" ||
           code === "INVALID_CHALLENGE"
         ) {
-          return reply.code(400).send(null);
+          return reply.type("application/problem+json").code(400).send({
+            status: 400,
+            title: "Invalid authentication response",
+            type: "/problems/invalid-authentication-response",
+          });
         }
 
         if (
@@ -59,14 +63,26 @@ export default async function (fastify, { passkeys }) {
           code === "NOT_VERIFIED" ||
           code === "COUNTER_REPLAY"
         ) {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Authentication failed",
+            type: "/problems/authentication-failed",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );

@@ -1,5 +1,5 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { ErrorResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { AdmissionParams, ClaimAdmissionResponse } from "./schemas.mjs";
 
 /**
@@ -24,12 +24,12 @@ export default async function (fastify, { admissions, jwks }) {
         params: AdmissionParams,
         response: {
           200: ClaimAdmissionResponse,
-          400: ErrorResponse,
-          401: ErrorResponse,
-          404: ErrorResponse,
-          409: ErrorResponse,
-          500: ErrorResponse,
-          503: ErrorResponse,
+          400: ProblemResponse,
+          401: ProblemResponse,
+          404: ProblemResponse,
+          409: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Claim admission and return state",
@@ -53,26 +53,50 @@ export default async function (fastify, { admissions, jwks }) {
         const code = /** @type {Error} */ (err).message;
 
         if (code === "INVALID_ACCESS_TOKEN") {
-          return reply.code(401).send(null);
+          return reply.type("application/problem+json").code(401).send({
+            status: 401,
+            title: "Invalid access token",
+            type: "/problems/invalid-access-token",
+          });
         }
 
         if (code === "ADMISSION_NOT_FOUND") {
-          return reply.code(404).send(null);
+          return reply.type("application/problem+json").code(404).send({
+            status: 404,
+            title: "Admission not found",
+            type: "/problems/admission-not-found",
+          });
         }
 
         if (code === "ADMISSION_CLAIMED") {
-          return reply.code(409).send(null);
+          return reply.type("application/problem+json").code(409).send({
+            status: 409,
+            title: "Admission already claimed",
+            type: "/problems/admission-claimed",
+          });
         }
 
         if (code === "ADMISSION_NOT_OPEN") {
-          return reply.code(409).send(null);
+          return reply.type("application/problem+json").code(409).send({
+            status: 409,
+            title: "Admission not open",
+            type: "/problems/admission-not-open",
+          });
         }
 
         if (code === "DATABASE_UNAVAILABLE") {
-          return reply.code(503).send(null);
+          return reply.type("application/problem+json").code(503).send({
+            status: 503,
+            title: "Database unavailable",
+            type: "/problems/database-unavailable",
+          });
         }
 
-        return reply.code(500).send(null);
+        return reply.type("application/problem+json").code(500).send({
+          status: 500,
+          title: "Internal server error",
+          type: "/problems/internal-server-error",
+        });
       }
     },
   );
