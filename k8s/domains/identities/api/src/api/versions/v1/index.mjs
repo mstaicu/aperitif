@@ -32,7 +32,9 @@ export default async (fastify, { domains }) => {
         },
       },
       info: {
-        title: "Authentication",
+        description:
+          "Identity API for passkey registration, passkey authentication, and session token lifecycle management.",
+        title: "Identities",
         version: "v1",
       },
       servers: [

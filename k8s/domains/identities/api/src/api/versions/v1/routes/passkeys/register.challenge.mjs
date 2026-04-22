@@ -16,7 +16,7 @@ export default async function (fastify, { passkeys }) {
     {
       schema: {
         description:
-          "Generates a WebAuthn credential creation challenge used to register a new passkey.",
+          "Generates and persists a one-time WebAuthn credential creation challenge used to register a new passkey and bootstrap a new identity.",
         operationId: "createPasskeyRegistrationChallenge",
         response: {
           200: RegistrationChallengeResponse,
@@ -32,9 +32,9 @@ export default async function (fastify, { passkeys }) {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
-        const publicKey = await passkeys.createRegisterChallenge();
-
-        return reply.code(200).send({ publicKey });
+        return reply
+          .code(200)
+          .send({ publicKey: await passkeys.createRegisterChallenge() });
       } catch (err) {
         if (/** @type {Error} */ (err).message === "DATABASE_UNAVAILABLE") {
           return reply.type("application/problem+json").code(503).send({

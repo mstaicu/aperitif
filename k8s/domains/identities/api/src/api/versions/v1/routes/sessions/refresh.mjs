@@ -16,7 +16,7 @@ export default async function (fastify, { sessions }) {
     {
       schema: {
         description:
-          "Exchange a refresh token provided in the Authorization bearer header for a new refresh token.",
+          "Rotate a refresh token provided in the Authorization bearer header and return the newly issued refresh token for the same identity session.",
         operationId: "refreshSession",
         response: {
           200: RefreshResponse,
@@ -25,7 +25,7 @@ export default async function (fastify, { sessions }) {
           503: ProblemResponse,
         },
         security: [{ refreshTokenAuth: [] }],
-        summary: "Refresh session",
+        summary: "Rotate refresh token",
         tags: ["sessions"],
       },
     },

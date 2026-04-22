@@ -17,7 +17,7 @@ export default async function (fastify, { passkeys }) {
       schema: {
         body: RegistrationBody,
         description:
-          "Verifies the WebAuthn registration response and stores the credential.",
+          "Verifies the WebAuthn registration response, creates the identity if needed, stores the credential, and issues the first refresh token.",
         operationId: "registerPasskey",
         response: {
           201: RegistrationSuccessResponse,

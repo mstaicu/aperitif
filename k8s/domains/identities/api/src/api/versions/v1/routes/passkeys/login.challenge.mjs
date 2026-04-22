@@ -16,14 +16,14 @@ export default async function (fastify, { passkeys }) {
     {
       schema: {
         description:
-          "Generates a WebAuthn authentication challenge for passkey login",
+          "Generates and persists a one-time WebAuthn authentication challenge for passkey login.",
         operationId: "createPasskeyLoginChallenge",
         response: {
           200: AuthenticationChallengeResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        summary: "Create authentication challenge",
+        summary: "Create passkey login challenge",
         tags: ["passkeys"],
       },
     },
@@ -32,10 +32,8 @@ export default async function (fastify, { passkeys }) {
         reply.header("Cache-Control", "no-store");
         reply.header("Pragma", "no-cache");
 
-        const publicKey = await passkeys.createLoginChallenge();
-
         return reply.send({
-          publicKey,
+          publicKey: await passkeys.createLoginChallenge(),
         });
       } catch (err) {
         if (/** @type {Error} */ (err).message === "DATABASE_UNAVAILABLE") {

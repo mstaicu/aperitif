@@ -17,7 +17,7 @@ export default async function (fastify, { sessions }) {
       schema: {
         body: SessionTokenBody,
         description:
-          "Exchange a refresh token provided in the Authorization bearer header for a short-lived audience-scoped access token. The request body should contain only the target audience.",
+          "Exchange a refresh token provided in the Authorization bearer header for a short-lived audience-scoped JWT access token. The request body should contain only the target audience.",
         operationId: "exchangeSessionToken",
         response: {
           200: SessionTokenResponse,
@@ -27,7 +27,7 @@ export default async function (fastify, { sessions }) {
           503: ProblemResponse,
         },
         security: [{ refreshTokenAuth: [] }],
-        summary: "Mint access token",
+        summary: "Mint audience-scoped access token",
         tags: ["sessions"],
       },
     },

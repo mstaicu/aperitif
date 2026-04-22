@@ -17,7 +17,7 @@ export default async function (fastify, { passkeys }) {
       schema: {
         body: LoginBody,
         description:
-          "Verifies the WebAuthn authentication response and issues a refresh token if successful.",
+          "Verifies the WebAuthn authentication response for an existing identity and issues a refresh token if successful.",
         operationId: "loginWithPasskey",
         response: {
           200: LoginSuccessResponse,
