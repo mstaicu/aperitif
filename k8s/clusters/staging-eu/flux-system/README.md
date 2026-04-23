@@ -14,6 +14,9 @@ That means:
   and `Secret/flux-system`
 - the `flux-system` repo source and secret referenced by the manifests are
   created by bootstrap
+- by default this comes from `--namespace=flux-system` and
+  `--secret-name=flux-system`, and the generated `gotk-sync.yaml` uses those
+  names
 - cluster manifests should reference `sourceRef.name: flux-system`
 - you do not need a second `GitRepository` or a separate `github-ssh` secret
   for this same repo
@@ -44,6 +47,8 @@ flux bootstrap github \
  --repository=aperitif \
  --branch=master \
  --path=k8s/clusters/staging-eu \
+ --namespace=flux-system \
+ --secret-name=flux-system \
  --personal \
  --token-auth \
  --components=source-controller,kustomize-controller \
@@ -60,6 +65,10 @@ flux bootstrap github \
   - branch Flux will reconcile from and image automation will push back to
 - `--path=k8s/clusters/staging-eu`
   - cluster root inside the Git repo for this specific cluster
+- `--namespace=flux-system`
+  - install Flux into the `flux-system` namespace and generate bootstrap sync objects there
+- `--secret-name=flux-system`
+  - store the Git auth secret as `Secret/flux-system`, which the generated `GitRepository/flux-system` uses
 - `--personal`
   - repo belongs to a personal GitHub account, not an organization
 - `--token-auth`

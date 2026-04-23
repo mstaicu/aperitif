@@ -1,8 +1,12 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import passkeyRoutes from "./routes/passkeys/index.mjs";
-import sessionRoutes from "./routes/sessions/index.mjs";
+import loginChallenge from "./routes/passkeys/login.challenge.mjs";
+import login from "./routes/passkeys/login.mjs";
+import registerChallenge from "./routes/passkeys/register.challenge.mjs";
+import register from "./routes/passkeys/register.mjs";
+import refresh from "./routes/sessions/refresh.mjs";
+import token from "./routes/sessions/token.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -59,11 +63,27 @@ export default async (fastify, { domains }) => {
     routePrefix: "/docs",
   });
 
-  await fastify.register(passkeyRoutes, {
+  await fastify.register(loginChallenge, {
     passkeys: domains.passkeys,
     prefix: "/passkeys",
   });
-  await fastify.register(sessionRoutes, {
+  await fastify.register(login, {
+    passkeys: domains.passkeys,
+    prefix: "/passkeys",
+  });
+  await fastify.register(registerChallenge, {
+    passkeys: domains.passkeys,
+    prefix: "/passkeys",
+  });
+  await fastify.register(register, {
+    passkeys: domains.passkeys,
+    prefix: "/passkeys",
+  });
+  await fastify.register(refresh, {
+    prefix: "/sessions",
+    sessions: domains.sessions,
+  });
+  await fastify.register(token, {
     prefix: "/sessions",
     sessions: domains.sessions,
   });

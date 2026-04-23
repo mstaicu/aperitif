@@ -9,9 +9,10 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
+ * @typedef {import('./domains/passkeys/index.mjs').PasskeysDomain} PasskeysDomain
+ * @typedef {import('./domains/sessions/index.mjs').SessionsDomain} SessionsDomain
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
- * @typedef {import('./domains/index.mjs').Domains} Domains
  */
 
 /**
@@ -27,7 +28,10 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @param {{
  *  ctx: Ctx,
- *  domains: Domains,
+ *  domains: {
+ *    passkeys: PasskeysDomain,
+ *    sessions: SessionsDomain,
+ *  },
  *  fastifyOtel: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}

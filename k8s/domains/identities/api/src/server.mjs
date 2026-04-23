@@ -1,5 +1,6 @@
 import { createApp } from "./app.mjs";
-import { createDomains } from "./domains/index.mjs";
+import { createPasskeysDomain } from "./domains/passkeys/index.mjs";
+import { createSessionsDomain } from "./domains/sessions/index.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
 
@@ -31,7 +32,10 @@ try {
 
   ctx = await createContext();
 
-  const domains = createDomains(ctx);
+  const domains = {
+    passkeys: createPasskeysDomain(ctx),
+    sessions: createSessionsDomain(ctx),
+  };
   const lifecycle = ctx.lifecycle;
 
   app = await createApp({
