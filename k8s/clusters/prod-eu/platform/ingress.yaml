@@ -9,7 +9,7 @@ spec:
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
-    name: aperitif-repo
+    name: flux-system
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready
 
@@ -25,7 +25,7 @@ spec:
   prune: true # remove resources no longer in the manifests
   sourceRef:
     kind: GitRepository
-    name: aperitif-repo
+    name: flux-system
   dependsOn:
     - name: ingress-crds
   wait: true
