@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-spaces-api-and-migrate-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: spaces-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: spaces-api
+        - podSelector:
+            matchLabels:
+              app: spaces-migrate
+      ports:
+        - protocol: TCP
+          port: 5432

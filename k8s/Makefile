@@ -25,3 +25,18 @@ dev:
 	kubectl wait -n spaces --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n spaces job/migrate --all-containers=true; exit 1; }
 
 	exec skaffold dev -m identities-api-dev,spaces-api-dev
+
+sops-updatekeys:
+	@rg -l '^sops:' domains platform -g '*.yaml' | while read -r file; do \
+		echo "Updating $$file"; \
+		sops updatekeys -y "$$file"; \
+	done
+
+sops-secret:
+	@kubectl create secret generic sops-age \
+		-n flux-system \
+		--from-file=identity.agekey="$(SOPS_AGE_KEY_FILE)" \
+		--dry-run=client -o yaml | kubectl apply -f -
+
+sops-pubkey:
+	@age-keygen -y "$(SOPS_AGE_KEY_FILE)"

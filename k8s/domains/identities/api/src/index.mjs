@@ -9,8 +9,6 @@ nconf
     "JWT_PUBLIC_KEY_PATH",
     "JWT_ALLOWED_AUDIENCES",
 
-    "NATS_URL",
-
     "ORIGIN",
   ]);
 

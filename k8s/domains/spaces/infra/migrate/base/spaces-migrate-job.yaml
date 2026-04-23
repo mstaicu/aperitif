@@ -7,6 +7,9 @@ spec:
   backoffLimit: 4
   activeDeadlineSeconds: 300
   template:
+    metadata:
+      labels:
+        app: spaces-migrate
     spec:
       restartPolicy: Never
 
