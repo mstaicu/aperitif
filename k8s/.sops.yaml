@@ -1,7 +1,39 @@
+# SOPS zero-to-hero:
+# 1. Install age + sops.
+# 2. Generate a local private key once, e.g.:
+#      mkdir -p ~/.config/sops/age
+#      age-keygen -o ~/.config/sops/age/keys.txt
+# 3. Point SOPS at that file so local encrypt/decrypt is deterministic:
+#      export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+#    Why: sops needs the private key locally; this avoids guessing where it is.
+# 4. Print the matching public key and copy it into the right rule below:
+#      age-keygen -y "$SOPS_AGE_KEY_FILE"
+#    This file stores public recipients only. Never commit private keys.
+# 5. Encrypt or edit a secret file with sops:
+#      sops -e -i <file.yaml>
+#      sops <file.yaml>
+# 6. After changing recipients below, re-encrypt affected files:
+#      sops updatekeys -r <path>
+# 7. For Flux live decryption, create the cluster secret from the same private key:
+#      kubectl create secret generic sops-age -n flux-system \
+#        --from-file=identity.agekey="$SOPS_AGE_KEY_FILE"
+# 8. Current state: local and live use the same recipient.
+#    When split later, keep engineer/shared keys on `local` and cluster plus
+#    recovery keys on `live`.
+
 creation_rules:
-  # Note: You must leave metadata, kind or apiVersion in plain text.
-  # An easy way to do this is limiting the encrypted keys with the flag
-  # --encrypted-regex '^(data|stringData)$' in your sops encrypt command.
-  - encrypted_regex: "^(data|stringData)$"
+  # Encrypt only Secret payloads. Keep metadata/apiVersion/kind readable.
+  # These rules cover both domain overlays and platform overlays.
+  - path_regex: ^(domains|platform)/.*/overlays/local/.*\.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
     age: >-
       age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+
+  - path_regex: ^(domains|platform)/.*/overlays/live/.*\.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
+    age: >-
+      age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+
+# Test with:
+#   sops --config .sops.yaml --filename-override <matching/path.yaml> -e /tmp/sops-test.yaml
+# A matching path should encrypt, a non-matching path should fail with "no matching creation rules found".

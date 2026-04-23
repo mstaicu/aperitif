@@ -133,3 +133,32 @@ flux install \
 source-controller → uses flux-system
 kustomize-controller → uses sops-age
 image-automation-controller → also uses flux-system
+
+## Post-bootstrap SOPS secret
+
+Bootstrap does not create `sops-age`.
+
+After bootstrap, create it manually in `flux-system` from the age private key
+that matches the public recipient in `.sops.yaml`.
+
+1. Verify the private key matches the recipient in `.sops.yaml`:
+
+```bash
+age-keygen -y /path/to/your/age.agekey
+```
+
+2. Create the decryption secret:
+
+```bash
+kubectl create secret generic sops-age \
+ -n flux-system \
+ --from-file=identity.agekey=/path/to/your/age.agekey
+```
+
+Important:
+
+- the file key inside the secret must end with `.agekey`
+- the private key must match the public age recipient in `.sops.yaml`
+- Flux uses this secret for Kustomizations that specify:
+  - `decryption.provider: sops`
+  - `decryption.secretRef.name: sops-age`
