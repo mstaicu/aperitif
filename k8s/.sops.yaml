@@ -17,14 +17,14 @@
 # 7. For Flux live decryption, create the cluster secret from the same private key:
 #      kubectl create secret generic sops-age -n flux-system \
 #        --from-file=identity.agekey="$SOPS_AGE_KEY_FILE"
-# 8. Current state: local and live use the same recipient.
-#    When split later, keep engineer/shared keys on `local` and cluster plus
+# 8. Current state: dev and live use the same recipient.
+#    When split later, keep engineer/shared keys on `dev` and cluster plus
 #    recovery keys on `live`.
 
 creation_rules:
   # Encrypt only Secret payloads. Keep metadata/apiVersion/kind readable.
   # These rules cover both domain overlays and platform overlays.
-  - path_regex: ^(domains|platform)/.*/overlays/local/.*\.ya?ml$
+  - path_regex: ^(domains|platform)/.*/overlays/dev/.*\.ya?ml$
     encrypted_regex: "^(data|stringData)$"
     age: >-
       age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0

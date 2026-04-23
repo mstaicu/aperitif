@@ -18,7 +18,7 @@ helm template linkerd-control-plane linkerd/linkerd-control-plane \
 The rendered base assumes external identity material.
 
 - `platform/mesh/base` contains the shared Linkerd control plane manifests
-- `platform/mesh/overlays/local` provides:
+- `platform/mesh/overlays/dev` provides:
   - `linkerd-identity-trust-roots` ConfigMap
   - `linkerd-identity-issuer` Secret
   - `linkerd-webhook-trust-roots` ConfigMap
@@ -30,7 +30,7 @@ The rendered base assumes external identity material.
   - `linkerd-*-k8s-tls` webhook Secrets
 
 Both overlays follow the same Helm-compatible model.
-The only difference between local and live should be the certificate material.
+The only difference between dev and live should be the certificate material.
 
 Webhook TLS is managed separately from Linkerd identity TLS.
 
@@ -52,7 +52,7 @@ export SOPS_AGE_KEY_FILE=/Users/mircea/.config/sops/age/keys.txt
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-for env in local live; do
+for env in dev live; do
   envdir="platform/mesh/overlays/$env"
   workdir="$tmp/$env"
   mkdir -p "$workdir"

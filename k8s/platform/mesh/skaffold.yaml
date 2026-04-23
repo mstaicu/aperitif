@@ -20,7 +20,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - overlays/local
+      - overlays/dev
 
     buildArgs:
       - --enable-alpha-plugins
