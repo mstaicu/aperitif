@@ -21,6 +21,12 @@ const AuthenticatorTransport = Type.Union([
   Type.Literal("usb"),
 ]);
 
+const PublicKeyCredentialHint = Type.Union([
+  Type.Literal("client-device"),
+  Type.Literal("hybrid"),
+  Type.Literal("security-key"),
+]);
+
 const PublicKeyCredentialDescriptorJSON = Type.Object(
   {
     id: base64UrlString("Credential identifier encoded as base64url."),
@@ -243,6 +249,12 @@ export const RegistrationChallengeResponse = Type.Object(
               "Optional WebAuthn extensions advertised for registration.",
           }),
         ),
+        hints: Type.Optional(
+          Type.Array(PublicKeyCredentialHint, {
+            description:
+              "Browser hints for preferred authenticator categories.",
+          }),
+        ),
         pubKeyCredParams: Type.Array(PublicKeyCredentialParameters, {
           description: "Credential algorithm options offered to the browser.",
         }),
@@ -303,6 +315,12 @@ export const AuthenticationChallengeResponse = Type.Object(
           Type.Unknown({
             description:
               "Optional WebAuthn extensions advertised for authentication.",
+          }),
+        ),
+        hints: Type.Optional(
+          Type.Array(PublicKeyCredentialHint, {
+            description:
+              "Browser hints for preferred authenticator categories.",
           }),
         ),
         rpId: Type.Optional(

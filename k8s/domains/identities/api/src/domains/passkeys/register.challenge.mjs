@@ -14,6 +14,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 export const createRegisterChallenge = (ctx) => async () => {
   try {
     const userId = randomUUID();
+    const userLabel = `identity-${userId.slice(0, 8)}`;
 
     const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
     const challenge = randomBytes(32);
@@ -38,8 +39,9 @@ export const createRegisterChallenge = (ctx) => async () => {
       rpID: hostname,
       rpName: hostname,
       timeout: 60000,
+      userDisplayName: userLabel,
       userID: webauthnUserHandle,
-      userName: "",
+      userName: userLabel,
     });
   } catch (err) {
     if (isDatabaseUnavailable(err)) {

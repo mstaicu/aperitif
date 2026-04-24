@@ -14,4 +14,4 @@ spec:
     - name: spaces-db
   force: true
   wait: true
-  timeout: 5m
+  timeout: 5m # wait ( wait=true ) 5m for resources to become ready
