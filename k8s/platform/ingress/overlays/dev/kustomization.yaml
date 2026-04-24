@@ -7,12 +7,7 @@ resources:
   - ../../base
   - traefik-gateway.yaml
   - traefik-ingress.yaml
-  - traefik-lb.yaml
   - traefik-ns.yaml
-  - traefik-svc.yaml
 
 patches:
   - path: traefik-depl.yaml
-
-generators:
-  - traefik-ksops-generator.yaml

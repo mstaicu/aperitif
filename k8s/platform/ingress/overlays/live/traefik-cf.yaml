@@ -1,3 +1,6 @@
+#
+# Encrypt using age + sops, decrypt in flux.cd
+#
 apiVersion: v1
 kind: Secret
 

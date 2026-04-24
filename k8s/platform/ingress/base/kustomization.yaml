@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
   - traefik-depl.yaml
   - traefik-rbac.yaml
+  - traefik-lb.yaml
+  - traefik-svc.yaml

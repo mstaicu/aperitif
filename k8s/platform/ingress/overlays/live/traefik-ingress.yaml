@@ -6,6 +6,7 @@ metadata:
 spec:
   hostnames:
     - tma.com
+
   parentRefs:
     - name: traefik-pgw
       sectionName: https
@@ -15,6 +16,7 @@ spec:
         - path:
             type: PathPrefix
             value: /api
+
         - path:
             type: PathPrefix
             value: /dashboard
