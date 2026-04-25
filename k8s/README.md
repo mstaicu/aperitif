@@ -1,175 +1,239 @@
-# Aperitif Platform
+# Aperitif Kubernetes
 
-> **Production-Ready, GitOps-First, Secure Microservices Platform**
+This repo is the Kubernetes and delivery spine for Aperitif. It keeps platform capabilities and domain capabilities explicit, composable, and deployable through the same mental model in local development and Flux-managed environments.
 
----
+The project is intentionally not hiding deployment units behind a fake "app" abstraction. A domain is composed from small units with clear ownership:
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Local Development](#local-development)
-- [GitOps & Environments](#gitops--environments)
-- [Secrets Management](#secrets-management)
-- [Service Development Workflow](#service-development-workflow)
-- [Troubleshooting](#troubleshooting)
-- [Security & Compliance](#security--compliance)
-- [Onboarding New Engineers](#onboarding-new-engineers)
-
----
-
-## Overview
-
-This repository contains the reference implementation for a modern, highly-secure, Kubernetes-native SaaS platform.  
-It leverages GitOps, rapid local iteration, secure secret handling, and production-grade deployment across cloud and local environments.
-
-**Key technologies:**
-
-- **FluxCD** (OCI Helm, Kustomize, GitOps CD)
-- **Skaffold** (Rapid local DX, PR previews)
-- **Kustomize** (Environment overlays)
-- **SOPS + Age** (Secrets management)
-- **Linkerd** (mTLS, SPIFFE service mesh)
-- **Traefik** (Ingress, TLS, JWT/Forward Auth)
-- **NATS JetStream** (Event-driven messaging)
-- **MongoDB** (Per-domain transactional state)
-
-**Supports:**
-
-- Local clusters (Docker Desktop, kind)
-- Remote clusters (DigitalOcean, AWS, Hetzner, etc.)
-- Preview environments (per-PR ephemeral namespaces)
-
----
-
-## Architecture
-
-**Folder Structure:**
-
+```text
+db -> migrate -> api -> ui/worker
 ```
-├── clusters
-│   ├── prod-eu
-│   └── staging-eu
-├── domains
-│   └── auth
-│       ├── api
-│       ├── infra
-│       ├── migrations
-│       ├── ui
-│       └── worker
-├── platform
-│   ├── delivery
-│   │   ├── base
-│   │   ├── crds
-│   │   └── overlays
-│   ├── event-bus
-│   │   ├── base
-│   │   └── overlays
-│   ├── ingress
-│   │   ├── base
-│   │   ├── crds
-│   │   └── overlays
-│   ├── mesh
-│   │   ├── base
-│   │   ├── crds
-│   │   └── overlays
-│   └── observability
-│       ├── base
-│       └── overlays
-├── scripts
-└── skaffold.yaml
+
+`ui` and `worker` are added only when the domain actually owns those capabilities.
+
+## Principles
+
+- Keep deployable unit boundaries honest. `db`, `migrate`, `api`, `ui`, and `worker` are separate units with separate manifests and lifecycle.
+- Keep local and live composition on the same spine. Local uses Skaffold and Make; live uses Flux Kustomizations.
+- Keep contracts explicit. HTTP contracts are OpenAPI/TypeBox; event contracts must name subjects and payloads; database ownership is per domain.
+- Keep platform dependencies explicit. A domain should not silently assume platform capabilities unless those capabilities are deployed by the environment.
+- Keep deleting fake abstractions. Prefer direct, readable wiring over clever layers that hide ownership.
+
+## Current Shape
+
+```text
+clusters/
+  prod-eu/
+    platform/             Flux Kustomizations for platform units
+    domains/              Flux Kustomizations for domain units
+    image-automation/     Flux image repositories, policies, and updates
+    flux-system/          bootstrap notes; Flux creates runtime sync resources
+  staging-eu/
+    flux-system/          bootstrap notes
+
+platform/
+  ingress/                Traefik, Gateway API CRDs, Gateways, HTTPRoutes
+  observability/          present, not currently composed
+  event-bus/              present, not currently composed
+  mesh/                   present, not currently composed
+
+domains/
+  identities/             passkeys, sessions, JWKS, identity signing keys
+  spaces/                 spaces, memberships, admissions, requirement tracking
+
+Makefile                  local orchestration
+Brewfile                  local toolchain
+.sops.yaml                SOPS age recipient rules
+skaffold.yaml             root Skaffold composition
 ```
+
+The currently composed platform unit is ingress. Observability, event-bus, and mesh folders may exist, but they are not part of the active local/prod-eu spine unless explicitly added.
+
+## Domain Model
+
+Each domain should document itself in `domains/<domain>/README.md`.
+
+Current domains:
+
+- `identities`: owns passkey registration/login, sessions, token signing, and JWKS.
+- `spaces`: owns space lifecycle, memberships, admissions, and requirement tracking.
+
+Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
+
+## Deployment Units
+
+Each domain follows this order:
+
+```text
+db -> migrate -> api
+```
+
+The `api` unit is also where HTTP route ownership lives. If a domain API exposes `HTTPRoute`s through Traefik, its namespace must opt in with:
+
+```yaml
+metadata:
+  labels:
+    tma.com/gateway-access: traefik
+```
+
+The API unit owns the gateway-access label because it owns HTTP routes. DB and migrate units should not carry ingress semantics.
+
+Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Prefer immutable image tags or digests for migrations; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
+
+## Platform Model
+
+Ingress is the active platform baseline.
+
+Local ingress setup does three different jobs:
+
+- Installs Gateway API CRDs.
+- Creates local machine trust and host routing with `mkcert` and `/etc/hosts`.
+- Applies Traefik and Gateway API manifests through Skaffold/Kustomize.
+
+Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
+
+Traefik Gateway listeners use namespace selectors for route attachment. Domain namespaces must opt in with `tma.com/gateway-access: traefik`; otherwise their `HTTPRoute`s should not attach to the shared Gateway.
 
 ## Local Development
 
-### Prerequisites
-
-- [Docker](https://www.docker.com/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [kustomize](https://formulae.brew.sh/formula/kustomize)
-- [Skaffold](https://skaffold.dev/docs/install/)
-- [SOPS](https://github.com/mozilla/sops)
-- [Age](https://github.com/FiloSottile/age)
-- [mkcert](https://github.com/FiloSottile/mkcert) (for local TLS)
-- [KSOPS](https://formulae.brew.sh/formula/ksops) (for local SOPS decryption)
-- [Flux CLI](https://fluxcd.io/docs/installation/)
-
-### SOPS locally
-
-Onboard a new developer
-
-Generate your key
+Install tools:
 
 ```sh
-age-keygen -o ~/.config/sops/age/keys.txt
-cat ~/.config/sops/age/keys.txt | age-keygen -y
+brew bundle
 ```
 
-Add your public key to .sops.yaml in the repo:
+Start Docker Desktop or another local Kubernetes cluster, then run one of:
 
 ```sh
-creation_rules:
-  - encrypted_regex: "^(data|stringData)$"
-    age:
-      - age1examplekeyofanotherdev...
-      - age1yournewpublickey...
+make dev
+make dev-identities
+make dev-spaces
 ```
 
-Update the encrypted secrets
+The Make targets intentionally run the same dependency order as live:
+
+```text
+ingress -> db -> migrate -> wait for migration Job -> api dev loop
+```
+
+Use `make ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
+
+The default local domain is `tma.com`. Override it when needed:
 
 ```sh
-sops updatekeys secret.enc.yaml
+make ingress DOMAIN=example.test
 ```
 
-Set the SOPS private key location env var so that child processes can access it
+## Live Deployment With Flux
+
+Flux live composition starts at:
+
+```text
+clusters/prod-eu/kustomization.yaml
+```
+
+That file includes:
+
+- `image-automation`
+- `platform.yaml`
+- `domains.yaml`
+
+`platform.yaml` reconciles platform units. `domains.yaml` reconciles domain units.
+
+For each domain, live Flux Kustomizations should preserve this dependency order:
+
+```text
+<domain>-db -> <domain>-migrate -> <domain>-api
+```
+
+The API Kustomization depends on ingress and the domain migration unit. The migration Kustomization depends on the DB unit and uses `force: true`.
+
+Bootstrap details live in:
+
+- `clusters/prod-eu/flux-system/README.md`
+- `clusters/staging-eu/flux-system/README.md`
+
+## Secrets
+
+SOPS uses age recipients from `.sops.yaml`. The private key is never committed.
+
+Set your local key path:
 
 ```sh
-export SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 ```
 
-Run it
+Useful commands:
 
 ```sh
-kustomize build --enable-alpha-plugins --enable-exec platform/ingress/overlays/local | kubectl apply -f -
+make sops-pubkey
+make sops-updatekeys
+make sops-secret
 ```
 
-### Workflow
+`make sops-secret` creates the Flux `sops-age` secret in `flux-system` from `SOPS_AGE_KEY_FILE`.
 
-- **Start Dev Cluster:**
+Secrets are scoped per deployable unit. Even if two units use the same database URL, they should consume separate Secret names, for example `identities-api-db` and `identities-migrate-db`.
+
+## Contracts
+
+APIs are Fastify services with TypeBox schemas and OpenAPI docs.
+
+Route work should preserve:
+
+- Explicit request schemas.
+- Explicit success response schemas.
+- Explicit domain error responses.
+- Stable OpenAPI operation descriptions that are useful to generated clients and LLM tools.
+
+Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, producer, consumer, and delivery expectation.
+
+Database ownership is exclusive to the owning domain. Migrations live in `domains/<domain>/migrations`.
+
+## How To Work Here
+
+When changing manifests:
+
+- Render the exact overlay you changed with `kubectl kustomize` or `kustomize build --enable-alpha-plugins --enable-exec` when KSOPS generators are involved.
+- Check local and live parity if the change affects deployable unit structure.
+- Keep generated Secrets and ConfigMaps in the intended namespace.
+- Do not make platform assumptions from domain manifests unless the platform unit is composed in that environment.
+
+When changing a domain API:
+
+- Keep route handlers thin.
+- Put business decisions in `api/src/domains/*`.
+- Put shared process concerns in `api/src/platform/*`.
+- Keep TypeBox/OpenAPI schemas in sync with actual responses.
+- Treat request validation errors and domain errors as part of the API contract.
+
+When adding a new domain:
+
+- Copy the current domain spine, not stale Appendix examples.
+- Add `domains/<domain>/README.md`.
+- Add Skaffold modules for local units.
+- Add Flux Kustomizations for live units.
+- Add image automation only for images Flux should update.
+- Add network policies for only the traffic the unit actually needs.
+
+## Checks
+
+Common render checks:
 
 ```sh
-  skaffold dev
+kubectl kustomize platform/ingress/overlays/dev
+kubectl kustomize platform/ingress/overlays/live
+kubectl kustomize domains/identities/infra/db/overlays/dev
+kubectl kustomize domains/identities/infra/db/overlays/live
+kubectl kustomize domains/spaces/infra/db/overlays/dev
+kubectl kustomize domains/spaces/infra/db/overlays/live
+kustomize build --enable-alpha-plugins --enable-exec domains/identities/infra/api/overlays/dev
+kubectl kustomize domains/identities/infra/api/overlays/live
+kubectl kustomize domains/spaces/infra/api/overlays/dev
+kubectl kustomize domains/spaces/infra/api/overlays/live
+git diff --check
 ```
 
-Old
-
-# Welcome to k8s!
-
--> Load Balancer
--> Client ( receives cookies, unpacks them and forwards the request with Bearer )
--> (This should be exposed publicly in the future) Traefik
--> forwardAuth ( exclude auth services requests )
--> Microservices
-
-## Development
-
-From your terminal:
-
-```sh
-task
-```
-
-This starts the entire cluster in development mode, redeploying services on file changes
-
-## Debug
-
-From your terminal:
-
-```sh
-task debug
-```
-
-This starts the entire cluster in debug mode where you can attach debuggers to the applications running inside the containers, redeploying services on file changes
+Use narrower checks when changing a narrow part of the repo. Use the full spine checks when changing shared structure, deployment ordering, namespaces, Gateway routing, secrets, or image automation.
 
 ## Appendix
 
