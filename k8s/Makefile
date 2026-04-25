@@ -1,3 +1,5 @@
+DOMAIN ?= tma.com
+
 dev-identities:
 	$(MAKE) ingress
 
@@ -38,12 +40,12 @@ ingress:
 
 	mkcert -install
 
-	grep -q "127.0.0.1 tma.com" /etc/hosts || echo "127.0.0.1 tma.com" | sudo tee -a /etc/hosts
+	grep -q "127.0.0.1 $(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts
 
 	mkcert \
 		-cert-file /tmp/traefik-tls.crt \
 		-key-file /tmp/traefik-tls.key \
-		tma.com "*.tma.com" localhost 127.0.0.1 ::1
+		$(DOMAIN) "*.$(DOMAIN)" localhost 127.0.0.1 ::1
 
 	kubectl create namespace traefik --dry-run=client -o yaml | kubectl apply -f -
 

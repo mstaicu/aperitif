@@ -3,6 +3,7 @@ kind: Service
 
 metadata:
   name: traefik-srv
+  namespace: traefik
 spec:
   type: ClusterIP
   selector:

@@ -12,6 +12,7 @@ kind: Gateway
 
 metadata:
   name: traefik-pgw
+  namespace: traefik
   annotations:
     traefik.io/tls.certresolver: le
 spec:
@@ -33,6 +34,7 @@ kind: Gateway
 
 metadata:
   name: traefik-igw
+  namespace: traefik
 spec:
   gatewayClassName: traefik-gwc
 

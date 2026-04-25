@@ -3,6 +3,7 @@ kind: HTTPRoute
 
 metadata:
   name: traefik-dashboard
+  namespace: traefik
 spec:
   hostnames:
     - tma.com

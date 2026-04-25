@@ -27,6 +27,7 @@ kind: Gateway
 
 metadata:
   name: traefik-pgw
+  namespace: traefik
 spec:
   gatewayClassName: traefik-gwc
 
@@ -51,6 +52,7 @@ kind: Gateway
 
 metadata:
   name: traefik-igw
+  namespace: traefik
 spec:
   gatewayClassName: traefik-gwc
 

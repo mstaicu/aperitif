@@ -6,6 +6,7 @@ kind: Secret
 
 metadata:
   name: cloudflare-dns
+  namespace: traefik
 type: Opaque
 stringData:
   CF_DNS_API_TOKEN: "<your-token-here>"
