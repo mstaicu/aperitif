@@ -91,7 +91,7 @@ export const login =
       } = await client.query(
         `
           SELECT user_id, credential_id, public_key, sign_count
-          FROM credentials
+          FROM passkey_credentials
           WHERE credential_id = $1
           FOR UPDATE
         `,
@@ -150,7 +150,7 @@ export const login =
 
       await client.query(
         `
-          UPDATE credentials
+          UPDATE passkey_credentials
           SET sign_count =
             CASE
               WHEN $2 > sign_count THEN $2

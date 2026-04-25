@@ -4,6 +4,4 @@ kind: Kustomization
 namespace: spaces
 
 resources:
-  - namespace.yaml
-  - spaces-postgres-depl.yaml
-  - spaces-postgres-np.yaml
+  - ../../base

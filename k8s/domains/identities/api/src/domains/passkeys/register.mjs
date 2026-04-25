@@ -142,7 +142,7 @@ export const register =
 
       await client.query(
         `
-          INSERT INTO credentials
+          INSERT INTO passkey_credentials
           (
             user_id,
             credential_id,

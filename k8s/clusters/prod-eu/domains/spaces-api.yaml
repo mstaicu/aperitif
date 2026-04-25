@@ -12,6 +12,7 @@ spec:
     name: flux-system
   dependsOn:
     - name: ingress
+    - name: identities-api
     - name: spaces-migrate
   wait: true
   timeout: 5m

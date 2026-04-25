@@ -7,7 +7,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY
 );
 
-CREATE TABLE credentials (
+CREATE TABLE passkey_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     credential_id BYTEA NOT NULL UNIQUE,
@@ -47,25 +47,4 @@ CREATE TABLE sessions (
     expires_at TIMESTAMPTZ NOT NULL,
 
     revoked_at TIMESTAMPTZ
-);
-
-CREATE TABLE organizations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL
-);
-
-CREATE TABLE organization_memberships (
-    user_id UUID NOT NULL
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    organization_id UUID NOT NULL
-        REFERENCES organizations(id)
-        ON DELETE CASCADE,
-
-    status TEXT NOT NULL DEFAULT 'active',
-
-    PRIMARY KEY (user_id, organization_id),
-
-    CHECK (status IN ('active')) -- add more statuses
 );

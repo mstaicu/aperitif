@@ -4,6 +4,4 @@ kind: Kustomization
 namespace: identities
 
 resources:
-  - namespace.yaml
-  - identities-postgres-depl.yaml
-  - identities-postgres-np.yaml
+  - ../../base
