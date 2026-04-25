@@ -3,3 +3,5 @@ kind: Namespace
 
 metadata:
   name: spaces
+  labels:
+    tma.com/gateway-access: traefik

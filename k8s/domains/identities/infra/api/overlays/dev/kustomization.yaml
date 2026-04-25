@@ -5,7 +5,6 @@ namespace: identities
 
 resources:
   - ../../base
-  - namespace.yaml
 
 generators:
   - identities-ksops-generator.yaml
