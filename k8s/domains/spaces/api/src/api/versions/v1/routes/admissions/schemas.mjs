@@ -14,7 +14,8 @@ const SpaceId = Type.String({
   format: "uuid",
 });
 const UserId = Type.String({
-  description: "Stable identifier for the claimed user identity, when present.",
+  description:
+    "Stable identifier for the bound user identity. Self-started admissions are bound at creation; space-bound invite admissions are null until claimed.",
   format: "uuid",
 });
 const Role = Type.String({
@@ -80,7 +81,8 @@ export const Admission = Type.Object(
   },
   {
     additionalProperties: false,
-    description: "Admission resource.",
+    description:
+      "Admission process record. Self-started admissions are post-auth and already bound to a user; space-bound invite admissions may be unbound until claimed.",
   },
 );
 

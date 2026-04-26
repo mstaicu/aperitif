@@ -28,9 +28,3 @@ export const authenticate = async ({ authorization, jwks }) => {
     throw new Error("INVALID_ACCESS_TOKEN");
   }
 };
-
-/**
- * @param {{ authorization?: string, jwks: Jwks }} args
- */
-export const authenticateOptional = async ({ authorization, jwks }) =>
-  authorization ? authenticate({ authorization, jwks }) : null;

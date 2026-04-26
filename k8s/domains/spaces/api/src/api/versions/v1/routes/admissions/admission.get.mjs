@@ -1,4 +1,4 @@
-import { authenticateOptional } from "../../../../../platform/security/jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { AdmissionParams, AdmissionStateResponse } from "./schemas.mjs";
 
@@ -18,7 +18,7 @@ export default async function (fastify, { admissions, jwks }) {
     {
       schema: {
         description:
-          "Fetch the current state of an admission together with the currently known requirement rows.",
+          "Fetch the current state of an admission and its requirement rows. The caller must be the bound admission user or an owner of the target space for unclaimed space-bound admissions.",
         operationId: "getAdmission",
         params: AdmissionParams,
         response: {
@@ -30,12 +30,13 @@ export default async function (fastify, { admissions, jwks }) {
           500: ProblemResponse,
           503: ProblemResponse,
         },
+        security: [{ bearerAuth: [] }],
         summary: "Get admission state",
         tags: ["admissions"],
       },
     },
     async function (req, reply) {
-      const currentUserId = await authenticateOptional({
+      const currentUserId = await authenticate({
         authorization: req.headers.authorization,
         jwks,
       });

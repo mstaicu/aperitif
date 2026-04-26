@@ -18,7 +18,7 @@ export default async function (fastify, { jwks, spaces }) {
     {
       schema: {
         description:
-          "Create a new space and bootstrap the authenticated caller as its initial owner.",
+          "Create a new space directly and bootstrap the authenticated caller as owner. This is the no-requirement authority path and does not create an admission.",
         operationId: "createSpace",
         response: {
           201: SpaceResponse,

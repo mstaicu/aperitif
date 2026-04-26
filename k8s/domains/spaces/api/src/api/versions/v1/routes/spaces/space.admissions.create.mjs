@@ -23,7 +23,7 @@ export default async function (fastify, { jwks, spaces }) {
       schema: {
         body: SpaceAdmissionBody,
         description:
-          "Create an admission for an existing space. Intended for owners. The response includes the admission resource and the derived requirement rows.",
+          "Create an unbound admission for an existing space. Intended for owners inviting or admitting another user. The recipient must authenticate and claim the admission before requirement completion can grant membership.",
         operationId: "createSpaceAdmission",
         params: SpaceParams,
         response: {

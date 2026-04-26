@@ -9,6 +9,11 @@ const PROBLEMS = {
     title: "Admission already claimed",
     type: "/problems/admission-claimed",
   },
+  ADMISSION_NOT_CLAIMABLE: {
+    status: 409,
+    title: "Admission not claimable",
+    type: "/problems/admission-not-claimable",
+  },
   ADMISSION_NOT_FOUND: {
     status: 404,
     title: "Admission not found",

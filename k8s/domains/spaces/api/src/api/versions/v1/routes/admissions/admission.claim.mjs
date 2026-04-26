@@ -18,7 +18,7 @@ export default async function (fastify, { admissions, jwks }) {
     {
       schema: {
         description:
-          "Bind the authenticated subject to an admission and return the full admission state, including the current requirement rows.",
+          "Claim an unbound space-bound admission as the authenticated user. Self-started admissions are already bound when created and should be read with getAdmission.",
         operationId: "claimAdmission",
         params: AdmissionParams,
         response: {
@@ -31,7 +31,7 @@ export default async function (fastify, { admissions, jwks }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Claim admission and return state",
+        summary: "Claim unbound admission",
         tags: ["admissions"],
       },
     },

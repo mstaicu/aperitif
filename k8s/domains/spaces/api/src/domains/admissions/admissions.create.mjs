@@ -7,13 +7,13 @@ const requirements = ["profile"];
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string | null }) => Promise<{
+ * @returns {(args: { currentUserId: string }) => Promise<{
  *   admission: {
  *     id: string,
  *     requested_role: string,
  *     space_id: string | null,
  *     status: "open" | "completed",
- *     user_id: string | null,
+ *     user_id: string,
  *   },
  *   requirements: {
  *     id: string,
@@ -61,7 +61,7 @@ export const create =
 
       let finalizedAdmission = admission;
 
-      if (requirements.length === 0 && currentUserId) {
+      if (requirements.length === 0) {
         const {
           rows: [space],
         } = await client.query(

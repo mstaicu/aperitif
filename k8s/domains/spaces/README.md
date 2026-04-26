@@ -26,6 +26,19 @@ spaces finalizes authority when all requirements are completed
 
 This keeps authority finalization in spaces while allowing each onboarding step to remain independently owned.
 
+Baseline onboarding is identity-first:
+
+```text
+user authenticates through identities
+user creates a self-started admission
+spaces binds the admission to that user immediately
+step domains publish domain facts, such as profile completed
+spaces maps those facts to open requirements for that user
+spaces grants membership only when all requirements complete
+```
+
+Direct space creation remains a separate no-requirement path: `POST /spaces` creates a space and owner membership immediately. Self-started admissions are post-auth only. `POST /admissions/:admissionId/claim` is reserved for unbound space admissions created by an existing space owner.
+
 ## Deployment Units
 
 The domain unit spine is:

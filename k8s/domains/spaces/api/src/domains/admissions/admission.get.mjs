@@ -2,7 +2,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { admissionId: string, currentUserId: string | null }) => Promise<{
+ * @returns {(args: { admissionId: string, currentUserId: string }) => Promise<{
  *   admission: {
  *     id: string,
  *     requested_role: string,
@@ -44,8 +44,8 @@ export const get =
         throw new Error("FORBIDDEN");
       }
 
-      if (!admission.user_id && admission.space_id) {
-        if (!currentUserId) {
+      if (!admission.user_id) {
+        if (!admission.space_id) {
           throw new Error("FORBIDDEN");
         }
 
@@ -65,10 +65,6 @@ export const get =
           throw new Error("FORBIDDEN");
         }
       }
-
-      // NOTE: Unclaimed self-started admissions remain capability-style reads
-      // for now. Tightening that later will need a separate access token or
-      // a different client flow for anonymous onboarding.
 
       const { rows: requirements } = await client.query(
         `

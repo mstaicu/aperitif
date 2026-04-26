@@ -1,4 +1,4 @@
-import { authenticateOptional } from "../../../../../platform/security/jwt.mjs";
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
 import { AdmissionStateResponse } from "./schemas.mjs";
 
@@ -18,7 +18,7 @@ export default async function (fastify, { admissions, jwks }) {
     {
       schema: {
         description:
-          "Create a self-started admission for first-space onboarding. Authentication is optional at this stage. The response includes the admission resource and the derived requirement rows.",
+          "Create an authenticated self-started admission for first-space onboarding. The admission is immediately bound to the authenticated user; authority is granted only after all requirement rows complete.",
         operationId: "createAdmission",
         response: {
           201: AdmissionStateResponse,
@@ -26,12 +26,13 @@ export default async function (fastify, { admissions, jwks }) {
           500: ProblemResponse,
           503: ProblemResponse,
         },
+        security: [{ bearerAuth: [] }],
         summary: "Create self-started admission",
         tags: ["admissions"],
       },
     },
     async function (req, reply) {
-      const currentUserId = await authenticateOptional({
+      const currentUserId = await authenticate({
         authorization: req.headers.authorization,
         jwks,
       });

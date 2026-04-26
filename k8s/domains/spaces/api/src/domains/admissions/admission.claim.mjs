@@ -42,37 +42,33 @@ export const claim =
         throw new Error("ADMISSION_NOT_FOUND");
       }
 
-      if (
-        existingAdmission.status !== "open" &&
-        !(
-          existingAdmission.status === "completed" &&
-          existingAdmission.user_id === currentUserId
-        )
-      ) {
+      if (existingAdmission.status !== "open") {
         throw new Error("ADMISSION_NOT_OPEN");
       }
 
       let admission = existingAdmission;
 
-      if (admission.user_id && admission.user_id !== currentUserId) {
+      if (admission.user_id) {
         throw new Error("ADMISSION_CLAIMED");
       }
 
-      if (!admission.user_id) {
-        const {
-          rows: [claimedAdmission],
-        } = await client.query(
-          `
-            UPDATE space_admissions
-            SET user_id = $2
-            WHERE id = $1
-            RETURNING id, space_id, user_id, requested_role, status
-          `,
-          [admissionId, currentUserId],
-        );
-
-        admission = claimedAdmission;
+      if (!admission.space_id) {
+        throw new Error("ADMISSION_NOT_CLAIMABLE");
       }
+
+      const {
+        rows: [claimedAdmission],
+      } = await client.query(
+        `
+          UPDATE space_admissions
+          SET user_id = $2
+          WHERE id = $1
+          RETURNING id, space_id, user_id, requested_role, status
+        `,
+        [admissionId, currentUserId],
+      );
+
+      admission = claimedAdmission;
 
       const { rows: requirements } = await client.query(
         `
@@ -85,57 +81,25 @@ export const claim =
       );
 
       if (admission.status === "open" && requirements.length === 0) {
-        if (admission.space_id) {
-          await client.query(
-            `
-              INSERT INTO space_memberships (space_id, user_id, role)
-              VALUES ($1, $2, $3)
-            `,
-            [admission.space_id, currentUserId, admission.requested_role],
-          );
+        await client.query(
+          `
+            INSERT INTO space_memberships (space_id, user_id, role)
+            VALUES ($1, $2, $3)
+          `,
+          [admission.space_id, currentUserId, admission.requested_role],
+        );
 
-          ({
-            rows: [admission],
-          } = await client.query(
-            `
-              UPDATE space_admissions
-              SET status = 'completed'
-              WHERE id = $1
-              RETURNING id, space_id, user_id, requested_role, status
-            `,
-            [admission.id],
-          ));
-        } else {
-          const {
-            rows: [space],
-          } = await client.query(
-            `
-              INSERT INTO spaces DEFAULT VALUES
-              RETURNING id
-            `,
-          );
-
-          await client.query(
-            `
-              INSERT INTO space_memberships (space_id, user_id, role)
-              VALUES ($1, $2, $3)
-            `,
-            [space.id, currentUserId, admission.requested_role],
-          );
-
-          ({
-            rows: [admission],
-          } = await client.query(
-            `
-              UPDATE space_admissions
-              SET space_id = $2,
-                  status = 'completed'
-              WHERE id = $1
-              RETURNING id, space_id, user_id, requested_role, status
-            `,
-            [admission.id, space.id],
-          ));
-        }
+        ({
+          rows: [admission],
+        } = await client.query(
+          `
+            UPDATE space_admissions
+            SET status = 'completed'
+            WHERE id = $1
+            RETURNING id, space_id, user_id, requested_role, status
+          `,
+          [admission.id],
+        ));
       }
 
       const response = {
