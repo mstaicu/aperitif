@@ -7,17 +7,13 @@ const TTL_SECONDS = 60;
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { refresh_token: string; audience: string }) => Promise<{ access_token: string }>}
+ * @returns {(args: { refresh_token: string }) => Promise<{ access_token: string }>}
  */
 export const createAccessToken =
   (ctx) =>
-  async ({ audience, refresh_token }) => {
+  async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
-    }
-
-    if (!ctx.security.allowedAudiences.includes(audience)) {
-      throw new Error("INVALID_AUDIENCE");
     }
 
     let session;
@@ -55,7 +51,7 @@ export const createAccessToken =
         alg: "ES256",
         kid: ctx.security.signing.kid,
       })
-      .setAudience(audience)
+      .setAudience(ctx.security.audience)
       .setIssuedAt(now)
       .setExpirationTime(now + TTL_SECONDS)
       .sign(ctx.security.signing.privateKey);

@@ -85,7 +85,7 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 ## Contracts
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/spaces` gateway prefix.
-- Identity dependency: spaces validates identity-issued tokens through the identities JWKS URL. It does not own identity records.
+- Identity dependency: spaces validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
 - Events: no committed event contract is currently defined for this domain. Existing TODOs should become explicit subject names, payload schemas, and transactional outbox/consumer wiring before NATS is treated as a required dependency.
 - Database: spaces owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 

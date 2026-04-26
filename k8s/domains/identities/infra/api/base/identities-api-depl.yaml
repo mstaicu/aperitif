@@ -34,11 +34,11 @@ spec:
                 configMapKeyRef:
                   name: identities-api-cm
                   key: ORIGIN
-            - name: JWT_ALLOWED_AUDIENCES
+            - name: JWT_AUDIENCE
               valueFrom:
                 configMapKeyRef:
                   name: identities-api-cm
-                  key: JWT_ALLOWED_AUDIENCES
+                  key: JWT_AUDIENCE
 
             - name: JWT_PRIVATE_KEY_PATH
               value: /app/keys/jwt-private.pem

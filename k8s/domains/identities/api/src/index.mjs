@@ -7,7 +7,7 @@ nconf
 
     "JWT_PRIVATE_KEY_PATH",
     "JWT_PUBLIC_KEY_PATH",
-    "JWT_ALLOWED_AUDIENCES",
+    "JWT_AUDIENCE",
 
     "ORIGIN",
   ]);

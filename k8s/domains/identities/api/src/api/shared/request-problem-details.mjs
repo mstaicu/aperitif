@@ -19,11 +19,6 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  INVALID_AUDIENCE: {
-    status: 400,
-    title: "Invalid audience",
-    type: "/problems/invalid-audience",
-  },
   INVALID_AUTHENTICATION_RESPONSE: {
     status: 400,
     title: "Invalid authentication response",

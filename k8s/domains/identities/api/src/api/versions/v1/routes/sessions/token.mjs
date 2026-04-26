@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SessionTokenBody, SessionTokenResponse } from "./schemas.mjs";
+import { SessionTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -15,9 +15,8 @@ export default async function (fastify, { sessions }) {
     "/token",
     {
       schema: {
-        body: SessionTokenBody,
         description:
-          "Exchange a refresh token provided in the Authorization bearer header for a short-lived audience-scoped JWT access token. The request body should contain only the target audience.",
+          "Exchange a refresh token provided in the Authorization bearer header for a short-lived product API access token. The minted token uses the identities service configured JWT audience.",
         operationId: "exchangeSessionToken",
         response: {
           200: SessionTokenResponse,
@@ -27,7 +26,7 @@ export default async function (fastify, { sessions }) {
           503: ProblemResponse,
         },
         security: [{ refreshTokenAuth: [] }],
-        summary: "Mint audience-scoped access token",
+        summary: "Mint product API access token",
         tags: ["sessions"],
       },
     },
@@ -38,14 +37,11 @@ export default async function (fastify, { sessions }) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
-      const input = {
-        audience: req.body.audience,
-        refresh_token: token,
-      };
-
       reply.header("Cache-Control", "no-store");
 
-      return reply.send(await sessions.createAccessToken(input));
+      return reply.send(
+        await sessions.createAccessToken({ refresh_token: token }),
+      );
     },
   );
 }

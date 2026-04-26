@@ -32,6 +32,9 @@ spec:
             - name: IDENTITIES_JWKS_URL
               value: http://traefik-srv.traefik.svc.cluster.local/.well-known/jwks.json
 
+            - name: JWT_AUDIENCE
+              value: aperitif-api
+
             - name: OTEL_SERVICE_NAME
               value: spaces-api
 

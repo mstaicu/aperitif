@@ -8,15 +8,10 @@ export const createSecurityContext = async () => {
   /**
    * @type {string}
    */
-  const rawAllowedAudiences = nconf.get("JWT_ALLOWED_AUDIENCES");
+  const audience = nconf.get("JWT_AUDIENCE");
 
-  const allowedAudiences = rawAllowedAudiences
-    .split(",")
-    .map((audience) => audience.trim())
-    .filter(Boolean);
-
-  if (!allowedAudiences.length) {
-    throw new Error("No JWT_ALLOWED_AUDIENCES provided");
+  if (!audience) {
+    throw new Error("No JWT_AUDIENCE provided");
   }
 
   const [privatePem, publicPem] = await Promise.all([
@@ -30,7 +25,7 @@ export const createSecurityContext = async () => {
   ]);
 
   return {
-    allowedAudiences,
+    audience,
     jwks: {
       keys: [{ ...publicJwk, alg: "ES256", kid: KID, use: "sig" }],
     },

@@ -18,7 +18,7 @@ The intended integration is:
 
 ```text
 identities authenticates a subject
-identities issues an audience-bound access token
+identities issues a shared product API access token
 domain APIs verify the token through JWKS
 domain APIs authorize from their own state
 ```

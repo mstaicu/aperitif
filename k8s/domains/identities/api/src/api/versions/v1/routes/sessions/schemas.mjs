@@ -22,31 +22,15 @@ export const RefreshResponse = Type.Object(
   },
 );
 
-export const SessionTokenBody = Type.Object(
-  {
-    audience: Type.String({
-      description:
-        "Target audience for the access token. Must match one of the audiences configured for the identities service.",
-      maxLength: 128,
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Audience-scoped access token request carried alongside a refresh token bearer header.",
-  },
-);
-
 export const SessionTokenResponse = Type.Object(
   {
     access_token: TokenString(
-      "Short-lived JWT access token minted for the requested audience.",
+      "Short-lived JWT access token minted for the product API audience.",
     ),
   },
   {
     additionalProperties: false,
     description:
-      "Audience-scoped access token returned after validating the refresh token.",
+      "Product API access token returned after validating the refresh token.",
   },
 );
