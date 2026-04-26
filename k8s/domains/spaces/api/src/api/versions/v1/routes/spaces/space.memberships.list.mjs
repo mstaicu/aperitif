@@ -1,10 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import {
-  CreateSpaceMemberBody,
-  SpaceMemberParams,
-  SpaceMemberResponse,
-} from "./schemas.mjs";
+import { SpaceMembershipsResponse, SpaceParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,27 +13,25 @@ import {
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.put(
-    "/:spaceId/members/:userId",
+  fastify.get(
+    "/:spaceId/memberships",
     {
       schema: {
-        body: CreateSpaceMemberBody,
         description:
-          "Ensure a direct membership exists in a space for an existing global user identity. Repeating the same request with the same role is a no-op. Changing an existing role is not supported here.",
-        operationId: "createSpaceMember",
-        params: SpaceMemberParams,
+          "List all memberships attached to a space. Only owners can inspect other memberships.",
+        operationId: "listSpaceMemberships",
+        params: SpaceParams,
         response: {
-          200: SpaceMemberResponse,
+          200: SpaceMembershipsResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
-          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create space membership",
+        summary: "List space memberships",
         tags: ["spaces"],
       },
     },
@@ -47,12 +41,10 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      return reply.code(200).send(
-        await spaces.createMember({
+      return reply.send(
+        await spaces.listMemberships({
           currentUserId,
-          role: req.body.role,
           spaceId: req.params.spaceId,
-          userId: req.params.userId,
         }),
       );
     },

@@ -31,7 +31,7 @@ export const SpaceParams = Type.Object(
   },
 );
 
-export const SpaceMemberParams = Type.Object(
+export const SpaceMembershipParams = Type.Object(
   {
     spaceId: Type.String({
       description: "Target space identifier.",
@@ -50,7 +50,7 @@ export const SpaceMemberParams = Type.Object(
 
 // NOTE: user_id is assumed to be a valid global identity UUID resolved
 // outside this domain. Spaces does not verify user existence yet.
-export const CreateSpaceMemberBody = Type.Object(
+export const CreateSpaceMembershipBody = Type.Object(
   {
     role: Type.String({
       description: "Role to grant to the target user in the target space.",
@@ -119,10 +119,10 @@ export const SpaceResponse = Type.Object(
   },
 );
 
-export const SpaceMembersResponse = Type.Object(
+export const SpaceMembershipsResponse = Type.Object(
   {
     count: Count,
-    members: Type.Array(SpaceMembership),
+    memberships: Type.Array(SpaceMembership),
     space: Space,
   },
   {
@@ -131,7 +131,7 @@ export const SpaceMembersResponse = Type.Object(
   },
 );
 
-export const SpaceMemberResponse = Type.Object(
+export const SpaceMembershipResponse = Type.Object(
   {
     membership: SpaceMembership,
     space: Space,

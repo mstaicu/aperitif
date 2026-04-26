@@ -1,6 +1,10 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceMemberParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import {
+  CreateSpaceMembershipBody,
+  SpaceMembershipParams,
+  SpaceMembershipResponse,
+} from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,16 +17,17 @@ import { SpaceMemberParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId/members/:userId",
+  fastify.put(
+    "/:spaceId/memberships/:userId",
     {
       schema: {
+        body: CreateSpaceMembershipBody,
         description:
-          "Remove a membership from a space. Only owners can remove other members, owners cannot self-target through this endpoint, and removing an already-absent membership is treated as a no-op.",
-        operationId: "deleteSpaceMember",
-        params: SpaceMemberParams,
+          "Ensure a direct membership exists in a space for an existing global user identity. Repeating the same request with the same role is a no-op. Changing an existing role is not supported here.",
+        operationId: "createSpaceMembership",
+        params: SpaceMembershipParams,
         response: {
-          204: EmptyResponse,
+          200: SpaceMembershipResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -32,7 +37,7 @@ export default async function (fastify, { jwks, spaces }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space membership",
+        summary: "Create space membership",
         tags: ["spaces"],
       },
     },
@@ -42,13 +47,14 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.deleteMember({
-        currentUserId,
-        spaceId: req.params.spaceId,
-        userId: req.params.userId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.code(200).send(
+        await spaces.createMembership({
+          currentUserId,
+          role: req.body.role,
+          spaceId: req.params.spaceId,
+          userId: req.params.userId,
+        }),
+      );
     },
   );
 }

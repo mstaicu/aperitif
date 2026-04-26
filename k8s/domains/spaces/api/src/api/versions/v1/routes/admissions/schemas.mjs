@@ -4,6 +4,10 @@ const AdmissionId = Type.String({
   description: "Stable identifier for an admission resource.",
   format: "uuid",
 });
+const AdmissionRequirementId = Type.String({
+  description: "Stable identifier for an admission requirement row.",
+  format: "uuid",
+});
 const SpaceId = Type.String({
   description:
     "Stable identifier for the target space, when the admission is space-bound.",
@@ -18,8 +22,9 @@ const Role = Type.String({
   maxLength: 64,
   minLength: 1,
 });
-const Requirement = Type.String({
-  description: "Requirement name tracked for this admission.",
+const RequirementType = Type.String({
+  description:
+    "Requirement type tracked for this admission, such as profile, terms, or kyc.",
   maxLength: 128,
   minLength: 1,
 });
@@ -81,12 +86,14 @@ export const Admission = Type.Object(
 
 export const AdmissionRequirement = Type.Object(
   {
-    requirement: Requirement,
+    id: AdmissionRequirementId,
     status: AdmissionRequirementStatus,
+    type: RequirementType,
   },
   {
     additionalProperties: false,
-    description: "Requirement tracked against an admission.",
+    description:
+      "Requirement row tracked against an admission. Other domains fulfill these requirement types; spaces tracks their status.",
   },
 );
 

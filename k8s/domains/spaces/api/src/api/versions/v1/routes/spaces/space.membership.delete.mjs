@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceMembersResponse, SpaceParams } from "./schemas.mjs";
+import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
+import { SpaceMembershipParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,25 +13,26 @@ import { SpaceMembersResponse, SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.get(
-    "/:spaceId/members",
+  fastify.delete(
+    "/:spaceId/memberships/:userId",
     {
       schema: {
         description:
-          "List all memberships attached to a space. Only owners can inspect other memberships.",
-        operationId: "listSpaceMembers",
-        params: SpaceParams,
+          "Remove a membership from a space. Only owners can remove other members, owners cannot self-target through this endpoint, and removing an already-absent membership is treated as a no-op.",
+        operationId: "deleteSpaceMembership",
+        params: SpaceMembershipParams,
         response: {
-          200: SpaceMembersResponse,
+          204: EmptyResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
+          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List space memberships",
+        summary: "Delete space membership",
         tags: ["spaces"],
       },
     },
@@ -41,12 +42,13 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      return reply.send(
-        await spaces.listMembers({
-          currentUserId,
-          spaceId: req.params.spaceId,
-        }),
-      );
+      await spaces.deleteMembership({
+        currentUserId,
+        spaceId: req.params.spaceId,
+        userId: req.params.userId,
+      });
+
+      return reply.code(204).send(null);
     },
   );
 }

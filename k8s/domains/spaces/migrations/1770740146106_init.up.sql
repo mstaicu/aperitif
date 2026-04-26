@@ -31,16 +31,17 @@ CREATE TABLE space_admissions (
 );
 
 CREATE TABLE space_admission_requirements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     admission_id UUID NOT NULL
         REFERENCES space_admissions(id)
         ON DELETE CASCADE,
 
-    -- This specifies the business step associated with the completion of this space admission requirement, can be 'kyc', 'profile', etc
-    requirement TEXT NOT NULL,
+    type TEXT NOT NULL,
 
     status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed')),
 
-    PRIMARY KEY (admission_id, requirement)
+    UNIQUE (admission_id, type)
 );
 
 -- | Table                             | Meaning                            |

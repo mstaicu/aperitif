@@ -16,8 +16,9 @@ const requirements = ["profile"];
  *     user_id: string | null,
  *   },
  *   requirements: {
- *     requirement: string,
+ *     id: string,
  *     status: "pending",
+ *     type: string,
  *   }[],
  * }>}
  */
@@ -42,14 +43,20 @@ export const create =
         [currentUserId],
       );
 
+      /** @type {{ id: string, status: "pending", type: string }[]} */
+      let requirementRows = [];
+
       if (requirements.length > 0) {
-        await client.query(
+        const { rows } = await client.query(
           `
-            INSERT INTO space_admission_requirements (admission_id, requirement, status)
+            INSERT INTO space_admission_requirements (admission_id, type, status)
             SELECT $1, unnest($2::text[]), 'pending'
+            RETURNING id, type, status
           `,
           [admission.id, requirements],
         );
+
+        requirementRows = rows;
       }
 
       let finalizedAdmission = admission;
@@ -96,9 +103,10 @@ export const create =
           status: finalizedAdmission.status,
           user_id: finalizedAdmission.user_id,
         },
-        requirements: requirements.map((requirement) => ({
-          requirement,
-          status: "pending",
+        requirements: requirementRows.map((requirement) => ({
+          id: requirement.id,
+          status: requirement.status,
+          type: requirement.type,
         })),
       };
     } catch (err) {

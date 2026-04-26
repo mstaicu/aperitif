@@ -7,9 +7,9 @@ import createAdmission from "./routes/admissions/admissions.create.mjs";
 import createSpaceAdmission from "./routes/spaces/space.admissions.create.mjs";
 import destroySpace from "./routes/spaces/space.delete.mjs";
 import getSpace from "./routes/spaces/space.get.mjs";
-import deleteSpaceMember from "./routes/spaces/space.member.delete.mjs";
-import createSpaceMember from "./routes/spaces/space.members.create.mjs";
-import listSpaceMembers from "./routes/spaces/space.members.list.mjs";
+import deleteSpaceMembership from "./routes/spaces/space.membership.delete.mjs";
+import createSpaceMembership from "./routes/spaces/space.memberships.create.mjs";
+import listSpaceMemberships from "./routes/spaces/space.memberships.list.mjs";
 import createSpace from "./routes/spaces/spaces.create.mjs";
 import listSpaces from "./routes/spaces/spaces.list.mjs";
 
@@ -89,7 +89,7 @@ export default async (fastify, { domains, jwks }) => {
     prefix: "/spaces",
     spaces: domains.spaces,
   });
-  await fastify.register(listSpaceMembers, {
+  await fastify.register(listSpaceMemberships, {
     jwks,
     prefix: "/spaces",
     spaces: domains.spaces,
@@ -99,12 +99,12 @@ export default async (fastify, { domains, jwks }) => {
     prefix: "/spaces",
     spaces: domains.spaces,
   });
-  await fastify.register(createSpaceMember, {
+  await fastify.register(createSpaceMembership, {
     jwks,
     prefix: "/spaces",
     spaces: domains.spaces,
   });
-  await fastify.register(deleteSpaceMember, {
+  await fastify.register(deleteSpaceMembership, {
     jwks,
     prefix: "/spaces",
     spaces: domains.spaces,

@@ -2,6 +2,29 @@
 
 Identities owns passkey registration, passkey login, session token lifecycle, and the identity signing keys exposed through JWKS.
 
+## Domain Boundary
+
+Identities owns authentication identity, not product authority.
+
+- `users` are stable first-party subject identifiers.
+- `passkey_credentials` are WebAuthn/passkey credentials for those subjects.
+- `challenges` are short-lived WebAuthn registration/login challenges.
+- `sessions` are refresh-token backed identity sessions.
+- JWKS is the public verification contract for identity-issued access tokens.
+
+Identities must not own spaces, memberships, admissions, onboarding requirements, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
+
+The intended integration is:
+
+```text
+identities authenticates a subject
+identities issues an audience-bound access token
+domain APIs verify the token through JWKS
+domain APIs authorize from their own state
+```
+
+If external IdPs, M2M, or agents are added later, keep them behind the same verification boundary: token issuer -> verified subject/actor -> domain-owned authorization.
+
 ## Deployment Units
 
 The domain unit spine is:

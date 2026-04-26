@@ -11,8 +11,9 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     user_id: string | null,
  *   },
  *   requirements: {
- *     requirement: string,
+ *     id: string,
  *     status: "pending" | "completed" | "failed",
+ *     type: string,
  *   }[],
  * }>}
  */
@@ -75,10 +76,10 @@ export const claim =
 
       const { rows: requirements } = await client.query(
         `
-          SELECT requirement, status
+          SELECT id, type, status
           FROM space_admission_requirements
           WHERE admission_id = $1
-          ORDER BY requirement
+          ORDER BY type
         `,
         [admission.id],
       );
@@ -146,8 +147,9 @@ export const claim =
           user_id: admission.user_id,
         },
         requirements: requirements.map((requirement) => ({
-          requirement: requirement.requirement,
+          id: requirement.id,
           status: requirement.status,
+          type: requirement.type,
         })),
       };
 

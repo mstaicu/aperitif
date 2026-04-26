@@ -2,15 +2,20 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, spaceId: string, userId: string }) => Promise<void>}
+ * @returns {(args: { currentUserId: string, role: string, spaceId: string, userId: string }) => Promise<{
+ *   membership: {
+ *     role: string,
+ *     space_id: string,
+ *     user_id: string,
+ *   },
+ *   space: {
+ *     id: string,
+ *   },
+ * }>}
  */
-export const deleteMember =
+export const createMembership =
   (ctx) =>
-  async ({ currentUserId, spaceId, userId }) => {
-    if (userId === currentUserId) {
-      throw new Error("FORBIDDEN_SELF_TARGET");
-    }
-
+  async ({ currentUserId, role, spaceId, userId }) => {
     let client;
 
     try {
@@ -33,23 +38,24 @@ export const deleteMember =
       }
 
       const {
-        rows: [currentMembership],
+        rows: [membership],
       } = await client.query(
         `
           SELECT role
           FROM space_memberships
           WHERE space_id = $1
             AND user_id = $2
+          FOR UPDATE
         `,
         [spaceId, currentUserId],
       );
 
-      if (!currentMembership || currentMembership.role !== "owner") {
+      if (!membership || membership.role !== "owner") {
         throw new Error("FORBIDDEN");
       }
 
       const {
-        rows: [targetMembership],
+        rows: [existingMembership],
       } = await client.query(
         `
           SELECT role
@@ -61,42 +67,50 @@ export const deleteMember =
         [spaceId, userId],
       );
 
-      if (!targetMembership) {
-        await client.query("COMMIT");
-        return;
-      }
-
-      if (targetMembership.role === "owner") {
-        const { rows: owners } = await client.query(
-          `
-            SELECT user_id
-            FROM space_memberships
-            WHERE space_id = $1
-              AND role = 'owner'
-            FOR UPDATE
-          `,
-          [spaceId],
-        );
-
-        if (owners.length <= 1) {
-          throw new Error("LAST_OWNER");
+      if (existingMembership) {
+        if (existingMembership.role !== role) {
+          throw new Error("MEMBERSHIP_ALREADY_EXISTS");
         }
+
+        await client.query("COMMIT");
+
+        return {
+          membership: {
+            role: existingMembership.role,
+            space_id: spaceId,
+            user_id: userId,
+          },
+          space: {
+            id: spaceId,
+          },
+        };
       }
 
+      // TODO: This assumes userId is a valid global identity UUID.
+      // When an identity projection exists locally, validate it here.
       await client.query(
         `
-          DELETE FROM space_memberships
-          WHERE space_id = $1
-            AND user_id = $2
+          INSERT INTO space_memberships (space_id, user_id, role)
+          VALUES ($1, $2, $3)
         `,
-        [spaceId, userId],
+        [spaceId, userId, role],
       );
 
       // TODO: When eventing is wired, insert an outbox row in this transaction for:
-      // - spaces.membership.deleted
-      // Use targetMembership.role together with spaceId and userId.
+      // - spaces.membership.created
 
       await client.query("COMMIT");
+
+      return {
+        membership: {
+          role,
+          space_id: spaceId,
+          user_id: userId,
+        },
+        space: {
+          id: spaceId,
+        },
+      };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 

@@ -11,8 +11,9 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     user_id: null,
  *   },
  *   requirements: {
- *     requirement: string,
+ *     id: string,
  *     status: "pending",
+ *     type: string,
  *   }[],
  * }>}
  */
@@ -71,14 +72,20 @@ export const createAdmission =
         [spaceId, requested_role],
       );
 
+      /** @type {{ id: string, status: "pending", type: string }[]} */
+      let requirementRows = [];
+
       if (requirements.length > 0) {
-        await client.query(
+        const { rows } = await client.query(
           `
-            INSERT INTO space_admission_requirements (admission_id, requirement, status)
+            INSERT INTO space_admission_requirements (admission_id, type, status)
             SELECT $1, unnest($2::text[]), 'pending'
+            RETURNING id, type, status
           `,
           [admission.id, requirements],
         );
+
+        requirementRows = rows;
       }
 
       await client.query("COMMIT");
@@ -91,9 +98,10 @@ export const createAdmission =
           status: "open",
           user_id: admission.user_id,
         },
-        requirements: requirements.map((requirement) => ({
-          requirement,
-          status: "pending",
+        requirements: requirementRows.map((requirement) => ({
+          id: requirement.id,
+          status: requirement.status,
+          type: requirement.type,
         })),
       };
     } catch (err) {

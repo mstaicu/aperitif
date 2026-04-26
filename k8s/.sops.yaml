@@ -1,4 +1,3 @@
-# SOPS zero-to-hero:
 # 1. Install age + sops.
 # 2. Generate a local private key once, e.g.:
 #      mkdir -p ~/.config/sops/age

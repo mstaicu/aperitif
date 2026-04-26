@@ -2,6 +2,30 @@
 
 Spaces owns space lifecycle, membership management, admissions, and requirement tracking for joining or preparing a space.
 
+## Domain Boundary
+
+Spaces owns the authority topology for spaces.
+
+- `spaces` are the authority containers.
+- `space_memberships` are the materialized authority grants: user X has role Y in space Z.
+- `space_admissions` are the process records that may produce authority.
+- `space_admission_requirements` are the requirement rows that must be fulfilled before an admission can complete.
+
+Step domains own evidence collection and validation. For example, a future `profiles` domain owns profile data and decides whether a `profile` requirement is complete. Step domains must not write the spaces database and must not create memberships directly.
+
+The intended integration is:
+
+```text
+spaces creates admission + requirement rows
+step domains collect and validate evidence
+step domains publish requirement completed/failed events
+spaces consumes those events
+spaces updates requirement status
+spaces finalizes authority when all requirements are completed
+```
+
+This keeps authority finalization in spaces while allowing each onboarding step to remain independently owned.
+
 ## Deployment Units
 
 The domain unit spine is:

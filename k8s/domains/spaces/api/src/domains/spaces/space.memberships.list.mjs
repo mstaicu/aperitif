@@ -4,7 +4,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: { currentUserId: string, spaceId: string }) => Promise<{
  *   count: number,
- *   members: {
+ *   memberships: {
  *     role: string,
  *     space_id: string,
  *     user_id: string,
@@ -14,7 +14,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   },
  * }>}
  */
-export const listMembers =
+export const listMemberships =
   (ctx) =>
   async ({ currentUserId, spaceId }) => {
     let client;
@@ -64,7 +64,7 @@ export const listMembers =
 
       return {
         count: rows.length,
-        members: rows.map((row) => ({
+        memberships: rows.map((row) => ({
           role: row.role,
           space_id: spaceId,
           user_id: row.user_id,
