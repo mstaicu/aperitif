@@ -1,6 +1,7 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpacesResponse } from "./schemas.mjs";
+import { SpaceResponse } from "../spaces/schemas.mjs";
+import { AccountParams, CreateAccountSpaceBody } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,22 +14,27 @@ import { SpacesResponse } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.get(
-    "/",
+  fastify.post(
+    "/:accountId/spaces",
     {
       schema: {
+        body: CreateAccountSpaceBody,
         description:
-          "List the spaces the authenticated caller belongs to. Each item includes the space resource and the caller membership in that space.",
-        operationId: "listSpaces",
+          "Create an optional sub-authority context under an account. Account-only products should not create spaces. The caller must be an account owner and becomes explicit owner of the new space.",
+        operationId: "createAccountSpace",
+        params: AccountParams,
         response: {
-          200: SpacesResponse,
+          201: SpaceResponse,
+          400: ProblemResponse,
           401: ProblemResponse,
+          403: ProblemResponse,
+          404: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List caller spaces",
-        tags: ["spaces"],
+        summary: "Create account space",
+        tags: ["accounts", "spaces"],
       },
     },
     async function (req, reply) {
@@ -37,7 +43,13 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      return reply.send(await spaces.list({ currentUserId }));
+      return reply.code(201).send(
+        await spaces.createAccountSpace({
+          accountId: req.params.accountId,
+          currentUserId,
+          name: req.body.name,
+        }),
+      );
     },
   );
 }

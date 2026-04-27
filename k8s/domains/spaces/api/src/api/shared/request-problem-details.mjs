@@ -4,15 +4,35 @@ const VALIDATION_CONTEXTS = new Set(["body", "params", "query", "querystring"]);
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
+  ACCOUNT_MEMBERSHIP_ALREADY_EXISTS: {
+    status: 409,
+    title: "Account membership already exists",
+    type: "/problems/account-membership-already-exists",
+  },
+  ACCOUNT_NOT_ACTIVE: {
+    status: 409,
+    title: "Account not active",
+    type: "/problems/account-not-active",
+  },
+  ACCOUNT_NOT_FOUND: {
+    status: 404,
+    title: "Account not found",
+    type: "/problems/account-not-found",
+  },
+  ACCOUNT_REQUIREMENT_NOT_FOUND: {
+    status: 404,
+    title: "Account requirement not found",
+    type: "/problems/account-requirement-not-found",
+  },
   ADMISSION_CLAIMED: {
     status: 409,
     title: "Admission already claimed",
     type: "/problems/admission-claimed",
   },
-  ADMISSION_NOT_CLAIMABLE: {
+  ADMISSION_NOT_CLAIMED: {
     status: 409,
-    title: "Admission not claimable",
-    type: "/problems/admission-not-claimable",
+    title: "Admission not claimed",
+    type: "/problems/admission-not-claimed",
   },
   ADMISSION_NOT_FOUND: {
     status: 404,
@@ -24,10 +44,10 @@ const PROBLEMS = {
     title: "Admission not open",
     type: "/problems/admission-not-open",
   },
-  ANOTHER_SPACE_REQUIRED: {
-    status: 409,
-    title: "Another space required",
-    type: "/problems/another-space-required",
+  ADMISSION_REQUIREMENT_NOT_FOUND: {
+    status: 404,
+    title: "Admission requirement not found",
+    type: "/problems/admission-requirement-not-found",
   },
   DATABASE_UNAVAILABLE: {
     status: 503,

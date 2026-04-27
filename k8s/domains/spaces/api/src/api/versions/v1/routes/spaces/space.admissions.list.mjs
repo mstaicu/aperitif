@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceResponse } from "./schemas.mjs";
+import { SpaceAdmissionsResponse, SpaceParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,22 +13,26 @@ import { SpaceResponse } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.post(
-    "/",
+  fastify.get(
+    "/:spaceId/admissions",
     {
       schema: {
         description:
-          "Create a new space directly and bootstrap the authenticated caller as owner. This is the no-requirement authority path and does not create an admission.",
-        operationId: "createSpace",
+          "List admissions for a space, including their current requirement rows. Only space owners can inspect admission state for other users.",
+        operationId: "listSpaceAdmissions",
+        params: SpaceParams,
         response: {
-          201: SpaceResponse,
+          200: SpaceAdmissionsResponse,
+          400: ProblemResponse,
           401: ProblemResponse,
+          403: ProblemResponse,
+          404: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create caller-owned space",
-        tags: ["spaces"],
+        summary: "List space admissions",
+        tags: ["admissions", "spaces"],
       },
     },
     async function (req, reply) {
@@ -37,9 +41,10 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      return reply.code(201).send(
-        await spaces.create({
+      return reply.send(
+        await spaces.listAdmissions({
           currentUserId,
+          spaceId: req.params.spaceId,
         }),
       );
     },

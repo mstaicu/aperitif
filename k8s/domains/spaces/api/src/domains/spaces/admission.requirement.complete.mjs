@@ -2,11 +2,11 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { admissionId: string, currentUserId: string }) => Promise<{
+ * @returns {(args: { admissionId: string, currentUserId: string, type: string }) => Promise<{
  *   admission: {
  *     id: string,
  *     requested_role: string,
- *     space_id: string | null,
+ *     space_id: string,
  *     status: "open" | "completed" | "failed" | "cancelled" | "expired",
  *     user_id: string | null,
  *   },
@@ -17,17 +17,17 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   }[],
  * }>}
  */
-export const claim =
+export const completeAdmissionRequirement =
   (ctx) =>
-  async ({ admissionId, currentUserId }) => {
+  async ({ admissionId, currentUserId, type }) => {
     let client;
 
     try {
       client = await ctx.persistence.db.connect();
       await client.query("BEGIN");
 
-      const {
-        rows: [existingAdmission],
+      let {
+        rows: [admission],
       } = await client.query(
         `
           SELECT id, space_id, user_id, requested_role, status
@@ -38,37 +38,51 @@ export const claim =
         [admissionId],
       );
 
-      if (!existingAdmission) {
+      if (!admission) {
         throw new Error("ADMISSION_NOT_FOUND");
       }
 
-      if (existingAdmission.status !== "open") {
+      if (admission.status !== "open") {
         throw new Error("ADMISSION_NOT_OPEN");
       }
 
-      let admission = existingAdmission;
-
-      if (admission.user_id) {
-        throw new Error("ADMISSION_CLAIMED");
-      }
-
-      if (!admission.space_id) {
-        throw new Error("ADMISSION_NOT_CLAIMABLE");
+      if (!admission.user_id) {
+        throw new Error("ADMISSION_NOT_CLAIMED");
       }
 
       const {
-        rows: [claimedAdmission],
+        rows: [membership],
       } = await client.query(
         `
-          UPDATE space_admissions
-          SET user_id = $2
-          WHERE id = $1
-          RETURNING id, space_id, user_id, requested_role, status
+          SELECT role
+          FROM space_memberships
+          WHERE space_id = $1
+            AND user_id = $2
+          FOR UPDATE
         `,
-        [admissionId, currentUserId],
+        [admission.space_id, currentUserId],
       );
 
-      admission = claimedAdmission;
+      if (!membership || membership.role !== "owner") {
+        throw new Error("FORBIDDEN");
+      }
+
+      const {
+        rows: [requirement],
+      } = await client.query(
+        `
+          UPDATE space_admission_requirements
+          SET status = 'completed'
+          WHERE admission_id = $1
+            AND type = $2
+          RETURNING id
+        `,
+        [admissionId, type],
+      );
+
+      if (!requirement) {
+        throw new Error("ADMISSION_REQUIREMENT_NOT_FOUND");
+      }
 
       const { rows: requirements } = await client.query(
         `
@@ -77,16 +91,21 @@ export const claim =
           WHERE admission_id = $1
           ORDER BY type
         `,
-        [admission.id],
+        [admissionId],
       );
 
-      if (admission.status === "open" && requirements.length === 0) {
+      const isComplete = requirements.every(
+        (requirement) => requirement.status === "completed",
+      );
+
+      if (isComplete) {
         await client.query(
           `
             INSERT INTO space_memberships (space_id, user_id, role)
             VALUES ($1, $2, $3)
+            ON CONFLICT (space_id, user_id) DO NOTHING
           `,
-          [admission.space_id, currentUserId, admission.requested_role],
+          [admission.space_id, admission.user_id, admission.requested_role],
         );
 
         ({
@@ -98,11 +117,13 @@ export const claim =
             WHERE id = $1
             RETURNING id, space_id, user_id, requested_role, status
           `,
-          [admission.id],
+          [admissionId],
         ));
       }
 
-      const response = {
+      await client.query("COMMIT");
+
+      return {
         admission: {
           id: admission.id,
           requested_role: admission.requested_role,
@@ -116,13 +137,6 @@ export const claim =
           type: requirement.type,
         })),
       };
-
-      // TODO: When the worker is added, write an outbox row in this transaction for:
-      // - spaces.admission.claimed
-
-      await client.query("COMMIT");
-
-      return response;
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 

@@ -1,5 +1,4 @@
 import { createApp } from "./app.mjs";
-import { createAdmissionsDomain } from "./domains/admissions/index.mjs";
 import { createSpacesDomain } from "./domains/spaces/index.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
@@ -33,7 +32,6 @@ try {
   ctx = await createContext();
 
   const domains = {
-    admissions: createAdmissionsDomain(ctx),
     spaces: createSpacesDomain(ctx),
   };
   const lifecycle = ctx.lifecycle;

@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { AccountParams, AccountResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,27 +13,26 @@ import { SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId",
+  fastify.get(
+    "/:accountId",
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "Fetch an account together with the authenticated caller membership and activation requirements.",
+        operationId: "getAccount",
+        params: AccountParams,
         response: {
-          204: EmptyResponse,
+          200: AccountResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
-          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "Get account context",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -42,12 +41,12 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
-        currentUserId,
-        spaceId: req.params.spaceId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.send(
+        await spaces.getAccount({
+          accountId: req.params.accountId,
+          currentUserId,
+        }),
+      );
     },
   );
 }

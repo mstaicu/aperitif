@@ -9,13 +9,12 @@ const AdmissionRequirementId = Type.String({
   format: "uuid",
 });
 const SpaceId = Type.String({
-  description:
-    "Stable identifier for the target space, when the admission is space-bound.",
+  description: "Stable identifier for the target space.",
   format: "uuid",
 });
 const UserId = Type.String({
   description:
-    "Stable identifier for the bound user identity. Self-started admissions are bound at creation; space-bound invite admissions are null until claimed.",
+    "Stable identifier for the bound user identity. Invite admissions are null until claimed.",
   format: "uuid",
 });
 const Role = Type.String({
@@ -57,6 +56,20 @@ export const AdmissionParams = Type.Object(
   },
 );
 
+export const AdmissionRequirementParams = Type.Object(
+  {
+    admissionId: Type.String({
+      description: "Target admission identifier.",
+      format: "uuid",
+    }),
+    type: RequirementType,
+  },
+  {
+    additionalProperties: false,
+    description: "Path parameters for a specific admission requirement type.",
+  },
+);
+
 export const SpaceAdmissionBody = Type.Object(
   {
     requested_role: Type.String({
@@ -75,14 +88,14 @@ export const Admission = Type.Object(
   {
     id: AdmissionId,
     requested_role: Role,
-    space_id: Type.Union([SpaceId, Type.Null()]),
+    space_id: SpaceId,
     status: AdmissionStatus,
     user_id: Type.Union([UserId, Type.Null()]),
   },
   {
     additionalProperties: false,
     description:
-      "Admission process record. Self-started admissions are post-auth and already bound to a user; space-bound invite admissions may be unbound until claimed.",
+      "Admission process record for joining a space. Invite admissions may be unbound until claimed.",
   },
 );
 
@@ -99,7 +112,7 @@ export const AdmissionRequirement = Type.Object(
   },
 );
 
-export const AdmissionStateResponse = Type.Object(
+export const AdmissionState = Type.Object(
   {
     admission: Admission,
     requirements: Type.Array(AdmissionRequirement),
@@ -110,3 +123,5 @@ export const AdmissionStateResponse = Type.Object(
       "Admission state together with the currently known requirement rows.",
   },
 );
+
+export const AdmissionStateResponse = AdmissionState;

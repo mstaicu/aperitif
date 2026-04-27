@@ -2,20 +2,22 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string }) => Promise<{
+ * @returns {(args: { accountId: string, currentUserId: string, name: string }) => Promise<{
  *   membership: {
- *     role: string,
+ *     role: "owner",
  *     space_id: string,
  *     user_id: string,
  *   },
  *   space: {
+ *     account_id: string,
  *     id: string,
+ *     name: string,
  *   },
  * }>}
  */
-export const create =
+export const createAccountSpace =
   (ctx) =>
-  async ({ currentUserId }) => {
+  async ({ accountId, currentUserId, name }) => {
     let client;
 
     try {
@@ -23,12 +25,47 @@ export const create =
       await client.query("BEGIN");
 
       const {
+        rows: [account],
+      } = await client.query(
+        `
+          SELECT id
+          FROM accounts
+          WHERE id = $1
+          FOR UPDATE
+        `,
+        [accountId],
+      );
+
+      if (!account) {
+        throw new Error("ACCOUNT_NOT_FOUND");
+      }
+
+      const {
+        rows: [accountMembership],
+      } = await client.query(
+        `
+          SELECT role
+          FROM account_memberships
+          WHERE account_id = $1
+            AND user_id = $2
+          FOR UPDATE
+        `,
+        [accountId, currentUserId],
+      );
+
+      if (!accountMembership || accountMembership.role !== "owner") {
+        throw new Error("FORBIDDEN");
+      }
+
+      const {
         rows: [space],
       } = await client.query(
         `
-          INSERT INTO spaces DEFAULT VALUES
-          RETURNING id
+          INSERT INTO spaces (account_id, name)
+          VALUES ($1, $2)
+          RETURNING id, account_id, name
         `,
+        [accountId, name],
       );
 
       await client.query(
@@ -52,7 +89,9 @@ export const create =
           user_id: currentUserId,
         },
         space: {
+          account_id: space.account_id,
           id: space.id,
+          name: space.name,
         },
       };
     } catch (err) {

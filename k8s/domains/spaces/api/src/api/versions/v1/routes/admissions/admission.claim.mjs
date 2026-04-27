@@ -5,20 +5,20 @@ import { AdmissionParams, AdmissionStateResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
-export default async function (fastify, { admissions, jwks }) {
+export default async function (fastify, { jwks, spaces }) {
   fastify.post(
     "/:admissionId/claim",
     {
       schema: {
         description:
-          "Claim an unbound space-bound admission as the authenticated user. Self-started admissions are already bound when created and should be read with getAdmission.",
+          "Claim an unbound admission for a space as the authenticated user.",
         operationId: "claimAdmission",
         params: AdmissionParams,
         response: {
@@ -41,7 +41,7 @@ export default async function (fastify, { admissions, jwks }) {
         jwks,
       });
 
-      const result = await admissions.claim({
+      const result = await spaces.claimAdmission({
         admissionId: req.params.admissionId,
         currentUserId,
       });

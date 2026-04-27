@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { AccountMembershipParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -14,13 +14,13 @@ import { SpaceParams } from "./schemas.mjs";
  */
 export default async function (fastify, { jwks, spaces }) {
   fastify.delete(
-    "/:spaceId",
+    "/:accountId/memberships/:userId",
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "Remove account-level authority. Owners cannot self-target through this endpoint, and removing an already-absent membership is a no-op.",
+        operationId: "deleteAccountMembership",
+        params: AccountMembershipParams,
         response: {
           204: EmptyResponse,
           400: ProblemResponse,
@@ -32,8 +32,8 @@ export default async function (fastify, { jwks, spaces }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "Delete account membership",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -42,9 +42,10 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
+      await spaces.deleteAccountMembership({
+        accountId: req.params.accountId,
         currentUserId,
-        spaceId: req.params.spaceId,
+        userId: req.params.userId,
       });
 
       return reply.code(204).send(null);

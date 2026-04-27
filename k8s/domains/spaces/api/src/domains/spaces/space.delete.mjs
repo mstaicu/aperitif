@@ -29,30 +29,21 @@ export const destroy =
         throw new Error("SPACE_NOT_FOUND");
       }
 
-      const { rows: memberships } = await client.query(
+      const {
+        rows: [targetMembership],
+      } = await client.query(
         `
-          SELECT space_id, role
+          SELECT role
           FROM space_memberships
-          WHERE user_id = $1
+          WHERE space_id = $1
+            AND user_id = $2
           FOR UPDATE
         `,
-        [currentUserId],
-      );
-
-      const targetMembership = memberships.find(
-        (membership) => membership.space_id === spaceId,
+        [spaceId, currentUserId],
       );
 
       if (!targetMembership || targetMembership.role !== "owner") {
         throw new Error("FORBIDDEN");
-      }
-
-      const hasAnotherSpace = memberships.some(
-        (membership) => membership.space_id !== spaceId,
-      );
-
-      if (!hasAnotherSpace) {
-        throw new Error("ANOTHER_SPACE_REQUIRED");
       }
 
       const {

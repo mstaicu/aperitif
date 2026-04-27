@@ -1,34 +1,36 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { AdmissionStateResponse } from "./schemas.mjs";
+import { AccountResponse, CreateAccountBody } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
-export default async function (fastify, { admissions, jwks }) {
+export default async function (fastify, { jwks, spaces }) {
   fastify.post(
     "/",
     {
       schema: {
+        body: CreateAccountBody,
         description:
-          "Create an authenticated self-started admission for first-space onboarding. The admission is immediately bound to the authenticated user; authority is granted only after all requirement rows complete.",
-        operationId: "createAdmission",
+          "Create an account as the tenant/customer ownership root. The authenticated caller becomes account owner, and account activation requirements decide whether the account starts active or pending activation.",
+        operationId: "createAccount",
         response: {
-          201: AdmissionStateResponse,
+          201: AccountResponse,
+          400: ProblemResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create self-started admission",
-        tags: ["admissions"],
+        summary: "Create account",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -38,8 +40,10 @@ export default async function (fastify, { admissions, jwks }) {
       });
 
       return reply.code(201).send(
-        await admissions.createSelfStarted({
+        await spaces.createAccount({
           currentUserId,
+          kind: req.body.kind,
+          name: req.body.name,
         }),
       );
     },

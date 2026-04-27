@@ -5,14 +5,14 @@ import { AdmissionParams, AdmissionStateResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
+ * @typedef {import("../../../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{admissions: AdmissionsDomain, jwks: Jwks}} opts
+ * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
-export default async function (fastify, { admissions, jwks }) {
+export default async function (fastify, { jwks, spaces }) {
   fastify.get(
     "/:admissionId",
     {
@@ -41,7 +41,7 @@ export default async function (fastify, { admissions, jwks }) {
         jwks,
       });
 
-      const result = await admissions.get({
+      const result = await spaces.getAdmission({
         admissionId: req.params.admissionId,
         currentUserId,
       });

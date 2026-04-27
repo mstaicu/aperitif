@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { AccountsResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,27 +13,22 @@ import { SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId",
+  fastify.get(
+    "/",
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "List accounts where the authenticated caller has account-level authority.",
+        operationId: "listAccounts",
         response: {
-          204: EmptyResponse,
-          400: ProblemResponse,
+          200: AccountsResponse,
           401: ProblemResponse,
-          403: ProblemResponse,
-          404: ProblemResponse,
-          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "List caller accounts",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -42,12 +37,7 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
-        currentUserId,
-        spaceId: req.params.spaceId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.send(await spaces.listAccounts({ currentUserId }));
     },
   );
 }

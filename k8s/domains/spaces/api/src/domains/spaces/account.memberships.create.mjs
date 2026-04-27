@@ -2,20 +2,23 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, role: string, spaceId: string, userId: string }) => Promise<{
- *   membership: {
- *     role: string,
- *     space_id: string,
- *     user_id: string,
- *   },
- *   space: {
+ * @returns {(args: { accountId: string, currentUserId: string, role: "owner" | "member", userId: string }) => Promise<{
+ *   account: {
  *     id: string,
+ *     kind: "personal" | "organization",
+ *     name: string,
+ *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *   },
+ *   membership: {
+ *     account_id: string,
+ *     role: "owner" | "member",
+ *     user_id: string,
  *   },
  * }>}
  */
-export const createMembership =
+export const createAccountMembership =
   (ctx) =>
-  async ({ currentUserId, role, spaceId, userId }) => {
+  async ({ accountId, currentUserId, role, userId }) => {
     let client;
 
     try {
@@ -23,34 +26,35 @@ export const createMembership =
       await client.query("BEGIN");
 
       const {
-        rows: [space],
+        rows: [account],
       } = await client.query(
         `
-          SELECT id
-          FROM spaces
+          SELECT id, name, kind, status
+          FROM accounts
           WHERE id = $1
+          FOR UPDATE
         `,
-        [spaceId],
+        [accountId],
       );
 
-      if (!space) {
-        throw new Error("SPACE_NOT_FOUND");
+      if (!account) {
+        throw new Error("ACCOUNT_NOT_FOUND");
       }
 
       const {
-        rows: [membership],
+        rows: [currentMembership],
       } = await client.query(
         `
           SELECT role
-          FROM space_memberships
-          WHERE space_id = $1
+          FROM account_memberships
+          WHERE account_id = $1
             AND user_id = $2
           FOR UPDATE
         `,
-        [spaceId, currentUserId],
+        [accountId, currentUserId],
       );
 
-      if (!membership || membership.role !== "owner") {
+      if (!currentMembership || currentMembership.role !== "owner") {
         throw new Error("FORBIDDEN");
       }
 
@@ -59,29 +63,32 @@ export const createMembership =
       } = await client.query(
         `
           SELECT role
-          FROM space_memberships
-          WHERE space_id = $1
+          FROM account_memberships
+          WHERE account_id = $1
             AND user_id = $2
           FOR UPDATE
         `,
-        [spaceId, userId],
+        [accountId, userId],
       );
 
       if (existingMembership) {
         if (existingMembership.role !== role) {
-          throw new Error("MEMBERSHIP_ALREADY_EXISTS");
+          throw new Error("ACCOUNT_MEMBERSHIP_ALREADY_EXISTS");
         }
 
         await client.query("COMMIT");
 
         return {
-          membership: {
-            role: existingMembership.role,
-            space_id: spaceId,
-            user_id: userId,
+          account: {
+            id: account.id,
+            kind: account.kind,
+            name: account.name,
+            status: account.status,
           },
-          space: {
-            id: spaceId,
+          membership: {
+            account_id: accountId,
+            role: existingMembership.role,
+            user_id: userId,
           },
         };
       }
@@ -90,25 +97,28 @@ export const createMembership =
       // When an identity projection exists locally, validate it here.
       await client.query(
         `
-          INSERT INTO space_memberships (space_id, user_id, role)
+          INSERT INTO account_memberships (account_id, user_id, role)
           VALUES ($1, $2, $3)
         `,
-        [spaceId, userId, role],
+        [accountId, userId, role],
       );
 
       // TODO: When eventing is wired, insert an outbox row in this transaction for:
-      // - spaces.membership.created
+      // - spaces.account_membership.created
 
       await client.query("COMMIT");
 
       return {
-        membership: {
-          role,
-          space_id: spaceId,
-          user_id: userId,
+        account: {
+          id: account.id,
+          kind: account.kind,
+          name: account.name,
+          status: account.status,
         },
-        space: {
-          id: spaceId,
+        membership: {
+          account_id: accountId,
+          role,
+          user_id: userId,
         },
       };
     } catch (err) {

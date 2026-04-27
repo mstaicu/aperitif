@@ -2,80 +2,83 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, spaceId: string }) => Promise<{
+ * @returns {(args: { accountId: string, currentUserId: string }) => Promise<{
+ *   account: {
+ *     id: string,
+ *     kind: "personal" | "organization",
+ *     name: string,
+ *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *   },
  *   count: number,
  *   memberships: {
- *     role: string,
- *     space_id: string,
+ *     account_id: string,
+ *     role: "owner" | "member",
  *     user_id: string,
  *   }[],
- *   space: {
- *     account_id: string,
- *     id: string,
- *     name: string,
- *   },
  * }>}
  */
-export const listMemberships =
+export const listAccountMemberships =
   (ctx) =>
-  async ({ currentUserId, spaceId }) => {
+  async ({ accountId, currentUserId }) => {
     let client;
 
     try {
       client = await ctx.persistence.db.connect();
+
       const {
-        rows: [space],
+        rows: [account],
       } = await client.query(
         `
-          SELECT id, account_id, name
-          FROM spaces
+          SELECT id, name, kind, status
+          FROM accounts
           WHERE id = $1
         `,
-        [spaceId],
+        [accountId],
       );
 
-      if (!space) {
-        throw new Error("SPACE_NOT_FOUND");
+      if (!account) {
+        throw new Error("ACCOUNT_NOT_FOUND");
       }
 
       const {
-        rows: [membership],
+        rows: [currentMembership],
       } = await client.query(
         `
           SELECT role
-          FROM space_memberships
-          WHERE space_id = $1
+          FROM account_memberships
+          WHERE account_id = $1
             AND user_id = $2
         `,
-        [spaceId, currentUserId],
+        [accountId, currentUserId],
       );
 
-      if (!membership || membership.role !== "owner") {
+      if (!currentMembership || currentMembership.role !== "owner") {
         throw new Error("FORBIDDEN");
       }
 
       const { rows } = await client.query(
         `
           SELECT user_id, role
-          FROM space_memberships
-          WHERE space_id = $1
+          FROM account_memberships
+          WHERE account_id = $1
           ORDER BY user_id
         `,
-        [spaceId],
+        [accountId],
       );
 
       return {
+        account: {
+          id: account.id,
+          kind: account.kind,
+          name: account.name,
+          status: account.status,
+        },
         count: rows.length,
         memberships: rows.map((row) => ({
+          account_id: accountId,
           role: row.role,
-          space_id: spaceId,
           user_id: row.user_id,
         })),
-        space: {
-          account_id: space.account_id,
-          id: space.id,
-          name: space.name,
-        },
       };
     } catch (err) {
       if (isDatabaseUnavailable(err)) {

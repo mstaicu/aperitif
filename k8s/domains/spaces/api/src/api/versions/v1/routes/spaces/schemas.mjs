@@ -1,7 +1,13 @@
 import { Type } from "@sinclair/typebox";
 
+import { AdmissionState } from "../admissions/schemas.mjs";
+
 const SpaceId = Type.String({
   description: "Stable identifier for a space resource.",
+  format: "uuid",
+});
+const AccountId = Type.String({
+  description: "Stable identifier for the account that owns this space.",
   format: "uuid",
 });
 const UserId = Type.String({
@@ -16,6 +22,11 @@ const Role = Type.String({
 const Count = Type.Integer({
   description: "Number of items returned in this response.",
   minimum: 0,
+});
+const SpaceName = Type.String({
+  description: "Human-readable space name.",
+  maxLength: 160,
+  minLength: 1,
 });
 
 export const SpaceParams = Type.Object(
@@ -48,29 +59,16 @@ export const SpaceMembershipParams = Type.Object(
   },
 );
 
-// NOTE: user_id is assumed to be a valid global identity UUID resolved
-// outside this domain. Spaces does not verify user existence yet.
-export const CreateSpaceMembershipBody = Type.Object(
-  {
-    role: Type.String({
-      description: "Role to grant to the target user in the target space.",
-      maxLength: 64,
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description: "Payload for creating a direct membership in a space.",
-  },
-);
-
 export const Space = Type.Object(
   {
+    account_id: AccountId,
     id: SpaceId,
+    name: SpaceName,
   },
   {
     additionalProperties: false,
-    description: "Space resource.",
+    description:
+      "Space authority context. A space belongs to exactly one account.",
   },
 );
 
@@ -83,28 +81,6 @@ export const SpaceMembership = Type.Object(
   {
     additionalProperties: false,
     description: "Membership linking a user identity to a space.",
-  },
-);
-
-export const SpaceAccess = Type.Object(
-  {
-    membership: SpaceMembership,
-    space: Space,
-  },
-  {
-    additionalProperties: false,
-    description: "Space plus the caller membership in that space.",
-  },
-);
-
-export const SpacesResponse = Type.Object(
-  {
-    count: Count,
-    spaces: Type.Array(SpaceAccess),
-  },
-  {
-    additionalProperties: false,
-    description: "Spaces visible to the authenticated caller.",
   },
 );
 
@@ -131,13 +107,15 @@ export const SpaceMembershipsResponse = Type.Object(
   },
 );
 
-export const SpaceMembershipResponse = Type.Object(
+export const SpaceAdmissionsResponse = Type.Object(
   {
-    membership: SpaceMembership,
+    admissions: Type.Array(AdmissionState),
+    count: Count,
     space: Space,
   },
   {
     additionalProperties: false,
-    description: "Created or fetched membership for a specific space.",
+    description:
+      "Admissions currently attached to a space, including their requirement rows.",
   },
 );

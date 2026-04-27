@@ -1,10 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import {
-  CreateSpaceMembershipBody,
-  SpaceMembershipParams,
-  SpaceMembershipResponse,
-} from "./schemas.mjs";
+import { AccountParams, AccountRequirementsResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,28 +13,26 @@ import {
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.put(
-    "/:spaceId/memberships/:userId",
+  fastify.get(
+    "/:accountId/requirements",
     {
       schema: {
-        body: CreateSpaceMembershipBody,
         description:
-          "Ensure a direct membership exists in a space for an existing global user identity. Repeating the same request with the same role is a no-op. Changing an existing role is not supported here.",
-        operationId: "createSpaceMembership",
-        params: SpaceMembershipParams,
+          "List account activation requirements. Account members can inspect the requirements that gate account activation.",
+        operationId: "listAccountRequirements",
+        params: AccountParams,
         response: {
-          200: SpaceMembershipResponse,
+          200: AccountRequirementsResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
-          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create space membership",
-        tags: ["spaces"],
+        summary: "List account requirements",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -47,12 +41,10 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      return reply.code(200).send(
-        await spaces.createMembership({
+      return reply.send(
+        await spaces.listAccountRequirements({
+          accountId: req.params.accountId,
           currentUserId,
-          role: req.body.role,
-          spaceId: req.params.spaceId,
-          userId: req.params.userId,
         }),
       );
     },

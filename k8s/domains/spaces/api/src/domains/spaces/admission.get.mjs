@@ -6,7 +6,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   admission: {
  *     id: string,
  *     requested_role: string,
- *     space_id: string | null,
+ *     space_id: string,
  *     status: "open" | "completed" | "failed" | "cancelled" | "expired",
  *     user_id: string | null,
  *   },
@@ -17,7 +17,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   }[],
  * }>}
  */
-export const get =
+export const getAdmission =
   (ctx) =>
   async ({ admissionId, currentUserId }) => {
     let client;
@@ -45,10 +45,6 @@ export const get =
       }
 
       if (!admission.user_id) {
-        if (!admission.space_id) {
-          throw new Error("FORBIDDEN");
-        }
-
         const {
           rows: [membership],
         } = await client.query(

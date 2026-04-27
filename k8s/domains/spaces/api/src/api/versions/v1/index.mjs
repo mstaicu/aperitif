@@ -1,29 +1,35 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
+import getAccount from "./routes/accounts/account.get.mjs";
+import deleteAccountMembership from "./routes/accounts/account.membership.delete.mjs";
+import createAccountMembership from "./routes/accounts/account.memberships.create.mjs";
+import listAccountMemberships from "./routes/accounts/account.memberships.list.mjs";
+import completeAccountRequirement from "./routes/accounts/account.requirement.complete.mjs";
+import listAccountRequirements from "./routes/accounts/account.requirements.list.mjs";
+import createAccountSpace from "./routes/accounts/account.spaces.create.mjs";
+import listAccountSpaces from "./routes/accounts/account.spaces.list.mjs";
+import createAccount from "./routes/accounts/accounts.create.mjs";
+import listAccounts from "./routes/accounts/accounts.list.mjs";
 import claimAdmission from "./routes/admissions/admission.claim.mjs";
 import getAdmission from "./routes/admissions/admission.get.mjs";
-import createAdmission from "./routes/admissions/admissions.create.mjs";
+import completeAdmissionRequirement from "./routes/admissions/admission.requirement.complete.mjs";
 import createSpaceAdmission from "./routes/spaces/space.admissions.create.mjs";
+import listSpaceAdmissions from "./routes/spaces/space.admissions.list.mjs";
 import destroySpace from "./routes/spaces/space.delete.mjs";
 import getSpace from "./routes/spaces/space.get.mjs";
 import deleteSpaceMembership from "./routes/spaces/space.membership.delete.mjs";
-import createSpaceMembership from "./routes/spaces/space.memberships.create.mjs";
 import listSpaceMemberships from "./routes/spaces/space.memberships.list.mjs";
-import createSpace from "./routes/spaces/spaces.create.mjs";
-import listSpaces from "./routes/spaces/spaces.list.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../domains/admissions/index.mjs").AdmissionsDomain} AdmissionsDomain
  * @typedef {import("../../../domains/spaces/index.mjs").SpacesDomain} SpacesDomain
  */
 
 /**
  * @param {Fastify} fastify
  * @param {{domains: {
- *   admissions: AdmissionsDomain,
  *   spaces: SpacesDomain,
  * }, jwks: Jwks}} opts
  */
@@ -43,7 +49,7 @@ export default async (fastify, { domains, jwks }) => {
       },
       info: {
         description:
-          "Authority API for space lifecycle, memberships, and admissions.",
+          "Authority API for account ownership, optional space contexts, memberships, and admissions.",
         title: "Spaces",
         version: "v1",
       },
@@ -54,7 +60,12 @@ export default async (fastify, { domains, jwks }) => {
       ],
       tags: [
         {
-          description: "Space lifecycle and membership management",
+          description: "Tenant/customer ownership and account membership",
+          name: "accounts",
+        },
+        {
+          description:
+            "Optional sub-authority contexts under accounts, with explicit membership management",
           name: "spaces",
         },
         {
@@ -69,9 +80,54 @@ export default async (fastify, { domains, jwks }) => {
     routePrefix: "/docs",
   });
 
-  await fastify.register(listSpaces, {
+  await fastify.register(listAccounts, {
     jwks,
-    prefix: "/spaces",
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(createAccount, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(getAccount, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(listAccountMemberships, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(createAccountMembership, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(deleteAccountMembership, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(listAccountRequirements, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(completeAccountRequirement, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(listAccountSpaces, {
+    jwks,
+    prefix: "/accounts",
+    spaces: domains.spaces,
+  });
+  await fastify.register(createAccountSpace, {
+    jwks,
+    prefix: "/accounts",
     spaces: domains.spaces,
   });
   await fastify.register(getSpace, {
@@ -89,17 +145,12 @@ export default async (fastify, { domains, jwks }) => {
     prefix: "/spaces",
     spaces: domains.spaces,
   });
+  await fastify.register(listSpaceAdmissions, {
+    jwks,
+    prefix: "/spaces",
+    spaces: domains.spaces,
+  });
   await fastify.register(listSpaceMemberships, {
-    jwks,
-    prefix: "/spaces",
-    spaces: domains.spaces,
-  });
-  await fastify.register(createSpace, {
-    jwks,
-    prefix: "/spaces",
-    spaces: domains.spaces,
-  });
-  await fastify.register(createSpaceMembership, {
     jwks,
     prefix: "/spaces",
     spaces: domains.spaces,
@@ -109,19 +160,19 @@ export default async (fastify, { domains, jwks }) => {
     prefix: "/spaces",
     spaces: domains.spaces,
   });
-  await fastify.register(createAdmission, {
-    admissions: domains.admissions,
-    jwks,
-    prefix: "/admissions",
-  });
   await fastify.register(getAdmission, {
-    admissions: domains.admissions,
     jwks,
     prefix: "/admissions",
+    spaces: domains.spaces,
+  });
+  await fastify.register(completeAdmissionRequirement, {
+    jwks,
+    prefix: "/admissions",
+    spaces: domains.spaces,
   });
   await fastify.register(claimAdmission, {
-    admissions: domains.admissions,
     jwks,
     prefix: "/admissions",
+    spaces: domains.spaces,
   });
 };

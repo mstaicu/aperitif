@@ -32,6 +32,7 @@ export default async function (fastify, { jwks, spaces }) {
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
+          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },

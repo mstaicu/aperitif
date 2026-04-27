@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { AccountParams, AccountSpacesResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,27 +13,26 @@ import { SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId",
+  fastify.get(
+    "/:accountId/spaces",
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "List optional spaces owned by an account. Account membership is enough to list account-level space metadata; space-specific actions still require space membership.",
+        operationId: "listAccountSpaces",
+        params: AccountParams,
         response: {
-          204: EmptyResponse,
+          200: AccountSpacesResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
-          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "List account spaces",
+        tags: ["accounts", "spaces"],
       },
     },
     async function (req, reply) {
@@ -42,12 +41,12 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
-        currentUserId,
-        spaceId: req.params.spaceId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.send(
+        await spaces.listAccountSpaces({
+          accountId: req.params.accountId,
+          currentUserId,
+        }),
+      );
     },
   );
 }

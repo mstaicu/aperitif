@@ -1,6 +1,10 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import {
+  AccountMembershipParams,
+  AccountMembershipResponse,
+  CreateAccountMembershipBody,
+} from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,16 +17,17 @@ import { SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId",
+  fastify.put(
+    "/:accountId/memberships/:userId",
     {
       schema: {
+        body: CreateAccountMembershipBody,
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "Ensure a user has account-level authority. Repeating the same request with the same role is a no-op; changing an existing role is not supported here.",
+        operationId: "createAccountMembership",
+        params: AccountMembershipParams,
         response: {
-          204: EmptyResponse,
+          200: AccountMembershipResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -32,8 +37,8 @@ export default async function (fastify, { jwks, spaces }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "Create account membership",
+        tags: ["accounts"],
       },
     },
     async function (req, reply) {
@@ -42,12 +47,14 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
-        currentUserId,
-        spaceId: req.params.spaceId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.code(200).send(
+        await spaces.createAccountMembership({
+          accountId: req.params.accountId,
+          currentUserId,
+          role: req.body.role,
+          userId: req.params.userId,
+        }),
+      );
     },
   );
 }

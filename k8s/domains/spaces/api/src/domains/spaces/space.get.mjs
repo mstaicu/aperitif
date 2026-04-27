@@ -9,7 +9,9 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     user_id: string,
  *   },
  *   space: {
+ *     account_id: string,
  *     id: string,
+ *     name: string,
  *   },
  * }>}
  */
@@ -24,7 +26,7 @@ export const get =
         rows: [space],
       } = await client.query(
         `
-          SELECT id
+          SELECT id, account_id, name
           FROM spaces
           WHERE id = $1
         `,
@@ -58,7 +60,9 @@ export const get =
           user_id: currentUserId,
         },
         space: {
-          id: spaceId,
+          account_id: space.account_id,
+          id: space.id,
+          name: space.name,
         },
       };
     } catch (err) {

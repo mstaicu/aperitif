@@ -22,7 +22,7 @@ export const createAdmission =
   async ({ currentUserId, requested_role, spaceId }) => {
     // Add or remove business steps here. Owning domains should publish
     // status updates for these requirement names; spaces only tracks status.
-    const requirements = ["profile", "terms"];
+    const admissionRequirements = ["profile", "terms"];
     let client;
 
     try {
@@ -33,15 +33,20 @@ export const createAdmission =
         rows: [space],
       } = await client.query(
         `
-          SELECT id
-          FROM spaces
-          WHERE id = $1
+          SELECT s.id, a.status AS account_status
+          FROM spaces s
+          JOIN accounts a ON a.id = s.account_id
+          WHERE s.id = $1
         `,
         [spaceId],
       );
 
       if (!space) {
         throw new Error("SPACE_NOT_FOUND");
+      }
+
+      if (space.account_status !== "active") {
+        throw new Error("ACCOUNT_NOT_ACTIVE");
       }
 
       const {
@@ -75,14 +80,14 @@ export const createAdmission =
       /** @type {{ id: string, status: "pending", type: string }[]} */
       let requirementRows = [];
 
-      if (requirements.length > 0) {
+      if (admissionRequirements.length > 0) {
         const { rows } = await client.query(
           `
             INSERT INTO space_admission_requirements (admission_id, type, status)
             SELECT $1, unnest($2::text[]), 'pending'
             RETURNING id, type, status
           `,
-          [admission.id, requirements],
+          [admission.id, admissionRequirements],
         );
 
         requirementRows = rows;

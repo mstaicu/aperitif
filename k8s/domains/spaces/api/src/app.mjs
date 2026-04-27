@@ -8,7 +8,6 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
- * @typedef {import('./domains/admissions/index.mjs').AdmissionsDomain} AdmissionsDomain
  * @typedef {import('./domains/spaces/index.mjs').SpacesDomain} SpacesDomain
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
@@ -28,7 +27,6 @@ import v1 from "./api/versions/v1/index.mjs";
  * @param {{
  *  ctx: Ctx,
  *  domains: {
- *    admissions: AdmissionsDomain,
  *    spaces: SpacesDomain,
  *  },
  *  fastifyOtel: FastifyOtelInstrumentation

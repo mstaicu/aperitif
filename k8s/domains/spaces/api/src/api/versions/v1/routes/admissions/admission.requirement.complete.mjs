@@ -1,6 +1,9 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { EmptyResponse, ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SpaceParams } from "./schemas.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import {
+  AdmissionRequirementParams,
+  AdmissionStateResponse,
+} from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -13,16 +16,16 @@ import { SpaceParams } from "./schemas.mjs";
  * @param {{jwks: Jwks, spaces: SpacesDomain}} opts
  */
 export default async function (fastify, { jwks, spaces }) {
-  fastify.delete(
-    "/:spaceId",
+  fastify.post(
+    "/:admissionId/requirements/:type/complete",
     {
       schema: {
         description:
-          "Delete a space. The caller must own the space, and the target space must have no open admissions.",
-        operationId: "deleteSpace",
-        params: SpaceParams,
+          "Mark an admission requirement completed. Space owners can use this synchronous route shape; later event consumers should reuse this transaction behind an internal worker path. When all requirements are complete and the admission is claimed, spaces completes the admission and creates the membership.",
+        operationId: "completeAdmissionRequirement",
+        params: AdmissionRequirementParams,
         response: {
-          204: EmptyResponse,
+          200: AdmissionStateResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -32,8 +35,8 @@ export default async function (fastify, { jwks, spaces }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Delete space",
-        tags: ["spaces"],
+        summary: "Complete admission requirement",
+        tags: ["admissions"],
       },
     },
     async function (req, reply) {
@@ -42,12 +45,13 @@ export default async function (fastify, { jwks, spaces }) {
         jwks,
       });
 
-      await spaces.delete({
-        currentUserId,
-        spaceId: req.params.spaceId,
-      });
-
-      return reply.code(204).send(null);
+      return reply.send(
+        await spaces.completeAdmissionRequirement({
+          admissionId: req.params.admissionId,
+          currentUserId,
+          type: req.params.type,
+        }),
+      );
     },
   );
 }
