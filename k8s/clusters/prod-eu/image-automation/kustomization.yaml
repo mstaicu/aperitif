@@ -3,4 +3,4 @@ kind: Kustomization
 
 resources:
   - identities.yaml
-  - spaces.yaml
+  - accounts.yaml

@@ -1,0 +1,67 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: accounts-api
+spec:
+  image: docker.io/mdstaicu/accounts-api
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: accounts-migrate
+spec:
+  image: docker.io/mdstaicu/accounts-migrate
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: accounts-api-latest
+spec:
+  imageRepositoryRef:
+    name: accounts-api
+  filterTags:
+    pattern: "^[a-f0-9]{7}$"
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: accounts-migrate-latest
+spec:
+  imageRepositoryRef:
+    name: accounts-migrate
+  filterTags:
+    pattern: "^[a-f0-9]{7}$"
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+
+metadata:
+  name: accounts
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: master
+    commit:
+      author:
+        email: flux@tma.com
+        name: FluxCD Bot
+    push:
+      branch: master
+  update:
+    path: ./k8s/domains/accounts/infra
+    strategy: Setters

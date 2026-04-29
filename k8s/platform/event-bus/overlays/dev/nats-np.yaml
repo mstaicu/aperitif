@@ -63,3 +63,27 @@ spec:
           protocol: TCP
   policyTypes:
     - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-accounts-worker-to-nats
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: accounts
+          podSelector:
+            matchLabels:
+              app: accounts-worker
+      ports:
+        - port: 4222
+          protocol: TCP
+  policyTypes:
+    - Ingress

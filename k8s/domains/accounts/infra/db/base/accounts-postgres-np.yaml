@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-accounts-api-and-migrate-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: accounts-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: accounts-api
+        - podSelector:
+            matchLabels:
+              app: accounts-migrate
+      ports:
+        - protocol: TCP
+          port: 5432

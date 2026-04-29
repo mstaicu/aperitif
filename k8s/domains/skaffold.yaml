@@ -3,4 +3,4 @@ kind: Config
 
 requires:
   - path: identities
-  - path: spaces
+  - path: accounts

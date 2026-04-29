@@ -1,7 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-
-metadata:
-  name: spaces-api-depl
-spec:
-  replicas: 1

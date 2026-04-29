@@ -4,7 +4,10 @@ import { jetstream } from "@nats-io/jetstream";
  * @param {import('@nats-io/transport-node').NatsConnection} nc
  */
 export async function startIdentitiesConsumer(nc) {
-  const c = await jetstream(nc).consumers.get("identities", "identities-worker");
+  const c = await jetstream(nc).consumers.get(
+    "identities",
+    "identities-worker",
+  );
   const it = await c.consume({ max_messages: 1 });
 
   let running = true;
@@ -13,7 +16,13 @@ export async function startIdentitiesConsumer(nc) {
   (async () => {
     for await (const m of it) {
       if (!running) break;
-      await handleIdentitiesEvent(m);
+
+      try {
+        await handleIdentitiesEvent(m);
+        m.ack();
+      } catch {
+        m.nak();
+      }
     }
   })();
 

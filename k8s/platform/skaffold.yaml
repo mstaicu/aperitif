@@ -2,6 +2,6 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 requires:
+  - path: event-bus
   - path: ingress
   # - path: observability
-  # - path: event-bus

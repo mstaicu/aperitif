@@ -10,26 +10,28 @@ dev-identities:
 
 	exec skaffold dev -m identities-api-dev
 
-dev-spaces:
+dev-accounts:
 	$(MAKE) ingress
+	$(MAKE) event-bus
 
-	skaffold run -m spaces-db-dev
-	skaffold run --force -m spaces-migrate-dev
+	skaffold run -m accounts-db-dev
+	skaffold run --force -m accounts-migrate-dev
 
-	kubectl wait -n spaces --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n spaces job/migrate --all-containers=true; exit 1; }
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 
-	exec skaffold dev -m spaces-api-dev
+	exec skaffold dev -m accounts-api-dev,accounts-worker-dev
 
 dev:
 	$(MAKE) ingress
+	$(MAKE) event-bus
 
-	skaffold run -m identities-db-dev,spaces-db-dev
-	skaffold run --force -m identities-migrate-dev,spaces-migrate-dev
+	skaffold run -m identities-db-dev,accounts-db-dev
+	skaffold run --force -m identities-migrate-dev,accounts-migrate-dev
 
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
-	kubectl wait -n spaces --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n spaces job/migrate --all-containers=true; exit 1; }
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 
-	exec skaffold dev -m identities-api-dev,spaces-api-dev
+	exec skaffold dev -m identities-api-dev,accounts-api-dev,accounts-worker-dev
 
 ingress:
 	skaffold run -m ingress-crds
@@ -56,6 +58,10 @@ ingress:
 		--dry-run=client -o yaml | kubectl apply -f -
 
 	skaffold run -m ingress
+
+event-bus:
+	skaffold run -m event-bus
+	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
 
 sops-updatekeys:
 	@rg -l '^sops:' domains platform -g '*.yaml' | while read -r file; do \

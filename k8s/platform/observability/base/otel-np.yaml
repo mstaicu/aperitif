@@ -15,7 +15,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-identities-and-spaces-to-otel-http
+  name: allow-identities-and-accounts-to-otel-http
 spec:
   podSelector:
     matchLabels:
@@ -32,10 +32,10 @@ spec:
               app: identities-api
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: spaces
+              kubernetes.io/metadata.name: accounts
           podSelector:
             matchLabels:
-              app: spaces-api
+              app: accounts-api
       ports:
         - protocol: TCP
           port: 4318

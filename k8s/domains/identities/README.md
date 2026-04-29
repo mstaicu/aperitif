@@ -12,7 +12,7 @@ Identities owns authentication identity, not product authority.
 - `sessions` are refresh-token backed identity sessions.
 - JWKS is the public verification contract for identity-issued access tokens.
 
-Identities must not own spaces, memberships, admissions, onboarding requirements, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
+Identities must not own accounts, memberships, onboarding requirements, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
 
 The intended integration is:
 
