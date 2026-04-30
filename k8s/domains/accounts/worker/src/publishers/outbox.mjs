@@ -2,6 +2,9 @@ import { setInterval } from "node:timers/promises";
 
 import { ACCOUNTS_STREAM } from "../platform/messaging/accounts-stream.mjs";
 
+const OUTBOX_POLL_INTERVAL_MS = 1000;
+const PUBLISH_ACK_TIMEOUT_MS = 5000;
+
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {AbortSignal} signal
@@ -9,7 +12,7 @@ import { ACCOUNTS_STREAM } from "../platform/messaging/accounts-stream.mjs";
 export async function runOutboxPublisher(ctx, signal) {
   try {
     // eslint-disable-next-line
-    for await (const _ of setInterval(1000, undefined, {
+    for await (const _ of setInterval(OUTBOX_POLL_INTERVAL_MS, undefined, {
       signal,
     })) {
       await publishNextOutboxEvent(ctx);
@@ -28,6 +31,7 @@ export async function runOutboxPublisher(ctx, signal) {
  */
 async function publishNextOutboxEvent(ctx) {
   const client = await ctx.persistence.db.connect();
+  let destroyClient = false;
 
   try {
     await client.query("BEGIN");
@@ -59,6 +63,7 @@ async function publishNextOutboxEvent(ctx) {
         streamName: ACCOUNTS_STREAM,
       },
       msgID: event.id,
+      timeout: PUBLISH_ACK_TIMEOUT_MS,
     });
 
     await client.query(
@@ -74,9 +79,14 @@ async function publishNextOutboxEvent(ctx) {
 
     return true;
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      destroyClient = true;
+    }
+
     throw err;
   } finally {
-    client.release();
+    client.release(destroyClient);
   }
 }

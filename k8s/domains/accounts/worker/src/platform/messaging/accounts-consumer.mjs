@@ -14,8 +14,27 @@ export const ACCOUNTS_CONSUMER = "accounts-worker";
  * @param {import("../context.mjs").WorkerContext} ctx
  */
 export async function ensureAccountsConsumer(ctx) {
+  const createConfig = {
+    ack_policy: AckPolicy.Explicit,
+    deliver_policy: DeliverPolicy.All,
+    durable_name: ACCOUNTS_CONSUMER,
+    filter_subject: "accounts.>",
+    max_ack_pending: 1,
+    replay_policy: ReplayPolicy.Instant,
+  };
+
+  const updateConfig = {
+    filter_subject: createConfig.filter_subject,
+    max_ack_pending: createConfig.max_ack_pending,
+  };
+
   try {
     await ctx.messaging.jsm.consumers.info(ACCOUNTS_STREAM, ACCOUNTS_CONSUMER);
+    await ctx.messaging.jsm.consumers.update(
+      ACCOUNTS_STREAM,
+      ACCOUNTS_CONSUMER,
+      updateConfig,
+    );
   } catch (err) {
     if (
       !(
@@ -26,13 +45,6 @@ export async function ensureAccountsConsumer(ctx) {
       throw err;
     }
 
-    await ctx.messaging.jsm.consumers.add(ACCOUNTS_STREAM, {
-      ack_policy: AckPolicy.Explicit,
-      deliver_policy: DeliverPolicy.All,
-      durable_name: ACCOUNTS_CONSUMER,
-      filter_subject: "accounts.>",
-      max_ack_pending: 1,
-      replay_policy: ReplayPolicy.Instant,
-    });
+    await ctx.messaging.jsm.consumers.add(ACCOUNTS_STREAM, createConfig);
   }
 }

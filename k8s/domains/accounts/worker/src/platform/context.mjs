@@ -5,13 +5,14 @@ import { createPgContext } from "./persistence/pg.mjs";
 
 export async function createContext() {
   const pg = createPgContext();
+  const streamReplicas = getStreamReplicas();
 
   try {
     const nats = await createNatsContext();
 
     return {
       app: {
-        streamReplicas: getStreamReplicas(),
+        streamReplicas,
       },
       lifecycle: {
         close: async () => {
