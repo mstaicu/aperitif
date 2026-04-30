@@ -11,7 +11,7 @@ export function createPgContext() {
   });
 
   return {
-    close: () => pool.end(),
+    close: pool.end,
     db: pool,
   };
 }

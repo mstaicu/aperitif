@@ -8,3 +8,4 @@ resources:
   - accounts-db.yaml
   - accounts-migrate.yaml
   - accounts-api.yaml
+  - accounts-worker.yaml

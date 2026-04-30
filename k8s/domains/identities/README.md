@@ -30,7 +30,7 @@ If external IdPs, M2M, or agents are added later, keep them behind the same veri
 The domain unit spine is:
 
 ```text
-db -> migrate -> api -> ui/worker
+db -> migrate -> api -> ui
 ```
 
 Current Kubernetes-deployed units:
@@ -42,9 +42,10 @@ Current Kubernetes-deployed units:
 Current source-only units:
 
 - `ui`: React Router UI under `ui/`. Add `infra/ui`, Skaffold, and Flux wiring before treating it as a deployable unit.
-- `worker`: NATS worker under `worker/`. Add `infra/worker`, Skaffold, and Flux wiring before treating it as a deployable unit.
 
-Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction.
+There is no identities worker right now. Add one only when identities has a real event contract, and copy the accounts worker spine instead of reviving ad hoc worker code.
+
+Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, or `ui` behind a fake all-in-one abstraction.
 
 ## Local
 
@@ -72,12 +73,13 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/identities` gateway prefix.
 - Public identity contract: JWKS is exposed at `/.well-known/jwks.json` for other domains to validate identity-issued tokens.
-- Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer and add worker deployment wiring explicitly.
+- Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identities owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 
 ## Agent Notes
 
-- Copy the folder shape first: `api/`, `infra/db`, `infra/migrate`, `infra/api`, `migrations/`, `skaffold.yaml`, and optional `ui/` or `worker/`.
+- Copy the folder shape first: `api/`, `infra/db`, `infra/migrate`, `infra/api`, `migrations/`, `skaffold.yaml`, and optional `ui/`.
+- If this domain later needs a worker, copy the accounts worker spine and wire it as its own deployable unit.
 - Preserve unit boundaries. Route handlers call domain functions; domain functions use the domain context; platform code owns shared concerns like persistence, security, observability, and request problem details.
 - Keep API contracts LLM/tool-ready: explicit TypeBox request and response schemas, stable operation summaries, domain-specific error responses, and no implicit response shapes.
 - Keep Kubernetes names domain-prefixed except shared service names inside the namespace, such as `postgres-srv`.

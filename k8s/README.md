@@ -32,8 +32,8 @@ clusters/
 
 platform/
   ingress/                Traefik, Gateway API CRDs, Gateways, HTTPRoutes
+  event-bus/              NATS JetStream for durable domain events
   observability/          present, not currently composed
-  event-bus/              present, not currently composed
   mesh/                   present, not currently composed
 
 domains/
@@ -46,7 +46,7 @@ Brewfile                  local toolchain
 skaffold.yaml             root Skaffold composition
 ```
 
-The currently composed platform unit is ingress. Observability, event-bus, and mesh folders may exist, but they are not part of the active local/prod-eu spine unless explicitly added.
+The currently composed platform units are ingress and event-bus. Observability and mesh folders may exist, but they are not part of the active local/prod-eu spine unless explicitly added.
 
 ## Domain Model
 

@@ -1,6 +1,8 @@
+import { runAccountsConsumer } from "./consumers/accounts.mjs";
 import { createContext } from "./platform/context.mjs";
+import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
+import { ensureAccountsStream } from "./platform/messaging/accounts-stream.mjs";
 import { runOutboxPublisher } from "./publishers/outbox.mjs";
-import { ensureAccountsStream } from "./streams/accounts.mjs";
 
 const ctx = await createContext();
 const controller = new AbortController();
@@ -19,13 +21,18 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
 
 try {
   await ensureAccountsStream(ctx);
+  await ensureAccountsConsumer(ctx);
 
   console.log("accounts worker listening");
 
-  await runOutboxPublisher(ctx, controller.signal);
+  await Promise.all([
+    runAccountsConsumer(ctx, controller.signal),
+    runOutboxPublisher(ctx, controller.signal),
+  ]);
 } catch (err) {
   console.error("fatal accounts worker error", err);
   process.exitCode = 1;
+  shutdown();
 } finally {
   try {
     console.log("closing context...");

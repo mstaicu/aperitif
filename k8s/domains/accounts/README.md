@@ -120,10 +120,9 @@ Local development is driven by Skaffold modules in `skaffold.yaml`:
 - `accounts-db-dev` applies `infra/db/overlays/dev`.
 - `accounts-migrate-dev` builds `mdstaicu/accounts-migrate` from `migrations/` and applies `infra/migrate/overlays/dev`.
 - `accounts-api-dev` builds `mdstaicu/accounts-api` from `api/`, applies `infra/api/overlays/dev`, and syncs `api/src/**/*`.
+- `accounts-worker-dev` builds `mdstaicu/accounts-worker` from `worker/`, applies `infra/worker/overlays/dev`, and syncs `worker/src/**/*`.
 
-The Makefile should preserve the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` in `skaffold dev`.
-
-The worker overlay exists, but it should be added to Skaffold only when event-bus is composed into the local environment.
+The Makefile should preserve the startup order: run platform dependencies, run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `worker` in `skaffold dev`.
 
 ## Live
 
@@ -132,18 +131,17 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `accounts-db` points at `domains/accounts/infra/db/overlays/live`.
 - `accounts-migrate` points at `domains/accounts/infra/migrate/overlays/live`, depends on `accounts-db`, and uses `force: true`.
 - `accounts-api` points at `domains/accounts/infra/api/overlays/live`, depends on `accounts-migrate`, `identities-api`, and platform ingress.
+- `accounts-worker` points at `domains/accounts/infra/worker/overlays/live`, depends on `accounts-migrate` and platform event-bus.
 
-The live order must remain `db -> migrate -> api`. Migration and API images are Flux-managed through `clusters/prod-eu/image-automation/accounts.yaml`.
+The live order must remain `db -> migrate -> api/worker`. Migration, API, and worker images are Flux-managed through `clusters/prod-eu/image-automation/accounts.yaml`.
 
-The worker overlay exists, but it should be added to Flux only with an explicit event-bus dependency.
-
-Secrets are per deployable unit even when they contain the same database URL. Keep `accounts-api-db` and `accounts-migrate-db` as separate Secret names so each unit owns the contract it consumes.
+Secrets are per deployable unit even when they contain the same database URL. Keep `accounts-api-db`, `accounts-migrate-db`, and `accounts-worker-db` as separate Secret names so each unit owns the contract it consumes.
 
 ## Contracts
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/accounts` gateway prefix.
 - Identity dependency: accounts validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
-- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `ACCOUNTS` JetStream stream for `accounts.>` and publishes unpublished rows to that stream. Event subjects and payload contracts are still intentionally minimal.
+- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `ACCOUNTS` JetStream stream plus an `accounts-worker` durable consumer for `accounts.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry `subject`, account authority `version`, and a minimal domain payload.
 - Database: accounts owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 
 ## Agent Notes

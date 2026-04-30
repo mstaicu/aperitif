@@ -9,6 +9,8 @@ CREATE TABLE accounts (
 
     status TEXT NOT NULL CHECK (status IN ('pending_activation', 'active', 'suspended', 'closed')),
 
+    version BIGINT NOT NULL DEFAULT 1,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -17,6 +19,7 @@ COMMENT ON COLUMN accounts.id IS 'Stable account identifier referenced by accoun
 COMMENT ON COLUMN accounts.name IS 'Human-readable account name shown to users and operators.';
 COMMENT ON COLUMN accounts.kind IS 'Baseline account shape: personal for consumer use cases, organization for business use cases.';
 COMMENT ON COLUMN accounts.status IS 'Lifecycle gate for account-scoped product access.';
+COMMENT ON COLUMN accounts.version IS 'Monotonic account authority version; increment on account, membership, or requirement changes that consumers project.';
 COMMENT ON COLUMN accounts.created_at IS 'Time the account record was created.';
 
 CREATE TABLE account_memberships (
@@ -63,10 +66,7 @@ CREATE TABLE outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     subject TEXT NOT NULL,
-
-    aggregate_type TEXT NOT NULL,
-    aggregate_id UUID NOT NULL,
-    aggregate_version BIGINT NOT NULL,
+    version BIGINT NOT NULL,
 
     payload JSONB NOT NULL,
 
@@ -77,9 +77,10 @@ CREATE TABLE outbox_events (
 COMMENT ON TABLE outbox_events IS 'Transactional outbox for durable account-domain events waiting to be published to the event bus.';
 COMMENT ON COLUMN outbox_events.id IS 'Stable event id used by consumers for idempotency.';
 COMMENT ON COLUMN outbox_events.subject IS 'Event bus subject, for example accounts.account.created.';
-COMMENT ON COLUMN outbox_events.aggregate_type IS 'Type of aggregate that changed, for example account.';
-COMMENT ON COLUMN outbox_events.aggregate_id IS 'Identifier of the aggregate that changed.';
-COMMENT ON COLUMN outbox_events.aggregate_version IS 'Producer-supplied aggregate version used by consumers for ordering and idempotency.';
+COMMENT ON COLUMN outbox_events.version IS 'Account authority version consumers use to reject stale or out-of-order events.';
 COMMENT ON COLUMN outbox_events.payload IS 'JSON event body published to the event bus.';
 COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was recorded in the same transaction as the state change.';
 COMMENT ON COLUMN outbox_events.published_at IS 'Null until a worker successfully publishes the event.';
+
+-- TODO: Add before event volume grows:
+-- CREATE INDEX outbox_events_unpublished_idx ON outbox_events (occurred_at, id) WHERE published_at IS NULL;

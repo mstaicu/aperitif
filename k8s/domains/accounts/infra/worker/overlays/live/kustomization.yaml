@@ -19,4 +19,6 @@ generatorOptions:
 
 images:
   - name: mdstaicu/accounts-worker
-    newTag: latest
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:accounts-worker-latest
+    newTag: latest # {"$imagepolicy": "flux-system:accounts-worker-latest"}

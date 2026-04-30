@@ -9,7 +9,7 @@ import {
 export const ACCOUNTS_STREAM = "ACCOUNTS";
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../context.mjs").WorkerContext} ctx
  */
 export async function ensureAccountsStream(ctx) {
   const config = {
