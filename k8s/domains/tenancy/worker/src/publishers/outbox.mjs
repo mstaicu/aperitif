@@ -1,28 +1,56 @@
-import { setInterval } from "node:timers/promises";
+import { on } from "node:events";
 
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
 
-const OUTBOX_POLL_INTERVAL_MS = 1000;
+const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
 const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
 /**
+ * The Postgres notification only wakes the worker. The durable event still
+ * comes from outbox_events, so startup drain handles rows left behind before
+ * this worker started.
+ *
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {AbortSignal} signal
  */
 export async function runOutboxPublisher(ctx, signal) {
+  const listener = await ctx.persistence.db.connect();
+  let destroyListener = false;
+
   try {
-    // eslint-disable-next-line
-    for await (const _ of setInterval(OUTBOX_POLL_INTERVAL_MS, undefined, {
+    await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
+    await drainOutbox(ctx);
+
+    for await (const [notification] of on(listener, "notification", {
       signal,
     })) {
-      await publishNextOutboxEvent(ctx);
+      if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
+        await drainOutbox(ctx);
+      }
     }
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       return;
     }
 
+    destroyListener = true;
     throw err;
+  } finally {
+    await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {
+      destroyListener = true;
+    });
+    listener.release(destroyListener);
+  }
+}
+
+/**
+ * @param {import("../platform/context.mjs").WorkerContext} ctx
+ */
+async function drainOutbox(ctx) {
+  let published = true;
+
+  while (published) {
+    published = await publishNextOutboxEvent(ctx);
   }
 }
 

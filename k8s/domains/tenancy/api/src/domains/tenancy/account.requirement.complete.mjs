@@ -1,3 +1,9 @@
+import {
+  AccountRequirementCompletedPayloadCheck,
+  AccountUpdatedPayloadCheck,
+  TENANCY_ACCOUNT_REQUIREMENT_COMPLETED,
+  TENANCY_ACCOUNT_UPDATED,
+} from "../../contracts/events.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -97,27 +103,38 @@ export const completeAccountRequirement =
           [accountId],
         );
 
+        /** @type {import("../../contracts/events.mjs").AccountRequirementCompletedPayload} */
+        const requirementCompletedPayload = {
+          account: {
+            id: account.id,
+            kind: account.kind,
+            name: account.name,
+            status: account.status,
+          },
+          requirement: {
+            account_id: accountId,
+            status: "completed",
+            type: completedRequirement.type,
+          },
+        };
+
+        if (
+          !AccountRequirementCompletedPayloadCheck.Check(
+            requirementCompletedPayload,
+          )
+        ) {
+          throw new Error("INVALID_EVENT_PAYLOAD");
+        }
+
         await client.query(
           `
             INSERT INTO outbox_events (subject, version, payload)
             VALUES ($1, $2, $3::jsonb)
           `,
           [
-            "tenancy.account_requirement.completed",
+            TENANCY_ACCOUNT_REQUIREMENT_COMPLETED,
             version,
-            JSON.stringify({
-              account: {
-                id: account.id,
-                kind: account.kind,
-                name: account.name,
-                status: account.status,
-              },
-              requirement: {
-                account_id: accountId,
-                status: completedRequirement.status,
-                type: completedRequirement.type,
-              },
-            }),
+            JSON.stringify(requirementCompletedPayload),
           ],
         );
       }
@@ -150,22 +167,29 @@ export const completeAccountRequirement =
           [accountId],
         ));
 
+        /** @type {import("../../contracts/events.mjs").AccountUpdatedPayload} */
+        const accountUpdatedPayload = {
+          account: {
+            id: account.id,
+            kind: account.kind,
+            name: account.name,
+            status: account.status,
+          },
+        };
+
+        if (!AccountUpdatedPayloadCheck.Check(accountUpdatedPayload)) {
+          throw new Error("INVALID_EVENT_PAYLOAD");
+        }
+
         await client.query(
           `
             INSERT INTO outbox_events (subject, version, payload)
             VALUES ($1, $2, $3::jsonb)
           `,
           [
-            "tenancy.account.updated",
+            TENANCY_ACCOUNT_UPDATED,
             account.version,
-            JSON.stringify({
-              account: {
-                id: account.id,
-                kind: account.kind,
-                name: account.name,
-                status: account.status,
-              },
-            }),
+            JSON.stringify(accountUpdatedPayload),
           ],
         );
       }

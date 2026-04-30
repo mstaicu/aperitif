@@ -1,3 +1,9 @@
+import {
+  AccountCreatedPayloadCheck,
+  AccountMembershipCreatedPayloadCheck,
+  TENANCY_ACCOUNT_CREATED,
+  TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
+} from "../../contracts/events.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 // Add or remove account activation steps here. Empty means accounts activate
@@ -54,22 +60,29 @@ export const createAccount =
         );
       }
 
+      /** @type {import("../../contracts/events.mjs").AccountCreatedPayload} */
+      const accountCreatedPayload = {
+        account: {
+          id: account.id,
+          kind: account.kind,
+          name: account.name,
+          status: account.status,
+        },
+      };
+
+      if (!AccountCreatedPayloadCheck.Check(accountCreatedPayload)) {
+        throw new Error("INVALID_EVENT_PAYLOAD");
+      }
+
       await client.query(
         `
           INSERT INTO outbox_events (subject, version, payload)
           VALUES ($1, $2, $3::jsonb)
         `,
         [
-          "tenancy.account.created",
+          TENANCY_ACCOUNT_CREATED,
           account.version,
-          JSON.stringify({
-            account: {
-              id: account.id,
-              kind: account.kind,
-              name: account.name,
-              status: account.status,
-            },
-          }),
+          JSON.stringify(accountCreatedPayload),
         ],
       );
 
@@ -85,27 +98,36 @@ export const createAccount =
         [account.id],
       );
 
+      /** @type {import("../../contracts/events.mjs").AccountMembershipCreatedPayload} */
+      const membershipCreatedPayload = {
+        account: {
+          id: account.id,
+          kind: account.kind,
+          name: account.name,
+          status: account.status,
+        },
+        membership: {
+          account_id: account.id,
+          role: "owner",
+          user_id: currentUserId,
+        },
+      };
+
+      if (
+        !AccountMembershipCreatedPayloadCheck.Check(membershipCreatedPayload)
+      ) {
+        throw new Error("INVALID_EVENT_PAYLOAD");
+      }
+
       await client.query(
         `
           INSERT INTO outbox_events (subject, version, payload)
           VALUES ($1, $2, $3::jsonb)
         `,
         [
-          "tenancy.account_membership.created",
+          TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
           membershipVersion,
-          JSON.stringify({
-            account: {
-              id: account.id,
-              kind: account.kind,
-              name: account.name,
-              status: account.status,
-            },
-            membership: {
-              account_id: account.id,
-              role: "owner",
-              user_id: currentUserId,
-            },
-          }),
+          JSON.stringify(membershipCreatedPayload),
         ],
       );
 
