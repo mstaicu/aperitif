@@ -6,6 +6,7 @@ identities:
 	skaffold run --force -m identities-migrate-dev
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
 	skaffold run -m identities-api-dev
+	kubectl rollout status -n identities deploy/identities-api-depl --timeout=300s
 
 identities-dev:
 	$(MAKE) ingress
@@ -21,6 +22,8 @@ accounts:
 	skaffold run --force -m accounts-migrate-dev
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 	skaffold run -m accounts-api-dev,accounts-worker-dev
+	kubectl rollout status -n accounts deploy/accounts-api-depl --timeout=300s
+	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
 
 accounts-dev:
 	$(MAKE) identities
