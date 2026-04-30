@@ -1,36 +1,42 @@
 DOMAIN ?= tma.com
 
-dev-identities:
+identities:
 	$(MAKE) ingress
-
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
-
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
+	skaffold run -m identities-api-dev
 
+identities-dev:
+	$(MAKE) ingress
+	skaffold run -m identities-db-dev
+	skaffold run --force -m identities-migrate-dev
+	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m identities-api-dev
 
-dev-accounts:
-	$(MAKE) ingress
+accounts:
+	$(MAKE) identities
 	$(MAKE) event-bus
-
 	skaffold run -m accounts-db-dev
 	skaffold run --force -m accounts-migrate-dev
-
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
+	skaffold run -m accounts-api-dev,accounts-worker-dev
 
+accounts-dev:
+	$(MAKE) identities
+	$(MAKE) event-bus
+	skaffold run -m accounts-db-dev
+	skaffold run --force -m accounts-migrate-dev
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m accounts-api-dev,accounts-worker-dev
 
 dev:
 	$(MAKE) ingress
 	$(MAKE) event-bus
-
 	skaffold run -m identities-db-dev,accounts-db-dev
 	skaffold run --force -m identities-migrate-dev,accounts-migrate-dev
-
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-
 	exec skaffold dev -m identities-api-dev,accounts-api-dev,accounts-worker-dev
 
 ingress:
@@ -62,18 +68,3 @@ ingress:
 event-bus:
 	skaffold run -m event-bus
 	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
-
-sops-updatekeys:
-	@rg -l '^sops:' domains platform -g '*.yaml' | while read -r file; do \
-		echo "Updating $$file"; \
-		sops updatekeys -y "$$file"; \
-	done
-
-sops-secret:
-	@kubectl create secret generic sops-age \
-		-n flux-system \
-		--from-file=identity.agekey="$(SOPS_AGE_KEY_FILE)" \
-		--dry-run=client -o yaml | kubectl apply -f -
-
-sops-pubkey:
-	@age-keygen -y "$(SOPS_AGE_KEY_FILE)"

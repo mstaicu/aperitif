@@ -29,7 +29,6 @@ spec:
     - metadata:
         name: nats-storage
       spec:
-        storageClassName: hostpath
         accessModes:
           - ReadWriteOnce
         resources:
