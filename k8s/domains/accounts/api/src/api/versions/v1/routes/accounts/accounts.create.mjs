@@ -19,7 +19,7 @@ export default async function (fastify, { accounts, jwks }) {
       schema: {
         body: CreateAccountBody,
         description:
-          "Create an account as the tenant/customer ownership root. The authenticated caller becomes account owner, and account activation requirements decide whether the account starts active or pending activation.",
+          "Create an account as the tenant/customer ownership root. The authenticated caller becomes account owner, and account activation requirements decide whether the account starts active or pending.",
         operationId: "createAccount",
         response: {
           201: AccountResponse,

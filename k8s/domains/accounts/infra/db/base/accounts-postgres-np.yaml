@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-accounts-api-and-migrate-to-postgres
+  name: allow-account-units-to-postgres
 spec:
   podSelector:
     matchLabels:
@@ -17,6 +17,9 @@ spec:
         - podSelector:
             matchLabels:
               app: accounts-migrate
+        - podSelector:
+            matchLabels:
+              app: accounts-worker
       ports:
         - protocol: TCP
           port: 5432

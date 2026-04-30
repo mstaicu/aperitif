@@ -43,11 +43,10 @@ async function publishNextOutboxEvent(ctx) {
         SELECT id,
           subject,
           version,
-          payload,
-          occurred_at
+          payload
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY occurred_at, id
+        ORDER BY occurred_at, version, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -58,13 +57,21 @@ async function publishNextOutboxEvent(ctx) {
       return false;
     }
 
-    await ctx.messaging.js.publish(event.subject, JSON.stringify(event), {
-      expect: {
-        streamName: ACCOUNTS_STREAM,
+    await ctx.messaging.js.publish(
+      event.subject,
+      JSON.stringify({
+        payload: event.payload,
+        subject: event.subject,
+        version: Number(event.version),
+      }),
+      {
+        expect: {
+          streamName: ACCOUNTS_STREAM,
+        },
+        msgID: event.id,
+        timeout: PUBLISH_ACK_TIMEOUT_MS,
       },
-      msgID: event.id,
-      timeout: PUBLISH_ACK_TIMEOUT_MS,
-    });
+    );
 
     await client.query(
       `

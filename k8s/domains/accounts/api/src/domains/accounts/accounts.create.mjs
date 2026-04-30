@@ -12,7 +12,7 @@ const accountRequirements = [];
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *     status: "pending" | "active",
  *   },
  *   membership: {
  *     account_id: string,
@@ -21,7 +21,7 @@ const accountRequirements = [];
  *   },
  *   requirements: {
  *     id: string,
- *     status: "pending" | "completed" | "failed",
+ *     status: "pending" | "completed",
  *     type: string,
  *   }[],
  * }>}
@@ -41,13 +41,9 @@ export const createAccount =
         `
           INSERT INTO accounts (name, kind, status)
           VALUES ($1, $2, $3)
-          RETURNING id, name, kind, status
+          RETURNING id, name, kind, status, version
         `,
-        [
-          name,
-          kind,
-          accountRequirements.length === 0 ? "active" : "pending_activation",
-        ],
+        [name, kind, accountRequirements.length === 0 ? "active" : "pending"],
       );
 
       await client.query(
@@ -74,9 +70,60 @@ export const createAccount =
         requirementRows = rows;
       }
 
-      // TODO: When eventing is wired, insert outbox rows in this transaction for:
-      // - accounts.account.created
-      // - accounts.account_membership.created
+      await client.query(
+        `
+          INSERT INTO outbox_events (subject, version, payload)
+          VALUES ($1, $2, $3::jsonb)
+        `,
+        [
+          "accounts.account.created",
+          account.version,
+          JSON.stringify({
+            account: {
+              id: account.id,
+              kind: account.kind,
+              name: account.name,
+              status: account.status,
+            },
+          }),
+        ],
+      );
+
+      const {
+        rows: [{ version: membershipVersion }],
+      } = await client.query(
+        `
+          UPDATE accounts
+          SET version = version + 1
+          WHERE id = $1
+          RETURNING version
+        `,
+        [account.id],
+      );
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (subject, version, payload)
+          VALUES ($1, $2, $3::jsonb)
+        `,
+        [
+          "accounts.account_membership.created",
+          membershipVersion,
+          JSON.stringify({
+            account: {
+              id: account.id,
+              kind: account.kind,
+              name: account.name,
+              status: account.status,
+            },
+            membership: {
+              account_id: account.id,
+              role: "owner",
+              user_id: currentUserId,
+            },
+          }),
+        ],
+      );
 
       await client.query("COMMIT");
 

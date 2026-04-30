@@ -17,7 +17,7 @@ The intended integration is:
 ```text
 accounts creates account requirement rows
 step domains collect and validate evidence
-step domains publish requirement completed/failed events
+step domains publish requirement completed events
 accounts consumes those events
 accounts updates requirement status
 accounts activates the account when all requirements are completed
@@ -40,7 +40,7 @@ Product resources in other domains should generally be account-owned:
 resource.account_id
 ```
 
-Request handling should normally derive `user_id` from the bearer token and get `account_id` from the route, body, or loaded resource. Product operations should require account membership and an active account. Setup/onboarding operations may allow `pending_activation` accounts.
+Request handling should normally derive `user_id` from the bearer token and get `account_id` from the route, body, or loaded resource. Product operations should require account membership and an active account. Setup/onboarding operations may allow `pending` accounts.
 
 ## Core API
 
@@ -69,7 +69,7 @@ Consumer SaaS with required onboarding:
 ```text
 user registers through identities
 POST /accounts { kind: "personal", name: "<display name>" }
-account.status = pending_activation
+account.status = pending
 GET /accounts/:accountId/requirements
 step domains complete terms, verification, risk, or billing requirements
 account.status = active when all requirements complete
@@ -143,6 +143,36 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 - Identity dependency: accounts validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker ensures the `ACCOUNTS` JetStream stream plus an `accounts-worker` durable consumer for `accounts.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry `subject`, account authority `version`, and a minimal domain payload.
 - Database: accounts owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
+
+Current event subjects:
+
+- `accounts.account.created`
+- `accounts.account.updated`
+- `accounts.account_membership.created`
+- `accounts.account_membership.deleted`
+- `accounts.account_requirement.completed`
+
+Event payloads are intentionally projection-shaped. Consumers store the latest account authority `version` they have applied for each `account.id` and ignore events where `event.version <= projected_account_version`.
+
+```json
+{
+  "subject": "accounts.account_membership.created",
+  "version": 12,
+  "payload": {
+    "account": {
+      "id": "account-id",
+      "kind": "organization",
+      "name": "Acme Ltd",
+      "status": "active"
+    },
+    "membership": {
+      "account_id": "account-id",
+      "role": "member",
+      "user_id": "user-id"
+    }
+  }
+}
+```
 
 ## Agent Notes
 

@@ -7,7 +7,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *     status: "pending" | "active",
  *   },
  *   membership: {
  *     account_id: string,
@@ -103,8 +103,41 @@ export const createAccountMembership =
         [accountId, userId, role],
       );
 
-      // TODO: When eventing is wired, insert an outbox row in this transaction for:
-      // - accounts.account_membership.created
+      const {
+        rows: [{ version }],
+      } = await client.query(
+        `
+          UPDATE accounts
+          SET version = version + 1
+          WHERE id = $1
+          RETURNING version
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (subject, version, payload)
+          VALUES ($1, $2, $3::jsonb)
+        `,
+        [
+          "accounts.account_membership.created",
+          version,
+          JSON.stringify({
+            account: {
+              id: account.id,
+              kind: account.kind,
+              name: account.name,
+              status: account.status,
+            },
+            membership: {
+              account_id: accountId,
+              role,
+              user_id: userId,
+            },
+          }),
+        ],
+      );
 
       await client.query("COMMIT");
 

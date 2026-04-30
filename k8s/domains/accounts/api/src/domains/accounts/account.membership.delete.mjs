@@ -21,9 +21,10 @@ export const deleteAccountMembership =
         rows: [account],
       } = await client.query(
         `
-          SELECT id
+          SELECT id, name, kind, status
           FROM accounts
           WHERE id = $1
+          FOR UPDATE
         `,
         [accountId],
       );
@@ -92,8 +93,40 @@ export const deleteAccountMembership =
         [accountId, userId],
       );
 
-      // TODO: When eventing is wired, insert an outbox row in this transaction for:
-      // - accounts.account_membership.deleted
+      const {
+        rows: [{ version }],
+      } = await client.query(
+        `
+          UPDATE accounts
+          SET version = version + 1
+          WHERE id = $1
+          RETURNING version
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (subject, version, payload)
+          VALUES ($1, $2, $3::jsonb)
+        `,
+        [
+          "accounts.account_membership.deleted",
+          version,
+          JSON.stringify({
+            account: {
+              id: account.id,
+              kind: account.kind,
+              name: account.name,
+              status: account.status,
+            },
+            membership: {
+              account_id: accountId,
+              user_id: userId,
+            },
+          }),
+        ],
+      );
 
       await client.query("COMMIT");
     } catch (err) {

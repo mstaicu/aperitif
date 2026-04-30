@@ -7,11 +7,11 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *     status: "pending" | "active",
  *   },
  *   requirements: {
  *     id: string,
- *     status: "pending" | "completed" | "failed",
+ *     status: "pending" | "completed",
  *     type: string,
  *   }[],
  * }>}
@@ -62,17 +62,69 @@ export const completeAccountRequirement =
         rows: [requirement],
       } = await client.query(
         `
-          UPDATE account_requirements
-          SET status = 'completed'
+          SELECT id, type, status
+          FROM account_requirements
           WHERE account_id = $1
             AND type = $2
-          RETURNING id
+          FOR UPDATE
         `,
         [accountId, type],
       );
 
       if (!requirement) {
         throw new Error("ACCOUNT_REQUIREMENT_NOT_FOUND");
+      }
+
+      let completedRequirement = requirement;
+
+      if (requirement.status !== "completed") {
+        ({
+          rows: [completedRequirement],
+        } = await client.query(
+          `
+            UPDATE account_requirements
+            SET status = 'completed'
+            WHERE id = $1
+            RETURNING id, type, status
+          `,
+          [requirement.id],
+        ));
+
+        const {
+          rows: [{ version }],
+        } = await client.query(
+          `
+            UPDATE accounts
+            SET version = version + 1
+            WHERE id = $1
+            RETURNING version
+          `,
+          [accountId],
+        );
+
+        await client.query(
+          `
+            INSERT INTO outbox_events (subject, version, payload)
+            VALUES ($1, $2, $3::jsonb)
+          `,
+          [
+            "accounts.account_requirement.completed",
+            version,
+            JSON.stringify({
+              account: {
+                id: account.id,
+                kind: account.kind,
+                name: account.name,
+                status: account.status,
+              },
+              requirement: {
+                account_id: accountId,
+                status: completedRequirement.status,
+                type: completedRequirement.type,
+              },
+            }),
+          ],
+        );
       }
 
       const { rows: requirements } = await client.query(
@@ -89,18 +141,38 @@ export const completeAccountRequirement =
         (requirement) => requirement.status === "completed",
       );
 
-      if (account.status === "pending_activation" && isComplete) {
+      if (account.status === "pending" && isComplete) {
         ({
           rows: [account],
         } = await client.query(
           `
             UPDATE accounts
-            SET status = 'active'
+            SET status = 'active',
+              version = version + 1
             WHERE id = $1
-            RETURNING id, name, kind, status
+            RETURNING id, name, kind, status, version
           `,
           [accountId],
         ));
+
+        await client.query(
+          `
+            INSERT INTO outbox_events (subject, version, payload)
+            VALUES ($1, $2, $3::jsonb)
+          `,
+          [
+            "accounts.account.updated",
+            account.version,
+            JSON.stringify({
+              account: {
+                id: account.id,
+                kind: account.kind,
+                name: account.name,
+                status: account.status,
+              },
+            }),
+          ],
+        );
       }
 
       await client.query("COMMIT");

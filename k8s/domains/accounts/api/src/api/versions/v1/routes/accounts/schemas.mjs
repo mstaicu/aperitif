@@ -45,22 +45,16 @@ export const AccountRole = Type.Union(
 );
 
 export const AccountStatus = Type.Union(
-  [
-    Type.Literal("pending_activation"),
-    Type.Literal("active"),
-    Type.Literal("suspended"),
-    Type.Literal("closed"),
-  ],
+  [Type.Literal("pending"), Type.Literal("active")],
   {
     description:
-      "Account lifecycle status. Activation requirements move an account from pending_activation to active.",
+      "Account lifecycle status. Activation requirements move an account from pending to active.",
   },
 );
 
 const AccountRequirementStatus = Type.Union([
   Type.Literal("pending"),
   Type.Literal("completed"),
-  Type.Literal("failed"),
 ]);
 
 export const AccountParams = Type.Object(

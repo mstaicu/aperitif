@@ -7,11 +7,11 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *     status: "pending" | "active",
  *   },
  *   requirements: {
  *     id: string,
- *     status: "pending" | "completed" | "failed",
+ *     status: "pending" | "completed",
  *     type: string,
  *   }[],
  * }>}

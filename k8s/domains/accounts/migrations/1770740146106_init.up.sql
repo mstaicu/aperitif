@@ -7,7 +7,7 @@ CREATE TABLE accounts (
 
     kind TEXT NOT NULL CHECK (kind IN ('personal', 'organization')),
 
-    status TEXT NOT NULL CHECK (status IN ('pending_activation', 'active', 'suspended', 'closed')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'active')),
 
     version BIGINT NOT NULL DEFAULT 1,
 
@@ -51,7 +51,7 @@ CREATE TABLE account_requirements (
 
     type TEXT NOT NULL,
 
-    status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'completed')),
 
     UNIQUE (account_id, type)
 );
@@ -83,4 +83,4 @@ COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was record
 COMMENT ON COLUMN outbox_events.published_at IS 'Null until a worker successfully publishes the event.';
 
 -- TODO: Add before event volume grows:
--- CREATE INDEX outbox_events_unpublished_idx ON outbox_events (occurred_at, id) WHERE published_at IS NULL;
+-- CREATE INDEX outbox_events_unpublished_idx ON outbox_events (occurred_at, version, id) WHERE published_at IS NULL;

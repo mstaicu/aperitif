@@ -7,7 +7,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending_activation" | "active" | "suspended" | "closed",
+ *     status: "pending" | "active",
  *   },
  *   count: number,
  *   memberships: {
