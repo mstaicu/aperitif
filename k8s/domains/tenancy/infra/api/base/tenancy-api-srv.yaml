@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: tenancy-api-srv
+spec:
+  selector:
+    app: tenancy-api
+  ports:
+    - name: tenancy-api
+      port: 3000
+      targetPort: 3000

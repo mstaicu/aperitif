@@ -1,0 +1,18 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: tenancy-api
+spec:
+  interval: 10m
+  path: ./k8s/domains/tenancy/infra/api/overlays/live
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: ingress
+    - name: identities-api
+    - name: tenancy-migrate
+  wait: true
+  timeout: 5m

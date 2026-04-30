@@ -13,8 +13,5 @@ configMapGenerator:
     files:
       - nats.conf=nats.conf
 
-generatorOptions:
-  disableNameSuffixHash: true
-
 patches:
   - path: nats-depl.yaml

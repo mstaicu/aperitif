@@ -5,7 +5,7 @@ resources:
   - identities-db.yaml
   - identities-migrate.yaml
   - identities-api.yaml
-  - accounts-db.yaml
-  - accounts-migrate.yaml
-  - accounts-api.yaml
-  - accounts-worker.yaml
+  - tenancy-db.yaml
+  - tenancy-migrate.yaml
+  - tenancy-api.yaml
+  - tenancy-worker.yaml

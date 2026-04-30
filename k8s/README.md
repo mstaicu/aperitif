@@ -38,7 +38,7 @@ platform/
 
 domains/
   identities/             passkeys, sessions, JWKS, identity signing keys
-  accounts/               tenant/customer accounts, memberships, activation requirements
+  tenancy/                tenant/customer accounts, memberships, activation requirements
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -55,7 +55,7 @@ Each domain should document itself in `domains/<domain>/README.md`.
 Current domains:
 
 - `identities`: owns passkey registration/login, sessions, token signing, and JWKS.
-- `accounts`: owns the tenant/customer relationship, account memberships, and activation requirements.
+- `tenancy`: owns the tenant/customer relationship, account memberships, and activation requirements.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -105,8 +105,8 @@ Start Docker Desktop or another local Kubernetes cluster, then run one of:
 
 ```sh
 make dev
-make dev-identities
-make dev-accounts
+make identities-dev
+make tenancy-dev
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -224,12 +224,12 @@ kubectl kustomize platform/ingress/overlays/dev
 kubectl kustomize platform/ingress/overlays/live
 kubectl kustomize domains/identities/infra/db/overlays/dev
 kubectl kustomize domains/identities/infra/db/overlays/live
-kubectl kustomize domains/accounts/infra/db/overlays/dev
-kubectl kustomize domains/accounts/infra/db/overlays/live
+kubectl kustomize domains/tenancy/infra/db/overlays/dev
+kubectl kustomize domains/tenancy/infra/db/overlays/live
 kustomize build --enable-alpha-plugins --enable-exec domains/identities/infra/api/overlays/dev
 kubectl kustomize domains/identities/infra/api/overlays/live
-kubectl kustomize domains/accounts/infra/api/overlays/dev
-kubectl kustomize domains/accounts/infra/api/overlays/live
+kubectl kustomize domains/tenancy/infra/api/overlays/dev
+kubectl kustomize domains/tenancy/infra/api/overlays/live
 git diff --check
 ```
 

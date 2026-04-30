@@ -3,4 +3,4 @@ kind: Kustomization
 
 resources:
   - identities.yaml
-  - accounts.yaml
+  - tenancy.yaml

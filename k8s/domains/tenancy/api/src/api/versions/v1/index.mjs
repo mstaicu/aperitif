@@ -1,0 +1,109 @@
+import swagger from "@fastify/swagger";
+import swaggerUI from "@fastify/swagger-ui";
+
+import getAccount from "./routes/accounts/account.get.mjs";
+import deleteAccountMembership from "./routes/accounts/account.membership.delete.mjs";
+import getAccountMembership from "./routes/accounts/account.membership.get.mjs";
+import createAccountMembership from "./routes/accounts/account.memberships.create.mjs";
+import listAccountMemberships from "./routes/accounts/account.memberships.list.mjs";
+import completeAccountRequirement from "./routes/accounts/account.requirement.complete.mjs";
+import listAccountRequirements from "./routes/accounts/account.requirements.list.mjs";
+import createAccount from "./routes/accounts/accounts.create.mjs";
+import listAccounts from "./routes/accounts/accounts.list.mjs";
+
+/**
+ * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
+ * @typedef {import("jose").JWTVerifyGetKey} Jwks
+ * @typedef {import("../../../domains/tenancy/index.mjs").TenancyDomain} TenancyDomain
+ */
+
+/**
+ * @param {Fastify} fastify
+ * @param {{domains: {
+ *   tenancy: TenancyDomain,
+ * }, jwks: Jwks}} opts
+ */
+export default async (fastify, { domains, jwks }) => {
+  await fastify.register(swagger, {
+    openapi: {
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            bearerFormat: "JWT",
+            description:
+              "Access token carried in the Authorization header as Bearer <token>.",
+            scheme: "bearer",
+            type: "http",
+          },
+        },
+      },
+      info: {
+        description:
+          "Tenancy API for account ownership, memberships, and activation requirements.",
+        title: "Tenancy",
+        version: "v1",
+      },
+      servers: [
+        {
+          url: "/tenancy",
+        },
+      ],
+      tags: [
+        {
+          description: "Tenant/customer ownership and account membership",
+          name: "accounts",
+        },
+      ],
+    },
+  });
+
+  await fastify.register(swaggerUI, {
+    routePrefix: "/docs",
+  });
+
+  await fastify.register(listAccounts, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(createAccount, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(getAccount, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(listAccountMemberships, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(getAccountMembership, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(createAccountMembership, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(deleteAccountMembership, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(listAccountRequirements, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+  await fastify.register(completeAccountRequirement, {
+    accounts: domains.tenancy,
+    jwks,
+    prefix: "/accounts",
+  });
+};

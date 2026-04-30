@@ -2,7 +2,7 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help identities identities-dev accounts accounts-dev dev ingress event-bus
+.PHONY: help identities identities-dev tenancy tenancy-dev dev ingress event-bus
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -24,34 +24,34 @@ identities-dev: ## Prepare identities, then run identities API in skaffold dev.
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m identities-api-dev
 
-accounts: ## Deploy accounts plus required dependencies and exit.
+tenancy: ## Deploy tenancy plus required dependencies and exit.
 	$(MAKE) identities
 	$(MAKE) event-bus
-	skaffold run -m accounts-db-dev
-	skaffold run --force -m accounts-migrate-dev
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	skaffold run -m accounts-api-dev,accounts-worker-dev
-	kubectl rollout status -n accounts deploy/accounts-api-depl --timeout=300s
-	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
+	skaffold run -m tenancy-db-dev
+	skaffold run --force -m tenancy-migrate-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	skaffold run -m tenancy-api-dev,tenancy-worker-dev
+	kubectl rollout status -n tenancy deploy/tenancy-api-depl --timeout=300s
+	kubectl rollout status -n tenancy deploy/tenancy-worker-depl --timeout=300s
 
-accounts-dev: ## Prepare accounts, then run accounts API and worker in skaffold dev.
+tenancy-dev: ## Prepare tenancy, then run tenancy API and worker in skaffold dev.
 	$(MAKE) identities
 	$(MAKE) event-bus
-	skaffold run -m accounts-db-dev
-	skaffold run --force -m accounts-migrate-dev
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m accounts-api-dev,accounts-worker-dev
+	skaffold run -m tenancy-db-dev
+	skaffold run --force -m tenancy-migrate-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m tenancy-api-dev,tenancy-worker-dev
 
 # Full stack
 
 dev: ## Prepare the full local stack, then run all runtime units in skaffold dev.
 	$(MAKE) ingress
 	$(MAKE) event-bus
-	skaffold run -m identities-db-dev,accounts-db-dev
-	skaffold run --force -m identities-migrate-dev,accounts-migrate-dev
+	skaffold run -m identities-db-dev,tenancy-db-dev
+	skaffold run --force -m identities-migrate-dev,tenancy-migrate-dev
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identities-api-dev,accounts-api-dev,accounts-worker-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m identities-api-dev,tenancy-api-dev,tenancy-worker-dev
 
 # Platform dependencies
 

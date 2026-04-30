@@ -1,0 +1,52 @@
+import { authenticate } from "../../../../../platform/security/jwt.mjs";
+import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { AccountParams, AccountResponse } from "./schemas.mjs";
+
+/**
+ * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
+ * @typedef {import("jose").JWTVerifyGetKey} Jwks
+ * @typedef {import("../../../../../domains/tenancy/index.mjs").TenancyDomain} TenancyDomain
+ */
+
+/**
+ * @param {Fastify} fastify
+ * @param {{accounts: TenancyDomain, jwks: Jwks}} opts
+ */
+export default async function (fastify, { accounts, jwks }) {
+  fastify.get(
+    "/:accountId",
+    {
+      schema: {
+        description:
+          "Fetch a single account resource. Memberships and activation requirements are exposed through their own account sub-resources.",
+        operationId: "getAccount",
+        params: AccountParams,
+        response: {
+          200: AccountResponse,
+          400: ProblemResponse,
+          401: ProblemResponse,
+          403: ProblemResponse,
+          404: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
+        },
+        security: [{ bearerAuth: [] }],
+        summary: "Get account",
+        tags: ["accounts"],
+      },
+    },
+    async function (req, reply) {
+      const currentUserId = await authenticate({
+        authorization: req.headers.authorization,
+        jwks,
+      });
+
+      return reply.send(
+        await accounts.getAccount({
+          accountId: req.params.accountId,
+          currentUserId,
+        }),
+      );
+    },
+  );
+}

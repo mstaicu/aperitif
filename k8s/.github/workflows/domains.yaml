@@ -128,8 +128,8 @@ jobs:
                 smoke_path="/.well-known/jwks.json"
                 smoke_status="200"
                 ;;
-              accounts)
-                smoke_path="/accounts"
+              tenancy)
+                smoke_path="/tenancy/v1/accounts"
                 smoke_status="401"
                 ;;
               *)
