@@ -145,6 +145,24 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 - Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry `subject`, account authority `version`, and a minimal domain payload.
 - Database: tenancy owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 
+## Event Publishing Mechanics
+
+Tenancy authority events follow this path:
+
+```text
+request handler -> domain function -> DB transaction
+DB transaction -> account/account_membership/account_requirement change
+DB transaction -> outbox_events row
+Postgres trigger -> pg_notify wake-up
+worker -> drains unpublished outbox rows
+worker -> publishes to TENANCY JetStream stream
+worker -> sets published_at after JetStream accepts the event
+```
+
+The durable source is `outbox_events`, not the Postgres notification. The notification only wakes the worker. On startup, the worker drains existing unpublished rows before waiting for new notifications.
+
+Request handlers must not publish tenancy authority events directly to NATS. They write state and event intent in the same database transaction.
+
 Current event subjects:
 
 - `tenancy.account.created`
@@ -175,11 +193,6 @@ Event payloads are intentionally projection-shaped. Consumers store the latest a
 }
 ```
 
-## Agent Notes
+## Agent Context
 
-- Copy the folder shape first: `api/`, `infra/db`, `infra/migrate`, `infra/api`, `migrations/`, `skaffold.yaml`, and optional `ui/` or `worker/`.
-- Preserve unit boundaries. Route handlers call domain functions; domain functions use the domain context; API platform code owns shared concerns like persistence, security, observability, and request problem details.
-- Keep workers on the same spine as APIs: `index` loads config, `worker` wires runtime, `platform` owns infrastructure adapters, and publisher/listener modules own async work.
-- Keep API contracts LLM/tool-ready: explicit TypeBox request and response schemas, stable operation summaries, domain-specific error responses, and no implicit response shapes.
-- Keep Kubernetes names domain-prefixed except shared service names inside the namespace, such as `postgres-srv`.
-- Keep network policy intent simple: ingress reaches APIs through Traefik; APIs reach their own PostgreSQL; APIs or workers reach NATS only when the domain needs eventing.
+Agent-specific gotchas live in `AGENTS.md`. Keep this README human-facing and avoid duplicating agent-only rules here.

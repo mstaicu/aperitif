@@ -2,13 +2,15 @@
 
 This repo is the Kubernetes and delivery spine for Aperitif. It keeps platform capabilities and domain capabilities explicit, composable, and deployable through the same mental model in local development and Flux-managed environments.
 
-The project is intentionally not hiding deployment units behind a fake "app" abstraction. A domain is composed from small units with clear ownership:
+Treat this `k8s/` directory as the project root. All paths, Make targets, Skaffold commands, Flux paths, GitHub workflows, and checks in this README are relative to this directory, even when the parent Git repository contains other folders.
+
+The project intentionally does not hide deployment units behind a fake "app" abstraction. A domain is composed from small units with clear ownership:
 
 ```text
-db -> migrate -> api -> ui/worker
+db -> migrate -> api/worker
 ```
 
-`ui` and `worker` are added only when the domain actually owns those capabilities.
+`worker` and `ui` exist only when the domain actually owns those capabilities.
 
 ## Principles
 
@@ -21,6 +23,9 @@ db -> migrate -> api -> ui/worker
 ## Current Shape
 
 ```text
+.github/
+  workflows/              pull request integration workflows
+
 clusters/
   prod-eu/
     platform/             Flux Kustomizations for platform units
@@ -40,6 +45,9 @@ domains/
   identities/             passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant/customer accounts, memberships, activation requirements
 
+templates/
+  domain/                 copyable baseline for new domains
+
 Makefile                  local orchestration
 Brewfile                  local toolchain
 .sops.yaml                SOPS age recipient rules
@@ -47,6 +55,20 @@ skaffold.yaml             root Skaffold composition
 ```
 
 The currently composed platform units are ingress and event-bus. Observability and mesh folders may exist, but they are not part of the active local/prod-eu spine unless explicitly added.
+
+## Agent Context
+
+Agent-specific instructions live in scoped `AGENTS.md` files. These files are not codebase maps or generated onboarding docs; they contain non-obvious operational rules that agents can easily miss.
+
+Current agent context files:
+
+- `AGENTS.md`
+- `domains/identities/AGENTS.md`
+- `domains/tenancy/AGENTS.md`
+- `platform/ingress/AGENTS.md`
+- `platform/event-bus/AGENTS.md`
+
+Before adding a line to an `AGENTS.md` file, ask whether the agent can discover it by reading the repo. If yes, fix the README, code, tests, or structure instead of adding agent-only context.
 
 ## Domain Model
 
@@ -67,7 +89,15 @@ Each domain follows this order:
 db -> migrate -> api
 ```
 
-The `api` unit is also where HTTP route ownership lives. If a domain API exposes `HTTPRoute`s through Traefik, its namespace must opt in with:
+If a domain owns async event publishing or consumption, add `worker` as a separate deployable unit:
+
+```text
+db -> migrate -> api/worker
+```
+
+If a domain owns a browser surface, add `ui` as a separate deployable unit.
+
+The `api` unit is where HTTP route ownership lives. If a domain API exposes `HTTPRoute`s through Traefik, its namespace must opt in with:
 
 ```yaml
 metadata:
@@ -81,9 +111,9 @@ Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations 
 
 ## Platform Model
 
-Ingress is the active platform baseline.
+Ingress and event-bus are the active platform baseline.
 
-Local ingress setup does three different jobs:
+Local ingress setup does three jobs:
 
 - Installs Gateway API CRDs.
 - Creates local machine trust and host routing with `mkcert` and `/etc/hosts`.
@@ -93,6 +123,8 @@ Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` an
 
 Traefik Gateway listeners use namespace selectors for route attachment. Domain namespaces must opt in with `tma.com/gateway-access: traefik`; otherwise their `HTTPRoute`s should not attach to the shared Gateway.
 
+Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
+
 ## Local Development
 
 Install tools:
@@ -101,7 +133,7 @@ Install tools:
 brew bundle
 ```
 
-Start Docker Desktop or another local Kubernetes cluster, then run one of:
+Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of:
 
 ```sh
 make dev
@@ -109,10 +141,17 @@ make identities-dev
 make tenancy-dev
 ```
 
+Deploy-and-exit targets are useful for checks and CI-style local testing:
+
+```sh
+make identities
+make tenancy
+```
+
 The Make targets intentionally run the same dependency order as live:
 
 ```text
-ingress -> db -> migrate -> wait for migration Job -> api dev loop
+ingress/event-bus -> db -> migrate -> wait for migration Job -> api/worker
 ```
 
 Use `make ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
@@ -122,6 +161,12 @@ The default local domain is `tma.com`. Override it when needed:
 ```sh
 make ingress DOMAIN=example.test
 ```
+
+## Pull Request Integration
+
+The GitHub workflow under `.github/workflows/domains.yaml` creates a kind cluster, detects changed domains, deploys each changed domain through the matching Make target, port-forwards Traefik, and runs a small smoke check.
+
+This intentionally reuses the same dev overlays and Make/Skaffold path used locally.
 
 ## Live Deployment With Flux
 
@@ -142,7 +187,7 @@ That file includes:
 For each domain, live Flux Kustomizations should preserve this dependency order:
 
 ```text
-<domain>-db -> <domain>-migrate -> <domain>-api
+<domain>-db -> <domain>-migrate -> <domain>-api/worker
 ```
 
 The API Kustomization depends on ingress and the domain migration unit. The migration Kustomization depends on the DB unit and uses `force: true`.
@@ -208,8 +253,9 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Copy the current domain spine, not stale Appendix examples.
+- Start from `templates/domain`.
 - Add `domains/<domain>/README.md`.
+- Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
 - Add Skaffold modules for local units.
 - Add Flux Kustomizations for live units.
 - Add image automation only for images Flux should update.
@@ -222,6 +268,8 @@ Common render checks:
 ```sh
 kubectl kustomize platform/ingress/overlays/dev
 kubectl kustomize platform/ingress/overlays/live
+kubectl kustomize platform/event-bus/overlays/dev
+kubectl kustomize platform/event-bus/overlays/live
 kubectl kustomize domains/identities/infra/db/overlays/dev
 kubectl kustomize domains/identities/infra/db/overlays/live
 kubectl kustomize domains/tenancy/infra/db/overlays/dev
@@ -230,6 +278,8 @@ kustomize build --enable-alpha-plugins --enable-exec domains/identities/infra/ap
 kubectl kustomize domains/identities/infra/api/overlays/live
 kubectl kustomize domains/tenancy/infra/api/overlays/dev
 kubectl kustomize domains/tenancy/infra/api/overlays/live
+kubectl kustomize domains/tenancy/infra/worker/overlays/dev
+kubectl kustomize domains/tenancy/infra/worker/overlays/live
 git diff --check
 ```
 

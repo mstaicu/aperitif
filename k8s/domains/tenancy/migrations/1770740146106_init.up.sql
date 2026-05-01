@@ -99,5 +99,8 @@ EXECUTE FUNCTION notify_outbox_event();
 
 COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
 
--- TODO: Add before event volume grows:
--- CREATE INDEX outbox_events_unpublished_idx ON outbox_events (occurred_at, version, id) WHERE published_at IS NULL;
+CREATE INDEX outbox_events_unpublished_idx
+ON outbox_events (occurred_at, version, id)
+WHERE published_at IS NULL;
+
+COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';

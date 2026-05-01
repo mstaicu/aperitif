@@ -1,151 +1,45 @@
-helm repo add linkerd https://helm.linkerd.io/stable
-helm repo update
+# Mesh Platform
 
-helm search repo linkerd --versions
+Mesh contains Linkerd manifests, but it is not currently part of the active local or prod-eu composition.
 
-helm template linkerd-crd linkerd/linkerd-crds \
- --version 1.8.0 \
- --set installGatewayAPI=true > linkerd-crd.yaml
+Do not assume mTLS, service identity, or mesh policy exists unless this platform unit is explicitly composed into the environment.
 
-helm template linkerd-control-plane linkerd/linkerd-control-plane \
- --version 1.16.11 \
- --set disableHeartBeat=true \
- --set identity.externalCA=true \
- --set identity.issuer.scheme=kubernetes.io/tls \
- --set proxyInit.runAsRoot=true \
- -n linkerd > linkerd-depl.yaml
+## Intended Boundary
 
-The rendered base assumes external identity material.
+Mesh should own only cross-cutting service-to-service transport concerns:
 
-- `platform/mesh/base` contains the shared Linkerd control plane manifests
-- `platform/mesh/overlays/dev` provides:
-  - `linkerd-identity-trust-roots` ConfigMap
-  - `linkerd-identity-issuer` Secret
-  - `linkerd-webhook-trust-roots` ConfigMap
-  - `linkerd-*-k8s-tls` webhook Secrets
-- `platform/mesh/overlays/live` provides:
-  - `linkerd-identity-trust-roots` ConfigMap
-  - `linkerd-identity-issuer` Secret
-  - `linkerd-webhook-trust-roots` ConfigMap
-  - `linkerd-*-k8s-tls` webhook Secrets
+- mTLS between workloads,
+- service identity,
+- mesh policy,
+- proxy injection,
+- Linkerd control plane resources.
 
-Both overlays follow the same Helm-compatible model.
-The only difference between dev and live should be the certificate material.
+It should not own domain authentication, domain authorization, or business-level actor semantics.
 
-Webhook TLS is managed separately from Linkerd identity TLS.
+## Current State
 
-- `linkerd-identity-trust-roots` is consumed by Linkerd identity/proxies
-- `linkerd-webhook-trust-roots` is the overlay source of truth for the webhook CA
-- Kubernetes API server trusts the webhook CA via the `caBundle` embedded in:
-  - `linkerd-proxy-injector-webhook-config`
-  - `linkerd-policy-validator-webhook-config`
-  - `linkerd-sp-validator-webhook-config`
+```text
+platform/mesh/base
+platform/mesh/overlays/dev
+platform/mesh/overlays/live
+```
 
-To rotate webhook TLS later:
+The overlays contain certificate material and webhook trust configuration for Linkerd. Treat this folder as inactive until it is deliberately added to the platform spine.
 
-- you need `openssl` and `sops`
-- you do not need the `age` CLI directly if `sops` can read `SOPS_AGE_KEY_FILE`
+## Enabling Later
+
+Before enabling mesh:
+
+- decide whether every domain namespace should be injected or only selected workloads,
+- verify local and live certificate management,
+- verify Gateway API CRD ownership does not conflict with ingress,
+- add explicit Flux Kustomizations under `clusters/<env>/platform`,
+- add Make/Skaffold targets only if local development needs it,
+- update network policies after observing actual traffic under the mesh.
+
+## Checks
 
 ```sh
-export SOPS_AGE_KEY_FILE=/Users/mircea/.config/sops/age/keys.txt
-
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-
-for env in dev live; do
-  envdir="platform/mesh/overlays/$env"
-  workdir="$tmp/$env"
-  mkdir -p "$workdir"
-
-  openssl ecparam -name prime256v1 -genkey -noout -out "$workdir/webhook-ca.key"
-  openssl req -x509 -new -sha256 -days 3650 \
-    -key "$workdir/webhook-ca.key" \
-    -subj "/CN=linkerd-webhooks.$env.linkerd.cluster.local" \
-    -out "$workdir/webhook-ca.crt"
-
-  cat > "$envdir/linkerd-webhook-trust-roots.yaml" <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: linkerd-webhook-trust-roots
-data:
-  ca-bundle.crt: |
-$(sed 's/^/    /' "$workdir/webhook-ca.crt")
-EOF
-
-  bundle_b64="$(base64 < "$workdir/webhook-ca.crt" | tr -d '\n')"
-
-  cat > "$envdir/linkerd-webhook-ca-bundle-patches.yaml" <<EOF
-apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
-metadata:
-  name: linkerd-proxy-injector-webhook-config
-webhooks:
-  - name: linkerd-proxy-injector.linkerd.io
-    clientConfig:
-      caBundle: $bundle_b64
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: linkerd-policy-validator-webhook-config
-webhooks:
-  - name: linkerd-policy-validator.linkerd.io
-    clientConfig:
-      caBundle: $bundle_b64
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: linkerd-sp-validator-webhook-config
-webhooks:
-  - name: linkerd-sp-validator.linkerd.io
-    clientConfig:
-      caBundle: $bundle_b64
-EOF
-
-  for svc in proxy-injector policy-validator sp-validator; do
-    secret_name="linkerd-$svc-k8s-tls"
-    dns1="linkerd-$svc.linkerd.svc"
-    dns2="linkerd-$svc.linkerd.svc.cluster.local"
-
-    openssl ecparam -name prime256v1 -genkey -noout -out "$workdir/$svc.key"
-    openssl req -new \
-      -key "$workdir/$svc.key" \
-      -subj "/CN=$dns1" \
-      -out "$workdir/$svc.csr"
-
-    cat > "$workdir/$svc.ext" <<EOF
-basicConstraints=critical,CA:FALSE
-extendedKeyUsage=serverAuth
-subjectAltName=DNS:$dns1,DNS:$dns2
-EOF
-
-    openssl x509 -req -sha256 -days 825 \
-      -in "$workdir/$svc.csr" \
-      -CA "$workdir/webhook-ca.crt" \
-      -CAkey "$workdir/webhook-ca.key" \
-      -CAcreateserial \
-      -extfile "$workdir/$svc.ext" \
-      -out "$workdir/$svc.crt"
-
-    crt_b64="$(base64 < "$workdir/$svc.crt" | tr -d '\n')"
-    key_b64="$(base64 < "$workdir/$svc.key" | tr -d '\n')"
-    ca_b64="$(base64 < "$workdir/webhook-ca.crt" | tr -d '\n')"
-
-    cat > "$workdir/$secret_name.yaml" <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: $secret_name
-type: kubernetes.io/tls
-data:
-  tls.crt: $crt_b64
-  tls.key: $key_b64
-  ca.crt: $ca_b64
-EOF
-
-    sops -e --encrypted-regex '^(data|stringData)$' "$workdir/$secret_name.yaml" > "$envdir/$secret_name.yaml"
-  done
-done
+kubectl kustomize platform/mesh/overlays/dev
+kubectl kustomize platform/mesh/overlays/live
 ```

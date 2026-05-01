@@ -1,9 +1,43 @@
-# https://opentelemetry.io/docs/platforms/kubernetes/helm/collector/
+# Observability Platform
 
-helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+Observability contains OpenTelemetry Collector manifests, but it is not currently part of the active local or prod-eu composition.
 
-helm repo update
+Do not assume OTel exists in an environment unless this platform unit is explicitly composed.
 
-helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
- --set image.repository="otel/opentelemetry-collector-k8s" \
- --set mode=<daemonset|deployment|statefulset>
+## Intended Boundary
+
+Observability should own cross-cutting telemetry infrastructure:
+
+- OpenTelemetry Collector deployment,
+- collector service and namespace,
+- telemetry network policy,
+- environment-specific exporter configuration.
+
+It should not own domain instrumentation code. Domain APIs and workers decide whether they register real telemetry or no-op behavior based on runtime configuration.
+
+## Current State
+
+```text
+platform/observability/base
+platform/observability/overlays/dev
+platform/observability/overlays/live
+```
+
+The folder is kept as a future platform unit, not as an active dependency.
+
+## Enabling Later
+
+Before enabling observability:
+
+- decide local vs live exporter behavior,
+- make API/worker OTel registration conditional on configuration,
+- add the platform unit to Make/Skaffold only when local dev needs it,
+- add Flux Kustomizations under `clusters/<env>/platform`,
+- update network policies only for workloads that actually emit telemetry.
+
+## Checks
+
+```sh
+kubectl kustomize platform/observability/overlays/dev
+kubectl kustomize platform/observability/overlays/live
+```

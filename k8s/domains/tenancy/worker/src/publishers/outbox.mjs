@@ -40,7 +40,7 @@ export async function runOutboxPublisher(ctx, signal) {
       }
     }
   } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
+    if (Error.isError(err) && err.name === "AbortError") {
       return;
     }
 

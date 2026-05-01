@@ -1,103 +1,66 @@
-helm repo add nats https://nats-io.github.io/k8s/helm/charts/
-helm repo update
+# Event-Bus Platform
 
-helm search repo nats --versions
+Event-bus owns NATS JetStream infrastructure. Domains own their event contracts, outbox tables, streams, consumers, and workers.
 
-helm template nats nats/nats \
- --version 2.12.4 \
- --set config.jetstream.enabled=true \
- --set config.jetstream.memoryStore.enabled=true \
- --set config.cluster.enabled=true
+## Unit
 
-helm show values nats/nats --version 2.12.4
-
-```values.yaml
-
-config:
-  cluster:
-    enabled: true
-    replicas: 3
-
-  jetstream:
-    enabled: true
-    fileStore:
-      enabled: true
-      pvc:
-        enabled: true
-        size: 20Gi
-
-container:
-  resources:
-    requests:
-      cpu: 250m
-      memory: 512Mi
-    limits:
-      cpu: 2
-      memory: 2Gi
-
-podTemplate:
-  configChecksumAnnotation: true
-  topologySpreadConstraints:
-    kubernetes.io/hostname:
-      maxSkew: 1
-
-promExporter:
-  enabled: true
-
-service:
-  ports:
-    leafnodes:
-      enabled: false
-    websocket:
-      enabled: false
-    mqtt:
-      enabled: false
-    gateway:
-      enabled: false
+```text
+event-bus
 ```
 
+The active implementation is NATS JetStream under:
+
+```text
+platform/event-bus/overlays/{dev,live}
 ```
-# 1. Create operator with system account (SYS)
 
-nsc add operator --name TMA --sys --generate-signing-key
-nsc edit operator --require-signing-keys
+## Local
 
-# 2. Add accounts (one for SYS, one for your app)
+Deploy through Make:
 
-# skip nsc add account --name SYS if the system account was already created with nsc add operator --sys ... (it usually is).
+```sh
+make event-bus
+```
 
-# nsc add account --name SYS
+The target deploys the Skaffold `event-bus` module and waits for the `nats-depl` StatefulSet.
 
-nsc edit account SYS --sk generate
+## Live
 
-nsc add account --name TMA
-nsc edit account TMA --sk generate
+Live event-bus is reconciled by Flux from:
 
-# 3. Enable JetStream (if needed) on your app account
+```text
+clusters/prod-eu/platform/event-bus.yaml
+```
 
-nsc edit account TMA \
- --js-mem-storage -1 \
- --js-disk-storage -1
+The Kustomization points at:
 
-# 4. Add users to accounts
+```text
+platform/event-bus/overlays/live
+```
 
-nsc add user --account SYS --name sys
-nsc add user --account TMA --name identities-api
+## Domain Events
 
-# nsc generate creds --account SYS --name sys > sys.creds
+Authority/state events should use a transactional outbox in the owning domain:
 
-nsc generate creds --account TMA --name identities-api > identities-api.creds
+```text
+domain DB transaction -> outbox_events -> domain worker -> JetStream
+```
 
-# These go on the nats instances
+Do not publish critical domain events directly from request handlers. Direct publish is acceptable only for best-effort notifications where losing the event does not corrupt projections or authorization state.
 
-nsc describe operator --name TMA --raw
-nsc describe account --name SYS --raw
+Current copyable event worker spine:
 
-# Test
+```text
+domains/tenancy/worker
+```
 
-kubectl port-forward -n nats pod/nats-depl-0 4222:4222
+## Network Policy
 
-nsc list users
-nsc generate creds --account SYS --name sys > sys.creds
-nats --creds sys.creds -s nats://localhost:4222 server list
+Only domains that emit or consume events should receive egress to NATS. Do not add event-bus access to domains by default.
+
+## Checks
+
+```sh
+kubectl kustomize platform/event-bus/overlays/dev
+kubectl kustomize platform/event-bus/overlays/live
 ```

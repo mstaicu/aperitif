@@ -76,11 +76,6 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identities owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 
-## Agent Notes
+## Agent Context
 
-- Copy the folder shape first: `api/`, `infra/db`, `infra/migrate`, `infra/api`, `migrations/`, `skaffold.yaml`, and optional `ui/`.
-- If this domain later needs a worker, copy the tenancy worker spine and wire it as its own deployable unit.
-- Preserve unit boundaries. Route handlers call domain functions; domain functions use the domain context; platform code owns shared concerns like persistence, security, observability, and request problem details.
-- Keep API contracts LLM/tool-ready: explicit TypeBox request and response schemas, stable operation summaries, domain-specific error responses, and no implicit response shapes.
-- Keep Kubernetes names domain-prefixed except shared service names inside the namespace, such as `postgres-srv`.
-- Keep network policy intent simple: ingress reaches APIs through Traefik; APIs reach their own PostgreSQL; APIs or workers reach NATS only when the domain needs eventing.
+Agent-specific gotchas live in `AGENTS.md`. Keep this README human-facing and avoid duplicating agent-only rules here.

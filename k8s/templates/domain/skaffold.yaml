@@ -1,0 +1,71 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+# Replace <domain> before use. Add worker/ui modules only when those units exist.
+
+metadata:
+  name: <domain>-db-dev
+
+manifests:
+  kustomize:
+    paths:
+      - infra/db/overlays/dev
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: <domain>-migrate-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/<domain>-migrate
+      context: migrations
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - infra/migrate/overlays/dev
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: <domain>-api-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/<domain>-api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/api/overlays/dev
+
+deploy:
+  kubectl: {}
