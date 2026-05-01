@@ -17,7 +17,7 @@ identities: ## Deploy identities and exit.
 	skaffold run -m identities-api-dev
 	kubectl rollout status -n identities deploy/identities-api-depl --timeout=300s
 
-identities-dev: ## Prepare identities, then run identities API in skaffold dev.
+identities-dev: ## Prepare identities, then run identities in skaffold dev.
 	$(MAKE) ingress
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
@@ -34,7 +34,7 @@ tenancy: ## Deploy tenancy plus required dependencies and exit.
 	kubectl rollout status -n tenancy deploy/tenancy-api-depl --timeout=300s
 	kubectl rollout status -n tenancy deploy/tenancy-worker-depl --timeout=300s
 
-tenancy-dev: ## Prepare tenancy, then run tenancy API and worker in skaffold dev.
+tenancy-dev: ## Prepare tenancy, then run tenancy in skaffold dev.
 	$(MAKE) identities
 	$(MAKE) event-bus
 	skaffold run -m tenancy-db-dev
@@ -44,7 +44,7 @@ tenancy-dev: ## Prepare tenancy, then run tenancy API and worker in skaffold dev
 
 # Full stack
 
-dev: ## Prepare the full local stack, then run all runtime units in skaffold dev.
+dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	$(MAKE) ingress
 	$(MAKE) event-bus
 	skaffold run -m identities-db-dev,tenancy-db-dev

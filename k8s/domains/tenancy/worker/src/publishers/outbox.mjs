@@ -15,17 +15,28 @@ const PUBLISH_ACK_TIMEOUT_MS = 5000;
  */
 export async function runOutboxPublisher(ctx, signal) {
   const listener = await ctx.persistence.db.connect();
-  let destroyListener = false;
+
+  let brokenListener = false;
 
   try {
+    /**
+     * Postgres describes NOTIFY as sending an event,
+     * with an optional payload,
+     * to clients that previously ran LISTEN on that channel.
+     */
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
-    await drainOutbox(ctx);
+
+    while (await publishNextOutboxEvent(ctx)) {
+      // Keep draining until no unpublished row is found.
+    }
 
     for await (const [notification] of on(listener, "notification", {
       signal,
     })) {
       if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-        await drainOutbox(ctx);
+        while (await publishNextOutboxEvent(ctx)) {
+          // Keep draining until no unpublished row is found.
+        }
       }
     }
   } catch (err) {
@@ -33,24 +44,15 @@ export async function runOutboxPublisher(ctx, signal) {
       return;
     }
 
-    destroyListener = true;
+    brokenListener = true;
+
     throw err;
   } finally {
     await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {
-      destroyListener = true;
+      brokenListener = true;
     });
-    listener.release(destroyListener);
-  }
-}
 
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
- */
-async function drainOutbox(ctx) {
-  let published = true;
-
-  while (published) {
-    published = await publishNextOutboxEvent(ctx);
+    listener.release(brokenListener);
   }
 }
 
@@ -59,7 +61,10 @@ async function drainOutbox(ctx) {
  */
 async function publishNextOutboxEvent(ctx) {
   const client = await ctx.persistence.db.connect();
-  let destroyClient = false;
+
+  let brokenClient = false;
+
+  let keepDraining = false;
 
   try {
     await client.query("BEGIN");
@@ -80,48 +85,47 @@ async function publishNextOutboxEvent(ctx) {
       `,
     );
 
-    if (!event) {
-      await client.query("COMMIT");
-      return false;
-    }
-
-    await ctx.messaging.js.publish(
-      event.subject,
-      JSON.stringify({
-        payload: event.payload,
-        subject: event.subject,
-        version: Number(event.version),
-      }),
-      {
-        expect: {
-          streamName: TENANCY_STREAM,
+    if (event) {
+      await ctx.messaging.js.publish(
+        event.subject,
+        JSON.stringify({
+          payload: event.payload,
+          subject: event.subject,
+          version: Number(event.version),
+        }),
+        {
+          expect: {
+            streamName: TENANCY_STREAM,
+          },
+          msgID: event.id,
+          timeout: PUBLISH_ACK_TIMEOUT_MS,
         },
-        msgID: event.id,
-        timeout: PUBLISH_ACK_TIMEOUT_MS,
-      },
-    );
+      );
 
-    await client.query(
-      `
-        UPDATE outbox_events
-        SET published_at = now()
-        WHERE id = $1
-      `,
-      [event.id],
-    );
+      await client.query(
+        `
+          UPDATE outbox_events
+          SET published_at = now()
+          WHERE id = $1
+        `,
+        [event.id],
+      );
+
+      keepDraining = true;
+    }
 
     await client.query("COMMIT");
 
-    return true;
+    return keepDraining;
   } catch (err) {
     try {
       await client.query("ROLLBACK");
     } catch {
-      destroyClient = true;
+      brokenClient = true;
     }
 
     throw err;
   } finally {
-    client.release(destroyClient);
+    client.release(brokenClient);
   }
 }

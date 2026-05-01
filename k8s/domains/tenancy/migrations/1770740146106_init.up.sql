@@ -82,22 +82,22 @@ COMMENT ON COLUMN outbox_events.payload IS 'JSON event body published to the eve
 COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was recorded in the same transaction as the state change.';
 COMMENT ON COLUMN outbox_events.published_at IS 'Null until a worker successfully publishes the event.';
 
--- Wake workers when a new outbox row is inserted.
+-- Wake workers once after an INSERT statement adds outbox rows.
 -- This is only a notification signal; outbox_events remains the durable source.
 CREATE FUNCTION notify_outbox_event()
 RETURNS TRIGGER AS $$
 BEGIN
     PERFORM pg_notify('outbox_events', '');
-    RETURN NEW;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER outbox_events_notify_insert
 AFTER INSERT ON outbox_events
-FOR EACH ROW
+FOR EACH STATEMENT
 EXECUTE FUNCTION notify_outbox_event();
 
-COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an outbox row is inserted. Workers must still query outbox_events because notifications are not durable.';
+COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
 
 -- TODO: Add before event volume grows:
 -- CREATE INDEX outbox_events_unpublished_idx ON outbox_events (occurred_at, version, id) WHERE published_at IS NULL;
