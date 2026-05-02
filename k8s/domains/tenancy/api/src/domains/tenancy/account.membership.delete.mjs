@@ -1,7 +1,9 @@
 import {
   AccountMembershipDeletedPayloadCheck,
-  TENANCY_ACCOUNT_MEMBERSHIP_DELETED,
-} from "../../contracts/events.mjs";
+  AccountMembershipDeletedSchemaVersion,
+  AccountMembershipDeletedSubject,
+  TENANCY_EVENT_PRODUCER,
+} from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -109,7 +111,7 @@ export const deleteAccountMembership =
         [accountId],
       );
 
-      /** @type {import("../../contracts/events.mjs").AccountMembershipDeletedPayload} */
+      /** @type {import("../../events/index.mjs").AccountMembershipDeletedPayload} */
       const membershipDeletedPayload = {
         account: {
           id: account.id,
@@ -131,12 +133,20 @@ export const deleteAccountMembership =
 
       await client.query(
         `
-          INSERT INTO outbox_events (subject, version, payload)
-          VALUES ($1, $2, $3::jsonb)
+          INSERT INTO outbox_events (
+            subject,
+            version,
+            producer,
+            schema_version,
+            payload
+          )
+          VALUES ($1, $2, $3, $4, $5::jsonb)
         `,
         [
-          TENANCY_ACCOUNT_MEMBERSHIP_DELETED,
+          AccountMembershipDeletedSubject,
           version,
+          TENANCY_EVENT_PRODUCER,
+          AccountMembershipDeletedSchemaVersion,
           JSON.stringify(membershipDeletedPayload),
         ],
       );

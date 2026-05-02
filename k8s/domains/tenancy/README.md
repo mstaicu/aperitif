@@ -142,7 +142,8 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/tenancy` gateway prefix.
 - Identity dependency: tenancy validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
-- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry `subject`, account authority `version`, and a minimal domain payload.
+- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, account authority `version`, `occurred_at`, `producer`, `schema_version`, and a minimal domain payload.
+- Event schemas: TypeBox/JSDoc event contracts live in `api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
 - Database: tenancy owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 
 ## Event Publishing Mechanics
@@ -171,12 +172,16 @@ Current event subjects:
 - `tenancy.account_membership.deleted`
 - `tenancy.account_requirement.completed`
 
-Event payloads are intentionally projection-shaped. Consumers store the latest account authority `version` they have applied for each `account.id` and ignore events where `event.version <= projected_account_version`.
+Event payloads are intentionally projection-shaped. Consumers store each processed event `id` for idempotency, store the latest account authority `version` they have applied for each `account.id`, and ignore duplicate or stale events where `event.version <= projected_account_version`.
 
 ```json
 {
+  "id": "event-id",
   "subject": "tenancy.account_membership.created",
   "version": 12,
+  "occurred_at": "2026-05-02T10:15:30.000Z",
+  "producer": "tenancy",
+  "schema_version": 1,
   "payload": {
     "account": {
       "id": "account-id",

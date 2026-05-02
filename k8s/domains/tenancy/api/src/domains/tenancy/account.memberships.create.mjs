@@ -1,7 +1,9 @@
 import {
   AccountMembershipCreatedPayloadCheck,
-  TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
-} from "../../contracts/events.mjs";
+  AccountMembershipCreatedSchemaVersion,
+  AccountMembershipCreatedSubject,
+  TENANCY_EVENT_PRODUCER,
+} from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -107,7 +109,7 @@ export const createAccountMembership =
         [accountId],
       );
 
-      /** @type {import("../../contracts/events.mjs").AccountMembershipCreatedPayload} */
+      /** @type {import("../../events/index.mjs").AccountMembershipCreatedPayload} */
       const membershipCreatedPayload = {
         account: {
           id: account.id,
@@ -130,12 +132,20 @@ export const createAccountMembership =
 
       await client.query(
         `
-          INSERT INTO outbox_events (subject, version, payload)
-          VALUES ($1, $2, $3::jsonb)
+          INSERT INTO outbox_events (
+            subject,
+            version,
+            producer,
+            schema_version,
+            payload
+          )
+          VALUES ($1, $2, $3, $4, $5::jsonb)
         `,
         [
-          TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
+          AccountMembershipCreatedSubject,
           version,
+          TENANCY_EVENT_PRODUCER,
+          AccountMembershipCreatedSchemaVersion,
           JSON.stringify(membershipCreatedPayload),
         ],
       );

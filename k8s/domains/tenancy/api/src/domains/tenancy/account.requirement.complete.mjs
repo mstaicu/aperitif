@@ -1,9 +1,12 @@
 import {
   AccountRequirementCompletedPayloadCheck,
+  AccountRequirementCompletedSchemaVersion,
+  AccountRequirementCompletedSubject,
   AccountUpdatedPayloadCheck,
-  TENANCY_ACCOUNT_REQUIREMENT_COMPLETED,
-  TENANCY_ACCOUNT_UPDATED,
-} from "../../contracts/events.mjs";
+  AccountUpdatedSchemaVersion,
+  AccountUpdatedSubject,
+  TENANCY_EVENT_PRODUCER,
+} from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -103,7 +106,7 @@ export const completeAccountRequirement =
           [accountId],
         );
 
-        /** @type {import("../../contracts/events.mjs").AccountRequirementCompletedPayload} */
+        /** @type {import("../../events/index.mjs").AccountRequirementCompletedPayload} */
         const requirementCompletedPayload = {
           account: {
             id: account.id,
@@ -128,12 +131,20 @@ export const completeAccountRequirement =
 
         await client.query(
           `
-            INSERT INTO outbox_events (subject, version, payload)
-            VALUES ($1, $2, $3::jsonb)
+            INSERT INTO outbox_events (
+              subject,
+              version,
+              producer,
+              schema_version,
+              payload
+            )
+            VALUES ($1, $2, $3, $4, $5::jsonb)
           `,
           [
-            TENANCY_ACCOUNT_REQUIREMENT_COMPLETED,
+            AccountRequirementCompletedSubject,
             version,
+            TENANCY_EVENT_PRODUCER,
+            AccountRequirementCompletedSchemaVersion,
             JSON.stringify(requirementCompletedPayload),
           ],
         );
@@ -167,7 +178,7 @@ export const completeAccountRequirement =
           [accountId],
         ));
 
-        /** @type {import("../../contracts/events.mjs").AccountUpdatedPayload} */
+        /** @type {import("../../events/index.mjs").AccountUpdatedPayload} */
         const accountUpdatedPayload = {
           account: {
             id: account.id,
@@ -183,12 +194,20 @@ export const completeAccountRequirement =
 
         await client.query(
           `
-            INSERT INTO outbox_events (subject, version, payload)
-            VALUES ($1, $2, $3::jsonb)
+            INSERT INTO outbox_events (
+              subject,
+              version,
+              producer,
+              schema_version,
+              payload
+            )
+            VALUES ($1, $2, $3, $4, $5::jsonb)
           `,
           [
-            TENANCY_ACCOUNT_UPDATED,
+            AccountUpdatedSubject,
             account.version,
+            TENANCY_EVENT_PRODUCER,
+            AccountUpdatedSchemaVersion,
             JSON.stringify(accountUpdatedPayload),
           ],
         );

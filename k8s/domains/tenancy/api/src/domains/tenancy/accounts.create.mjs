@@ -1,9 +1,12 @@
 import {
   AccountCreatedPayloadCheck,
+  AccountCreatedSchemaVersion,
+  AccountCreatedSubject,
   AccountMembershipCreatedPayloadCheck,
-  TENANCY_ACCOUNT_CREATED,
-  TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
-} from "../../contracts/events.mjs";
+  AccountMembershipCreatedSchemaVersion,
+  AccountMembershipCreatedSubject,
+  TENANCY_EVENT_PRODUCER,
+} from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 // Add or remove account activation steps here. Empty means accounts activate
@@ -60,7 +63,7 @@ export const createAccount =
         );
       }
 
-      /** @type {import("../../contracts/events.mjs").AccountCreatedPayload} */
+      /** @type {import("../../events/index.mjs").AccountCreatedPayload} */
       const accountCreatedPayload = {
         account: {
           id: account.id,
@@ -76,12 +79,20 @@ export const createAccount =
 
       await client.query(
         `
-          INSERT INTO outbox_events (subject, version, payload)
-          VALUES ($1, $2, $3::jsonb)
+          INSERT INTO outbox_events (
+            subject,
+            version,
+            producer,
+            schema_version,
+            payload
+          )
+          VALUES ($1, $2, $3, $4, $5::jsonb)
         `,
         [
-          TENANCY_ACCOUNT_CREATED,
+          AccountCreatedSubject,
           account.version,
+          TENANCY_EVENT_PRODUCER,
+          AccountCreatedSchemaVersion,
           JSON.stringify(accountCreatedPayload),
         ],
       );
@@ -98,7 +109,7 @@ export const createAccount =
         [account.id],
       );
 
-      /** @type {import("../../contracts/events.mjs").AccountMembershipCreatedPayload} */
+      /** @type {import("../../events/index.mjs").AccountMembershipCreatedPayload} */
       const membershipCreatedPayload = {
         account: {
           id: account.id,
@@ -121,12 +132,20 @@ export const createAccount =
 
       await client.query(
         `
-          INSERT INTO outbox_events (subject, version, payload)
-          VALUES ($1, $2, $3::jsonb)
+          INSERT INTO outbox_events (
+            subject,
+            version,
+            producer,
+            schema_version,
+            payload
+          )
+          VALUES ($1, $2, $3, $4, $5::jsonb)
         `,
         [
-          TENANCY_ACCOUNT_MEMBERSHIP_CREATED,
+          AccountMembershipCreatedSubject,
           membershipVersion,
+          TENANCY_EVENT_PRODUCER,
+          AccountMembershipCreatedSchemaVersion,
           JSON.stringify(membershipCreatedPayload),
         ],
       );

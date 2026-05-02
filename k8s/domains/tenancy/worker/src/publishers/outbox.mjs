@@ -76,6 +76,9 @@ async function publishNextOutboxEvent(ctx) {
         SELECT id,
           subject,
           version,
+          occurred_at,
+          producer,
+          schema_version,
           payload
         FROM outbox_events
         WHERE published_at IS NULL
@@ -89,7 +92,14 @@ async function publishNextOutboxEvent(ctx) {
       await ctx.messaging.js.publish(
         event.subject,
         JSON.stringify({
+          id: event.id,
+          occurred_at:
+            event.occurred_at instanceof Date
+              ? event.occurred_at.toISOString()
+              : new Date(event.occurred_at).toISOString(),
           payload: event.payload,
+          producer: event.producer,
+          schema_version: Number(event.schema_version),
           subject: event.subject,
           version: Number(event.version),
         }),
