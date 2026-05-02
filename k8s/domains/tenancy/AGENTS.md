@@ -12,7 +12,11 @@ documents, notifications, workflow, or integrations.
   only wakes the worker; the worker drains durable rows from `outbox_events`.
 - The worker must `LISTEN` before startup drain so rows inserted during startup
   are either drained or wake the listener.
-- Keep the manual requirement completion endpoint as an internal seam until a
-  fulfillment domain and event consumer exist.
+- Do not add a direct owner-supplied `userId` member creation endpoint as the
+  product invite flow. Future member adds should go through invite,
+  provisioning, or another explicit proof path.
+- Do not add a public/manual requirement completion endpoint. Future
+  fulfillment domains should drive requirement changes through an internal
+  consumer path.
 - Do not read identities tables. Tenancy verifies identity-issued tokens
   through JWKS and owns authorization state locally.

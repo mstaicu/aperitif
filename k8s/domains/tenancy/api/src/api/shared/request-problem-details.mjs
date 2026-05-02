@@ -4,11 +4,6 @@ const VALIDATION_CONTEXTS = new Set(["body", "params", "query", "querystring"]);
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
-  ACCOUNT_MEMBERSHIP_ALREADY_EXISTS: {
-    status: 409,
-    title: "Account membership already exists",
-    type: "/problems/account-membership-already-exists",
-  },
   ACCOUNT_MEMBERSHIP_NOT_FOUND: {
     status: 404,
     title: "Account membership not found",
@@ -23,11 +18,6 @@ const PROBLEMS = {
     status: 404,
     title: "Account not found",
     type: "/problems/account-not-found",
-  },
-  ACCOUNT_REQUIREMENT_NOT_FOUND: {
-    status: 404,
-    title: "Account requirement not found",
-    type: "/problems/account-requirement-not-found",
   },
   DATABASE_UNAVAILABLE: {
     status: 503,

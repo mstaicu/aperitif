@@ -67,17 +67,6 @@ export const AccountParams = Type.Object(
   },
 );
 
-export const AccountRequirementParams = Type.Object(
-  {
-    accountId: AccountId,
-    type: RequirementType,
-  },
-  {
-    additionalProperties: false,
-    description: "Path parameters for a specific account requirement type.",
-  },
-);
-
 export const AccountMembershipParams = Type.Object(
   {
     accountId: AccountId,
@@ -97,16 +86,6 @@ export const CreateAccountBody = Type.Object(
   {
     additionalProperties: false,
     description: "Payload for creating an account owned by the caller.",
-  },
-);
-
-export const CreateAccountMembershipBody = Type.Object(
-  {
-    role: AccountRole,
-  },
-  {
-    additionalProperties: false,
-    description: "Payload for adding a user to an account.",
   },
 );
 

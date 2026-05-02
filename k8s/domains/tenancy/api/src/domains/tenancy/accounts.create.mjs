@@ -9,11 +9,6 @@ import {
 } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
-// Add or remove account activation steps here. Empty means accounts activate
-// immediately; non-empty means requirements must complete before activation.
-/** @type {string[]} */
-const accountRequirements = [];
-
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: { currentUserId: string, kind: "personal" | "organization", name: string }) => Promise<{
@@ -42,7 +37,7 @@ export const createAccount =
           VALUES ($1, $2, $3)
           RETURNING id, name, kind, status, version
         `,
-        [name, kind, accountRequirements.length === 0 ? "active" : "pending"],
+        [name, kind, "active"],
       );
 
       await client.query(
@@ -52,16 +47,6 @@ export const createAccount =
         `,
         [account.id, currentUserId],
       );
-
-      if (accountRequirements.length > 0) {
-        await client.query(
-          `
-            INSERT INTO account_requirements (account_id, type, status)
-            SELECT $1, unnest($2::text[]), 'pending'
-          `,
-          [account.id, accountRequirements],
-        );
-      }
 
       /** @type {import("../../events/index.mjs").AccountCreatedPayload} */
       const accountCreatedPayload = {

@@ -15,15 +15,15 @@ Step domains own evidence collection and validation. For example, a future billi
 The intended integration is:
 
 ```text
-tenancy creates account requirement rows
+tenancy creates account requirement rows when onboarding requirements exist
 step domains collect and validate evidence
-step domains publish requirement completed events
-tenancy consumes those events
+step domains publish fulfillment events
+tenancy consumes those events through an internal worker path
 tenancy updates requirement status
 tenancy activates the account when all requirements are completed
 ```
 
-The current completion endpoint is a manual/internal seam until the first fulfillment domain and event consumer exist.
+The current API does not expose direct member creation/invite or manual requirement completion. Account creation grants owner membership to the caller. Future member adds should come from invite, provisioning, or another explicit proof workflow. Future requirement completion should be consumed from fulfillment-domain events, not called synchronously from a public route.
 
 ## Core Model
 
@@ -49,10 +49,8 @@ GET/POST /tenancy/v1/accounts
 GET /tenancy/v1/accounts/:accountId
 GET /tenancy/v1/accounts/:accountId/memberships
 GET /tenancy/v1/accounts/:accountId/memberships/:userId
-PUT /tenancy/v1/accounts/:accountId/memberships/:userId
 DELETE /tenancy/v1/accounts/:accountId/memberships/:userId
 GET /tenancy/v1/accounts/:accountId/requirements
-POST /tenancy/v1/accounts/:accountId/requirements/:type/complete
 ```
 
 ## Onboarding Examples
@@ -72,7 +70,8 @@ user registers through identities
 POST /tenancy/v1/accounts { kind: "personal", name: "<display name>" }
 account.status = pending
 GET /tenancy/v1/accounts/:accountId/requirements
-step domains complete terms, verification, risk, or billing requirements
+step domains fulfill terms, verification, risk, or billing requirements
+tenancy consumes fulfillment events
 account.status = active when all requirements complete
 ```
 
@@ -81,7 +80,7 @@ B2B SaaS:
 ```text
 founder registers through identities
 POST /tenancy/v1/accounts { kind: "organization", name: "Acme Ltd" }
-PUT /tenancy/v1/accounts/:accountId/memberships/:userId { role: "member" }
+future invite/provisioning flow creates additional account memberships
 ```
 
 Regulated fintech-style account:
@@ -167,10 +166,8 @@ Request handlers must not publish tenancy authority events directly to NATS. The
 Current event subjects:
 
 - `tenancy.account.created`
-- `tenancy.account.updated`
 - `tenancy.account_membership.created`
 - `tenancy.account_membership.deleted`
-- `tenancy.account_requirement.completed`
 
 Event payloads are intentionally projection-shaped. Consumers store each processed event `id` for idempotency, store the latest account authority `version` they have applied for each `account.id`, and ignore duplicate or stale events where `event.version <= projected_account_version`.
 
@@ -178,7 +175,7 @@ Event payloads are intentionally projection-shaped. Consumers store each process
 {
   "id": "event-id",
   "subject": "tenancy.account_membership.created",
-  "version": 12,
+  "version": 2,
   "occurred_at": "2026-05-02T10:15:30.000Z",
   "producer": "tenancy",
   "schema_version": 1,
@@ -191,7 +188,7 @@ Event payloads are intentionally projection-shaped. Consumers store each process
     },
     "membership": {
       "account_id": "account-id",
-      "role": "member",
+      "role": "owner",
       "user_id": "user-id"
     }
   }

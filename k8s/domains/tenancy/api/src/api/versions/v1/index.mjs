@@ -4,9 +4,7 @@ import swaggerUI from "@fastify/swagger-ui";
 import getAccount from "./routes/accounts/account.get.mjs";
 import deleteAccountMembership from "./routes/accounts/account.membership.delete.mjs";
 import getAccountMembership from "./routes/accounts/account.membership.get.mjs";
-import createAccountMembership from "./routes/accounts/account.memberships.create.mjs";
 import listAccountMemberships from "./routes/accounts/account.memberships.list.mjs";
-import completeAccountRequirement from "./routes/accounts/account.requirement.complete.mjs";
 import listAccountRequirements from "./routes/accounts/account.requirements.list.mjs";
 import createAccount from "./routes/accounts/accounts.create.mjs";
 import listAccounts from "./routes/accounts/accounts.list.mjs";
@@ -86,22 +84,12 @@ export default async (fastify, { domains, jwks }) => {
     jwks,
     prefix: "/accounts",
   });
-  await fastify.register(createAccountMembership, {
-    accounts: domains.tenancy,
-    jwks,
-    prefix: "/accounts",
-  });
   await fastify.register(deleteAccountMembership, {
     accounts: domains.tenancy,
     jwks,
     prefix: "/accounts",
   });
   await fastify.register(listAccountRequirements, {
-    accounts: domains.tenancy,
-    jwks,
-    prefix: "/accounts",
-  });
-  await fastify.register(completeAccountRequirement, {
     accounts: domains.tenancy,
     jwks,
     prefix: "/accounts",
