@@ -2,6 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - customresourcedefinition-backendtlspolicies.gateway.networking.k8s.io.yaml
   - customresourcedefinition-gatewayclasses.gateway.networking.k8s.io.yaml
   - customresourcedefinition-gateways.gateway.networking.k8s.io.yaml
+  - customresourcedefinition-grpcroutes.gateway.networking.k8s.io.yaml
   - customresourcedefinition-httproutes.gateway.networking.k8s.io.yaml
+  - customresourcedefinition-referencegrants.gateway.networking.k8s.io.yaml

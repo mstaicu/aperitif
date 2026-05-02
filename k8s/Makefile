@@ -63,7 +63,10 @@ ingress: ## Install Gateway CRDs, dev TLS, hosts entry, and Traefik.
 
 	kubectl wait --for=condition=Established --timeout=60s crd/gatewayclasses.gateway.networking.k8s.io
 	kubectl wait --for=condition=Established --timeout=60s crd/gateways.gateway.networking.k8s.io
+	kubectl wait --for=condition=Established --timeout=60s crd/grpcroutes.gateway.networking.k8s.io
 	kubectl wait --for=condition=Established --timeout=60s crd/httproutes.gateway.networking.k8s.io
+	kubectl wait --for=condition=Established --timeout=60s crd/referencegrants.gateway.networking.k8s.io
+	kubectl wait --for=condition=Established --timeout=60s crd/backendtlspolicies.gateway.networking.k8s.io
 
 	mkcert -install
 
