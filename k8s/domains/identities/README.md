@@ -33,15 +33,12 @@ The domain unit spine is:
 db -> migrate -> api -> ui
 ```
 
-Current Kubernetes-deployed units:
+Current Kubernetes-deployable units:
 
 - `db`: PostgreSQL owned by this domain under `infra/db/overlays/{dev,live}`.
 - `migrate`: one-shot migration Job built from `migrations/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `api/` and deployed from `infra/api/overlays/{dev,live}`.
-
-Current source-only units:
-
-- `ui`: React Router UI under `ui/`. Add `infra/ui`, Skaffold, and Flux wiring before treating it as a deployable unit.
+- `ui`: Remix 3 beta UI built from `ui/` and expressed under `infra/ui/overlays/{dev,live}`.
 
 There is no identities worker right now. Add one only when identities has a real event contract, and copy the tenancy worker spine instead of reviving ad hoc worker code.
 
@@ -55,7 +52,9 @@ Local development is driven by Skaffold modules in `skaffold.yaml`:
 - `identities-migrate-dev` builds `mdstaicu/identities-migrate` from `migrations/` and applies `infra/migrate/overlays/dev`.
 - `identities-api-dev` builds `mdstaicu/identities-api` from `api/`, applies `infra/api/overlays/dev`, and syncs `api/src/**/*`.
 
-The Makefile should preserve the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` in `skaffold dev`.
+The UI infra exists, but it is not wired into Skaffold yet.
+
+The Makefile should preserve the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `ui` in `skaffold dev` once the UI is composed.
 
 ## Live
 
@@ -65,7 +64,9 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `identities-migrate` points at `domains/identities/infra/migrate/overlays/live`, depends on `identities-db`, and should use `force: true`.
 - `identities-api` points at `domains/identities/infra/api/overlays/live`, depends on `identities-migrate` and platform ingress.
 
-The live order must remain `db -> migrate -> api`. Migration and API images are Flux-managed through `clusters/prod-eu/image-automation/identities.yaml`.
+The UI infra exists, but it is not wired into Flux yet. When composed, `identities-ui` should depend on `identities-api` and platform ingress.
+
+The live order must remain `db -> migrate -> api -> ui`. Migration and API images are Flux-managed through `clusters/prod-eu/image-automation/identities.yaml`; add UI image automation when wiring the UI into live Flux.
 
 Secrets are per deployable unit even when they contain the same database URL. Keep `identities-api-db` and `identities-migrate-db` as separate Secret names so each unit owns the contract it consumes.
 

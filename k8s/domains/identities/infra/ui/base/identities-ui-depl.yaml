@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: identities-ui-depl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: identities-ui
+  template:
+    metadata:
+      labels:
+        app: identities-ui
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: identities-ui
+      automountServiceAccountToken: false
+
+      containers:
+        - name: identities-ui
+          image: mdstaicu/identities-ui
+          env:
+            - name: PORT
+              value: "3000"
+
+            - name: IDENTITIES_API_INTERNAL_URL
+              value: http://traefik-srv.traefik/identities/v1
+
+          ports:
+            - containerPort: 3000
+              name: http
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
