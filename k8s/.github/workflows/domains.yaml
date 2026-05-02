@@ -25,9 +25,11 @@ jobs:
       SOPS_VERSION: v3.12.2
 
     steps:
+      # Fetch the PR sources so Make, Skaffold, Kustomize, and domain files are available.
       - name: checkout
         uses: actions/checkout@v6
 
+      # Detect which top-level domains changed so the workflow deploys only the affected domain targets.
       - name: select domains
         uses: actions/github-script@v8
         with:
@@ -51,30 +53,42 @@ jobs:
 
             core.exportVariable("CHANGED_DOMAINS", domains.join(" "));
 
+      # Fail early if a changed domain does not have a matching Make deploy target.
       - name: check domain targets
         run: |
           for domain in $CHANGED_DOMAINS; do
             make -n "$domain" >/dev/null
           done
 
+      # Dev overlays use SOPS/KSOPS, so CI needs the repository age key secret.
       - name: check sops age key
         if: env.SOPS_AGE_KEY == ''
         run: |
           echo "::error::SOPS_AGE_KEY repository secret is required for encrypted dev overlays."
           exit 1
 
+      # Create an isolated disposable Kubernetes cluster for this PR run.
       - name: create kind cluster
         uses: helm/kind-action@v1.14.0
         with:
           cluster_name: ${{ env.CLUSTER_NAME }}
           wait: 120s
 
+      # Install kubectl after cluster creation so later steps can inspect and deploy to the cluster.
       - name: setup kubectl
         uses: azure/setup-kubectl@v4.0.1
 
+      # Make the target cluster explicit before Make and Skaffold deploy anything.
+      - name: use kind context
+        run: |
+          kubectl config use-context "kind-${CLUSTER_NAME}"
+          kubectl config current-context
+
+      # Install standalone kustomize because KSOPS-enabled overlays need kustomize plugin support.
       - name: setup kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
+      # Install the exact CLI tools used by the Make/Skaffold dev deployment path.
       - name: install tools
         run: |
           sudo apt-get update
@@ -104,22 +118,26 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
+      # Tell Skaffold this context is local so built images are loaded into kind instead of pushed.
       - name: configure skaffold
         run: |
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
+      # Reuse the same domain Make targets used locally; they deploy dependencies, migrations, APIs, and workers.
       - name: deploy domain
         run: |
           for domain in $CHANGED_DOMAINS; do
             make "$domain"
           done
 
+      # Expose Traefik from kind to the runner so smoke checks hit the real ingress path.
       - name: expose ingress
         run: |
           kubectl -n traefik port-forward svc/traefik-lb 8443:443 > /tmp/traefik-port-forward.log 2>&1 &
           echo "$!" > /tmp/traefik-port-forward.pid
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
+      # Check each changed domain through Traefik using the minimal stable endpoint for that domain.
       - name: smoke domains
         run: |
           for domain in $CHANGED_DOMAINS; do
@@ -152,6 +170,7 @@ jobs:
             fi
           done
 
+      # Always tear down background processes and the disposable kind cluster.
       - name: cleanup
         if: always()
         run: |

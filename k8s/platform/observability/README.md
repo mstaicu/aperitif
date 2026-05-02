@@ -1,8 +1,8 @@
 # Observability Platform
 
-Observability contains OpenTelemetry Collector manifests, but it is not currently part of the active local or prod-eu composition.
+Observability contains OpenTelemetry Collector manifests. It is part of the active platform baseline for local and prod-eu composition.
 
-Do not assume OTel exists in an environment unless this platform unit is explicitly composed.
+Do not assume OTel exists in an environment unless this platform unit is explicitly composed there.
 
 ## Intended Boundary
 
@@ -23,15 +23,20 @@ platform/observability/overlays/dev
 platform/observability/overlays/live
 ```
 
-The folder is kept as a future platform unit, not as an active dependency.
+The unit is deployed locally by the main domain/full-stack targets. It can also be deployed directly with:
 
-## Enabling Later
+```sh
+make observability
+```
 
-Before enabling observability:
+Domain APIs register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured. Without that environment variable, API OTel is a no-op so future overlays can opt out cleanly.
+
+## Enabling In An Environment
+
+Before making observability part of another environment:
 
 - decide local vs live exporter behavior,
-- make API/worker OTel registration conditional on configuration,
-- add the platform unit to Make/Skaffold only when local dev needs it,
+- set `OTEL_EXPORTER_OTLP_ENDPOINT` only on workloads that should emit telemetry,
 - add Flux Kustomizations under `clusters/<env>/platform`,
 - update network policies only for workloads that actually emit telemetry.
 

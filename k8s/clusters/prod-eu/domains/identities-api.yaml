@@ -16,6 +16,7 @@ spec:
       name: sops-age
   dependsOn:
     - name: ingress
+    - name: observability
     - name: identities-migrate
   wait: true
   timeout: 5m

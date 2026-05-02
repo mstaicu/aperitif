@@ -29,7 +29,7 @@ import v1 from "./api/versions/v1/index.mjs";
  *  domains: {
  *    tenancy: TenancyDomain,
  *  },
- *  fastifyOtel: FastifyOtelInstrumentation
+ *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
@@ -46,7 +46,9 @@ export const createApp = async ({ ctx, domains, fastifyOtel }) => {
     .withTypeProvider();
 
   await app.register(requestProblemDetails);
-  await app.register(fastifyOtel.plugin());
+  if (fastifyOtel) {
+    await app.register(fastifyOtel.plugin());
+  }
   await app.register(probes, { db: ctx.persistence.db });
   await app.register(v1, { domains, jwks: ctx.security.jwks, prefix: "/v1" });
 

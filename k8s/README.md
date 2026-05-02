@@ -38,7 +38,7 @@ clusters/
 platform/
   ingress/                Traefik, Gateway API CRDs, Gateways, HTTPRoutes
   event-bus/              NATS JetStream for durable domain events
-  observability/          present, not currently composed
+  observability/          OpenTelemetry Collector
   mesh/                   present, not currently composed
 
 domains/
@@ -54,7 +54,7 @@ Brewfile                  local toolchain
 skaffold.yaml             root Skaffold composition
 ```
 
-The currently composed platform units are ingress and event-bus. Observability and mesh folders may exist, but they are not part of the active local/prod-eu spine unless explicitly added.
+The currently composed platform units are ingress, event-bus, and observability. Mesh exists, but it is not part of the active local/prod-eu spine unless explicitly added.
 
 ## Agent Context
 
@@ -125,6 +125,8 @@ Traefik Gateway listeners use namespace selectors for route attachment. Domain n
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
+Observability is part of the active platform baseline. `make observability` deploys the OpenTelemetry Collector, and `make dev` plus domain deploy targets run it before OTel-emitting workloads. APIs still register OTel conditionally: `OTEL_EXPORTER_OTLP_ENDPOINT` present means real OTel, absent means no-op.
+
 ## Local Development
 
 Install tools:
@@ -155,6 +157,8 @@ ingress/event-bus -> db -> migrate -> wait for migration Job -> api/worker
 ```
 
 Use `make ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
+
+Use `make observability` when you only need the OpenTelemetry Collector.
 
 The default local domain is `tma.com`. Override it when needed:
 
@@ -233,6 +237,8 @@ Route work should preserve:
 Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, producer, consumer, and delivery expectation.
 
 Database ownership is exclusive to the owning domain. Migrations live in `domains/<domain>/migrations`.
+
+Account-scoped domains should authorize from local projections of tenancy authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume tenancy events into local `account_authority_projection` and `account_membership_projection` tables. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 
 ## How To Work Here
 

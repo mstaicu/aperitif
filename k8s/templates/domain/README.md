@@ -50,6 +50,19 @@ Every domain should document:
 - Database ownership and migrations.
 - External domain dependencies.
 
+## Account-Scoped Authorization
+
+If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume tenancy events into local projection tables owned by that domain.
+
+Baseline projection tables:
+
+```text
+account_authority_projection
+account_membership_projection
+```
+
+Authorize from those local projections. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
+
 ## Wiring Checklist
 
 - Add Skaffold modules for each local unit.

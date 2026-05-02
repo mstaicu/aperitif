@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - event-bus.yaml
   - ingress.yaml
+  - observability.yaml

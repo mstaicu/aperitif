@@ -2,7 +2,7 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help identities identities-dev tenancy tenancy-dev dev ingress event-bus
+.PHONY: help identities identities-dev tenancy tenancy-dev dev ingress event-bus observability
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -10,6 +10,7 @@ help: ## Show available targets.
 # Domain targets
 
 identities: ## Deploy identities and exit.
+	$(MAKE) observability
 	$(MAKE) ingress
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
@@ -18,6 +19,7 @@ identities: ## Deploy identities and exit.
 	kubectl rollout status -n identities deploy/identities-api-depl --timeout=300s
 
 identities-dev: ## Prepare identities, then run identities in skaffold dev.
+	$(MAKE) observability
 	$(MAKE) ingress
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
@@ -45,6 +47,7 @@ tenancy-dev: ## Prepare tenancy, then run tenancy in skaffold dev.
 # Full stack
 
 dev: ## Prepare the full local stack, then run all domains in skaffold dev.
+	$(MAKE) observability
 	$(MAKE) ingress
 	$(MAKE) event-bus
 	skaffold run -m identities-db-dev,tenancy-db-dev
@@ -85,3 +88,7 @@ ingress: ## Install Gateway CRDs, dev TLS, hosts entry, and Traefik.
 event-bus: ## Deploy NATS JetStream and wait for readiness.
 	skaffold run -m event-bus
 	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
+
+observability: ## Deploy OpenTelemetry Collector and wait for readiness.
+	skaffold run -m observability
+	kubectl rollout status -n otel deploy/otel-collector --timeout=300s

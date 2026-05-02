@@ -4,4 +4,4 @@ kind: Config
 requires:
   - path: event-bus
   - path: ingress
-  # - path: observability
+  - path: observability
