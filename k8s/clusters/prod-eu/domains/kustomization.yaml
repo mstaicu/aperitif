@@ -5,6 +5,7 @@ resources:
   - identities-db.yaml
   - identities-migrate.yaml
   - identities-api.yaml
+  - identities-ui.yaml
   - tenancy-db.yaml
   - tenancy-migrate.yaml
   - tenancy-api.yaml

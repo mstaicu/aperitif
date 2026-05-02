@@ -1,8 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "build": "esbuild app/pages/register.client.ts app/pages/login.client.ts --bundle --format=esm --outdir=public/assets --entry-names=[name] --minify --sourcemap && esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
-    "dev": "esbuild app/pages/register.client.ts app/pages/login.client.ts --bundle --format=esm --outdir=public/assets --entry-names=[name] --sourcemap --watch & NODE_ENV=development tsx watch server.ts",
+    "build": "esbuild app/pages/register.client.ts app/pages/login.client.ts --bundle --format=esm --outdir=public/identities/assets --entry-names=[name] --minify --sourcemap && esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
+    "dev": "esbuild app/pages/register.client.ts app/pages/login.client.ts --bundle --format=esm --outdir=public/identities/assets --entry-names=[name] --sourcemap --watch & NODE_ENV=development tsx watch server.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit"
   },

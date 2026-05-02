@@ -26,10 +26,7 @@ spec:
 
       allowedRoutes:
         namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              tma.com/gateway-access: traefik
+          from: All
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -48,7 +45,4 @@ spec:
 
       allowedRoutes:
         namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              tma.com/gateway-access: traefik
+          from: All

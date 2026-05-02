@@ -3,5 +3,3 @@ kind: Namespace
 
 metadata:
   name: identities
-  labels:
-    tma.com/gateway-access: traefik

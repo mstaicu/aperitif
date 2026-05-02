@@ -13,14 +13,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /identities
+            value: /identities/v1
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /
+              replacePrefixMatch: /v1
 
       backendRefs:
         - name: identities-api-srv
@@ -64,14 +64,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /identities
+            value: /identities/v1
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /
+              replacePrefixMatch: /v1
 
       backendRefs:
         - name: identities-api-srv

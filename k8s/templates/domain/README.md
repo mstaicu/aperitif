@@ -37,9 +37,9 @@ db -> migrate -> api/worker
 
 - `db`: domain-owned PostgreSQL for local/live parity.
 - `migrate`: one-shot Job built from `migrations/`.
-- `api`: Fastify HTTP API, TypeBox/OpenAPI contracts, HTTPRoutes.
+- `api`: Fastify HTTP API, TypeBox/OpenAPI contracts, HTTPRoutes under `/<domain>/v1`.
 - `worker`: async publisher/consumer only when the domain emits or consumes events.
-- `ui`: browser surface only when this domain owns one.
+- `ui`: browser surface only when this domain owns one, normally under `/<domain>`.
 
 ## Contracts
 
@@ -57,8 +57,8 @@ If a domain owns account-scoped resources or performs account-scoped authorizati
 Baseline projection tables:
 
 ```text
-account_authority_projection
-account_membership_projection
+tenancy_account_projection
+tenancy_account_membership_projection
 ```
 
 Authorize from those local projections. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.

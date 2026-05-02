@@ -25,7 +25,7 @@ spec:
               value: "3000"
 
             - name: IDENTITIES_API_INTERNAL_URL
-              value: http://traefik-srv.traefik/identities/v1
+              value: http://traefik-srv.traefik.svc.cluster.local/identities/v1
 
           ports:
             - containerPort: 3000
@@ -33,7 +33,7 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /
+              path: /identities
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
@@ -42,7 +42,7 @@ spec:
 
           livenessProbe:
             httpGet:
-              path: /
+              path: /identities
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5

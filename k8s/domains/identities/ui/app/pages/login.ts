@@ -102,11 +102,23 @@ export const loginPage = {
                 Verify your passkey and let the server action store the refresh
                 token.
               </p>
-              <button type="button" data-login>Login with passkey</button>
+              <button
+                type="button"
+                data-login
+                data-action-url="${routes.login.action.href()}"
+                data-challenge-url="${routes.login.challenge.href()}"
+              >
+                Login with passkey
+              </button>
               <p class="status" data-status aria-live="polite"></p>
-              <p class="back"><a href="${routes.home.href()}">Back</a></p>
+              <p class="back">
+                <a href="${routes.home.href()}">Back</a>
+              </p>
             </main>
-            <script type="module" src="/assets/login.client.js"></script>
+            <script
+              type="module"
+              src="/identities/assets/login.client.js"
+            ></script>
           </body>
         </html>`,
         {

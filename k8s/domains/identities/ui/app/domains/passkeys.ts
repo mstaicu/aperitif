@@ -1,6 +1,6 @@
 const identitiesApiUrl = (
   process.env.IDENTITIES_API_INTERNAL_URL ??
-  "http://traefik-srv.traefik/identities/v1"
+  "http://traefik-srv.traefik.svc.cluster.local/identities/v1"
 ).replace(/\/+$/, "");
 
 export async function createRegistrationChallenge(request: Request) {
@@ -25,6 +25,7 @@ export async function finishRegistration(request: Request) {
     method: "POST",
     signal: request.signal,
   });
+
   const payload = await response.json();
 
   if (!response.ok || typeof payload.refresh_token !== "string") {
@@ -41,7 +42,7 @@ export async function finishRegistration(request: Request) {
         "Cache-Control": "no-store",
         "Set-Cookie":
           [
-            `identities_refresh_token=${encodeURIComponent(payload.refresh_token)}`,
+            `refresh_token=${encodeURIComponent(payload.refresh_token)}`,
             "Path=/",
             "HttpOnly",
             "SameSite=Lax",
@@ -73,6 +74,7 @@ export async function finishLogin(request: Request) {
     method: "POST",
     signal: request.signal,
   });
+
   const payload = await response.json();
 
   if (!response.ok || typeof payload.refresh_token !== "string") {
@@ -89,7 +91,7 @@ export async function finishLogin(request: Request) {
         "Cache-Control": "no-store",
         "Set-Cookie":
           [
-            `identities_refresh_token=${encodeURIComponent(payload.refresh_token)}`,
+            `refresh_token=${encodeURIComponent(payload.refresh_token)}`,
             "Path=/",
             "HttpOnly",
             "SameSite=Lax",

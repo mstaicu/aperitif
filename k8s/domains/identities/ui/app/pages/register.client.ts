@@ -8,10 +8,13 @@ const status = document.querySelector<HTMLElement>("[data-status]")!;
 
 button.addEventListener("click", async () => {
   try {
+    const actionUrl = button.dataset.actionUrl!;
+    const challengeUrl = button.dataset.challengeUrl!;
+
     status.style.color = "#5f5548";
     status.textContent = "Waiting for passkey...";
 
-    const challenge = await fetch("/register/challenge", { method: "POST" });
+    const challenge = await fetch(challengeUrl, { method: "POST" });
     const { publicKey } = (await challenge.json()) as {
       publicKey: PublicKeyCredentialCreationOptionsJSON;
     };
@@ -19,7 +22,7 @@ button.addEventListener("click", async () => {
     if (!challenge.ok) throw new Error();
 
     const credential = await startRegistration({ optionsJSON: publicKey });
-    const finish = await fetch("/register", {
+    const finish = await fetch(actionUrl, {
       body: JSON.stringify({ credential }),
       headers: { "Content-Type": "application/json" },
       method: "POST",

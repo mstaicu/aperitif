@@ -15,8 +15,9 @@ identities: ## Deploy identities and exit.
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
-	skaffold run -m identities-api-dev
+	skaffold run -m identities-api-dev,identities-ui-dev
 	kubectl rollout status -n identities deploy/identities-api-depl --timeout=300s
+	kubectl rollout status -n identities deploy/identities-ui-depl --timeout=300s
 
 identities-dev: ## Prepare identities, then run identities in skaffold dev.
 	$(MAKE) observability
@@ -24,7 +25,7 @@ identities-dev: ## Prepare identities, then run identities in skaffold dev.
 	skaffold run -m identities-db-dev
 	skaffold run --force -m identities-migrate-dev
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identities-api-dev
+	exec skaffold dev -m identities-api-dev,identities-ui-dev
 
 tenancy: ## Deploy tenancy plus required dependencies and exit.
 	$(MAKE) identities
@@ -54,7 +55,7 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	skaffold run --force -m identities-migrate-dev,tenancy-migrate-dev
 	kubectl wait -n identities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identities job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identities-api-dev,tenancy-api-dev,tenancy-worker-dev
+	exec skaffold dev -m identities-api-dev,identities-ui-dev,tenancy-api-dev,tenancy-worker-dev
 
 # Platform dependencies
 

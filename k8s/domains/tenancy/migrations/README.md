@@ -1,3 +1,11 @@
-docker build -t mdstaicu/tenancy-migrate domains/tenancy/migrations
-docker push mdstaicu/tenancy-migrate
-docker run -it --rm --entrypoint sh mdstaicu/tenancy-migrate
+# Tenancy Migrations
+
+This folder is built as the `tenancy-migrate` deployable unit.
+
+Run it through the domain target instead of building or pushing the image by hand:
+
+```sh
+make tenancy
+```
+
+Local and live deployment order stays `db -> migrate -> api/worker`.

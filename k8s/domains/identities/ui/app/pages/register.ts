@@ -105,11 +105,23 @@ export const registerPage = {
                 Create a passkey and let the identities API issue the first
                 session.
               </p>
-              <button type="button" data-register>Register passkey</button>
+              <button
+                type="button"
+                data-register
+                data-action-url="${routes.register.action.href()}"
+                data-challenge-url="${routes.register.challenge.href()}"
+              >
+                Register passkey
+              </button>
               <p class="status" data-status aria-live="polite"></p>
-              <p class="back"><a href="${routes.home.href()}">Back</a></p>
+              <p class="back">
+                <a href="${routes.home.href()}">Back</a>
+              </p>
             </main>
-            <script type="module" src="/assets/register.client.js"></script>
+            <script
+              type="module"
+              src="/identities/assets/register.client.js"
+            ></script>
           </body>
         </html>`,
         {

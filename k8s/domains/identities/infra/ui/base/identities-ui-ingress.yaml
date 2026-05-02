@@ -13,16 +13,16 @@ spec:
     - matches:
         - path:
             type: Exact
-            value: /
+            value: /identities
         - path:
             type: PathPrefix
-            value: /register
+            value: /identities/register
         - path:
             type: PathPrefix
-            value: /login
+            value: /identities/login
         - path:
             type: PathPrefix
-            value: /assets
+            value: /identities/assets
 
       backendRefs:
         - name: identities-ui-srv

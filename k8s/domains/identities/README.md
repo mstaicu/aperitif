@@ -51,10 +51,9 @@ Local development is driven by Skaffold modules in `skaffold.yaml`:
 - `identities-db-dev` applies `infra/db/overlays/dev`.
 - `identities-migrate-dev` builds `mdstaicu/identities-migrate` from `migrations/` and applies `infra/migrate/overlays/dev`.
 - `identities-api-dev` builds `mdstaicu/identities-api` from `api/`, applies `infra/api/overlays/dev`, and syncs `api/src/**/*`.
+- `identities-ui-dev` builds `mdstaicu/identities-ui` from `ui/`, applies `infra/ui/overlays/dev`, and syncs `ui/app/**/*`, `ui/public/**/*`, and `ui/server.ts`.
 
-The UI infra exists, but it is not wired into Skaffold yet.
-
-The Makefile should preserve the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `ui` in `skaffold dev` once the UI is composed.
+The Makefile preserves the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `ui` in `skaffold dev`.
 
 ## Live
 
@@ -63,16 +62,15 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `identities-db` points at `domains/identities/infra/db/overlays/live`.
 - `identities-migrate` points at `domains/identities/infra/migrate/overlays/live`, depends on `identities-db`, and should use `force: true`.
 - `identities-api` points at `domains/identities/infra/api/overlays/live`, depends on `identities-migrate` and platform ingress.
+- `identities-ui` points at `domains/identities/infra/ui/overlays/live`, depends on `identities-api` and platform ingress.
 
-The UI infra exists, but it is not wired into Flux yet. When composed, `identities-ui` should depend on `identities-api` and platform ingress.
-
-The live order must remain `db -> migrate -> api -> ui`. Migration and API images are Flux-managed through `clusters/prod-eu/image-automation/identities.yaml`; add UI image automation when wiring the UI into live Flux.
+The live order must remain `db -> migrate -> api -> ui`. Migration, API, and UI images are Flux-managed through `clusters/prod-eu/image-automation/identities.yaml`.
 
 Secrets are per deployable unit even when they contain the same database URL. Keep `identities-api-db` and `identities-migrate-db` as separate Secret names so each unit owns the contract it consumes.
 
 ## Contracts
 
-- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/identities` gateway prefix.
+- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `/identities/v1` gateway API prefix.
 - Public identity contract: JWKS is exposed at `/.well-known/jwks.json` for other domains to validate identity-issued tokens.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identities owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.

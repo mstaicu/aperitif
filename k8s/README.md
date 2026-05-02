@@ -7,10 +7,10 @@ Treat this `k8s/` directory as the project root. All paths, Make targets, Skaffo
 The project intentionally does not hide deployment units behind a fake "app" abstraction. A domain is composed from small units with clear ownership:
 
 ```text
-db -> migrate -> api/worker
+db -> migrate -> api/ui/worker
 ```
 
-`worker` and `ui` exist only when the domain actually owns those capabilities.
+`ui` and `worker` exist only when the domain actually owns those capabilities.
 
 ## Principles
 
@@ -97,15 +97,7 @@ db -> migrate -> api/worker
 
 If a domain owns a browser surface, add `ui` as a separate deployable unit.
 
-The `api` unit is where HTTP route ownership lives. If a domain API exposes `HTTPRoute`s through Traefik, its namespace must opt in with:
-
-```yaml
-metadata:
-  labels:
-    tma.com/gateway-access: traefik
-```
-
-The API unit owns the gateway-access label because it owns HTTP routes. DB and migrate units should not carry ingress semantics.
+HTTP route ownership lives in the unit that serves HTTP, usually `api` and sometimes `ui`. DB and migrate units should stay out of gateway concerns.
 
 Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Prefer immutable image tags or digests for migrations; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
 
@@ -121,7 +113,7 @@ Local ingress setup does three jobs:
 
 Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
 
-Traefik Gateway listeners use namespace selectors for route attachment. Domain namespaces must opt in with `tma.com/gateway-access: traefik`; otherwise their `HTTPRoute`s should not attach to the shared Gateway.
+Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway.
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
@@ -153,7 +145,7 @@ make tenancy
 The Make targets intentionally run the same dependency order as live:
 
 ```text
-ingress/event-bus -> db -> migrate -> wait for migration Job -> api/worker
+declared platform deps -> db -> migrate -> wait for migration Job -> api/ui/worker
 ```
 
 Use `make ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
@@ -238,7 +230,7 @@ Events are not implicit. If a domain emits or consumes an event, document the su
 
 Database ownership is exclusive to the owning domain. Migrations live in `domains/<domain>/migrations`.
 
-Account-scoped domains should authorize from local projections of tenancy authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume tenancy events into local `account_authority_projection` and `account_membership_projection` tables. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
+Account-scoped domains should authorize from local projections of tenancy authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `tenancy_account_projection` and `tenancy_account_membership_projection`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 
 ## How To Work Here
 
@@ -276,12 +268,16 @@ kubectl kustomize platform/ingress/overlays/dev
 kubectl kustomize platform/ingress/overlays/live
 kubectl kustomize platform/event-bus/overlays/dev
 kubectl kustomize platform/event-bus/overlays/live
+kubectl kustomize platform/observability/overlays/dev
+kubectl kustomize platform/observability/overlays/live
 kubectl kustomize domains/identities/infra/db/overlays/dev
 kubectl kustomize domains/identities/infra/db/overlays/live
 kubectl kustomize domains/tenancy/infra/db/overlays/dev
 kubectl kustomize domains/tenancy/infra/db/overlays/live
 kustomize build --enable-alpha-plugins --enable-exec domains/identities/infra/api/overlays/dev
 kubectl kustomize domains/identities/infra/api/overlays/live
+kubectl kustomize domains/identities/infra/ui/overlays/dev
+kubectl kustomize domains/identities/infra/ui/overlays/live
 kubectl kustomize domains/tenancy/infra/api/overlays/dev
 kubectl kustomize domains/tenancy/infra/api/overlays/live
 kubectl kustomize domains/tenancy/infra/worker/overlays/dev

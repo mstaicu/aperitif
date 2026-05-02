@@ -17,6 +17,15 @@ spec:
   interval: 1m
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: identities-ui
+spec:
+  image: docker.io/mdstaicu/identities-ui
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 
 metadata:
@@ -37,6 +46,19 @@ metadata:
 spec:
   imageRepositoryRef:
     name: identities-migrate
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: identities-ui-latest
+spec:
+  imageRepositoryRef:
+    name: identities-ui
   filterTags:
     pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
   policy:

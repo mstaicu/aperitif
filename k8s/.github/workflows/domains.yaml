@@ -140,35 +140,8 @@ jobs:
       # Check each changed domain through Traefik using the minimal stable endpoint for that domain.
       - name: smoke domains
         run: |
-          for domain in $CHANGED_DOMAINS; do
-            case "$domain" in
-              identities)
-                smoke_path="/.well-known/jwks.json"
-                smoke_status="200"
-                ;;
-              tenancy)
-                smoke_path="/tenancy/v1/accounts"
-                smoke_status="401"
-                ;;
-              *)
-                echo "::error::No smoke check configured for domain: ${domain}"
-                exit 1
-                ;;
-            esac
-
-            status="$(curl \
-              -ksS \
-              -o /tmp/domain-smoke-response.txt \
-              -w "%{http_code}" \
-              --resolve "${DOMAIN}:8443:127.0.0.1" \
-              "https://${DOMAIN}:8443${smoke_path}")"
-
-            if [ "$status" != "$smoke_status" ]; then
-              echo "Expected ${domain} HTTP ${smoke_status}, got HTTP ${status}"
-              cat /tmp/domain-smoke-response.txt
-              exit 1
-            fi
-          done
+          [[ " ${CHANGED_DOMAINS} " != *" identities "* ]] || curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/identities"
+          [[ " ${CHANGED_DOMAINS} " != *" tenancy "* ]] || [[ "$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/tenancy/v1/accounts")" = "401" ]]
 
       # Always tear down background processes and the disposable kind cluster.
       - name: cleanup

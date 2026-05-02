@@ -7,12 +7,12 @@ Remix 3 beta UI for the identities domain.
 - `app/domains/passkeys.ts` calls the identities API.
 - `app/pages/*.client.ts` is browser-only WebAuthn code.
 
-- `GET /register` renders the passkey registration page.
-- `POST /register/challenge` proxies the identities registration challenge.
-- `POST /register` verifies the browser WebAuthn response through the identities API and stores the returned refresh token as an HttpOnly cookie.
-- `GET /login` renders the passkey login page.
-- `POST /login/challenge` proxies the identities login challenge.
-- `POST /login` verifies the browser WebAuthn response through the identities API and stores the returned refresh token as an HttpOnly cookie.
+- `GET /identities/register` renders the passkey registration page through Traefik.
+- `POST /identities/register/challenge` proxies the identities registration challenge.
+- `POST /identities/register` verifies the browser WebAuthn response through the identities API and stores the returned refresh token as an HttpOnly cookie.
+- `GET /identities/login` renders the passkey login page through Traefik.
+- `POST /identities/login/challenge` proxies the identities login challenge.
+- `POST /identities/login` verifies the browser WebAuthn response through the identities API and stores the returned refresh token as an HttpOnly cookie.
 
 Run it locally:
 
@@ -31,7 +31,7 @@ npm run start
 Defaults:
 
 - `PORT=44100`
-- `IDENTITIES_API_INTERNAL_URL=http://traefik-srv.traefik/identities/v1` for in-cluster UI pods.
+- `IDENTITIES_API_INTERNAL_URL=http://traefik-srv.traefik.svc.cluster.local/identities/v1` for in-cluster UI pods.
 - For host-only testing, use `IDENTITIES_API_INTERNAL_URL=https://tma.com/identities/v1` after `make ingress`.
 - `COOKIE_SECURE=true`; set `COOKIE_SECURE=false` when testing cookies over plain `http://localhost`.
 

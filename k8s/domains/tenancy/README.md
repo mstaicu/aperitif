@@ -97,7 +97,7 @@ account.status = active when all required checks pass
 The domain unit spine is:
 
 ```text
-db -> migrate -> api -> ui/worker
+db -> migrate -> api/worker
 ```
 
 Current Kubernetes-expressed units:
@@ -111,7 +111,7 @@ Current source-only units:
 
 - `ui`: not present yet. Add it only when this domain owns a browser surface.
 
-Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction.
+Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction. A future UI should own `/tenancy` while the API keeps `/tenancy/v1`.
 
 ## Local
 
@@ -139,7 +139,7 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 
 ## Contracts
 
-- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served by the API at `/docs` behind the `/tenancy` gateway prefix.
+- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `/tenancy/v1` gateway API prefix.
 - Identity dependency: tenancy validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, account authority `version`, `occurred_at`, `producer`, `schema_version`, and a minimal domain payload.
 - Event schemas: TypeBox/JSDoc event contracts live in `api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.

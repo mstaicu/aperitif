@@ -32,10 +32,4 @@ Keep Secrets per deployable unit even when values are the same:
 <domain>-worker-db
 ```
 
-API namespaces must opt in to Traefik route attachment when they own HTTPRoutes:
-
-```yaml
-metadata:
-  labels:
-    tma.com/gateway-access: traefik
-```
+Route-owning API/UI units define their own `HTTPRoute`s. DB and migrate units should not own gateway concerns.

@@ -3,5 +3,3 @@ kind: Namespace
 
 metadata:
   name: tenancy
-  labels:
-    tma.com/gateway-access: traefik

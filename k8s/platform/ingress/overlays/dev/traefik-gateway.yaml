@@ -39,10 +39,7 @@ spec:
 
       allowedRoutes:
         namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              tma.com/gateway-access: traefik
+          from: All
 
       tls:
         mode: Terminate
@@ -66,7 +63,4 @@ spec:
 
       allowedRoutes:
         namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              tma.com/gateway-access: traefik
+          from: All

@@ -13,14 +13,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /tenancy
+            value: /tenancy/v1
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /
+              replacePrefixMatch: /v1
 
       backendRefs:
         - name: tenancy-api-srv
@@ -42,14 +42,14 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /tenancy
+            value: /tenancy/v1
 
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /
+              replacePrefixMatch: /v1
 
       backendRefs:
         - name: tenancy-api-srv

@@ -6,7 +6,7 @@ Expected source spine:
 api/src/
   api/         Fastify routes, TypeBox schemas, OpenAPI registration
   domains/    domain runtime functions
-  contracts/  event contracts or shared external contract objects
+  events/      event contracts when this API records events
   platform/   persistence, security, observability, request problem details
   app.mjs
   server.mjs

@@ -2,7 +2,7 @@
 
 Ingress owns Traefik, Gateway API CRDs, shared Gateways, and the Traefik dashboard route.
 
-It does not own domain API routes. Domain APIs own their own `HTTPRoute` resources and attach to the shared Gateway by labeling their namespace.
+It does not own domain API or UI routes. Domain HTTP-serving units own their own `HTTPRoute` resources and attach to the shared Gateway.
 
 ## Units
 
@@ -61,13 +61,7 @@ Live TLS and DNS provider material must be managed as environment-specific secre
 
 ## Route Attachment
 
-Gateway listeners accept routes only from namespaces labeled:
-
-```yaml
-tma.com/gateway-access: traefik
-```
-
-API overlays add this label because APIs own HTTPRoutes. DB and migrate overlays should not carry ingress semantics unless they share a namespace object that must remain consistently labeled.
+Gateway listeners currently accept routes from all namespaces. Domain API/UI units own their own `HTTPRoute`s; DB and migrate units should not own gateway concerns.
 
 ## Checks
 
