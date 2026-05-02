@@ -11,17 +11,20 @@ export const createOtelContext = () => {
     };
   }
 
+  nconf.required(["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_SERVICE_NAME"]);
+
   const fastifyOtel = new FastifyOtelInstrumentation({
     ignorePaths: ({ url }) => url === "/healthz" || url === "/readyz",
   });
 
   const otel = new NodeSDK({
     instrumentations: [fastifyOtel],
+    serviceName: nconf.get("OTEL_SERVICE_NAME"),
   });
 
   return {
-    close: otel.shutdown,
+    close: () => otel.shutdown(),
     fastifyOtel,
-    start: otel.start,
+    start: () => otel.start(),
   };
 };
