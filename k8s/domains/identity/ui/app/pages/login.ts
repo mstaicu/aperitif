@@ -112,7 +112,7 @@ export const loginPage = {
               </button>
               <p class="status" data-status aria-live="polite"></p>
               <p class="back">
-                <a href="${routes.home.href()}">Back</a>
+                <a href="${routes.signup.index.href()}">Sign up instead</a>
               </p>
             </main>
             <script

@@ -6,6 +6,9 @@ namespace: identity
 resources:
   - ../../base
 
+patches:
+  - path: identity-ui-depl.yaml
+
 images:
   - name: mdstaicu/identity-ui
     # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>

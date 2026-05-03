@@ -3,7 +3,7 @@ import {
   type PublicKeyCredentialCreationOptionsJSON,
 } from "@simplewebauthn/browser";
 
-const button = document.querySelector<HTMLButtonElement>("[data-register]")!;
+const button = document.querySelector<HTMLButtonElement>("[data-signup]")!;
 const status = document.querySelector<HTMLElement>("[data-status]")!;
 
 button.addEventListener("click", async () => {
@@ -30,9 +30,9 @@ button.addEventListener("click", async () => {
 
     if (!finish.ok) throw new Error();
 
-    status.textContent = "Registered.";
+    status.textContent = "Signed up.";
   } catch {
     status.style.color = "#9d1f1f";
-    status.textContent = "Registration failed.";
+    status.textContent = "Signup failed.";
   }
 });

@@ -6,22 +6,26 @@ import { router } from "./app/router.ts";
 const server = http.createServer(
   createRequestListener((request) => router.fetch(request)),
 );
-
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100;
-
-server.listen(port, () =>
-  console.log(`listening on http://localhost:${port}/identity`),
-);
-
 let shuttingDown = false;
 
-function shutdown() {
+server.listen(port, () => console.log(`listening on http://localhost:${port}`));
+
+async function shutdown() {
   if (shuttingDown) return;
 
   shuttingDown = true;
-  server.close(() => process.exit(0));
-  server.closeAllConnections();
+
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+    server.closeAllConnections();
+  });
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+["SIGINT", "SIGTERM"].forEach((signal) =>
+  process.once(signal, () => {
+    void shutdown().catch(() => {
+      process.exitCode = 1;
+    });
+  }),
+);

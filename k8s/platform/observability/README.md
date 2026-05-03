@@ -13,7 +13,7 @@ Observability should own cross-cutting telemetry infrastructure:
 - telemetry network policy,
 - environment-specific exporter configuration.
 
-It should not own domain instrumentation code. Domain APIs and workers decide whether they register real telemetry or no-op behavior based on runtime configuration.
+It should not own domain instrumentation code. Domain deployable units decide whether they register real telemetry or no-op behavior based on runtime configuration.
 
 ## Current State
 
@@ -29,7 +29,7 @@ The unit is deployed locally by the main domain/full-stack targets. It can also 
 make observability
 ```
 
-Domain APIs register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured. Without that environment variable, API OTel is a no-op so future overlays can opt out cleanly.
+Domain workloads register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured. Without that environment variable, workload OTel is a no-op so future overlays can opt out cleanly.
 
 ## Enabling In An Environment
 

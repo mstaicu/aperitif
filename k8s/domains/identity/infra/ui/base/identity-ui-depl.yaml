@@ -33,7 +33,7 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /identity
+              path: /readyz
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
@@ -42,7 +42,7 @@ spec:
 
           livenessProbe:
             httpGet:
-              path: /identity
+              path: /healthz
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5

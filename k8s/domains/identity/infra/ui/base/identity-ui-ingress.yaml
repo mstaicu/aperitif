@@ -15,14 +15,11 @@ spec:
   rules:
     - matches:
         - path:
-            type: Exact
-            value: /identity
+            type: PathPrefix
+            value: /login
         - path:
             type: PathPrefix
-            value: /identity/register
-        - path:
-            type: PathPrefix
-            value: /identity/login
+            value: /signup
         - path:
             type: PathPrefix
             value: /identity/assets

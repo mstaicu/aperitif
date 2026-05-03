@@ -84,11 +84,11 @@ export function homePage() {
           <p class="eyebrow">Identity UI</p>
           <h1>Passkey identity flows</h1>
           <p class="lead">
-            Remix 3 server routes proxy the identity API while browser code
-            only runs the WebAuthn ceremony.
+            Remix 3 server routes proxy the identity API while browser code only
+            runs the WebAuthn ceremony.
           </p>
           <nav class="actions">
-            <a href="${routes.register.index.href()}">Register passkey</a>
+            <a href="${routes.signup.index.href()}">Sign up</a>
             <a href="${routes.login.index.href()}">Login with passkey</a>
           </nav>
         </main>

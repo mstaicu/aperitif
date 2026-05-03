@@ -7,7 +7,7 @@ import {
 } from "../domains/passkeys.ts";
 import { routes } from "../routes.ts";
 
-export const registerPage = {
+export const signupPage = {
   actions: {
     action: ({ request }: { request: Request }) => finishRegistration(request),
     challenge: ({ request }: { request: Request }) =>
@@ -21,7 +21,7 @@ export const registerPage = {
               name="viewport"
               content="width=device-width, initial-scale=1"
             />
-            <title>Register</title>
+            <title>Sign up</title>
             <style>
               :root {
                 color-scheme: light;
@@ -107,20 +107,20 @@ export const registerPage = {
               </p>
               <button
                 type="button"
-                data-register
-                data-action-url="${routes.register.action.href()}"
-                data-challenge-url="${routes.register.challenge.href()}"
+                data-signup
+                data-action-url="${routes.signup.action.href()}"
+                data-challenge-url="${routes.signup.challenge.href()}"
               >
-                Register passkey
+                Sign up with passkey
               </button>
               <p class="status" data-status aria-live="polite"></p>
               <p class="back">
-                <a href="${routes.home.href()}">Back</a>
+                <a href="${routes.login.index.href()}">Login instead</a>
               </p>
             </main>
             <script
               type="module"
-              src="/identity/assets/register.client.js"
+              src="/identity/assets/signup.client.js"
             ></script>
           </body>
         </html>`,

@@ -71,8 +71,10 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 ## Contracts
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/identity/docs`.
+- UI: `identity-ui` serves product-shaped public routes on `tma.com`: `GET /signup`, `POST /signup/challenge`, `POST /signup`, `GET /login`, `POST /login/challenge`, and `POST /login`. Browser bundles stay namespaced under `/identity/assets/*`.
 - Public identity contract: JWKS is exposed at `api.tma.com/.well-known/jwks.json` for other domains to validate identity-issued tokens.
 - Session token endpoints use explicit token nouns: `POST /v1/sessions/access-token` creates a short-lived product API access token from a refresh token, and `POST /v1/sessions/refresh-token` rotates the refresh token for the current identity session.
+- Observability: `identity-api` and `identity-ui` emit traces only when their overlays configure `OTEL_EXPORTER_OTLP_ENDPOINT`; metrics and logs stay disabled for both domain units.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identity owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 

@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   name: identity-ui-depl
 spec:
-  replicas: 1
   template:
     spec:
       containers:

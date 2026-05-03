@@ -1,11 +1,15 @@
 {
   "type": "module",
   "scripts": {
-    "build": "esbuild app/pages/register.client.ts app/pages/login.client.ts --bundle --format=esm --outdir=public/identity/assets --entry-names=[name] --minify --sourcemap && esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
+    "build": "esbuild app/pages/*.client.ts --bundle --format=esm --outdir=public/identity/assets --entry-names=[name] --minify --sourcemap && esbuild app/platform/observability/otel.ts --bundle --platform=node --format=esm --outfile=dist/otel.js --packages=external && esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
     "dev": "sh ./dev.sh",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/instrumentation-http": "^0.216.0",
+    "@opentelemetry/instrumentation-undici": "^0.26.0",
+    "@opentelemetry/sdk-node": "^0.216.0",
     "@simplewebauthn/browser": "^13.3.0",
     "remix": "^3.0.0-beta.0"
   },

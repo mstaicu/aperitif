@@ -32,6 +32,12 @@ spec:
               app: identity-api
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: identity
+          podSelector:
+            matchLabels:
+              app: identity-ui
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: accounts
           podSelector:
             matchLabels:

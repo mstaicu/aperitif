@@ -3,7 +3,7 @@ import { staticFiles } from "remix/static-middleware";
 
 import { homePage } from "./pages/home.ts";
 import { loginPage } from "./pages/login.ts";
-import { registerPage } from "./pages/register.ts";
+import { signupPage } from "./pages/signup.ts";
 import { routes } from "./routes.ts";
 
 export const router = createRouter({
@@ -16,6 +16,8 @@ export const router = createRouter({
   ],
 });
 
+router.get("/healthz", () => new Response("ok"));
+router.get("/readyz", () => new Response("ok"));
 router.get(routes.home, () => homePage());
-router.map(routes.register, registerPage);
+router.map(routes.signup, signupPage);
 router.map(routes.login, loginPage);
