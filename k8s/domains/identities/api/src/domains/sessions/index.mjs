@@ -1,12 +1,12 @@
-import { refresh } from "./refresh.mjs";
-import { createAccessToken } from "./token.mjs";
+import { createAccessToken } from "./access-token.mjs";
+import { rotateRefreshToken } from "./refresh-token.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
 export const createSessionsDomain = (ctx) => ({
   createAccessToken: createAccessToken(ctx),
-  refresh: refresh(ctx),
+  rotateRefreshToken: rotateRefreshToken(ctx),
 });
 
 /**

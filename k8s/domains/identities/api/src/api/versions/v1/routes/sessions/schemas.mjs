@@ -9,7 +9,7 @@ const TokenString = (description) =>
     minLength: 1,
   });
 
-export const RefreshResponse = Type.Object(
+export const RefreshTokenResponse = Type.Object(
   {
     refresh_token: TokenString(
       "Rotated opaque refresh token representing the current identity session.",
@@ -22,7 +22,7 @@ export const RefreshResponse = Type.Object(
   },
 );
 
-export const SessionTokenResponse = Type.Object(
+export const AccessTokenResponse = Type.Object(
   {
     access_token: TokenString(
       "Short-lived JWT access token minted for the product API audience.",

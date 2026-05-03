@@ -5,8 +5,8 @@ import loginChallenge from "./routes/passkeys/login.challenge.mjs";
 import login from "./routes/passkeys/login.mjs";
 import registerChallenge from "./routes/passkeys/register.challenge.mjs";
 import register from "./routes/passkeys/register.mjs";
-import refresh from "./routes/sessions/refresh.mjs";
-import token from "./routes/sessions/token.mjs";
+import accessToken from "./routes/sessions/access-token.mjs";
+import refreshToken from "./routes/sessions/refresh-token.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -52,7 +52,7 @@ export default async (fastify, { domains }) => {
           name: "passkeys",
         },
         {
-          description: "Session lifecycle and token refresh",
+          description: "Session access-token and refresh-token lifecycle",
           name: "sessions",
         },
       ],
@@ -79,11 +79,11 @@ export default async (fastify, { domains }) => {
     passkeys: domains.passkeys,
     prefix: "/passkeys",
   });
-  await fastify.register(refresh, {
+  await fastify.register(accessToken, {
     prefix: "/sessions",
     sessions: domains.sessions,
   });
-  await fastify.register(token, {
+  await fastify.register(refreshToken, {
     prefix: "/sessions",
     sessions: domains.sessions,
   });

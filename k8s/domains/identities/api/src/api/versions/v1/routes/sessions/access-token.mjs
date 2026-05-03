@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { SessionTokenResponse } from "./schemas.mjs";
+import { AccessTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -12,21 +12,20 @@ import { SessionTokenResponse } from "./schemas.mjs";
  */
 export default async function (fastify, { sessions }) {
   fastify.post(
-    "/token",
+    "/access-token",
     {
       schema: {
         description:
-          "Exchange a refresh token provided in the Authorization bearer header for a short-lived product API access token. The minted token uses the identities service configured JWT audience.",
-        operationId: "exchangeSessionToken",
+          "Create a short-lived product API access token from a refresh token supplied in the Authorization bearer header. The minted token uses the identities service configured JWT audience.",
+        operationId: "createSessionAccessToken",
         response: {
-          200: SessionTokenResponse,
-          400: ProblemResponse,
+          200: AccessTokenResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ refreshTokenAuth: [] }],
-        summary: "Mint product API access token",
+        summary: "Create access token",
         tags: ["sessions"],
       },
     },

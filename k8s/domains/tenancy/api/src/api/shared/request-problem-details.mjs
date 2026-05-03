@@ -9,11 +9,6 @@ const PROBLEMS = {
     title: "Account membership not found",
     type: "/problems/account-membership-not-found",
   },
-  ACCOUNT_NOT_ACTIVE: {
-    status: 409,
-    title: "Account not active",
-    type: "/problems/account-not-active",
-  },
   ACCOUNT_NOT_FOUND: {
     status: 404,
     title: "Account not found",

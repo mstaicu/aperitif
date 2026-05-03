@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { RefreshResponse } from "./schemas.mjs";
+import { RefreshTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -12,14 +12,14 @@ import { RefreshResponse } from "./schemas.mjs";
  */
 export default async function (fastify, { sessions }) {
   fastify.post(
-    "/refresh",
+    "/refresh-token",
     {
       schema: {
         description:
-          "Rotate a refresh token provided in the Authorization bearer header and return the newly issued refresh token for the same identity session.",
-        operationId: "refreshSession",
+          "Rotate a refresh token supplied in the Authorization bearer header and return the newly issued refresh token for the same identity session.",
+        operationId: "rotateSessionRefreshToken",
         response: {
-          200: RefreshResponse,
+          200: RefreshTokenResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
@@ -39,7 +39,7 @@ export default async function (fastify, { sessions }) {
       reply.header("Cache-Control", "no-store");
 
       return reply.send(
-        await sessions.refresh({
+        await sessions.rotateRefreshToken({
           refresh_token: token,
         }),
       );
