@@ -1,0 +1,89 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: identity-api
+spec:
+  image: docker.io/mdstaicu/identity-api
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: identity-migrate
+spec:
+  image: docker.io/mdstaicu/identity-migrate
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: identity-ui
+spec:
+  image: docker.io/mdstaicu/identity-ui
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: identity-api-latest
+spec:
+  imageRepositoryRef:
+    name: identity-api
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: identity-migrate-latest
+spec:
+  imageRepositoryRef:
+    name: identity-migrate
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: identity-ui-latest
+spec:
+  imageRepositoryRef:
+    name: identity-ui
+  filterTags:
+    pattern: "^[a-f0-9]{7}$" # Only short SHAs, 7 hex chars
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+
+metadata:
+  name: identity
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: master
+    commit:
+      author:
+        email: flux@tma.com
+        name: FluxCD Bot
+    push:
+      branch: master
+  update:
+    path: ./k8s/domains/identity/infra
+    strategy: Setters

@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: identity-api-depl
+spec:
+  selector:
+    matchLabels:
+      app: identity-api
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: identity-api
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: identity-api
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
+      automountServiceAccountToken: false
+
+      containers:
+        - name: identity-api
+          image: mdstaicu/identity-api
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: identity-api-db
+                  key: DATABASE_URL
+
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: identity-api-cm
+                  key: ORIGIN
+            - name: JWT_AUDIENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: identity-api-cm
+                  key: JWT_AUDIENCE
+
+            - name: JWT_PRIVATE_KEY_PATH
+              value: /app/keys/jwt-private.pem
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /app/keys/jwt-public.pem
+
+            - name: OTEL_SERVICE_NAME
+              value: identity-api
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-srv.otel.svc.cluster.local:4318
+
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+
+          volumeMounts:
+            - name: identity-api-jwt
+              mountPath: /app/keys
+              readOnly: true
+
+          #
+          # total probe time =
+          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
+          #
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+      volumes:
+        - name: identity-api-jwt
+          secret:
+            secretName: identity-api-jwt

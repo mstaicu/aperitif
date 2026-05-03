@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: identity
+
+resources:
+  - ../../base
+
+images:
+  - name: mdstaicu/identity-ui
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:identity-ui-latest
+    newTag: latest # {"$imagepolicy": "flux-system:identity-ui-latest"}

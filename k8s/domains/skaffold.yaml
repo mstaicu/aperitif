@@ -2,5 +2,5 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 requires:
-  - path: identities
-  - path: tenancy
+  - path: identity
+  - path: accounts

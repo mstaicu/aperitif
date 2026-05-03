@@ -132,12 +132,14 @@ jobs:
         run: |
           for domain in $CHANGED_DOMAINS; do
             case "$domain" in
-              identities)
-                curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/identities"
+              identity)
+                curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/identity"
                 curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/.well-known/jwks.json"
+                curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/identity/docs/json"
                 ;;
-              tenancy)
-                [[ "$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/tenancy/v1/accounts")" = "401" ]]
+              accounts)
+                curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/accounts/docs/json"
+                [[ "$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/accounts")" = "401" ]]
                 ;;
             esac
           done

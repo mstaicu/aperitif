@@ -1,0 +1,32 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: identity-ui-public
+spec:
+  hostnames:
+    - tma.com
+
+  parentRefs:
+    - name: traefik-pgw
+      namespace: traefik
+      sectionName: https-ui
+
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /identity
+        - path:
+            type: PathPrefix
+            value: /identity/register
+        - path:
+            type: PathPrefix
+            value: /identity/login
+        - path:
+            type: PathPrefix
+            value: /identity/assets
+
+      backendRefs:
+        - name: identity-ui-srv
+          port: 3000

@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: accounts
+
+resources:
+  - ../../base
+
+patches:
+  - path: accounts-api-depl.yaml
+
+secretGenerator:
+  - name: accounts-api-db
+    literals:
+      - DATABASE_URL=postgres://postgres@postgres-srv:5432/accounts?sslmode=disable
+
+generatorOptions:
+  disableNameSuffixHash: true

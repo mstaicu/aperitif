@@ -42,8 +42,8 @@ platform/
   mesh/                   present, not currently composed
 
 domains/
-  identities/             passkeys, sessions, JWKS, identity signing keys
-  tenancy/                tenant/customer accounts, memberships, activation requirements
+  identity/                passkeys, sessions, JWKS, identity signing keys
+  accounts/                account authority, memberships, activation requirements
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -60,8 +60,8 @@ Agent-specific instructions live in scoped `AGENTS.md` files. These files are no
 Current agent context files:
 
 - `AGENTS.md`
-- `domains/identities/AGENTS.md`
-- `domains/tenancy/AGENTS.md`
+- `domains/identity/AGENTS.md`
+- `domains/accounts/AGENTS.md`
 - `platform/ingress/AGENTS.md`
 - `platform/event-bus/AGENTS.md`
 
@@ -73,8 +73,8 @@ Each domain should document itself in `domains/<domain>/README.md`.
 
 Current domains:
 
-- `identities`: owns passkey registration/login, sessions, token signing, and JWKS.
-- `tenancy`: owns the tenant/customer relationship, account memberships, and activation requirements.
+- `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
+- `accounts`: owns account authority, account memberships, and activation requirements.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -110,7 +110,7 @@ Local ingress setup does three jobs:
 
 Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
 
-Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use `api.tma.com`. Internal HTTP routes stay on the internal Gateway without hostnames.
+Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/accounts`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes stay on the internal Gateway without hostnames.
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
@@ -128,15 +128,15 @@ Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of
 
 ```sh
 make dev
-make identities-dev
-make tenancy-dev
+make identity-dev
+make accounts-dev
 ```
 
 Deploy-and-exit targets are useful for checks and CI-style local testing:
 
 ```sh
-make identities
-make tenancy
+make identity
+make accounts
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -212,7 +212,7 @@ make sops-secret
 
 `make sops-secret` creates the Flux `sops-age` secret in `flux-system` from `SOPS_AGE_KEY_FILE`.
 
-Secrets are scoped per deployable unit. Even if two units use the same database URL, they should consume separate Secret names, for example `identities-api-db` and `identities-migrate-db`.
+Secrets are scoped per deployable unit. Even if two units use the same database URL, they should consume separate Secret names, for example `identity-api-db` and `identity-migrate-db`.
 
 ## Contracts
 
@@ -229,7 +229,7 @@ Events are not implicit. If a domain emits or consumes an event, document the su
 
 Database ownership is exclusive to the owning domain. Migrations live in `domains/<domain>/migrations`.
 
-Account-scoped domains should authorize from local projections of tenancy authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `tenancy_account_projection` and `tenancy_account_membership_projection`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
+Account-scoped domains should authorize from local projections of accounts authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume accounts events into local projection tables such as `account_projection` and `account_membership_projection`. Do not read the accounts database. Do not call accounts synchronously for hot-path authorization.
 
 ## How To Work Here
 
@@ -250,9 +250,9 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Create `domains/<domain>` using `identities` and `tenancy` as examples.
-- Copy the unit spine you need: `identities` is the example for auth API and
-  Remix UI, while `tenancy` is the example for account-scoped API, worker,
+- Create `domains/<domain>` using `identity` and `accounts` as examples.
+- Copy the unit spine you need: `identity` is the example for auth API and
+  Remix UI, while `accounts` is the example for account-scoped API, worker,
   outbox, events, and projections.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
@@ -261,8 +261,8 @@ When adding a new domain:
 - Add Flux Kustomizations for live units.
 - Add image automation only for images Flux should update.
 - Add network policies for only the traffic the unit actually needs.
-- Account-scoped domains must authorize from local tenancy projections, not by
-  reading tenancy's database or calling tenancy synchronously on hot paths.
+- Account-scoped domains must authorize from local accounts projections, not by
+  reading the accounts database or calling accounts synchronously on hot paths.
 
 ## Checks
 
@@ -275,18 +275,18 @@ kubectl kustomize platform/event-bus/overlays/dev
 kubectl kustomize platform/event-bus/overlays/live
 kubectl kustomize platform/observability/overlays/dev
 kubectl kustomize platform/observability/overlays/live
-kubectl kustomize domains/identities/infra/db/overlays/dev
-kubectl kustomize domains/identities/infra/db/overlays/live
-kubectl kustomize domains/tenancy/infra/db/overlays/dev
-kubectl kustomize domains/tenancy/infra/db/overlays/live
-kustomize build --enable-alpha-plugins --enable-exec domains/identities/infra/api/overlays/dev
-kubectl kustomize domains/identities/infra/api/overlays/live
-kubectl kustomize domains/identities/infra/ui/overlays/dev
-kubectl kustomize domains/identities/infra/ui/overlays/live
-kubectl kustomize domains/tenancy/infra/api/overlays/dev
-kubectl kustomize domains/tenancy/infra/api/overlays/live
-kubectl kustomize domains/tenancy/infra/worker/overlays/dev
-kubectl kustomize domains/tenancy/infra/worker/overlays/live
+kubectl kustomize domains/identity/infra/db/overlays/dev
+kubectl kustomize domains/identity/infra/db/overlays/live
+kubectl kustomize domains/accounts/infra/db/overlays/dev
+kubectl kustomize domains/accounts/infra/db/overlays/live
+kustomize build --enable-alpha-plugins --enable-exec domains/identity/infra/api/overlays/dev
+kubectl kustomize domains/identity/infra/api/overlays/live
+kubectl kustomize domains/identity/infra/ui/overlays/dev
+kubectl kustomize domains/identity/infra/ui/overlays/live
+kubectl kustomize domains/accounts/infra/api/overlays/dev
+kubectl kustomize domains/accounts/infra/api/overlays/live
+kubectl kustomize domains/accounts/infra/worker/overlays/dev
+kubectl kustomize domains/accounts/infra/worker/overlays/live
 git diff --check
 ```
 
@@ -326,13 +326,13 @@ $ nats server report js --creds /tmp/sys.creds
 
 $ nats server ls --creds /tmp/sys.creds
 
-$ nats subscribe --stream=math --creds /tmp/identities.creds
+$ nats subscribe --stream=math --creds /tmp/identity.creds
 
-$ nats consumer add math worker-1 --filter "math.>" --deliver all --ack all --creds /tmp/identities.creds
+$ nats consumer add math worker-1 --filter "math.>" --deliver all --ack all --creds /tmp/identity.creds
 
-$ nats consumer next math worker-1 --creds /tmp/identities.creds
+$ nats consumer next math worker-1 --creds /tmp/identity.creds
 
-$ nats pub math.add '{"id": 1}' --creds /tmp/identities.creds
+$ nats pub math.add '{"id": 1}' --creds /tmp/identity.creds
 ```
 
 ### Adding a new service:
@@ -682,12 +682,12 @@ git push
 step crypto keypair jwt-public.pem jwt-private.pem \
  --kty EC --crv P-256 --use sig --alg ES256
 
-kubectl create secret generic identities-jwt-keys \
+kubectl create secret generic identity-jwt-keys \
  --from-file=jwt-private.pem \
  --from-file=jwt-public.pem \
- --dry-run=client -o yaml > secrets/identities-jwt-keys.yaml
+ --dry-run=client -o yaml > secrets/identity-jwt-keys.yaml
 
-sops --encrypt --in-place secrets/identities-jwt-keys.yaml
+sops --encrypt --in-place secrets/identity-jwt-keys.yaml
 
 ## Linkerd
 

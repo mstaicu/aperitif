@@ -51,7 +51,7 @@ Do not publish critical domain events directly from request handlers. Direct pub
 Current copyable event worker spine:
 
 ```text
-domains/tenancy/worker
+domains/accounts/worker
 ```
 
 ## Network Policy

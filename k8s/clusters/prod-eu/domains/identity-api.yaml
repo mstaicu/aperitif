@@ -1,0 +1,22 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: identity-api
+spec:
+  interval: 10m
+  path: ./k8s/domains/identity/infra/api/overlays/live
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: ingress
+    - name: observability
+    - name: identity-migrate
+  wait: true
+  timeout: 5m
