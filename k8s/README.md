@@ -45,9 +45,6 @@ domains/
   identities/             passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant/customer accounts, memberships, activation requirements
 
-templates/
-  domain/                 copyable baseline for new domains
-
 Makefile                  local orchestration
 Brewfile                  local toolchain
 .sops.yaml                SOPS age recipient rules
@@ -253,13 +250,19 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Start from `templates/domain/README.md`.
+- Create `domains/<domain>` using `identities` and `tenancy` as examples.
+- Copy the unit spine you need: `identities` is the example for auth API and
+  Remix UI, while `tenancy` is the example for account-scoped API, worker,
+  outbox, events, and projections.
+- Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
 - Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
 - Add Skaffold modules for local units.
 - Add Flux Kustomizations for live units.
 - Add image automation only for images Flux should update.
 - Add network policies for only the traffic the unit actually needs.
+- Account-scoped domains must authorize from local tenancy projections, not by
+  reading tenancy's database or calling tenancy synchronously on hot paths.
 
 ## Checks
 
