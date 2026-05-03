@@ -1,7 +1,7 @@
 on:
   pull_request:
     paths:
-      - "domains/**"
+      - "domains/*/**"
 
 permissions:
   contents: read
@@ -48,6 +48,11 @@ jobs:
                 .map((file) => file.filename.match(/^domains\/([^/]+)\//)?.[1])
                 .filter(Boolean),
             )].sort();
+
+            if (domains.length === 0) {
+              core.setFailed("No changed domain deploy target selected.");
+              return;
+            }
 
             for (const domain of domains) {
               execFileSync("make", ["-n", domain], { stdio: "ignore" });
@@ -133,7 +138,7 @@ jobs:
           for domain in $CHANGED_DOMAINS; do
             case "$domain" in
               identity)
-                curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/identity"
+                curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/login"
                 curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/.well-known/jwks.json"
                 curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/identity/docs/json"
                 ;;

@@ -1,12 +1,13 @@
 apiVersion: skaffold/v4beta11
 kind: Config
 
-requires:
-  - path: platform
-
----
-apiVersion: skaffold/v4beta11
-kind: Config
+metadata:
+  name: main
 
 requires:
-  - path: domains
+  - path: platform/event-bus
+  - path: platform/ingress
+  - path: platform/observability
+
+  - path: domains/accounts
+  - path: domains/identity
