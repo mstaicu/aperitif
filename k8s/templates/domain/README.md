@@ -37,9 +37,9 @@ db -> migrate -> api/worker
 
 - `db`: domain-owned PostgreSQL for local/live parity.
 - `migrate`: one-shot Job built from `migrations/`.
-- `api`: Fastify HTTP API, TypeBox/OpenAPI contracts, HTTPRoutes under `/<domain>/v1`.
+- `api`: Fastify HTTP API, TypeBox/OpenAPI contracts, public HTTPRoutes under `api.tma.com/<domain>/v1`.
 - `worker`: async publisher/consumer only when the domain emits or consumes events.
-- `ui`: browser surface only when this domain owns one, normally under `/<domain>`.
+- `ui`: browser surface only when this domain owns one, normally under `tma.com/<domain>`.
 
 ## Contracts
 

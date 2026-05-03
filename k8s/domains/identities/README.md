@@ -70,8 +70,8 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 
 ## Contracts
 
-- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `/identities/v1` gateway API prefix.
-- Public identity contract: JWKS is exposed at `/.well-known/jwks.json` for other domains to validate identity-issued tokens.
+- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `api.tma.com/identities/v1` gateway API prefix.
+- Public identity contract: JWKS is exposed at `api.tma.com/.well-known/jwks.json` for other domains to validate identity-issued tokens.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identities owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
 

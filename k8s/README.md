@@ -113,7 +113,7 @@ Local ingress setup does three jobs:
 
 Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
 
-Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway.
+Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use `api.tma.com`. Internal HTTP routes stay on the internal Gateway without hostnames.
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 

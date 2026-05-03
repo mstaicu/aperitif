@@ -22,6 +22,9 @@ ui/
     routes.ts
   public/
     assets/
+  .dockerignore
+  Dockerfile
+  dev.sh
   package.json
   server.ts
   tsconfig.json
@@ -31,6 +34,14 @@ Keep browser code next to the page that owns it, for example
 `app/pages/register.client.ts`. Do not create `app/ui/` until shared UI actually
 exists.
 
+After copying the template, run `npm install` in the new UI folder and commit
+the generated `package-lock.json`; the Dockerfile uses `npm ci`.
+
+If the UI adds browser-only entrypoints, extend `build` and `dev.sh` to compile
+them into `public/<domain>/assets`. If `dev.sh` starts more than one watcher,
+switch the Dockerfile entrypoint to `tini -g` so Kubernetes shutdown signals
+reach the whole process group.
+
 This template intentionally does not include Kubernetes manifests. Add `infra/ui`
 only when the UI becomes a deployable unit for the domain, and keep the API on
-`/<domain>/v1` so UI and API routes do not conflict.
+`api.tma.com/<domain>/v1` so UI and API routes do not conflict on `tma.com`.

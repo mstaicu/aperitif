@@ -72,6 +72,7 @@ ingress: ## Install Gateway CRDs, dev TLS, hosts entry, and Traefik.
 	mkcert -install
 
 	grep -q "127.0.0.1 $(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts
+	grep -q "127.0.0.1 api.$(DOMAIN)" /etc/hosts || echo "127.0.0.1 api.$(DOMAIN)" | sudo tee -a /etc/hosts
 
 	mkcert \
 		-cert-file /tmp/traefik-tls.crt \

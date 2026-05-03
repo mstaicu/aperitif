@@ -9,7 +9,7 @@ export function homePage() {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Identities UI 2</title>
+        <title>Identities UI</title>
         <style>
           :root {
             color-scheme: light;
@@ -81,7 +81,7 @@ export function homePage() {
       </head>
       <body>
         <main class="shell">
-          <p class="eyebrow">Identities UI 2</p>
+          <p class="eyebrow">Identities UI</p>
           <h1>Passkey identity flows</h1>
           <p class="lead">
             Remix 3 server routes proxy the identities API while browser code

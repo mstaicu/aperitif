@@ -25,20 +25,20 @@ Build and run the production server locally:
 
 ```sh
 npm run build
-npm run start
+node dist/server.js
 ```
 
 Defaults:
 
 - `PORT=44100`
 - `IDENTITIES_API_INTERNAL_URL=http://traefik-srv.traefik.svc.cluster.local/identities/v1` for in-cluster UI pods.
-- For host-only testing, use `IDENTITIES_API_INTERNAL_URL=https://tma.com/identities/v1` after `make ingress`.
+- For host-only testing, use `IDENTITIES_API_INTERNAL_URL=https://api.tma.com/identities/v1` after `make ingress`.
 - `COOKIE_SECURE=true`; set `COOKIE_SECURE=false` when testing cookies over plain `http://localhost`.
 
 Host-only HTTPS testing with mkcert:
 
 ```sh
 NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" \
-IDENTITIES_API_INTERNAL_URL=https://tma.com/identities/v1 \
+IDENTITIES_API_INTERNAL_URL=https://api.tma.com/identities/v1 \
 npm run dev
 ```

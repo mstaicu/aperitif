@@ -4,10 +4,13 @@ kind: HTTPRoute
 metadata:
   name: identities-api-public
 spec:
+  hostnames:
+    - api.tma.com
+
   parentRefs:
     - name: traefik-pgw
       namespace: traefik
-      sectionName: https
+      sectionName: https-api
 
   rules:
     - matches:
@@ -33,10 +36,13 @@ kind: HTTPRoute
 metadata:
   name: identities-jwks-public
 spec:
+  hostnames:
+    - api.tma.com
+
   parentRefs:
     - name: traefik-pgw
       namespace: traefik
-      sectionName: https
+      sectionName: https-api
 
   rules:
     - matches:

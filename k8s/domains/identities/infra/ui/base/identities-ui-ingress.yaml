@@ -4,10 +4,13 @@ kind: HTTPRoute
 metadata:
   name: identities-ui-public
 spec:
+  hostnames:
+    - tma.com
+
   parentRefs:
     - name: traefik-pgw
       namespace: traefik
-      sectionName: https
+      sectionName: https-ui
 
   rules:
     - matches:

@@ -63,6 +63,8 @@ Live TLS and DNS provider material must be managed as environment-specific secre
 
 Gateway listeners currently accept routes from all namespaces. Domain API/UI units own their own `HTTPRoute`s; DB and migrate units should not own gateway concerns.
 
+The public Gateway has separate HTTPS listeners for browser UI traffic on `tma.com` and API traffic on `api.tma.com`. Public route host ownership still belongs on the `HTTPRoute`, and internal routes stay hostless on `traefik-igw`.
+
 ## Checks
 
 ```sh

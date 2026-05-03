@@ -13,9 +13,8 @@ WORKDIR /home/node/app
 #             child processes
 #
 # Kubernetes sends pod shutdown signals to container PID 1. Tini is PID 1 here:
-# it forwards signals and reaps child processes. `-g` sends signals to the
-# process group, which matters in dev because the UI runs two watchers.
-ENTRYPOINT ["/sbin/tini", "-g", "--"]
+# it forwards signals to the UI server and reaps child processes.
+ENTRYPOINT ["/sbin/tini", "--"]
 
 # DEPS
 FROM base AS deps
@@ -36,20 +35,15 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
-# 9229 should be for debugger
 EXPOSE 3000 9229
 
 USER node
 
 # Dev process tree:
 #   tini
-#     sh ./dev.sh
-#       esbuild --watch=forever
-#       tsx watch server.ts
-# Keep npm out of the container process chain. `dev.sh` starts both watchers,
-# leaves the server watcher in the foreground, and cleans up the asset watcher
-# on exit. Tini's process-group mode sends SIGTERM to both watchers during
-# Skaffold restarts and Kubernetes pod termination.
+#     tsx watch server.ts
+# `dev.sh` execs into tsx, so npm and the shell do not stay in the container
+# process chain.
 CMD ["sh", "./dev.sh"]
 
 # BUILD

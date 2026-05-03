@@ -139,7 +139,7 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 
 ## Contracts
 
-- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `/tenancy/v1` gateway API prefix.
+- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through the `api.tma.com/tenancy/v1` gateway API prefix.
 - Identity dependency: tenancy validates identity-issued tokens through the identities JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, account authority `version`, `occurred_at`, `producer`, `schema_version`, and a minimal domain payload.
 - Event schemas: TypeBox/JSDoc event contracts live in `api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.

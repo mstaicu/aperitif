@@ -10,7 +10,7 @@ spec:
 
   parentRefs:
     - name: traefik-pgw
-      sectionName: https
+      sectionName: https-ui
 
   rules:
     - matches:

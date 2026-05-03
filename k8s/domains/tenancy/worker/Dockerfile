@@ -3,6 +3,17 @@ FROM node:25-alpine AS base
 RUN apk add --no-cache tini
 
 WORKDIR /home/node/app
+
+# Kubernetes placement hierarchy:
+#   Kubernetes cluster
+#     Node
+#       Pod
+#         Container
+#           PID 1 process
+#             child processes
+#
+# Kubernetes sends pod shutdown signals to container PID 1. Tini is PID 1 here:
+# it forwards signals to the worker and reaps child processes.
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # DEPS
@@ -28,9 +39,12 @@ EXPOSE 9229
 
 USER node
 
-# tini
-#   └── nodemon
-#         └── node
+# Dev process tree:
+#   tini
+#     nodemon
+#       node src/index.mjs
+# Keep nodemon as tini's direct child so Skaffold restarts and pod termination
+# do not go through npm or a shell wrapper.
 CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 # PROD
@@ -43,6 +57,9 @@ COPY --chown=node:node . .
 
 USER node
 
-# tini
-#   └── node
+# Prod process tree:
+#   tini
+#     node src/index.mjs
+# Run node directly in prod so SIGTERM reaches the worker through one tiny init
+# layer, without npm or shell signal-forwarding behavior in the middle.
 CMD ["node", "src/index.mjs"]

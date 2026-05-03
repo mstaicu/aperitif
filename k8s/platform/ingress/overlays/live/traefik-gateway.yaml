@@ -19,10 +19,19 @@ spec:
   gatewayClassName: traefik-gwc
 
   listeners:
-    - name: https
+    - name: https-ui
       port: 443
       protocol: HTTPS
       hostname: tma.com
+
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https-api
+      port: 443
+      protocol: HTTPS
+      hostname: api.tma.com
 
       allowedRoutes:
         namespaces:
