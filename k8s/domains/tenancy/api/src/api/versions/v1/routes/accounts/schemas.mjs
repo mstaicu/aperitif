@@ -12,10 +12,6 @@ const UserId = Type.String({
   description: "Stable identifier for a global user identity.",
   format: "uuid",
 });
-const Count = Type.Integer({
-  description: "Number of items returned in this response.",
-  minimum: 0,
-});
 const AccountName = Type.String({
   description: "Human-readable account name.",
   maxLength: 160,
@@ -132,7 +128,6 @@ export const AccountMembership = Type.Object(
 export const AccountsResponse = Type.Object(
   {
     accounts: Type.Array(Account),
-    count: Count,
   },
   {
     additionalProperties: false,
@@ -152,7 +147,6 @@ export const AccountResponse = Type.Object(
 
 export const AccountRequirementsResponse = Type.Object(
   {
-    count: Count,
     requirements: Type.Array(AccountRequirement),
   },
   {
@@ -163,7 +157,6 @@ export const AccountRequirementsResponse = Type.Object(
 
 export const AccountMembershipsResponse = Type.Object(
   {
-    count: Count,
     memberships: Type.Array(AccountMembership),
   },
   {

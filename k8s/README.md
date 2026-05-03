@@ -160,7 +160,7 @@ make ingress DOMAIN=example.test
 
 ## Pull Request Integration
 
-The GitHub workflow under `.github/workflows/domains.yaml` creates a kind cluster, detects changed domains, deploys each changed domain through the matching Make target, port-forwards Traefik, and runs a small smoke check.
+The GitHub workflow under `.github/workflows/domains.yaml` creates a kind cluster, detects changed domains under `domains/**`, deploys each selected domain through the matching Make target, port-forwards Traefik, and runs a small smoke check.
 
 This intentionally reuses the same dev overlays and Make/Skaffold path used locally.
 
@@ -183,10 +183,12 @@ That file includes:
 For each domain, live Flux Kustomizations should preserve this dependency order:
 
 ```text
-<domain>-db -> <domain>-migrate -> <domain>-api/worker
+<domain>-db -> <domain>-migrate -> <domain>-api/worker/ui
 ```
 
-The API Kustomization depends on ingress and the domain migration unit. The migration Kustomization depends on the DB unit and uses `force: true`.
+The API Kustomization depends on ingress and the domain migration unit. A UI
+Kustomization depends on ingress and, when it calls the domain API, the API
+unit. The migration Kustomization depends on the DB unit and uses `force: true`.
 
 Bootstrap details live in:
 
@@ -251,7 +253,7 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Start from `templates/domain`.
+- Start from `templates/domain/README.md`.
 - Add `domains/<domain>/README.md`.
 - Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
 - Add Skaffold modules for local units.

@@ -14,3 +14,7 @@ Bad entries:
 - folder maps that are already visible,
 - generic advice copied from the root README,
 - generated summaries.
+
+After copying this template, replace the README with the actual domain boundary,
+deployment units, contracts, and dependencies. Add AGENTS entries only for traps
+that are not obvious from the README, code, tests, or manifests.

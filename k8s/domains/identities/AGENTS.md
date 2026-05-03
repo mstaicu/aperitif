@@ -12,4 +12,3 @@ to this domain.
   contract, and copy the tenancy worker spine instead of reviving older worker
   code.
 - Do not read or write tenancy/account data from identities.
-- Keep route handlers thin and preserve TypeBox/OpenAPI response contracts.

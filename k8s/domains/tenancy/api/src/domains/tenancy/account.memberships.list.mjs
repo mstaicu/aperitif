@@ -3,7 +3,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: { accountId: string, currentUserId: string }) => Promise<{
- *   count: number,
  *   memberships: {
  *     account_id: string,
  *     role: "owner" | "member",
@@ -61,7 +60,6 @@ export const listAccountMemberships =
       );
 
       return {
-        count: rows.length,
         memberships: rows.map((row) => ({
           account_id: accountId,
           role: row.role,

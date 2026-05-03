@@ -9,7 +9,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     name: string,
  *     status: "pending" | "active",
  *   }[],
- *   count: number,
  * }>}
  */
 export const listAccounts =
@@ -43,6 +42,5 @@ export const listAccounts =
         name: row.name,
         status: row.status,
       })),
-      count: rows.length,
     };
   };

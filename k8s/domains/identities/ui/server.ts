@@ -10,7 +10,7 @@ const server = http.createServer(
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100;
 
 server.listen(port, () =>
-  console.log(`identities-ui listening on http://localhost:${port}`),
+  console.log(`listening on http://localhost:${port}/identities`),
 );
 
 let shuttingDown = false;

@@ -1,6 +1,4 @@
-node_modules
 dist
-public/assets/*
-!public/assets/.gitkeep
+node_modules
 public/identities/assets/*
 Dockerfile
