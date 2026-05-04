@@ -6,19 +6,13 @@ namespace: identity
 resources:
   - ../../base
   - identity-api-jwt.yaml
+  - identity-api-db.yaml
 
 configMapGenerator:
   - name: identity-api-cm
     literals:
       - ORIGIN=https://tma.com
       - ACCESS_TOKEN_AUDIENCE=aperitif-api
-
-secretGenerator:
-  - name: identity-api-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/identity?sslmode=disable
-    options:
-      disableNameSuffixHash: true
 
 images:
   - name: mdstaicu/identity-api

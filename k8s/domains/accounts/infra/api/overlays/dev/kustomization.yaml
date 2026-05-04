@@ -6,13 +6,8 @@ namespace: accounts
 resources:
   - ../../base
 
+generators:
+  - accounts-api-ksops-generator.yaml
+
 patches:
   - path: accounts-api-depl.yaml
-
-secretGenerator:
-  - name: accounts-api-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/accounts?sslmode=disable
-
-generatorOptions:
-  disableNameSuffixHash: true

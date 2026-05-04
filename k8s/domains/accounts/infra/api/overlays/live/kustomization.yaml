@@ -5,13 +5,7 @@ namespace: accounts
 
 resources:
   - ../../base
-
-secretGenerator:
-  - name: accounts-api-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/accounts?sslmode=disable
-    options:
-      disableNameSuffixHash: true
+  - accounts-api-db.yaml
 
 images:
   - name: mdstaicu/accounts-api

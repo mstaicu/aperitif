@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: identity-postgres-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: identity-postgres
+          volumeMounts:
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d/001-identity-init.sql
+              subPath: identity-postgres-init.sql
+              readOnly: true
+
+      volumes:
+        - name: postgres-init
+          configMap:
+            name: identity-postgres-init

@@ -28,6 +28,11 @@ spec:
                 secretKeyRef:
                   name: identity-migrate-db
                   key: FLYWAY_USER
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: identity-migrate-db
+                  key: FLYWAY_PASSWORD
             - name: FLYWAY_LOCATIONS
               valueFrom:
                 secretKeyRef:

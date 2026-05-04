@@ -7,7 +7,7 @@ resources:
   - ../../base
 
 generators:
-  - identity-ksops-generator.yaml
+  - identity-api-ksops-generator.yaml
 
 patches:
   - path: identity-api-depl.yaml
@@ -17,11 +17,6 @@ configMapGenerator:
     literals:
       - ORIGIN=https://tma.com
       - ACCESS_TOKEN_AUDIENCE=aperitif-api
-
-secretGenerator:
-  - name: identity-api-db
-    literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/identity?sslmode=disable
 
 generatorOptions:
   disableNameSuffixHash: true

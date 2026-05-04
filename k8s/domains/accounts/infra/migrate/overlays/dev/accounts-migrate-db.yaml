@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: accounts-migrate-db
+stringData:
+  FLYWAY_URL: ENC[AES256_GCM,data:XnlXOhteDIDEHvrxBP7pOL4KcfkIfjT+U557p1Y4RJLCOPKVUA83B1i9CpaUu+//u2T+0tedJV0Hw+xJ,iv:Tx6sfgtX7qMy05j4XhNeyDX7+dU2p9YwRbCNDARY92c=,tag:RbO4mZ3srhdblAgIPOfaUA==,type:str]
+  FLYWAY_USER: ENC[AES256_GCM,data:QRHrVh8Yc7btG+CEfOaaUGY=,iv:JzNQnUImXyavQ58Y0agCxqXpqN8S7CT5zYq+oz+bLB8=,tag:5dXiK7zMS3nuFxLuMpjMVw==,type:str]
+  FLYWAY_PASSWORD: ENC[AES256_GCM,data:ZoDJ,iv:GbDe4si/T9wJCru9E0tPWHxPetST7jTEua2qk2lXaLw=,tag:wXFYYGBxItqbeUYxsU+Hgg==,type:str]
+  FLYWAY_LOCATIONS: ENC[AES256_GCM,data:kfYgPJFV4HmeRwU1lzCfyT336ry4ZpYAXJjaiPiYSSJlCDemuwvk9VHhVqKKhs5ieWa7nZ0mTi+2Y9Oxg9D3yqdCuqBxyHKR,iv:7y7ENWfsEor+gzCtM5i4g6l2pmNfBaaxyW7SamWzMos=,tag:M/sOnzLoy2drOjwp6D2dyA==,type:str]
+sops:
+  age:
+    - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnWHF2SG03SThxcjlHeXk2
+        ZTlLSnpmeGVWcThOM2x5b0NVNVJ6UDFkNENVCkY2dkoxTTdsalczVFpCb2lWV1Uy
+        Qm5ObHhVNEFjcElINU0vT2xob2F0RzQKLS0tIEZiM2ZMRk55WENneWp4YktmY2tS
+        UWNHU0VhZTlUak5DVWRpRUFXaW11Y3cKttf9HamEgIiQS3GiAicjNHQD73uTPaYV
+        +atNxrVwplC67MHoLaV47suGfI2BRgrl1tQwQpy2IUAsUFNpzsYUUA==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2026-05-04T21:07:04Z"
+  mac: ENC[AES256_GCM,data:I7dpzip/88dKehn26E5JkT0nxG4mOSpalOBrFlqFxVV2dfpqsb3nQkIvykYPE0xH1U3fb4jmeVDKliNH+8P4I6M4LBw3obDnA408TR78lTBFy06oAyKEPowi0Gh0gGhAORmyI8I3uCDGbeweq/P19reI/Rq5VT5Y4xftzgMtuu0=,iv:nZ3vBq2GwDM58B9Z6jC47ZdnxGBBTrWwG9Qho7n23po=,tag:/EwPO8kf5XF54/eJ/HA/Jw==,type:str]
+  encrypted_regex: ^(data|stringData)$
+  version: 3.12.2

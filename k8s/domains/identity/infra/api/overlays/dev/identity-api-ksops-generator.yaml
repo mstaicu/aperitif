@@ -1,0 +1,12 @@
+apiVersion: viaduct.ai/v1
+kind: KSOPS
+
+metadata:
+  name: identity-api-ksops-generator
+  annotations:
+    config.kubernetes.io/function: |
+      exec:
+        path: ksops
+files:
+  - identity-api-jwt.yaml
+  - identity-api-db.yaml

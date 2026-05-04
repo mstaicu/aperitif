@@ -89,6 +89,19 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
+      # CI uses the same encrypted dev overlays as local integration checks.
+      - name: configure sops age key
+        run: |
+          if [ -z "$SOPS_AGE_KEY" ]; then
+            echo "::error::SOPS_AGE_KEY repository secret is required for encrypted dev overlays."
+            exit 1
+          fi
+
+          mkdir -p "$RUNNER_TEMP/sops-age"
+          printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
+          chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
+          echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
+
       # Keep GitHub Actions as orchestration and let each SCS own its cheap
       # pre-deploy checks through a domain-local Makefile.
       #
@@ -103,13 +116,6 @@ jobs:
           for domain in $CHANGED_DOMAINS; do
             make -C "domains/$domain" check
           done
-
-      # CI uses the same encrypted dev overlays as local integration checks.
-      - name: check sops age key
-        if: env.SOPS_AGE_KEY == ''
-        run: |
-          echo "::error::SOPS_AGE_KEY repository secret is required for encrypted dev overlays."
-          exit 1
 
       - name: create kind cluster
         uses: helm/kind-action@v1.14.0

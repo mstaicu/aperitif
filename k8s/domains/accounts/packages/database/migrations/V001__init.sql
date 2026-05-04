@@ -112,3 +112,31 @@ ON outbox_events (occurred_at, version, id)
 WHERE published_at IS NULL;
 
 COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';
+
+-- Runtime roles are created by the placeholder Postgres init SQL. Flyway
+-- creates the schema objects, so object-level runtime grants live here.
+GRANT USAGE
+ON SCHEMA public
+TO accounts_runtime;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO accounts_runtime;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA public
+TO accounts_runtime;
+
+-- Future tables/sequences created by accounts_migrator should automatically
+-- be usable by accounts_runtime without repeating grants in every migration.
+ALTER DEFAULT PRIVILEGES
+FOR ROLE accounts_migrator
+IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLES TO accounts_runtime;
+
+ALTER DEFAULT PRIVILEGES
+FOR ROLE accounts_migrator
+IN SCHEMA public
+GRANT USAGE, SELECT
+ON SEQUENCES TO accounts_runtime;

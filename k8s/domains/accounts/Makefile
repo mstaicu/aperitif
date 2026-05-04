@@ -24,8 +24,12 @@ check-infra: check-manifests check-skaffold ## Check accounts manifests and Skaf
 check-manifests: ## Render accounts manifests.
 	kubectl kustomize infra/postgres/overlays/dev >/dev/null
 	kubectl kustomize infra/postgres/overlays/live >/dev/null
-	kubectl kustomize infra/migrate/overlays/dev >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
 	kubectl kustomize infra/migrate/overlays/live >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/dev >/dev/null
+	kubectl kustomize infra/api/overlays/live >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/dev >/dev/null
+	kubectl kustomize infra/worker/overlays/live >/dev/null
 
 check-skaffold: ## Verify accounts Skaffold modules.
 	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null

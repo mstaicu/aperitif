@@ -6,12 +6,5 @@ namespace: identity
 resources:
   - ../../base
 
-secretGenerator:
-  - name: identity-migrate-db
-    literals:
-      - FLYWAY_URL=jdbc:postgresql://postgres-srv:5432/identity?sslmode=disable
-      - FLYWAY_USER=postgres
-      - FLYWAY_LOCATIONS=filesystem:/db/migrations,filesystem:/db/repeatable,filesystem:/db/seeds
-
-generatorOptions:
-  disableNameSuffixHash: true
+generators:
+  - identity-migrate-ksops-generator.yaml

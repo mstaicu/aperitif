@@ -71,3 +71,31 @@ COMMENT ON COLUMN sessions.created_at IS 'Time the session was created.';
 COMMENT ON COLUMN sessions.last_refreshed_at IS 'Time the session refresh token was last rotated.';
 COMMENT ON COLUMN sessions.expires_at IS 'Time after which the session must not be refreshed.';
 COMMENT ON COLUMN sessions.revoked_at IS 'Time the session was explicitly revoked, if any.';
+
+-- Runtime roles are created by the placeholder Postgres init SQL. Flyway
+-- creates the schema objects, so object-level runtime grants live here.
+GRANT USAGE
+ON SCHEMA public
+TO identity_runtime;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO identity_runtime;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA public
+TO identity_runtime;
+
+-- Future tables/sequences created by identity_migrator should automatically
+-- be usable by identity_runtime without repeating grants in every migration.
+ALTER DEFAULT PRIVILEGES
+FOR ROLE identity_migrator
+IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLES TO identity_runtime;
+
+ALTER DEFAULT PRIVILEGES
+FOR ROLE identity_migrator
+IN SCHEMA public
+GRANT USAGE, SELECT
+ON SEQUENCES TO identity_runtime;

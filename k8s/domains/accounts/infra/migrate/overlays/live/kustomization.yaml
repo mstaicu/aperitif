@@ -5,16 +5,7 @@ namespace: accounts
 
 resources:
   - ../../base
-
-secretGenerator:
-  - name: accounts-migrate-db
-    literals:
-      - FLYWAY_URL=jdbc:postgresql://postgres-srv:5432/accounts?sslmode=disable
-      - FLYWAY_USER=postgres
-      - FLYWAY_LOCATIONS=filesystem:/db/migrations,filesystem:/db/repeatable
-
-generatorOptions:
-  disableNameSuffixHash: true
+  - accounts-migrate-db.yaml
 
 images:
   - name: mdstaicu/accounts-migrate
