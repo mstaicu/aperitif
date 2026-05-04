@@ -60,19 +60,8 @@ jobs:
 
             core.exportVariable("CHANGED_DOMAINS", domains.join(" "));
 
-      # CI uses the same encrypted dev overlays as local integration checks.
-      - name: check sops age key
-        if: env.SOPS_AGE_KEY == ''
-        run: |
-          echo "::error::SOPS_AGE_KEY repository secret is required for encrypted dev overlays."
-          exit 1
-
-      - name: create kind cluster
-        uses: helm/kind-action@v1.14.0
-        with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          wait: 120s
-
+      # Install tools before domain checks, but do not create the cluster until
+      # the cheap domain-owned checks pass.
       - name: setup kubectl
         uses: azure/setup-kubectl@v4.0.1
 
@@ -100,19 +89,38 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
+      # Keep GitHub Actions as orchestration and let each SCS own its cheap
+      # pre-deploy checks through a domain-local Makefile.
+      #
+      # Expected domain-owned checks over time:
+      # - lint/typecheck/build for changed source packages;
+      # - manifest render and Skaffold module sanity;
+      # - OpenAPI/event schema validation when present;
+      # - Flyway upgrade checks against previous schema/data snapshots when
+      #   packages/database/checks is wired.
+      - name: check domains
+        run: |
+          for domain in $CHANGED_DOMAINS; do
+            make -C "domains/$domain" check
+          done
+
+      # CI uses the same encrypted dev overlays as local integration checks.
+      - name: check sops age key
+        if: env.SOPS_AGE_KEY == ''
+        run: |
+          echo "::error::SOPS_AGE_KEY repository secret is required for encrypted dev overlays."
+          exit 1
+
+      - name: create kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          wait: 120s
+
       - name: configure skaffold
         run: |
           kubectl config use-context "kind-${CLUSTER_NAME}"
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
-
-      # Future phase, still scoped to $CHANGED_DOMAINS:
-      # - run fast domain-local checks such as typecheck, lint, and focused domain tests;
-      # - validate OpenAPI and event schema compatibility;
-      # - empty-DB migration is already covered by make <domain>; later validate
-      #   migrations against a previous schema/data snapshot for upgrade safety.
-      #
-      # Keep these checks inside the owning domain. Do not turn this into a
-      # cross-domain product test suite.
 
       # Current required proof: each changed domain can deploy through the same
       # Make/Skaffold path developers use locally.
@@ -130,23 +138,12 @@ jobs:
           echo "$!" > /tmp/traefik-port-forward.pid
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
-      # Keep PR smoke checks tiny and stable: prove route ownership, startup,
-      # auth boundary behavior, and the public contract endpoint for each domain.
-      # Add one case per new domain when its Make target is added.
+      # Keep PR smoke checks tiny and stable. Domain-local Makefiles own route
+      # ownership, startup, auth boundary behavior, and public contract checks.
       - name: smoke domains
         run: |
           for domain in $CHANGED_DOMAINS; do
-            case "$domain" in
-              identity)
-                curl -fkSs -o /dev/null --resolve "${DOMAIN}:8443:127.0.0.1" "https://${DOMAIN}:8443/login"
-                curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/.well-known/jwks.json"
-                curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/identity/docs/json"
-                ;;
-              accounts)
-                curl -fkSs -o /dev/null --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/accounts/docs/json"
-                [[ "$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.${DOMAIN}:8443:127.0.0.1" "https://api.${DOMAIN}:8443/v1/accounts")" = "401" ]]
-                ;;
-            esac
+            make -C "domains/$domain" smoke DOMAIN="$DOMAIN"
           done
 
       - name: cleanup
