@@ -1,5 +1,3 @@
--- Up Migration
-
 -- Required for gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -16,7 +14,7 @@ CREATE TABLE passkey_credentials (
     credential_id BYTEA NOT NULL UNIQUE,
 
     user_id UUID NOT NULL
-        REFERENCES users(id) 
+        REFERENCES users(id)
         ON DELETE CASCADE,
 
     public_key BYTEA NOT NULL,
@@ -38,7 +36,7 @@ CREATE TABLE challenges (
 
     challenge BYTEA NOT NULL UNIQUE,
 
-    expires_at TIMESTAMPTZ NOT NULL 
+    expires_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW() + INTERVAL '2 minutes'
 );
 

@@ -2,12 +2,12 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: identity-db-dev
+  name: identity-postgres-dev
 
 manifests:
   kustomize:
     paths:
-      - infra/db/overlays/dev
+      - infra/postgres/overlays/dev
 
 deploy:
   kubectl: {}
@@ -25,7 +25,7 @@ build:
 
   artifacts:
     - image: mdstaicu/identity-migrate
-      context: migrations
+      context: packages/database
       docker:
         dockerfile: Dockerfile
 
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: mdstaicu/identity-api
-      context: api
+      context: packages/api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -84,7 +84,7 @@ build:
 
   artifacts:
     - image: mdstaicu/identity-ui
-      context: ui
+      context: packages/ui
       docker:
         dockerfile: Dockerfile
         target: dev

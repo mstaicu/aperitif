@@ -30,41 +30,41 @@ If external IdPs, M2M, or agents are added later, keep them behind the same veri
 The domain unit spine is:
 
 ```text
-db -> migrate -> api -> ui
+postgres -> migrate -> api -> ui
 ```
 
 Current Kubernetes-deployable units:
 
-- `db`: PostgreSQL owned by this domain under `infra/db/overlays/{dev,live}`.
-- `migrate`: one-shot migration Job built from `migrations/` and deployed from `infra/migrate/overlays/{dev,live}`.
-- `api`: Fastify API built from `api/` and deployed from `infra/api/overlays/{dev,live}`.
-- `ui`: Remix 3 beta UI built from `ui/` and expressed under `infra/ui/overlays/{dev,live}`.
+- `postgres`: PostgreSQL owned by this domain under `infra/postgres/overlays/{dev,live}`.
+- `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
+- `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
+- `ui`: Remix 3 beta UI built from `packages/ui/` and expressed under `infra/ui/overlays/{dev,live}`.
 
 There is no identity worker right now. Add one only when identity has a real event contract, and copy the accounts worker spine instead of reviving ad hoc worker code.
 
-Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, or `ui` behind a fake all-in-one abstraction.
+Keep each deployable unit independently addressable. Do not hide `postgres`, `migrate`, `api`, or `ui` behind a fake all-in-one abstraction.
 
 ## Local
 
 Local development is driven by Skaffold modules in `skaffold.yaml`:
 
-- `identity-db-dev` applies `infra/db/overlays/dev`.
-- `identity-migrate-dev` builds `mdstaicu/identity-migrate` from `migrations/` and applies `infra/migrate/overlays/dev`.
-- `identity-api-dev` builds `mdstaicu/identity-api` from `api/`, applies `infra/api/overlays/dev`, and syncs `api/src/**/*`.
-- `identity-ui-dev` builds `mdstaicu/identity-ui` from `ui/`, applies `infra/ui/overlays/dev`, and syncs `ui/app/**/*`, `ui/public/**/*`, and `ui/server.ts`.
+- `identity-postgres-dev` applies `infra/postgres/overlays/dev`.
+- `identity-migrate-dev` builds `mdstaicu/identity-migrate` from `packages/database/` and applies `infra/migrate/overlays/dev`.
+- `identity-api-dev` builds `mdstaicu/identity-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
+- `identity-ui-dev` builds `mdstaicu/identity-ui` from `packages/ui/`, applies `infra/ui/overlays/dev`, and syncs `packages/ui/app/**/*`, `packages/ui/public/**/*`, and `packages/ui/server.ts`.
 
-The Makefile preserves the startup order: run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `ui` in `skaffold dev`.
+The Makefile preserves the startup order: run `postgres`, run `migrate`, wait for the migration Job to complete, then start `api` and `ui` in `skaffold dev`.
 
 ## Live
 
 Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 
-- `identity-db` points at `domains/identity/infra/db/overlays/live`.
-- `identity-migrate` points at `domains/identity/infra/migrate/overlays/live`, depends on `identity-db`, and should use `force: true`.
+- `identity-postgres` points at `domains/identity/infra/postgres/overlays/live`.
+- `identity-migrate` points at `domains/identity/infra/migrate/overlays/live`, depends on `identity-postgres`, and should use `force: true`.
 - `identity-api` points at `domains/identity/infra/api/overlays/live`, depends on `identity-migrate` and platform ingress.
 - `identity-ui` points at `domains/identity/infra/ui/overlays/live`, depends on `identity-api` and platform ingress.
 
-The live order must remain `db -> migrate -> api -> ui`. Migration, API, and UI images are Flux-managed through `clusters/prod-eu/image-automation/identity.yaml`.
+The live order must remain `postgres -> migrate -> api -> ui`. Migration, API, and UI images are Flux-managed through `clusters/prod-eu/image-automation/identity.yaml`.
 
 Secrets are per deployable unit even when they contain the same database URL. Keep `identity-api-db` and `identity-migrate-db` as separate Secret names so each unit owns the contract it consumes.
 
@@ -76,7 +76,7 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 - Session token endpoints use explicit token nouns: `POST /v1/sessions/access-token` creates a short-lived product API access token from a refresh token, and `POST /v1/sessions/refresh-token` rotates the refresh token for the current identity session.
 - Observability: `identity-api` and `identity-ui` emit traces only when their overlays configure `OTEL_EXPORTER_OTLP_ENDPOINT`; metrics and logs stay disabled for both domain units.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside the producer/consumer, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
-- Database: identity owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
+- Database: identity owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
 ## Agent Context
 

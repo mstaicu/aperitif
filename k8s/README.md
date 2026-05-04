@@ -275,8 +275,8 @@ kubectl kustomize platform/event-bus/overlays/dev
 kubectl kustomize platform/event-bus/overlays/live
 kubectl kustomize platform/observability/overlays/dev
 kubectl kustomize platform/observability/overlays/live
-kubectl kustomize domains/identity/infra/db/overlays/dev
-kubectl kustomize domains/identity/infra/db/overlays/live
+kubectl kustomize domains/identity/infra/postgres/overlays/dev
+kubectl kustomize domains/identity/infra/postgres/overlays/live
 kubectl kustomize domains/accounts/infra/db/overlays/dev
 kubectl kustomize domains/accounts/infra/db/overlays/live
 kustomize build --enable-alpha-plugins --enable-exec domains/identity/infra/api/overlays/dev
