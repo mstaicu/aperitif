@@ -9,7 +9,9 @@ resources:
 secretGenerator:
   - name: accounts-migrate-db
     literals:
-      - DATABASE_URL=postgres://postgres@postgres-srv:5432/accounts?sslmode=disable
+      - FLYWAY_URL=jdbc:postgresql://postgres-srv:5432/accounts?sslmode=disable
+      - FLYWAY_USER=postgres
+      - FLYWAY_LOCATIONS=filesystem:/db/migrations,filesystem:/db/repeatable,filesystem:/db/seeds
 
 generatorOptions:
   disableNameSuffixHash: true

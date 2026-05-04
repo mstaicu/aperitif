@@ -227,7 +227,7 @@ Route work should preserve:
 
 Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, producer, consumer, and delivery expectation.
 
-Database ownership is exclusive to the owning domain. Migrations live in `domains/<domain>/migrations`.
+Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/database`.
 
 Account-scoped domains should authorize from local projections of accounts authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume accounts events into local projection tables such as `account_projection` and `account_membership_projection`. Do not read the accounts database. Do not call accounts synchronously for hot-path authorization.
 
@@ -243,8 +243,8 @@ When changing manifests:
 When changing a domain API:
 
 - Keep route handlers thin.
-- Put business decisions in `api/src/domains/*`.
-- Put shared process concerns in `api/src/platform/*`.
+- Put business decisions in `packages/api/src/domains/*`.
+- Put shared process concerns in `packages/api/src/platform/*`.
 - Keep TypeBox/OpenAPI schemas in sync with actual responses.
 - Treat request validation errors and domain errors as part of the API contract.
 
@@ -277,8 +277,8 @@ kubectl kustomize platform/observability/overlays/dev
 kubectl kustomize platform/observability/overlays/live
 kubectl kustomize domains/identity/infra/postgres/overlays/dev
 kubectl kustomize domains/identity/infra/postgres/overlays/live
-kubectl kustomize domains/accounts/infra/db/overlays/dev
-kubectl kustomize domains/accounts/infra/db/overlays/live
+kubectl kustomize domains/accounts/infra/postgres/overlays/dev
+kubectl kustomize domains/accounts/infra/postgres/overlays/live
 kustomize build --enable-alpha-plugins --enable-exec domains/identity/infra/api/overlays/dev
 kubectl kustomize domains/identity/infra/api/overlays/live
 kubectl kustomize domains/identity/infra/ui/overlays/dev

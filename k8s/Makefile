@@ -32,7 +32,7 @@ identity-dev: ## Prepare identity, then run identity in skaffold dev.
 accounts: ## Deploy accounts plus required dependencies and exit.
 	$(MAKE) identity
 	$(MAKE) event-bus
-	skaffold run -m accounts-db-dev
+	skaffold run -m accounts-postgres-dev
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m accounts-migrate-dev
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
@@ -43,7 +43,7 @@ accounts: ## Deploy accounts plus required dependencies and exit.
 accounts-dev: ## Prepare accounts, then run accounts in skaffold dev.
 	$(MAKE) identity
 	$(MAKE) event-bus
-	skaffold run -m accounts-db-dev
+	skaffold run -m accounts-postgres-dev
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m accounts-migrate-dev
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
@@ -55,7 +55,7 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	$(MAKE) observability
 	$(MAKE) ingress
 	$(MAKE) event-bus
-	skaffold run -m identity-postgres-dev,accounts-db-dev
+	skaffold run -m identity-postgres-dev,accounts-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m identity-migrate-dev,accounts-migrate-dev

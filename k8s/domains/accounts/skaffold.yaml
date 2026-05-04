@@ -2,12 +2,12 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-db-dev
+  name: accounts-postgres-dev
 
 manifests:
   kustomize:
     paths:
-      - infra/db/overlays/dev
+      - infra/postgres/overlays/dev
 
 deploy:
   kubectl: {}
@@ -25,7 +25,7 @@ build:
 
   artifacts:
     - image: mdstaicu/accounts-migrate
-      context: migrations
+      context: packages/database
       docker:
         dockerfile: Dockerfile
 
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: mdstaicu/accounts-api
-      context: api
+      context: packages/api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -84,7 +84,7 @@ build:
 
   artifacts:
     - image: mdstaicu/accounts-worker
-      context: worker
+      context: packages/worker
       docker:
         dockerfile: Dockerfile
         target: dev

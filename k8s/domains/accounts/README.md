@@ -97,43 +97,43 @@ account.status = active when all required checks pass
 The domain unit spine is:
 
 ```text
-db -> migrate -> api/worker
+postgres -> migrate -> api/worker
 ```
 
 Current Kubernetes-expressed units:
 
-- `db`: PostgreSQL owned by this domain under `infra/db/overlays/{dev,live}`.
-- `migrate`: one-shot migration Job built from `migrations/` and deployed from `infra/migrate/overlays/{dev,live}`.
-- `api`: Fastify API built from `api/` and deployed from `infra/api/overlays/{dev,live}`.
-- `worker`: outbox publisher built from `worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
+- `postgres`: PostgreSQL owned by this domain under `infra/postgres/overlays/{dev,live}`.
+- `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
+- `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
+- `worker`: outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
 
 Current source-only units:
 
 - `ui`: not present yet. Add it only when this domain owns a browser surface.
 
-Keep each deployable unit independently addressable. Do not hide `db`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction. A future UI should own `/accounts` on `tma.com`, while the public API keeps `/v1/accounts` on `api.tma.com`.
+Keep each deployable unit independently addressable. Do not hide `postgres`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction. A future UI should own `/accounts` on `tma.com`, while the public API keeps `/v1/accounts` on `api.tma.com`.
 
 ## Local
 
 Local development is driven by Skaffold modules in `skaffold.yaml`:
 
-- `accounts-db-dev` applies `infra/db/overlays/dev`.
-- `accounts-migrate-dev` builds `mdstaicu/accounts-migrate` from `migrations/` and applies `infra/migrate/overlays/dev`.
-- `accounts-api-dev` builds `mdstaicu/accounts-api` from `api/`, applies `infra/api/overlays/dev`, and syncs `api/src/**/*`.
-- `accounts-worker-dev` builds `mdstaicu/accounts-worker` from `worker/`, applies `infra/worker/overlays/dev`, and syncs `worker/src/**/*`.
+- `accounts-postgres-dev` applies `infra/postgres/overlays/dev`.
+- `accounts-migrate-dev` builds `mdstaicu/accounts-migrate` from `packages/database/` and applies `infra/migrate/overlays/dev`.
+- `accounts-api-dev` builds `mdstaicu/accounts-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
+- `accounts-worker-dev` builds `mdstaicu/accounts-worker` from `packages/worker/`, applies `infra/worker/overlays/dev`, and syncs `packages/worker/src/**/*`.
 
-The Makefile should preserve the startup order: run platform dependencies, run `db`, run `migrate`, wait for the migration Job to complete, then start `api` and `worker` in `skaffold dev`.
+The Makefile should preserve the startup order: run platform dependencies, run `postgres`, run `migrate`, wait for the migration Job to complete, then start `api` and `worker` in `skaffold dev`.
 
 ## Live
 
 Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 
-- `accounts-db` points at `domains/accounts/infra/db/overlays/live`.
-- `accounts-migrate` points at `domains/accounts/infra/migrate/overlays/live`, depends on `accounts-db`, and uses `force: true`.
+- `accounts-postgres` points at `domains/accounts/infra/postgres/overlays/live`.
+- `accounts-migrate` points at `domains/accounts/infra/migrate/overlays/live`, depends on `accounts-postgres`, and uses `force: true`.
 - `accounts-api` points at `domains/accounts/infra/api/overlays/live`, depends on `accounts-migrate`, `identity-api`, and platform ingress.
 - `accounts-worker` points at `domains/accounts/infra/worker/overlays/live`, depends on `accounts-migrate` and platform event-bus.
 
-The live order must remain `db -> migrate -> api/worker`. Migration, API, and worker images are Flux-managed through `clusters/prod-eu/image-automation/accounts.yaml`.
+The live order must remain `postgres -> migrate -> api/worker`. Migration, API, and worker images are Flux-managed through `clusters/prod-eu/image-automation/accounts.yaml`.
 
 Secrets are per deployable unit even when they contain the same database URL. Keep `accounts-api-db`, `accounts-migrate-db`, and `accounts-worker-db` as separate Secret names so each unit owns the contract it consumes.
 
@@ -142,8 +142,8 @@ Secrets are per deployable unit even when they contain the same database URL. Ke
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/accounts/docs`.
 - Identity dependency: accounts validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker ensures the `ACCOUNTS` JetStream stream plus a `accounts-worker` durable consumer for `accounts.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, account authority `version`, `occurred_at`, `producer`, `schema_version`, and a minimal domain payload.
-- Event schemas: TypeBox/JSDoc event contracts live in `api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
-- Database: accounts owns its schema and migrations in `migrations/`. Other domains must not read or write this database directly.
+- Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
+- Database: accounts owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
 ## Event Publishing Mechanics
 

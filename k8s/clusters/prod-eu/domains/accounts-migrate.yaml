@@ -11,7 +11,7 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: accounts-db
+    - name: accounts-postgres
   force: true
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready
