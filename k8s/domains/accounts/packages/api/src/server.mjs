@@ -1,3 +1,6 @@
+import { once } from "node:events";
+import process from "node:process";
+
 import { createApp } from "./app.mjs";
 import { createAccountsDomain } from "./domains/accounts/index.mjs";
 import { createContext } from "./platform/context.mjs";
@@ -5,65 +8,29 @@ import { createOtelContext } from "./platform/observability/otel.mjs";
 
 const otel = createOtelContext();
 
-let shutdownInitiated = false;
+otel.start();
 
-/** @type {import("./platform/context.mjs").Context | undefined} */
-let ctx;
-/** @type {import("./app.mjs").FastifyInstance | undefined} */
-let app;
+const ctx = await createContext();
 
-const shutdown = async () => {
-  if (shutdownInitiated) return;
-
-  shutdownInitiated = true;
-
-  if (app) {
-    await app.close();
-  } else if (ctx) {
-    await Promise.allSettled([ctx.lifecycle.close(), otel.close()]);
-  } else {
-    await otel.close();
-  }
-};
-
-try {
-  otel.start();
-
-  ctx = await createContext();
-
-  const domains = {
+const app = await createApp({
+  ctx,
+  domains: {
     accounts: createAccountsDomain(ctx),
-  };
-  const lifecycle = ctx.lifecycle;
+  },
+  fastifyOtel: otel.fastifyOtel,
+});
 
-  app = await createApp({
-    ctx,
-    domains,
-    fastifyOtel: otel.fastifyOtel,
-  });
+app.addHook("onClose", () => otel.close());
+app.addHook("onClose", () => ctx.lifecycle.close());
 
-  app.addHook("onClose", () => otel.close());
-  app.addHook("onClose", () => lifecycle.close());
+await app.listen({ host: "0.0.0.0", port: 3000 });
 
-  // SIGUSR2 is for nodemon
-  ["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) =>
-    process.once(signal, async () => {
-      console.log("closing server...");
+const [signal] = await Promise.race(
+  ["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
+);
 
-      try {
-        await shutdown();
+app.log.info({ signal }, "closing server");
 
-        console.log("shutdown complete");
+await app.close();
 
-        process.exit(0);
-      } catch {
-        process.exit(1);
-      }
-    }),
-  );
-
-  await app.listen({ host: "0.0.0.0", port: 3000 });
-} catch (err) {
-  await shutdown().catch(() => {});
-  throw err;
-}
+app.log.info("shutdown complete");

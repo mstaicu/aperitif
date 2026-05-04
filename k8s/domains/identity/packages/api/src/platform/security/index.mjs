@@ -8,10 +8,10 @@ export const createSecurityContext = async () => {
   /**
    * @type {string}
    */
-  const audience = nconf.get("JWT_AUDIENCE");
+  const audience = nconf.get("ACCESS_TOKEN_AUDIENCE");
 
   if (!audience) {
-    throw new Error("No JWT_AUDIENCE provided");
+    throw new Error("No ACCESS_TOKEN_AUDIENCE provided");
   }
 
   const [privatePem, publicPem] = await Promise.all([

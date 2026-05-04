@@ -2,8 +2,9 @@
 
 DOMAIN ?= tma.com
 PORT ?= 8443
+SKAFFOLD_MODULES := accounts-postgres-dev,accounts-migrate-dev,accounts-api-dev,accounts-worker-dev
 
-.PHONY: help check check-api check-database check-infra check-worker smoke
+.PHONY: help check check-api check-database check-infra check-manifests check-skaffold check-worker smoke
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -18,12 +19,16 @@ check-worker: ## Check the accounts worker package.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
 
-check-infra: ## Render accounts manifests and verify Skaffold modules.
+check-infra: check-manifests check-skaffold ## Check accounts manifests and Skaffold modules.
+
+check-manifests: ## Render accounts manifests.
 	kubectl kustomize infra/postgres/overlays/dev >/dev/null
 	kubectl kustomize infra/postgres/overlays/live >/dev/null
 	kubectl kustomize infra/migrate/overlays/dev >/dev/null
 	kubectl kustomize infra/migrate/overlays/live >/dev/null
-	skaffold diagnose --yaml-only -m accounts-postgres-dev,accounts-migrate-dev,accounts-api-dev,accounts-worker-dev >/dev/null
+
+check-skaffold: ## Verify accounts Skaffold modules.
+	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null
 
 check-database: ## Check accounts database migration package.
 	@echo "accounts: no database upgrade checks configured yet"

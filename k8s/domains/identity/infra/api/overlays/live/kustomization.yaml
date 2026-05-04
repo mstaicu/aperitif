@@ -11,7 +11,7 @@ configMapGenerator:
   - name: identity-api-cm
     literals:
       - ORIGIN=https://tma.com
-      - JWT_AUDIENCE=aperitif-api
+      - ACCESS_TOKEN_AUDIENCE=aperitif-api
 
 secretGenerator:
   - name: identity-api-db
