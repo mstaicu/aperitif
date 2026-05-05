@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: tenancy-api-db
+stringData:
+    DATABASE_URL: ENC[AES256_GCM,data:vX/Sze7bUBORTqtnaMdjndUyrVpzJTN6wGfLt1rMY2Heu6rpKy9Jxvtx42fNg/sQxGE9bQgGUQjGtt6mlCC2cVgnam8=,iv:4BKioiMoypjhJ9DQOzT/UjC1UT76gHQtzRcDaYVAKBQ=,tag:YFcJhS9z/rIEpOxEP64I0A==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBJZWtyZmR3bGJCSTdqV2Qy
+            ZStsSVFmUzN0OTZYNlBZSHNBTlpVV0RFcTF3ClRxOHdZMDAxSGREc1JNL2Zhc3NZ
+            TEpQV0hqUGowbmpGQWpxcFg5NllISEkKLS0tIFhDUTIvR3pjQ0hVSXg4MDZhSHlV
+            OHd2cFhWVDNEdWR3WjdIZ3VHaERTUDQKdnie4LA9LcC7xjId2n0tK1xCMtQcIg6d
+            W+0uiskIah6GkVxL1SQOvGlXMUWn1OJImnxpMG07kamR3A13WsTAgg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-05T18:53:55Z"
+    mac: ENC[AES256_GCM,data:FLXp515Be+5IHkmXTXl6gTvksCT2kE1O6kwZ1VRTgAMyeNumSSSiSyqEBWLHfNmMNaGhtHl8Ju1a3lb/4VhN8yA3T0scFajerTwhPBTMLe1XRi7v+q725/FCxnoY72B+/YMIQvlL3/eaYQZzLzVT4wCEDz6IT56xVgznoBJirbE=,iv:ZDLvpT0CrJhFjAj6ig+JllpGKHP6ajCDEyIQwNBO0ss=,tag:ISOhB6FsBoPfhhr1zTUwZg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

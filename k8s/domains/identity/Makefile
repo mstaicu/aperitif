@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 DOMAIN ?= tma.com
-PORT ?= 8443
+PORT ?= 443
 SKAFFOLD_MODULES := identity-postgres-dev,identity-migrate-dev,identity-api-dev,identity-ui-dev
 
 .PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-skaffold pre-deploy-ui post-deploy

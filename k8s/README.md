@@ -43,7 +43,7 @@ platform/
 
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
-  accounts/                account authority, memberships, activation requirements
+  tenancy/                tenant authority, memberships, activation requirements
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -61,7 +61,7 @@ Current agent context files:
 
 - `AGENTS.md`
 - `domains/identity/AGENTS.md`
-- `domains/accounts/AGENTS.md`
+- `domains/tenancy/AGENTS.md`
 - `platform/ingress/AGENTS.md`
 - `platform/event-bus/AGENTS.md`
 
@@ -74,7 +74,7 @@ Each domain should document itself in `domains/<domain>/README.md`.
 Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
-- `accounts`: owns account authority, account memberships, and activation requirements.
+- `tenancy`: owns tenant authority, tenant memberships, and activation requirements.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -127,7 +127,7 @@ Local ingress setup does three jobs:
 
 Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
 
-Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/accounts`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes stay on the internal Gateway without hostnames.
+Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/tenants`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes stay on the internal Gateway without hostnames.
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
@@ -146,14 +146,14 @@ Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of
 ```sh
 make dev
 make dev-identity
-make dev-accounts
+make dev-tenancy
 ```
 
 Deploy-and-exit targets are useful for checks and CI-style local testing:
 
 ```sh
 make deploy-identity
-make deploy-accounts
+make deploy-tenancy
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -260,7 +260,7 @@ Events are not implicit. If a domain emits or consumes an event, document the su
 
 Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/database`.
 
-Account-scoped domains should authorize from local projections of accounts authority. If a domain owns account-scoped resources or performs account-scoped authorization on hot request paths, it must consume accounts events into local projection tables such as `account_projection` and `account_membership_projection`. Do not read the accounts database. Do not call accounts synchronously for hot-path authorization.
+Tenant-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `tenant_projection` and `tenant_membership_projection`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 
 ## How To Work Here
 
@@ -281,9 +281,9 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Create `domains/<domain>` using `identity` and `accounts` as examples.
+- Create `domains/<domain>` using `identity` and `tenancy` as examples.
 - Copy the unit spine you need: `identity` is the example for auth API and
-  Remix UI, while `accounts` is the example for account-scoped API, worker,
+  Remix UI, while `tenancy` is the example for tenant-scoped API, worker,
   outbox, events, and projections.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
@@ -292,8 +292,8 @@ When adding a new domain:
 - Add Flux Kustomizations for live units.
 - Add image automation only for images Flux should update.
 - Add network policies for only the traffic the unit actually needs.
-- Account-scoped domains must authorize from local accounts projections, not by
-  reading the accounts database or calling accounts synchronously on hot paths.
+- Tenant-scoped domains must authorize from local tenancy projections, not by
+  reading the tenancy database or calling tenancy synchronously on hot paths.
 
 ## Checks
 
@@ -301,7 +301,7 @@ Prefer domain-owned checks:
 
 ```sh
 make -C domains/identity pre-deploy-infra
-make -C domains/accounts pre-deploy-infra
+make -C domains/tenancy pre-deploy-infra
 git diff --check
 ```
 

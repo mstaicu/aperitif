@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: tenancy-worker-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: tenancy-worker
+          env:
+            - name: NATS_STREAM_REPLICAS
+              value: "3"

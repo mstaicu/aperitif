@@ -1,0 +1,37 @@
+import { Type } from "@sinclair/typebox";
+
+export const UuidSchema = Type.String({
+  pattern:
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+});
+
+export const TenantKindSchema = Type.Union([
+  Type.Literal("personal"),
+  Type.Literal("organization"),
+]);
+
+export const TenantStatusSchema = Type.Union([
+  Type.Literal("pending"),
+  Type.Literal("active"),
+]);
+
+export const TenantRoleSchema = Type.Union([
+  Type.Literal("owner"),
+  Type.Literal("member"),
+]);
+
+export const TenantEventResourceSchema = Type.Object(
+  {
+    id: UuidSchema,
+    kind: TenantKindSchema,
+    name: Type.String({ maxLength: 160, minLength: 1 }),
+    status: TenantStatusSchema,
+  },
+  { additionalProperties: false },
+);
+
+/**
+ * @typedef {import("@sinclair/typebox").Static<
+ *   typeof TenantEventResourceSchema
+ * >} TenantEventResource
+ */

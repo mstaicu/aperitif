@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tenancy
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - tenancy-migrate-db.yaml
+
+images:
+  - name: mdstaicu/tenancy-migrate
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:tenancy-migrate-latest
+    newTag: latest # {"$imagepolicy": "flux-system:tenancy-migrate-latest"}

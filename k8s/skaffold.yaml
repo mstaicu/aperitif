@@ -9,5 +9,5 @@ requires:
   - path: platform/ingress
   - path: platform/observability
 
-  - path: domains/accounts
   - path: domains/identity
+  - path: domains/tenancy

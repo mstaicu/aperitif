@@ -2,7 +2,7 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help deploy-identity dev-identity deploy-accounts dev-accounts dev deploy-ingress deploy-event-bus deploy-observability
+.PHONY: help deploy-identity dev-identity deploy-tenancy dev-tenancy dev deploy-ingress deploy-event-bus deploy-observability
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -29,25 +29,25 @@ dev-identity: ## Prepare identity, then run identity in skaffold dev.
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m identity-api-dev,identity-ui-dev
 
-deploy-accounts: ## Deploy accounts plus required dependencies and exit.
+deploy-tenancy: ## Deploy tenancy plus required dependencies and exit.
 	$(MAKE) deploy-identity
 	$(MAKE) deploy-event-bus
-	skaffold run -m accounts-postgres-dev
-	kubectl delete job -n accounts migrate --ignore-not-found
-	skaffold run --force -m accounts-migrate-dev
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	skaffold run -m accounts-api-dev,accounts-worker-dev
-	kubectl rollout status -n accounts deploy/accounts-api-depl --timeout=300s
-	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
+	skaffold run -m tenancy-postgres-dev
+	kubectl delete job -n tenancy migrate --ignore-not-found
+	skaffold run --force -m tenancy-migrate-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	skaffold run -m tenancy-api-dev,tenancy-worker-dev
+	kubectl rollout status -n tenancy deploy/tenancy-api-depl --timeout=300s
+	kubectl rollout status -n tenancy deploy/tenancy-worker-depl --timeout=300s
 
-dev-accounts: ## Prepare accounts, then run accounts in skaffold dev.
+dev-tenancy: ## Prepare tenancy, then run tenancy in skaffold dev.
 	$(MAKE) deploy-identity
 	$(MAKE) deploy-event-bus
-	skaffold run -m accounts-postgres-dev
-	kubectl delete job -n accounts migrate --ignore-not-found
-	skaffold run --force -m accounts-migrate-dev
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m accounts-api-dev,accounts-worker-dev
+	skaffold run -m tenancy-postgres-dev
+	kubectl delete job -n tenancy migrate --ignore-not-found
+	skaffold run --force -m tenancy-migrate-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m tenancy-api-dev,tenancy-worker-dev
 
 # Full stack
 
@@ -55,13 +55,13 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	$(MAKE) deploy-observability
 	$(MAKE) deploy-ingress
 	$(MAKE) deploy-event-bus
-	skaffold run -m identity-postgres-dev,accounts-postgres-dev
+	skaffold run -m identity-postgres-dev,tenancy-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
-	kubectl delete job -n accounts migrate --ignore-not-found
-	skaffold run --force -m identity-migrate-dev,accounts-migrate-dev
+	kubectl delete job -n tenancy migrate --ignore-not-found
+	skaffold run --force -m identity-migrate-dev,tenancy-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,accounts-api-dev,accounts-worker-dev
+	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev
 
 # Platform dependencies
 

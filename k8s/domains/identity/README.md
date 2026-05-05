@@ -12,7 +12,7 @@ Identity owns authentication identity, not product authority.
 - `sessions` are refresh-token backed identity sessions.
 - JWKS is the public verification contract for identity-issued access tokens.
 
-Identity must not own accounts, memberships, onboarding requirements, account authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
+Identity must not own tenants, memberships, onboarding requirements, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
 
 The intended integration is:
 
@@ -40,7 +40,7 @@ Current Kubernetes-deployable units:
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `ui`: Remix 3 beta UI built from `packages/ui/` and expressed under `infra/ui/overlays/{dev,live}`.
 
-There is no identity worker right now. Add one only when identity has a real event contract, and copy the accounts worker spine instead of reviving ad hoc worker code.
+There is no identity worker right now. Add one only when identity has a real event contract, and copy the tenancy worker spine instead of reviving ad hoc worker code.
 
 Keep each deployable unit independently addressable. Do not hide `postgres`, `migrate`, `api`, or `ui` behind a fake all-in-one abstraction.
 

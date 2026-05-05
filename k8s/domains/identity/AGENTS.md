@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Identity owns authentication identity only. Do not add accounts,
-memberships, account authority, onboarding requirements, or product permissions
+Identity owns authentication identity only. Do not add tenants,
+memberships, tenant authority, onboarding requirements, or product permissions
 to this domain.
 
 - Keep the public identity contract as token issuer plus JWKS verification.
@@ -9,6 +9,6 @@ to this domain.
 - Keep the shared product API audience unless the whole auth model is being
   deliberately changed.
 - There is no identity worker right now. Add one only for a real event
-  contract, and copy the accounts worker spine instead of reviving older worker
+  contract, and copy the tenancy worker spine instead of reviving older worker
   code.
-- Do not read or write accounts/account data from identity.
+- Do not read or write tenancy/tenant data from identity.

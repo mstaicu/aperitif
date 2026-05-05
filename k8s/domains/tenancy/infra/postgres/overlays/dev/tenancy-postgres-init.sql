@@ -1,0 +1,47 @@
+-- Local/CI placeholder bootstrap. The official Postgres image runs this once
+-- when the data directory is empty. Managed production should run an equivalent
+-- bootstrap with real passwords outside the in-cluster Postgres unit.
+-- Mirror role/grant changes in packages/database/bootstrap/managed-postgres.sql.
+
+CREATE ROLE tenancy_migrator;
+CREATE ROLE tenancy_runtime;
+CREATE ROLE tenancy_api;
+CREATE ROLE tenancy_worker;
+
+ALTER ROLE tenancy_migrator
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+ALTER ROLE tenancy_runtime
+WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+ALTER ROLE tenancy_api
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+ALTER ROLE tenancy_worker
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+GRANT tenancy_runtime TO tenancy_api;
+GRANT tenancy_runtime TO tenancy_worker;
+
+REVOKE CONNECT, TEMPORARY ON DATABASE tenancy FROM PUBLIC;
+
+GRANT CONNECT, CREATE, TEMPORARY
+ON DATABASE tenancy
+TO tenancy_migrator;
+
+GRANT CONNECT
+ON DATABASE tenancy
+TO tenancy_runtime;
+
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+GRANT USAGE, CREATE
+ON SCHEMA public
+TO tenancy_migrator;
+
+GRANT USAGE
+ON SCHEMA public
+TO tenancy_runtime;

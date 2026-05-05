@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: tenancy-migrate-db
+stringData:
+    FLYWAY_URL: ENC[AES256_GCM,data:HUhAWo0m+xYdofCWNPwxjBM9hBY0jKep27W0lbVAPTWRObT/uSueRnfQxIDeO+UP0VxndmHh3kv6zDc=,iv:r5ZysR6iHSuAHGwhmS7b7OyPCzIkG0M4NPbbe8mgKPw=,tag:8ynyh4sCp0Bq/FYVYYqHvQ==,type:str]
+    FLYWAY_USER: ENC[AES256_GCM,data:vlwZbLqZFI7KtTy5WtcVYA==,iv:pCBpiUC9bR4TcGWFJVDQz2/6Ry9w04ZTD4eb0G39JEY=,tag:crsEAHi8wACR5nqnKXVKXA==,type:str]
+    FLYWAY_PASSWORD: ENC[AES256_GCM,data:X4BN,iv:NoJ2JjJ5fh7iodAdXga8mc0CWmFgN6yIsfCzCqQIdUM=,tag:MKsTZkeMHIfbkwOk5MzE2w==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBpdXF1bis1YS84ZU1RWjF0
+            dkw3cGwxTjROaXVSNUxBUmR6bWphQmU0MW44CkFhVW1GTEtFRDBYYmVQR09LYjBK
+            cmVqOUdjTmc5SVNXU1dJb2pYOFhQNEkKLS0tIGtib1kzWkgyYzUvMTVWMXRKQ1p1
+            RGs1V1Q1K2pPeEdhNVZodTFGZmlBM0EKybycXVuYTxB9BMtlWfgok+XVBwVJ1oC3
+            CTC9C0PXEwdKtnlGsqxHHtICceHs1cuhgQElv6QZBW8yVBHdphwtpA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-05T18:53:55Z"
+    mac: ENC[AES256_GCM,data:6BSSxekZWhWjYfSFc0+nCSTcA6RkJsDMkDE31leSMOzlbROQfwAlXE+V7LXXT9XKicxhCAEfNDQIDghjIGPo2OW6rA1efivM15/iRYWntrRDUnNnd4gmbCa+KQroVWiNnmYP5/229Y/td1UQiqY0DyvfKl2qrVWNZDJJOCkqQjg=,iv:qXfg2lLOX3q94qZCN6irezmRBJQCenu9HrTyUEle1OY=,tag:nE8mT+ZzZnxDy14op0aWJg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2
