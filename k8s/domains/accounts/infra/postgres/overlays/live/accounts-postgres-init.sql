@@ -1,3 +1,7 @@
+-- Live placeholder bootstrap for the in-cluster Postgres unit. Managed
+-- production should run an equivalent bootstrap with real passwords outside the
+-- cluster, then remove this Postgres unit from the Flux graph.
+
 CREATE ROLE accounts_migrator LOGIN PASSWORD 'dev';
 CREATE ROLE accounts_runtime NOLOGIN;
 CREATE ROLE accounts_api LOGIN PASSWORD 'dev';

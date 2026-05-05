@@ -8,7 +8,7 @@ failure cases.
   intentionally under `k8s/.github`.
 - Use Make targets for integration deploy checks: `make identity`,
   `make accounts`, or `make dev`. Do not invent ad hoc deployment order.
-- Domain units stay separate: `db -> migrate -> api/worker`. Do not collapse
+- Domain units stay separate: `postgres -> migrate -> api/worker`. Do not collapse
   them into one Kubernetes app abstraction.
 - Dev overlays using KSOPS require `SOPS_AGE_KEY_FILE` and Kustomize with
   `--enable-alpha-plugins --enable-exec`. Do not replace encrypted Secret

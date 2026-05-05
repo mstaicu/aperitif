@@ -35,7 +35,7 @@ postgres -> migrate -> api -> ui
 
 Current Kubernetes-deployable units:
 
-- `postgres`: PostgreSQL owned by this domain under `infra/postgres/overlays/{dev,live}`.
+- `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
 - `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `ui`: Remix 3 beta UI built from `packages/ui/` and expressed under `infra/ui/overlays/{dev,live}`.
@@ -66,7 +66,9 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 
 The live order must remain `postgres -> migrate -> api -> ui`. Migration, API, and UI images are Flux-managed through `clusters/prod-eu/image-automation/identity.yaml`.
 
-Secrets are per deployable unit even when they contain the same database URL. Keep `identity-api-db` and `identity-migrate-db` as separate Secret names so each unit owns the contract it consumes.
+Secrets are per deployable unit. Keep `identity-api-db` and `identity-migrate-db` as separate Secret names because the API and migrator use different database roles.
+
+When live moves to a managed database, remove `identity-postgres` from the Flux graph, run the database bootstrap SQL against the managed database, and keep `identity-migrate -> identity-api -> identity-ui`.
 
 ## Contracts
 

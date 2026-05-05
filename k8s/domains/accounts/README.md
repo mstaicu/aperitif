@@ -102,7 +102,7 @@ postgres -> migrate -> api/worker
 
 Current Kubernetes-expressed units:
 
-- `postgres`: PostgreSQL owned by this domain under `infra/postgres/overlays/{dev,live}`.
+- `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
 - `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `worker`: outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
@@ -135,7 +135,9 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 
 The live order must remain `postgres -> migrate -> api/worker`. Migration, API, and worker images are Flux-managed through `clusters/prod-eu/image-automation/accounts.yaml`.
 
-Secrets are per deployable unit even when they contain the same database URL. Keep `accounts-api-db`, `accounts-migrate-db`, and `accounts-worker-db` as separate Secret names so each unit owns the contract it consumes.
+Secrets are per deployable unit. Keep `accounts-api-db`, `accounts-migrate-db`, and `accounts-worker-db` as separate Secret names because the API, migrator, and worker use different database roles.
+
+When live moves to a managed database, remove `accounts-postgres` from the Flux graph, run the database bootstrap SQL against the managed database, and keep `accounts-migrate -> accounts-api/worker`.
 
 ## Contracts
 

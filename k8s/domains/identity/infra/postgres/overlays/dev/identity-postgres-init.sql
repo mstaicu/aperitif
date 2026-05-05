@@ -1,3 +1,7 @@
+-- Local/CI placeholder bootstrap. The official Postgres image runs this once
+-- when the data directory is empty. Managed production should run an equivalent
+-- bootstrap with real passwords outside the in-cluster Postgres unit.
+
 CREATE ROLE identity_migrator LOGIN PASSWORD 'dev';
 CREATE ROLE identity_runtime NOLOGIN;
 CREATE ROLE identity_api LOGIN PASSWORD 'dev';
