@@ -4,25 +4,25 @@ DOMAIN ?= tma.com
 PORT ?= 8443
 SKAFFOLD_MODULES := identity-postgres-dev,identity-migrate-dev,identity-api-dev,identity-ui-dev
 
-.PHONY: help check check-api check-database check-infra check-manifests check-skaffold check-ui smoke
+.PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-skaffold pre-deploy-ui post-deploy
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: check-api check-ui check-infra check-database ## Run cheap identity-local checks before deploy.
+pre-deploy: pre-deploy-api pre-deploy-ui pre-deploy-infra ## Validate identity before deploying it.
 
-check-api: ## Check the identity API package.
+pre-deploy-api: ## Validate the identity API package before deploy.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
 
-check-ui: ## Check the identity UI package.
+pre-deploy-ui: ## Validate the identity UI package before deploy.
 	cd packages/ui && npm ci
 	cd packages/ui && npm run typecheck
 	cd packages/ui && npm run build
 
-check-infra: check-manifests check-skaffold ## Check identity manifests and Skaffold modules.
+pre-deploy-infra: pre-deploy-manifests pre-deploy-skaffold ## Validate identity manifests and Skaffold modules before deploy.
 
-check-manifests: ## Render identity manifests.
+pre-deploy-manifests: ## Render identity manifests before deploy.
 	kubectl kustomize infra/postgres/overlays/dev >/dev/null
 	kubectl kustomize infra/postgres/overlays/live >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
@@ -32,13 +32,10 @@ check-manifests: ## Render identity manifests.
 	kubectl kustomize infra/ui/overlays/dev >/dev/null
 	kubectl kustomize infra/ui/overlays/live >/dev/null
 
-check-skaffold: ## Verify identity Skaffold modules.
+pre-deploy-skaffold: ## Verify identity Skaffold modules before deploy.
 	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null
 
-check-database: ## Check identity database migration package.
-	@echo "identity: no database upgrade checks configured yet"
-
-smoke: ## Smoke the deployed identity boundary through Traefik.
+post-deploy: ## Verify the deployed identity boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "$(DOMAIN):$(PORT):127.0.0.1" "https://$(DOMAIN):$(PORT)/login"
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/.well-known/jwks.json"
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/identity/docs/json"

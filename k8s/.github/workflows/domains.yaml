@@ -29,7 +29,7 @@ jobs:
 
       # Scope this job to changed domain deployable units. The Make dry-run is
       # the structural guard for new domains: a domain folder needs a matching
-      # deploy target before CI can evaluate it.
+      # root deploy target before CI can evaluate it.
       - name: select domains
         uses: actions/github-script@v8
         with:
@@ -55,7 +55,7 @@ jobs:
             }
 
             for (const domain of domains) {
-              execFileSync("make", ["-n", domain], { stdio: "ignore" });
+              execFileSync("make", ["-n", `deploy-${domain}`], { stdio: "ignore" });
             }
 
             core.exportVariable("CHANGED_DOMAINS", domains.join(" "));
@@ -101,20 +101,14 @@ jobs:
           printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
           chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
           echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
-
-      # Keep GitHub Actions as orchestration and let each SCS own its cheap
+      #
+      # Keep GitHub Actions as orchestration and let each SCS own its
       # pre-deploy checks through a domain-local Makefile.
       #
-      # Expected domain-owned checks over time:
-      # - lint/typecheck/build for changed source packages;
-      # - manifest render and Skaffold module sanity;
-      # - OpenAPI/event schema validation when present;
-      # - Flyway upgrade checks against previous schema/data snapshots when
-      #   packages/database/checks is wired.
-      - name: check domains
+      - name: pre-deploy domains
         run: |
           for domain in $CHANGED_DOMAINS; do
-            make -C "domains/$domain" check
+            make -C "domains/$domain" pre-deploy
           done
 
       - name: create kind cluster
@@ -133,7 +127,7 @@ jobs:
       - name: deploy domains
         run: |
           for domain in $CHANGED_DOMAINS; do
-            make "$domain"
+            make "deploy-$domain"
           done
 
       # Hit the real Gateway/Traefik path from the runner instead of calling
@@ -144,12 +138,12 @@ jobs:
           echo "$!" > /tmp/traefik-port-forward.pid
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
-      # Keep PR smoke checks tiny and stable. Domain-local Makefiles own route
-      # ownership, startup, auth boundary behavior, and public contract checks.
-      - name: smoke domains
+      # Keep PR post-deploy checks tiny and stable. Domain-local Makefiles own
+      # route ownership, startup, auth boundary behavior, and public contracts.
+      - name: post-deploy domains
         run: |
           for domain in $CHANGED_DOMAINS; do
-            make -C "domains/$domain" smoke DOMAIN="$DOMAIN"
+            make -C "domains/$domain" post-deploy DOMAIN="$DOMAIN"
           done
 
       - name: cleanup

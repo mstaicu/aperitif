@@ -19,7 +19,7 @@ platform/event-bus/overlays/{dev,live}
 Deploy through Make:
 
 ```sh
-make event-bus
+make deploy-event-bus
 ```
 
 The target deploys the Skaffold `event-bus` module and waits for the `nats-depl` StatefulSet.

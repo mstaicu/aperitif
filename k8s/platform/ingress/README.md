@@ -15,7 +15,7 @@ crds -> ingress
 
 ## Local
 
-`make ingress` is the local entrypoint. It:
+`make deploy-ingress` is the local entrypoint. It:
 
 - applies Gateway API CRDs,
 - waits for CRDs to be established,
@@ -28,13 +28,13 @@ crds -> ingress
 The default local domain is `tma.com`:
 
 ```sh
-make ingress
+make deploy-ingress
 ```
 
 Override it when needed:
 
 ```sh
-make ingress DOMAIN=example.test
+make deploy-ingress DOMAIN=example.test
 ```
 
 In kind or CI, prefer a port-forward instead of relying on host LoadBalancer behavior:

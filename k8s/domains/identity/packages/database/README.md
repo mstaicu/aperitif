@@ -108,8 +108,8 @@ docker build -t mdstaicu/identity-migrate:<tag> domains/identity/packages/databa
 ```
 
 Use a real immutable release tag for production. Use `:local` only for manual
-testing. Normally use `make identity`; Skaffold builds and tags this image for
-the domain deploy path.
+testing. Normally use `make deploy-identity`; Skaffold builds and tags this
+image for the domain deploy path.
 
 ## Debug
 
@@ -148,7 +148,7 @@ adding a value old code safely ignores.
 Run the full domain path instead of building or pushing the image by hand:
 
 ```sh
-make identity
+make deploy-identity
 ```
 
 Current local and placeholder-live order is `postgres -> migrate -> api -> ui`.

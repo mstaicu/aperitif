@@ -4,24 +4,24 @@ DOMAIN ?= tma.com
 PORT ?= 8443
 SKAFFOLD_MODULES := accounts-postgres-dev,accounts-migrate-dev,accounts-api-dev,accounts-worker-dev
 
-.PHONY: help check check-api check-database check-infra check-manifests check-skaffold check-worker smoke
+.PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-skaffold pre-deploy-worker post-deploy
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: check-api check-worker check-infra check-database ## Run cheap accounts-local checks before deploy.
+pre-deploy: pre-deploy-api pre-deploy-worker pre-deploy-infra ## Validate accounts before deploying it.
 
-check-api: ## Check the accounts API package.
+pre-deploy-api: ## Validate the accounts API package before deploy.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
 
-check-worker: ## Check the accounts worker package.
+pre-deploy-worker: ## Validate the accounts worker package before deploy.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
 
-check-infra: check-manifests check-skaffold ## Check accounts manifests and Skaffold modules.
+pre-deploy-infra: pre-deploy-manifests pre-deploy-skaffold ## Validate accounts manifests and Skaffold modules before deploy.
 
-check-manifests: ## Render accounts manifests.
+pre-deploy-manifests: ## Render accounts manifests before deploy.
 	kubectl kustomize infra/postgres/overlays/dev >/dev/null
 	kubectl kustomize infra/postgres/overlays/live >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
@@ -31,12 +31,9 @@ check-manifests: ## Render accounts manifests.
 	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/dev >/dev/null
 	kubectl kustomize infra/worker/overlays/live >/dev/null
 
-check-skaffold: ## Verify accounts Skaffold modules.
+pre-deploy-skaffold: ## Verify accounts Skaffold modules before deploy.
 	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null
 
-check-database: ## Check accounts database migration package.
-	@echo "accounts: no database upgrade checks configured yet"
-
-smoke: ## Smoke the deployed accounts boundary through Traefik.
+post-deploy: ## Verify the deployed accounts boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/docs/json"
 	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts")" = "401"

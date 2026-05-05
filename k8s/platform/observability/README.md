@@ -26,7 +26,7 @@ platform/observability/overlays/live
 The unit is deployed locally by the main domain/full-stack targets. It can also be deployed directly with:
 
 ```sh
-make observability
+make deploy-observability
 ```
 
 Domain workloads register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured. Without that environment variable, workload OTel is a no-op so future overlays can opt out cleanly.

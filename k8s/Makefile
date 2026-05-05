@@ -2,16 +2,16 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help identity identity-dev accounts accounts-dev dev ingress event-bus observability
+.PHONY: help deploy-identity dev-identity deploy-accounts dev-accounts dev deploy-ingress deploy-event-bus deploy-observability
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Domain targets
 
-identity: ## Deploy identity and exit.
-	$(MAKE) observability
-	$(MAKE) ingress
+deploy-identity: ## Deploy identity and exit.
+	$(MAKE) deploy-observability
+	$(MAKE) deploy-ingress
 	skaffold run -m identity-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	skaffold run --force -m identity-migrate-dev
@@ -20,18 +20,18 @@ identity: ## Deploy identity and exit.
 	kubectl rollout status -n identity deploy/identity-api-depl --timeout=300s
 	kubectl rollout status -n identity deploy/identity-ui-depl --timeout=300s
 
-identity-dev: ## Prepare identity, then run identity in skaffold dev.
-	$(MAKE) observability
-	$(MAKE) ingress
+dev-identity: ## Prepare identity, then run identity in skaffold dev.
+	$(MAKE) deploy-observability
+	$(MAKE) deploy-ingress
 	skaffold run -m identity-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	skaffold run --force -m identity-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m identity-api-dev,identity-ui-dev
 
-accounts: ## Deploy accounts plus required dependencies and exit.
-	$(MAKE) identity
-	$(MAKE) event-bus
+deploy-accounts: ## Deploy accounts plus required dependencies and exit.
+	$(MAKE) deploy-identity
+	$(MAKE) deploy-event-bus
 	skaffold run -m accounts-postgres-dev
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m accounts-migrate-dev
@@ -40,9 +40,9 @@ accounts: ## Deploy accounts plus required dependencies and exit.
 	kubectl rollout status -n accounts deploy/accounts-api-depl --timeout=300s
 	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
 
-accounts-dev: ## Prepare accounts, then run accounts in skaffold dev.
-	$(MAKE) identity
-	$(MAKE) event-bus
+dev-accounts: ## Prepare accounts, then run accounts in skaffold dev.
+	$(MAKE) deploy-identity
+	$(MAKE) deploy-event-bus
 	skaffold run -m accounts-postgres-dev
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m accounts-migrate-dev
@@ -52,9 +52,9 @@ accounts-dev: ## Prepare accounts, then run accounts in skaffold dev.
 # Full stack
 
 dev: ## Prepare the full local stack, then run all domains in skaffold dev.
-	$(MAKE) observability
-	$(MAKE) ingress
-	$(MAKE) event-bus
+	$(MAKE) deploy-observability
+	$(MAKE) deploy-ingress
+	$(MAKE) deploy-event-bus
 	skaffold run -m identity-postgres-dev,accounts-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	kubectl delete job -n accounts migrate --ignore-not-found
@@ -65,7 +65,7 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 
 # Platform dependencies
 
-ingress: ## Install Gateway CRDs, dev TLS, hosts entry, and Traefik.
+deploy-ingress: ## Deploy Gateway CRDs, dev TLS, hosts entry, and Traefik.
 	skaffold run -m ingress-crds
 
 	kubectl wait --for=condition=Established --timeout=60s crd/gatewayclasses.gateway.networking.k8s.io
@@ -96,10 +96,10 @@ ingress: ## Install Gateway CRDs, dev TLS, hosts entry, and Traefik.
 	skaffold run -m ingress
 	kubectl rollout status -n traefik deploy/traefik-depl --timeout=300s
 
-event-bus: ## Deploy NATS JetStream and wait for readiness.
+deploy-event-bus: ## Deploy NATS JetStream and wait for readiness.
 	skaffold run -m event-bus
 	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
 
-observability: ## Deploy OpenTelemetry Collector and wait for readiness.
+deploy-observability: ## Deploy OpenTelemetry Collector and wait for readiness.
 	skaffold run -m observability
 	kubectl rollout status -n otel deploy/otel-collector --timeout=300s

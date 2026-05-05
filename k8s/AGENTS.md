@@ -6,8 +6,8 @@ failure cases.
 
 - Treat this `k8s/` directory as the working repo root. GitHub workflows are
   intentionally under `k8s/.github`.
-- Use Make targets for integration deploy checks: `make identity`,
-  `make accounts`, or `make dev`. Do not invent ad hoc deployment order.
+- Use Make targets for integration deploy checks: `make deploy-identity`,
+  `make deploy-accounts`, or `make dev`. Do not invent ad hoc deployment order.
 - Domain units stay separate: `postgres -> migrate -> api/worker`. Do not collapse
   them into one Kubernetes app abstraction.
 - Dev overlays using KSOPS require `SOPS_AGE_KEY_FILE` and Kustomize with

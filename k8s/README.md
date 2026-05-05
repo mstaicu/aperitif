@@ -131,7 +131,7 @@ Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namesp
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
-Observability is part of the active platform baseline. `make observability` deploys the OpenTelemetry Collector, and `make dev` plus domain deploy targets run it before OTel-emitting workloads. APIs still register OTel conditionally: `OTEL_EXPORTER_OTLP_ENDPOINT` present means real OTel, absent means no-op.
+Observability is part of the active platform baseline. `make deploy-observability` deploys the OpenTelemetry Collector, and `make dev` plus domain deploy targets run it before OTel-emitting workloads. APIs still register OTel conditionally: `OTEL_EXPORTER_OTLP_ENDPOINT` present means real OTel, absent means no-op.
 
 ## Local Development
 
@@ -145,15 +145,15 @@ Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of
 
 ```sh
 make dev
-make identity-dev
-make accounts-dev
+make dev-identity
+make dev-accounts
 ```
 
 Deploy-and-exit targets are useful for checks and CI-style local testing:
 
 ```sh
-make identity
-make accounts
+make deploy-identity
+make deploy-accounts
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -162,19 +162,23 @@ The Make targets intentionally run the same dependency order as live:
 declared platform deps -> postgres -> migrate -> wait for migration Job -> api/ui/worker
 ```
 
-Use `make ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
+Use `make deploy-ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
 
-Use `make observability` when you only need the OpenTelemetry Collector.
+Use `make deploy-observability` when you only need the OpenTelemetry Collector.
 
 The default local domain is `tma.com`. Override it when needed:
 
 ```sh
-make ingress DOMAIN=example.test
+make deploy-ingress DOMAIN=example.test
 ```
 
 ## Pull Request Integration
 
-The GitHub workflow under `.github/workflows/domains.yaml` creates a kind cluster, detects changed domains under `domains/**`, deploys each selected domain through the matching Make target, port-forwards Traefik, and runs a small smoke check.
+The GitHub workflow under `.github/workflows/domains.yaml` detects changed
+domains under `domains/**`, runs each domain's `pre-deploy` target, creates a
+kind cluster, deploys each selected domain through the matching root
+`deploy-<domain>` target, port-forwards Traefik, and runs each domain's
+`post-deploy` target.
 
 This intentionally reuses the same dev overlays and Make/Skaffold path used locally.
 
@@ -296,8 +300,8 @@ When adding a new domain:
 Prefer domain-owned checks:
 
 ```sh
-make -C domains/identity check-infra
-make -C domains/accounts check-infra
+make -C domains/identity pre-deploy-infra
+make -C domains/accounts pre-deploy-infra
 git diff --check
 ```
 
