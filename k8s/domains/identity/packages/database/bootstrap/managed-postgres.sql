@@ -12,11 +12,16 @@
 -- This script creates only roles and base grants. Flyway owns tables, indexes,
 -- sequences, comments, triggers, and object-level runtime grants.
 --
--- Keep role names, memberships, and database/schema grants in lockstep with
--- the matching infra/postgres overlay init SQL. Managed bootstrap differs only
--- in how passwords are supplied.
+-- Sections marked MANAGED ONLY are intentionally absent from overlay init SQL.
+-- Sections marked LOCKSTEP WITH OVERLAY INIT must be mirrored in:
+--   domains/identity/infra/postgres/overlays/dev/identity-postgres-init.sql
+--   domains/identity/infra/postgres/overlays/live/identity-postgres-init.sql
+-- Overlay init files use placeholder dev passwords and one-time CREATE ROLE
+-- statements because the official Postgres image runs them only for an empty
+-- data directory.
 
--- Section: psql safety and required password inputs.
+-- MANAGED ONLY: psql safety and required password inputs.
+-- Overlay init SQL cannot depend on caller-provided psql variables.
 \set ON_ERROR_STOP on
 
 \if :{?identity_migrator_password}
@@ -31,7 +36,8 @@
   \quit 1
 \endif
 
--- Section: target database guard.
+-- MANAGED ONLY: target database guard.
+-- Overlay init SQL runs after POSTGRES_DB has created the target database.
 SELECT CASE WHEN current_database() = 'identity' THEN 'true' ELSE 'false' END
   AS connected_to_identity
 \gset
@@ -42,7 +48,8 @@ SELECT CASE WHEN current_database() = 'identity' THEN 'true' ELSE 'false' END
   \quit 1
 \endif
 
--- Section: role declarations.
+-- LOCKSTEP WITH OVERLAY INIT: role declarations.
+-- Overlay init mirrors these roles with plain CREATE ROLE statements.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_migrator') THEN
@@ -59,7 +66,8 @@ BEGIN
 END
 $$;
 
--- Section: role attributes and passwords.
+-- LOCKSTEP WITH OVERLAY INIT: role attributes and passwords.
+-- Managed bootstrap uses real psql variables; overlay init uses 'dev'.
 ALTER ROLE identity_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_migrator_password';
@@ -71,10 +79,10 @@ ALTER ROLE identity_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_api_password';
 
--- Section: runtime role membership.
+-- LOCKSTEP WITH OVERLAY INIT: runtime role membership.
 GRANT identity_runtime TO identity_api;
 
--- Section: database access.
+-- LOCKSTEP WITH OVERLAY INIT: database access.
 REVOKE CONNECT, TEMPORARY ON DATABASE identity FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -85,7 +93,7 @@ GRANT CONNECT
 ON DATABASE identity
 TO identity_runtime;
 
--- Section: schema access.
+-- LOCKSTEP WITH OVERLAY INIT: schema access.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 GRANT USAGE, CREATE
