@@ -12,7 +12,12 @@
 --
 -- This script creates only roles and base grants. Flyway owns tables, indexes,
 -- sequences, comments, triggers, and object-level runtime grants.
+--
+-- Keep role names, memberships, and database/schema grants in lockstep with
+-- the matching infra/postgres overlay init SQL. Managed bootstrap differs only
+-- in how passwords are supplied.
 
+-- Section: psql safety and required password inputs.
 \set ON_ERROR_STOP on
 
 \if :{?accounts_migrator_password}
@@ -33,6 +38,7 @@
   \quit 1
 \endif
 
+-- Section: target database guard.
 SELECT CASE WHEN current_database() = 'accounts' THEN 'true' ELSE 'false' END
   AS connected_to_accounts
 \gset
@@ -43,6 +49,7 @@ SELECT CASE WHEN current_database() = 'accounts' THEN 'true' ELSE 'false' END
   \quit 1
 \endif
 
+-- Section: role declarations.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'accounts_migrator') THEN
@@ -63,6 +70,7 @@ BEGIN
 END
 $$;
 
+-- Section: role attributes and passwords.
 ALTER ROLE accounts_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'accounts_migrator_password';
@@ -78,9 +86,11 @@ ALTER ROLE accounts_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'accounts_worker_password';
 
+-- Section: runtime role membership.
 GRANT accounts_runtime TO accounts_api;
 GRANT accounts_runtime TO accounts_worker;
 
+-- Section: database access.
 REVOKE CONNECT, TEMPORARY ON DATABASE accounts FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -91,6 +101,7 @@ GRANT CONNECT
 ON DATABASE accounts
 TO accounts_runtime;
 
+-- Section: schema access.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 GRANT USAGE, CREATE

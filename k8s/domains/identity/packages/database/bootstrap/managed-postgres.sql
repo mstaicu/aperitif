@@ -11,7 +11,12 @@
 --
 -- This script creates only roles and base grants. Flyway owns tables, indexes,
 -- sequences, comments, triggers, and object-level runtime grants.
+--
+-- Keep role names, memberships, and database/schema grants in lockstep with
+-- the matching infra/postgres overlay init SQL. Managed bootstrap differs only
+-- in how passwords are supplied.
 
+-- Section: psql safety and required password inputs.
 \set ON_ERROR_STOP on
 
 \if :{?identity_migrator_password}
@@ -26,6 +31,7 @@
   \quit 1
 \endif
 
+-- Section: target database guard.
 SELECT CASE WHEN current_database() = 'identity' THEN 'true' ELSE 'false' END
   AS connected_to_identity
 \gset
@@ -36,6 +42,7 @@ SELECT CASE WHEN current_database() = 'identity' THEN 'true' ELSE 'false' END
   \quit 1
 \endif
 
+-- Section: role declarations.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_migrator') THEN
@@ -52,6 +59,7 @@ BEGIN
 END
 $$;
 
+-- Section: role attributes and passwords.
 ALTER ROLE identity_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_migrator_password';
@@ -63,8 +71,10 @@ ALTER ROLE identity_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_api_password';
 
+-- Section: runtime role membership.
 GRANT identity_runtime TO identity_api;
 
+-- Section: database access.
 REVOKE CONNECT, TEMPORARY ON DATABASE identity FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -75,6 +85,7 @@ GRANT CONNECT
 ON DATABASE identity
 TO identity_runtime;
 
+-- Section: schema access.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 GRANT USAGE, CREATE
