@@ -7,4 +7,3 @@ resources:
   - identity-api-sa.yaml
   - identity-api-srv.yaml
   - identity-np.yaml
-  - identity-ns.yaml

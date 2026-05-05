@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: accounts
 
 resources:
+  - namespace.yaml
   - ../../base
   - accounts-api-db.yaml
 

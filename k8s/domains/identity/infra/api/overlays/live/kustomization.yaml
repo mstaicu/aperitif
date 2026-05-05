@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: identity
 
 resources:
+  - namespace.yaml
   - ../../base
   - identity-api-jwt.yaml
   - identity-api-db.yaml

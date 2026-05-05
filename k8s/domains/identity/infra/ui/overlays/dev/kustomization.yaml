@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: identity
 
 resources:
+  - namespace.yaml
   - ../../base
 
 patches:
