@@ -1,24 +1,25 @@
 -- Local/CI placeholder bootstrap. The official Postgres image runs this once
 -- when the data directory is empty. Managed production should run an equivalent
 -- bootstrap with real passwords outside the in-cluster Postgres unit.
---
--- This file has no MANAGED ONLY sections. It mirrors only the sections marked
--- LOCKSTEP WITH OVERLAY INIT in packages/database/bootstrap/managed-postgres.sql.
--- Managed bootstrap uses real psql password variables; this local/CI init uses
--- placeholder 'dev' passwords.
+-- Mirror role/grant changes in packages/database/bootstrap/managed-postgres.sql.
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: role declarations and capabilities.
--- Managed bootstrap expresses these capabilities with ALTER ROLE and real
--- passwords. Local/CI init uses one-time CREATE ROLE statements with 'dev'.
-CREATE ROLE identity_migrator LOGIN PASSWORD 'dev';
-CREATE ROLE identity_runtime NOLOGIN;
-CREATE ROLE identity_api LOGIN PASSWORD 'dev';
+CREATE ROLE identity_migrator;
+CREATE ROLE identity_runtime;
+CREATE ROLE identity_api;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: runtime role membership.
--- Login roles inherit a shared runtime role so object grants stay in migrations.
+ALTER ROLE identity_migrator
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+ALTER ROLE identity_runtime
+WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+ALTER ROLE identity_api
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
 GRANT identity_runtime TO identity_api;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: database access.
 REVOKE CONNECT, TEMPORARY ON DATABASE identity FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -29,7 +30,6 @@ GRANT CONNECT
 ON DATABASE identity
 TO identity_runtime;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: schema access.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 GRANT USAGE, CREATE

@@ -1,27 +1,31 @@
 -- Live placeholder bootstrap for the in-cluster Postgres unit. Managed
 -- production should run an equivalent bootstrap with real passwords outside the
 -- cluster, then remove this Postgres unit from the Flux graph.
---
--- This file has no MANAGED ONLY sections. It mirrors only the sections marked
--- LOCKSTEP WITH OVERLAY INIT in packages/database/bootstrap/managed-postgres.sql.
--- Managed bootstrap uses real psql password variables; this placeholder-live
--- init uses placeholder 'dev' passwords.
+-- Mirror role/grant changes in packages/database/bootstrap/managed-postgres.sql.
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: role declarations and capabilities.
--- Managed bootstrap expresses these capabilities with ALTER ROLE and real
--- passwords. Placeholder-live init uses one-time CREATE ROLE statements with
--- 'dev'.
-CREATE ROLE accounts_migrator LOGIN PASSWORD 'dev';
-CREATE ROLE accounts_runtime NOLOGIN;
-CREATE ROLE accounts_api LOGIN PASSWORD 'dev';
-CREATE ROLE accounts_worker LOGIN PASSWORD 'dev';
+CREATE ROLE accounts_migrator;
+CREATE ROLE accounts_runtime;
+CREATE ROLE accounts_api;
+CREATE ROLE accounts_worker;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: runtime role membership.
--- Login roles inherit a shared runtime role so object grants stay in migrations.
+ALTER ROLE accounts_migrator
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+ALTER ROLE accounts_runtime
+WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+ALTER ROLE accounts_api
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
+ALTER ROLE accounts_worker
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD 'dev';
+
 GRANT accounts_runtime TO accounts_api;
 GRANT accounts_runtime TO accounts_worker;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: database access.
 REVOKE CONNECT, TEMPORARY ON DATABASE accounts FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -32,7 +36,6 @@ GRANT CONNECT
 ON DATABASE accounts
 TO accounts_runtime;
 
--- LOCKSTEP WITH MANAGED BOOTSTRAP: schema access.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 GRANT USAGE, CREATE
