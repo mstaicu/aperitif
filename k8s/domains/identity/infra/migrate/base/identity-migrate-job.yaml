@@ -34,9 +34,6 @@ spec:
                   name: identity-migrate-db
                   key: FLYWAY_PASSWORD
             - name: FLYWAY_LOCATIONS
-              valueFrom:
-                secretKeyRef:
-                  name: identity-migrate-db
-                  key: FLYWAY_LOCATIONS
+              value: filesystem:/db/migrations
             - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS
               value: "true"

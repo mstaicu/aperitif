@@ -1,69 +1,143 @@
 # Accounts Database
 
-This package is built into the `accounts-migrate` deployable unit.
+This package builds the `accounts-migrate` unit. Flyway owns the accounts
+database schema history.
 
-Flyway owns the migration history for the accounts database:
+## Model
 
-- `migrations/`: production versioned migrations, named `V###__description.sql`.
-- `repeatable/`: rerunnable database objects or stable reference data.
-- `seeds/`: non-live deterministic seed data, enabled only by dev/PR overlays.
-- `checks/`: SQL fixtures and assertions for migration upgrade checks.
-
-## Access Model
-
-The database has one bootstrap user and four domain roles:
-
-| Role | Login | Used by | Purpose |
-| --- | --- | --- | --- |
-| `postgres` | yes | local/CI Postgres init only | bootstrap superuser |
-| `accounts_migrator` | yes | Flyway Job | create and change schema |
-| `accounts_api` | yes | API Deployment | runtime table access |
-| `accounts_worker` | yes | Worker Deployment | runtime table access |
-| `accounts_runtime` | no | inherited by API and worker | shared runtime grants |
-
-The flow is:
-
-1. Local/CI starts the official Postgres image with `POSTGRES_DB=accounts`.
-   With no `POSTGRES_USER`, the image creates the default `postgres`
-   superuser. `POSTGRES_HOST_AUTH_METHOD=trust` means local/CI does not verify
-   passwords; production managed databases must.
-2. On an empty data directory, the image runs
-   `infra/postgres/overlays/{dev,live}/accounts-postgres-init.sql` as
-   `postgres`. That script creates `accounts_migrator`, `accounts_runtime`,
-   `accounts_api`, and `accounts_worker`, then grants `accounts_runtime` to the
-   API and worker roles.
-3. The same init script lets `accounts_migrator` connect and create objects,
-   while `accounts_runtime` can only connect and use the schema.
-4. The migrate Job reads `FLYWAY_URL`, `FLYWAY_USER`, and `FLYWAY_PASSWORD` from
-   `accounts-migrate-db`, connects as `accounts_migrator`, and runs Flyway.
-5. Flyway creates tables/indexes/sequences. Because Flyway owns those objects,
-   migrations grant table/sequence access to `accounts_runtime`.
-6. The API and worker read `DATABASE_URL` from `accounts-api-db` and
-   `accounts-worker-db`. The URL users are `accounts_api` and `accounts_worker`;
-   both inherit `accounts_runtime`, so they can use tables but cannot create,
-   drop, or alter schema objects.
-
-Managed production uses the same role model. The difference is that the roles
-and base grants are created by managed DB provisioning before Flux reconciles
-`accounts-migrate`.
-
-When production moves to a managed database, add:
+Postgres is layered like this:
 
 ```text
-bootstrap/prod.sql
+Postgres server or instance
+  accounts database
+    public schema
+      accounts
+      account_memberships
+      outbox_events
+      flyway_schema_history
 ```
 
-Base it on `infra/postgres/overlays/live/accounts-postgres-init.sql`, but do
-not hardcode `dev` passwords. It should create/document only the database,
-roles, passwords, and base grants. Flyway continues to own tables, indexes,
-comments, triggers, and object-level grants.
+`public` is the default schema. After a client connects to the `accounts`
+database, `SELECT * FROM accounts` means `SELECT * FROM public.accounts`.
+
+The domain boundary is the database. Other domains must not connect to it
+directly.
+
+## Files
+
+- `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
+- `migrations/`: production Flyway migrations, named `V###__description.sql`.
+- `repeatable/`: rerunnable database objects or stable reference data.
+- `seeds/`: non-live deterministic seed data.
+- `checks/`: fixtures and assertions for migration upgrade checks.
+
+The current migration image copies only `migrations/`. Add other folders back
+to the Dockerfile only when a workflow actually uses them.
+
+## Flyway Rules
+
+Copying a folder into the image does not make Flyway run it. Flyway scans only
+the folders listed in `FLYWAY_LOCATIONS`.
+
+Within those folders, Flyway recognizes files by filename prefix:
+
+```text
+V001__init.sql       versioned migration, applied once in version order
+R__refresh_view.sql  repeatable migration, rerun when the file changes
+```
+
+Arbitrary files such as `seed.sql` or `assert.sql` are ignored by Flyway unless
+another command runs them. `seeds/` should only be included by non-prod
+locations. `checks/` is for future CI/database validation, not the normal
+production migration Job.
+
+## Roles
+
+| Role                | Login | Used by                 | Purpose                         |
+| ------------------- | ----- | ----------------------- | ------------------------------- |
+| `postgres`          | yes   | local/CI init only      | placeholder bootstrap superuser |
+| `accounts_migrator` | yes   | Flyway Job              | create/change schema objects    |
+| `accounts_api`      | yes   | API Deployment          | runtime table access            |
+| `accounts_worker`   | yes   | Worker Deployment       | runtime table access            |
+| `accounts_runtime`  | no    | inherited by API/worker | shared runtime grants           |
+
+Services connect with login roles only. `accounts_runtime` is a no-login role
+so runtime grants have one stable target.
+
+## Flow
+
+1. Local/CI starts the placeholder Postgres image with `POSTGRES_DB=accounts`
+   and overlay `POSTGRES_PASSWORD=postgres`.
+2. On an empty data directory, Postgres runs
+   `infra/postgres/overlays/{dev,live}/accounts-postgres-init.sql` as the
+   `postgres` superuser.
+3. That init SQL creates `accounts_migrator`, `accounts_api`,
+   `accounts_worker`, and `accounts_runtime`, then grants base database/schema
+   access.
+4. The migrate Job reads `FLYWAY_*` from `accounts-migrate-db` and connects as
+   `accounts_migrator`.
+5. Flyway applies this package's migrations. Migrations create objects and grant
+   table/sequence access to `accounts_runtime`.
+6. The API and worker read `DATABASE_URL` from `accounts-api-db` and
+   `accounts-worker-db`, then connect as `accounts_api` and `accounts_worker`.
+   Both inherit `accounts_runtime`.
+
+The split is intentional: bootstrap creates roles and base permissions; Flyway
+owns schema objects and object-level grants.
+
+## Configuration
+
+- Placeholder Postgres: `infra/postgres`.
+- Flyway Job: `infra/migrate`.
+- API DB Secret: `infra/api`.
+- Worker DB Secret: `infra/worker`.
+- Managed DB bootstrap: `bootstrap/managed-postgres.sql`.
+
+The migrate Job hardcodes `FLYWAY_LOCATIONS=filesystem:/db/migrations`. The
+Secret contains only database connection credentials.
+
+The in-cluster Postgres init SQL is for local/CI and the current live
+placeholder. Managed production should run `bootstrap/managed-postgres.sql`
+with real passwords before Flux reconciles `accounts-migrate`.
+
+Secrets are scoped per deployable unit even when values match. The migrator
+uses `accounts_migrator`; the API uses `accounts_api`; the worker uses
+`accounts_worker`.
+
+## Image
+
+The migration image is built from this package directory:
+
+```sh
+docker build -t mdstaicu/accounts-migrate:<tag> domains/accounts/packages/database
+```
+
+Use a real immutable release tag for production. Use `:local` only for manual
+testing. Normally use `make accounts`; Skaffold builds and tags this image for
+the domain deploy path.
+
+## Debug
+
+Render placeholder Postgres auth env:
+
+```sh
+kubectl kustomize infra/postgres/overlays/dev | rg "POSTGRES_DB|POSTGRES_PASSWORD|POSTGRES_HOST_AUTH_METHOD"
+```
+
+Check the API can connect with its configured secret:
+
+```sh
+kubectl exec -n accounts deploy/accounts-api-depl -- \
+  node --input-type=module -e 'import pg from "pg"; const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL }); await pool.query("select 1"); await pool.end(); console.log("connected");'
+```
+
+Do not use `psql -h 127.0.0.1` inside the Postgres container to prove service
+auth. The useful auth check is from another pod through `postgres-srv`.
 
 ## Migration Style
 
-Use expand/contract for schema changes that may affect already-running code or
-existing data. Each migration should be one small, release-safe step.
-
-Prefer this shape:
+Use expand/contract for changes that can affect running code or existing data.
+Each migration should be one small, release-safe step:
 
 ```text
 V002__add_new_nullable_column.sql
@@ -72,15 +146,11 @@ V004__require_new_column.sql
 V005__drop_old_column.sql
 ```
 
-Avoid one-shot breaking changes such as renaming or dropping a column in the
-same release that application code starts depending on the new shape. New and
-old application versions should both survive while rollout is in progress.
-
 Simple additive changes can stay as one migration: creating an unused table,
 adding a nullable column, adding a non-breaking index, adding comments, or
-adding a value that old code safely ignores.
+adding a value old code safely ignores.
 
-Run it through the domain target instead of building or pushing the image by hand:
+Run the full domain path instead of building or pushing the image by hand:
 
 ```sh
 make accounts

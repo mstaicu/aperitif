@@ -3,6 +3,7 @@ brew "kustomize"
 brew "skaffold"
 
 brew "mkcert"
+brew "libpq"
 
 brew "age"
 brew "sops"

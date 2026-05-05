@@ -8,6 +8,10 @@ spec:
     spec:
       containers:
         - name: accounts-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+
           volumeMounts:
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d/001-accounts-init.sql

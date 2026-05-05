@@ -8,6 +8,10 @@ spec:
     spec:
       containers:
         - name: identity-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+
           volumeMounts:
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d/001-identity-init.sql
