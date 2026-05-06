@@ -1,5 +1,4 @@
 import {
-  TENANCY_EVENT_PRODUCER,
   TenantMembershipDeletedPayloadCheck,
   TenantMembershipDeletedSchemaVersion,
   TenantMembershipDeletedSubject,
@@ -100,7 +99,7 @@ export const deleteTenantMembership =
       );
 
       const {
-        rows: [{ version }],
+        rows: [{ version: tenantVersion }],
       } = await client.query(
         `
           UPDATE tenants
@@ -135,17 +134,15 @@ export const deleteTenantMembership =
         `
           INSERT INTO outbox_events (
             subject,
-            version,
-            producer,
+            tenant_version,
             schema_version,
             payload
           )
-          VALUES ($1, $2, $3, $4, $5::jsonb)
+          VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
           TenantMembershipDeletedSubject,
-          version,
-          TENANCY_EVENT_PRODUCER,
+          tenantVersion,
           TenantMembershipDeletedSchemaVersion,
           JSON.stringify(membershipDeletedPayload),
         ],

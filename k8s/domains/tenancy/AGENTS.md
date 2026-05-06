@@ -6,8 +6,10 @@ documents, notifications, workflow, or integrations.
 
 - Do not publish tenancy authority events directly from request handlers. Write
   `outbox_events` inside the same database transaction as the state change.
-- `tenants.version` is the projection ordering contract for consumers. Events
-  that change tenant authority must carry the correct tenant version.
+- `tenants.version` is the source tenant authority version. Events that change
+  tenant authority must carry it as `tenant_version` for consumers.
+- Every tenancy event payload must include `payload.tenant.id`. Consumers use
+  `payload.tenant.id` plus `tenant_version` as the projection ordering key.
 - The outbox trigger is statement-level on purpose. The Postgres notification
   only wakes the worker; the worker drains durable rows from `outbox_events`.
 - The worker must `LISTEN` before startup drain so rows inserted during startup

@@ -143,7 +143,7 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/tenants/docs`.
 - Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
-- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, tenant authority `version`, `occurred_at`, `producer`, `schema_version`, and a minimal domain payload.
+- Events: the schema includes a transactional `outbox_events` table. The worker ensures the `TENANCY` JetStream stream plus a `tenancy-worker` durable consumer for `tenancy.>`, publishes unpublished rows to that stream, and provides the baseline consumer spine. Event rows carry the stable event `id`, `subject`, `tenant_version`, `occurred_at`, `schema_version`, and a minimal domain payload.
 - Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
 - Database: tenancy owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
@@ -171,15 +171,16 @@ Current event subjects:
 - `tenancy.tenant_membership.created`
 - `tenancy.tenant_membership.deleted`
 
-Event payloads are intentionally projection-shaped. Consumers store each processed event `id` for idempotency, store the latest tenant authority `version` they have applied for each `tenant.id`, and ignore duplicate or stale events where `event.version <= projected_tenant_version`.
+Event payloads are intentionally projection-shaped. Consumers store each processed event `id` for idempotency, store the latest `tenant_version` they have applied for each `tenant.id`, and ignore duplicate or stale events where `event.tenant_version <= projected_tenant_version`.
+
+Every tenancy event payload must include `payload.tenant.id`, including future events for workspace, team, requirement, or other tenant-owned authority changes. Consumers use `payload.tenant.id` plus `tenant_version` as the projection ordering key. Any authority-affecting tenancy event must increment `tenants.version` and publish the new value as `tenant_version`.
 
 ```json
 {
   "id": "event-id",
   "subject": "tenancy.tenant_membership.created",
-  "version": 2,
+  "tenant_version": 2,
   "occurred_at": "2026-05-02T10:15:30.000Z",
-  "producer": "tenancy",
   "schema_version": 1,
   "payload": {
     "tenant": {

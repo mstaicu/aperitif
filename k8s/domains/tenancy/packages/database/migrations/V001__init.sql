@@ -66,9 +66,8 @@ CREATE TABLE outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     subject TEXT NOT NULL,
-    version BIGINT NOT NULL,
+    tenant_version BIGINT NOT NULL,
 
-    producer TEXT NOT NULL,
     schema_version INTEGER NOT NULL,
 
     payload JSONB NOT NULL,
@@ -76,15 +75,13 @@ CREATE TABLE outbox_events (
     occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     published_at TIMESTAMPTZ,
 
-    CONSTRAINT outbox_events_producer_not_empty CHECK (length(producer) > 0),
     CONSTRAINT outbox_events_schema_version_positive CHECK (schema_version > 0)
 );
 
 COMMENT ON TABLE outbox_events IS 'Transactional outbox for durable tenant-domain events waiting to be published to the event bus.';
 COMMENT ON COLUMN outbox_events.id IS 'Stable event id used by consumers for idempotency.';
 COMMENT ON COLUMN outbox_events.subject IS 'Event bus subject, for example tenancy.tenant.created.';
-COMMENT ON COLUMN outbox_events.version IS 'Tenant authority version consumers use to reject stale or out-of-order events.';
-COMMENT ON COLUMN outbox_events.producer IS 'Stable producer key for the domain that owns and emitted the event contract.';
+COMMENT ON COLUMN outbox_events.tenant_version IS 'Tenant authority version consumers use to reject stale or out-of-order events.';
 COMMENT ON COLUMN outbox_events.schema_version IS 'Event payload schema version used by consumers to select the correct decoder.';
 COMMENT ON COLUMN outbox_events.payload IS 'JSON event body published to the event bus.';
 COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was recorded in the same transaction as the state change.';
@@ -108,7 +105,7 @@ EXECUTE FUNCTION notify_outbox_event();
 COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
 
 CREATE INDEX outbox_events_unpublished_idx
-ON outbox_events (occurred_at, version, id)
+ON outbox_events (occurred_at, tenant_version, id)
 WHERE published_at IS NULL;
 
 COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';

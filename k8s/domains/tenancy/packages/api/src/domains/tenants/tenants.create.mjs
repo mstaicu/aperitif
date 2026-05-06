@@ -1,5 +1,4 @@
 import {
-  TENANCY_EVENT_PRODUCER,
   TenantCreatedPayloadCheck,
   TenantCreatedSchemaVersion,
   TenantCreatedSubject,
@@ -66,24 +65,22 @@ export const createTenant =
         `
           INSERT INTO outbox_events (
             subject,
-            version,
-            producer,
+            tenant_version,
             schema_version,
             payload
           )
-          VALUES ($1, $2, $3, $4, $5::jsonb)
+          VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
           TenantCreatedSubject,
           tenant.version,
-          TENANCY_EVENT_PRODUCER,
           TenantCreatedSchemaVersion,
           JSON.stringify(tenantCreatedPayload),
         ],
       );
 
       const {
-        rows: [{ version: membershipVersion }],
+        rows: [{ version: membershipTenantVersion }],
       } = await client.query(
         `
           UPDATE tenants
@@ -119,17 +116,15 @@ export const createTenant =
         `
           INSERT INTO outbox_events (
             subject,
-            version,
-            producer,
+            tenant_version,
             schema_version,
             payload
           )
-          VALUES ($1, $2, $3, $4, $5::jsonb)
+          VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
           TenantMembershipCreatedSubject,
-          membershipVersion,
-          TENANCY_EVENT_PRODUCER,
+          membershipTenantVersion,
           TenantMembershipCreatedSchemaVersion,
           JSON.stringify(membershipCreatedPayload),
         ],

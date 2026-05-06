@@ -24,15 +24,15 @@ export async function runOutboxPublisher(ctx, signal) {
      * with an optional payload,
      * to clients that previously ran LISTEN on that channel.
      */
+    const notifications = on(listener, "notification", { signal });
+
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
 
     while (await publishNextOutboxEvent(ctx)) {
       // Keep draining until no unpublished row is found.
     }
 
-    for await (const [notification] of on(listener, "notification", {
-      signal,
-    })) {
+    for await (const [notification] of notifications) {
       if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
         while (await publishNextOutboxEvent(ctx)) {
           // Keep draining until no unpublished row is found.
@@ -75,14 +75,13 @@ async function publishNextOutboxEvent(ctx) {
       `
         SELECT id,
           subject,
-          version,
+          tenant_version,
           occurred_at,
-          producer,
           schema_version,
           payload
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY occurred_at, version, id
+        ORDER BY occurred_at, tenant_version, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -98,10 +97,9 @@ async function publishNextOutboxEvent(ctx) {
               ? event.occurred_at.toISOString()
               : new Date(event.occurred_at).toISOString(),
           payload: event.payload,
-          producer: event.producer,
           schema_version: Number(event.schema_version),
           subject: event.subject,
-          version: Number(event.version),
+          tenant_version: Number(event.tenant_version),
         }),
         {
           expect: {

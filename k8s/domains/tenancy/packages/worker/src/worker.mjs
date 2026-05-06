@@ -13,24 +13,25 @@ const controller = new AbortController();
 await ensureTenancyStream(ctx);
 await ensureTenancyConsumer(ctx);
 
+const consumer = runTenancyConsumer(ctx, controller.signal);
+const publisher = runOutboxPublisher(ctx, controller.signal);
+
+const worker = Promise.race([consumer, publisher]).then(() => {
+  throw new Error("tenancy worker stopped unexpectedly");
+});
+
 console.log("tenancy worker listening");
 
-const worker = Promise.all([
-  runTenancyConsumer(ctx, controller.signal),
-  runOutboxPublisher(ctx, controller.signal),
+const [signal] = await Promise.race([
+  ...["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
+  worker,
 ]);
-
-const [signal] = await Promise.race(
-  ["SIGINT", "SIGTERM", "SIGUSR2"]
-    .map((code) => once(process, code))
-    .concat(worker.then(() => ["worker complete"])),
-);
 
 console.log("closing worker", { signal });
 
 controller.abort();
 
-await worker.catch(() => {});
+await Promise.allSettled([consumer, publisher]);
 
 console.log("closing context...");
 await ctx.lifecycle.close();
