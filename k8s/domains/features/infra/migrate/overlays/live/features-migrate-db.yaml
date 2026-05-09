@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: features-migrate-db
+stringData:
+    FLYWAY_URL: ENC[AES256_GCM,data:eFvSumjj4+E7FWnYy0XnTa/h/6dPJ5jmfEmfc3XFhHFMyYXTgSC8TNkSRDyjo8QfsQjg2JIZTBrCgiwP,iv:pl8yOsR7yeK/lBXOwb4XqNFvFz3wQWCbmOOnoav6zRU=,tag:mFTEXogqMRv70ngvTi4+yw==,type:str]
+    FLYWAY_USER: ENC[AES256_GCM,data:miogKnjPrDzuDDgH9ltDqEM=,iv:4PhDrz2yDA+f6idcY9He3M2SlRior6L+jy1VSOgFqDg=,tag:Jtwv9NKmAWNPcnzhNfpQYg==,type:str]
+    FLYWAY_PASSWORD: ENC[AES256_GCM,data:jrth,iv:CTVZkjXG7cuVmi9RuhUqiN2pXTlLKSSofxvWaeDtPjM=,tag:G/zOdbxvu0z2jxonLdpX/Q==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB5M2FyMmFVbGlQV0dZbk1a
+            OTZIWU5lS3VJZ2w4b2xDalhrVnh3akI0b0RFCllWVGxjUU5pY2Q0d0prNnBJaFpm
+            b3kwajhhbmZSSVFBV21TNHFyV1FoWEUKLS0tIEVNaSttaldjMkZFLytBU2tRRWN2
+            blVSZlpOS1UyZlZrY3NZNWFpNzNNckEKx+I8yBgVpCGcX03yypKEcuoQWa+6JGli
+            lhNOxeZJBF2T4gY6qa/eGEnvXd57z8bJSqI+iJRhgr+NNeASi30Jdw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-09T11:29:24Z"
+    mac: ENC[AES256_GCM,data:j6N4wFC9kVKr2SvvV5jrUA++GrsNVLlP/u+zf8samGQS8NBm0ByZDH4awW1aOxSKM4UaoNHA0f2MLD0vzvhjSnePTTdWQQ42/Ki4VKjOoN1MuSHQXoEEydBY6bdnwc4GSJ2ySQ0y8KuiqNXRh7eYTrY6gbgTCicwuACt5MefViQ=,iv:2ewHr750+0ewlNLpvUwkuJv/e53WlMYniN/moYF5fzQ=,tag:Q+j+KwwVGbQk8ZgTZvrzGQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

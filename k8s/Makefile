@@ -2,7 +2,7 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help deploy-identity dev-identity deploy-tenancy dev-tenancy dev deploy-ingress deploy-event-bus deploy-observability
+.PHONY: help deploy-identity dev-identity deploy-tenancy dev-tenancy deploy-features dev-features dev deploy-ingress deploy-event-bus deploy-observability
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -49,19 +49,39 @@ dev-tenancy: ## Prepare tenancy, then run tenancy in skaffold dev.
 	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m tenancy-api-dev,tenancy-worker-dev
 
+deploy-features: ## Deploy features plus required dependencies and exit.
+	$(MAKE) deploy-tenancy
+	skaffold run -m features-postgres-dev
+	kubectl delete job -n features migrate --ignore-not-found
+	skaffold run --force -m features-migrate-dev
+	kubectl wait -n features --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n features job/migrate --all-containers=true; exit 1; }
+	skaffold run -m features-api-dev,features-worker-dev
+	kubectl rollout status -n features deploy/features-api-depl --timeout=300s
+	kubectl rollout status -n features deploy/features-worker-depl --timeout=300s
+
+dev-features: ## Prepare features, then run features in skaffold dev.
+	$(MAKE) deploy-tenancy
+	skaffold run -m features-postgres-dev
+	kubectl delete job -n features migrate --ignore-not-found
+	skaffold run --force -m features-migrate-dev
+	kubectl wait -n features --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n features job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m features-api-dev,features-worker-dev
+
 # Full stack
 
 dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	$(MAKE) deploy-observability
 	$(MAKE) deploy-ingress
 	$(MAKE) deploy-event-bus
-	skaffold run -m identity-postgres-dev,tenancy-postgres-dev
+	skaffold run -m identity-postgres-dev,tenancy-postgres-dev,features-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	kubectl delete job -n tenancy migrate --ignore-not-found
-	skaffold run --force -m identity-migrate-dev,tenancy-migrate-dev
+	kubectl delete job -n features migrate --ignore-not-found
+	skaffold run --force -m identity-migrate-dev,tenancy-migrate-dev,features-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev
+	kubectl wait -n features --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n features job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev,features-api-dev,features-worker-dev
 
 # Platform dependencies
 

@@ -93,6 +93,6 @@ export default async (fastify, { domains, jwks }) => {
 
   await fastify.register(swaggerUI, {
     indexPrefix: "/v1",
-    routePrefix: "/tenants/docs",
+    routePrefix: "/tenancy/docs",
   });
 };

@@ -16,6 +16,9 @@ spec:
     - matches:
         - path:
             type: PathPrefix
+            value: /v1/tenancy/docs
+        - path:
+            type: PathPrefix
             value: /v1/tenants
 
       backendRefs:
@@ -36,6 +39,9 @@ spec:
 
   rules:
     - matches:
+        - path:
+            type: PathPrefix
+            value: /v1/tenancy/docs
         - path:
             type: PathPrefix
             value: /v1/tenants

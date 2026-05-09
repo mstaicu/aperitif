@@ -132,6 +132,12 @@ auth. The useful auth check is from another pod through `postgres-srv`.
 ## Migration Style
 
 Use expand/contract for changes that can affect running code or existing data.
+Assume the migration image can deploy before, after, or without the matching API
+image. Each migration must be safe with both the currently running runtime and
+the next runtime until the contract step removes old compatibility.
+If new runtime code requires new schema, ship the expand migration first as its
+own domain release. Then release the runtime code. Then later ship the contract
+migration that removes old schema.
 Each migration should be one small, release-safe step:
 
 ```text

@@ -44,6 +44,7 @@ platform/
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant authority, memberships, activation requirements
+  features/               product feature catalogue, prices, tenancy projection
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -60,6 +61,7 @@ Agent-specific instructions live in scoped `AGENTS.md` files. These files are no
 Current agent context files:
 
 - `AGENTS.md`
+- `domains/features/AGENTS.md`
 - `domains/identity/AGENTS.md`
 - `domains/tenancy/AGENTS.md`
 - `platform/ingress/AGENTS.md`
@@ -75,6 +77,7 @@ Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
 - `tenancy`: owns tenant authority, tenant memberships, and activation requirements.
+- `features`: owns product feature vocabulary, local products, product prices, and future tenant feature grants/projections.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -147,6 +150,7 @@ Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of
 make dev
 make dev-identity
 make dev-tenancy
+make dev-features
 ```
 
 Deploy-and-exit targets are useful for checks and CI-style local testing:
@@ -154,6 +158,7 @@ Deploy-and-exit targets are useful for checks and CI-style local testing:
 ```sh
 make deploy-identity
 make deploy-tenancy
+make deploy-features
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -247,7 +252,9 @@ the URL.
 
 ## Contracts
 
-APIs are Fastify services with TypeBox schemas and OpenAPI docs.
+APIs are Fastify services with TypeBox schemas and OpenAPI docs. Public API
+resources are resource-first under `api.tma.com/v1`, while generated docs are
+domain-scoped under `/v1/<domain>/docs`.
 
 Route work should preserve:
 
@@ -281,10 +288,10 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Create `domains/<domain>` using `identity` and `tenancy` as examples.
+- Create `domains/<domain>` using `identity`, `tenancy`, and `features` as examples.
 - Copy the unit spine you need: `identity` is the example for auth API and
-  Remix UI, while `tenancy` is the example for tenant-scoped API, worker,
-  outbox, events, and projections.
+  Remix UI, `tenancy` is the example for tenant authority, and `features` is
+  the example for catalogue API plus local tenancy projection consumer.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
 - Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
@@ -302,6 +309,7 @@ Prefer domain-owned checks:
 ```sh
 make -C domains/identity pre-deploy-infra
 make -C domains/tenancy pre-deploy-infra
+make -C domains/features pre-deploy-infra
 git diff --check
 ```
 

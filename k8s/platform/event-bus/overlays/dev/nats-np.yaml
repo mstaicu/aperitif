@@ -69,7 +69,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-tenancy-worker-to-nats
+  name: allow-domain-workers-to-nats
 spec:
   podSelector:
     matchLabels:
@@ -82,6 +82,12 @@ spec:
           podSelector:
             matchLabels:
               app: tenancy-worker
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: features
+          podSelector:
+            matchLabels:
+              app: features-worker
       ports:
         - port: 4222
           protocol: TCP

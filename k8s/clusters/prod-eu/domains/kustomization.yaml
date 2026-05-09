@@ -10,3 +10,7 @@ resources:
   - tenancy-migrate.yaml
   - tenancy-api.yaml
   - tenancy-worker.yaml
+  - features-postgres.yaml
+  - features-migrate.yaml
+  - features-api.yaml
+  - features-worker.yaml

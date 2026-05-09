@@ -8,7 +8,7 @@ import {
 
 import { TENANCY_STREAM } from "./tenancy-stream.mjs";
 
-export const TENANCY_CONSUMER = "tenancy-worker";
+export const TENANCY_CONSUMER = "features-tenancy-projection";
 
 /**
  * @param {import("../context.mjs").WorkerContext} ctx

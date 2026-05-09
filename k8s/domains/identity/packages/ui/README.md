@@ -33,7 +33,7 @@ Defaults:
 
 - `PORT=44100`
 - `API_INTERNAL_V1_URL=http://traefik-srv.traefik.svc.cluster.local/v1` for in-cluster UI pods.
-- For host-only testing, use `API_INTERNAL_V1_URL=https://api.tma.com/v1` after `make ingress`.
+- For host-only testing, use `API_INTERNAL_V1_URL=https://api.tma.com/v1` after `make deploy-ingress`.
 - `COOKIE_SECURE=true`; set `COOKIE_SECURE=false` when testing cookies over plain `http://localhost`.
 - OTel is opt-in. The Kubernetes dev/live overlays set `OTEL_SERVICE_NAME=identity-ui`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-srv.otel.svc.cluster.local:4318`, `OTEL_TRACES_EXPORTER=otlp`, `OTEL_METRICS_EXPORTER=none`, and `OTEL_LOGS_EXPORTER=none`.
 

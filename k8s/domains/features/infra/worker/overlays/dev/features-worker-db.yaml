@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: features-worker-db
+stringData:
+    DATABASE_URL: ENC[AES256_GCM,data:sFKAULSdyCj8Nddqk9s4nCzmMxNnkgCW3umy+TfaBBKjCgwVtPwePBA35jx6PNnJ5rXA5R+IQcQUQOcpqZqX9pB2gBYHU8bPcA==,iv:neFpB7x3+ZOaO9Xq5ZezrMX1ubvcaCf+mWg/JaRkQmQ=,tag:L0pAk+8xcygUCRNyhQnAhA==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBjSnIwMmVpZVVaYnBkOGlP
+            aVkvRVh4SWdPaEoyZ2tXdWhkcEtTSTVhWEJvCjRZUG41MTRmaUQvUGRndWt1bk1O
+            UGxMYzRiRWNYSldYbENRd0lsMnFkZE0KLS0tIGxPZS8yVlAySytQTkdVaEhUNzlW
+            a05jR0NJckRLTVkxMU04SlpmV3NFYTAKxObM/gsVVRnTE9AexgHS8uIf9xwo1GYA
+            syvBNxPZl/yqVN/vmInuEiELzouqM21EnrdxuUdbXaHNAJYzub2yfA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-09T11:29:25Z"
+    mac: ENC[AES256_GCM,data:mVj0M7GV03Q9Bvl36jCV/AAlhErWKTz7O4x8NPHZs2tFILelcH+QZDi3Pe4NpdQUCaSiuhoLZaRmVek6g4qlO7f1uoiOJKeztSw5WR+ZsZTLlPa+RcBEWwZNS3wXZj9zjStC2u3IRLcmWBEciRyotsM8xK93l/B4wYbZgzHCh/4=,iv:+7oWfc1VCyuCmbkKfqTGz0IG2wycYi9florLJiJUxA4=,tag:wtn5qiqRb7xdNyj0kLUXRQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

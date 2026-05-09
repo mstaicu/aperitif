@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: features-api-srv
+spec:
+  selector:
+    app: features-api
+  ports:
+    - name: features-api
+      port: 3000
+      targetPort: 3000

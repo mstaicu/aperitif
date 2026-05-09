@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: features-worker-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: features-worker
+  template:
+    metadata:
+      labels:
+        app: features-worker
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: features-worker
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
+      automountServiceAccountToken: false
+
+      containers:
+        - name: features-worker
+          image: mdstaicu/features-worker
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: features-worker-db
+                  key: DATABASE_URL
+
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
