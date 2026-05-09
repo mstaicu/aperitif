@@ -22,7 +22,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   },
  *   workspace: {
  *     id: string,
- *     is_default: boolean,
  *     name: string,
  *     status: "active" | "archived",
  *     tenant_id: string,
@@ -61,11 +60,10 @@ export const createTenant =
         `
           INSERT INTO workspaces (
             tenant_id,
-            name,
-            is_default
+            name
           )
-          VALUES ($1, $2, true)
-          RETURNING id, tenant_id, name, is_default, status
+          VALUES ($1, $2)
+          RETURNING id, tenant_id, name, status
         `,
         [tenant.id, name],
       );
@@ -173,7 +171,6 @@ export const createTenant =
         },
         workspace: {
           id: workspace.id,
-          is_default: workspace.is_default,
           status: workspace.status,
           tenant_id: workspace.tenant_id,
         },
@@ -212,7 +209,6 @@ export const createTenant =
         },
         workspace: {
           id: workspace.id,
-          is_default: workspace.is_default,
           name: workspace.name,
           status: workspace.status,
           tenant_id: workspace.tenant_id,

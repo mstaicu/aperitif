@@ -1,12 +1,14 @@
 # AGENTS.md
 
-Features owns product feature vocabulary, local products, product prices, and
-future tenant/workspace feature grants/projections. It does not own authentication,
-tenant membership, business-domain records, documents, notifications, or
-workflow.
+Features owns product feature vocabulary, local products, product prices,
+tenant feature grants, effective tenant features, and its event outbox. It does
+not own authentication, tenant membership, workspaces, business-domain records,
+documents, notifications, or workflow.
 
 - `product_features` are catalogue templates. Future grants should
   snapshot feature values instead of reading product templates live.
+- Emit feature events from `tenant_features` through `outbox_events`, not from
+  catalogue tables.
 - Features consumes tenancy events into local projection tables. Keep
   `tenant_version` stale-event protection when changing that consumer.
 - Do not read identity or tenancy tables. Features verifies identity-issued

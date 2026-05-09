@@ -15,7 +15,7 @@ their own domains and reference `tenant_id` or `workspace_id` when they own
 tenant/workspace-scoped resources.
 
 The current API does not expose direct member creation/invite. Tenant creation
-grants owner membership to the caller and creates one default workspace. Future
+grants owner membership to the caller and creates one initial workspace. Future
 member adds should come from invite, provisioning, or another explicit proof
 workflow.
 
@@ -59,7 +59,7 @@ Consumer SaaS without required onboarding:
 user registers through identity
 POST /v1/tenants { kind: "personal", name: "<display name>" }
 tenant.status = active
-default workspace is created
+initial workspace is created
 ```
 
 B2B SaaS:
@@ -67,7 +67,7 @@ B2B SaaS:
 ```text
 founder registers through identity
 POST /v1/tenants { kind: "organization", name: "<organization name>" }
-default workspace is created
+initial workspace is created
 future invite/provisioning flow creates additional tenant memberships
 ```
 

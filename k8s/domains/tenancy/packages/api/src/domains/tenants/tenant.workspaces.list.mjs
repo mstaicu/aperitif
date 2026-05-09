@@ -5,7 +5,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  * @returns {(args: { tenantId: string, currentUserId: string }) => Promise<{
  *   workspaces: {
  *     id: string,
- *     is_default: boolean,
  *     name: string,
  *     status: "active" | "archived",
  *     tenant_id: string,
@@ -56,11 +55,10 @@ export const listTenantWorkspaces =
           SELECT id,
             tenant_id,
             name,
-            is_default,
             status
           FROM workspaces
           WHERE tenant_id = $1
-          ORDER BY is_default DESC, name, id
+          ORDER BY name, id
         `,
         [tenantId],
       );

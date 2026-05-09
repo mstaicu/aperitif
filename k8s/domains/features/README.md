@@ -1,45 +1,47 @@
 # Features Domain
 
-Features owns product feature vocabulary, local products, product prices, and
-the local tenancy projections needed by future feature grants.
+Features owns product feature vocabulary, local products, product prices,
+tenant feature grants, effective tenant features, and the local tenancy
+projections needed to authorize those feature changes.
 
 ## Domain Boundary
 
-- `features` are the vocabulary of things the platform can enable at tenant or
-  workspace scope.
+- `features` are the vocabulary of things the platform can enable for a tenant.
 - `products` are local things a tenant can acquire, such as plans, add-ons, or
   top-ups.
 - `product_features` are the feature values included in each product template.
 - `product_prices` map local products to provider-specific sellable prices.
-- `tenant_projection`, `tenant_membership_projection`, and
-  `workspace_projection` are local projections of tenancy authority consumed
-  from tenancy events.
+- `tenant_feature_grants` are tenant-specific inputs that grant feature values.
+- `tenant_features` are the effective tenant feature values emitted to other
+  domains.
+- `tenant_projection` and `tenant_membership_projection` are local projections
+  of tenancy authority consumed from tenancy events.
 
 Identity stays in `identity`. Tenant lifecycle, tenant memberships, and
-workspaces stay in `tenancy`. Product domains should own their own
-tenant/workspace-scoped resources and consume feature state through APIs/events,
-not by reading the features database.
+workspaces stay in `tenancy`. Product domains should consume tenant-level
+feature state through APIs/events, not by reading the features database.
 
-The current API is catalogue-only and does not create tenant entitlements,
-subscriptions, checkout sessions, provider webhooks, invoices, usage counters,
-or manual grants.
+The current API is catalogue-only. Tenant feature writes are modelled in the
+database and outbox, but checkout sessions, provider webhooks, invoices, usage
+counters, and manual-grant APIs are not implemented yet.
 
 ## Core Model
 
 ```text
 identity = who the actor is
 tenant = authority root for tenant-scoped product access
-feature = product capability that can later be granted to a tenant or workspace
+feature = product capability that can later be granted to a tenant
 product = local commercial/access package
 product_feature = product template value for one feature
 product_price = provider-specific way to buy or acquire a product, including
 manual acquisition
+tenant_feature_grant = tenant-specific source value for one feature
+tenant_feature = current effective tenant feature value
 ```
 
-`product_features` are templates. Future grants should snapshot product feature
-values into tenant- or workspace-specific grant rows before calculating
-effective features. That prevents catalogue edits from silently changing
-existing tenant/workspace state.
+`product_features` are templates. Grants snapshot product feature values into
+tenant-specific grant rows before calculating effective tenant features.
+That prevents catalogue edits from silently changing existing tenant state.
 
 ## Core API
 
@@ -47,8 +49,7 @@ existing tenant/workspace state.
 GET /v1/products
 ```
 
-The route requires an identity-issued access token verified through JWKS. It
-returns active products with active prices and active feature definitions.
+The route requires an identity-issued access token verified through JWKS.
 
 ## Deployment Units
 
@@ -63,7 +64,7 @@ Current Kubernetes-expressed units:
 - `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
 - `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
-- `worker`: tenancy projection consumer built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
+- `worker`: tenancy projection consumer and features outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
 
 Current source-only units:
 
@@ -112,7 +113,7 @@ graph, run the database bootstrap SQL against the managed database, and keep
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/features/docs`.
 - Identity dependency: features validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
-- Events: features currently consumes tenancy authority events through the `features-tenancy-projection` durable consumer on the tenancy-owned `TENANCY` stream. It does not publish features events yet.
+- Events: features consumes tenancy authority events through the `features-tenancy-projection` durable consumer on the tenancy-owned `TENANCY` stream. It publishes feature authority events from its own transactional outbox to the `FEATURES` stream.
 - Database: features owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
 ## Tenancy Projection
@@ -122,11 +123,10 @@ Features consumes these tenancy event subjects into local projection tables:
 - `tenancy.tenant.created`
 - `tenancy.tenant_membership.created`
 - `tenancy.tenant_membership.deleted`
-- `tenancy.workspace.created`
 
 Projection writes are idempotent through natural keys and `tenant_version`.
-Duplicate or stale events do not overwrite newer projected tenant, workspace,
-or membership rows. Deleted memberships are kept as tombstones so an old
+Duplicate or stale events do not overwrite newer projected tenant or
+membership rows. Deleted memberships are kept as tombstones so an old
 membership-created event cannot resurrect a removed membership.
 
 If the features projection database is intentionally reset while the `TENANCY`
@@ -140,6 +140,21 @@ Tenancy event wire contracts live under `packages/worker/src/events/versions/`.
 Projection behavior lives under
 `packages/worker/src/consumers/tenancy-projection/versions/`. Add both sides
 deliberately when accepting a new tenancy event schema version.
+
+## Feature Events
+
+Features emits tenant-level feature state from `tenant_features`, not from
+catalogue tables:
+
+- `features.tenant_features.updated`
+
+The event carries the tenant id, a `features_version`, and the current effective
+feature rows included in the payload. Consumers should use `features_version`
+to ignore stale events.
+
+Producer contracts live under `packages/api/src/events/versions/`. The worker
+publishes durable rows from `outbox_events` to the `FEATURES` stream and then
+marks them as published.
 
 ## Agent Context
 

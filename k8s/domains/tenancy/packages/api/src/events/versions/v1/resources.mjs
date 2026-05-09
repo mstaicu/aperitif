@@ -37,7 +37,6 @@ export const WorkspaceStatusSchema = Type.Union([
 export const WorkspaceEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
-    is_default: Type.Boolean(),
     status: WorkspaceStatusSchema,
     tenant_id: UuidSchema,
   },

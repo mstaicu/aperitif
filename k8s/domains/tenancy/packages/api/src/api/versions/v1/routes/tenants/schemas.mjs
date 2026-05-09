@@ -96,9 +96,6 @@ export const Tenant = Type.Object(
 export const Workspace = Type.Object(
   {
     id: WorkspaceId,
-    is_default: Type.Boolean({
-      description: "Whether this is the tenant's default workspace.",
-    }),
     name: Type.String({
       description: "Human-readable workspace name.",
       maxLength: 160,
@@ -154,7 +151,7 @@ export const CreateTenantResponse = Type.Object(
   },
   {
     additionalProperties: false,
-    description: "Created tenant and its default workspace.",
+    description: "Created tenant and its initial workspace.",
   },
 );
 

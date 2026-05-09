@@ -6,15 +6,12 @@ import {
   TenantMembershipCreatedSubject,
   TenantMembershipDeletedPayloadCheck,
   TenantMembershipDeletedSubject,
-  WorkspaceCreatedPayloadCheck,
-  WorkspaceCreatedSubject,
 } from "../../../events/index.mjs";
 
 const PROJECTED_SUBJECTS = new Set([
   TenantCreatedSubject,
   TenantMembershipCreatedSubject,
   TenantMembershipDeletedSubject,
-  WorkspaceCreatedSubject,
 ]);
 
 /**
@@ -32,7 +29,6 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
 
   let tenant;
   let membership = null;
-  let workspace = null;
 
   if (event.subject === TenantCreatedSubject) {
     if (!TenantCreatedPayloadCheck.Check(event.payload)) {
@@ -64,13 +60,6 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
       tenant_id: event.payload.membership.tenant_id,
       user_id: event.payload.membership.user_id,
     };
-  } else if (event.subject === WorkspaceCreatedSubject) {
-    if (!WorkspaceCreatedPayloadCheck.Check(event.payload)) {
-      throw new Error("Invalid tenancy workspace created payload");
-    }
-
-    tenant = event.payload.tenant;
-    workspace = event.payload.workspace;
   } else {
     return;
   }
@@ -124,35 +113,6 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
           membership.user_id,
           membership.role,
           membership.status,
-          event.tenant_version,
-        ],
-      );
-    }
-
-    if (workspace) {
-      await client.query(
-        `
-          INSERT INTO workspace_projection (
-            workspace_id,
-            tenant_id,
-            is_default,
-            status,
-            tenant_version
-          )
-          VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT (workspace_id) DO UPDATE
-          SET tenant_id = EXCLUDED.tenant_id,
-            is_default = EXCLUDED.is_default,
-            status = EXCLUDED.status,
-            tenant_version = EXCLUDED.tenant_version,
-            projected_at = now()
-          WHERE workspace_projection.tenant_version < EXCLUDED.tenant_version
-        `,
-        [
-          workspace.id,
-          workspace.tenant_id,
-          workspace.is_default,
-          workspace.status,
           event.tenant_version,
         ],
       );

@@ -17,22 +17,35 @@ Postgres server or instance
       product_prices
       tenant_projection
       tenant_membership_projection
-      workspace_projection
+      tenant_feature_grants
+      tenant_features
+      features_version_seq
+      outbox_events
       flyway_schema_history
 ```
 
-`features` is the product feature vocabulary. Each feature declares whether it
-is evaluated at tenant or workspace scope. `products` are local things a tenant
-can acquire, such as plans, add-ons, or top-ups. Manual acquisition belongs on
-`product_prices.provider`, not `products.product_type`.
-`product_features` are catalogue templates, not tenant/workspace grants.
-Future grants should snapshot product feature values instead of reading
-`product_features` live.
+`features` is the tenant-level product feature vocabulary. `products` are local
+things a tenant can acquire, such as plans, add-ons, or top-ups. Manual
+acquisition belongs on `product_prices.provider`, not `products.product_type`.
+`product_features` are catalogue templates, not tenant grants. Future grants
+should snapshot product feature values instead of reading `product_features`
+live.
 
-`tenant_projection`, `tenant_membership_projection`, and
-`workspace_projection` are local copies of tenancy authority built from tenancy
-events. Projection writes are idempotent through natural keys and
-`tenant_version`.
+`tenant_projection` and `tenant_membership_projection` are local copies of
+tenancy authority built from tenancy events. Projection writes are idempotent
+through natural keys and `tenant_version`.
+
+`tenant_feature_grants` records tenant-specific inputs that grant feature
+values. `tenant_features` stores the current effective feature values for each
+tenant after active grants are merged. `outbox_events` is the durable publisher
+queue for tenant feature events.
+
+Feature authority rows store tenancy-owned `tenant_id` values, but they are not
+foreign-key children of projection tables. Rebuilding tenancy projections must
+not delete feature grants or effective feature rows.
+
+Future grant-writing code should update `tenant_features` and insert the
+matching `outbox_events` row in the same transaction.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.
@@ -95,6 +108,8 @@ so runtime grants have one stable target.
 6. The API and worker read `DATABASE_URL` from `features-api-db` and
    `features-worker-db`, then connect as `features_api` and `features_worker`.
    Both inherit `features_runtime`.
+7. The worker consumes tenancy events into projection tables and publishes
+   feature events from `outbox_events` to NATS JetStream.
 
 The split is intentional: bootstrap creates roles and base permissions; Flyway
 owns schema objects and object-level grants.

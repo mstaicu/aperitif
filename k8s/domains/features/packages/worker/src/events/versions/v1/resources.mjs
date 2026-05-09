@@ -29,29 +29,8 @@ export const TenantEventResourceSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceStatusSchema = Type.Union([
-  Type.Literal("active"),
-  Type.Literal("archived"),
-]);
-
-export const WorkspaceEventResourceSchema = Type.Object(
-  {
-    id: UuidSchema,
-    is_default: Type.Boolean(),
-    status: WorkspaceStatusSchema,
-    tenant_id: UuidSchema,
-  },
-  { additionalProperties: false },
-);
-
 /**
  * @typedef {import("@sinclair/typebox").Static<
  *   typeof TenantEventResourceSchema
  * >} TenantEventResource
- */
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
- *   typeof WorkspaceEventResourceSchema
- * >} WorkspaceEventResource
  */

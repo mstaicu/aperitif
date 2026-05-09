@@ -8,7 +8,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     features: {
  *       key: string,
  *       name: string,
- *       scope: "tenant" | "workspace",
  *       value: unknown,
  *       value_type: "boolean" | "number" | "string" | "json",
  *     }[],
@@ -48,7 +47,6 @@ export const listProducts = (ctx) => async () => {
         `
           SELECT f.feature_key,
             f.name,
-            f.scope,
             f.value_type,
             pf.granted_value
           FROM product_features pf
@@ -82,7 +80,6 @@ export const listProducts = (ctx) => async () => {
         features: featuresResult.rows.map((feature) => ({
           key: feature.feature_key,
           name: feature.name,
-          scope: feature.scope,
           value: feature.granted_value,
           value_type: feature.value_type,
         })),

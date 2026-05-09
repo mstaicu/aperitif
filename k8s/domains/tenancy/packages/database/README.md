@@ -25,7 +25,7 @@ The domain boundary is the database. Other domains must not connect to it
 directly.
 
 `workspaces` are operational containers inside a tenant. Tenant creation
-creates one default workspace. Tenant membership controls workspace access for
+creates one initial workspace. Tenant membership controls workspace access for
 now; there are no workspace memberships in this baseline.
 
 ## Files

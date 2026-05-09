@@ -51,8 +51,6 @@ CREATE TABLE workspaces (
 
     name TEXT NOT NULL,
 
-    is_default BOOLEAN NOT NULL DEFAULT false,
-
     status TEXT NOT NULL DEFAULT 'active' CHECK (
         status IN ('active', 'archived')
     ),
@@ -64,13 +62,8 @@ COMMENT ON TABLE workspaces IS 'Operational resource containers inside a tenant.
 COMMENT ON COLUMN workspaces.id IS 'Stable workspace identifier referenced by workspace-scoped resources in other domains.';
 COMMENT ON COLUMN workspaces.tenant_id IS 'Tenant that owns this workspace.';
 COMMENT ON COLUMN workspaces.name IS 'Human-readable workspace name shown to users.';
-COMMENT ON COLUMN workspaces.is_default IS 'Marks the workspace created with the tenant.';
 COMMENT ON COLUMN workspaces.status IS 'Workspace lifecycle status.';
 COMMENT ON COLUMN workspaces.created_at IS 'Time the workspace record was created.';
-
-CREATE UNIQUE INDEX workspaces_default_unique
-ON workspaces (tenant_id)
-WHERE is_default;
 
 CREATE INDEX workspaces_tenant_id_idx
 ON workspaces (tenant_id, name, id);
