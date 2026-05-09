@@ -21,8 +21,9 @@ Postgres server or instance
 ```
 
 `features` is the product feature vocabulary. `products` are local things a
-tenant can acquire, such as Starter, Studio, add-ons, top-ups, or manual
-packages. `product_features` are catalogue templates, not tenant grants.
+tenant can acquire, such as Starter, Studio, add-ons, or top-ups. Manual
+acquisition belongs on `product_prices.provider`, not `products.product_type`.
+`product_features` are catalogue templates, not tenant grants.
 Future tenant-specific grants should snapshot product feature values instead
 of reading `product_features` live.
 

@@ -6,8 +6,8 @@ the local tenancy projections needed by future tenant feature grants.
 ## Domain Boundary
 
 - `features` are the vocabulary of things the platform can enable.
-- `products` are local things a tenant can acquire, such as plans, add-ons,
-  top-ups, or manual packages.
+- `products` are local things a tenant can acquire, such as plans, add-ons, or
+  top-ups.
 - `product_features` are the feature values included in each product template.
 - `product_prices` map local products to provider-specific sellable prices.
 - `tenant_projection` and `tenant_membership_projection` are local projections
@@ -30,7 +30,8 @@ tenant = authority root for tenant-scoped product access
 feature = product capability that can later be granted to a tenant
 product = local commercial/access package
 product_feature = product template value for one feature
-product_price = provider-specific way to buy or acquire a product
+product_price = provider-specific way to buy or acquire a product, including
+manual acquisition
 ```
 
 `product_features` are templates. Future tenant grants should snapshot product

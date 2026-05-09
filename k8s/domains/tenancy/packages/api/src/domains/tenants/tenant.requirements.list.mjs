@@ -5,8 +5,8 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  * @returns {(args: { tenantId: string, currentUserId: string }) => Promise<{
  *   requirements: {
  *     id: string,
+ *     requirement_key: string,
  *     status: "pending" | "completed",
- *     type: string,
  *   }[],
  * }>}
  */
@@ -51,20 +51,18 @@ export const listTenantRequirements =
 
       const { rows } = await client.query(
         `
-          SELECT id, type, status
+          SELECT id,
+            requirement_key,
+            status
           FROM tenant_requirements
           WHERE tenant_id = $1
-          ORDER BY type
+          ORDER BY requirement_key
         `,
         [tenantId],
       );
 
       return {
-        requirements: rows.map((requirement) => ({
-          id: requirement.id,
-          status: requirement.status,
-          type: requirement.type,
-        })),
+        requirements: rows,
       };
     } catch (err) {
       if (isDatabaseUnavailable(err)) {

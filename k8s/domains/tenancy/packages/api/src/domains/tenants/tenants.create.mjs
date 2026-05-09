@@ -28,6 +28,20 @@ export const createTenant =
       client = await ctx.persistence.db.connect();
       await client.query("BEGIN");
 
+      const requirementResult = await client.query(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM requirement_rules
+            WHERE subject_type = 'tenant'
+              AND subject_kind = $1
+              AND status = 'active'
+          ) AS has_requirements
+        `,
+        [kind],
+      );
+      const hasRequirements = requirementResult.rows[0].has_requirements;
+
       const {
         rows: [tenant],
       } = await client.query(
@@ -36,7 +50,7 @@ export const createTenant =
           VALUES ($1, $2, $3)
           RETURNING id, name, kind, status, version
         `,
-        [name, kind, "active"],
+        [name, kind, hasRequirements ? "pending" : "active"],
       );
 
       await client.query(
@@ -45,6 +59,24 @@ export const createTenant =
           VALUES ($1, $2, 'owner')
         `,
         [tenant.id, currentUserId],
+      );
+
+      await client.query(
+        `
+          INSERT INTO tenant_requirements (
+            tenant_id,
+            requirement_key,
+            status
+          )
+          SELECT $1,
+            requirement_key,
+            'pending'
+          FROM requirement_rules
+          WHERE subject_type = 'tenant'
+            AND subject_kind = $2
+            AND status = 'active'
+        `,
+        [tenant.id, kind],
       );
 
       /** @type {import("../../events/index.mjs").TenantCreatedPayload} */

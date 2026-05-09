@@ -42,6 +42,29 @@ COMMENT ON COLUMN tenant_memberships.user_id IS 'Identity user id from the ident
 COMMENT ON COLUMN tenant_memberships.role IS 'Tenant-level authority; owner manages the tenant, member can use tenant-scoped product capabilities.';
 COMMENT ON COLUMN tenant_memberships.created_at IS 'Time the membership was granted.';
 
+CREATE TABLE requirement_rules (
+    subject_type TEXT NOT NULL,
+
+    subject_kind TEXT NOT NULL,
+
+    requirement_key TEXT NOT NULL,
+
+    status TEXT NOT NULL DEFAULT 'active' CHECK (
+        status IN ('active', 'archived')
+    ),
+
+    PRIMARY KEY (subject_type, subject_kind, requirement_key)
+);
+
+COMMENT ON TABLE requirement_rules IS 'Requirement templates applied to a kind of authority subject, such as tenant organization requirements.';
+COMMENT ON COLUMN requirement_rules.subject_type IS 'Authority boundary the rule applies to, such as tenant. Future domains may use workspace or membership.';
+COMMENT ON COLUMN requirement_rules.subject_kind IS 'Kind inside the authority boundary, such as personal or organization for tenant rules.';
+COMMENT ON COLUMN requirement_rules.requirement_key IS 'Stable requirement key to instantiate, such as terms.accepted or billing.setup.';
+COMMENT ON COLUMN requirement_rules.status IS 'Active rules are applied to new matching subjects; archived rules are retained but not applied.';
+
+-- Add future requirement rules with Flyway seed migrations. Each active rule is
+-- copied into tenant_requirements when a matching tenant is created.
+
 CREATE TABLE tenant_requirements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -49,17 +72,17 @@ CREATE TABLE tenant_requirements (
         REFERENCES tenants(id)
         ON DELETE CASCADE,
 
-    type TEXT NOT NULL,
+    requirement_key TEXT NOT NULL,
 
     status TEXT NOT NULL CHECK (status IN ('pending', 'completed')),
 
-    UNIQUE (tenant_id, type)
+    UNIQUE (tenant_id, requirement_key)
 );
 
 COMMENT ON TABLE tenant_requirements IS 'Activation requirements that must be completed before a tenant can become active.';
 COMMENT ON COLUMN tenant_requirements.id IS 'Stable requirement row identifier.';
 COMMENT ON COLUMN tenant_requirements.tenant_id IS 'Tenant this activation requirement belongs to.';
-COMMENT ON COLUMN tenant_requirements.type IS 'Requirement capability key owned by another domain, such as terms_acceptance or identity_verification.';
+COMMENT ON COLUMN tenant_requirements.requirement_key IS 'Stable requirement key fulfilled by another domain, such as terms.accepted or identity.verified.';
 COMMENT ON COLUMN tenant_requirements.status IS 'Requirement lifecycle tracked by tenancy from external fulfillment signals.';
 
 CREATE TABLE outbox_events (

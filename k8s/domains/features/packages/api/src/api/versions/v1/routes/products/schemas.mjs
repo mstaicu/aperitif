@@ -18,12 +18,7 @@ const FeatureValueType = Type.Union(
 );
 
 const ProductType = Type.Union(
-  [
-    Type.Literal("plan"),
-    Type.Literal("addon"),
-    Type.Literal("top_up"),
-    Type.Literal("manual"),
-  ],
+  [Type.Literal("plan"), Type.Literal("addon"), Type.Literal("top_up")],
   {
     description:
       "Commercial/access shape of the product. Plans are the initial SaaS pricing packages.",

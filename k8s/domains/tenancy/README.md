@@ -6,6 +6,8 @@ Tenancy owns tenant-scoped authority: tenant lifecycle, tenant membership, and t
 
 - `tenants` are the product authority root for tenant-scoped resources.
 - `tenant_memberships` grant tenant-level authority to authenticated identity.
+- `requirement_rules` define requirement templates for a kind of authority
+  subject, currently tenant `personal` or `organization`.
 - `tenant_requirements` are activation requirement rows that must be completed before a tenant becomes active.
 
 Identity stays in `identity`. Plans, subscriptions, invoices, payments, profiles, documents, notifications, workflow, and integrations should live in their own domains and reference `tenant_id` when they own tenant-scoped resources.
@@ -31,6 +33,7 @@ The current API does not expose direct member creation/invite or manual requirem
 identity = who the actor is
 tenant = authority root for tenant-scoped product access
 tenant_membership = who can act in that tenant
+requirement_rule = template for requirements applied to a subject kind
 tenant_requirement = what must happen before the tenant is active
 ```
 
@@ -41,6 +44,47 @@ resource.tenant_id
 ```
 
 Request handling should normally derive `user_id` from the bearer token and get `tenant_id` from the route, body, or loaded resource. Product operations should require tenant membership and an active tenant. Setup/onboarding operations may allow `pending` tenants.
+
+## Requirement Rules
+
+`requirement_rules` is seeded by Flyway migrations and starts empty. Each active
+row means:
+
+```text
+subject_type + subject_kind requires requirement_key
+```
+
+For tenant creation, tenancy loads active rules where:
+
+```text
+subject_type = tenant
+subject_kind = personal | organization
+```
+
+Those rules are copied into `tenant_requirements` for the specific tenant. If no
+rows are copied, the tenant starts `active`; if one or more rows are copied, the
+tenant starts `pending`.
+
+Add future rules only when the domain that completes the requirement exists:
+
+```sql
+INSERT INTO requirement_rules (
+  subject_type,
+  subject_kind,
+  requirement_key,
+  status
+)
+VALUES (
+  'tenant',
+  'organization',
+  'billing.setup',
+  'active'
+);
+```
+
+Existing tenant requirements are snapshots. Changing `requirement_rules` affects
+future tenants only unless a later migration intentionally inserts or updates
+`tenant_requirements` for existing tenants.
 
 ## Core API
 
@@ -87,7 +131,7 @@ Regulated fintech-style tenant:
 
 ```text
 POST /v1/tenants { kind: "personal", name: "<legal/customer name>" }
-requirements = terms_acceptance, identity_verification, address_verification, risk_screening
+requirement_keys = terms.accepted, identity.verified, address.verified, risk.screened
 verification/risk/terms domains complete their owned requirements
 tenant.status = active when all required checks pass
 ```

@@ -29,7 +29,7 @@ CREATE TABLE products (
     name TEXT NOT NULL,
 
     product_type TEXT NOT NULL CHECK (
-        product_type IN ('plan', 'addon', 'top_up', 'manual')
+        product_type IN ('plan', 'addon', 'top_up')
     ),
 
     status TEXT NOT NULL DEFAULT 'active' CHECK (
@@ -37,7 +37,7 @@ CREATE TABLE products (
     )
 );
 
-COMMENT ON TABLE products IS 'Local products a tenant can acquire, such as a plan, add-on, top-up, or manual package.';
+COMMENT ON TABLE products IS 'Local products a tenant can acquire, such as a plan, add-on, or top-up.';
 COMMENT ON COLUMN products.product_code IS 'Stable local product code. This is not a payment-provider product id.';
 COMMENT ON COLUMN products.name IS 'Human-readable product name.';
 COMMENT ON COLUMN products.product_type IS 'Commercial/access shape of the product.';

@@ -17,9 +17,9 @@ const TenantName = Type.String({
   maxLength: 160,
   minLength: 1,
 });
-const RequirementType = Type.String({
+const RequirementKey = Type.String({
   description:
-    "Requirement type tracked for tenant activation, such as terms, billing_setup, or identity_verification.",
+    "Stable requirement key tracked for tenant activation, such as terms.accepted, billing.setup, or identity.verified.",
   maxLength: 128,
   minLength: 1,
 });
@@ -101,13 +101,13 @@ export const Tenant = Type.Object(
 export const TenantRequirement = Type.Object(
   {
     id: TenantRequirementId,
+    requirement_key: RequirementKey,
     status: TenantRequirementStatus,
-    type: RequirementType,
   },
   {
     additionalProperties: false,
     description:
-      "Requirement row tracked against tenant activation. Other domains fulfill these requirement types; tenancy tracks their status.",
+      "Requirement row tracked against tenant activation. Other domains fulfill these requirement keys; tenancy tracks their status.",
   },
 );
 
