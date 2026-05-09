@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Tenancy owns tenants, tenant memberships, and tenant activation
-requirements. It does not own identity credentials, billing, profiles,
-documents, notifications, workflow, or integrations.
+Tenancy owns tenants, tenant memberships, and workspaces. It does not own
+identity credentials, billing, profiles, documents, notifications, workflow, or
+integrations.
 
 - Do not publish tenancy authority events directly from request handlers. Write
   `outbox_events` inside the same database transaction as the state change.
@@ -17,8 +17,5 @@ documents, notifications, workflow, or integrations.
 - Do not add a direct owner-supplied `userId` member creation endpoint as the
   product invite flow. Future member adds should go through invite,
   provisioning, or another explicit proof path.
-- Do not add a public/manual requirement completion endpoint. Future
-  fulfillment domains should drive requirement changes through an internal
-  consumer path.
 - Do not read identity tables. Tenancy verifies identity-issued tokens
   through JWKS and owns authorization state locally.

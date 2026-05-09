@@ -3,14 +3,16 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: { tenantId: string, currentUserId: string }) => Promise<{
- *   requirements: {
+ *   workspaces: {
  *     id: string,
- *     requirement_key: string,
- *     status: "pending" | "completed",
+ *     is_default: boolean,
+ *     name: string,
+ *     status: "active" | "archived",
+ *     tenant_id: string,
  *   }[],
  * }>}
  */
-export const listTenantRequirements =
+export const listTenantWorkspaces =
   (ctx) =>
   async ({ currentUserId, tenantId }) => {
     let client;
@@ -52,17 +54,19 @@ export const listTenantRequirements =
       const { rows } = await client.query(
         `
           SELECT id,
-            requirement_key,
+            tenant_id,
+            name,
+            is_default,
             status
-          FROM tenant_requirements
+          FROM workspaces
           WHERE tenant_id = $1
-          ORDER BY requirement_key
+          ORDER BY is_default DESC, name, id
         `,
         [tenantId],
       );
 
       return {
-        requirements: rows,
+        workspaces: rows,
       };
     } catch (err) {
       if (isDatabaseUnavailable(err)) {

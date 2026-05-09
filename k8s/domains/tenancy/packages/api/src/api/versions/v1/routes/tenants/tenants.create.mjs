@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { CreateTenantBody, TenantResponse } from "./schemas.mjs";
+import { CreateTenantBody, CreateTenantResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -19,10 +19,10 @@ export default async function (fastify, { jwks, tenancy }) {
       schema: {
         body: CreateTenantBody,
         description:
-          "Create a tenant as the authority root for tenant-scoped product access. The authenticated caller becomes tenant owner, and tenant activation requirements decide whether the tenant starts active or pending.",
+          "Create a tenant as the authority root for tenant-scoped product access. The authenticated caller becomes tenant owner, and a default workspace is created for tenant-scoped product data.",
         operationId: "createTenant",
         response: {
-          201: TenantResponse,
+          201: CreateTenantResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           500: ProblemResponse,

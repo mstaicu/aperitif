@@ -31,7 +31,7 @@ export default async (fastify, { domains, jwks }) => {
       },
       info: {
         description:
-          "Features API for product catalogue and tenant feature enablement.",
+          "Features API for product catalogue and feature enablement.",
         title: "Features",
         version: "v1",
       },

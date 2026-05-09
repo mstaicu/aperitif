@@ -5,6 +5,9 @@ import {
   TenantMembershipCreatedPayloadCheck,
   TenantMembershipCreatedSchemaVersion,
   TenantMembershipCreatedSubject,
+  WorkspaceCreatedPayloadCheck,
+  WorkspaceCreatedSchemaVersion,
+  WorkspaceCreatedSubject,
 } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
@@ -15,7 +18,14 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     id: string,
  *     kind: "personal" | "organization",
  *     name: string,
- *     status: "pending" | "active",
+ *     status: "active" | "archived",
+ *   },
+ *   workspace: {
+ *     id: string,
+ *     is_default: boolean,
+ *     name: string,
+ *     status: "active" | "archived",
+ *     tenant_id: string,
  *   },
  * }>}
  */
@@ -28,20 +38,6 @@ export const createTenant =
       client = await ctx.persistence.db.connect();
       await client.query("BEGIN");
 
-      const requirementResult = await client.query(
-        `
-          SELECT EXISTS (
-            SELECT 1
-            FROM requirement_rules
-            WHERE subject_type = 'tenant'
-              AND subject_kind = $1
-              AND status = 'active'
-          ) AS has_requirements
-        `,
-        [kind],
-      );
-      const hasRequirements = requirementResult.rows[0].has_requirements;
-
       const {
         rows: [tenant],
       } = await client.query(
@@ -50,7 +46,7 @@ export const createTenant =
           VALUES ($1, $2, $3)
           RETURNING id, name, kind, status, version
         `,
-        [name, kind, hasRequirements ? "pending" : "active"],
+        [name, kind, "active"],
       );
 
       await client.query(
@@ -61,30 +57,25 @@ export const createTenant =
         [tenant.id, currentUserId],
       );
 
-      await client.query(
+      const workspaceResult = await client.query(
         `
-          INSERT INTO tenant_requirements (
+          INSERT INTO workspaces (
             tenant_id,
-            requirement_key,
-            status
+            name,
+            is_default
           )
-          SELECT $1,
-            requirement_key,
-            'pending'
-          FROM requirement_rules
-          WHERE subject_type = 'tenant'
-            AND subject_kind = $2
-            AND status = 'active'
+          VALUES ($1, $2, true)
+          RETURNING id, tenant_id, name, is_default, status
         `,
-        [tenant.id, kind],
+        [tenant.id, name],
       );
+      const workspace = workspaceResult.rows[0];
 
       /** @type {import("../../events/index.mjs").TenantCreatedPayload} */
       const tenantCreatedPayload = {
         tenant: {
           id: tenant.id,
           kind: tenant.kind,
-          name: tenant.name,
           status: tenant.status,
         },
       };
@@ -133,7 +124,6 @@ export const createTenant =
         tenant: {
           id: tenant.id,
           kind: tenant.kind,
-          name: tenant.name,
           status: tenant.status,
         },
       };
@@ -162,6 +152,55 @@ export const createTenant =
         ],
       );
 
+      const {
+        rows: [{ version: workspaceTenantVersion }],
+      } = await client.query(
+        `
+          UPDATE tenants
+          SET version = version + 1
+          WHERE id = $1
+          RETURNING version
+        `,
+        [tenant.id],
+      );
+
+      /** @type {import("../../events/index.mjs").WorkspaceCreatedPayload} */
+      const workspaceCreatedPayload = {
+        tenant: {
+          id: tenant.id,
+          kind: tenant.kind,
+          status: tenant.status,
+        },
+        workspace: {
+          id: workspace.id,
+          is_default: workspace.is_default,
+          status: workspace.status,
+          tenant_id: workspace.tenant_id,
+        },
+      };
+
+      if (!WorkspaceCreatedPayloadCheck.Check(workspaceCreatedPayload)) {
+        throw new Error("INVALID_EVENT_PAYLOAD");
+      }
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (
+            subject,
+            tenant_version,
+            schema_version,
+            payload
+          )
+          VALUES ($1, $2, $3, $4::jsonb)
+        `,
+        [
+          WorkspaceCreatedSubject,
+          workspaceTenantVersion,
+          WorkspaceCreatedSchemaVersion,
+          JSON.stringify(workspaceCreatedPayload),
+        ],
+      );
+
       await client.query("COMMIT");
 
       return {
@@ -170,6 +209,13 @@ export const createTenant =
           kind: tenant.kind,
           name: tenant.name,
           status: tenant.status,
+        },
+        workspace: {
+          id: workspace.id,
+          is_default: workspace.is_default,
+          name: workspace.name,
+          status: workspace.status,
+          tenant_id: workspace.tenant_id,
         },
       };
     } catch (err) {

@@ -18,7 +18,7 @@ export default async function (fastify, { jwks, tenancy }) {
     {
       schema: {
         description:
-          "Fetch a single tenant resource. Memberships and activation requirements are exposed through their own tenant sub-resources.",
+          "Fetch a single tenant resource. Memberships and workspaces are exposed through their own tenant sub-resources.",
         operationId: "getTenant",
         params: TenantParams,
         response: {

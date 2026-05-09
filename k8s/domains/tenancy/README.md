@@ -1,31 +1,23 @@
 # Tenancy Domain
 
-Tenancy owns tenant-scoped authority: tenant lifecycle, tenant membership, and tenant activation requirements.
+Tenancy owns tenant-scoped authority: tenant lifecycle, tenant membership, and
+workspaces.
 
 ## Domain Boundary
 
 - `tenants` are the product authority root for tenant-scoped resources.
 - `tenant_memberships` grant tenant-level authority to authenticated identity.
-- `requirement_rules` define requirement templates for a kind of authority
-  subject, currently tenant `personal` or `organization`.
-- `tenant_requirements` are activation requirement rows that must be completed before a tenant becomes active.
+- `workspaces` are operational resource containers inside a tenant.
 
-Identity stays in `identity`. Plans, subscriptions, invoices, payments, profiles, documents, notifications, workflow, and integrations should live in their own domains and reference `tenant_id` when they own tenant-scoped resources.
+Identity stays in `identity`. Plans, subscriptions, invoices, payments,
+profiles, documents, notifications, workflow, and integrations should live in
+their own domains and reference `tenant_id` or `workspace_id` when they own
+tenant/workspace-scoped resources.
 
-Step domains own evidence collection and validation. For example, a future billing domain owns payment setup, a future verification domain owns KYC/KYB, and a future terms domain owns terms acceptance. They should not write the tenancy database directly.
-
-The intended integration is:
-
-```text
-tenancy creates tenant requirement rows when onboarding requirements exist
-step domains collect and validate evidence
-step domains publish fulfillment events
-tenancy consumes those events through an internal worker path
-tenancy updates requirement status
-tenancy activates the tenant when all requirements are completed
-```
-
-The current API does not expose direct member creation/invite or manual requirement completion. Tenant creation grants owner membership to the caller. Future member adds should come from invite, provisioning, or another explicit proof workflow. Future requirement completion should be consumed from fulfillment-domain events, not called synchronously from a public route.
+The current API does not expose direct member creation/invite. Tenant creation
+grants owner membership to the caller and creates one default workspace. Future
+member adds should come from invite, provisioning, or another explicit proof
+workflow.
 
 ## Core Model
 
@@ -33,58 +25,20 @@ The current API does not expose direct member creation/invite or manual requirem
 identity = who the actor is
 tenant = authority root for tenant-scoped product access
 tenant_membership = who can act in that tenant
-requirement_rule = template for requirements applied to a subject kind
-tenant_requirement = what must happen before the tenant is active
+workspace = operational container for product data inside the tenant
 ```
 
-Product resources in other domains should generally be tenant-owned:
+Product resources in other domains should generally be workspace-owned when
+they are operational data:
 
 ```text
+resource.workspace_id
 resource.tenant_id
 ```
 
-Request handling should normally derive `user_id` from the bearer token and get `tenant_id` from the route, body, or loaded resource. Product operations should require tenant membership and an active tenant. Setup/onboarding operations may allow `pending` tenants.
-
-## Requirement Rules
-
-`requirement_rules` is seeded by Flyway migrations and starts empty. Each active
-row means:
-
-```text
-subject_type + subject_kind requires requirement_key
-```
-
-For tenant creation, tenancy loads active rules where:
-
-```text
-subject_type = tenant
-subject_kind = personal | organization
-```
-
-Those rules are copied into `tenant_requirements` for the specific tenant. If no
-rows are copied, the tenant starts `active`; if one or more rows are copied, the
-tenant starts `pending`.
-
-Add future rules only when the domain that completes the requirement exists:
-
-```sql
-INSERT INTO requirement_rules (
-  subject_type,
-  subject_kind,
-  requirement_key,
-  status
-)
-VALUES (
-  'tenant',
-  'organization',
-  'billing.setup',
-  'active'
-);
-```
-
-Existing tenant requirements are snapshots. Changing `requirement_rules` affects
-future tenants only unless a later migration intentionally inserts or updates
-`tenant_requirements` for existing tenants.
+Request handling should normally derive `user_id` from the bearer token and get
+`tenant_id` or `workspace_id` from the route, body, or loaded resource. Product
+operations should require tenant membership and an active tenant/workspace.
 
 ## Core API
 
@@ -94,7 +48,7 @@ GET /v1/tenants/:tenantId
 GET /v1/tenants/:tenantId/memberships
 GET /v1/tenants/:tenantId/memberships/:userId
 DELETE /v1/tenants/:tenantId/memberships/:userId
-GET /v1/tenants/:tenantId/requirements
+GET /v1/tenants/:tenantId/workspaces
 ```
 
 ## Onboarding Examples
@@ -105,35 +59,16 @@ Consumer SaaS without required onboarding:
 user registers through identity
 POST /v1/tenants { kind: "personal", name: "<display name>" }
 tenant.status = active
-```
-
-Consumer SaaS with required onboarding:
-
-```text
-user registers through identity
-POST /v1/tenants { kind: "personal", name: "<display name>" }
-tenant.status = pending
-GET /v1/tenants/:tenantId/requirements
-step domains fulfill terms, verification, risk, or billing requirements
-tenancy consumes fulfillment events
-tenant.status = active when all requirements complete
+default workspace is created
 ```
 
 B2B SaaS:
 
 ```text
 founder registers through identity
-POST /v1/tenants { kind: "organization", name: "Acme Ltd" }
+POST /v1/tenants { kind: "organization", name: "<organization name>" }
+default workspace is created
 future invite/provisioning flow creates additional tenant memberships
-```
-
-Regulated fintech-style tenant:
-
-```text
-POST /v1/tenants { kind: "personal", name: "<legal/customer name>" }
-requirement_keys = terms.accepted, identity.verified, address.verified, risk.screened
-verification/risk/terms domains complete their owned requirements
-tenant.status = active when all required checks pass
 ```
 
 ## Deployment Units
@@ -200,7 +135,7 @@ Tenancy authority events follow this path:
 
 ```text
 request handler -> domain function -> DB transaction
-DB transaction -> tenant/tenant_membership/tenant_requirement change
+DB transaction -> tenant/tenant_membership/workspace change
 DB transaction -> outbox_events row
 Postgres trigger -> pg_notify wake-up
 worker -> drains unpublished outbox rows
@@ -217,6 +152,7 @@ Current event subjects:
 - `tenancy.tenant.created`
 - `tenancy.tenant_membership.created`
 - `tenancy.tenant_membership.deleted`
+- `tenancy.workspace.created`
 
 Event payloads are intentionally projection-shaped. Consumers should use natural
 projection keys plus the latest applied `tenant_version` to ignore duplicate or
@@ -228,7 +164,11 @@ Do not break an existing subject plus `schema_version` in place. Add a new
 schema version or subject, deploy consumers that understand it, then switch
 producers only after old consumers no longer depend on the previous contract.
 
-Every tenancy event payload must include `payload.tenant.id`, including future events for workspace, team, requirement, or other tenant-owned authority changes. Consumers use `payload.tenant.id` plus `tenant_version` as the projection ordering key. Any authority-affecting tenancy event must increment `tenants.version` and publish the new value as `tenant_version`.
+Every tenancy event payload must include `payload.tenant.id`, including future
+events for teams or other tenant-owned authority changes. Consumers use
+`payload.tenant.id` plus `tenant_version` as the projection ordering key. Any
+authority-affecting tenancy event must increment `tenants.version` and publish
+the new value as `tenant_version`.
 
 ```json
 {
@@ -241,7 +181,6 @@ Every tenancy event payload must include `payload.tenant.id`, including future e
     "tenant": {
       "id": "tenant-id",
       "kind": "organization",
-      "name": "Acme Ltd",
       "status": "active"
     },
     "membership": {

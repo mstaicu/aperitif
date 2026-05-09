@@ -17,6 +17,13 @@ const FeatureValueType = Type.Union(
   },
 );
 
+const FeatureScope = Type.Union(
+  [Type.Literal("tenant"), Type.Literal("workspace")],
+  {
+    description: "Authority level where this feature is evaluated.",
+  },
+);
+
 const ProductType = Type.Union(
   [Type.Literal("plan"), Type.Literal("addon"), Type.Literal("top_up")],
   {
@@ -61,6 +68,7 @@ export const ProductFeature = Type.Object(
       description: "Human-readable feature name.",
       minLength: 1,
     }),
+    scope: FeatureScope,
     value: FeatureValue,
     value_type: FeatureValueType,
   },

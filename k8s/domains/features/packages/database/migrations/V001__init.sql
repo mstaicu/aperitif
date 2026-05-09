@@ -7,6 +7,10 @@ CREATE TABLE features (
         value_type IN ('boolean', 'number', 'string', 'json')
     ),
 
+    scope TEXT NOT NULL CHECK (
+        scope IN ('tenant', 'workspace')
+    ),
+
     merge_strategy TEXT NOT NULL CHECK (
         merge_strategy IN ('boolean_or', 'number_max', 'number_sum')
     ),
@@ -20,7 +24,8 @@ COMMENT ON TABLE features IS 'Vocabulary of product features that can be granted
 COMMENT ON COLUMN features.feature_key IS 'Stable internal feature key used by product code, for example members.max.';
 COMMENT ON COLUMN features.name IS 'Human-readable feature name.';
 COMMENT ON COLUMN features.value_type IS 'Expected JSON value type for grants of this feature.';
-COMMENT ON COLUMN features.merge_strategy IS 'Rule used later to merge multiple active tenant grants for this feature.';
+COMMENT ON COLUMN features.scope IS 'Authority level where this feature is evaluated.';
+COMMENT ON COLUMN features.merge_strategy IS 'Rule used later to merge multiple active grants for this feature.';
 COMMENT ON COLUMN features.status IS 'Lifecycle status for catalogue management.';
 
 CREATE TABLE products (
@@ -100,7 +105,7 @@ COMMENT ON COLUMN product_prices.billing_period_unit IS 'Recurring billing perio
 COMMENT ON COLUMN product_prices.billing_period_count IS 'Number of billing period units per cycle.';
 COMMENT ON COLUMN product_prices.amount_minor IS 'Price amount in minor currency units.';
 COMMENT ON COLUMN product_prices.currency_code IS 'ISO-style three-letter currency code.';
-COMMENT ON COLUMN product_prices.status IS 'Draft prices are not sellable; active prices can be shown to clients.';
+COMMENT ON COLUMN product_prices.status IS 'Draft prices are not sellable; active prices can be shown by the API.';
 
 CREATE UNIQUE INDEX product_prices_provider_price_ref_unique
 ON product_prices (provider, provider_price_ref)
@@ -118,11 +123,9 @@ ON product_prices (status);
 CREATE TABLE tenant_projection (
     tenant_id UUID PRIMARY KEY,
 
-    name TEXT NOT NULL,
-
     kind TEXT NOT NULL CHECK (kind IN ('personal', 'organization')),
 
-    status TEXT NOT NULL CHECK (status IN ('pending', 'active')),
+    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
 
     tenant_version BIGINT NOT NULL,
 
@@ -131,11 +134,34 @@ CREATE TABLE tenant_projection (
 
 COMMENT ON TABLE tenant_projection IS 'Local projection of tenancy-owned tenant authority used by the features domain.';
 COMMENT ON COLUMN tenant_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
-COMMENT ON COLUMN tenant_projection.name IS 'Projected tenant name from tenancy events.';
 COMMENT ON COLUMN tenant_projection.kind IS 'Projected tenant kind from tenancy events.';
 COMMENT ON COLUMN tenant_projection.status IS 'Projected tenant lifecycle status from tenancy events.';
 COMMENT ON COLUMN tenant_projection.tenant_version IS 'Latest tenancy authority version applied to this projected tenant.';
 COMMENT ON COLUMN tenant_projection.projected_at IS 'Time this projection row was last updated locally.';
+
+CREATE TABLE workspace_projection (
+    workspace_id UUID PRIMARY KEY,
+
+    tenant_id UUID NOT NULL
+        REFERENCES tenant_projection(tenant_id)
+        ON DELETE CASCADE,
+
+    is_default BOOLEAN NOT NULL,
+
+    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
+
+    tenant_version BIGINT NOT NULL,
+
+    projected_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE workspace_projection IS 'Local projection of tenancy-owned workspaces used by the features domain.';
+COMMENT ON COLUMN workspace_projection.workspace_id IS 'Workspace id owned by the tenancy domain.';
+COMMENT ON COLUMN workspace_projection.tenant_id IS 'Tenant that owns the workspace.';
+COMMENT ON COLUMN workspace_projection.is_default IS 'Projected default-workspace marker from tenancy events.';
+COMMENT ON COLUMN workspace_projection.status IS 'Projected workspace lifecycle status from tenancy events.';
+COMMENT ON COLUMN workspace_projection.tenant_version IS 'Latest tenancy authority version applied to this projected workspace.';
+COMMENT ON COLUMN workspace_projection.projected_at IS 'Time this projection row was last updated locally.';
 
 CREATE TABLE tenant_membership_projection (
     tenant_id UUID NOT NULL

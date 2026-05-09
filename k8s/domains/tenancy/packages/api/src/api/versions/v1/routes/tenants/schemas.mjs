@@ -4,8 +4,8 @@ const TenantId = Type.String({
   description: "Stable identifier for a tenant resource.",
   format: "uuid",
 });
-const TenantRequirementId = Type.String({
-  description: "Stable identifier for a tenant requirement row.",
+const WorkspaceId = Type.String({
+  description: "Stable identifier for a workspace resource.",
   format: "uuid",
 });
 const UserId = Type.String({
@@ -15,12 +15,6 @@ const UserId = Type.String({
 const TenantName = Type.String({
   description: "Human-readable tenant name.",
   maxLength: 160,
-  minLength: 1,
-});
-const RequirementKey = Type.String({
-  description:
-    "Stable requirement key tracked for tenant activation, such as terms.accepted, billing.setup, or identity.verified.",
-  maxLength: 128,
   minLength: 1,
 });
 
@@ -40,17 +34,18 @@ export const TenantRole = Type.Union(
 );
 
 export const TenantStatus = Type.Union(
-  [Type.Literal("pending"), Type.Literal("active")],
+  [Type.Literal("active"), Type.Literal("archived")],
   {
-    description:
-      "Tenant lifecycle status. Activation requirements move a tenant from pending to active.",
+    description: "Tenant lifecycle status.",
   },
 );
 
-const TenantRequirementStatus = Type.Union([
-  Type.Literal("pending"),
-  Type.Literal("completed"),
-]);
+const WorkspaceStatus = Type.Union(
+  [Type.Literal("active"), Type.Literal("archived")],
+  {
+    description: "Workspace lifecycle status.",
+  },
+);
 
 export const TenantParams = Type.Object(
   {
@@ -98,16 +93,24 @@ export const Tenant = Type.Object(
   },
 );
 
-export const TenantRequirement = Type.Object(
+export const Workspace = Type.Object(
   {
-    id: TenantRequirementId,
-    requirement_key: RequirementKey,
-    status: TenantRequirementStatus,
+    id: WorkspaceId,
+    is_default: Type.Boolean({
+      description: "Whether this is the tenant's default workspace.",
+    }),
+    name: Type.String({
+      description: "Human-readable workspace name.",
+      maxLength: 160,
+      minLength: 1,
+    }),
+    status: WorkspaceStatus,
+    tenant_id: TenantId,
   },
   {
     additionalProperties: false,
     description:
-      "Requirement row tracked against tenant activation. Other domains fulfill these requirement keys; tenancy tracks their status.",
+      "Workspace resource. Workspaces are operational containers inside a tenant.",
   },
 );
 
@@ -144,13 +147,24 @@ export const TenantResponse = Type.Object(
   },
 );
 
-export const TenantRequirementsResponse = Type.Object(
+export const CreateTenantResponse = Type.Object(
   {
-    requirements: Type.Array(TenantRequirement),
+    tenant: Tenant,
+    workspace: Workspace,
   },
   {
     additionalProperties: false,
-    description: "Current activation requirements for a tenant.",
+    description: "Created tenant and its default workspace.",
+  },
+);
+
+export const TenantWorkspacesResponse = Type.Object(
+  {
+    workspaces: Type.Array(Workspace),
+  },
+  {
+    additionalProperties: false,
+    description: "Workspaces attached to a tenant.",
   },
 );
 

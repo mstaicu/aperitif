@@ -17,19 +17,22 @@ Postgres server or instance
       product_prices
       tenant_projection
       tenant_membership_projection
+      workspace_projection
       flyway_schema_history
 ```
 
-`features` is the product feature vocabulary. `products` are local things a
-tenant can acquire, such as Starter, Studio, add-ons, or top-ups. Manual
-acquisition belongs on `product_prices.provider`, not `products.product_type`.
-`product_features` are catalogue templates, not tenant grants.
-Future tenant-specific grants should snapshot product feature values instead
-of reading `product_features` live.
+`features` is the product feature vocabulary. Each feature declares whether it
+is evaluated at tenant or workspace scope. `products` are local things a tenant
+can acquire, such as plans, add-ons, or top-ups. Manual acquisition belongs on
+`product_prices.provider`, not `products.product_type`.
+`product_features` are catalogue templates, not tenant/workspace grants.
+Future grants should snapshot product feature values instead of reading
+`product_features` live.
 
-`tenant_projection` and `tenant_membership_projection` are local copies of
-tenancy authority built from tenancy events. Projection writes are idempotent
-through natural keys and `tenant_version`.
+`tenant_projection`, `tenant_membership_projection`, and
+`workspace_projection` are local copies of tenancy authority built from tenancy
+events. Projection writes are idempotent through natural keys and
+`tenant_version`.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.

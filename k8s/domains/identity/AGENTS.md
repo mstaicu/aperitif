@@ -1,8 +1,8 @@
 # AGENTS.md
 
 Identity owns authentication identity only. Do not add tenants,
-memberships, tenant authority, onboarding requirements, or product permissions
-to this domain.
+memberships, workspaces, tenant authority, or product permissions to this
+domain.
 
 - Keep the public identity contract as token issuer plus JWKS verification.
   Other domains authorize from their own state after verifying tokens.

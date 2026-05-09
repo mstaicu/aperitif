@@ -1,22 +1,24 @@
 # Features Domain
 
 Features owns product feature vocabulary, local products, product prices, and
-the local tenancy projections needed by future tenant feature grants.
+the local tenancy projections needed by future feature grants.
 
 ## Domain Boundary
 
-- `features` are the vocabulary of things the platform can enable.
+- `features` are the vocabulary of things the platform can enable at tenant or
+  workspace scope.
 - `products` are local things a tenant can acquire, such as plans, add-ons, or
   top-ups.
 - `product_features` are the feature values included in each product template.
 - `product_prices` map local products to provider-specific sellable prices.
-- `tenant_projection` and `tenant_membership_projection` are local projections
-  of tenancy authority consumed from tenancy events.
+- `tenant_projection`, `tenant_membership_projection`, and
+  `workspace_projection` are local projections of tenancy authority consumed
+  from tenancy events.
 
-Identity stays in `identity`. Tenant lifecycle, tenant memberships, and tenant
-activation requirements stay in `tenancy`. Product domains such as a future
-Salon CRM should own their own tenant-scoped resources and consume feature
-state through APIs/events, not by reading the features database.
+Identity stays in `identity`. Tenant lifecycle, tenant memberships, and
+workspaces stay in `tenancy`. Product domains should own their own
+tenant/workspace-scoped resources and consume feature state through APIs/events,
+not by reading the features database.
 
 The current API is catalogue-only and does not create tenant entitlements,
 subscriptions, checkout sessions, provider webhooks, invoices, usage counters,
@@ -27,17 +29,17 @@ or manual grants.
 ```text
 identity = who the actor is
 tenant = authority root for tenant-scoped product access
-feature = product capability that can later be granted to a tenant
+feature = product capability that can later be granted to a tenant or workspace
 product = local commercial/access package
 product_feature = product template value for one feature
 product_price = provider-specific way to buy or acquire a product, including
 manual acquisition
 ```
 
-`product_features` are templates. Future tenant grants should snapshot product
-feature values into tenant-specific grant rows before calculating effective
-tenant features. That prevents catalogue edits from silently changing existing
-tenant state.
+`product_features` are templates. Future grants should snapshot product feature
+values into tenant- or workspace-specific grant rows before calculating
+effective features. That prevents catalogue edits from silently changing
+existing tenant/workspace state.
 
 ## Core API
 
@@ -120,11 +122,12 @@ Features consumes these tenancy event subjects into local projection tables:
 - `tenancy.tenant.created`
 - `tenancy.tenant_membership.created`
 - `tenancy.tenant_membership.deleted`
+- `tenancy.workspace.created`
 
 Projection writes are idempotent through natural keys and `tenant_version`.
-Duplicate or stale events do not overwrite newer projected tenant or membership
-rows. Deleted memberships are kept as tombstones so an old membership-created
-event cannot resurrect a removed membership.
+Duplicate or stale events do not overwrite newer projected tenant, workspace,
+or membership rows. Deleted memberships are kept as tombstones so an old
+membership-created event cannot resurrect a removed membership.
 
 If the features projection database is intentionally reset while the `TENANCY`
 stream survives, the durable consumer state must be reset too. Otherwise NATS has

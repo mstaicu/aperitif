@@ -26,7 +26,7 @@ export const deleteTenantMembership =
         rows: [tenant],
       } = await client.query(
         `
-          SELECT id, name, kind, status
+          SELECT id, kind, status
           FROM tenants
           WHERE id = $1
           FOR UPDATE
@@ -119,7 +119,6 @@ export const deleteTenantMembership =
         tenant: {
           id: tenant.id,
           kind: tenant.kind,
-          name: tenant.name,
           status: tenant.status,
         },
       };

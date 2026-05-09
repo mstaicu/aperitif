@@ -11,8 +11,8 @@ export const TenantKindSchema = Type.Union([
 ]);
 
 export const TenantStatusSchema = Type.Union([
-  Type.Literal("pending"),
   Type.Literal("active"),
+  Type.Literal("archived"),
 ]);
 
 export const TenantRoleSchema = Type.Union([
@@ -24,8 +24,22 @@ export const TenantEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
     kind: TenantKindSchema,
-    name: Type.String({ maxLength: 160, minLength: 1 }),
     status: TenantStatusSchema,
+  },
+  { additionalProperties: false },
+);
+
+export const WorkspaceStatusSchema = Type.Union([
+  Type.Literal("active"),
+  Type.Literal("archived"),
+]);
+
+export const WorkspaceEventResourceSchema = Type.Object(
+  {
+    id: UuidSchema,
+    is_default: Type.Boolean(),
+    status: WorkspaceStatusSchema,
+    tenant_id: UuidSchema,
   },
   { additionalProperties: false },
 );
@@ -34,4 +48,10 @@ export const TenantEventResourceSchema = Type.Object(
  * @typedef {import("@sinclair/typebox").Static<
  *   typeof TenantEventResourceSchema
  * >} TenantEventResource
+ */
+
+/**
+ * @typedef {import("@sinclair/typebox").Static<
+ *   typeof WorkspaceEventResourceSchema
+ * >} WorkspaceEventResource
  */

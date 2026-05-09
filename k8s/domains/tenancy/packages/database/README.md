@@ -13,8 +13,7 @@ Postgres server or instance
     public schema
       tenants
       tenant_memberships
-      requirement_rules
-      tenant_requirements
+      workspaces
       outbox_events
       flyway_schema_history
 ```
@@ -25,10 +24,9 @@ database, `SELECT * FROM tenants` means `SELECT * FROM public.tenants`.
 The domain boundary is the database. Other domains must not connect to it
 directly.
 
-`requirement_rules` is seeded by Flyway migrations and defines requirement
-templates for future tenant creation. Tenant creation snapshots matching active
-rules into `tenant_requirements`; later rule changes do not mutate existing
-tenants unless a migration intentionally updates their requirement rows.
+`workspaces` are operational containers inside a tenant. Tenant creation
+creates one default workspace. Tenant membership controls workspace access for
+now; there are no workspace memberships in this baseline.
 
 ## Files
 

@@ -3,3 +3,4 @@ export * from "./resources.mjs";
 export * from "./tenant.created.mjs";
 export * from "./tenant.membership.created.mjs";
 export * from "./tenant.membership.deleted.mjs";
+export * from "./workspace.created.mjs";

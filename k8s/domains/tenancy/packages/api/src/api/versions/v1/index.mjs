@@ -5,7 +5,7 @@ import getTenant from "./routes/tenants/tenant.get.mjs";
 import deleteTenantMembership from "./routes/tenants/tenant.membership.delete.mjs";
 import getTenantMembership from "./routes/tenants/tenant.membership.get.mjs";
 import listTenantMemberships from "./routes/tenants/tenant.memberships.list.mjs";
-import listTenantRequirements from "./routes/tenants/tenant.requirements.list.mjs";
+import listTenantWorkspaces from "./routes/tenants/tenant.workspaces.list.mjs";
 import createTenant from "./routes/tenants/tenants.create.mjs";
 import listTenants from "./routes/tenants/tenants.list.mjs";
 
@@ -37,7 +37,7 @@ export default async (fastify, { domains, jwks }) => {
       },
       info: {
         description:
-          "Tenancy API for tenant ownership, memberships, and activation requirements.",
+          "Tenancy API for tenants, tenant memberships, and workspaces.",
         title: "Tenancy",
         version: "v1",
       },
@@ -48,7 +48,7 @@ export default async (fastify, { domains, jwks }) => {
       ],
       tags: [
         {
-          description: "Tenant authority and tenant membership",
+          description: "Tenant authority, tenant membership, and workspaces",
           name: "tenants",
         },
       ],
@@ -85,7 +85,7 @@ export default async (fastify, { domains, jwks }) => {
     prefix: "/tenants",
     tenancy: domains.tenancy,
   });
-  await fastify.register(listTenantRequirements, {
+  await fastify.register(listTenantWorkspaces, {
     jwks,
     prefix: "/tenants",
     tenancy: domains.tenancy,

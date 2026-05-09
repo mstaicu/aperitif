@@ -2,7 +2,7 @@ import { getTenant } from "./tenant.get.mjs";
 import { deleteTenantMembership } from "./tenant.membership.delete.mjs";
 import { getTenantMembership } from "./tenant.membership.get.mjs";
 import { listTenantMemberships } from "./tenant.memberships.list.mjs";
-import { listTenantRequirements } from "./tenant.requirements.list.mjs";
+import { listTenantWorkspaces } from "./tenant.workspaces.list.mjs";
 import { createTenant } from "./tenants.create.mjs";
 import { listTenants } from "./tenants.list.mjs";
 
@@ -15,8 +15,8 @@ export const createTenancyDomain = (ctx) => ({
   getTenant: getTenant(ctx),
   getTenantMembership: getTenantMembership(ctx),
   listTenantMemberships: listTenantMemberships(ctx),
-  listTenantRequirements: listTenantRequirements(ctx),
   listTenants: listTenants(ctx),
+  listTenantWorkspaces: listTenantWorkspaces(ctx),
 });
 
 /**

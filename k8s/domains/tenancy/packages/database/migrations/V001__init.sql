@@ -7,7 +7,7 @@ CREATE TABLE tenants (
 
     kind TEXT NOT NULL CHECK (kind IN ('personal', 'organization')),
 
-    status TEXT NOT NULL CHECK (status IN ('pending', 'active')),
+    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
 
     version BIGINT NOT NULL DEFAULT 1,
 
@@ -18,8 +18,8 @@ COMMENT ON TABLE tenants IS 'Authority root used for tenant lifecycle, commercia
 COMMENT ON COLUMN tenants.id IS 'Stable tenant identifier referenced by tenant-owned resources in other domains.';
 COMMENT ON COLUMN tenants.name IS 'Human-readable tenant name shown to users and operators.';
 COMMENT ON COLUMN tenants.kind IS 'Baseline tenant shape: personal for consumer use cases, organization for business use cases.';
-COMMENT ON COLUMN tenants.status IS 'Lifecycle gate for tenant-scoped product access.';
-COMMENT ON COLUMN tenants.version IS 'Monotonic tenant authority version; increment on tenant, membership, or requirement changes that consumers project.';
+COMMENT ON COLUMN tenants.status IS 'Tenant lifecycle status.';
+COMMENT ON COLUMN tenants.version IS 'Monotonic tenant authority version; increment on tenant, membership, or workspace changes that consumers project.';
 COMMENT ON COLUMN tenants.created_at IS 'Time the tenant record was created.';
 
 CREATE TABLE tenant_memberships (
@@ -42,48 +42,38 @@ COMMENT ON COLUMN tenant_memberships.user_id IS 'Identity user id from the ident
 COMMENT ON COLUMN tenant_memberships.role IS 'Tenant-level authority; owner manages the tenant, member can use tenant-scoped product capabilities.';
 COMMENT ON COLUMN tenant_memberships.created_at IS 'Time the membership was granted.';
 
-CREATE TABLE requirement_rules (
-    subject_type TEXT NOT NULL,
-
-    subject_kind TEXT NOT NULL,
-
-    requirement_key TEXT NOT NULL,
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'archived')
-    ),
-
-    PRIMARY KEY (subject_type, subject_kind, requirement_key)
-);
-
-COMMENT ON TABLE requirement_rules IS 'Requirement templates applied to a kind of authority subject, such as tenant organization requirements.';
-COMMENT ON COLUMN requirement_rules.subject_type IS 'Authority boundary the rule applies to, such as tenant. Future domains may use workspace or membership.';
-COMMENT ON COLUMN requirement_rules.subject_kind IS 'Kind inside the authority boundary, such as personal or organization for tenant rules.';
-COMMENT ON COLUMN requirement_rules.requirement_key IS 'Stable requirement key to instantiate, such as terms.accepted or billing.setup.';
-COMMENT ON COLUMN requirement_rules.status IS 'Active rules are applied to new matching subjects; archived rules are retained but not applied.';
-
--- Add future requirement rules with Flyway seed migrations. Each active rule is
--- copied into tenant_requirements when a matching tenant is created.
-
-CREATE TABLE tenant_requirements (
+CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     tenant_id UUID NOT NULL
         REFERENCES tenants(id)
         ON DELETE CASCADE,
 
-    requirement_key TEXT NOT NULL,
+    name TEXT NOT NULL,
 
-    status TEXT NOT NULL CHECK (status IN ('pending', 'completed')),
+    is_default BOOLEAN NOT NULL DEFAULT false,
 
-    UNIQUE (tenant_id, requirement_key)
+    status TEXT NOT NULL DEFAULT 'active' CHECK (
+        status IN ('active', 'archived')
+    ),
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-COMMENT ON TABLE tenant_requirements IS 'Activation requirements that must be completed before a tenant can become active.';
-COMMENT ON COLUMN tenant_requirements.id IS 'Stable requirement row identifier.';
-COMMENT ON COLUMN tenant_requirements.tenant_id IS 'Tenant this activation requirement belongs to.';
-COMMENT ON COLUMN tenant_requirements.requirement_key IS 'Stable requirement key fulfilled by another domain, such as terms.accepted or identity.verified.';
-COMMENT ON COLUMN tenant_requirements.status IS 'Requirement lifecycle tracked by tenancy from external fulfillment signals.';
+COMMENT ON TABLE workspaces IS 'Operational resource containers inside a tenant.';
+COMMENT ON COLUMN workspaces.id IS 'Stable workspace identifier referenced by workspace-scoped resources in other domains.';
+COMMENT ON COLUMN workspaces.tenant_id IS 'Tenant that owns this workspace.';
+COMMENT ON COLUMN workspaces.name IS 'Human-readable workspace name shown to users.';
+COMMENT ON COLUMN workspaces.is_default IS 'Marks the workspace created with the tenant.';
+COMMENT ON COLUMN workspaces.status IS 'Workspace lifecycle status.';
+COMMENT ON COLUMN workspaces.created_at IS 'Time the workspace record was created.';
+
+CREATE UNIQUE INDEX workspaces_default_unique
+ON workspaces (tenant_id)
+WHERE is_default;
+
+CREATE INDEX workspaces_tenant_id_idx
+ON workspaces (tenant_id, name, id);
 
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

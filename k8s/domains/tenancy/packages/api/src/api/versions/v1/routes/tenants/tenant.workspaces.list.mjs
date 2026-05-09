@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { TenantParams, TenantRequirementsResponse } from "./schemas.mjs";
+import { TenantParams, TenantWorkspacesResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -14,15 +14,15 @@ import { TenantParams, TenantRequirementsResponse } from "./schemas.mjs";
  */
 export default async function (fastify, { jwks, tenancy }) {
   fastify.get(
-    "/:tenantId/requirements",
+    "/:tenantId/workspaces",
     {
       schema: {
         description:
-          "List tenant activation requirements. Tenant members can inspect the gates that block tenant activation.",
-        operationId: "listTenantRequirements",
+          "List workspaces inside a tenant. Tenant members can access tenant workspaces.",
+        operationId: "listTenantWorkspaces",
         params: TenantParams,
         response: {
-          200: TenantRequirementsResponse,
+          200: TenantWorkspacesResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -31,7 +31,7 @@ export default async function (fastify, { jwks, tenancy }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List tenant requirements",
+        summary: "List tenant workspaces",
         tags: ["tenants"],
       },
     },
@@ -42,7 +42,7 @@ export default async function (fastify, { jwks, tenancy }) {
       });
 
       return reply.send(
-        await tenancy.listTenantRequirements({
+        await tenancy.listTenantWorkspaces({
           currentUserId,
           tenantId: req.params.tenantId,
         }),
