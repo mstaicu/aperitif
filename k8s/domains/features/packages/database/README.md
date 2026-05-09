@@ -11,7 +11,7 @@ Postgres is layered like this:
 Postgres server or instance
   features database
     public schema
-      features
+      feature_definitions
       products
       product_features
       product_prices
@@ -24,12 +24,12 @@ Postgres server or instance
       flyway_schema_history
 ```
 
-`features` is the tenant-level product feature vocabulary. `products` are local
-things a tenant can acquire, such as plans, add-ons, or top-ups. Manual
-acquisition belongs on `product_prices.provider`, not `products.product_type`.
-`product_features` are catalogue templates, not tenant grants. Future grants
-should snapshot product feature values instead of reading `product_features`
-live.
+`feature_definitions` is the tenant-level product feature vocabulary.
+`products` are local things a tenant can acquire, such as plans, add-ons, or
+top-ups. Manual acquisition belongs on `product_prices.provider`, not
+`products.product_type`. `product_features` are catalogue templates, not tenant
+grants. Future grants should snapshot product feature values instead of reading
+`product_features` live.
 
 `tenant_projection` and `tenant_membership_projection` are local copies of
 tenancy authority built from tenancy events. Projection writes are idempotent

@@ -6,7 +6,8 @@ projections needed to authorize those feature changes.
 
 ## Domain Boundary
 
-- `features` are the vocabulary of things the platform can enable for a tenant.
+- `feature_definitions` are the vocabulary of things the platform can enable
+  for a tenant.
 - `products` are local things a tenant can acquire, such as plans, add-ons, or
   top-ups.
 - `product_features` are the feature values included in each product template.

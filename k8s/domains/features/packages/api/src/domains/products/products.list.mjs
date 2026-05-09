@@ -50,7 +50,7 @@ export const listProducts = (ctx) => async () => {
             f.value_type,
             pf.granted_value
           FROM product_features pf
-          JOIN features f ON f.feature_key = pf.feature_key
+          JOIN feature_definitions f ON f.feature_key = pf.feature_key
           WHERE pf.product_code = $1
             AND f.status = 'active'
           ORDER BY f.feature_key

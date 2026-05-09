@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE features (
+CREATE TABLE feature_definitions (
     feature_key TEXT PRIMARY KEY,
 
     name TEXT NOT NULL,
@@ -18,12 +18,12 @@ CREATE TABLE features (
     )
 );
 
-COMMENT ON TABLE features IS 'Vocabulary of product features that can be granted to tenants.';
-COMMENT ON COLUMN features.feature_key IS 'Stable internal feature key used by product code, for example members.max.';
-COMMENT ON COLUMN features.name IS 'Human-readable feature name.';
-COMMENT ON COLUMN features.value_type IS 'Expected JSON value type for grants of this feature.';
-COMMENT ON COLUMN features.merge_strategy IS 'Rule used later to merge multiple active tenant grants for this feature.';
-COMMENT ON COLUMN features.status IS 'Lifecycle status for catalogue management.';
+COMMENT ON TABLE feature_definitions IS 'Vocabulary of product features that can be granted to tenants.';
+COMMENT ON COLUMN feature_definitions.feature_key IS 'Stable internal feature key used by product code, for example members.max.';
+COMMENT ON COLUMN feature_definitions.name IS 'Human-readable feature name.';
+COMMENT ON COLUMN feature_definitions.value_type IS 'Expected JSON value type for grants of this feature.';
+COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used later to merge multiple active tenant grants for this feature.';
+COMMENT ON COLUMN feature_definitions.status IS 'Lifecycle status for catalogue management.';
 
 CREATE TABLE products (
     product_code TEXT PRIMARY KEY,
@@ -51,7 +51,7 @@ CREATE TABLE product_features (
         ON DELETE CASCADE,
 
     feature_key TEXT NOT NULL
-        REFERENCES features(feature_key),
+        REFERENCES feature_definitions(feature_key),
 
     granted_value JSONB NOT NULL,
 
@@ -172,7 +172,7 @@ CREATE TABLE tenant_feature_grants (
     tenant_id UUID NOT NULL,
 
     feature_key TEXT NOT NULL
-        REFERENCES features(feature_key),
+        REFERENCES feature_definitions(feature_key),
 
     granted_value JSONB NOT NULL,
 
@@ -214,7 +214,7 @@ CREATE TABLE tenant_features (
     tenant_id UUID NOT NULL,
 
     feature_key TEXT NOT NULL
-        REFERENCES features(feature_key),
+        REFERENCES feature_definitions(feature_key),
 
     value JSONB NOT NULL,
 
