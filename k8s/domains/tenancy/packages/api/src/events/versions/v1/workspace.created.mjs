@@ -27,3 +27,23 @@ export const WorkspaceCreatedPayloadSchema = Type.Object(
 export const WorkspaceCreatedPayloadCheck = TypeCompiler.Compile(
   WorkspaceCreatedPayloadSchema,
 );
+
+/**
+ * @param {WorkspaceCreatedPayload} payload
+ * @returns {{
+ *   payload: WorkspaceCreatedPayload,
+ *   schema_version: number,
+ *   subject: string,
+ * }}
+ */
+export function buildWorkspaceCreatedEvent(payload) {
+  if (!WorkspaceCreatedPayloadCheck.Check(payload)) {
+    throw new Error("INVALID_EVENT_PAYLOAD");
+  }
+
+  return {
+    payload,
+    schema_version: WorkspaceCreatedSchemaVersion,
+    subject: WorkspaceCreatedSubject,
+  };
+}

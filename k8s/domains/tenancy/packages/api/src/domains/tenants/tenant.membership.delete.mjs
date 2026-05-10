@@ -1,8 +1,4 @@
-import {
-  TenantMembershipDeletedPayloadCheck,
-  TenantMembershipDeletedSchemaVersion,
-  TenantMembershipDeletedSubject,
-} from "../../events/index.mjs";
+import { buildTenantMembershipDeletedEvent } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -110,8 +106,7 @@ export const deleteTenantMembership =
         [tenantId],
       );
 
-      /** @type {import("../../events/index.mjs").TenantMembershipDeletedPayload} */
-      const membershipDeletedPayload = {
+      const membershipDeletedEvent = buildTenantMembershipDeletedEvent({
         membership: {
           tenant_id: tenantId,
           user_id: userId,
@@ -121,13 +116,7 @@ export const deleteTenantMembership =
           kind: tenant.kind,
           status: tenant.status,
         },
-      };
-
-      if (
-        !TenantMembershipDeletedPayloadCheck.Check(membershipDeletedPayload)
-      ) {
-        throw new Error("INVALID_EVENT_PAYLOAD");
-      }
+      });
 
       await client.query(
         `
@@ -140,10 +129,10 @@ export const deleteTenantMembership =
           VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
-          TenantMembershipDeletedSubject,
+          membershipDeletedEvent.subject,
           tenantVersion,
-          TenantMembershipDeletedSchemaVersion,
-          JSON.stringify(membershipDeletedPayload),
+          membershipDeletedEvent.schema_version,
+          JSON.stringify(membershipDeletedEvent.payload),
         ],
       );
 

@@ -1,13 +1,7 @@
 import {
-  TenantCreatedPayloadCheck,
-  TenantCreatedSchemaVersion,
-  TenantCreatedSubject,
-  TenantMembershipCreatedPayloadCheck,
-  TenantMembershipCreatedSchemaVersion,
-  TenantMembershipCreatedSubject,
-  WorkspaceCreatedPayloadCheck,
-  WorkspaceCreatedSchemaVersion,
-  WorkspaceCreatedSubject,
+  buildTenantCreatedEvent,
+  buildTenantMembershipCreatedEvent,
+  buildWorkspaceCreatedEvent,
 } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
@@ -67,20 +61,14 @@ export const createTenant =
         `,
         [tenant.id, name],
       );
-      const workspace = workspaceResult.rows[0];
 
-      /** @type {import("../../events/index.mjs").TenantCreatedPayload} */
-      const tenantCreatedPayload = {
+      const tenantCreatedEvent = buildTenantCreatedEvent({
         tenant: {
           id: tenant.id,
           kind: tenant.kind,
           status: tenant.status,
         },
-      };
-
-      if (!TenantCreatedPayloadCheck.Check(tenantCreatedPayload)) {
-        throw new Error("INVALID_EVENT_PAYLOAD");
-      }
+      });
 
       await client.query(
         `
@@ -93,10 +81,10 @@ export const createTenant =
           VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
-          TenantCreatedSubject,
+          tenantCreatedEvent.subject,
           tenant.version,
-          TenantCreatedSchemaVersion,
-          JSON.stringify(tenantCreatedPayload),
+          tenantCreatedEvent.schema_version,
+          JSON.stringify(tenantCreatedEvent.payload),
         ],
       );
 
@@ -112,8 +100,7 @@ export const createTenant =
         [tenant.id],
       );
 
-      /** @type {import("../../events/index.mjs").TenantMembershipCreatedPayload} */
-      const membershipCreatedPayload = {
+      const membershipCreatedEvent = buildTenantMembershipCreatedEvent({
         membership: {
           role: "owner",
           tenant_id: tenant.id,
@@ -124,13 +111,7 @@ export const createTenant =
           kind: tenant.kind,
           status: tenant.status,
         },
-      };
-
-      if (
-        !TenantMembershipCreatedPayloadCheck.Check(membershipCreatedPayload)
-      ) {
-        throw new Error("INVALID_EVENT_PAYLOAD");
-      }
+      });
 
       await client.query(
         `
@@ -143,10 +124,10 @@ export const createTenant =
           VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
-          TenantMembershipCreatedSubject,
+          membershipCreatedEvent.subject,
           membershipTenantVersion,
-          TenantMembershipCreatedSchemaVersion,
-          JSON.stringify(membershipCreatedPayload),
+          membershipCreatedEvent.schema_version,
+          JSON.stringify(membershipCreatedEvent.payload),
         ],
       );
 
@@ -162,8 +143,9 @@ export const createTenant =
         [tenant.id],
       );
 
-      /** @type {import("../../events/index.mjs").WorkspaceCreatedPayload} */
-      const workspaceCreatedPayload = {
+      const [workspace] = workspaceResult.rows;
+
+      const workspaceCreatedEvent = buildWorkspaceCreatedEvent({
         tenant: {
           id: tenant.id,
           kind: tenant.kind,
@@ -174,11 +156,7 @@ export const createTenant =
           status: workspace.status,
           tenant_id: workspace.tenant_id,
         },
-      };
-
-      if (!WorkspaceCreatedPayloadCheck.Check(workspaceCreatedPayload)) {
-        throw new Error("INVALID_EVENT_PAYLOAD");
-      }
+      });
 
       await client.query(
         `
@@ -191,10 +169,10 @@ export const createTenant =
           VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
-          WorkspaceCreatedSubject,
+          workspaceCreatedEvent.subject,
           workspaceTenantVersion,
-          WorkspaceCreatedSchemaVersion,
-          JSON.stringify(workspaceCreatedPayload),
+          workspaceCreatedEvent.schema_version,
+          JSON.stringify(workspaceCreatedEvent.payload),
         ],
       );
 

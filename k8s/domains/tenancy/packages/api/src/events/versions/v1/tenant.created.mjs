@@ -23,3 +23,23 @@ export const TenantCreatedPayloadSchema = Type.Object(
 export const TenantCreatedPayloadCheck = TypeCompiler.Compile(
   TenantCreatedPayloadSchema,
 );
+
+/**
+ * @param {TenantCreatedPayload} payload
+ * @returns {{
+ *   payload: TenantCreatedPayload,
+ *   schema_version: number,
+ *   subject: string,
+ * }}
+ */
+export function buildTenantCreatedEvent(payload) {
+  if (!TenantCreatedPayloadCheck.Check(payload)) {
+    throw new Error("INVALID_EVENT_PAYLOAD");
+  }
+
+  return {
+    payload,
+    schema_version: TenantCreatedSchemaVersion,
+    subject: TenantCreatedSubject,
+  };
+}

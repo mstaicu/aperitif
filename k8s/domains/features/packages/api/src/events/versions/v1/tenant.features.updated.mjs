@@ -27,3 +27,23 @@ export const TenantFeaturesUpdatedPayloadSchema = Type.Object(
 export const TenantFeaturesUpdatedPayloadCheck = TypeCompiler.Compile(
   TenantFeaturesUpdatedPayloadSchema,
 );
+
+/**
+ * @param {TenantFeaturesUpdatedPayload} payload
+ * @returns {{
+ *   payload: TenantFeaturesUpdatedPayload,
+ *   schema_version: number,
+ *   subject: string,
+ * }}
+ */
+export function buildTenantFeaturesUpdatedEvent(payload) {
+  if (!TenantFeaturesUpdatedPayloadCheck.Check(payload)) {
+    throw new Error("INVALID_EVENT_PAYLOAD");
+  }
+
+  return {
+    payload,
+    schema_version: TenantFeaturesUpdatedSchemaVersion,
+    subject: TenantFeaturesUpdatedSubject,
+  };
+}

@@ -40,3 +40,23 @@ export const TenantMembershipDeletedPayloadSchema = Type.Object(
 export const TenantMembershipDeletedPayloadCheck = TypeCompiler.Compile(
   TenantMembershipDeletedPayloadSchema,
 );
+
+/**
+ * @param {TenantMembershipDeletedPayload} payload
+ * @returns {{
+ *   payload: TenantMembershipDeletedPayload,
+ *   schema_version: number,
+ *   subject: string,
+ * }}
+ */
+export function buildTenantMembershipDeletedEvent(payload) {
+  if (!TenantMembershipDeletedPayloadCheck.Check(payload)) {
+    throw new Error("INVALID_EVENT_PAYLOAD");
+  }
+
+  return {
+    payload,
+    schema_version: TenantMembershipDeletedSchemaVersion,
+    subject: TenantMembershipDeletedSubject,
+  };
+}
