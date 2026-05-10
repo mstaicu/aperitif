@@ -75,13 +75,13 @@ async function publishNextOutboxEvent(ctx) {
       `
         SELECT id,
           subject,
-          tenant_version,
+          version,
           occurred_at,
           schema_version,
           payload
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY occurred_at, tenant_version, id
+        ORDER BY occurred_at, version, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -99,7 +99,7 @@ async function publishNextOutboxEvent(ctx) {
           payload: event.payload,
           schema_version: Number(event.schema_version),
           subject: event.subject,
-          tenant_version: Number(event.tenant_version),
+          tenant_version: Number(event.version),
         }),
         {
           expect: {

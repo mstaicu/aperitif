@@ -6,24 +6,16 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   products: {
  *     code: string,
  *     features: {
- *       key: string,
+ *       code: string,
  *       name: string,
+ *       type: "boolean" | "number" | "string",
  *       value: unknown,
- *       value_type: "boolean" | "number" | "string" | "json",
  *     }[],
  *     name: string,
- *     prices: {
+ *     offers: {
  *       amount_minor: number | null,
- *       billing_period: {
- *         count: number,
- *         unit: "day" | "week" | "month" | "year",
- *       } | null,
- *       billing_type: "recurring" | "one_time",
  *       code: string,
- *       currency_code: string | null,
- *       provider: string,
  *     }[],
- *     type: "plan" | "addon" | "top_up",
  *   }[],
  * }>}
  */
@@ -31,12 +23,10 @@ export const listProducts = (ctx) => async () => {
   try {
     const productResult = await ctx.persistence.db.query(
       `
-        SELECT product_code,
-          name,
-          product_type
+        SELECT code,
+          name
         FROM products
-        WHERE status = 'active'
-        ORDER BY product_code
+        ORDER BY code
       `,
     );
 
@@ -45,59 +35,42 @@ export const listProducts = (ctx) => async () => {
     for (const product of productResult.rows) {
       const featuresResult = await ctx.persistence.db.query(
         `
-          SELECT f.feature_key,
+          SELECT f.code,
             f.name,
-            f.value_type,
-            pf.granted_value
+            f.type,
+            pf.value
           FROM product_features pf
-          JOIN feature_definitions f ON f.feature_key = pf.feature_key
+          JOIN feature_definitions f ON f.code = pf.feature_code
           WHERE pf.product_code = $1
-            AND f.status = 'active'
-          ORDER BY f.feature_key
+          ORDER BY f.code
         `,
-        [product.product_code],
+        [product.code],
       );
 
-      const pricesResult = await ctx.persistence.db.query(
+      const offersResult = await ctx.persistence.db.query(
         `
-          SELECT price_code,
-            provider,
-            billing_type,
-            billing_period_unit,
-            billing_period_count,
-            amount_minor,
-            currency_code
-          FROM product_prices
+          SELECT code,
+            amount_minor
+          FROM product_offers
           WHERE product_code = $1
-            AND status = 'active'
-          ORDER BY price_code
+          ORDER BY code
         `,
-        [product.product_code],
+        [product.code],
       );
 
       products.push({
-        code: product.product_code,
+        code: product.code,
         features: featuresResult.rows.map((feature) => ({
-          key: feature.feature_key,
+          code: feature.code,
           name: feature.name,
-          value: feature.granted_value,
-          value_type: feature.value_type,
+          type: feature.type,
+          value: feature.value,
         })),
         name: product.name,
-        prices: pricesResult.rows.map((price) => ({
-          amount_minor: price.amount_minor,
-          billing_period: price.billing_period_unit
-            ? {
-                count: price.billing_period_count,
-                unit: price.billing_period_unit,
-              }
-            : null,
-          billing_type: price.billing_type,
-          code: price.price_code,
-          currency_code: price.currency_code,
-          provider: price.provider,
+        offers: offersResult.rows.map((offer) => ({
+          amount_minor: offer.amount_minor,
+          code: offer.code,
         })),
-        type: product.product_type,
       });
     }
 

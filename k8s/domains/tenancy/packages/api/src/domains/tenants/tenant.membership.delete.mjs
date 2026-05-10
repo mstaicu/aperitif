@@ -133,7 +133,7 @@ export const deleteTenantMembership =
         `
           INSERT INTO outbox_events (
             subject,
-            tenant_version,
+            version,
             schema_version,
             payload
           )

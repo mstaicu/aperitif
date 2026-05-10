@@ -86,7 +86,7 @@ export const createTenant =
         `
           INSERT INTO outbox_events (
             subject,
-            tenant_version,
+            version,
             schema_version,
             payload
           )
@@ -136,7 +136,7 @@ export const createTenant =
         `
           INSERT INTO outbox_events (
             subject,
-            tenant_version,
+            version,
             schema_version,
             payload
           )
@@ -184,7 +184,7 @@ export const createTenant =
         `
           INSERT INTO outbox_events (
             subject,
-            tenant_version,
+            version,
             schema_version,
             payload
           )

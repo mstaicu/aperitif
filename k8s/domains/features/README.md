@@ -1,6 +1,6 @@
 # Features Domain
 
-Features owns product feature vocabulary, local products, product prices,
+Features owns product feature vocabulary, local products, product offers,
 tenant feature grants, effective tenant features, and the local tenancy
 projections needed to authorize those feature changes.
 
@@ -8,12 +8,11 @@ projections needed to authorize those feature changes.
 
 - `feature_definitions` are the vocabulary of things the platform can enable
   for a tenant.
-- `products` are local things a tenant can acquire, such as plans, add-ons, or
-  top-ups.
+- `products` are local things a tenant can acquire.
 - `product_features` are the feature values included in each product template.
-- `product_prices` map local products to provider-specific sellable prices.
+- `product_offers` are simple catalogue offers for products.
 - `tenant_feature_grants` are tenant-specific inputs that grant feature values.
-- `tenant_features` are the effective tenant feature values emitted to other
+- `tenant_effective_features` are the current feature values emitted to other
   domains.
 - `tenant_projection` and `tenant_membership_projection` are local projections
   of tenancy authority consumed from tenancy events.
@@ -34,10 +33,9 @@ tenant = authority root for tenant-scoped product access
 feature = product capability that can later be granted to a tenant
 product = local commercial/access package
 product_feature = product template value for one feature
-product_price = provider-specific way to buy or acquire a product, including
-manual acquisition
+product_offer = simple way to acquire a product
 tenant_feature_grant = tenant-specific source value for one feature
-tenant_feature = current effective tenant feature value
+tenant_effective_feature = current effective tenant feature value
 ```
 
 `product_features` are templates. Grants snapshot product feature values into
@@ -144,8 +142,8 @@ deliberately when accepting a new tenancy event schema version.
 
 ## Feature Events
 
-Features emits tenant-level feature state from `tenant_features`, not from
-catalogue tables:
+Features emits tenant-level feature state from `tenant_effective_features`, not
+from catalogue tables:
 
 - `features.tenant_features.updated`
 

@@ -71,13 +71,13 @@ async function publishNextOutboxEvent(ctx) {
         SELECT id,
           subject,
           tenant_id,
-          features_version,
+          version,
           occurred_at,
           schema_version,
           payload
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY occurred_at, features_version, id
+        ORDER BY occurred_at, version, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -87,7 +87,7 @@ async function publishNextOutboxEvent(ctx) {
       await ctx.messaging.js.publish(
         event.subject,
         JSON.stringify({
-          features_version: Number(event.features_version),
+          features_version: Number(event.version),
           id: event.id,
           occurred_at:
             event.occurred_at instanceof Date

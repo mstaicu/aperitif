@@ -14,38 +14,38 @@ Postgres server or instance
       feature_definitions
       products
       product_features
-      product_prices
+      product_offers
       tenant_projection
       tenant_membership_projection
       tenant_feature_grants
-      tenant_features
+      tenant_effective_features
       features_version_seq
       outbox_events
       flyway_schema_history
 ```
 
 `feature_definitions` is the tenant-level product feature vocabulary.
-`products` are local things a tenant can acquire, such as plans, add-ons, or
-top-ups. Manual acquisition belongs on `product_prices.provider`, not
-`products.product_type`. `product_features` are catalogue templates, not tenant
-grants. Future grants should snapshot product feature values instead of reading
-`product_features` live.
+`products` are local things a tenant can acquire. `product_features` are
+catalogue templates, not tenant grants. Future grants should snapshot product
+feature values instead of reading `product_features` live. `product_offers`
+currently stores only a local offer code and amount; provider fields can be
+added when checkout/webhooks are implemented.
 
 `tenant_projection` and `tenant_membership_projection` are local copies of
 tenancy authority built from tenancy events. Projection writes are idempotent
 through natural keys and `tenant_version`.
 
 `tenant_feature_grants` records tenant-specific inputs that grant feature
-values. `tenant_features` stores the current effective feature values for each
-tenant after active grants are merged. `outbox_events` is the durable publisher
-queue for tenant feature events.
+values. `tenant_effective_features` stores the current effective feature values
+for each tenant after active grants are merged. `outbox_events` is the durable
+publisher queue for tenant feature events.
 
 Feature authority rows store tenancy-owned `tenant_id` values, but they are not
 foreign-key children of projection tables. Rebuilding tenancy projections must
 not delete feature grants or effective feature rows.
 
-Future grant-writing code should update `tenant_features` and insert the
-matching `outbox_events` row in the same transaction.
+Future grant-writing code should update `tenant_effective_features` and insert
+the matching `outbox_events` row in the same transaction.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.

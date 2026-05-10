@@ -124,7 +124,8 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
 - Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker
   ensures the `TENANCY` JetStream stream and publishes unpublished rows to that
-  stream. Event rows carry the stable event `id`, `subject`, `tenant_version`,
+  stream. Outbox rows store the local authority `version`; the worker emits it
+  on the wire as `tenant_version` with the stable event `id`, `subject`,
   `occurred_at`, `schema_version`, and a minimal domain payload.
 - Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
 - Database: tenancy owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.

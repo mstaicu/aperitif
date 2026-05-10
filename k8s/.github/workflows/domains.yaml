@@ -143,7 +143,7 @@ jobs:
       - name: post-deploy domains
         run: |
           for domain in $CHANGED_DOMAINS; do
-            make -C "domains/$domain" post-deploy DOMAIN="$DOMAIN"
+            make -C "domains/$domain" post-deploy DOMAIN="$DOMAIN" PORT=8443
           done
 
       - name: cleanup

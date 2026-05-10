@@ -1,121 +1,159 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE feature_definitions (
-    feature_key TEXT PRIMARY KEY,
+    code TEXT PRIMARY KEY,
 
     name TEXT NOT NULL,
 
-    value_type TEXT NOT NULL CHECK (
-        value_type IN ('boolean', 'number', 'string', 'json')
+    type TEXT NOT NULL CHECK (
+        type IN ('boolean', 'number', 'string')
     ),
 
     merge_strategy TEXT NOT NULL CHECK (
         merge_strategy IN ('boolean_or', 'number_max', 'number_sum')
-    ),
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'archived')
     )
 );
 
 COMMENT ON TABLE feature_definitions IS 'Vocabulary of product features that can be granted to tenants.';
-COMMENT ON COLUMN feature_definitions.feature_key IS 'Stable internal feature key used by product code, for example members.max.';
+COMMENT ON COLUMN feature_definitions.code IS 'Stable internal feature code used by application code, for example members.max.';
 COMMENT ON COLUMN feature_definitions.name IS 'Human-readable feature name.';
-COMMENT ON COLUMN feature_definitions.value_type IS 'Expected JSON value type for grants of this feature.';
+COMMENT ON COLUMN feature_definitions.type IS 'Expected value type for grants of this feature.';
 COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used later to merge multiple active tenant grants for this feature.';
-COMMENT ON COLUMN feature_definitions.status IS 'Lifecycle status for catalogue management.';
 
 CREATE TABLE products (
-    product_code TEXT PRIMARY KEY,
+    code TEXT PRIMARY KEY,
 
-    name TEXT NOT NULL,
-
-    product_type TEXT NOT NULL CHECK (
-        product_type IN ('plan', 'addon', 'top_up')
-    ),
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'archived')
-    )
+    name TEXT NOT NULL
 );
 
-COMMENT ON TABLE products IS 'Local products a tenant can acquire, such as a plan, add-on, or top-up.';
-COMMENT ON COLUMN products.product_code IS 'Stable local product code. This is not a payment-provider product id.';
+COMMENT ON TABLE products IS 'Local products a tenant can acquire.';
+COMMENT ON COLUMN products.code IS 'Stable local product code. This is not a payment-provider product id.';
 COMMENT ON COLUMN products.name IS 'Human-readable product name.';
-COMMENT ON COLUMN products.product_type IS 'Commercial/access shape of the product.';
-COMMENT ON COLUMN products.status IS 'Lifecycle status for catalogue management.';
 
 CREATE TABLE product_features (
     product_code TEXT NOT NULL
-        REFERENCES products(product_code)
+        REFERENCES products(code)
         ON DELETE CASCADE,
 
-    feature_key TEXT NOT NULL
-        REFERENCES feature_definitions(feature_key),
+    feature_code TEXT NOT NULL
+        REFERENCES feature_definitions(code),
 
-    granted_value JSONB NOT NULL,
+    value JSONB NOT NULL,
 
-    PRIMARY KEY (product_code, feature_key)
+    PRIMARY KEY (product_code, feature_code)
 );
 
 COMMENT ON TABLE product_features IS 'Feature values included in each product catalogue template.';
 COMMENT ON COLUMN product_features.product_code IS 'Product that includes this feature value.';
-COMMENT ON COLUMN product_features.feature_key IS 'Feature included by the product.';
-COMMENT ON COLUMN product_features.granted_value IS 'JSON value granted by this product for this feature.';
+COMMENT ON COLUMN product_features.feature_code IS 'Feature included by the product.';
+COMMENT ON COLUMN product_features.value IS 'Value granted by this product for this feature.';
 
-CREATE TABLE product_prices (
-    price_code TEXT PRIMARY KEY,
+CREATE TABLE product_offers (
+    code TEXT PRIMARY KEY,
 
     product_code TEXT NOT NULL
-        REFERENCES products(product_code),
+        REFERENCES products(code),
 
-    provider TEXT NOT NULL,
-
-    provider_price_ref TEXT,
-
-    billing_type TEXT NOT NULL CHECK (
-        billing_type IN ('recurring', 'one_time')
-    ),
-
-    billing_period_unit TEXT CHECK (
-        billing_period_unit IN ('day', 'week', 'month', 'year')
-    ),
-
-    billing_period_count INTEGER,
-
-    amount_minor INTEGER,
-
-    currency_code TEXT,
-
-    status TEXT NOT NULL DEFAULT 'draft' CHECK (
-        status IN ('draft', 'active', 'archived')
-    )
+    amount_minor INTEGER
 );
 
-COMMENT ON TABLE product_prices IS 'Provider-specific ways to sell or acquire a local product.';
-COMMENT ON COLUMN product_prices.price_code IS 'Stable local price code. This is not a payment-provider price id.';
-COMMENT ON COLUMN product_prices.product_code IS 'Local product this price sells.';
-COMMENT ON COLUMN product_prices.provider IS 'Provider key, such as stripe, paystack, adyen, or manual.';
-COMMENT ON COLUMN product_prices.provider_price_ref IS 'Provider-side price, plan, or offer reference.';
-COMMENT ON COLUMN product_prices.billing_type IS 'Whether this price is recurring or one-time.';
-COMMENT ON COLUMN product_prices.billing_period_unit IS 'Recurring billing period unit.';
-COMMENT ON COLUMN product_prices.billing_period_count IS 'Number of billing period units per cycle.';
-COMMENT ON COLUMN product_prices.amount_minor IS 'Price amount in minor currency units.';
-COMMENT ON COLUMN product_prices.currency_code IS 'ISO-style three-letter currency code.';
-COMMENT ON COLUMN product_prices.status IS 'Draft prices are not sellable; active prices can be shown by the API.';
+COMMENT ON TABLE product_offers IS 'Simple catalogue offers for local products.';
+COMMENT ON COLUMN product_offers.code IS 'Stable local offer code.';
+COMMENT ON COLUMN product_offers.product_code IS 'Local product this offer belongs to.';
+COMMENT ON COLUMN product_offers.amount_minor IS 'Offer amount in minor currency units.';
 
-CREATE UNIQUE INDEX product_prices_provider_price_ref_unique
-ON product_prices (provider, provider_price_ref)
-WHERE provider_price_ref IS NOT NULL;
+CREATE INDEX product_features_feature_code_idx
+ON product_features (feature_code);
 
-CREATE INDEX product_features_feature_key_idx
-ON product_features (feature_key);
+CREATE INDEX product_offers_product_code_idx
+ON product_offers (product_code);
 
-CREATE INDEX product_prices_product_code_idx
-ON product_prices (product_code);
+CREATE TABLE tenant_feature_grants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-CREATE INDEX product_prices_status_idx
-ON product_prices (status);
+    tenant_id UUID NOT NULL,
+
+    feature_code TEXT NOT NULL
+        REFERENCES feature_definitions(code),
+
+    value JSONB NOT NULL,
+
+    grant_type TEXT NOT NULL,
+
+    grant_ref TEXT NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    revoked_at TIMESTAMPTZ
+);
+
+COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as products, admin grants, or future provider confirmations.';
+COMMENT ON COLUMN tenant_feature_grants.id IS 'Stable grant id.';
+COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
+COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
+COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
+COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example product or manual.';
+COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable reference inside the grant category.';
+COMMENT ON COLUMN tenant_feature_grants.created_at IS 'Time the grant was recorded.';
+COMMENT ON COLUMN tenant_feature_grants.revoked_at IS 'Null while the grant is active; set when the grant is revoked.';
+
+CREATE INDEX tenant_feature_grants_tenant_feature_idx
+ON tenant_feature_grants (tenant_id, feature_code)
+WHERE revoked_at IS NULL;
+
+CREATE INDEX tenant_feature_grants_grant_idx
+ON tenant_feature_grants (grant_type, grant_ref);
+
+CREATE UNIQUE INDEX tenant_feature_grants_active_grant_unique
+ON tenant_feature_grants (tenant_id, feature_code, grant_type, grant_ref)
+WHERE revoked_at IS NULL;
+
+-- feature_definitions
+-- products
+-- product_features
+-- product_offers
+--         |
+--         v
+-- tenant_feature_grants
+--         |
+--         v
+-- tenant_effective_features
+--         |
+--         v
+-- outbox_events
+--         |
+--         v
+-- FEATURES stream
+
+CREATE TABLE tenant_effective_features (
+    tenant_id UUID NOT NULL,
+
+    feature_code TEXT NOT NULL
+        REFERENCES feature_definitions(code),
+
+    value JSONB NOT NULL,
+
+    version BIGINT NOT NULL,
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (tenant_id, feature_code)
+);
+
+COMMENT ON TABLE tenant_effective_features IS 'Current effective feature values for each tenant. Events are emitted from this authority table.';
+COMMENT ON COLUMN tenant_effective_features.tenant_id IS 'Tenant that owns this effective feature value.';
+COMMENT ON COLUMN tenant_effective_features.feature_code IS 'Effective feature code.';
+COMMENT ON COLUMN tenant_effective_features.value IS 'Current effective feature value after active grants are merged.';
+COMMENT ON COLUMN tenant_effective_features.version IS 'Monotonic authority version assigned when this tenant feature value changes.';
+COMMENT ON COLUMN tenant_effective_features.updated_at IS 'Time this effective feature value was last changed.';
+
+CREATE INDEX tenant_effective_features_feature_code_idx
+ON tenant_effective_features (feature_code);
+
+CREATE SEQUENCE features_version_seq AS BIGINT;
+
+COMMENT ON SEQUENCE features_version_seq IS 'Monotonic authority version assigned to features-domain events.';
+
+-- Projections
 
 CREATE TABLE tenant_projection (
     tenant_id UUID PRIMARY KEY,
@@ -166,83 +204,7 @@ CREATE INDEX tenant_membership_projection_user_id_idx
 ON tenant_membership_projection (user_id)
 WHERE status = 'active';
 
-CREATE TABLE tenant_feature_grants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    tenant_id UUID NOT NULL,
-
-    feature_key TEXT NOT NULL
-        REFERENCES feature_definitions(feature_key),
-
-    granted_value JSONB NOT NULL,
-
-    source_type TEXT NOT NULL,
-
-    source_ref TEXT NOT NULL,
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'revoked')
-    ),
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    revoked_at TIMESTAMPTZ
-);
-
-COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as products, admin grants, or future provider confirmations.';
-COMMENT ON COLUMN tenant_feature_grants.id IS 'Stable grant id.';
-COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
-COMMENT ON COLUMN tenant_feature_grants.feature_key IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_feature_grants.granted_value IS 'JSON feature value contributed by this grant.';
-COMMENT ON COLUMN tenant_feature_grants.source_type IS 'Local source category for the grant, for example product or manual.';
-COMMENT ON COLUMN tenant_feature_grants.source_ref IS 'Stable source reference inside the source category.';
-COMMENT ON COLUMN tenant_feature_grants.status IS 'Active grants are used to compute tenant_features; revoked grants remain for history.';
-COMMENT ON COLUMN tenant_feature_grants.created_at IS 'Time the grant was recorded.';
-COMMENT ON COLUMN tenant_feature_grants.revoked_at IS 'Time the grant was revoked, when applicable.';
-
-CREATE INDEX tenant_feature_grants_tenant_feature_idx
-ON tenant_feature_grants (tenant_id, feature_key)
-WHERE status = 'active';
-
-CREATE INDEX tenant_feature_grants_source_idx
-ON tenant_feature_grants (source_type, source_ref);
-
-CREATE UNIQUE INDEX tenant_feature_grants_active_source_feature_unique
-ON tenant_feature_grants (tenant_id, feature_key, source_type, source_ref)
-WHERE status = 'active';
-
-CREATE TABLE tenant_features (
-    tenant_id UUID NOT NULL,
-
-    feature_key TEXT NOT NULL
-        REFERENCES feature_definitions(feature_key),
-
-    value JSONB NOT NULL,
-
-    value_type TEXT NOT NULL CHECK (
-        value_type IN ('boolean', 'number', 'string', 'json')
-    ),
-
-    features_version BIGINT NOT NULL,
-
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    PRIMARY KEY (tenant_id, feature_key)
-);
-
-COMMENT ON TABLE tenant_features IS 'Current effective feature values for each tenant. Events are emitted from this authority table.';
-COMMENT ON COLUMN tenant_features.tenant_id IS 'Tenant that owns this effective feature value.';
-COMMENT ON COLUMN tenant_features.feature_key IS 'Effective feature key.';
-COMMENT ON COLUMN tenant_features.value IS 'Current effective JSON feature value after active grants are merged.';
-COMMENT ON COLUMN tenant_features.value_type IS 'Projected value type from features for consumers.';
-COMMENT ON COLUMN tenant_features.features_version IS 'Monotonic authority version assigned when this tenant feature value changes.';
-COMMENT ON COLUMN tenant_features.updated_at IS 'Time this effective feature value was last changed.';
-
-CREATE INDEX tenant_features_feature_key_idx
-ON tenant_features (feature_key);
-
-CREATE SEQUENCE features_version_seq AS BIGINT;
-
-COMMENT ON SEQUENCE features_version_seq IS 'Monotonic authority version assigned to features-domain events.';
+-- Outbox
 
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -251,7 +213,7 @@ CREATE TABLE outbox_events (
 
     tenant_id UUID NOT NULL,
 
-    features_version BIGINT NOT NULL,
+    version BIGINT NOT NULL,
 
     schema_version INTEGER NOT NULL,
 
@@ -267,7 +229,7 @@ COMMENT ON TABLE outbox_events IS 'Transactional outbox for durable features-dom
 COMMENT ON COLUMN outbox_events.id IS 'Stable event id used by consumers for idempotency.';
 COMMENT ON COLUMN outbox_events.subject IS 'Event bus subject, for example features.tenant_features.updated.';
 COMMENT ON COLUMN outbox_events.tenant_id IS 'Tenant whose features changed.';
-COMMENT ON COLUMN outbox_events.features_version IS 'Features authority version consumers use to reject stale or out-of-order feature events.';
+COMMENT ON COLUMN outbox_events.version IS 'Features authority version emitted as features_version on the event envelope.';
 COMMENT ON COLUMN outbox_events.schema_version IS 'Event payload schema version used by consumers to select the correct decoder.';
 COMMENT ON COLUMN outbox_events.payload IS 'JSON event body published to the event bus.';
 COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was recorded in the same transaction as the state change.';
@@ -291,7 +253,7 @@ EXECUTE FUNCTION notify_outbox_event();
 COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
 
 CREATE INDEX outbox_events_unpublished_idx
-ON outbox_events (occurred_at, features_version, id)
+ON outbox_events (occurred_at, version, id)
 WHERE published_at IS NULL;
 
 COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';

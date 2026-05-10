@@ -44,7 +44,7 @@ platform/
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant authority, memberships, workspaces
-  features/               product feature catalogue, prices, tenancy projection
+  features/               product feature catalogue, offers, tenancy projection
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -77,7 +77,7 @@ Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
 - `tenancy`: owns tenant authority, tenant memberships, and workspaces.
-- `features`: owns product feature vocabulary, local products, product prices, and future tenant/workspace feature grants/projections.
+- `features`: owns product feature vocabulary, local products, product offers, and future tenant feature grants/projections.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 

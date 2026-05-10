@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: local
+  name: tma-stack
 
 requires:
   - path: platform/event-bus
