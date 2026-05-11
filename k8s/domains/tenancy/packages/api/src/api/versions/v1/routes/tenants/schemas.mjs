@@ -17,6 +17,11 @@ const TenantName = Type.String({
   maxLength: 160,
   minLength: 1,
 });
+const WorkspaceName = Type.String({
+  description: "Human-readable workspace name.",
+  maxLength: 160,
+  minLength: 1,
+});
 
 export const TenantKind = Type.Union(
   [Type.Literal("personal"), Type.Literal("organization")],
@@ -79,6 +84,16 @@ export const CreateTenantBody = Type.Object(
   },
 );
 
+export const CreateWorkspaceBody = Type.Object(
+  {
+    name: WorkspaceName,
+  },
+  {
+    additionalProperties: false,
+    description: "Payload for creating a workspace inside a tenant.",
+  },
+);
+
 export const Tenant = Type.Object(
   {
     id: TenantId,
@@ -96,11 +111,7 @@ export const Tenant = Type.Object(
 export const Workspace = Type.Object(
   {
     id: WorkspaceId,
-    name: Type.String({
-      description: "Human-readable workspace name.",
-      maxLength: 160,
-      minLength: 1,
-    }),
+    name: WorkspaceName,
     status: WorkspaceStatus,
     tenant_id: TenantId,
   },
@@ -147,11 +158,20 @@ export const TenantResponse = Type.Object(
 export const CreateTenantResponse = Type.Object(
   {
     tenant: Tenant,
+  },
+  {
+    additionalProperties: false,
+    description: "Created tenant.",
+  },
+);
+
+export const CreateWorkspaceResponse = Type.Object(
+  {
     workspace: Workspace,
   },
   {
     additionalProperties: false,
-    description: "Created tenant and its initial workspace.",
+    description: "Created workspace.",
   },
 );
 

@@ -15,9 +15,9 @@ their own domains and reference `tenant_id` or `workspace_id` when they own
 tenant/workspace-scoped resources.
 
 The current API does not expose direct member creation/invite. Tenant creation
-grants owner membership to the caller and creates one initial workspace. Future
-member adds should come from invite, provisioning, or another explicit proof
-workflow.
+grants owner membership to the caller. Workspaces are created separately when a
+product needs an operational resource container. Future member adds should come
+from invite, provisioning, or another explicit proof workflow.
 
 ## Core Model
 
@@ -43,12 +43,14 @@ operations should require tenant membership and an active tenant/workspace.
 ## Core API
 
 ```text
-GET/POST /v1/tenants
+GET /v1/tenants
+POST /v1/tenants
 GET /v1/tenants/:tenantId
 GET /v1/tenants/:tenantId/memberships
 GET /v1/tenants/:tenantId/memberships/:userId
 DELETE /v1/tenants/:tenantId/memberships/:userId
 GET /v1/tenants/:tenantId/workspaces
+POST /v1/tenants/:tenantId/workspaces
 ```
 
 ## Onboarding Examples
@@ -59,7 +61,8 @@ Consumer SaaS without required onboarding:
 user registers through identity
 POST /v1/tenants { kind: "personal", name: "<display name>" }
 tenant.status = active
-initial workspace is created
+product creates a workspace only if it needs one
+POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 ```
 
 B2B SaaS:
@@ -67,7 +70,8 @@ B2B SaaS:
 ```text
 founder registers through identity
 POST /v1/tenants { kind: "organization", name: "<organization name>" }
-initial workspace is created
+product creates one or more workspaces if it needs operational containers
+POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 future invite/provisioning flow creates additional tenant memberships
 ```
 

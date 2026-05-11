@@ -1,6 +1,10 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { CreateTenantBody, CreateTenantResponse } from "./schemas.mjs";
+import {
+  CreateWorkspaceBody,
+  CreateWorkspaceResponse,
+  TenantParams,
+} from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -14,22 +18,25 @@ import { CreateTenantBody, CreateTenantResponse } from "./schemas.mjs";
  */
 export default async function (fastify, { jwks, tenancy }) {
   fastify.post(
-    "",
+    "/:tenantId/workspaces",
     {
       schema: {
-        body: CreateTenantBody,
+        body: CreateWorkspaceBody,
         description:
-          "Create a tenant as the authority root for tenant-scoped product access. The authenticated caller becomes tenant owner. Create a workspace separately when a product needs an operational resource container.",
-        operationId: "createTenant",
+          "Create a workspace inside a tenant. Tenant owners can create workspaces when a product needs an operational resource container.",
+        operationId: "createTenantWorkspace",
+        params: TenantParams,
         response: {
-          201: CreateTenantResponse,
+          201: CreateWorkspaceResponse,
           400: ProblemResponse,
           401: ProblemResponse,
+          403: ProblemResponse,
+          404: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create tenant",
+        summary: "Create tenant workspace",
         tags: ["tenants"],
       },
     },
@@ -40,10 +47,10 @@ export default async function (fastify, { jwks, tenancy }) {
       });
 
       return reply.code(201).send(
-        await tenancy.createTenant({
+        await tenancy.createTenantWorkspace({
           currentUserId,
-          kind: req.body.kind,
           name: req.body.name,
+          tenantId: req.params.tenantId,
         }),
       );
     },

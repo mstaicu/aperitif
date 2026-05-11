@@ -1,7 +1,6 @@
 import {
   buildTenantCreatedEvent,
   buildTenantMembershipCreatedEvent,
-  buildWorkspaceCreatedEvent,
 } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
@@ -13,12 +12,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     kind: "personal" | "organization",
  *     name: string,
  *     status: "active" | "archived",
- *   },
- *   workspace: {
- *     id: string,
- *     name: string,
- *     status: "active" | "archived",
- *     tenant_id: string,
  *   },
  * }>}
  */
@@ -48,18 +41,6 @@ export const createTenant =
           VALUES ($1, $2, 'owner')
         `,
         [tenant.id, currentUserId],
-      );
-
-      const workspaceResult = await client.query(
-        `
-          INSERT INTO workspaces (
-            tenant_id,
-            name
-          )
-          VALUES ($1, $2)
-          RETURNING id, tenant_id, name, status
-        `,
-        [tenant.id, name],
       );
 
       const tenantCreatedEvent = buildTenantCreatedEvent({
@@ -131,51 +112,6 @@ export const createTenant =
         ],
       );
 
-      const {
-        rows: [{ version: workspaceTenantVersion }],
-      } = await client.query(
-        `
-          UPDATE tenants
-          SET version = version + 1
-          WHERE id = $1
-          RETURNING version
-        `,
-        [tenant.id],
-      );
-
-      const [workspace] = workspaceResult.rows;
-
-      const workspaceCreatedEvent = buildWorkspaceCreatedEvent({
-        tenant: {
-          id: tenant.id,
-          kind: tenant.kind,
-          status: tenant.status,
-        },
-        workspace: {
-          id: workspace.id,
-          status: workspace.status,
-          tenant_id: workspace.tenant_id,
-        },
-      });
-
-      await client.query(
-        `
-          INSERT INTO outbox_events (
-            subject,
-            version,
-            schema_version,
-            payload
-          )
-          VALUES ($1, $2, $3, $4::jsonb)
-        `,
-        [
-          workspaceCreatedEvent.subject,
-          workspaceTenantVersion,
-          workspaceCreatedEvent.schema_version,
-          JSON.stringify(workspaceCreatedEvent.payload),
-        ],
-      );
-
       await client.query("COMMIT");
 
       return {
@@ -184,12 +120,6 @@ export const createTenant =
           kind: tenant.kind,
           name: tenant.name,
           status: tenant.status,
-        },
-        workspace: {
-          id: workspace.id,
-          name: workspace.name,
-          status: workspace.status,
-          tenant_id: workspace.tenant_id,
         },
       };
     } catch (err) {

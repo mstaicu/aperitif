@@ -26,7 +26,7 @@ Postgres server or instance
 
 `feature_definitions` is the tenant-level product feature vocabulary.
 `products` are local things a tenant can acquire. `product_features` are
-catalogue templates, not tenant grants. Future grants should snapshot product
+catalogue templates, not tenant grants. Tenant product grants snapshot product
 feature values instead of reading `product_features` live. `product_offers`
 currently stores only a local offer code and amount; provider fields can be
 added when checkout/webhooks are implemented.
@@ -44,8 +44,8 @@ Feature authority rows store tenancy-owned `tenant_id` values, but they are not
 foreign-key children of projection tables. Rebuilding tenancy projections must
 not delete feature grants or effective feature rows.
 
-Future grant-writing code should update `tenant_effective_features` and insert
-the matching `outbox_events` row in the same transaction.
+Grant-writing code updates `tenant_effective_features` and inserts the matching
+`outbox_events` row in the same transaction.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.
@@ -60,6 +60,9 @@ directly.
 
 The current migration image copies only `migrations/`. Add other folders back
 to the Dockerfile only when a workflow actually uses them.
+
+`V002__seed_basic_catalogue.sql` seeds the smallest generic catalogue used to
+prove feature grants: `starter`, `pro`, and a few simple tenant-level features.
 
 ## Flyway Rules
 

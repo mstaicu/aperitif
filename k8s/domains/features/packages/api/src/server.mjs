@@ -3,6 +3,7 @@ import process from "node:process";
 
 import { createApp } from "./app.mjs";
 import { createProductsDomain } from "./domains/products/index.mjs";
+import { createTenantFeaturesDomain } from "./domains/tenant-features/index.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
 
@@ -16,6 +17,7 @@ const app = await createApp({
   ctx,
   domains: {
     products: createProductsDomain(ctx),
+    tenantFeatures: createTenantFeaturesDomain(ctx),
   },
   fastifyOtel: otel.fastifyOtel,
 });

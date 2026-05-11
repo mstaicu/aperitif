@@ -9,6 +9,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
  * @typedef {import('./domains/products/index.mjs').ProductsDomain} ProductsDomain
+ * @typedef {import('./domains/tenant-features/index.mjs').TenantFeaturesDomain} TenantFeaturesDomain
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
  */
@@ -28,6 +29,7 @@ import v1 from "./api/versions/v1/index.mjs";
  *  ctx: Ctx,
  *  domains: {
  *    products: ProductsDomain,
+ *    tenantFeatures: TenantFeaturesDomain,
  *  },
  *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args

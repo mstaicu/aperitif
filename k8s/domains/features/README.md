@@ -21,9 +21,9 @@ Identity stays in `identity`. Tenant lifecycle, tenant memberships, and
 workspaces stay in `tenancy`. Product domains should consume tenant-level
 feature state through APIs/events, not by reading the features database.
 
-The current API is catalogue-only. Tenant feature writes are modelled in the
-database and outbox, but checkout sessions, provider webhooks, invoices, usage
-counters, and manual-grant APIs are not implemented yet.
+The current API exposes the product catalogue and tenant-owner grant operations.
+Checkout sessions, provider webhooks, invoices, and usage counters are not
+implemented yet.
 
 ## Core Model
 
@@ -46,9 +46,14 @@ That prevents catalogue edits from silently changing existing tenant state.
 
 ```text
 GET /v1/products
+POST /v1/admin/grants/products
+POST /v1/admin/grants/features
 ```
 
-The route requires an identity-issued access token verified through JWKS.
+Routes require an identity-issued access token verified through JWKS. Tenant
+grant requests carry `tenant_id` and the target `product_code` or
+`feature_code` in the body. These are admin/control plane commands, not customer
+purchase APIs.
 
 ## Deployment Units
 

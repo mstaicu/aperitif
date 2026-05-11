@@ -24,9 +24,10 @@ database, `SELECT * FROM tenants` means `SELECT * FROM public.tenants`.
 The domain boundary is the database. Other domains must not connect to it
 directly.
 
-`workspaces` are operational containers inside a tenant. Tenant creation
-creates one initial workspace. Tenant membership controls workspace access for
-now; there are no workspace memberships in this baseline.
+`workspaces` are operational containers inside a tenant. Tenant creation does
+not require a workspace; products create workspaces when they need operational
+resource containers. Tenant membership controls workspace access for now; there
+are no workspace memberships in this baseline.
 
 ## Files
 

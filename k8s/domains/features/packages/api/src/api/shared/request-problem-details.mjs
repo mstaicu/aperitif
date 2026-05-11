@@ -9,10 +9,35 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
+  FEATURE_NOT_FOUND: {
+    status: 404,
+    title: "Feature not found",
+    type: "/problems/feature-not-found",
+  },
+  FORBIDDEN: {
+    status: 403,
+    title: "Forbidden",
+    type: "/problems/forbidden",
+  },
   INVALID_ACCESS_TOKEN: {
     status: 401,
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
+  },
+  INVALID_FEATURE_VALUE: {
+    status: 400,
+    title: "Invalid feature value",
+    type: "/problems/invalid-feature-value",
+  },
+  PRODUCT_NOT_FOUND: {
+    status: 404,
+    title: "Product not found",
+    type: "/problems/product-not-found",
+  },
+  TENANT_NOT_FOUND: {
+    status: 404,
+    title: "Tenant not found",
+    type: "/problems/tenant-not-found",
   },
 };
 

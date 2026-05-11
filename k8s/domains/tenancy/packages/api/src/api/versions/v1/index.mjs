@@ -5,6 +5,7 @@ import getTenant from "./routes/tenants/tenant.get.mjs";
 import deleteTenantMembership from "./routes/tenants/tenant.membership.delete.mjs";
 import getTenantMembership from "./routes/tenants/tenant.membership.get.mjs";
 import listTenantMemberships from "./routes/tenants/tenant.memberships.list.mjs";
+import createTenantWorkspace from "./routes/tenants/tenant.workspace.create.mjs";
 import listTenantWorkspaces from "./routes/tenants/tenant.workspaces.list.mjs";
 import createTenant from "./routes/tenants/tenants.create.mjs";
 import listTenants from "./routes/tenants/tenants.list.mjs";
@@ -81,6 +82,11 @@ export default async (fastify, { domains, jwks }) => {
     tenancy: domains.tenancy,
   });
   await fastify.register(deleteTenantMembership, {
+    jwks,
+    prefix: "/tenants",
+    tenancy: domains.tenancy,
+  });
+  await fastify.register(createTenantWorkspace, {
     jwks,
     prefix: "/tenants",
     tenancy: domains.tenancy,
