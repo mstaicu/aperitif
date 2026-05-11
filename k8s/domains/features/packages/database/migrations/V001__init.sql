@@ -83,7 +83,7 @@ COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by t
 -- tenant_feature_grants
 --         |
 --         v
--- tenant_effective_features
+-- tenant_features
 --         |
 --         v
 -- outbox_events
@@ -91,7 +91,7 @@ COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by t
 --         v
 -- FEATURES stream
 
-CREATE TABLE tenant_effective_features (
+CREATE TABLE tenant_features (
     tenant_id UUID NOT NULL,
 
     feature_code TEXT NOT NULL
@@ -104,11 +104,11 @@ CREATE TABLE tenant_effective_features (
     PRIMARY KEY (tenant_id, feature_code)
 );
 
-COMMENT ON TABLE tenant_effective_features IS 'Current effective feature values for each tenant. Events are emitted from this authority table.';
-COMMENT ON COLUMN tenant_effective_features.tenant_id IS 'Tenant that owns this effective feature value.';
-COMMENT ON COLUMN tenant_effective_features.feature_code IS 'Effective feature code.';
-COMMENT ON COLUMN tenant_effective_features.value IS 'Current effective feature value after grants are merged.';
-COMMENT ON COLUMN tenant_effective_features.version IS 'Monotonic authority version assigned when this tenant feature value changes.';
+COMMENT ON TABLE tenant_features IS 'Current feature values for each tenant. Events are emitted from this authority table.';
+COMMENT ON COLUMN tenant_features.tenant_id IS 'Tenant that owns this feature value.';
+COMMENT ON COLUMN tenant_features.feature_code IS 'Feature code.';
+COMMENT ON COLUMN tenant_features.value IS 'Current feature value after grants are merged.';
+COMMENT ON COLUMN tenant_features.version IS 'Monotonic authority version assigned when this tenant feature value changes.';
 
 CREATE SEQUENCE features_version_seq AS BIGINT;
 

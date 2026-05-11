@@ -3,12 +3,12 @@ import { AccessTokenResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../domains/sessions/index.mjs").SessionsDomain} SessionsDomain
+ * @typedef {import("../../../../../services/sessions/index.mjs").SessionsService} SessionsService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{sessions: SessionsDomain}} opts
+ * @param {{sessions: SessionsService}} opts
  */
 export default async function (fastify, { sessions }) {
   fastify.post(

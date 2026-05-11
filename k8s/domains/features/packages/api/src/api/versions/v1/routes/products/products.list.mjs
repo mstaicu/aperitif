@@ -5,12 +5,12 @@ import { ProductsResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../domains/products/index.mjs").ProductsDomain} ProductsDomain
+ * @typedef {import("../../../../../services/products/index.mjs").ProductsService} ProductsService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{products: ProductsDomain, jwks: Jwks}} opts
+ * @param {{products: ProductsService, jwks: Jwks}} opts
  */
 export default async function (fastify, { jwks, products }) {
   fastify.get(

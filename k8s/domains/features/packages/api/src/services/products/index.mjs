@@ -3,10 +3,10 @@ import { listProducts } from "./products.list.mjs";
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
-export const createProductsDomain = (ctx) => ({
+export const createProductsService = (ctx) => ({
   listProducts: listProducts(ctx),
 });
 
 /**
- * @typedef {ReturnType<typeof createProductsDomain>} ProductsDomain
+ * @typedef {ReturnType<typeof createProductsService>} ProductsService
  */

@@ -8,18 +8,18 @@ import listProducts from "./routes/products/products.list.mjs";
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../domains/products/index.mjs").ProductsDomain} ProductsDomain
- * @typedef {import("../../../domains/tenant-features/index.mjs").TenantFeaturesDomain} TenantFeaturesDomain
+ * @typedef {import("../../../services/products/index.mjs").ProductsService} ProductsService
+ * @typedef {import("../../../services/tenant-features/index.mjs").TenantFeaturesService} TenantFeaturesService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{domains: {
- *   products: ProductsDomain,
- *   tenantFeatures: TenantFeaturesDomain,
+ * @param {{services: {
+ *   products: ProductsService,
+ *   tenantFeatures: TenantFeaturesService,
  * }, jwks: Jwks}} opts
  */
-export default async (fastify, { domains, jwks }) => {
+export default async (fastify, { jwks, services }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -60,17 +60,17 @@ export default async (fastify, { domains, jwks }) => {
   await fastify.register(createProductGrant, {
     jwks,
     prefix: "/admin/grants",
-    tenantFeatures: domains.tenantFeatures,
+    tenantFeatures: services.tenantFeatures,
   });
   await fastify.register(createFeatureGrant, {
     jwks,
     prefix: "/admin/grants",
-    tenantFeatures: domains.tenantFeatures,
+    tenantFeatures: services.tenantFeatures,
   });
   await fastify.register(listProducts, {
     jwks,
     prefix: "/products",
-    products: domains.products,
+    products: services.products,
   });
 
   await fastify.register(swaggerUI, {

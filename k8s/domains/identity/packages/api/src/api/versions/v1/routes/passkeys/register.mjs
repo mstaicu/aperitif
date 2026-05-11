@@ -3,12 +3,12 @@ import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
+ * @typedef {import("../../../../../services/passkeys/index.mjs").PasskeysService} PasskeysService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysDomain}} opts
+ * @param {{passkeys: PasskeysService}} opts
  */
 export default async function (fastify, { passkeys }) {
   fastify.post(

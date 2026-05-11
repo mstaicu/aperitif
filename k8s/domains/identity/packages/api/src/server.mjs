@@ -2,10 +2,10 @@ import { once } from "node:events";
 import process from "node:process";
 
 import { createApp } from "./app.mjs";
-import { createPasskeysDomain } from "./domains/passkeys/index.mjs";
-import { createSessionsDomain } from "./domains/sessions/index.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
+import { createPasskeysService } from "./services/passkeys/index.mjs";
+import { createSessionsService } from "./services/sessions/index.mjs";
 
 const otel = createOtelContext();
 
@@ -15,11 +15,11 @@ const ctx = await createContext();
 
 const app = await createApp({
   ctx,
-  domains: {
-    passkeys: createPasskeysDomain(ctx),
-    sessions: createSessionsDomain(ctx),
-  },
   fastifyOtel: otel.fastifyOtel,
+  services: {
+    passkeys: createPasskeysService(ctx),
+    sessions: createSessionsService(ctx),
+  },
 });
 
 app.addHook("onClose", () => otel.close());

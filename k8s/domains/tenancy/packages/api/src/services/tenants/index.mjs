@@ -10,7 +10,7 @@ import { listTenants } from "./tenants.list.mjs";
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
-export const createTenancyDomain = (ctx) => ({
+export const createTenancyService = (ctx) => ({
   createTenant: createTenant(ctx),
   createTenantWorkspace: createTenantWorkspace(ctx),
   deleteTenantMembership: deleteTenantMembership(ctx),
@@ -22,5 +22,5 @@ export const createTenancyDomain = (ctx) => ({
 });
 
 /**
- * @typedef {ReturnType<typeof createTenancyDomain>} TenancyDomain
+ * @typedef {ReturnType<typeof createTenancyService>} TenancyService
  */

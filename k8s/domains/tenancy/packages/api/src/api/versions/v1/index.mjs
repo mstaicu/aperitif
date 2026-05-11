@@ -13,16 +13,16 @@ import listTenants from "./routes/tenants/tenants.list.mjs";
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../domains/tenants/index.mjs").TenancyDomain} TenancyDomain
+ * @typedef {import("../../../services/tenants/index.mjs").TenancyService} TenancyService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{domains: {
- *   tenancy: TenancyDomain,
+ * @param {{services: {
+ *   tenancy: TenancyService,
  * }, jwks: Jwks}} opts
  */
-export default async (fastify, { domains, jwks }) => {
+export default async (fastify, { jwks, services }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -59,42 +59,42 @@ export default async (fastify, { domains, jwks }) => {
   await fastify.register(listTenants, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(createTenant, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(getTenant, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(listTenantMemberships, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(getTenantMembership, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(deleteTenantMembership, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(createTenantWorkspace, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
   await fastify.register(listTenantWorkspaces, {
     jwks,
     prefix: "/tenants",
-    tenancy: domains.tenancy,
+    tenancy: services.tenancy,
   });
 
   await fastify.register(swaggerUI, {

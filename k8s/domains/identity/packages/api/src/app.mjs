@@ -9,8 +9,8 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
- * @typedef {import('./domains/passkeys/index.mjs').PasskeysDomain} PasskeysDomain
- * @typedef {import('./domains/sessions/index.mjs').SessionsDomain} SessionsDomain
+ * @typedef {import('./services/passkeys/index.mjs').PasskeysService} PasskeysService
+ * @typedef {import('./services/sessions/index.mjs').SessionsService} SessionsService
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
  */
@@ -28,15 +28,15 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @param {{
  *  ctx: Ctx,
- *  domains: {
- *    passkeys: PasskeysDomain,
- *    sessions: SessionsDomain,
+ *  services: {
+ *    passkeys: PasskeysService,
+ *    sessions: SessionsService,
  *  },
  *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ ctx, domains, fastifyOtel }) => {
+export const createApp = async ({ ctx, fastifyOtel, services }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -54,7 +54,7 @@ export const createApp = async ({ ctx, domains, fastifyOtel }) => {
   }
   await app.register(probes, { db: ctx.persistence.db });
   await app.register(jwks, { jwks: ctx.security.jwks });
-  await app.register(v1, { domains, prefix: "/v1" });
+  await app.register(v1, { prefix: "/v1", services });
 
   return app;
 };

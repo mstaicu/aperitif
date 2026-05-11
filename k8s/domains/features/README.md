@@ -1,7 +1,7 @@
 # Features Domain
 
 Features owns product feature vocabulary, local products, tenant feature grants,
-effective tenant features, and the local tenancy projections needed to authorize
+tenant features, and the local tenancy projections needed to authorize
 those feature changes.
 
 ## Domain Boundary
@@ -11,7 +11,7 @@ those feature changes.
 - `products` are local things a tenant can acquire.
 - `product_features` are the feature values included in each product template.
 - `tenant_feature_grants` are tenant-specific inputs that grant feature values.
-- `tenant_effective_features` are the current feature values emitted to other
+- `tenant_features` are the current feature values emitted to other
   domains.
 - `tenant_projection` and `tenant_membership_projection` are local projections
   of tenancy authority consumed from tenancy events.
@@ -20,7 +20,7 @@ Identity stays in `identity`. Tenant lifecycle, tenant memberships, and
 workspaces stay in `tenancy`. Product domains should consume tenant-level
 feature state through APIs/events, not by reading the features database.
 
-The current API exposes the product catalogue and tenant-owner grant operations.
+The current API exposes the product catalogue and admin grant operations.
 Checkout sessions, provider webhooks, invoices, and usage counters are not
 implemented yet.
 
@@ -33,11 +33,11 @@ feature = product capability that can later be granted to a tenant
 product = local commercial/access package
 product_feature = product template value for one feature
 tenant_feature_grant = tenant-specific source value for one feature
-tenant_effective_feature = current effective tenant feature value
+tenant_feature = current tenant feature value
 ```
 
 `product_features` are templates. Grants snapshot product feature values into
-tenant-specific grant rows before calculating effective tenant features.
+tenant-specific grant rows before calculating tenant features.
 That prevents catalogue edits from silently changing existing tenant state.
 
 ## Core API
@@ -145,8 +145,8 @@ deliberately when accepting a new tenancy event schema version.
 
 ## Feature Events
 
-Features emits tenant-level feature state from `tenant_effective_features`, not
-from catalogue tables:
+Features emits tenant-level feature state from `tenant_features`, not from
+catalogue tables:
 
 - `features.tenant_features.updated`
 

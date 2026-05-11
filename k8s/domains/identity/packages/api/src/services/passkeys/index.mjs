@@ -6,7 +6,7 @@ import { register } from "./register.mjs";
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
-export const createPasskeysDomain = (ctx) => ({
+export const createPasskeysService = (ctx) => ({
   createLoginChallenge: createLoginChallenge(ctx),
   createRegisterChallenge: createRegisterChallenge(ctx),
   login: login(ctx),
@@ -14,5 +14,5 @@ export const createPasskeysDomain = (ctx) => ({
 });
 
 /**
- * @typedef {ReturnType<typeof createPasskeysDomain>} PasskeysDomain
+ * @typedef {ReturnType<typeof createPasskeysService>} PasskeysService
  */

@@ -101,7 +101,7 @@ export const createTenantFeatureGrant =
 
       await client.query(
         `
-          DELETE FROM tenant_effective_features
+          DELETE FROM tenant_features
           WHERE tenant_id = $1
         `,
         [tenantId],
@@ -156,7 +156,7 @@ export const createTenantFeatureGrant =
       for (const tenantFeature of tenantFeatures) {
         await client.query(
           `
-            INSERT INTO tenant_effective_features (
+            INSERT INTO tenant_features (
               tenant_id,
               feature_code,
               value,

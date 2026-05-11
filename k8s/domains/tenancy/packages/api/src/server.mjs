@@ -2,9 +2,9 @@ import { once } from "node:events";
 import process from "node:process";
 
 import { createApp } from "./app.mjs";
-import { createTenancyDomain } from "./domains/tenants/index.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
+import { createTenancyService } from "./services/tenants/index.mjs";
 
 const otel = createOtelContext();
 
@@ -14,10 +14,10 @@ const ctx = await createContext();
 
 const app = await createApp({
   ctx,
-  domains: {
-    tenancy: createTenancyDomain(ctx),
-  },
   fastifyOtel: otel.fastifyOtel,
+  services: {
+    tenancy: createTenancyService(ctx),
+  },
 });
 
 app.addHook("onClose", () => otel.close());

@@ -5,12 +5,12 @@ import { TenantMembershipsResponse, TenantParams } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../domains/tenants/index.mjs").TenancyDomain} TenancyDomain
+ * @typedef {import("../../../../../services/tenants/index.mjs").TenancyService} TenancyService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{tenancy: TenancyDomain, jwks: Jwks}} opts
+ * @param {{tenancy: TenancyService, jwks: Jwks}} opts
  */
 export default async function (fastify, { jwks, tenancy }) {
   fastify.get(

@@ -10,18 +10,18 @@ import refreshToken from "./routes/sessions/refresh-token.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../domains/passkeys/index.mjs").PasskeysDomain} PasskeysDomain
- * @typedef {import("../../../domains/sessions/index.mjs").SessionsDomain} SessionsDomain
+ * @typedef {import("../../../services/passkeys/index.mjs").PasskeysService} PasskeysService
+ * @typedef {import("../../../services/sessions/index.mjs").SessionsService} SessionsService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{domains: {
- *   passkeys: PasskeysDomain,
- *   sessions: SessionsDomain,
+ * @param {{services: {
+ *   passkeys: PasskeysService,
+ *   sessions: SessionsService,
  * }}} opts
  */
-export default async (fastify, { domains }) => {
+export default async (fastify, { services }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -60,28 +60,28 @@ export default async (fastify, { domains }) => {
   });
 
   await fastify.register(loginChallenge, {
-    passkeys: domains.passkeys,
+    passkeys: services.passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(login, {
-    passkeys: domains.passkeys,
+    passkeys: services.passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(registerChallenge, {
-    passkeys: domains.passkeys,
+    passkeys: services.passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(register, {
-    passkeys: domains.passkeys,
+    passkeys: services.passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(accessToken, {
     prefix: "/sessions",
-    sessions: domains.sessions,
+    sessions: services.sessions,
   });
   await fastify.register(refreshToken, {
     prefix: "/sessions",
-    sessions: domains.sessions,
+    sessions: services.sessions,
   });
 
   await fastify.register(swaggerUI, {

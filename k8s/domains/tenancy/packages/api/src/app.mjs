@@ -8,7 +8,7 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
- * @typedef {import('./domains/tenants/index.mjs').TenancyDomain} TenancyDomain
+ * @typedef {import('./services/tenants/index.mjs').TenancyService} TenancyService
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
  */
@@ -26,14 +26,14 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @param {{
  *  ctx: Ctx,
- *  domains: {
- *    tenancy: TenancyDomain,
+ *  services: {
+ *    tenancy: TenancyService,
  *  },
  *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ ctx, domains, fastifyOtel }) => {
+export const createApp = async ({ ctx, fastifyOtel, services }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -50,7 +50,7 @@ export const createApp = async ({ ctx, domains, fastifyOtel }) => {
     await app.register(fastifyOtel.plugin());
   }
   await app.register(probes, { db: ctx.persistence.db });
-  await app.register(v1, { domains, jwks: ctx.security.jwks, prefix: "/v1" });
+  await app.register(v1, { jwks: ctx.security.jwks, prefix: "/v1", services });
 
   return app;
 };

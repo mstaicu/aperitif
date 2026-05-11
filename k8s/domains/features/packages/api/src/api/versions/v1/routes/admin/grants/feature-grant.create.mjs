@@ -5,12 +5,12 @@ import { CreateFeatureGrantBody, GrantResponse } from "./schemas.mjs";
 /**
  * @typedef {import("../../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../../domains/tenant-features/index.mjs").TenantFeaturesDomain} TenantFeaturesDomain
+ * @typedef {import("../../../../../../services/tenant-features/index.mjs").TenantFeaturesService} TenantFeaturesService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{tenantFeatures: TenantFeaturesDomain, jwks: Jwks}} opts
+ * @param {{tenantFeatures: TenantFeaturesService, jwks: Jwks}} opts
  */
 export default async function (fastify, { jwks, tenantFeatures }) {
   fastify.post(
@@ -19,7 +19,7 @@ export default async function (fastify, { jwks, tenantFeatures }) {
       schema: {
         body: CreateFeatureGrantBody,
         description:
-          "Admin command that grants one feature to a tenant and recomputes effective tenant features.",
+          "Admin command that grants one feature to a tenant and recomputes tenant features.",
         operationId: "createAdminFeatureGrant",
         response: {
           200: GrantResponse,

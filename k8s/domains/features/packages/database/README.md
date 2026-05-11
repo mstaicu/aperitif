@@ -17,7 +17,7 @@ Postgres server or instance
       tenant_projection
       tenant_membership_projection
       tenant_feature_grants
-      tenant_effective_features
+      tenant_features
       features_version_seq
       outbox_events
       flyway_schema_history
@@ -35,15 +35,15 @@ tenancy authority built from tenancy events. Projection writes are idempotent
 through natural keys and `tenant_version`.
 
 `tenant_feature_grants` records current tenant-specific inputs that grant
-feature values. `tenant_effective_features` stores the current effective feature
-values for each tenant after grants are merged. `outbox_events` is the durable
-publisher queue for tenant feature events.
+feature values. `tenant_features` stores the current feature values for each
+tenant after grants are merged. `outbox_events` is the durable publisher queue
+for tenant feature events.
 
 Feature authority rows store tenancy-owned `tenant_id` values, but they are not
 foreign-key children of projection tables. Rebuilding tenancy projections must
-not delete feature grants or effective feature rows.
+not delete feature grants or tenant feature rows.
 
-Grant-writing code updates `tenant_effective_features` and inserts the matching
+Grant-writing code updates `tenant_features` and inserts the matching
 `outbox_events` row in the same transaction.
 
 The domain boundary is the database. Other domains must not connect to it
