@@ -39,7 +39,7 @@ export const createTenantProductGrant =
         rows: [product],
       } = await client.query(
         `
-          SELECT code
+          SELECT 1
           FROM products
           WHERE code = $1
         `,
@@ -50,164 +50,156 @@ export const createTenantProductGrant =
         throw new Error("PRODUCT_NOT_FOUND");
       }
 
-      const { rows: features } = await client.query(
+      const result = await client.query(
         `
-          SELECT f.code,
-            pf.value
-          FROM product_features pf
-          JOIN feature_definitions f ON f.code = pf.feature_code
-          WHERE pf.product_code = $1
-          ORDER BY f.code
+          INSERT INTO tenant_feature_grants (
+            tenant_id,
+            feature_code,
+            value,
+            grant_type,
+            grant_ref
+          )
+          SELECT $1,
+            feature_code,
+            value,
+            'product',
+            $3
+          FROM product_features
+          WHERE product_code = $2
+          ON CONFLICT (
+            tenant_id,
+            feature_code,
+            grant_type,
+            grant_ref
+          )
+          DO UPDATE
+          SET value = EXCLUDED.value
+          WHERE tenant_feature_grants.value IS DISTINCT FROM EXCLUDED.value
+          RETURNING 1
         `,
-        [product.code],
+        [tenantId, productCode, grantRef],
       );
 
-      let changed = false;
+      const changed = (result.rowCount ?? 0) > 0;
 
-      for (const feature of features) {
-        const result = await client.query(
+      if (changed) {
+        const {
+          rows: [{ version }],
+        } = await client.query(
           `
-            INSERT INTO tenant_feature_grants (
-              tenant_id,
-              feature_code,
-              value,
-              grant_type,
-              grant_ref
-            )
-            VALUES ($1, $2, $3::jsonb, 'product', $4)
-            ON CONFLICT (
-              tenant_id,
-              feature_code,
-              grant_type,
-              grant_ref
-            )
-            DO UPDATE
-            SET value = EXCLUDED.value
-            WHERE tenant_feature_grants.value IS DISTINCT FROM EXCLUDED.value
-            RETURNING 1
+            SELECT nextval('features_version_seq') AS version
           `,
-          [tenantId, feature.code, JSON.stringify(feature.value), grantRef],
         );
 
-        changed = changed || (result.rowCount ?? 0) > 0;
-      }
-
-      if (!changed) {
-        await client.query("COMMIT");
-
-        return {
-          tenant_id: tenantId,
-        };
-      }
-
-      const {
-        rows: [{ version }],
-      } = await client.query(
-        `
-          SELECT nextval('features_version_seq') AS version
-        `,
-      );
-
-      await client.query(
-        `
-          DELETE FROM tenant_features
-          WHERE tenant_id = $1
-        `,
-        [tenantId],
-      );
-
-      const { rows: grants } = await client.query(
-        `
-          SELECT d.code,
-            d.type,
-            d.merge_strategy,
-            g.value
-          FROM tenant_feature_grants g
-          JOIN feature_definitions d ON d.code = g.feature_code
-          WHERE g.tenant_id = $1
-          ORDER BY d.code
-        `,
-        [tenantId],
-      );
-
-      /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
-      const tenantFeatures = [];
-      let currentCode = "";
-      let currentType = "";
-      let currentStrategy = "";
-      let values = [];
-
-      for (const grant of grants) {
-        if (currentCode && grant.code !== currentCode) {
-          tenantFeatures.push({
-            code: currentCode,
-            type: /** @type {"boolean" | "number"} */ (currentType),
-            value: mergeValues(currentStrategy, values),
-          });
-
-          values = [];
-        }
-
-        currentCode = grant.code;
-        currentType = grant.type;
-        currentStrategy = grant.merge_strategy;
-        values.push(grant.value);
-      }
-
-      if (currentCode) {
-        tenantFeatures.push({
-          code: currentCode,
-          type: /** @type {"boolean" | "number"} */ (currentType),
-          value: mergeValues(currentStrategy, values),
-        });
-      }
-
-      for (const tenantFeature of tenantFeatures) {
         await client.query(
           `
-            INSERT INTO tenant_features (
+            DELETE FROM tenant_features
+            WHERE tenant_id = $1
+          `,
+          [tenantId],
+        );
+
+        const { rows } = await client.query(
+          `
+            SELECT d.code,
+              d.type,
+              d.merge_strategy,
+              jsonb_agg(g.value ORDER BY g.grant_type, g.grant_ref) AS values
+            FROM tenant_feature_grants g
+            JOIN feature_definitions d ON d.code = g.feature_code
+            WHERE g.tenant_id = $1
+            GROUP BY d.code,
+              d.type,
+              d.merge_strategy
+            ORDER BY d.code
+          `,
+          [tenantId],
+        );
+
+        /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
+        const grants = rows;
+
+        /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
+        const tenantFeatures = [];
+
+        for (const grant of grants) {
+          let mergedValue;
+
+          switch (grant.merge_strategy) {
+            case "boolean_or":
+              mergedValue = grant.values.some(
+                (grantValue) => grantValue === true,
+              );
+              break;
+
+            case "number_max":
+              mergedValue = Math.max(...grant.values.map(Number));
+              break;
+
+            case "number_sum":
+              mergedValue = grant.values
+                .map(Number)
+                .reduce((sum, grantValue) => sum + grantValue, 0);
+              break;
+
+            default:
+              throw new Error("UNKNOWN_MERGE_STRATEGY");
+          }
+
+          tenantFeatures.push({
+            code: grant.code,
+            type: grant.type,
+            value: mergedValue,
+          });
+        }
+
+        for (const tenantFeature of tenantFeatures) {
+          await client.query(
+            `
+              INSERT INTO tenant_features (
+                tenant_id,
+                feature_code,
+                value,
+                version
+              )
+              VALUES ($1, $2, $3::jsonb, $4)
+            `,
+            [
+              tenantId,
+              tenantFeature.code,
+              JSON.stringify(tenantFeature.value),
+              version,
+            ],
+          );
+        }
+
+        const event = buildTenantFeaturesUpdatedEvent({
+          features: tenantFeatures,
+          tenant: {
+            id: tenantId,
+          },
+        });
+
+        await client.query(
+          `
+            INSERT INTO outbox_events (
+              subject,
               tenant_id,
-              feature_code,
-              value,
-              version
+              version,
+              schema_version,
+              payload
             )
-            VALUES ($1, $2, $3::jsonb, $4)
+            VALUES ($1, $2, $3, $4, $5::jsonb)
           `,
           [
+            event.subject,
             tenantId,
-            tenantFeature.code,
-            JSON.stringify(tenantFeature.value),
             version,
+            event.schema_version,
+            JSON.stringify(event.payload),
           ],
         );
       }
-
-      const tenantFeaturesUpdatedEvent = buildTenantFeaturesUpdatedEvent({
-        features: tenantFeatures,
-        tenant: {
-          id: tenantId,
-        },
-      });
-
-      await client.query(
-        `
-          INSERT INTO outbox_events (
-            subject,
-            tenant_id,
-            version,
-            schema_version,
-            payload
-          )
-          VALUES ($1, $2, $3, $4, $5::jsonb)
-        `,
-        [
-          tenantFeaturesUpdatedEvent.subject,
-          tenantId,
-          version,
-          tenantFeaturesUpdatedEvent.schema_version,
-          JSON.stringify(tenantFeaturesUpdatedEvent.payload),
-        ],
-      );
 
       await client.query("COMMIT");
 
@@ -226,23 +218,3 @@ export const createTenantProductGrant =
       client?.release();
     }
   };
-
-/**
- * @param {string} strategy
- * @param {unknown[]} values
- */
-function mergeValues(strategy, values) {
-  switch (strategy) {
-    case "boolean_or":
-      return values.some((value) => value === true);
-
-    case "number_max":
-      return Math.max(...values.map(Number));
-
-    case "number_sum":
-      return values.map(Number).reduce((sum, value) => sum + value, 0);
-
-    default:
-      throw new Error("UNKNOWN_MERGE_STRATEGY");
-  }
-}

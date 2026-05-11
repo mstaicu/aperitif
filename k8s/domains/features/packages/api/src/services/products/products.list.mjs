@@ -32,34 +32,31 @@ export const listProducts = (ctx) => async () => {
       `,
     );
 
-    /** @type {{ code: string, features: { code: string, name: string, type: "boolean" | "number", value: unknown }[], name: string }[]} */
-    const products = [];
-    /** @type {{ code: string, features: { code: string, name: string, type: "boolean" | "number", value: unknown }[], name: string } | null} */
-    let product = null;
+    const productsByCode = new Map();
 
     for (const row of rows) {
-      if (!product || product.code !== row.product_code) {
-        product = {
+      if (!productsByCode.has(row.product_code)) {
+        productsByCode.set(row.product_code, {
           code: row.product_code,
           features: [],
           name: row.product_name,
-        };
-
-        products.push(product);
+        });
       }
 
       if (row.feature_code) {
+        const product = productsByCode.get(row.product_code);
+
         product.features.push({
           code: row.feature_code,
           name: row.feature_name,
-          type: /** @type {"boolean" | "number"} */ (row.feature_type),
+          type: row.feature_type,
           value: row.feature_value,
         });
       }
     }
 
     return {
-      products,
+      products: [...productsByCode.values()],
     };
   } catch (err) {
     if (isDatabaseUnavailable(err)) {
