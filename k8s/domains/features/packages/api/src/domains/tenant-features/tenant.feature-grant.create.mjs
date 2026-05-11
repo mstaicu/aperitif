@@ -1,7 +1,4 @@
-import {
-  TenantFeaturesUpdatedSchemaVersion,
-  TenantFeaturesUpdatedSubject,
-} from "../../events/index.mjs";
+import { buildTenantFeaturesUpdatedEvent } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -23,6 +20,23 @@ export const createTenantFeatureGrant =
       await client.query("BEGIN");
 
       const {
+        rows: [tenant],
+      } = await client.query(
+        `
+          SELECT tenant_id
+          FROM tenant_projection
+          WHERE tenant_id = $1
+            AND status = 'active'
+          FOR UPDATE
+        `,
+        [tenantId],
+      );
+
+      if (!tenant) {
+        throw new Error("TENANT_NOT_FOUND");
+      }
+
+      const {
         rows: [feature],
       } = await client.query(
         `
@@ -36,6 +50,13 @@ export const createTenantFeatureGrant =
 
       if (!feature) {
         throw new Error("FEATURE_NOT_FOUND");
+      }
+
+      if (
+        (feature.type === "boolean" && typeof value !== "boolean") ||
+        (feature.type === "number" && typeof value !== "number")
+      ) {
+        throw new Error("INVALID_FEATURE_VALUE");
       }
 
       const result = await client.query(
@@ -54,7 +75,6 @@ export const createTenantFeatureGrant =
             grant_type,
             grant_ref
           )
-          WHERE revoked_at IS NULL
           DO UPDATE
           SET value = EXCLUDED.value
           WHERE tenant_feature_grants.value IS DISTINCT FROM EXCLUDED.value
@@ -96,13 +116,13 @@ export const createTenantFeatureGrant =
           FROM tenant_feature_grants g
           JOIN feature_definitions d ON d.code = g.feature_code
           WHERE g.tenant_id = $1
-            AND g.revoked_at IS NULL
           ORDER BY d.code
         `,
         [tenantId],
       );
 
-      const features = [];
+      /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
+      const tenantFeatures = [];
       let currentCode = "";
       let currentType = "";
       let currentStrategy = "";
@@ -110,9 +130,9 @@ export const createTenantFeatureGrant =
 
       for (const grant of grants) {
         if (currentCode && grant.code !== currentCode) {
-          features.push({
+          tenantFeatures.push({
             code: currentCode,
-            type: currentType,
+            type: /** @type {"boolean" | "number"} */ (currentType),
             value: mergeValues(currentStrategy, values),
           });
 
@@ -126,14 +146,14 @@ export const createTenantFeatureGrant =
       }
 
       if (currentCode) {
-        features.push({
+        tenantFeatures.push({
           code: currentCode,
-          type: currentType,
+          type: /** @type {"boolean" | "number"} */ (currentType),
           value: mergeValues(currentStrategy, values),
         });
       }
 
-      for (const tenantFeature of features) {
+      for (const tenantFeature of tenantFeatures) {
         await client.query(
           `
             INSERT INTO tenant_effective_features (
@@ -153,6 +173,13 @@ export const createTenantFeatureGrant =
         );
       }
 
+      const tenantFeaturesUpdatedEvent = buildTenantFeaturesUpdatedEvent({
+        features: tenantFeatures,
+        tenant: {
+          id: tenantId,
+        },
+      });
+
       await client.query(
         `
           INSERT INTO outbox_events (
@@ -165,16 +192,11 @@ export const createTenantFeatureGrant =
           VALUES ($1, $2, $3, $4, $5::jsonb)
         `,
         [
-          TenantFeaturesUpdatedSubject,
+          tenantFeaturesUpdatedEvent.subject,
           tenantId,
           version,
-          TenantFeaturesUpdatedSchemaVersion,
-          JSON.stringify({
-            features,
-            tenant: {
-              id: tenantId,
-            },
-          }),
+          tenantFeaturesUpdatedEvent.schema_version,
+          JSON.stringify(tenantFeaturesUpdatedEvent.payload),
         ],
       );
 

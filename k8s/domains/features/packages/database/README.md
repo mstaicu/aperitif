@@ -14,7 +14,6 @@ Postgres server or instance
       feature_definitions
       products
       product_features
-      product_offers
       tenant_projection
       tenant_membership_projection
       tenant_feature_grants
@@ -24,20 +23,20 @@ Postgres server or instance
       flyway_schema_history
 ```
 
-`feature_definitions` is the tenant-level product feature vocabulary.
+`feature_definitions` is the tenant-level product feature vocabulary. Current
+feature values are deliberately limited to booleans and numbers because those
+are the only merge strategies this domain currently supports.
 `products` are local things a tenant can acquire. `product_features` are
 catalogue templates, not tenant grants. Tenant product grants snapshot product
-feature values instead of reading `product_features` live. `product_offers`
-currently stores only a local offer code and amount; provider fields can be
-added when checkout/webhooks are implemented.
+feature values instead of reading `product_features` live.
 
 `tenant_projection` and `tenant_membership_projection` are local copies of
 tenancy authority built from tenancy events. Projection writes are idempotent
 through natural keys and `tenant_version`.
 
-`tenant_feature_grants` records tenant-specific inputs that grant feature
-values. `tenant_effective_features` stores the current effective feature values
-for each tenant after active grants are merged. `outbox_events` is the durable
+`tenant_feature_grants` records current tenant-specific inputs that grant
+feature values. `tenant_effective_features` stores the current effective feature
+values for each tenant after grants are merged. `outbox_events` is the durable
 publisher queue for tenant feature events.
 
 Feature authority rows store tenancy-owned `tenant_id` values, but they are not

@@ -5,9 +5,9 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  * @returns {(args: { currentUserId: string }) => Promise<{
  *   tenants: {
  *     id: string,
- *     kind: "personal" | "organization",
  *     name: string,
  *     status: "active" | "archived",
+ *     type: "personal" | "organization",
  *   }[],
  * }>}
  */
@@ -19,11 +19,11 @@ export const listTenants =
     try {
       ({ rows } = await ctx.persistence.db.query(
         `
-          SELECT a.id, a.name, a.kind, a.status
-          FROM tenant_memberships am
-          JOIN tenants a ON a.id = am.tenant_id
-          WHERE am.user_id = $1
-          ORDER BY a.name, a.id
+          SELECT t.id, t.name, t.type, t.status
+          FROM tenant_memberships tm
+          JOIN tenants t ON t.id = tm.tenant_id
+          WHERE tm.user_id = $1
+          ORDER BY t.name, t.id
         `,
         [currentUserId],
       ));
@@ -38,9 +38,9 @@ export const listTenants =
     return {
       tenants: rows.map((row) => ({
         id: row.id,
-        kind: row.kind,
         name: row.name,
         status: row.status,
+        type: row.type,
       })),
     };
   };

@@ -8,70 +8,54 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *     features: {
  *       code: string,
  *       name: string,
- *       type: "boolean" | "number" | "string",
+ *       type: "boolean" | "number",
  *       value: unknown,
  *     }[],
  *     name: string,
- *     offers: {
- *       amount_minor: number | null,
- *       code: string,
- *     }[],
  *   }[],
  * }>}
  */
 export const listProducts = (ctx) => async () => {
   try {
-    const productResult = await ctx.persistence.db.query(
+    const { rows } = await ctx.persistence.db.query(
       `
-        SELECT code,
-          name
-        FROM products
-        ORDER BY code
+        SELECT p.code AS product_code,
+          p.name AS product_name,
+          f.code AS feature_code,
+          f.name AS feature_name,
+          f.type AS feature_type,
+          pf.value AS feature_value
+        FROM products p
+        LEFT JOIN product_features pf ON pf.product_code = p.code
+        LEFT JOIN feature_definitions f ON f.code = pf.feature_code
+        ORDER BY p.code, f.code
       `,
     );
 
+    /** @type {{ code: string, features: { code: string, name: string, type: "boolean" | "number", value: unknown }[], name: string }[]} */
     const products = [];
+    /** @type {{ code: string, features: { code: string, name: string, type: "boolean" | "number", value: unknown }[], name: string } | null} */
+    let product = null;
 
-    for (const product of productResult.rows) {
-      const featuresResult = await ctx.persistence.db.query(
-        `
-          SELECT f.code,
-            f.name,
-            f.type,
-            pf.value
-          FROM product_features pf
-          JOIN feature_definitions f ON f.code = pf.feature_code
-          WHERE pf.product_code = $1
-          ORDER BY f.code
-        `,
-        [product.code],
-      );
+    for (const row of rows) {
+      if (!product || product.code !== row.product_code) {
+        product = {
+          code: row.product_code,
+          features: [],
+          name: row.product_name,
+        };
 
-      const offersResult = await ctx.persistence.db.query(
-        `
-          SELECT code,
-            amount_minor
-          FROM product_offers
-          WHERE product_code = $1
-          ORDER BY code
-        `,
-        [product.code],
-      );
+        products.push(product);
+      }
 
-      products.push({
-        code: product.code,
-        features: featuresResult.rows.map((feature) => ({
-          code: feature.code,
-          name: feature.name,
-          type: feature.type,
-          value: feature.value,
-        })),
-        name: product.name,
-        offers: offersResult.rows.map((offer) => ({
-          amount_minor: offer.amount_minor,
-          code: offer.code,
-        })),
-      });
+      if (row.feature_code) {
+        product.features.push({
+          code: row.feature_code,
+          name: row.feature_name,
+          type: /** @type {"boolean" | "number"} */ (row.feature_type),
+          value: row.feature_value,
+        });
+      }
     }
 
     return {

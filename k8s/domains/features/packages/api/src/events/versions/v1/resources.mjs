@@ -8,7 +8,6 @@ export const UuidSchema = Type.String({
 export const FeatureTypeSchema = Type.Union([
   Type.Literal("boolean"),
   Type.Literal("number"),
-  Type.Literal("string"),
 ]);
 
 export const TenantEventResourceSchema = Type.Object(

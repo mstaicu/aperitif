@@ -6,7 +6,7 @@ CREATE TABLE feature_definitions (
     name TEXT NOT NULL,
 
     type TEXT NOT NULL CHECK (
-        type IN ('boolean', 'number', 'string')
+        type IN ('boolean', 'number')
     ),
 
     merge_strategy TEXT NOT NULL CHECK (
@@ -18,7 +18,7 @@ COMMENT ON TABLE feature_definitions IS 'Vocabulary of product features that can
 COMMENT ON COLUMN feature_definitions.code IS 'Stable internal feature code used by application code, for example members.max.';
 COMMENT ON COLUMN feature_definitions.name IS 'Human-readable feature name.';
 COMMENT ON COLUMN feature_definitions.type IS 'Expected value type for grants of this feature.';
-COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used later to merge multiple active tenant grants for this feature.';
+COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used to merge multiple tenant grants for this feature.';
 
 CREATE TABLE products (
     code TEXT PRIMARY KEY,
@@ -48,69 +48,36 @@ COMMENT ON COLUMN product_features.product_code IS 'Product that includes this f
 COMMENT ON COLUMN product_features.feature_code IS 'Feature included by the product.';
 COMMENT ON COLUMN product_features.value IS 'Value granted by this product for this feature.';
 
-CREATE TABLE product_offers (
-    code TEXT PRIMARY KEY,
-
-    product_code TEXT NOT NULL
-        REFERENCES products(code),
-
-    amount_minor INTEGER
-);
-
-COMMENT ON TABLE product_offers IS 'Simple catalogue offers for local products.';
-COMMENT ON COLUMN product_offers.code IS 'Stable local offer code.';
-COMMENT ON COLUMN product_offers.product_code IS 'Local product this offer belongs to.';
-COMMENT ON COLUMN product_offers.amount_minor IS 'Offer amount in minor currency units.';
-
-CREATE INDEX product_features_feature_code_idx
-ON product_features (feature_code);
-
-CREATE INDEX product_offers_product_code_idx
-ON product_offers (product_code);
-
 CREATE TABLE tenant_feature_grants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     tenant_id UUID NOT NULL,
 
     feature_code TEXT NOT NULL
         REFERENCES feature_definitions(code),
 
-    value JSONB NOT NULL,
-
     grant_type TEXT NOT NULL,
 
     grant_ref TEXT NOT NULL,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    revoked_at TIMESTAMPTZ
+    value JSONB NOT NULL,
+
+    PRIMARY KEY (
+        tenant_id,
+        feature_code,
+        grant_type,
+        grant_ref
+    )
 );
 
 COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as products, admin grants, or future provider confirmations.';
-COMMENT ON COLUMN tenant_feature_grants.id IS 'Stable grant id.';
 COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
 COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
 COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example product or manual.';
 COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable reference inside the grant category.';
-COMMENT ON COLUMN tenant_feature_grants.created_at IS 'Time the grant was recorded.';
-COMMENT ON COLUMN tenant_feature_grants.revoked_at IS 'Null while the grant is active; set when the grant is revoked.';
-
-CREATE INDEX tenant_feature_grants_tenant_feature_idx
-ON tenant_feature_grants (tenant_id, feature_code)
-WHERE revoked_at IS NULL;
-
-CREATE INDEX tenant_feature_grants_grant_idx
-ON tenant_feature_grants (grant_type, grant_ref);
-
-CREATE UNIQUE INDEX tenant_feature_grants_active_grant_unique
-ON tenant_feature_grants (tenant_id, feature_code, grant_type, grant_ref)
-WHERE revoked_at IS NULL;
+COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
 
 -- feature_definitions
 -- products
 -- product_features
--- product_offers
 --         |
 --         v
 -- tenant_feature_grants
@@ -134,20 +101,14 @@ CREATE TABLE tenant_effective_features (
 
     version BIGINT NOT NULL,
 
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
     PRIMARY KEY (tenant_id, feature_code)
 );
 
 COMMENT ON TABLE tenant_effective_features IS 'Current effective feature values for each tenant. Events are emitted from this authority table.';
 COMMENT ON COLUMN tenant_effective_features.tenant_id IS 'Tenant that owns this effective feature value.';
 COMMENT ON COLUMN tenant_effective_features.feature_code IS 'Effective feature code.';
-COMMENT ON COLUMN tenant_effective_features.value IS 'Current effective feature value after active grants are merged.';
+COMMENT ON COLUMN tenant_effective_features.value IS 'Current effective feature value after grants are merged.';
 COMMENT ON COLUMN tenant_effective_features.version IS 'Monotonic authority version assigned when this tenant feature value changes.';
-COMMENT ON COLUMN tenant_effective_features.updated_at IS 'Time this effective feature value was last changed.';
-
-CREATE INDEX tenant_effective_features_feature_code_idx
-ON tenant_effective_features (feature_code);
 
 CREATE SEQUENCE features_version_seq AS BIGINT;
 
@@ -158,21 +119,15 @@ COMMENT ON SEQUENCE features_version_seq IS 'Monotonic authority version assigne
 CREATE TABLE tenant_projection (
     tenant_id UUID PRIMARY KEY,
 
-    kind TEXT NOT NULL CHECK (kind IN ('personal', 'organization')),
-
     status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
 
-    tenant_version BIGINT NOT NULL,
-
-    projected_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    tenant_version BIGINT NOT NULL
 );
 
 COMMENT ON TABLE tenant_projection IS 'Local projection of tenancy-owned tenant authority used by the features domain.';
 COMMENT ON COLUMN tenant_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
-COMMENT ON COLUMN tenant_projection.kind IS 'Projected tenant kind from tenancy events.';
 COMMENT ON COLUMN tenant_projection.status IS 'Projected tenant lifecycle status from tenancy events.';
 COMMENT ON COLUMN tenant_projection.tenant_version IS 'Latest tenancy authority version applied to this projected tenant.';
-COMMENT ON COLUMN tenant_projection.projected_at IS 'Time this projection row was last updated locally.';
 
 CREATE TABLE tenant_membership_projection (
     tenant_id UUID NOT NULL
@@ -187,8 +142,6 @@ CREATE TABLE tenant_membership_projection (
 
     tenant_version BIGINT NOT NULL,
 
-    projected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
     PRIMARY KEY (tenant_id, user_id)
 );
 
@@ -198,11 +151,6 @@ COMMENT ON COLUMN tenant_membership_projection.user_id IS 'Identity user id proj
 COMMENT ON COLUMN tenant_membership_projection.role IS 'Projected tenant role when the membership is active.';
 COMMENT ON COLUMN tenant_membership_projection.status IS 'Projection row status. Deleted rows are tombstones for stale-event protection.';
 COMMENT ON COLUMN tenant_membership_projection.tenant_version IS 'Tenancy authority version that last changed this projected membership.';
-COMMENT ON COLUMN tenant_membership_projection.projected_at IS 'Time this projection row was last updated locally.';
-
-CREATE INDEX tenant_membership_projection_user_id_idx
-ON tenant_membership_projection (user_id)
-WHERE status = 'active';
 
 -- Outbox
 

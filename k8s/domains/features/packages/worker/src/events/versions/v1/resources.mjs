@@ -5,7 +5,7 @@ export const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const TenantKindSchema = Type.Union([
+export const TenantTypeSchema = Type.Union([
   Type.Literal("personal"),
   Type.Literal("organization"),
 ]);
@@ -23,8 +23,8 @@ export const TenantRoleSchema = Type.Union([
 export const TenantEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
-    kind: TenantKindSchema,
     status: TenantStatusSchema,
+    type: TenantTypeSchema,
   },
   { additionalProperties: false },
 );

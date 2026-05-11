@@ -59,7 +59,7 @@ Consumer SaaS without required onboarding:
 
 ```text
 user registers through identity
-POST /v1/tenants { kind: "personal", name: "<display name>" }
+POST /v1/tenants { type: "personal", name: "<display name>" }
 tenant.status = active
 product creates a workspace only if it needs one
 POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
@@ -69,7 +69,7 @@ B2B SaaS:
 
 ```text
 founder registers through identity
-POST /v1/tenants { kind: "organization", name: "<organization name>" }
+POST /v1/tenants { type: "organization", name: "<organization name>" }
 product creates one or more workspaces if it needs operational containers
 POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 future invite/provisioning flow creates additional tenant memberships
@@ -185,7 +185,7 @@ the new value as `tenant_version`.
   "payload": {
     "tenant": {
       "id": "tenant-id",
-      "kind": "organization",
+      "type": "organization",
       "status": "active"
     },
     "membership": {

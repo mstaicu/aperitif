@@ -26,7 +26,7 @@ export const createTenantWorkspace =
       } = await client.query(
         `
           SELECT id,
-            kind,
+            type,
             status
           FROM tenants
           WHERE id = $1
@@ -87,8 +87,8 @@ export const createTenantWorkspace =
       const workspaceCreatedEvent = buildWorkspaceCreatedEvent({
         tenant: {
           id: tenant.id,
-          kind: tenant.kind,
           status: tenant.status,
+          type: tenant.type,
         },
         workspace: {
           id: workspace.id,

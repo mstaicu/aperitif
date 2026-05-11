@@ -23,7 +23,7 @@ const WorkspaceName = Type.String({
   minLength: 1,
 });
 
-export const TenantKind = Type.Union(
+export const TenantType = Type.Union(
   [Type.Literal("personal"), Type.Literal("organization")],
   {
     description:
@@ -75,8 +75,8 @@ export const TenantMembershipParams = Type.Object(
 
 export const CreateTenantBody = Type.Object(
   {
-    kind: TenantKind,
     name: TenantName,
+    type: TenantType,
   },
   {
     additionalProperties: false,
@@ -97,9 +97,9 @@ export const CreateWorkspaceBody = Type.Object(
 export const Tenant = Type.Object(
   {
     id: TenantId,
-    kind: TenantKind,
     name: TenantName,
     status: TenantStatus,
+    type: TenantType,
   },
   {
     additionalProperties: false,

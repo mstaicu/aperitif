@@ -5,9 +5,9 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  * @returns {(args: { tenantId: string, currentUserId: string }) => Promise<{
  *   tenant: {
  *     id: string,
- *     kind: "personal" | "organization",
  *     name: string,
  *     status: "active" | "archived",
+ *     type: "personal" | "organization",
  *   },
  * }>}
  */
@@ -23,7 +23,7 @@ export const getTenant =
         rows: [tenant],
       } = await client.query(
         `
-          SELECT id, name, kind, status
+          SELECT id, name, type, status
           FROM tenants
           WHERE id = $1
         `,
@@ -53,9 +53,9 @@ export const getTenant =
       return {
         tenant: {
           id: tenant.id,
-          kind: tenant.kind,
           name: tenant.name,
           status: tenant.status,
+          type: tenant.type,
         },
       };
     } catch (err) {

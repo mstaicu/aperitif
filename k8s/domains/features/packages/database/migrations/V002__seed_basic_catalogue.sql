@@ -35,12 +35,3 @@ VALUES
     ('pro', 'api.requests.monthly', '100000'::jsonb),
     ('pro', 'storage.gb', '100'::jsonb),
     ('pro', 'exports.enabled', 'true'::jsonb);
-
-INSERT INTO product_offers (
-    code,
-    product_code,
-    amount_minor
-)
-VALUES
-    ('starter.monthly', 'starter', 3000),
-    ('pro.monthly', 'pro', 7900);

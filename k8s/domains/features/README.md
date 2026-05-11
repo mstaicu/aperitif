@@ -1,8 +1,8 @@
 # Features Domain
 
-Features owns product feature vocabulary, local products, product offers,
-tenant feature grants, effective tenant features, and the local tenancy
-projections needed to authorize those feature changes.
+Features owns product feature vocabulary, local products, tenant feature grants,
+effective tenant features, and the local tenancy projections needed to authorize
+those feature changes.
 
 ## Domain Boundary
 
@@ -10,7 +10,6 @@ projections needed to authorize those feature changes.
   for a tenant.
 - `products` are local things a tenant can acquire.
 - `product_features` are the feature values included in each product template.
-- `product_offers` are simple catalogue offers for products.
 - `tenant_feature_grants` are tenant-specific inputs that grant feature values.
 - `tenant_effective_features` are the current feature values emitted to other
   domains.
@@ -33,7 +32,6 @@ tenant = authority root for tenant-scoped product access
 feature = product capability that can later be granted to a tenant
 product = local commercial/access package
 product_feature = product template value for one feature
-product_offer = simple way to acquire a product
 tenant_feature_grant = tenant-specific source value for one feature
 tenant_effective_feature = current effective tenant feature value
 ```

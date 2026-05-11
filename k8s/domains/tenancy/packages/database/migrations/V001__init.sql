@@ -5,22 +5,19 @@ CREATE TABLE tenants (
 
     name TEXT NOT NULL,
 
-    kind TEXT NOT NULL CHECK (kind IN ('personal', 'organization')),
+    type TEXT NOT NULL CHECK (type IN ('personal', 'organization')),
 
     status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
 
-    version BIGINT NOT NULL DEFAULT 1,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    version BIGINT NOT NULL DEFAULT 1
 );
 
 COMMENT ON TABLE tenants IS 'Authority root used for tenant lifecycle, commercial ownership, and tenant-scoped product access.';
 COMMENT ON COLUMN tenants.id IS 'Stable tenant identifier referenced by tenant-owned resources in other domains.';
 COMMENT ON COLUMN tenants.name IS 'Human-readable tenant name shown to users and operators.';
-COMMENT ON COLUMN tenants.kind IS 'Baseline tenant shape: personal for consumer use cases, organization for business use cases.';
+COMMENT ON COLUMN tenants.type IS 'Baseline tenant type: personal for consumer use cases, organization for business use cases.';
 COMMENT ON COLUMN tenants.status IS 'Tenant lifecycle status.';
 COMMENT ON COLUMN tenants.version IS 'Monotonic tenant authority version; increment on tenant, membership, or workspace changes that consumers project.';
-COMMENT ON COLUMN tenants.created_at IS 'Time the tenant record was created.';
 
 CREATE TABLE tenant_memberships (
     tenant_id UUID NOT NULL
@@ -31,8 +28,6 @@ CREATE TABLE tenant_memberships (
 
     role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
     PRIMARY KEY (tenant_id, user_id)
 );
 
@@ -40,7 +35,6 @@ COMMENT ON TABLE tenant_memberships IS 'Users that can act inside a tenant.';
 COMMENT ON COLUMN tenant_memberships.tenant_id IS 'Tenant where the user has authority.';
 COMMENT ON COLUMN tenant_memberships.user_id IS 'Identity user id from the identity domain.';
 COMMENT ON COLUMN tenant_memberships.role IS 'Tenant-level authority; owner manages the tenant, member can use tenant-scoped product capabilities.';
-COMMENT ON COLUMN tenant_memberships.created_at IS 'Time the membership was granted.';
 
 CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -53,9 +47,7 @@ CREATE TABLE workspaces (
 
     status TEXT NOT NULL DEFAULT 'active' CHECK (
         status IN ('active', 'archived')
-    ),
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
 );
 
 COMMENT ON TABLE workspaces IS 'Operational resource containers inside a tenant.';
@@ -63,7 +55,6 @@ COMMENT ON COLUMN workspaces.id IS 'Stable workspace identifier referenced by wo
 COMMENT ON COLUMN workspaces.tenant_id IS 'Tenant that owns this workspace.';
 COMMENT ON COLUMN workspaces.name IS 'Human-readable workspace name shown to users.';
 COMMENT ON COLUMN workspaces.status IS 'Workspace lifecycle status.';
-COMMENT ON COLUMN workspaces.created_at IS 'Time the workspace record was created.';
 
 CREATE INDEX workspaces_tenant_id_idx
 ON workspaces (tenant_id, name, id);

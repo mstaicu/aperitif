@@ -1,12 +1,11 @@
 import { Type } from "@sinclair/typebox";
 
 const FeatureValue = Type.Unknown({
-  description:
-    "Value this product grants for the feature. It must match the feature type.",
+  description: "Boolean or number value this product grants for the feature.",
 });
 
 const FeatureType = Type.Union(
-  [Type.Literal("boolean"), Type.Literal("number"), Type.Literal("string")],
+  [Type.Literal("boolean"), Type.Literal("number")],
   {
     description: "Expected value type for grants of this feature.",
   },
@@ -31,20 +30,6 @@ export const ProductFeature = Type.Object(
   },
 );
 
-export const ProductOffer = Type.Object(
-  {
-    amount_minor: Type.Union([Type.Integer({ minimum: 0 }), Type.Null()]),
-    code: Type.String({
-      description: "Stable local offer code.",
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description: "Simple catalogue offer for a local product.",
-  },
-);
-
 export const Product = Type.Object(
   {
     code: Type.String({
@@ -56,11 +41,10 @@ export const Product = Type.Object(
       description: "Human-readable product name.",
       minLength: 1,
     }),
-    offers: Type.Array(ProductOffer),
   },
   {
     additionalProperties: false,
-    description: "Product catalogue item with included features and offers.",
+    description: "Product catalogue item with included features.",
   },
 );
 

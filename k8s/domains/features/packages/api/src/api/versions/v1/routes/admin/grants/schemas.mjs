@@ -11,7 +11,8 @@ const Code = Type.String({
 });
 
 const FeatureValue = Type.Unknown({
-  description: "Feature value. It must match the feature definition type.",
+  description:
+    "Boolean or number feature value. It must match the feature definition type.",
 });
 
 const GrantRef = Type.String({

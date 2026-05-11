@@ -75,19 +75,16 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
       `
         INSERT INTO tenant_projection (
           tenant_id,
-          kind,
           status,
           tenant_version
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3)
         ON CONFLICT (tenant_id) DO UPDATE
-        SET kind = EXCLUDED.kind,
-          status = EXCLUDED.status,
-          tenant_version = EXCLUDED.tenant_version,
-          projected_at = now()
+        SET status = EXCLUDED.status,
+          tenant_version = EXCLUDED.tenant_version
         WHERE tenant_projection.tenant_version < EXCLUDED.tenant_version
       `,
-      [tenant.id, tenant.kind, tenant.status, event.tenant_version],
+      [tenant.id, tenant.status, event.tenant_version],
     );
 
     if (membership) {
@@ -104,8 +101,7 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
           ON CONFLICT (tenant_id, user_id) DO UPDATE
           SET role = EXCLUDED.role,
             status = EXCLUDED.status,
-            tenant_version = EXCLUDED.tenant_version,
-            projected_at = now()
+            tenant_version = EXCLUDED.tenant_version
           WHERE tenant_membership_projection.tenant_version < EXCLUDED.tenant_version
         `,
         [

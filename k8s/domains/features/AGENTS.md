@@ -1,9 +1,9 @@
 # AGENTS.md
 
-Features owns product feature vocabulary, local products, product offers,
-tenant feature grants, effective tenant features, and its event outbox. It does
-not own authentication, tenant membership, workspaces, business-domain records,
-documents, notifications, or workflow.
+Features owns product feature vocabulary, local products, tenant feature grants,
+effective tenant features, and its event outbox. It does not own authentication,
+tenant membership, workspaces, business-domain records, documents,
+notifications, or workflow.
 
 - `product_features` are catalogue templates. Tenant grants snapshot feature
   values instead of reading product templates live.

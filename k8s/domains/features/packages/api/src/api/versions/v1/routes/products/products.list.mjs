@@ -17,7 +17,7 @@ export default async function (fastify, { jwks, products }) {
     "",
     {
       schema: {
-        description: "List products with their included features and offers.",
+        description: "List products with their included features.",
         operationId: "listProducts",
         response: {
           200: ProductsResponse,

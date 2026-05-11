@@ -42,8 +42,8 @@ export default async function (fastify, { jwks, tenancy }) {
       return reply.code(201).send(
         await tenancy.createTenant({
           currentUserId,
-          kind: req.body.kind,
           name: req.body.name,
+          type: req.body.type,
         }),
       );
     },

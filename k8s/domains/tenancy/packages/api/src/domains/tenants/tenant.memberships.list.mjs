@@ -22,7 +22,7 @@ export const listTenantMemberships =
         rows: [tenant],
       } = await client.query(
         `
-          SELECT id, name, kind, status
+          SELECT id
           FROM tenants
           WHERE id = $1
         `,
