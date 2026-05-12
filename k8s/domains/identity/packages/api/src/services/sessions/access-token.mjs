@@ -44,9 +44,18 @@ export const createAccessToken =
     }
 
     const now = Math.floor(Date.now() / 1000);
-    const access_token = await new SignJWT({
+    /**
+     * @type {{ platform_roles?: string[], sub: string }}
+     */
+    const claims = {
       sub: session.user_id,
-    })
+    };
+
+    if (ctx.security.platformOperatorUserIds.has(session.user_id)) {
+      claims.platform_roles = ["operator"];
+    }
+
+    const access_token = await new SignJWT(claims)
       .setProtectedHeader({
         alg: "ES256",
         kid: ctx.security.signing.kid,

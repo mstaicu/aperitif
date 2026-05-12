@@ -14,6 +14,11 @@ Identity owns authentication identity, not product authority.
 
 Identity must not own tenants, memberships, workspaces, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
 
+Platform operator status is deployment-owned for now. If a user id appears in
+`PLATFORM_OPERATOR_USER_IDS`, identity adds `platform_roles: ["operator"]` to
+that user's access token. Passkeys only authenticate the user; operator status
+belongs to the user id, not to a specific passkey credential.
+
 The intended integration is:
 
 ```text

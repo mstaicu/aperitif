@@ -9,6 +9,12 @@ export const createSecurityContext = async () => {
    * @type {string}
    */
   const audience = nconf.get("ACCESS_TOKEN_AUDIENCE");
+  const platformOperatorUserIds = new Set(
+    String(nconf.get("PLATFORM_OPERATOR_USER_IDS") ?? "")
+      .split(",")
+      .map((userId) => userId.trim())
+      .filter(Boolean),
+  );
 
   if (!audience) {
     throw new Error("No ACCESS_TOKEN_AUDIENCE provided");
@@ -29,6 +35,7 @@ export const createSecurityContext = async () => {
     jwks: {
       keys: [{ ...publicJwk, alg: "ES256", kid: KID, use: "sig" }],
     },
+    platformOperatorUserIds,
     signing: {
       kid: KID,
       privateKey,

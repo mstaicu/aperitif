@@ -11,8 +11,9 @@ const controller = new AbortController();
 await ensureTenancyStream(ctx);
 
 const publisher = runOutboxPublisher(ctx, controller.signal);
+const tasks = [publisher];
 
-const worker = publisher.then(() => {
+const worker = Promise.race(tasks).then(() => {
   throw new Error("tenancy worker stopped unexpectedly");
 });
 
