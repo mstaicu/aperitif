@@ -66,8 +66,6 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
 
   const client = await ctx.persistence.db.connect();
 
-  let brokenClient = false;
-
   try {
     await client.query("BEGIN");
 
@@ -116,15 +114,11 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
 
     await client.query("COMMIT");
   } catch (err) {
-    try {
-      await client.query("ROLLBACK");
-    } catch {
-      brokenClient = true;
-    }
+    await client.query("ROLLBACK").catch(() => {});
 
     throw err;
   } finally {
-    client.release(brokenClient);
+    client.release();
   }
 }
 

@@ -15,6 +15,7 @@ await ensureTenancyConsumer(ctx);
 
 const consumer = runTenancyProjectionConsumer(ctx, controller.signal);
 const publisher = runOutboxPublisher(ctx, controller.signal);
+
 const tasks = [consumer, publisher];
 
 const worker = Promise.race(tasks).then(() => {

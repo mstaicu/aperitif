@@ -14,24 +14,28 @@ const PUBLISH_ACK_TIMEOUT_MS = 5000;
  * @param {AbortSignal} signal
  */
 export async function runOutboxPublisher(ctx, signal) {
+  signal.throwIfAborted();
+
   const listener = await ctx.persistence.db.connect();
 
-  let brokenListener = false;
-
   try {
-    const notifications = on(listener, "notification", { signal });
-
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
 
     while (await publishNextOutboxEvent(ctx)) {
-      // Keep draining until no unpublished row is found.
+      signal.throwIfAborted();
     }
 
-    for await (const [notification] of notifications) {
-      if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-        while (await publishNextOutboxEvent(ctx)) {
-          // Keep draining until no unpublished row is found.
-        }
+    for await (const [notification] of on(listener, "notification", {
+      signal,
+    })) {
+      signal.throwIfAborted();
+
+      if (notification.channel !== OUTBOX_NOTIFY_CHANNEL) {
+        continue;
+      }
+
+      while (await publishNextOutboxEvent(ctx)) {
+        signal.throwIfAborted();
       }
     }
   } catch (err) {
@@ -39,15 +43,11 @@ export async function runOutboxPublisher(ctx, signal) {
       return;
     }
 
-    brokenListener = true;
-
     throw err;
   } finally {
-    await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {
-      brokenListener = true;
-    });
+    await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {});
 
-    listener.release(brokenListener);
+    listener.release();
   }
 }
 
@@ -56,8 +56,6 @@ export async function runOutboxPublisher(ctx, signal) {
  */
 async function publishNextOutboxEvent(ctx) {
   const client = await ctx.persistence.db.connect();
-
-  let brokenClient = false;
 
   let keepDraining = false;
 
@@ -123,14 +121,10 @@ async function publishNextOutboxEvent(ctx) {
 
     return keepDraining;
   } catch (err) {
-    try {
-      await client.query("ROLLBACK");
-    } catch {
-      brokenClient = true;
-    }
+    await client.query("ROLLBACK").catch(() => {});
 
     throw err;
   } finally {
-    client.release(brokenClient);
+    client.release();
   }
 }

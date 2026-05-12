@@ -1,3 +1,5 @@
+import { addAbortListener } from "node:events";
+
 import {
   TENANCY_EVENT_SCHEMA_VERSION as TENANCY_EVENT_SCHEMA_VERSION_V1,
   TenancyEventEnvelopeCheck,
@@ -14,18 +16,18 @@ import {
  * @param {AbortSignal} signal
  */
 export async function runTenancyProjectionConsumer(ctx, signal) {
+  signal.throwIfAborted();
+
   const consumer = await ctx.messaging.js.consumers.get(
     TENANCY_STREAM,
     TENANCY_CONSUMER,
   );
   const messages = await consumer.consume({ max_messages: 1 });
-
-  const stop = () => messages.stop();
-  signal.addEventListener("abort", stop, { once: true });
+  const stopOnAbort = addAbortListener(signal, () => messages.stop());
 
   try {
     for await (const message of messages) {
-      if (signal.aborted) return;
+      signal.throwIfAborted();
 
       try {
         await handleTenancyEvent(ctx, message);
@@ -36,7 +38,7 @@ export async function runTenancyProjectionConsumer(ctx, signal) {
       }
     }
   } finally {
-    signal.removeEventListener("abort", stop);
+    stopOnAbort[Symbol.dispose]();
     messages.stop();
   }
 }
