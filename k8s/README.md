@@ -77,7 +77,7 @@ Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
 - `tenancy`: owns tenant authority, tenant memberships, and workspaces.
-- `features`: owns product feature vocabulary, local products, tenant feature grants, and current tenant feature projections.
+- `features`: owns feature definitions, tenant feature grants, current tenant features, and feature events.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 

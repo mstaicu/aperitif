@@ -1,57 +1,64 @@
 # Features Domain
 
-Features owns product feature vocabulary, local products, tenant feature grants,
-tenant features, and the local tenancy projections needed to authorize
-those feature changes.
+Features owns tenant feature authority:
+
+```text
+feature definitions + tenant grants -> current tenant features -> events
+```
+
+It does not own products, plans, prices, checkout, subscriptions, payment
+provider state, authentication, tenant lifecycle, memberships, workspaces, or
+business-domain records.
 
 ## Domain Boundary
 
 - `feature_definitions` are the vocabulary of things the platform can enable
   for a tenant.
-- `products` are local things a tenant can acquire.
-- `product_features` are the feature values included in each product template.
-- `tenant_feature_grants` are tenant-specific inputs that grant feature values.
-- `tenant_features` are the current feature values emitted to other
+- `tenant_feature_grants` are tenant-specific grant inputs from admin commands
+  or future payment/compliance/reward events.
+- `tenant_features` are the current effective feature values emitted to other
   domains.
 - `tenant_projection` and `tenant_membership_projection` are local projections
   of tenancy authority consumed from tenancy events.
+- `outbox_events` is the durable publisher queue for feature authority events.
 
-Identity stays in `identity`. Tenant lifecycle, tenant memberships, and
-workspaces stay in `tenancy`. Product domains should consume tenant-level
-feature state through APIs/events, not by reading the features database.
-
-The current API exposes the product catalogue and admin grant operations.
-Checkout sessions, provider webhooks, invoices, and usage counters are not
-implemented yet.
+Identity stays in `identity`. Tenant lifecycle, memberships, and workspaces stay
+in `tenancy`. Products, plans, prices, checkout, provider refs, invoices, and
+payment status belong in a future commerce/payments domain. That domain should
+emit explicit feature grant snapshots; features should not infer grants from
+commercial catalogue tables.
 
 ## Core Model
 
 ```text
 identity = who the actor is
-tenant = authority root for tenant-scoped product access
-feature = product capability that can later be granted to a tenant
-product = local commercial/access package
-product_feature = product template value for one feature
+tenant = authority root for tenant-scoped feature state
+feature = capability that can be granted to a tenant
 tenant_feature_grant = tenant-specific source value for one feature
-tenant_feature = current tenant feature value
+tenant_feature = current tenant feature value after grants are merged
 ```
 
-`product_features` are templates. Grants snapshot product feature values into
-tenant-specific grant rows before calculating tenant features.
-That prevents catalogue edits from silently changing existing tenant state.
+The reducer is deliberately small:
+
+```text
+boolean_or
+number_max
+number_sum
+```
 
 ## Core API
 
 ```text
-GET /v1/products
-POST /v1/admin/grants/products
+GET /v1/features
 POST /v1/admin/grants/features
 ```
 
-Routes require an identity-issued access token verified through JWKS. Tenant
-grant requests carry `tenant_id` and the target `product_code` or
-`feature_code` in the body. These are admin/control plane commands, not customer
-purchase APIs.
+Routes require an identity-issued access token verified through JWKS. Grant
+requests carry `tenant_id`, `feature_code`, `value`, and an idempotency
+`grant_ref`. These are admin/control-plane commands, not customer purchase APIs.
+
+Future payment or commerce consumers should use the same command shape with a
+stable local purchase/payment id as `grant_ref`.
 
 ## Deployment Units
 
@@ -114,7 +121,7 @@ graph, run the database bootstrap SQL against the managed database, and keep
 ## Contracts
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/features/docs`.
-- Identity dependency: features validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
+- Identity dependency: features validates identity-issued tokens through the identity JWKS URL and the shared API audience. It does not own identity records.
 - Events: features consumes tenancy authority events through the `features-tenancy-projection` durable consumer on the tenancy-owned `TENANCY` stream. It publishes feature authority events from its own transactional outbox to the `FEATURES` stream.
 - Database: features owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
@@ -127,9 +134,9 @@ Features consumes these tenancy event subjects into local projection tables:
 - `tenancy.tenant_membership.deleted`
 
 Projection writes are idempotent through natural keys and `tenant_version`.
-Duplicate or stale events do not overwrite newer projected tenant or
-membership rows. Deleted memberships are kept as tombstones so an old
-membership-created event cannot resurrect a removed membership.
+Duplicate or stale events do not overwrite newer projected tenant or membership
+rows. Deleted memberships are kept as tombstones so an old membership-created
+event cannot resurrect a removed membership.
 
 If the features projection database is intentionally reset while the `TENANCY`
 stream survives, the durable consumer state must be reset too. Otherwise NATS has
@@ -145,8 +152,7 @@ deliberately when accepting a new tenancy event schema version.
 
 ## Feature Events
 
-Features emits tenant-level feature state from `tenant_features`, not from
-catalogue tables:
+Features emits tenant-level feature state from `tenant_features`:
 
 - `features.tenant_features.updated`
 

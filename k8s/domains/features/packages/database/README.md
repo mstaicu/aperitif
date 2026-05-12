@@ -10,10 +10,8 @@ Postgres is layered like this:
 ```text
 Postgres server or instance
   features database
-    public schema
+      public schema
       feature_definitions
-      products
-      product_features
       tenant_projection
       tenant_membership_projection
       tenant_feature_grants
@@ -23,12 +21,9 @@ Postgres server or instance
       flyway_schema_history
 ```
 
-`feature_definitions` is the tenant-level product feature vocabulary. Current
-feature values are deliberately limited to booleans and numbers because those
-are the only merge strategies this domain currently supports.
-`products` are local things a tenant can acquire. `product_features` are
-catalogue templates, not tenant grants. Tenant product grants snapshot product
-feature values instead of reading `product_features` live.
+`feature_definitions` is the tenant-level feature vocabulary. Current feature
+values are deliberately limited to booleans and numbers because those are the
+only merge strategies this domain currently supports.
 
 `tenant_projection` and `tenant_membership_projection` are local copies of
 tenancy authority built from tenancy events. Projection writes are idempotent
@@ -60,8 +55,8 @@ directly.
 The current migration image copies only `migrations/`. Add other folders back
 to the Dockerfile only when a workflow actually uses them.
 
-`V002__seed_basic_catalogue.sql` seeds the smallest generic catalogue used to
-prove feature grants: `starter`, `pro`, and a few simple tenant-level features.
+`V002__seed_feature_definitions.sql` seeds a few simple tenant-level feature
+definitions used to prove feature grants.
 
 ## Flyway Rules
 

@@ -19,10 +19,7 @@ spec:
             value: /v1/admin/grants
         - path:
             type: PathPrefix
-            value: /v1/features/docs
-        - path:
-            type: PathPrefix
-            value: /v1/products
+            value: /v1/features
 
       backendRefs:
         - name: features-api-srv
@@ -47,10 +44,7 @@ spec:
             value: /v1/admin/grants
         - path:
             type: PathPrefix
-            value: /v1/features/docs
-        - path:
-            type: PathPrefix
-            value: /v1/products
+            value: /v1/features
 
       backendRefs:
         - name: features-api-srv

@@ -2,20 +2,19 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
 import createFeatureGrant from "./routes/admin/grants/feature-grant.create.mjs";
-import createProductGrant from "./routes/admin/grants/product-grant.create.mjs";
-import listProducts from "./routes/products/products.list.mjs";
+import listFeatures from "./routes/features/features.list.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../services/products/index.mjs").ProductsService} ProductsService
+ * @typedef {import("../../../services/features/index.mjs").FeaturesService} FeaturesService
  * @typedef {import("../../../services/tenant-features/index.mjs").TenantFeaturesService} TenantFeaturesService
  */
 
 /**
  * @param {Fastify} fastify
  * @param {{services: {
- *   products: ProductsService,
+ *   features: FeaturesService,
  *   tenantFeatures: TenantFeaturesService,
  * }, jwks: Jwks}} opts
  */
@@ -34,8 +33,7 @@ export default async (fastify, { jwks, services }) => {
         },
       },
       info: {
-        description:
-          "Features API for product catalogue and feature enablement.",
+        description: "Features API for tenant feature authority.",
         title: "Features",
         version: "v1",
       },
@@ -46,8 +44,8 @@ export default async (fastify, { jwks, services }) => {
       ],
       tags: [
         {
-          description: "Products and the features they grant",
-          name: "products",
+          description: "Feature definitions",
+          name: "features",
         },
         {
           description: "Admin commands for tenant feature grants",
@@ -57,20 +55,15 @@ export default async (fastify, { jwks, services }) => {
     },
   });
 
-  await fastify.register(createProductGrant, {
-    jwks,
-    prefix: "/admin/grants",
-    tenantFeatures: services.tenantFeatures,
-  });
   await fastify.register(createFeatureGrant, {
     jwks,
     prefix: "/admin/grants",
     tenantFeatures: services.tenantFeatures,
   });
-  await fastify.register(listProducts, {
+  await fastify.register(listFeatures, {
+    features: services.features,
     jwks,
-    prefix: "/products",
-    products: services.products,
+    prefix: "/features",
   });
 
   await fastify.register(swaggerUI, {

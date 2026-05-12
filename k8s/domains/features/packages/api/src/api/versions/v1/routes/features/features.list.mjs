@@ -1,33 +1,33 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../shared/schemas.mjs";
-import { ProductsResponse } from "./schemas.mjs";
+import { FeaturesResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../services/products/index.mjs").ProductsService} ProductsService
+ * @typedef {import("../../../../../services/features/index.mjs").FeaturesService} FeaturesService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{products: ProductsService, jwks: Jwks}} opts
+ * @param {{features: FeaturesService, jwks: Jwks}} opts
  */
-export default async function (fastify, { jwks, products }) {
+export default async function (fastify, { features, jwks }) {
   fastify.get(
-    "",
+    "/",
     {
       schema: {
-        description: "List products with their included features.",
-        operationId: "listProducts",
+        description: "List feature definitions known to the features domain.",
+        operationId: "listFeatures",
         response: {
-          200: ProductsResponse,
+          200: FeaturesResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "List products",
-        tags: ["products"],
+        summary: "List features",
+        tags: ["features"],
       },
     },
     async function (req, reply) {
@@ -36,7 +36,7 @@ export default async function (fastify, { jwks, products }) {
         jwks,
       });
 
-      return reply.send(await products.listProducts());
+      return reply.send(await features.listFeatures());
     },
   );
 }

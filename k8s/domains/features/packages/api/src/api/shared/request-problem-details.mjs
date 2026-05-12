@@ -29,11 +29,6 @@ const PROBLEMS = {
     title: "Invalid feature value",
     type: "/problems/invalid-feature-value",
   },
-  PRODUCT_NOT_FOUND: {
-    status: 404,
-    title: "Product not found",
-    type: "/problems/product-not-found",
-  },
   TENANT_NOT_FOUND: {
     status: 404,
     title: "Tenant not found",

@@ -85,13 +85,12 @@ export const createTenantFeatureGrant =
       const changed = (result.rowCount ?? 0) > 0;
 
       if (changed) {
-        const {
-          rows: [{ version }],
-        } = await client.query(
+        const versionResult = await client.query(
           `
             SELECT nextval('features_version_seq') AS version
           `,
         );
+        const version = versionResult.rows[0].version;
 
         await client.query(
           `
@@ -101,7 +100,7 @@ export const createTenantFeatureGrant =
           [tenantId],
         );
 
-        const { rows } = await client.query(
+        const { rows: grantRows } = await client.query(
           `
             SELECT d.code,
               d.type,
@@ -119,7 +118,7 @@ export const createTenantFeatureGrant =
         );
 
         /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
-        const grants = rows;
+        const grants = grantRows;
 
         /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
         const tenantFeatures = [];
@@ -155,25 +154,22 @@ export const createTenantFeatureGrant =
           });
         }
 
-        for (const tenantFeature of tenantFeatures) {
-          await client.query(
-            `
-              INSERT INTO tenant_features (
-                tenant_id,
-                feature_code,
-                value,
-                version
-              )
-              VALUES ($1, $2, $3::jsonb, $4)
-            `,
-            [
-              tenantId,
-              tenantFeature.code,
-              JSON.stringify(tenantFeature.value),
-              version,
-            ],
-          );
-        }
+        await client.query(
+          `
+            INSERT INTO tenant_features (
+              tenant_id,
+              feature_code,
+              value,
+              version
+            )
+            SELECT $1,
+              feature->>'code',
+              feature->'value',
+              $3
+            FROM jsonb_array_elements($2::jsonb) AS feature
+          `,
+          [tenantId, JSON.stringify(tenantFeatures), version],
+        );
 
         const event = buildTenantFeaturesUpdatedEvent({
           features: tenantFeatures,

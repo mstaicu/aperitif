@@ -4,7 +4,7 @@ import process from "node:process";
 import { createApp } from "./app.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
-import { createProductsService } from "./services/products/index.mjs";
+import { createFeaturesService } from "./services/features/index.mjs";
 import { createTenantFeaturesService } from "./services/tenant-features/index.mjs";
 
 const otel = createOtelContext();
@@ -17,7 +17,7 @@ const app = await createApp({
   ctx,
   fastifyOtel: otel.fastifyOtel,
   services: {
-    products: createProductsService(ctx),
+    features: createFeaturesService(ctx),
     tenantFeatures: createTenantFeaturesService(ctx),
   },
 });

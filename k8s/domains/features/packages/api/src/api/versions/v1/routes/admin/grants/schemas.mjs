@@ -21,18 +21,6 @@ const GrantRef = Type.String({
   minLength: 1,
 });
 
-export const CreateProductGrantBody = Type.Object(
-  {
-    grant_ref: GrantRef,
-    product_code: Code,
-    tenant_id: TenantId,
-  },
-  {
-    additionalProperties: false,
-    description: "Payload for granting a product to a tenant.",
-  },
-);
-
 export const CreateFeatureGrantBody = Type.Object(
   {
     feature_code: Code,

@@ -14,39 +14,11 @@ CREATE TABLE feature_definitions (
     )
 );
 
-COMMENT ON TABLE feature_definitions IS 'Vocabulary of product features that can be granted to tenants.';
+COMMENT ON TABLE feature_definitions IS 'Vocabulary of features that can be granted to tenants.';
 COMMENT ON COLUMN feature_definitions.code IS 'Stable internal feature code used by application code, for example members.max.';
 COMMENT ON COLUMN feature_definitions.name IS 'Human-readable feature name.';
 COMMENT ON COLUMN feature_definitions.type IS 'Expected value type for grants of this feature.';
 COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used to merge multiple tenant grants for this feature.';
-
-CREATE TABLE products (
-    code TEXT PRIMARY KEY,
-
-    name TEXT NOT NULL
-);
-
-COMMENT ON TABLE products IS 'Local products a tenant can acquire.';
-COMMENT ON COLUMN products.code IS 'Stable local product code. This is not a payment-provider product id.';
-COMMENT ON COLUMN products.name IS 'Human-readable product name.';
-
-CREATE TABLE product_features (
-    product_code TEXT NOT NULL
-        REFERENCES products(code)
-        ON DELETE CASCADE,
-
-    feature_code TEXT NOT NULL
-        REFERENCES feature_definitions(code),
-
-    value JSONB NOT NULL,
-
-    PRIMARY KEY (product_code, feature_code)
-);
-
-COMMENT ON TABLE product_features IS 'Feature values included in each product catalogue template.';
-COMMENT ON COLUMN product_features.product_code IS 'Product that includes this feature value.';
-COMMENT ON COLUMN product_features.feature_code IS 'Feature included by the product.';
-COMMENT ON COLUMN product_features.value IS 'Value granted by this product for this feature.';
 
 CREATE TABLE tenant_feature_grants (
     tenant_id UUID NOT NULL,
@@ -68,18 +40,14 @@ CREATE TABLE tenant_feature_grants (
     )
 );
 
-COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as products, admin grants, or future provider confirmations.';
+COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as admin grants, payment confirmations, compliance approvals, or rewards.';
 COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
 COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example product or manual.';
+COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example manual, payment, compliance, or reward.';
 COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable reference inside the grant category.';
 COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
 
 -- feature_definitions
--- products
--- product_features
---         |
---         v
 -- tenant_feature_grants
 --         |
 --         v
