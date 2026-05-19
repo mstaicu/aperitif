@@ -14,3 +14,7 @@ resources:
   - features-migrate.yaml
   - features-api.yaml
   - features-worker.yaml
+  - documents-postgres.yaml
+  - documents-migrate.yaml
+  - documents-api.yaml
+  - documents-worker.yaml

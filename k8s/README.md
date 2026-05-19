@@ -44,7 +44,8 @@ platform/
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant authority, memberships, workspaces
-  features/               product feature catalogue and tenancy projection
+  features/               feature authority and tenancy projection
+  documents/              product-domain ABAC proof using tenancy/features projections
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -62,6 +63,7 @@ Current agent context files:
 
 - `AGENTS.md`
 - `domains/features/AGENTS.md`
+- `domains/documents/AGENTS.md`
 - `domains/identity/AGENTS.md`
 - `domains/tenancy/AGENTS.md`
 - `platform/ingress/AGENTS.md`
@@ -78,6 +80,7 @@ Current domains:
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
 - `tenancy`: owns tenant authority, tenant memberships, and workspaces.
 - `features`: owns feature definitions, tenant feature grants, current tenant features, and feature events.
+- `documents`: owns workspace-scoped documents and proves product-domain ABAC from identity, tenancy, and features projections.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -86,7 +89,7 @@ Each domain owns its database schema and migrations. Other domains must call the
 Each domain follows this order:
 
 ```text
-postgres -> migrate -> api
+postgres -> migrate -> api/worker/ui
 ```
 
 If a domain owns async event publishing or consumption, add `worker` as a separate deployable unit:
@@ -151,6 +154,7 @@ make dev
 make dev-identity
 make dev-tenancy
 make dev-features
+make dev-documents
 ```
 
 Deploy-and-exit targets are useful for checks and CI-style local testing:
@@ -159,6 +163,7 @@ Deploy-and-exit targets are useful for checks and CI-style local testing:
 make deploy-identity
 make deploy-tenancy
 make deploy-features
+make deploy-documents
 ```
 
 The Make targets intentionally run the same dependency order as live:
@@ -291,7 +296,8 @@ When adding a new domain:
 - Create `domains/<domain>` using `identity`, `tenancy`, and `features` as examples.
 - Copy the unit spine you need: `identity` is the example for auth API and
   Remix UI, `tenancy` is the example for tenant authority, and `features` is
-  the example for catalogue API plus local tenancy projection consumer.
+  the example for feature authority. `documents` is the example for a product
+  API using local tenancy and features projections for ABAC.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
 - Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
@@ -311,6 +317,7 @@ Prefer domain-owned checks:
 make -C domains/identity pre-deploy-infra
 make -C domains/tenancy pre-deploy-infra
 make -C domains/features pre-deploy-infra
+make -C domains/documents pre-deploy-infra
 git diff --check
 ```
 

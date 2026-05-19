@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: documents-worker-db
+stringData:
+    DATABASE_URL: ENC[AES256_GCM,data:R44dUeL/XQrCDqPSv1HJozEiQMf08MduqxNEDN9IMoBHIlLsJgPxc76xbP6Q4sXMUHinSCGrMqe7/aSvFrXAnmn+3AwIECfpOZjf,iv:mFFYdiVn0g40LswHGannV0ps3cWzWJs6x1eRnbO6AkE=,tag:6azfxZ1GSOsmn6ZmbtGdTg==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB5L3FJeFl2dHB4bC9PWm0z
+            bDd0SFJpR1lzejNYaFlQUnI1WXYvUlN0Y3pFClRyRHJoM3FmaVpHdHFkdTVySHhL
+            SmpvNnVxR01CQW1uc2tGQmNGemRMYTAKLS0tIEVxdTNKQ2syTExxOVJ1elVCSnp6
+            YjVOZy9WSEZZOExHZGZwUUJJclI2WjgKgYqqfOfL0htNg0S1sE0N4Kb6xH+AbHSe
+            ID/n+oCeZR+r1jE3RDxyn9oRBXgc5qzJ3WRn91nYDBKCKamZQ2UAwg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-19T18:25:19Z"
+    mac: ENC[AES256_GCM,data:dbx5gHAi4g4PhiVpg8sfrPdzNc+fMxBHQVes4ccTyg41giSUWH6oXLT8bkq0ltEpLdowQVp1X4S8SsWG/Fl407I5wCVtADSSzUPQGUfiHmUSwfPODs3cwDyPe95DusGWGbawTHzS7eOX9Y2SJZwu9p8x+al9SdZEYSW6hRThyKs=,iv:LaZfkhpOiTUnaRg5Tr+6Bj8Zk1MTlkSpiH4GuLcakiM=,tag:+VZBBWNWjWIhh7KOJEY7KA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

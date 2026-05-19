@@ -31,3 +31,25 @@ spec:
 
             - name: NATS_URL
               value: nats://nats-srv.nats.svc.cluster.local:4222
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f '(^|/)node src/index\.mjs$' >/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f '(^|/)node src/index\.mjs$' >/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2

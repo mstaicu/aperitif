@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-documents-units-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: documents-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: documents-api
+        - podSelector:
+            matchLabels:
+              app: documents-migrate
+        - podSelector:
+            matchLabels:
+              app: documents-worker
+      ports:
+        - protocol: TCP
+          port: 5432

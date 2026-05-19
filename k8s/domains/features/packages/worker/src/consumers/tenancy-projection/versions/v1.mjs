@@ -32,13 +32,19 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
 
   if (event.subject === TenantCreatedSubject) {
     if (!TenantCreatedPayloadCheck.Check(event.payload)) {
-      throw new Error("Invalid tenancy tenant created payload");
+      console.warn("ignoring invalid tenancy tenant created payload", {
+        subject: event.subject,
+      });
+      return;
     }
 
     tenant = event.payload.tenant;
   } else if (event.subject === TenantMembershipCreatedSubject) {
     if (!TenantMembershipCreatedPayloadCheck.Check(event.payload)) {
-      throw new Error("Invalid tenancy membership created payload");
+      console.warn("ignoring invalid tenancy membership created payload", {
+        subject: event.subject,
+      });
+      return;
     }
 
     tenant = event.payload.tenant;
@@ -50,7 +56,10 @@ export async function handleTenancyProjectionV1Event(ctx, event) {
     };
   } else if (event.subject === TenantMembershipDeletedSubject) {
     if (!TenantMembershipDeletedPayloadCheck.Check(event.payload)) {
-      throw new Error("Invalid tenancy membership deleted payload");
+      console.warn("ignoring invalid tenancy membership deleted payload", {
+        subject: event.subject,
+      });
+      return;
     }
 
     tenant = event.payload.tenant;

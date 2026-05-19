@@ -1,0 +1,11 @@
+apiVersion: viaduct.ai/v1
+kind: KSOPS
+
+metadata:
+  name: documents-migrate-ksops-generator
+  annotations:
+    config.kubernetes.io/function: |
+      exec:
+        path: ksops
+files:
+  - documents-migrate-db.yaml

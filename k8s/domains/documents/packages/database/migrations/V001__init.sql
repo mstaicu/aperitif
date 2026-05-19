@@ -1,0 +1,128 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE tenant_projection (
+    tenant_id UUID PRIMARY KEY,
+
+    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
+
+    tenant_version BIGINT NOT NULL
+);
+
+COMMENT ON TABLE tenant_projection IS 'Local projection of tenancy-owned tenant authority used by the documents domain.';
+COMMENT ON COLUMN tenant_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
+COMMENT ON COLUMN tenant_projection.status IS 'Projected tenant lifecycle status from tenancy events.';
+COMMENT ON COLUMN tenant_projection.tenant_version IS 'Latest tenancy authority version applied to this projected tenant.';
+
+CREATE TABLE tenant_membership_projection (
+    tenant_id UUID NOT NULL
+        REFERENCES tenant_projection(tenant_id)
+        ON DELETE CASCADE,
+
+    user_id UUID NOT NULL,
+
+    role TEXT CHECK (role IN ('owner', 'member')),
+
+    status TEXT NOT NULL CHECK (status IN ('active', 'deleted')),
+
+    tenant_version BIGINT NOT NULL,
+
+    PRIMARY KEY (tenant_id, user_id)
+);
+
+COMMENT ON TABLE tenant_membership_projection IS 'Local projection of tenancy-owned tenant memberships used by the documents domain.';
+COMMENT ON COLUMN tenant_membership_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
+COMMENT ON COLUMN tenant_membership_projection.user_id IS 'Identity user id projected from tenancy membership events.';
+COMMENT ON COLUMN tenant_membership_projection.role IS 'Projected tenant role when the membership is active.';
+COMMENT ON COLUMN tenant_membership_projection.status IS 'Projection row status. Deleted rows are tombstones for stale-event protection.';
+COMMENT ON COLUMN tenant_membership_projection.tenant_version IS 'Tenancy authority version that last changed this projected membership.';
+
+CREATE TABLE workspace_projection (
+    workspace_id UUID PRIMARY KEY,
+
+    tenant_id UUID NOT NULL
+        REFERENCES tenant_projection(tenant_id)
+        ON DELETE CASCADE,
+
+    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
+
+    tenant_version BIGINT NOT NULL
+);
+
+COMMENT ON TABLE workspace_projection IS 'Local projection of tenancy-owned workspace authority used by the documents domain.';
+COMMENT ON COLUMN workspace_projection.workspace_id IS 'Workspace id owned by the tenancy domain.';
+COMMENT ON COLUMN workspace_projection.tenant_id IS 'Tenant that owns the workspace.';
+COMMENT ON COLUMN workspace_projection.status IS 'Projected workspace lifecycle status from tenancy events.';
+COMMENT ON COLUMN workspace_projection.tenant_version IS 'Latest tenancy authority version applied to this projected workspace.';
+
+CREATE TABLE tenant_feature_projection (
+    tenant_id UUID NOT NULL,
+
+    feature_code TEXT NOT NULL,
+
+    value JSONB NOT NULL,
+
+    features_version BIGINT NOT NULL,
+
+    PRIMARY KEY (tenant_id, feature_code)
+);
+
+COMMENT ON TABLE tenant_feature_projection IS 'Local projection of features-owned tenant feature authority used by the documents domain.';
+COMMENT ON COLUMN tenant_feature_projection.tenant_id IS 'Tenant whose feature value is projected.';
+COMMENT ON COLUMN tenant_feature_projection.feature_code IS 'Feature code owned by the features domain.';
+COMMENT ON COLUMN tenant_feature_projection.value IS 'Projected effective feature value.';
+COMMENT ON COLUMN tenant_feature_projection.features_version IS 'Latest features authority version applied to this tenant feature.';
+
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    tenant_id UUID NOT NULL
+        REFERENCES tenant_projection(tenant_id),
+
+    workspace_id UUID NOT NULL
+        REFERENCES workspace_projection(workspace_id),
+
+    title TEXT NOT NULL,
+
+    created_by UUID NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE documents IS 'Workspace-scoped documents owned by the documents domain.';
+COMMENT ON COLUMN documents.id IS 'Stable document id.';
+COMMENT ON COLUMN documents.tenant_id IS 'Tenant authority root for the document.';
+COMMENT ON COLUMN documents.workspace_id IS 'Workspace resource boundary for the document.';
+COMMENT ON COLUMN documents.title IS 'Human-readable document title.';
+COMMENT ON COLUMN documents.created_by IS 'Identity user id that created the document.';
+COMMENT ON COLUMN documents.created_at IS 'Time the document was created.';
+
+CREATE INDEX documents_workspace_idx
+ON documents (workspace_id, created_at DESC, id);
+
+-- Runtime roles are created by the placeholder Postgres init SQL. Flyway
+-- creates the schema objects, so object-level runtime grants live here.
+GRANT USAGE
+ON SCHEMA public
+TO documents_runtime;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO documents_runtime;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA public
+TO documents_runtime;
+
+-- Future tables/sequences created by documents_migrator should automatically
+-- be usable by documents_runtime without repeating grants in every migration.
+ALTER DEFAULT PRIVILEGES
+FOR ROLE documents_migrator
+IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLES TO documents_runtime;
+
+ALTER DEFAULT PRIVILEGES
+FOR ROLE documents_migrator
+IN SCHEMA public
+GRANT USAGE, SELECT
+ON SEQUENCES TO documents_runtime;

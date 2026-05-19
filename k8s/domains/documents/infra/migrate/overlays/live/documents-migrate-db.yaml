@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: documents-migrate-db
+stringData:
+    FLYWAY_PASSWORD: ENC[AES256_GCM,data:O8Se,iv:F5pUs7KV4qNp9ekl6Yw3FexhbRDDUvTM6sfY4/Zbngk=,tag:0LbLFgJ7bx1eJHKmtXrnMw==,type:str]
+    FLYWAY_URL: ENC[AES256_GCM,data:oJN32cMcASpMc0D3T73uOuFmpkycq8dzF6/yILvRNYwecbBqCagCHdKxrA9qmHCX3Rp8JSF3FzXR7B51pg==,iv:u0XKhN9Qwac688YLRTiUnunTDKunn/fLqpoNfxQgKWo=,tag:a/P9yZQO7dmJy2apCcfuiQ==,type:str]
+    FLYWAY_USER: ENC[AES256_GCM,data:95IxWevJUQEQP5AzRAeGMqJ0,iv:W2mqZVjMylhJe3dBZalkp3qrMdGbEvq3oUiSpkj2DN0=,tag:opwtoLtm5pUL7dleVhFX0w==,type:str]
+sops:
+    age:
+        - recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAxVmlyUVliVmR5QkYwRmQy
+            OUx5dEZMK1FadUNZYXdnZkhic3dlOE1MRFZFCmVaNWIrcHdwMlU1dU1iZVhGTTI5
+            bzl6KzJheFk0clk5VitEdzl1MUtCaEEKLS0tIEVkMnhnSjJwVEhmRC93REpzK1pI
+            UTM2cVBNYys4NUhPQm9MdXhVa25IVXcKWvk1IFyxMxxuFtlsbYVWlTDpV3qBhgbF
+            gmfmV8vHLUzc3E61jOowANtGocEWAkjOZDv0PxfvxOQEwMJt82beNA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-19T18:25:19Z"
+    mac: ENC[AES256_GCM,data:3JEd1nIP0coWtBtNaiQXr915zZEBx7pu8jIEqLNSCOTuMSTBlgwEh61bf/Yo8ihd6mhnzPyZSJctOyB3w96Vc+oZz6GhrmhzN5CHAx3Yclqd2MFqvP2kMHZbXB1eHLsaObYQL0Iw51T6aBIdNgpSMBPgi3RiTjEQgNGI967sOHI=,iv:OcGMCGUrR4oV26g+GqowEqZyvFbDVjSVtwAnz013RhU=,tag:urt1sIlEa498nq9OoVqgfg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

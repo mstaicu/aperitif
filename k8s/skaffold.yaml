@@ -12,3 +12,4 @@ requires:
   - path: domains/identity
   - path: domains/tenancy
   - path: domains/features
+  - path: domains/documents

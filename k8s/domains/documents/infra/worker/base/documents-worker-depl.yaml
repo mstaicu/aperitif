@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: documents-worker-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: documents-worker
+  template:
+    metadata:
+      labels:
+        app: documents-worker
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: documents-worker
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
+      automountServiceAccountToken: false
+
+      containers:
+        - name: documents-worker
+          image: mdstaicu/documents-worker
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: documents-worker-db
+                  key: DATABASE_URL
+
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f '(^|/)node src/index\.mjs$' >/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f '(^|/)node src/index\.mjs$' >/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2

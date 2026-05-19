@@ -1,0 +1,11 @@
+apiVersion: viaduct.ai/v1
+kind: KSOPS
+
+metadata:
+  name: documents-worker-ksops-generator
+  annotations:
+    config.kubernetes.io/function: |
+      exec:
+        path: ksops
+files:
+  - documents-worker-db.yaml

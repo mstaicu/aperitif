@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: documents
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - documents-api-db.yaml
+
+images:
+  - name: mdstaicu/documents-api
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:documents-api-latest
+    newTag: latest # {"$imagepolicy": "flux-system:documents-api-latest"}

@@ -1,0 +1,103 @@
+-- Managed Postgres bootstrap for the documents domain.
+--
+-- Run this before Flux reconciles documents-migrate, using the managed DB
+-- provider/admin user while connected to the documents database.
+--
+-- Example:
+--   /opt/homebrew/opt/libpq/bin/psql "$DOCUMENTS_ADMIN_DATABASE_URL" \
+--     -v documents_migrator_password='replace-me' \
+--     -v documents_api_password='replace-me' \
+--     -v documents_worker_password='replace-me' \
+--     -f domains/documents/packages/database/bootstrap/managed-postgres.sql
+--
+-- This script creates only roles and base grants. Flyway owns tables, indexes,
+-- sequences, comments, triggers, and object-level runtime grants.
+-- Mirror role/grant changes in infra/postgres/overlays/*/documents-postgres-init.sql.
+
+\set ON_ERROR_STOP on
+
+\if :{?documents_migrator_password}
+\else
+  \echo 'missing required psql variable: documents_migrator_password'
+  \quit 1
+\endif
+
+\if :{?documents_api_password}
+\else
+  \echo 'missing required psql variable: documents_api_password'
+  \quit 1
+\endif
+
+\if :{?documents_worker_password}
+\else
+  \echo 'missing required psql variable: documents_worker_password'
+  \quit 1
+\endif
+
+SELECT CASE WHEN current_database() = 'documents' THEN 'true' ELSE 'false' END
+  AS connected_to_documents
+\gset
+
+\if :connected_to_documents
+\else
+  \echo 'connect to the documents database before running this bootstrap script'
+  \quit 1
+\endif
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_migrator') THEN
+    CREATE ROLE documents_migrator LOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_runtime') THEN
+    CREATE ROLE documents_runtime NOLOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_api') THEN
+    CREATE ROLE documents_api LOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_worker') THEN
+    CREATE ROLE documents_worker LOGIN;
+  END IF;
+END
+$$;
+
+ALTER ROLE documents_migrator
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD :'documents_migrator_password';
+
+ALTER ROLE documents_runtime
+WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+ALTER ROLE documents_api
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD :'documents_api_password';
+
+ALTER ROLE documents_worker
+WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
+PASSWORD :'documents_worker_password';
+
+GRANT documents_runtime TO documents_api;
+GRANT documents_runtime TO documents_worker;
+
+REVOKE CONNECT, TEMPORARY ON DATABASE documents FROM PUBLIC;
+
+GRANT CONNECT, CREATE, TEMPORARY
+ON DATABASE documents
+TO documents_migrator;
+
+GRANT CONNECT
+ON DATABASE documents
+TO documents_runtime;
+
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+GRANT USAGE, CREATE
+ON SCHEMA public
+TO documents_migrator;
+
+GRANT USAGE
+ON SCHEMA public
+TO documents_runtime;

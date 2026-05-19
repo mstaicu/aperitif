@@ -48,13 +48,20 @@ export async function runTenancyProjectionConsumer(ctx, signal) {
  * @param {import("@nats-io/jetstream").JsMsg} message
  */
 async function handleTenancyEvent(ctx, message) {
+  if (!isTenancyProjectionV1Subject(message.subject)) {
+    return;
+  }
+
   const event = message.json();
 
   if (
     !TenancyEventEnvelopeCheck.Check(event) ||
     event.subject !== message.subject
   ) {
-    throw new Error("Invalid tenancy event envelope");
+    console.warn("ignoring invalid tenancy event envelope", {
+      subject: message.subject,
+    });
+    return;
   }
 
   if (event.schema_version === TENANCY_EVENT_SCHEMA_VERSION_V1) {
@@ -62,7 +69,5 @@ async function handleTenancyEvent(ctx, message) {
     return;
   }
 
-  if (isTenancyProjectionV1Subject(event.subject)) {
-    throw new Error("Unsupported tenancy projection event schema version");
-  }
+  throw new Error("Unsupported tenancy projection event schema version");
 }
