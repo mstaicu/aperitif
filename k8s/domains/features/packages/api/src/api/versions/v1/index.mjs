@@ -1,8 +1,8 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import createFeatureGrant from "./routes/admin/grants/feature-grant.create.mjs";
 import listFeatures from "./routes/features/features.list.mjs";
+import createFeatureGrant from "./routes/features/grants/feature-grant.create.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -48,8 +48,8 @@ export default async (fastify, { jwks, services }) => {
           name: "features",
         },
         {
-          description: "Admin commands for tenant feature grants",
-          name: "admin grants",
+          description: "Feature grant commands",
+          name: "feature grants",
         },
       ],
     },
@@ -57,7 +57,7 @@ export default async (fastify, { jwks, services }) => {
 
   await fastify.register(createFeatureGrant, {
     jwks,
-    prefix: "/admin/grants",
+    prefix: "/features/grants",
     tenantFeatures: services.tenantFeatures,
   });
   await fastify.register(listFeatures, {

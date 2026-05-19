@@ -1,4 +1,4 @@
-import { authenticate } from "../../../../../../platform/security/jwt.mjs";
+import { authenticatePlatformOperator } from "../../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../../shared/schemas.mjs";
 import { CreateFeatureGrantBody, GrantResponse } from "./schemas.mjs";
 
@@ -14,13 +14,13 @@ import { CreateFeatureGrantBody, GrantResponse } from "./schemas.mjs";
  */
 export default async function (fastify, { jwks, tenantFeatures }) {
   fastify.post(
-    "/features",
+    "",
     {
       schema: {
         body: CreateFeatureGrantBody,
         description:
-          "Admin command that grants one feature to a tenant and recomputes tenant features.",
-        operationId: "createAdminFeatureGrant",
+          "Platform operator command that grants one feature to a tenant and recomputes tenant features.",
+        operationId: "createFeatureGrant",
         response: {
           200: GrantResponse,
           400: ProblemResponse,
@@ -32,11 +32,11 @@ export default async function (fastify, { jwks, tenantFeatures }) {
         },
         security: [{ bearerAuth: [] }],
         summary: "Grant tenant feature",
-        tags: ["admin grants"],
+        tags: ["feature grants"],
       },
     },
     async function (req, reply) {
-      await authenticate({
+      await authenticatePlatformOperator({
         authorization: req.headers.authorization,
         jwks,
       });

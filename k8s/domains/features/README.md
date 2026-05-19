@@ -50,12 +50,13 @@ number_sum
 
 ```text
 GET /v1/features
-POST /v1/admin/grants/features
+POST /v1/features/grants
 ```
 
 Routes require an identity-issued access token verified through JWKS. Grant
 requests carry `tenant_id`, `feature_code`, `value`, and an idempotency
-`grant_ref`. These are admin/control-plane commands, not customer purchase APIs.
+`grant_ref`. Grant commands require a platform operator access token; they are
+control-plane commands, not customer purchase APIs.
 
 Future payment or commerce consumers should use the same command shape with a
 stable local purchase/payment id as `grant_ref`.

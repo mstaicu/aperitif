@@ -40,7 +40,7 @@ CREATE TABLE tenant_feature_grants (
     )
 );
 
-COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as admin grants, payment confirmations, compliance approvals, or rewards.';
+COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as operator grants, payment confirmations, compliance approvals, or rewards.';
 COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
 COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
 COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example manual, payment, compliance, or reward.';

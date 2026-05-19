@@ -117,11 +117,11 @@ export const createTenantFeatureGrant =
           [tenantId],
         );
 
-        /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
-        const grants = grantRows;
-
         /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
         const tenantFeatures = [];
+
+        /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
+        const grants = grantRows;
 
         for (const grant of grants) {
           let mergedValue;

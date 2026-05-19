@@ -10,5 +10,5 @@ records, documents, notifications, or workflow.
   `tenant_version` stale-event protection when changing that consumer.
 - Do not read identity or tenancy tables. Features verifies identity-issued
   tokens through JWKS and should use tenancy APIs/events for tenant authority.
-- Tenant grant commands are admin commands under `/v1/admin/grants`, not
-  tenancy-owned `/v1/tenants` routes.
+- Tenant grant commands are feature-domain commands under `/v1/features/grants`,
+  not tenancy-owned `/v1/tenants` routes.

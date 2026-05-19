@@ -9,6 +9,32 @@ import nconf from "nconf";
  * @param {{ authorization?: string, jwks: Jwks }} args
  */
 export const authenticate = async ({ authorization, jwks }) => {
+  const payload = await verifyAccessToken({ authorization, jwks });
+
+  return payload.sub;
+};
+
+/**
+ * @param {{ authorization?: string, jwks: Jwks }} args
+ */
+export const authenticatePlatformOperator = async ({ authorization, jwks }) => {
+  const payload = await verifyAccessToken({ authorization, jwks });
+
+  if (
+    !Array.isArray(payload.platform_roles) ||
+    !payload.platform_roles.includes("operator")
+  ) {
+    throw new Error("FORBIDDEN");
+  }
+
+  return payload.sub;
+};
+
+/**
+ * @param {{ authorization?: string, jwks: Jwks }} args
+ * @returns {Promise<import("jose").JWTPayload & { sub: string, platform_roles?: unknown }>}
+ */
+const verifyAccessToken = async ({ authorization, jwks }) => {
   const [type, token] = (authorization || "").split(" ");
 
   if (type !== "Bearer" || !token) {
@@ -24,7 +50,10 @@ export const authenticate = async ({ authorization, jwks }) => {
       throw new Error("INVALID_ACCESS_TOKEN");
     }
 
-    return payload.sub;
+    return {
+      ...payload,
+      sub: payload.sub,
+    };
   } catch {
     throw new Error("INVALID_ACCESS_TOKEN");
   }

@@ -16,9 +16,6 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /v1/admin/grants
-        - path:
-            type: PathPrefix
             value: /v1/features
 
       backendRefs:
@@ -39,9 +36,6 @@ spec:
 
   rules:
     - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/admin/grants
         - path:
             type: PathPrefix
             value: /v1/features
