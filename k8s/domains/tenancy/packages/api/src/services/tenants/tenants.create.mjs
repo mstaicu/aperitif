@@ -1,6 +1,6 @@
 import {
-  buildTenantCreatedEvent,
-  buildTenantMembershipCreatedEvent,
+  buildTenantMembershipUpdatedEvent,
+  buildTenantUpdatedEvent,
 } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
@@ -10,7 +10,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   tenant: {
  *     id: string,
  *     name: string,
- *     status: "active" | "archived",
+ *     status: "active" | "disabled",
  *     type: "personal" | "organization",
  *   },
  * }>}
@@ -29,10 +29,10 @@ export const createTenant =
       } = await client.query(
         `
           INSERT INTO tenants (name, type, status)
-          VALUES ($1, $2, $3)
+          VALUES ($1, $2, DEFAULT)
           RETURNING id, name, type, status, version
         `,
-        [name, type, "active"],
+        [name, type],
       );
 
       await client.query(
@@ -43,30 +43,26 @@ export const createTenant =
         [tenant.id, currentUserId],
       );
 
-      const tenantCreatedEvent = buildTenantCreatedEvent({
-        tenant: {
-          id: tenant.id,
-          status: tenant.status,
-          type: tenant.type,
+      const tenantUpdatedEvent = buildTenantUpdatedEvent(
+        {
+          tenant: {
+            id: tenant.id,
+            status: tenant.status,
+            type: tenant.type,
+          },
         },
-      });
+        Number(tenant.version),
+      );
 
       await client.query(
         `
           INSERT INTO outbox_events (
-            subject,
-            version,
-            schema_version,
-            payload
+            id,
+            event
           )
-          VALUES ($1, $2, $3, $4::jsonb)
+          VALUES ($1, $2::jsonb)
         `,
-        [
-          tenantCreatedEvent.subject,
-          tenant.version,
-          tenantCreatedEvent.schema_version,
-          JSON.stringify(tenantCreatedEvent.payload),
-        ],
+        [tenantUpdatedEvent.id, JSON.stringify(tenantUpdatedEvent)],
       );
 
       const {
@@ -81,35 +77,32 @@ export const createTenant =
         [tenant.id],
       );
 
-      const membershipCreatedEvent = buildTenantMembershipCreatedEvent({
-        membership: {
-          role: "owner",
-          tenant_id: tenant.id,
-          user_id: currentUserId,
+      const membershipUpdatedEvent = buildTenantMembershipUpdatedEvent(
+        {
+          membership: {
+            role: "owner",
+            status: "active",
+            tenant_id: tenant.id,
+            user_id: currentUserId,
+          },
+          tenant: {
+            id: tenant.id,
+            status: tenant.status,
+            type: tenant.type,
+          },
         },
-        tenant: {
-          id: tenant.id,
-          status: tenant.status,
-          type: tenant.type,
-        },
-      });
+        Number(membershipTenantVersion),
+      );
 
       await client.query(
         `
           INSERT INTO outbox_events (
-            subject,
-            version,
-            schema_version,
-            payload
+            id,
+            event
           )
-          VALUES ($1, $2, $3, $4::jsonb)
+          VALUES ($1, $2::jsonb)
         `,
-        [
-          membershipCreatedEvent.subject,
-          membershipTenantVersion,
-          membershipCreatedEvent.schema_version,
-          JSON.stringify(membershipCreatedEvent.payload),
-        ],
+        [membershipUpdatedEvent.id, JSON.stringify(membershipUpdatedEvent)],
       );
 
       await client.query("COMMIT");

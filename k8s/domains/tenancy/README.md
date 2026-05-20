@@ -128,9 +128,8 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
 - Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker
   ensures the `TENANCY` JetStream stream and publishes unpublished rows to that
-  stream. Outbox rows store the local authority `version`; the worker emits it
-  on the wire as `tenant_version` with the stable event `id`, `subject`,
-  `occurred_at`, `schema_version`, and a minimal domain payload.
+  stream. Outbox rows store the complete event envelope as JSON, so the worker
+  publishes the event exactly as recorded in the transaction.
 - Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
 - Database: tenancy owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
 
@@ -154,14 +153,13 @@ Request handlers must not publish tenancy authority events directly to NATS. The
 
 Current event subjects:
 
-- `tenancy.tenant.created`
-- `tenancy.tenant_membership.created`
-- `tenancy.tenant_membership.deleted`
-- `tenancy.workspace.created`
+- `tenancy.tenant.updated`
+- `tenancy.tenant_membership.updated`
+- `tenancy.workspace.updated`
 
 Event payloads are intentionally projection-shaped. Consumers should use natural
-projection keys plus the latest applied `tenant_version` to ignore duplicate or
-stale events where `event.tenant_version <= projected_tenant_version`. Deleted
+projection keys plus the latest applied event `version` to ignore duplicate or
+stale events where `event.version <= projected.version`. Deleted
 resources that can be recreated should use tombstones when needed to prevent old
 events from resurrecting removed authority.
 
@@ -171,16 +169,15 @@ producers only after old consumers no longer depend on the previous contract.
 
 Every tenancy event payload must include `payload.tenant.id`, including future
 events for teams or other tenant-owned authority changes. Consumers use
-`payload.tenant.id` plus `tenant_version` as the projection ordering key. Any
+`payload.tenant.id` plus event `version` as the projection ordering key. Any
 authority-affecting tenancy event must increment `tenants.version` and publish
-the new value as `tenant_version`.
+the new value as the event `version`.
 
 ```json
 {
   "id": "event-id",
-  "subject": "tenancy.tenant_membership.created",
-  "tenant_version": 2,
-  "occurred_at": "2026-05-02T10:15:30.000Z",
+  "subject": "tenancy.tenant_membership.updated",
+  "version": 2,
   "schema_version": 1,
   "payload": {
     "tenant": {
@@ -191,6 +188,7 @@ the new value as `tenant_version`.
     "membership": {
       "tenant_id": "tenant-id",
       "role": "owner",
+      "status": "active",
       "user_id": "user-id"
     }
   }

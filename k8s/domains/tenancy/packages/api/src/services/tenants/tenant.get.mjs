@@ -6,7 +6,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   tenant: {
  *     id: string,
  *     name: string,
- *     status: "active" | "archived",
+ *     status: "active" | "disabled",
  *     type: "personal" | "organization",
  *   },
  * }>}

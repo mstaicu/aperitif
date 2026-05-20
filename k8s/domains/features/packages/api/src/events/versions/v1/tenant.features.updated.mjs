@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { randomUUID } from "node:crypto";
 
 import { FEATURES_EVENT_SCHEMA_VERSION } from "./envelope.mjs";
 import {
@@ -30,20 +31,25 @@ export const TenantFeaturesUpdatedPayloadCheck = TypeCompiler.Compile(
 
 /**
  * @param {TenantFeaturesUpdatedPayload} payload
+ * @param {number} version
  * @returns {{
+ *   id: string,
  *   payload: TenantFeaturesUpdatedPayload,
  *   schema_version: number,
  *   subject: string,
+ *   version: number,
  * }}
  */
-export function buildTenantFeaturesUpdatedEvent(payload) {
+export function buildTenantFeaturesUpdatedEvent(payload, version) {
   if (!TenantFeaturesUpdatedPayloadCheck.Check(payload)) {
     throw new Error("INVALID_EVENT_PAYLOAD");
   }
 
   return {
+    id: randomUUID(),
     payload,
     schema_version: TenantFeaturesUpdatedSchemaVersion,
     subject: TenantFeaturesUpdatedSubject,
+    version,
   };
 }

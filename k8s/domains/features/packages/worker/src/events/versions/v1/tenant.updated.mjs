@@ -4,10 +4,10 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { TENANCY_EVENT_SCHEMA_VERSION } from "./envelope.mjs";
 import { TenantEventResourceSchema } from "./resources.mjs";
 
-export const TenantCreatedSubject = "tenancy.tenant.created";
-export const TenantCreatedSchemaVersion = TENANCY_EVENT_SCHEMA_VERSION;
+export const TenantUpdatedSubject = "tenancy.tenant.updated";
+export const TenantUpdatedSchemaVersion = TENANCY_EVENT_SCHEMA_VERSION;
 
-export const TenantCreatedPayloadSchema = Type.Object(
+export const TenantUpdatedPayloadSchema = Type.Object(
   {
     tenant: TenantEventResourceSchema,
   },
@@ -16,10 +16,10 @@ export const TenantCreatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof TenantCreatedPayloadSchema
- * >} TenantCreatedPayload
+ *   typeof TenantUpdatedPayloadSchema
+ * >} TenantUpdatedPayload
  */
 
-export const TenantCreatedPayloadCheck = TypeCompiler.Compile(
-  TenantCreatedPayloadSchema,
+export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
+  TenantUpdatedPayloadSchema,
 );

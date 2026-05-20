@@ -7,13 +7,11 @@ export const FEATURES_EVENT_SCHEMA_VERSION = 1;
 
 export const FeaturesEventEnvelopeSchema = Type.Object(
   {
-    features_version: Type.Integer({ minimum: 1 }),
     id: UuidSchema,
-    occurred_at: Type.String({ minLength: 1 }),
     payload: Type.Object({}, { additionalProperties: true }),
     schema_version: Type.Integer({ minimum: 1 }),
     subject: Type.String({ minLength: 1 }),
-    tenant_id: UuidSchema,
+    version: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
 );

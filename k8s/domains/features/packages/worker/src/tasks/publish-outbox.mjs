@@ -13,7 +13,7 @@ const PUBLISH_ACK_TIMEOUT_MS = 5000;
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {AbortSignal} signal
  */
-export async function runOutboxPublisher(ctx, signal) {
+export async function runPublishOutbox(ctx, signal) {
   signal.throwIfAborted();
 
   const listener = await ctx.persistence.db.connect();
@@ -66,16 +66,12 @@ async function publishNextOutboxEvent(ctx) {
       rows: [event],
     } = await client.query(
       `
-        SELECT id,
-          subject,
-          tenant_id,
-          version,
-          occurred_at,
-          schema_version,
-          payload
+        SELECT position,
+          id,
+          event
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY occurred_at, version, id
+        ORDER BY position
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -83,19 +79,8 @@ async function publishNextOutboxEvent(ctx) {
 
     if (event) {
       await ctx.messaging.js.publish(
-        event.subject,
-        JSON.stringify({
-          features_version: Number(event.version),
-          id: event.id,
-          occurred_at:
-            event.occurred_at instanceof Date
-              ? event.occurred_at.toISOString()
-              : new Date(event.occurred_at).toISOString(),
-          payload: event.payload,
-          schema_version: Number(event.schema_version),
-          subject: event.subject,
-          tenant_id: event.tenant_id,
-        }),
+        event.event.subject,
+        JSON.stringify(event.event),
         {
           expect: {
             streamName: FEATURES_STREAM,
@@ -109,9 +94,9 @@ async function publishNextOutboxEvent(ctx) {
         `
           UPDATE outbox_events
           SET published_at = now()
-          WHERE id = $1
+          WHERE position = $1
         `,
-        [event.id],
+        [event.position],
       );
 
       keepDraining = true;

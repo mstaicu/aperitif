@@ -12,7 +12,7 @@ export const TenantTypeSchema = Type.Union([
 
 export const TenantStatusSchema = Type.Union([
   Type.Literal("active"),
-  Type.Literal("archived"),
+  Type.Literal("disabled"),
 ]);
 
 export const TenantRoleSchema = Type.Union([
@@ -31,7 +31,7 @@ export const TenantEventResourceSchema = Type.Object(
 
 export const WorkspaceStatusSchema = Type.Union([
   Type.Literal("active"),
-  Type.Literal("archived"),
+  Type.Literal("disabled"),
 ]);
 
 export const WorkspaceEventResourceSchema = Type.Object(

@@ -268,7 +268,7 @@ Route work should preserve:
 - Explicit domain error responses.
 - Stable OpenAPI operation descriptions that are useful to generated clients and LLM tools.
 
-Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, producer, consumer, and delivery expectation.
+Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, consumers, and delivery expectation.
 
 Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/database`.
 

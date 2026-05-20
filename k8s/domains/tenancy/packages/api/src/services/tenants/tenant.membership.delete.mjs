@@ -1,4 +1,4 @@
-import { buildTenantMembershipDeletedEvent } from "../../events/index.mjs";
+import { buildTenantMembershipUpdatedEvent } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -106,34 +106,32 @@ export const deleteTenantMembership =
         [tenantId],
       );
 
-      const membershipDeletedEvent = buildTenantMembershipDeletedEvent({
-        membership: {
-          tenant_id: tenantId,
-          user_id: userId,
+      const membershipUpdatedEvent = buildTenantMembershipUpdatedEvent(
+        {
+          membership: {
+            role: null,
+            status: "deleted",
+            tenant_id: tenantId,
+            user_id: userId,
+          },
+          tenant: {
+            id: tenant.id,
+            status: tenant.status,
+            type: tenant.type,
+          },
         },
-        tenant: {
-          id: tenant.id,
-          status: tenant.status,
-          type: tenant.type,
-        },
-      });
+        Number(tenantVersion),
+      );
 
       await client.query(
         `
           INSERT INTO outbox_events (
-            subject,
-            version,
-            schema_version,
-            payload
+            id,
+            event
           )
-          VALUES ($1, $2, $3, $4::jsonb)
+          VALUES ($1, $2::jsonb)
         `,
-        [
-          membershipDeletedEvent.subject,
-          tenantVersion,
-          membershipDeletedEvent.schema_version,
-          JSON.stringify(membershipDeletedEvent.payload),
-        ],
+        [membershipUpdatedEvent.id, JSON.stringify(membershipUpdatedEvent)],
       );
 
       await client.query("COMMIT");

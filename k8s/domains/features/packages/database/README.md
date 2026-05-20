@@ -27,7 +27,7 @@ only merge strategies this domain currently supports.
 
 `tenant_projection` and `tenant_membership_projection` are local copies of
 tenancy authority built from tenancy events. Projection writes are idempotent
-through natural keys and `tenant_version`.
+through natural keys and projection `version`.
 
 `tenant_feature_grants` records current tenant-specific inputs that grant
 feature values. `tenant_features` stores the current feature values for each

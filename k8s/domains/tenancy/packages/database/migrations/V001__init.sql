@@ -7,7 +7,9 @@ CREATE TABLE tenants (
 
     type TEXT NOT NULL CHECK (type IN ('personal', 'organization')),
 
-    status TEXT NOT NULL CHECK (status IN ('active', 'archived')),
+    status TEXT NOT NULL DEFAULT 'active' CHECK (
+        status IN ('active', 'disabled')
+    ),
 
     version BIGINT NOT NULL DEFAULT 1
 );
@@ -46,7 +48,7 @@ CREATE TABLE workspaces (
     name TEXT NOT NULL,
 
     status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'archived')
+        status IN ('active', 'disabled')
     )
 );
 
@@ -60,28 +62,19 @@ CREATE INDEX workspaces_tenant_id_idx
 ON workspaces (tenant_id, name, id);
 
 CREATE TABLE outbox_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    position BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
-    subject TEXT NOT NULL,
-    version BIGINT NOT NULL,
+    id UUID NOT NULL UNIQUE,
 
-    schema_version INTEGER NOT NULL,
+    event JSONB NOT NULL,
 
-    payload JSONB NOT NULL,
-
-    occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    published_at TIMESTAMPTZ,
-
-    CONSTRAINT outbox_events_schema_version_positive CHECK (schema_version > 0)
+    published_at TIMESTAMPTZ
 );
 
 COMMENT ON TABLE outbox_events IS 'Transactional outbox for durable tenant-domain events waiting to be published to the event bus.';
-COMMENT ON COLUMN outbox_events.id IS 'Stable event id used by consumers for idempotency.';
-COMMENT ON COLUMN outbox_events.subject IS 'Event bus subject, for example tenancy.tenant.created.';
-COMMENT ON COLUMN outbox_events.version IS 'Tenant authority version emitted as tenant_version on the event envelope.';
-COMMENT ON COLUMN outbox_events.schema_version IS 'Event payload schema version used by consumers to select the correct decoder.';
-COMMENT ON COLUMN outbox_events.payload IS 'JSON event body published to the event bus.';
-COMMENT ON COLUMN outbox_events.occurred_at IS 'Time the domain event was recorded in the same transaction as the state change.';
+COMMENT ON COLUMN outbox_events.position IS 'Local publish order for unpublished events.';
+COMMENT ON COLUMN outbox_events.id IS 'Stable event id copied from event.id for database uniqueness and NATS msgID.';
+COMMENT ON COLUMN outbox_events.event IS 'Complete event envelope published to the event bus.';
 COMMENT ON COLUMN outbox_events.published_at IS 'Null until a worker successfully publishes the event.';
 
 -- Wake workers once after an INSERT statement adds outbox rows.
@@ -102,7 +95,7 @@ EXECUTE FUNCTION notify_outbox_event();
 COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
 
 CREATE INDEX outbox_events_unpublished_idx
-ON outbox_events (occurred_at, version, id)
+ON outbox_events (position)
 WHERE published_at IS NULL;
 
 COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';

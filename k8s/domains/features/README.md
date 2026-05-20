@@ -130,13 +130,12 @@ graph, run the database bootstrap SQL against the managed database, and keep
 
 Features consumes these tenancy event subjects into local projection tables:
 
-- `tenancy.tenant.created`
-- `tenancy.tenant_membership.created`
-- `tenancy.tenant_membership.deleted`
+- `tenancy.tenant.updated`
+- `tenancy.tenant_membership.updated`
 
-Projection writes are idempotent through natural keys and `tenant_version`.
+Projection writes are idempotent through natural keys and projection `version`.
 Duplicate or stale events do not overwrite newer projected tenant or membership
-rows. Deleted memberships are kept as tombstones so an old membership-created
+rows. Deleted memberships are kept as tombstones so an old membership-updated
 event cannot resurrect a removed membership.
 
 If the features projection database is intentionally reset while the `TENANCY`
@@ -147,9 +146,8 @@ delete or rename the `features-tenancy-projection` durable consumer, then start
 the worker so `DeliverPolicy.All` replays the stream into the empty projection.
 
 Tenancy event wire contracts live under `packages/worker/src/events/versions/`.
-Projection behavior lives under
-`packages/worker/src/consumers/tenancy-projection/versions/`. Add both sides
-deliberately when accepting a new tenancy event schema version.
+Projection behavior lives in `packages/worker/src/tasks/project-tenancy.mjs`.
+Add both sides deliberately when accepting a new tenancy event schema version.
 
 ## Feature Events
 
@@ -157,9 +155,8 @@ Features emits tenant-level feature state from `tenant_features`:
 
 - `features.tenant_features.updated`
 
-The event carries the tenant id, a `features_version`, and the current effective
-feature rows included in the payload. Consumers should use `features_version`
-to ignore stale events.
+The event carries generic event `version` and the current tenant feature rows
+inside the payload. Consumers should use `version` to ignore stale events.
 
 Producer contracts live under `packages/api/src/events/versions/`. The worker
 publishes durable rows from `outbox_events` to the `FEATURES` stream and then

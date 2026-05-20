@@ -1,4 +1,4 @@
-import { buildWorkspaceCreatedEvent } from "../../events/index.mjs";
+import { buildWorkspaceUpdatedEvent } from "../../events/index.mjs";
 import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
@@ -7,7 +7,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   workspace: {
  *     id: string,
  *     name: string,
- *     status: "active" | "archived",
+ *     status: "active" | "disabled",
  *     tenant_id: string,
  *   },
  * }>}
@@ -84,35 +84,31 @@ export const createTenantWorkspace =
         [tenantId],
       );
 
-      const workspaceCreatedEvent = buildWorkspaceCreatedEvent({
-        tenant: {
-          id: tenant.id,
-          status: tenant.status,
-          type: tenant.type,
+      const workspaceUpdatedEvent = buildWorkspaceUpdatedEvent(
+        {
+          tenant: {
+            id: tenant.id,
+            status: tenant.status,
+            type: tenant.type,
+          },
+          workspace: {
+            id: workspace.id,
+            status: workspace.status,
+            tenant_id: workspace.tenant_id,
+          },
         },
-        workspace: {
-          id: workspace.id,
-          status: workspace.status,
-          tenant_id: workspace.tenant_id,
-        },
-      });
+        Number(version),
+      );
 
       await client.query(
         `
           INSERT INTO outbox_events (
-            subject,
-            version,
-            schema_version,
-            payload
+            id,
+            event
           )
-          VALUES ($1, $2, $3, $4::jsonb)
+          VALUES ($1, $2::jsonb)
         `,
-        [
-          workspaceCreatedEvent.subject,
-          version,
-          workspaceCreatedEvent.schema_version,
-          JSON.stringify(workspaceCreatedEvent.payload),
-        ],
+        [workspaceUpdatedEvent.id, JSON.stringify(workspaceUpdatedEvent)],
       );
 
       await client.query("COMMIT");

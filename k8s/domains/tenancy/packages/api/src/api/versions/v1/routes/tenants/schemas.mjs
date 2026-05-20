@@ -39,14 +39,14 @@ export const TenantRole = Type.Union(
 );
 
 export const TenantStatus = Type.Union(
-  [Type.Literal("active"), Type.Literal("archived")],
+  [Type.Literal("active"), Type.Literal("disabled")],
   {
     description: "Tenant lifecycle status.",
   },
 );
 
 const WorkspaceStatus = Type.Union(
-  [Type.Literal("active"), Type.Literal("archived")],
+  [Type.Literal("active"), Type.Literal("disabled")],
   {
     description: "Workspace lifecycle status.",
   },

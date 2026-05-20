@@ -6,7 +6,7 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   workspaces: {
  *     id: string,
  *     name: string,
- *     status: "active" | "archived",
+ *     status: "active" | "disabled",
  *     tenant_id: string,
  *   }[],
  * }>}

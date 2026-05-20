@@ -11,6 +11,8 @@ failure cases.
   ad hoc deployment order.
 - Domain units stay separate: `postgres -> migrate -> api/worker`. Do not collapse
   them into one Kubernetes app abstraction.
+- Cross-domain events are versioned current-state facts, not replay deltas.
+  Consumers apply newer `version` values and ack stale messages.
 - Dev overlays using KSOPS require `SOPS_AGE_KEY_FILE` and Kustomize with
   `--enable-alpha-plugins --enable-exec`. Do not replace encrypted Secret
   manifests with plaintext.

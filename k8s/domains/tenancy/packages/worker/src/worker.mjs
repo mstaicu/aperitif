@@ -1,34 +1,44 @@
 import { once } from "node:events";
+import http from "node:http";
 import process from "node:process";
 
 import { createContext } from "./platform/context.mjs";
 import { ensureTenancyStream } from "./platform/messaging/tenancy-stream.mjs";
-import { runOutboxPublisher } from "./publishers/outbox.mjs";
+import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
 const ctx = await createContext();
 const controller = new AbortController();
 
 await ensureTenancyStream(ctx);
 
-const publisher = runOutboxPublisher(ctx, controller.signal);
-const tasks = [publisher];
+const health = http.createServer((req, res) => {
+  if (req.url === "/livez" || req.url === "/readyz") {
+    res.writeHead(200, { "content-type": "text/plain" });
+  } else {
+    res.writeHead(404, { "content-type": "text/plain" });
+  }
 
-const worker = Promise.race(tasks).then(() => {
-  throw new Error("tenancy worker stopped unexpectedly");
+  res.end();
 });
+
+health.listen(3000, "0.0.0.0");
+
+const tasks = [runPublishOutbox(ctx, controller.signal)];
 
 console.log("tenancy worker listening");
 
-const [signal] = await Promise.race([
+await Promise.race([
   ...["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
-  worker,
+  ...tasks,
 ]);
 
-console.log("closing worker", { signal });
+console.log("closing worker");
 
 controller.abort();
 
-await Promise.allSettled([publisher]);
+await Promise.allSettled(tasks);
+
+health.close();
 
 console.log("closing context...");
 await ctx.lifecycle.close();

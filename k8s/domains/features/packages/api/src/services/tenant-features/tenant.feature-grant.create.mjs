@@ -171,31 +171,25 @@ export const createTenantFeatureGrant =
           [tenantId, JSON.stringify(tenantFeatures), version],
         );
 
-        const event = buildTenantFeaturesUpdatedEvent({
-          features: tenantFeatures,
-          tenant: {
-            id: tenantId,
+        const event = buildTenantFeaturesUpdatedEvent(
+          {
+            features: tenantFeatures,
+            tenant: {
+              id: tenantId,
+            },
           },
-        });
+          Number(version),
+        );
 
         await client.query(
           `
             INSERT INTO outbox_events (
-              subject,
-              tenant_id,
-              version,
-              schema_version,
-              payload
+              id,
+              event
             )
-            VALUES ($1, $2, $3, $4, $5::jsonb)
+            VALUES ($1, $2::jsonb)
           `,
-          [
-            event.subject,
-            tenantId,
-            version,
-            event.schema_version,
-            JSON.stringify(event.payload),
-          ],
+          [event.id, JSON.stringify(event)],
         );
       }
 
