@@ -69,6 +69,10 @@ export function buildTenantMembershipUpdatedEvent(payload, version) {
     throw new Error("INVALID_EVENT_PAYLOAD");
   }
 
+  if (!Number.isInteger(version) || version < 1) {
+    throw new Error("INVALID_EVENT_VERSION");
+  }
+
   return {
     id: randomUUID(),
     payload,

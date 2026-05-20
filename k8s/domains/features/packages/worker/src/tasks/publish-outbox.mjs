@@ -63,7 +63,7 @@ async function publishNextOutboxEvent(ctx) {
     await client.query("BEGIN");
 
     const {
-      rows: [event],
+      rows: [outboxEvent],
     } = await client.query(
       `
         SELECT position,
@@ -77,18 +77,16 @@ async function publishNextOutboxEvent(ctx) {
       `,
     );
 
-    if (event) {
-      await ctx.messaging.js.publish(
-        event.event.subject,
-        JSON.stringify(event.event),
-        {
-          expect: {
-            streamName: FEATURES_STREAM,
-          },
-          msgID: event.id,
-          timeout: PUBLISH_ACK_TIMEOUT_MS,
+    if (outboxEvent) {
+      const { event } = outboxEvent;
+
+      await ctx.messaging.js.publish(event.subject, JSON.stringify(event), {
+        expect: {
+          streamName: FEATURES_STREAM,
         },
-      );
+        msgID: outboxEvent.id,
+        timeout: PUBLISH_ACK_TIMEOUT_MS,
+      });
 
       await client.query(
         `
@@ -96,7 +94,7 @@ async function publishNextOutboxEvent(ctx) {
           SET published_at = now()
           WHERE position = $1
         `,
-        [event.position],
+        [outboxEvent.position],
       );
 
       keepDraining = true;

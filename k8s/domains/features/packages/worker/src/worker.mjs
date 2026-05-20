@@ -15,12 +15,9 @@ await ensureFeaturesStream(ctx);
 await ensureTenancyConsumer(ctx);
 
 const health = http.createServer((req, res) => {
-  if (req.url === "/livez" || req.url === "/readyz") {
-    res.writeHead(200, { "content-type": "text/plain" });
-  } else {
-    res.writeHead(404, { "content-type": "text/plain" });
-  }
-
+  res.writeHead(req.url === "/livez" || req.url === "/readyz" ? 200 : 404, {
+    "content-type": "text/plain",
+  });
   res.end();
 });
 
@@ -30,22 +27,27 @@ const tasks = [
   runProjectTenancy(ctx, controller.signal),
   runPublishOutbox(ctx, controller.signal),
 ];
+const signal = Promise.race(
+  ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
+);
+const taskFailure = Promise.race(tasks).then(() => {
+  throw new Error("worker task stopped unexpectedly");
+});
 
 console.log("features worker listening");
 
-await Promise.race([
-  ...["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
-  ...tasks,
-]);
+try {
+  await Promise.race([signal, taskFailure]);
+} finally {
+  console.log("closing worker");
 
-console.log("closing worker");
+  controller.abort();
 
-controller.abort();
+  await Promise.allSettled(tasks);
 
-await Promise.allSettled(tasks);
+  health.close();
 
-health.close();
-
-console.log("closing context...");
-await ctx.lifecycle.close();
-console.log("shutdown complete");
+  console.log("closing context...");
+  await ctx.lifecycle.close();
+  console.log("shutdown complete");
+}
