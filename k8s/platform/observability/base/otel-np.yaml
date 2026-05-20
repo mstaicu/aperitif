@@ -15,7 +15,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-identity-and-tenancy-to-otel-http
+  name: allow-domain-apis-to-otel-http
 spec:
   podSelector:
     matchLabels:
@@ -42,6 +42,18 @@ spec:
           podSelector:
             matchLabels:
               app: tenancy-api
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: features
+          podSelector:
+            matchLabels:
+              app: features-api
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: documents
+          podSelector:
+            matchLabels:
+              app: documents-api
       ports:
         - protocol: TCP
           port: 4318

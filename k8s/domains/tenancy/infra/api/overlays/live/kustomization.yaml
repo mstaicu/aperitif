@@ -8,6 +8,9 @@ resources:
   - ../../base
   - tenancy-api-db.yaml
 
+patches:
+  - path: tenancy-api-depl.yaml
+
 images:
   - name: mdstaicu/tenancy-api
     # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>

@@ -2,16 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: documents-api-depl
+  name: identity-api-depl
 spec:
-  replicas: 1
   template:
     spec:
       containers:
-        - name: documents-api
+        - name: identity-api
           env:
             - name: OTEL_SERVICE_NAME
-              value: documents-api
+              value: identity-api
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://otel-srv.otel.svc.cluster.local:4318
             - name: OTEL_TRACES_EXPORTER

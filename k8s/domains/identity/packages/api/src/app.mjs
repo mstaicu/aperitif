@@ -3,7 +3,7 @@ import Fastify from "fastify";
 
 import jwks from "./api/jwks/index.mjs";
 import probes from "./api/probes/index.mjs";
-import requestProblemDetails from "./api/shared/request-problem-details.mjs";
+import problemDetails from "./api/problem-details.mjs";
 import v1 from "./api/versions/v1/index.mjs";
 
 /**
@@ -48,7 +48,7 @@ export const createApp = async ({ ctx, fastifyOtel, services }) => {
     .setValidatorCompiler(TypeBoxValidatorCompiler)
     .withTypeProvider();
 
-  await app.register(requestProblemDetails);
+  await app.register(problemDetails);
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }

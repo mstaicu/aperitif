@@ -1,5 +1,5 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
-import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../problem-details.mjs";
 import { CreateDocumentBody, DocumentResponse } from "./schemas.mjs";
 
 /**

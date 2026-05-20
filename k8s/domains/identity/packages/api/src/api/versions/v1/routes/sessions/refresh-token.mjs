@@ -1,4 +1,4 @@
-import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../problem-details.mjs";
 import { RefreshTokenResponse } from "./schemas.mjs";
 
 /**

@@ -9,6 +9,9 @@ resources:
   - identity-api-jwt.yaml
   - identity-api-db.yaml
 
+patches:
+  - path: identity-api-depl.yaml
+
 configMapGenerator:
   - name: identity-api-cm
     literals:

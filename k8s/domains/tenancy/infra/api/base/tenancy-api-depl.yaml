@@ -35,18 +35,6 @@ spec:
             - name: ACCESS_TOKEN_AUDIENCE
               value: aperitif-api
 
-            - name: OTEL_SERVICE_NAME
-              value: tenancy-api
-
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://otel-srv.otel.svc.cluster.local:4318
-
-            - name: OTEL_METRICS_EXPORTER
-              value: none
-
-            - name: OTEL_LOGS_EXPORTER
-              value: none
-
           readinessProbe:
             httpGet:
               path: /readyz

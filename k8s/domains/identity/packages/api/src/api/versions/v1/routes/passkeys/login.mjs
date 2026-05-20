@@ -1,4 +1,4 @@
-import { ProblemResponse } from "../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../problem-details.mjs";
 import { LoginBody, LoginSuccessResponse } from "./schemas.mjs";
 
 /**

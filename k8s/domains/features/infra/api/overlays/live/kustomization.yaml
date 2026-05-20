@@ -8,6 +8,9 @@ resources:
   - ../../base
   - features-api-db.yaml
 
+patches:
+  - path: features-api-depl.yaml
+
 images:
   - name: mdstaicu/features-api
     # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>

@@ -23,7 +23,7 @@ const app = await createApp({
 app.addHook("onClose", () => otel.close());
 app.addHook("onClose", () => ctx.lifecycle.close());
 
-await app.listen({ host: "0.0.0.0", port: 3000 });
+await app.listen({ port: 3000 });
 
 const [signal] = await Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),

@@ -1,5 +1,5 @@
 import { authenticatePlatformOperator } from "../../../../../../platform/security/jwt.mjs";
-import { ProblemResponse } from "../../../../../shared/schemas.mjs";
+import { ProblemResponse } from "../../../../../problem-details.mjs";
 import { CreateFeatureGrantBody, GrantResponse } from "./schemas.mjs";
 
 /**

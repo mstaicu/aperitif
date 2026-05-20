@@ -8,6 +8,9 @@ resources:
   - ../../base
   - documents-api-db.yaml
 
+patches:
+  - path: documents-api-depl.yaml
+
 images:
   - name: mdstaicu/documents-api
     # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
