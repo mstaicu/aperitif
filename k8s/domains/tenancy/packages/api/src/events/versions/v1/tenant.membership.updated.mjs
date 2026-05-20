@@ -14,15 +14,9 @@ export const TenantMembershipUpdatedSubject =
 export const TenantMembershipUpdatedSchemaVersion =
   TENANCY_EVENT_SCHEMA_VERSION;
 
-export const TenantMembershipStatusSchema = Type.Union([
-  Type.Literal("active"),
-  Type.Literal("deleted"),
-]);
-
 const TenantMembershipUpdatedEventResourceSchema = Type.Object(
   {
-    role: Type.Union([TenantRoleSchema, Type.Null()]),
-    status: TenantMembershipStatusSchema,
+    role: TenantRoleSchema,
     tenant_id: UuidSchema,
     user_id: UuidSchema,
   },

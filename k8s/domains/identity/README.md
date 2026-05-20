@@ -10,6 +10,8 @@ Identity owns authentication identity, not product authority.
 - `passkey_credentials` are WebAuthn/passkey credentials for those subjects.
 - `challenges` are short-lived WebAuthn registration/login challenges.
 - `sessions` are refresh-token backed identity sessions.
+- `session_refresh_tokens` are hashed, rotating refresh credentials for those
+  sessions.
 - JWKS is the public verification contract for identity-issued access tokens.
 
 Identity must not own tenants, memberships, workspaces, tenant authority, or product permissions. Other domains consume identity through access tokens/JWKS and store their own authorization state.
@@ -80,11 +82,7 @@ When live moves to a managed database, remove `identity-postgres` from the Flux 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/identity/docs`.
 - UI: `identity-ui` serves product-shaped public routes on `tma.com`: `GET /signup`, `POST /signup/challenge`, `POST /signup`, `GET /login`, `POST /login/challenge`, and `POST /login`. Browser bundles stay namespaced under `/identity/assets/*`.
 - Public identity contract: JWKS is exposed at `api.tma.com/.well-known/jwks.json` for other domains to validate identity-issued tokens.
-- Session token endpoints use explicit token nouns: `POST /v1/sessions/access-token` creates a short-lived product API access token from a refresh token, and `POST /v1/sessions/refresh-token` rotates the refresh token for the current identity session.
+- Session token endpoints use explicit token nouns: `POST /v1/sessions/access-token` creates a short-lived product API access token from the current refresh token, and `POST /v1/sessions/refresh-token` consumes the current refresh token and returns its replacement. Reusing a consumed or revoked refresh token revokes the session.
 - Observability: `identity-api` and `identity-ui` emit traces only when their overlays configure `OTEL_EXPORTER_OTLP_ENDPOINT`; metrics and logs stay disabled for both domain units.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside producer and consumer code, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
 - Database: identity owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
-
-## Agent Context
-
-Agent-specific gotchas live in `AGENTS.md`. Keep this README human-facing and avoid duplicating agent-only rules here.

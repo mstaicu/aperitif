@@ -7,7 +7,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   workspace: {
  *     id: string,
  *     name: string,
- *     status: "active" | "disabled",
  *     tenant_id: string,
  *   },
  * }>}
@@ -25,9 +24,7 @@ export const createTenantWorkspace =
         rows: [tenant],
       } = await client.query(
         `
-          SELECT id,
-            type,
-            status
+          SELECT id
           FROM tenants
           WHERE id = $1
           FOR UPDATE
@@ -66,8 +63,7 @@ export const createTenantWorkspace =
           VALUES ($1, $2)
           RETURNING id,
             tenant_id,
-            name,
-            status
+            name
         `,
         [tenantId, name],
       );
@@ -88,12 +84,9 @@ export const createTenantWorkspace =
         {
           tenant: {
             id: tenant.id,
-            status: tenant.status,
-            type: tenant.type,
           },
           workspace: {
             id: workspace.id,
-            status: workspace.status,
             tenant_id: workspace.tenant_id,
           },
         },

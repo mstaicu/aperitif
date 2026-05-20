@@ -14,6 +14,7 @@ Postgres server or instance
       users
       passkey_credentials
       sessions
+      session_refresh_tokens
       flyway_schema_history
 ```
 
@@ -27,29 +28,18 @@ directly.
 
 - `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
 - `migrations/`: production Flyway migrations, named `V###__description.sql`.
-- `repeatable/`: rerunnable database objects or stable reference data.
-- `seeds/`: non-live deterministic seed data.
-- `checks/`: fixtures and assertions for migration upgrade checks.
-
-The current migration image copies only `migrations/`. Add other folders back
-to the Dockerfile only when a workflow actually uses them.
 
 ## Flyway Rules
 
 Copying a folder into the image does not make Flyway run it. Flyway scans only
 the folders listed in `FLYWAY_LOCATIONS`.
 
-Within those folders, Flyway recognizes files by filename prefix:
+Within that folder, Flyway recognizes versioned migration files by filename
+prefix:
 
 ```text
 V001__init.sql       versioned migration, applied once in version order
-R__refresh_view.sql  repeatable migration, rerun when the file changes
 ```
-
-Arbitrary files such as `seed.sql` or `assert.sql` are ignored by Flyway unless
-another command runs them. `seeds/` should only be included by non-prod
-locations. `checks/` is for future CI/database validation, not the normal
-production migration Job.
 
 ## Roles
 
@@ -81,6 +71,12 @@ so runtime grants have one stable target.
 
 The split is intentional: bootstrap creates roles and base permissions; Flyway
 owns schema objects and object-level grants.
+
+Refresh tokens are stored as hashes in `session_refresh_tokens`, not directly
+on `sessions`. A normal refresh rotation consumes the old token row and inserts
+a new current token row. If a consumed or revoked refresh token is presented to
+the refresh endpoint, the session is revoked because that means replay or token
+theft.
 
 ## Configuration
 

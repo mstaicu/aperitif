@@ -5,11 +5,6 @@ export const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const FeatureTypeSchema = Type.Union([
-  Type.Literal("boolean"),
-  Type.Literal("number"),
-]);
-
 export const TenantEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
@@ -20,7 +15,6 @@ export const TenantEventResourceSchema = Type.Object(
 export const TenantFeatureEventResourceSchema = Type.Object(
   {
     code: Type.String({ minLength: 1 }),
-    type: FeatureTypeSchema,
     value: Type.Unknown(),
   },
   { additionalProperties: false },

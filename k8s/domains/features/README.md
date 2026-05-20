@@ -6,27 +6,26 @@ Features owns tenant feature authority:
 feature definitions + tenant grants -> current tenant features -> events
 ```
 
-It does not own products, plans, prices, checkout, subscriptions, payment
-provider state, authentication, tenant lifecycle, memberships, workspaces, or
+It does not own commerce catalogues, checkout, subscriptions, payment provider
+state, authentication, tenant records, memberships, workspaces, or
 business-domain records.
 
 ## Domain Boundary
 
 - `feature_definitions` are the vocabulary of things the platform can enable
   for a tenant.
-- `tenant_feature_grants` are tenant-specific grant inputs from admin commands
-  or future payment/compliance/reward events.
+- `tenant_feature_grants` are tenant-specific grant inputs from explicit grant
+  commands.
 - `tenant_features` are the current effective feature values emitted to other
   domains.
-- `tenant_projection` and `tenant_membership_projection` are local projections
-  of tenancy authority consumed from tenancy events.
+- `tenant_projection` is the local tenant existence projection consumed from
+  tenancy events.
 - `outbox_events` is the durable publisher queue for feature authority events.
 
-Identity stays in `identity`. Tenant lifecycle, memberships, and workspaces stay
-in `tenancy`. Products, plans, prices, checkout, provider refs, invoices, and
-payment status belong in a future commerce/payments domain. That domain should
-emit explicit feature grant snapshots; features should not infer grants from
-commercial catalogue tables.
+Identity stays in `identity`. Tenant records, memberships, and workspaces stay
+in `tenancy`. Commerce catalogues, checkout, provider refs, invoices, and
+payment status belong outside this domain. Features only records explicit
+feature grants.
 
 ## Core Model
 
@@ -55,11 +54,7 @@ POST /v1/features/grants
 
 Routes require an identity-issued access token verified through JWKS. Grant
 requests carry `tenant_id`, `feature_code`, `value`, and an idempotency
-`grant_ref`. Grant commands require a platform operator access token; they are
-control-plane commands, not customer purchase APIs.
-
-Future payment or commerce consumers should use the same command shape with a
-stable local purchase/payment id as `grant_ref`.
+`grant_ref`. Grant commands require a platform operator access token.
 
 ## Deployment Units
 
@@ -128,15 +123,12 @@ graph, run the database bootstrap SQL against the managed database, and keep
 
 ## Tenancy Projection
 
-Features consumes these tenancy event subjects into local projection tables:
+Features consumes this tenancy event subject into its local projection table:
 
 - `tenancy.tenant.updated`
-- `tenancy.tenant_membership.updated`
 
 Projection writes are idempotent through natural keys and projection `version`.
-Duplicate or stale events do not overwrite newer projected tenant or membership
-rows. Deleted memberships are kept as tombstones so an old membership-updated
-event cannot resurrect a removed membership.
+Duplicate or stale events do not overwrite newer projected tenant rows.
 
 If the features projection database is intentionally reset while the `TENANCY`
 stream survives, the durable consumer state must be reset too. Otherwise NATS has
@@ -161,8 +153,3 @@ inside the payload. Consumers should use `version` to ignore stale events.
 Producer contracts live under `packages/api/src/events/versions/`. The worker
 publishes durable rows from `outbox_events` to the `FEATURES` stream and then
 marks them as published.
-
-## Agent Context
-
-Agent-specific gotchas live in `AGENTS.md`. Keep this README human-facing and
-avoid duplicating agent-only rules here.

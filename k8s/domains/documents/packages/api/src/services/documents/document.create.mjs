@@ -33,8 +33,6 @@ export const createDocument =
           FROM workspace_projection w
           JOIN tenant_projection t ON t.tenant_id = w.tenant_id
           WHERE w.workspace_id = $1
-            AND w.status = 'active'
-            AND t.status = 'active'
         `,
         [workspaceId],
       );
@@ -51,7 +49,6 @@ export const createDocument =
           FROM tenant_membership_projection
           WHERE tenant_id = $1
             AND user_id = $2
-            AND status = 'active'
         `,
         [workspace.tenant_id, currentUserId],
       );

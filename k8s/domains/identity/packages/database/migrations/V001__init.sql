@@ -53,8 +53,6 @@ CREATE TABLE sessions (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    refresh_token_hash BYTEA NOT NULL UNIQUE,
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -66,11 +64,29 @@ CREATE TABLE sessions (
 COMMENT ON TABLE sessions IS 'Refresh-token backed identity sessions.';
 COMMENT ON COLUMN sessions.id IS 'Stable session identifier.';
 COMMENT ON COLUMN sessions.user_id IS 'User authenticated by this session.';
-COMMENT ON COLUMN sessions.refresh_token_hash IS 'Hash of the refresh token; the raw refresh token is never stored.';
 COMMENT ON COLUMN sessions.created_at IS 'Time the session was created.';
 COMMENT ON COLUMN sessions.last_refreshed_at IS 'Time the session refresh token was last rotated.';
 COMMENT ON COLUMN sessions.expires_at IS 'Time after which the session must not be refreshed.';
 COMMENT ON COLUMN sessions.revoked_at IS 'Time the session was explicitly revoked, if any.';
+
+CREATE TABLE session_refresh_tokens (
+    token_hash BYTEA PRIMARY KEY,
+
+    session_id UUID NOT NULL
+        REFERENCES sessions(id)
+        ON DELETE CASCADE,
+
+    consumed_at TIMESTAMPTZ
+);
+
+COMMENT ON TABLE session_refresh_tokens IS 'Opaque refresh token hashes issued for an identity session.';
+COMMENT ON COLUMN session_refresh_tokens.token_hash IS 'Hash of the refresh token; the raw refresh token is never stored.';
+COMMENT ON COLUMN session_refresh_tokens.session_id IS 'Session this refresh token belongs to.';
+COMMENT ON COLUMN session_refresh_tokens.consumed_at IS 'Time the refresh token was rotated and replaced.';
+
+CREATE UNIQUE INDEX session_refresh_tokens_one_current_per_session
+ON session_refresh_tokens (session_id)
+WHERE consumed_at IS NULL;
 
 -- Runtime roles are created by the placeholder Postgres init SQL. Flyway
 -- creates the schema objects, so object-level runtime grants live here.

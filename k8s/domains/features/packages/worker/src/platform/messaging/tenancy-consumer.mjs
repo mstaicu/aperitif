@@ -18,7 +18,7 @@ export async function ensureTenancyConsumer(ctx) {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
     durable_name: TENANCY_CONSUMER,
-    filter_subject: "tenancy.>",
+    filter_subject: "tenancy.tenant.updated",
     max_ack_pending: 1,
     replay_policy: ReplayPolicy.Instant,
   };

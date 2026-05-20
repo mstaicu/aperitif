@@ -6,18 +6,16 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: { currentUserId: string, name: string, type: "personal" | "organization" }) => Promise<{
+ * @returns {(args: { currentUserId: string, name: string }) => Promise<{
  *   tenant: {
  *     id: string,
  *     name: string,
- *     status: "active" | "disabled",
- *     type: "personal" | "organization",
  *   },
  * }>}
  */
 export const createTenant =
   (ctx) =>
-  async ({ currentUserId, name, type }) => {
+  async ({ currentUserId, name }) => {
     let client;
 
     try {
@@ -28,11 +26,11 @@ export const createTenant =
         rows: [tenant],
       } = await client.query(
         `
-          INSERT INTO tenants (name, type, status)
-          VALUES ($1, $2, DEFAULT)
-          RETURNING id, name, type, status, version
+          INSERT INTO tenants (name)
+          VALUES ($1)
+          RETURNING id, name, version
         `,
-        [name, type],
+        [name],
       );
 
       await client.query(
@@ -47,8 +45,6 @@ export const createTenant =
         {
           tenant: {
             id: tenant.id,
-            status: tenant.status,
-            type: tenant.type,
           },
         },
         Number(tenant.version),
@@ -81,14 +77,11 @@ export const createTenant =
         {
           membership: {
             role: "owner",
-            status: "active",
             tenant_id: tenant.id,
             user_id: currentUserId,
           },
           tenant: {
             id: tenant.id,
-            status: tenant.status,
-            type: tenant.type,
           },
         },
         Number(membershipTenantVersion),
@@ -111,8 +104,6 @@ export const createTenant =
         tenant: {
           id: tenant.id,
           name: tenant.name,
-          status: tenant.status,
-          type: tenant.type,
         },
       };
     } catch (err) {

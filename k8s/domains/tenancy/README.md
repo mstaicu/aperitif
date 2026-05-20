@@ -1,34 +1,34 @@
 # Tenancy Domain
 
-Tenancy owns tenant-scoped authority: tenant lifecycle, tenant membership, and
+Tenancy owns tenant-scoped authority: tenants, tenant membership, and
 workspaces.
 
 ## Domain Boundary
 
-- `tenants` are the product authority root for tenant-scoped resources.
+- `tenants` are the authority root for tenant-scoped resources.
 - `tenant_memberships` grant tenant-level authority to authenticated identity.
 - `workspaces` are operational resource containers inside a tenant.
 
-Identity stays in `identity`. Plans, subscriptions, invoices, payments,
-profiles, documents, notifications, workflow, and integrations should live in
-their own domains and reference `tenant_id` or `workspace_id` when they own
-tenant/workspace-scoped resources.
+Identity stays in `identity`. Feature grants, profiles, documents,
+notifications, workflow, and integrations should live in their own domains and
+reference `tenant_id` or `workspace_id` when they own tenant/workspace-scoped
+resources.
 
-The current API does not expose direct member creation/invite. Tenant creation
-grants owner membership to the caller. Workspaces are created separately when a
-product needs an operational resource container. Future member adds should come
-from invite, provisioning, or another explicit proof workflow.
+The current API does not expose direct member creation, invite, membership
+inspection, membership deletion, or lifecycle toggles. Tenant creation grants
+owner membership to the caller. Workspaces are created separately when a domain
+needs an operational resource container.
 
 ## Core Model
 
 ```text
 identity = who the actor is
-tenant = authority root for tenant-scoped product access
+tenant = authority root for tenant-scoped access
 tenant_membership = who can act in that tenant
-workspace = operational container for product data inside the tenant
+workspace = operational container for resource data inside the tenant
 ```
 
-Product resources in other domains should generally be workspace-owned when
+Resources in other domains should generally be workspace-owned when
 they are operational data:
 
 ```text
@@ -37,19 +37,15 @@ resource.tenant_id
 ```
 
 Request handling should normally derive `user_id` from the bearer token and get
-`tenant_id` or `workspace_id` from the route, body, or loaded resource. Product
-operations should require tenant membership and an active tenant/workspace.
+`tenant_id` or `workspace_id` from the route, body, or loaded resource. Domain
+operations should require tenant membership and the referenced workspace when
+they are workspace-scoped.
 
 ## Core API
 
 ```text
 GET /v1/tenants
 POST /v1/tenants
-GET /v1/tenants/:tenantId
-GET /v1/tenants/:tenantId/memberships
-GET /v1/tenants/:tenantId/memberships/:userId
-DELETE /v1/tenants/:tenantId/memberships/:userId
-GET /v1/tenants/:tenantId/workspaces
 POST /v1/tenants/:tenantId/workspaces
 ```
 
@@ -59,9 +55,8 @@ Consumer SaaS without required onboarding:
 
 ```text
 user registers through identity
-POST /v1/tenants { type: "personal", name: "<display name>" }
-tenant.status = active
-product creates a workspace only if it needs one
+POST /v1/tenants { name: "<display name>" }
+resource domain creates a workspace only if it needs one
 POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 ```
 
@@ -69,8 +64,8 @@ B2B SaaS:
 
 ```text
 founder registers through identity
-POST /v1/tenants { type: "organization", name: "<organization name>" }
-product creates one or more workspaces if it needs operational containers
+POST /v1/tenants { name: "<organization name>" }
+resource domain creates one or more workspaces if it needs operational containers
 POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 future invite/provisioning flow creates additional tenant memberships
 ```
@@ -125,7 +120,7 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
 ## Contracts
 
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/tenancy/docs`.
-- Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared product API audience. It does not own identity records.
+- Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared API audience. It does not own identity records.
 - Events: the schema includes a transactional `outbox_events` table. The worker
   ensures the `TENANCY` JetStream stream and publishes unpublished rows to that
   stream. Outbox rows store the complete event envelope as JSON, so the worker
@@ -157,11 +152,9 @@ Current event subjects:
 - `tenancy.tenant_membership.updated`
 - `tenancy.workspace.updated`
 
-Event payloads are intentionally projection-shaped. Consumers should use natural
-projection keys plus the latest applied event `version` to ignore duplicate or
-stale events where `event.version <= projected.version`. Deleted
-resources that can be recreated should use tombstones when needed to prevent old
-events from resurrecting removed authority.
+Event payloads are intentionally projection-shaped and minimal. Consumers should
+use natural projection keys plus the latest applied event `version` to ignore
+duplicate or stale events where `event.version <= projected.version`.
 
 Do not break an existing subject plus `schema_version` in place. Add a new
 schema version or subject, deploy consumers that understand it, then switch
@@ -181,20 +174,13 @@ the new value as the event `version`.
   "schema_version": 1,
   "payload": {
     "tenant": {
-      "id": "tenant-id",
-      "type": "organization",
-      "status": "active"
+      "id": "tenant-id"
     },
     "membership": {
       "tenant_id": "tenant-id",
       "role": "owner",
-      "status": "active",
       "user_id": "user-id"
     }
   }
 }
 ```
-
-## Agent Context
-
-Agent-specific gotchas live in `AGENTS.md`. Keep this README human-facing and avoid duplicating agent-only rules here.

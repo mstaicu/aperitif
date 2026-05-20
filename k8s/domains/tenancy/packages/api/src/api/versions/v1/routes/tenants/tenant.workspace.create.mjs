@@ -23,7 +23,7 @@ export default async function (fastify, { jwks, tenancy }) {
       schema: {
         body: CreateWorkspaceBody,
         description:
-          "Create a workspace inside a tenant. Tenant owners can create workspaces when a product needs an operational resource container.",
+          "Create a workspace inside a tenant. Tenant owners can create workspaces when a domain needs an operational resource container.",
         operationId: "createTenantWorkspace",
         params: TenantParams,
         response: {

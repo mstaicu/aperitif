@@ -163,17 +163,30 @@ export const login =
 
       const { hash, token } = generateRefreshToken();
 
-      await client.query(
+      const {
+        rows: [session],
+      } = await client.query(
         `
           INSERT INTO sessions 
           (
             user_id,
-            refresh_token_hash,
             expires_at
           )
-          VALUES ($1, $2, NOW() + INTERVAL '30 days')
+          VALUES ($1, NOW() + INTERVAL '30 days')
+          RETURNING id
         `,
-        [credential.user_id, hash],
+        [credential.user_id],
+      );
+
+      await client.query(
+        `
+          INSERT INTO session_refresh_tokens (
+            session_id,
+            token_hash
+          )
+          VALUES ($1, $2)
+        `,
+        [session.id, hash],
       );
 
       await client.query("COMMIT");

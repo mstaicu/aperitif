@@ -1,12 +1,7 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import getTenant from "./routes/tenants/tenant.get.mjs";
-import deleteTenantMembership from "./routes/tenants/tenant.membership.delete.mjs";
-import getTenantMembership from "./routes/tenants/tenant.membership.get.mjs";
-import listTenantMemberships from "./routes/tenants/tenant.memberships.list.mjs";
 import createTenantWorkspace from "./routes/tenants/tenant.workspace.create.mjs";
-import listTenantWorkspaces from "./routes/tenants/tenant.workspaces.list.mjs";
 import createTenant from "./routes/tenants/tenants.create.mjs";
 import listTenants from "./routes/tenants/tenants.list.mjs";
 
@@ -37,8 +32,7 @@ export default async (fastify, { jwks, services }) => {
         },
       },
       info: {
-        description:
-          "Tenancy API for tenants, tenant memberships, and workspaces.",
+        description: "Tenancy API for tenants and workspaces.",
         title: "Tenancy",
         version: "v1",
       },
@@ -49,7 +43,7 @@ export default async (fastify, { jwks, services }) => {
       ],
       tags: [
         {
-          description: "Tenant authority, tenant membership, and workspaces",
+          description: "Tenant authority and workspaces",
           name: "tenants",
         },
       ],
@@ -66,32 +60,7 @@ export default async (fastify, { jwks, services }) => {
     prefix: "/tenants",
     tenancy: services.tenancy,
   });
-  await fastify.register(getTenant, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
-  await fastify.register(listTenantMemberships, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
-  await fastify.register(getTenantMembership, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
-  await fastify.register(deleteTenantMembership, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
   await fastify.register(createTenantWorkspace, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
-  await fastify.register(listTenantWorkspaces, {
     jwks,
     prefix: "/tenants",
     tenancy: services.tenancy,

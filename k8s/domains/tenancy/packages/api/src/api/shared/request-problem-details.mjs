@@ -14,25 +14,10 @@ const PROBLEMS = {
     title: "Forbidden",
     type: "/problems/forbidden",
   },
-  FORBIDDEN_SELF_TARGET: {
-    status: 403,
-    title: "Cannot self-target membership removal",
-    type: "/problems/forbidden-self-target",
-  },
   INVALID_ACCESS_TOKEN: {
     status: 401,
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
-  },
-  LAST_OWNER: {
-    status: 409,
-    title: "Cannot remove last owner",
-    type: "/problems/last-owner",
-  },
-  TENANT_MEMBERSHIP_NOT_FOUND: {
-    status: 404,
-    title: "Tenant membership not found",
-    type: "/problems/tenant-membership-not-found",
   },
   TENANT_NOT_FOUND: {
     status: 404,

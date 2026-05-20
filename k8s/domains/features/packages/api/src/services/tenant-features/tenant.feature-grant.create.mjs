@@ -26,7 +26,6 @@ export const createTenantFeatureGrant =
           SELECT 1
           FROM tenant_projection
           WHERE tenant_id = $1
-            AND status = 'active'
           FOR UPDATE
         `,
         [tenantId],
@@ -64,14 +63,12 @@ export const createTenantFeatureGrant =
             tenant_id,
             feature_code,
             value,
-            grant_type,
             grant_ref
           )
-          VALUES ($1, $2, $3::jsonb, 'manual', $4)
+          VALUES ($1, $2, $3::jsonb, $4)
           ON CONFLICT (
             tenant_id,
             feature_code,
-            grant_type,
             grant_ref
           )
           DO UPDATE
@@ -105,7 +102,7 @@ export const createTenantFeatureGrant =
             SELECT d.code,
               d.type,
               d.merge_strategy,
-              jsonb_agg(g.value ORDER BY g.grant_type, g.grant_ref) AS values
+              jsonb_agg(g.value ORDER BY g.grant_ref) AS values
             FROM tenant_feature_grants g
             JOIN feature_definitions d ON d.code = g.feature_code
             WHERE g.tenant_id = $1
@@ -117,7 +114,7 @@ export const createTenantFeatureGrant =
           [tenantId],
         );
 
-        /** @type {{ code: string, type: "boolean" | "number", value: unknown }[]} */
+        /** @type {{ code: string, value: unknown }[]} */
         const tenantFeatures = [];
 
         /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
@@ -149,7 +146,6 @@ export const createTenantFeatureGrant =
 
           tenantFeatures.push({
             code: grant.code,
-            type: grant.type,
             value: mergedValue,
           });
         }

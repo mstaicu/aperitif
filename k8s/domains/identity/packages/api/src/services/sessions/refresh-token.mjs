@@ -20,6 +20,10 @@ export const rotateRefreshToken =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
+    const currentTokenHash = createHash("sha256")
+      .update(refresh_token)
+      .digest();
+
     let client;
 
     try {
@@ -27,20 +31,44 @@ export const rotateRefreshToken =
       await client.query("BEGIN");
 
       const {
-        rows: [session],
+        rows: [refreshToken],
       } = await client.query(
         `
-          SELECT id
-          FROM sessions
-          WHERE refresh_token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-          FOR UPDATE
+          SELECT
+            rt.token_hash,
+            rt.session_id,
+            rt.consumed_at,
+            s.revoked_at AS session_revoked_at,
+            s.expires_at > NOW() AS session_active
+          FROM session_refresh_tokens rt
+          JOIN sessions s ON s.id = rt.session_id
+          WHERE rt.token_hash = $1
+          FOR UPDATE OF rt, s
         `,
-        [createHash("sha256").update(refresh_token).digest()],
+        [currentTokenHash],
       );
 
-      if (!session) {
+      if (!refreshToken) {
+        await client.query("ROLLBACK");
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      if (refreshToken.consumed_at) {
+        await client.query(
+          `
+            UPDATE sessions
+            SET revoked_at = COALESCE(revoked_at, NOW())
+            WHERE id = $1
+          `,
+          [refreshToken.session_id],
+        );
+
+        await client.query("COMMIT");
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      if (refreshToken.session_revoked_at || !refreshToken.session_active) {
+        await client.query("ROLLBACK");
         throw new Error("SESSION_NOT_FOUND");
       }
 
@@ -48,13 +76,31 @@ export const rotateRefreshToken =
 
       await client.query(
         `
+          UPDATE session_refresh_tokens
+          SET consumed_at = NOW()
+          WHERE token_hash = $1
+        `,
+        [refreshToken.token_hash],
+      );
+
+      await client.query(
+        `
+          INSERT INTO session_refresh_tokens (
+            session_id,
+            token_hash
+          )
+          VALUES ($1, $2)
+        `,
+        [refreshToken.session_id, hash],
+      );
+
+      await client.query(
+        `
           UPDATE sessions
-          SET
-            refresh_token_hash = $2,
-            last_refreshed_at = NOW()
+          SET last_refreshed_at = NOW()
           WHERE id = $1
         `,
-        [session.id, hash],
+        [refreshToken.session_id],
       );
 
       await client.query("COMMIT");
@@ -63,8 +109,6 @@ export const rotateRefreshToken =
         refresh_token: token,
       };
     } catch (err) {
-      await client?.query("ROLLBACK").catch(() => {});
-
       if (isDatabaseUnavailable(err)) {
         throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }

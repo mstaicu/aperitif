@@ -5,21 +5,13 @@ CREATE TABLE tenants (
 
     name TEXT NOT NULL,
 
-    type TEXT NOT NULL CHECK (type IN ('personal', 'organization')),
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'disabled')
-    ),
-
     version BIGINT NOT NULL DEFAULT 1
 );
 
-COMMENT ON TABLE tenants IS 'Authority root used for tenant lifecycle, commercial ownership, and tenant-scoped product access.';
+COMMENT ON TABLE tenants IS 'Authority root used for tenant lifecycle, commercial ownership, and tenant-scoped access.';
 COMMENT ON COLUMN tenants.id IS 'Stable tenant identifier referenced by tenant-owned resources in other domains.';
 COMMENT ON COLUMN tenants.name IS 'Human-readable tenant name shown to users and operators.';
-COMMENT ON COLUMN tenants.type IS 'Baseline tenant type: personal for consumer use cases, organization for business use cases.';
-COMMENT ON COLUMN tenants.status IS 'Tenant lifecycle status.';
-COMMENT ON COLUMN tenants.version IS 'Monotonic tenant authority version; increment on tenant, membership, or workspace changes that consumers project.';
+COMMENT ON COLUMN tenants.version IS 'Monotonic tenancy authority version; increment on tenant, membership, or workspace changes that consumers project.';
 
 CREATE TABLE tenant_memberships (
     tenant_id UUID NOT NULL
@@ -36,7 +28,7 @@ CREATE TABLE tenant_memberships (
 COMMENT ON TABLE tenant_memberships IS 'Users that can act inside a tenant.';
 COMMENT ON COLUMN tenant_memberships.tenant_id IS 'Tenant where the user has authority.';
 COMMENT ON COLUMN tenant_memberships.user_id IS 'Identity user id from the identity domain.';
-COMMENT ON COLUMN tenant_memberships.role IS 'Tenant-level authority; owner manages the tenant, member can use tenant-scoped product capabilities.';
+COMMENT ON COLUMN tenant_memberships.role IS 'Tenant-level authority; owner manages the tenant, member can use tenant-scoped features.';
 
 CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,18 +37,13 @@ CREATE TABLE workspaces (
         REFERENCES tenants(id)
         ON DELETE CASCADE,
 
-    name TEXT NOT NULL,
-
-    status TEXT NOT NULL DEFAULT 'active' CHECK (
-        status IN ('active', 'disabled')
-    )
+    name TEXT NOT NULL
 );
 
 COMMENT ON TABLE workspaces IS 'Operational resource containers inside a tenant.';
 COMMENT ON COLUMN workspaces.id IS 'Stable workspace identifier referenced by workspace-scoped resources in other domains.';
 COMMENT ON COLUMN workspaces.tenant_id IS 'Tenant that owns this workspace.';
 COMMENT ON COLUMN workspaces.name IS 'Human-readable workspace name shown to users.';
-COMMENT ON COLUMN workspaces.status IS 'Workspace lifecycle status.';
 
 CREATE INDEX workspaces_tenant_id_idx
 ON workspaces (tenant_id, name, id);

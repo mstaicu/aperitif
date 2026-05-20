@@ -13,7 +13,6 @@ Postgres server or instance
       public schema
       feature_definitions
       tenant_projection
-      tenant_membership_projection
       tenant_feature_grants
       tenant_features
       features_version_seq
@@ -25,9 +24,9 @@ Postgres server or instance
 values are deliberately limited to booleans and numbers because those are the
 only merge strategies this domain currently supports.
 
-`tenant_projection` and `tenant_membership_projection` are local copies of
-tenancy authority built from tenancy events. Projection writes are idempotent
-through natural keys and projection `version`.
+`tenant_projection` is the local tenant existence copy built from tenancy
+events. Projection writes are idempotent through natural keys and projection
+`version`.
 
 `tenant_feature_grants` records current tenant-specific inputs that grant
 feature values. `tenant_features` stores the current feature values for each
@@ -48,12 +47,6 @@ directly.
 
 - `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
 - `migrations/`: production Flyway migrations, named `V###__description.sql`.
-- `repeatable/`: rerunnable database objects or stable reference data.
-- `seeds/`: non-live deterministic seed data.
-- `checks/`: fixtures and assertions for migration upgrade checks.
-
-The current migration image copies only `migrations/`. Add other folders back
-to the Dockerfile only when a workflow actually uses them.
 
 `V002__seed_feature_definitions.sql` seeds a few simple tenant-level feature
 definitions used to prove feature grants.
@@ -63,17 +56,12 @@ definitions used to prove feature grants.
 Copying a folder into the image does not make Flyway run it. Flyway scans only
 the folders listed in `FLYWAY_LOCATIONS`.
 
-Within those folders, Flyway recognizes files by filename prefix:
+Within that folder, Flyway recognizes versioned migration files by filename
+prefix:
 
 ```text
 V001__init.sql       versioned migration, applied once in version order
-R__refresh_view.sql  repeatable migration, rerun when the file changes
 ```
-
-Arbitrary files such as `seed.sql` or `assert.sql` are ignored by Flyway unless
-another command runs them. `seeds/` should only be included by non-prod
-locations. `checks/` is for future CI/database validation, not the normal
-production migration Job.
 
 ## Roles
 

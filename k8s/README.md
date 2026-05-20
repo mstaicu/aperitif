@@ -57,19 +57,10 @@ The currently composed platform units are ingress, event-bus, and observability.
 
 ## Agent Context
 
-Agent-specific instructions live in scoped `AGENTS.md` files. These files are not codebase maps or generated onboarding docs; they contain non-obvious operational rules that agents can easily miss.
-
-Current agent context files:
-
-- `AGENTS.md`
-- `domains/features/AGENTS.md`
-- `domains/documents/AGENTS.md`
-- `domains/identity/AGENTS.md`
-- `domains/tenancy/AGENTS.md`
-- `platform/ingress/AGENTS.md`
-- `platform/event-bus/AGENTS.md`
-
-Before adding a line to an `AGENTS.md` file, ask whether the agent can discover it by reading the repo. If yes, fix the README, code, tests, or structure instead of adding agent-only context.
+Repo-wide agent instructions live in the root `AGENTS.md`. Do not add scoped
+agent files by default. If an agent instruction is discoverable from code,
+README files, tests, or Make targets, fix that source instead of adding
+agent-only context.
 
 ## Domain Model
 
@@ -300,7 +291,6 @@ When adding a new domain:
   API using local tenancy and features projections for ABAC.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
-- Add `domains/<domain>/AGENTS.md` only for non-obvious gotchas; do not copy one by default.
 - Add Skaffold modules for local units.
 - Add Flux Kustomizations for live units.
 - Add image automation only for images Flux should update.

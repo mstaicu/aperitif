@@ -25,37 +25,26 @@ The domain boundary is the database. Other domains must not connect to it
 directly.
 
 `workspaces` are operational containers inside a tenant. Tenant creation does
-not require a workspace; products create workspaces when they need operational
-resource containers. Tenant membership controls workspace access for now; there
-are no workspace memberships in this baseline.
+not require a workspace; resource domains create workspaces when they need
+operational resource containers. Tenant membership controls workspace access for
+now; there are no workspace memberships in this baseline.
 
 ## Files
 
 - `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
 - `migrations/`: production Flyway migrations, named `V###__description.sql`.
-- `repeatable/`: rerunnable database objects or stable reference data.
-- `seeds/`: non-live deterministic seed data.
-- `checks/`: fixtures and assertions for migration upgrade checks.
-
-The current migration image copies only `migrations/`. Add other folders back
-to the Dockerfile only when a workflow actually uses them.
 
 ## Flyway Rules
 
 Copying a folder into the image does not make Flyway run it. Flyway scans only
 the folders listed in `FLYWAY_LOCATIONS`.
 
-Within those folders, Flyway recognizes files by filename prefix:
+Within that folder, Flyway recognizes versioned migration files by filename
+prefix:
 
 ```text
 V001__init.sql       versioned migration, applied once in version order
-R__refresh_view.sql  repeatable migration, rerun when the file changes
 ```
-
-Arbitrary files such as `seed.sql` or `assert.sql` are ignored by Flyway unless
-another command runs them. `seeds/` should only be included by non-prod
-locations. `checks/` is for future CI/database validation, not the normal
-production migration Job.
 
 ## Roles
 

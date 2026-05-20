@@ -6,8 +6,6 @@ import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
  *   tenants: {
  *     id: string,
  *     name: string,
- *     status: "active" | "disabled",
- *     type: "personal" | "organization",
  *   }[],
  * }>}
  */
@@ -19,7 +17,7 @@ export const listTenants =
     try {
       ({ rows } = await ctx.persistence.db.query(
         `
-          SELECT t.id, t.name, t.type, t.status
+          SELECT t.id, t.name
           FROM tenant_memberships tm
           JOIN tenants t ON t.id = tm.tenant_id
           WHERE tm.user_id = $1
@@ -39,8 +37,6 @@ export const listTenants =
       tenants: rows.map((row) => ({
         id: row.id,
         name: row.name,
-        status: row.status,
-        type: row.type,
       })),
     };
   };

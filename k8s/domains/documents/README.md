@@ -7,7 +7,7 @@ JWT identity + tenancy projections + feature projections -> document command
 ```
 
 It owns only workspace-scoped documents. It does not own identity, tenant
-lifecycle, tenant membership, workspaces, feature definitions, feature grants,
+records, tenant membership, workspaces, feature definitions, feature grants,
 payments, notifications, or workflow.
 
 ## Boundary
@@ -41,7 +41,7 @@ The command succeeds only when:
 
 - the access token is valid;
 - the workspace exists in the local tenancy projection;
-- the caller is an active member of the workspace tenant;
+- the caller is a projected member of the workspace tenant;
 - the tenant has `documents.enabled = true` in the local feature projection.
 
 Docs are served at:

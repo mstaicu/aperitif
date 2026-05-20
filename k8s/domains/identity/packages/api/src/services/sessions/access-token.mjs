@@ -23,11 +23,13 @@ export const createAccessToken =
         rows: [session],
       } = await ctx.persistence.db.query(
         `
-          SELECT user_id
-          FROM sessions
-          WHERE refresh_token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
+          SELECT s.user_id
+          FROM session_refresh_tokens rt
+          JOIN sessions s ON s.id = rt.session_id
+          WHERE rt.token_hash = $1
+            AND rt.consumed_at IS NULL
+            AND s.revoked_at IS NULL
+            AND s.expires_at > NOW()
         `,
         [createHash("sha256").update(refresh_token).digest()],
       ));

@@ -26,8 +26,6 @@ CREATE TABLE tenant_feature_grants (
     feature_code TEXT NOT NULL
         REFERENCES feature_definitions(code),
 
-    grant_type TEXT NOT NULL,
-
     grant_ref TEXT NOT NULL,
 
     value JSONB NOT NULL,
@@ -35,16 +33,14 @@ CREATE TABLE tenant_feature_grants (
     PRIMARY KEY (
         tenant_id,
         feature_code,
-        grant_type,
         grant_ref
     )
 );
 
-COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant, such as operator grants, payment confirmations, compliance approvals, or rewards.';
+COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant.';
 COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
 COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_feature_grants.grant_type IS 'Local grant category, for example manual, payment, compliance, or reward.';
-COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable reference inside the grant category.';
+COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable grant reference used for idempotency.';
 COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
 
 -- feature_definitions
@@ -87,38 +83,12 @@ COMMENT ON SEQUENCE features_version_seq IS 'Monotonic authority version assigne
 CREATE TABLE tenant_projection (
     tenant_id UUID PRIMARY KEY,
 
-    status TEXT NOT NULL CHECK (status IN ('active', 'disabled')),
-
     version BIGINT NOT NULL
 );
 
 COMMENT ON TABLE tenant_projection IS 'Local projection of tenancy-owned tenant authority used by the features domain.';
 COMMENT ON COLUMN tenant_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
-COMMENT ON COLUMN tenant_projection.status IS 'Projected tenant lifecycle status from tenancy events.';
 COMMENT ON COLUMN tenant_projection.version IS 'Latest upstream event version applied to this projected tenant.';
-
-CREATE TABLE tenant_membership_projection (
-    tenant_id UUID NOT NULL
-        REFERENCES tenant_projection(tenant_id)
-        ON DELETE CASCADE,
-
-    user_id UUID NOT NULL,
-
-    role TEXT CHECK (role IN ('owner', 'member')),
-
-    status TEXT NOT NULL CHECK (status IN ('active', 'deleted')),
-
-    version BIGINT NOT NULL,
-
-    PRIMARY KEY (tenant_id, user_id)
-);
-
-COMMENT ON TABLE tenant_membership_projection IS 'Local projection of tenancy-owned tenant memberships used by the features domain.';
-COMMENT ON COLUMN tenant_membership_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
-COMMENT ON COLUMN tenant_membership_projection.user_id IS 'Identity user id projected from tenancy membership events.';
-COMMENT ON COLUMN tenant_membership_projection.role IS 'Projected tenant role when the membership is active.';
-COMMENT ON COLUMN tenant_membership_projection.status IS 'Projection row status. Deleted rows are tombstones for stale-event protection.';
-COMMENT ON COLUMN tenant_membership_projection.version IS 'Latest upstream event version applied to this projected membership.';
 
 -- Outbox
 

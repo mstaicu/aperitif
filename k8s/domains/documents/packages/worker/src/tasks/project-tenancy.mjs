@@ -106,7 +106,6 @@ async function projectTenancyEvent(ctx, event) {
     tenant = event.payload.tenant;
     membership = {
       role: event.payload.membership.role,
-      status: event.payload.membership.status,
       tenant_id: event.payload.membership.tenant_id,
       user_id: event.payload.membership.user_id,
     };
@@ -134,16 +133,14 @@ async function projectTenancyEvent(ctx, event) {
       `
         INSERT INTO tenant_projection (
           tenant_id,
-          status,
           version
         )
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2)
         ON CONFLICT (tenant_id) DO UPDATE
-        SET status = EXCLUDED.status,
-          version = EXCLUDED.version
+        SET version = EXCLUDED.version
         WHERE tenant_projection.version < EXCLUDED.version
       `,
-      [tenant.id, tenant.status, event.version],
+      [tenant.id, event.version],
     );
 
     if (membership) {
@@ -153,13 +150,11 @@ async function projectTenancyEvent(ctx, event) {
             tenant_id,
             user_id,
             role,
-            status,
             version
           )
-          VALUES ($1, $2, $3, $4, $5)
+          VALUES ($1, $2, $3, $4)
           ON CONFLICT (tenant_id, user_id) DO UPDATE
           SET role = EXCLUDED.role,
-            status = EXCLUDED.status,
             version = EXCLUDED.version
           WHERE tenant_membership_projection.version < EXCLUDED.version
         `,
@@ -167,7 +162,6 @@ async function projectTenancyEvent(ctx, event) {
           membership.tenant_id,
           membership.user_id,
           membership.role,
-          membership.status,
           event.version,
         ],
       );
@@ -179,17 +173,15 @@ async function projectTenancyEvent(ctx, event) {
           INSERT INTO workspace_projection (
             workspace_id,
             tenant_id,
-            status,
             version
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3)
           ON CONFLICT (workspace_id) DO UPDATE
           SET tenant_id = EXCLUDED.tenant_id,
-            status = EXCLUDED.status,
             version = EXCLUDED.version
           WHERE workspace_projection.version < EXCLUDED.version
         `,
-        [workspace.id, workspace.tenant_id, workspace.status, event.version],
+        [workspace.id, workspace.tenant_id, event.version],
       );
     }
 

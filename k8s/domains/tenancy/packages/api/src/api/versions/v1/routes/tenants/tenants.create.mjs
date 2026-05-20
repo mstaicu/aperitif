@@ -19,7 +19,7 @@ export default async function (fastify, { jwks, tenancy }) {
       schema: {
         body: CreateTenantBody,
         description:
-          "Create a tenant as the authority root for tenant-scoped product access. The authenticated caller becomes tenant owner. Create a workspace separately when a product needs an operational resource container.",
+          "Create a tenant as the authority root for tenant-scoped access. The authenticated caller becomes tenant owner. Create a workspace separately when a domain needs an operational resource container.",
         operationId: "createTenant",
         response: {
           201: CreateTenantResponse,
@@ -43,7 +43,6 @@ export default async function (fastify, { jwks, tenancy }) {
         await tenancy.createTenant({
           currentUserId,
           name: req.body.name,
-          type: req.body.type,
         }),
       );
     },
