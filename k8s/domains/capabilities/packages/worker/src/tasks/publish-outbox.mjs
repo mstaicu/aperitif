@@ -3,6 +3,7 @@ import { on } from "node:events";
 import { CAPABILITIES_STREAM } from "../platform/messaging/capabilities-stream.mjs";
 
 const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
+const OUTBOX_BATCH_SIZE = 10;
 const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
 /**
@@ -20,22 +21,15 @@ export async function runPublishOutbox(ctx, signal) {
 
   try {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
+    const notifications = on(listener, "notification", { signal });
 
-    while (await publishNextOutboxEvent(ctx)) {
-      signal.throwIfAborted();
-    }
+    await drainOutbox(ctx, signal);
 
-    for await (const [notification] of on(listener, "notification", {
-      signal,
-    })) {
+    for await (const [notification] of notifications) {
       signal.throwIfAborted();
 
-      if (notification.channel !== OUTBOX_NOTIFY_CHANNEL) {
-        continue;
-      }
-
-      while (await publishNextOutboxEvent(ctx)) {
-        signal.throwIfAborted();
+      if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
+        await drainOutbox(ctx, signal);
       }
     }
   } catch (err) {
@@ -53,56 +47,66 @@ export async function runPublishOutbox(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {AbortSignal} signal
  */
-async function publishNextOutboxEvent(ctx) {
-  const client = await ctx.persistence.db.connect();
+async function drainOutbox(ctx, signal) {
+  let publishedCount = await publishOutboxBatch(ctx, signal);
 
-  let keepDraining = false;
+  while (publishedCount === OUTBOX_BATCH_SIZE) {
+    publishedCount = await publishOutboxBatch(ctx, signal);
+  }
+}
+
+/**
+ * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {AbortSignal} signal
+ * @returns {Promise<number>}
+ */
+async function publishOutboxBatch(ctx, signal) {
+  signal.throwIfAborted();
+
+  const client = await ctx.persistence.db.connect();
 
   try {
     await client.query("BEGIN");
 
-    const {
-      rows: [outboxEvent],
-    } = await client.query(
+    const { rows: outboxEvents } = await client.query(
       `
-        SELECT position,
-          id,
+        SELECT id,
           event
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY position
-        LIMIT 1
+        ORDER BY id
+        LIMIT $1
         FOR UPDATE SKIP LOCKED
       `,
+      [OUTBOX_BATCH_SIZE],
     );
 
-    if (outboxEvent) {
-      const { event } = outboxEvent;
-
+    for (const { event, id } of outboxEvents) {
       await ctx.messaging.js.publish(event.subject, JSON.stringify(event), {
         expect: {
           streamName: CAPABILITIES_STREAM,
         },
-        msgID: outboxEvent.id,
+        msgID: id,
         timeout: PUBLISH_ACK_TIMEOUT_MS,
       });
+    }
 
+    if (outboxEvents.length > 0) {
       await client.query(
         `
           UPDATE outbox_events
           SET published_at = now()
-          WHERE position = $1
+          WHERE id = ANY($1::uuid[])
         `,
-        [outboxEvent.position],
+        [outboxEvents.map(({ id }) => id)],
       );
-
-      keepDraining = true;
     }
 
     await client.query("COMMIT");
 
-    return keepDraining;
+    return outboxEvents.length;
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
 

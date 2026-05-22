@@ -57,9 +57,7 @@ CREATE TABLE projected_tenants (
 );
 
 CREATE TABLE outbox_events (
-    position BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-
-    id UUID NOT NULL UNIQUE,
+    id UUID PRIMARY KEY,
 
     event JSONB NOT NULL,
 
