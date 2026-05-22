@@ -17,7 +17,7 @@ export default async function (fastify, { features, jwks }) {
     "/",
     {
       schema: {
-        description: "List feature definitions known to the features domain.",
+        description: "List features known to the features domain.",
         operationId: "listFeatures",
         response: {
           200: FeaturesResponse,

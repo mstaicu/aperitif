@@ -15,8 +15,8 @@ payments, notifications, or workflow.
 - `documents` stores rows created by this domain.
 - `tenant_projection`, `tenant_membership_projection`, and `workspace_projection`
   are local copies of tenancy authority from the `TENANCY` stream.
-- `tenant_feature_projection` is a local copy of tenant feature authority from
-  the `FEATURES` stream.
+- `tenant_feature_projection` is a local tenant feature snapshot from the
+  `FEATURES` stream.
 - The API verifies identity-issued JWTs through the identity JWKS endpoint.
 
 The domain uses projections for authorization. It never reaches into identity,

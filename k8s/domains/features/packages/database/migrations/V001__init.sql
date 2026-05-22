@@ -1,78 +1,49 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE feature_definitions (
-    code TEXT PRIMARY KEY,
+CREATE TABLE features (
+    id TEXT PRIMARY KEY,
 
     name TEXT NOT NULL,
 
-    type TEXT NOT NULL CHECK (
-        type IN ('boolean', 'number')
+    value_type TEXT NOT NULL CHECK (
+        value_type IN ('boolean', 'number')
     ),
 
     merge_strategy TEXT NOT NULL CHECK (
         merge_strategy IN ('boolean_or', 'number_max', 'number_sum')
+    ),
+
+    CHECK (
+        (value_type = 'boolean' AND merge_strategy = 'boolean_or')
+        OR
+        (value_type = 'number' AND merge_strategy IN ('number_max', 'number_sum'))
     )
 );
 
-COMMENT ON TABLE feature_definitions IS 'Vocabulary of features that can be granted to tenants.';
-COMMENT ON COLUMN feature_definitions.code IS 'Stable internal feature code used by application code, for example members.max.';
-COMMENT ON COLUMN feature_definitions.name IS 'Human-readable feature name.';
-COMMENT ON COLUMN feature_definitions.type IS 'Expected value type for grants of this feature.';
-COMMENT ON COLUMN feature_definitions.merge_strategy IS 'Rule used to merge multiple tenant grants for this feature.';
-
-CREATE TABLE tenant_feature_grants (
-    tenant_id UUID NOT NULL,
-
-    feature_code TEXT NOT NULL
-        REFERENCES feature_definitions(code),
-
-    grant_ref TEXT NOT NULL,
-
-    value JSONB NOT NULL,
-
-    PRIMARY KEY (
-        tenant_id,
-        feature_code,
-        grant_ref
-    )
-);
-
-COMMENT ON TABLE tenant_feature_grants IS 'Inputs that grant feature values to a tenant.';
-COMMENT ON COLUMN tenant_feature_grants.tenant_id IS 'Tenant receiving this feature grant.';
-COMMENT ON COLUMN tenant_feature_grants.feature_code IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_feature_grants.grant_ref IS 'Stable grant reference used for idempotency.';
-COMMENT ON COLUMN tenant_feature_grants.value IS 'Feature value contributed by this grant.';
-
--- feature_definitions
--- tenant_feature_grants
---         |
---         v
--- tenant_features
---         |
---         v
--- outbox_events
---         |
---         v
--- FEATURES stream
+COMMENT ON TABLE features IS 'Vocabulary of features that can be granted to tenants.';
+COMMENT ON COLUMN features.id IS 'Stable feature identifier used by application code and other domains, for example members.max.';
+COMMENT ON COLUMN features.name IS 'Human-readable feature name.';
+COMMENT ON COLUMN features.value_type IS 'Expected value type for grants of this feature.';
+COMMENT ON COLUMN features.merge_strategy IS 'Rule used to merge multiple tenant grants for this feature.';
 
 CREATE TABLE tenant_features (
     tenant_id UUID NOT NULL,
 
-    feature_code TEXT NOT NULL
-        REFERENCES feature_definitions(code),
+    grant_id UUID NOT NULL,
+
+    feature_id TEXT NOT NULL
+        REFERENCES features(id),
 
     value JSONB NOT NULL,
 
-    version BIGINT NOT NULL,
-
-    PRIMARY KEY (tenant_id, feature_code)
+    PRIMARY KEY (tenant_id, grant_id, feature_id)
 );
 
-COMMENT ON TABLE tenant_features IS 'Current feature values for each tenant. Events are emitted from this authority table.';
-COMMENT ON COLUMN tenant_features.tenant_id IS 'Tenant that owns this feature value.';
-COMMENT ON COLUMN tenant_features.feature_code IS 'Feature code.';
-COMMENT ON COLUMN tenant_features.value IS 'Current feature value after grants are merged.';
-COMMENT ON COLUMN tenant_features.version IS 'Monotonic authority version assigned when this tenant feature value changes.';
+COMMENT ON TABLE tenant_features IS 'Current tenant-specific grant inputs that contribute feature values. Effective tenant feature state is calculated from these rows and emitted as events.';
+COMMENT ON COLUMN tenant_features.tenant_id IS 'Tenant receiving this feature grant.';
+COMMENT ON COLUMN tenant_features.grant_id IS 'Stable identifier for one current grant. Multiple rows with the same grant_id belong to the same grant.';
+COMMENT ON COLUMN tenant_features.feature_id IS 'Feature granted to the tenant.';
+COMMENT ON COLUMN tenant_features.value IS 'Feature value contributed by this grant.';
 
 CREATE SEQUENCE features_version_seq AS BIGINT;
 

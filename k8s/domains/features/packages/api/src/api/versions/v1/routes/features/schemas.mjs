@@ -1,13 +1,13 @@
 import { Type } from "@sinclair/typebox";
 
-const FeatureCode = Type.String({
-  description: "Stable feature code.",
+const FeatureId = Type.String({
+  description: "Stable feature identifier.",
   minLength: 1,
 });
 
-export const FeatureDefinition = Type.Object(
+export const Feature = Type.Object(
   {
-    code: FeatureCode,
+    id: FeatureId,
     merge_strategy: Type.Union(
       [
         Type.Literal("boolean_or"),
@@ -22,22 +22,22 @@ export const FeatureDefinition = Type.Object(
       description: "Human-readable feature name.",
       minLength: 1,
     }),
-    type: Type.Union([Type.Literal("boolean"), Type.Literal("number")], {
+    value_type: Type.Union([Type.Literal("boolean"), Type.Literal("number")], {
       description: "Expected value type for grants of this feature.",
     }),
   },
   {
     additionalProperties: false,
-    description: "Feature definition understood by this domain.",
+    description: "Feature understood by this domain.",
   },
 );
 
 export const FeaturesResponse = Type.Object(
   {
-    features: Type.Array(FeatureDefinition),
+    features: Type.Array(Feature),
   },
   {
     additionalProperties: false,
-    description: "Feature definitions visible to the authenticated caller.",
+    description: "Features visible to the authenticated caller.",
   },
 );

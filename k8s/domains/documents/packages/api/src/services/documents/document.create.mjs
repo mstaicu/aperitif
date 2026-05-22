@@ -1,6 +1,6 @@
-import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
+import { DatabaseError } from "pg";
 
-const REQUIRED_FEATURE_CODE = "documents.enabled";
+const REQUIRED_FEATURE_ID = "documents.enabled";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -58,18 +58,24 @@ export const createDocument =
       }
 
       const {
-        rows: [feature],
+        rows: [featureProjection],
       } = await client.query(
         `
-          SELECT value
+          SELECT features
           FROM tenant_feature_projection
           WHERE tenant_id = $1
-            AND feature_code = $2
         `,
-        [workspace.tenant_id, REQUIRED_FEATURE_CODE],
+        [workspace.tenant_id],
       );
 
-      if (feature?.value !== true) {
+      const hasRequiredFeature =
+        Array.isArray(featureProjection?.features) &&
+        featureProjection.features.some(
+          (feature) =>
+            feature?.id === REQUIRED_FEATURE_ID && feature?.value === true,
+        );
+
+      if (!hasRequiredFeature) {
         throw new Error("FEATURE_REQUIRED");
       }
 
@@ -100,8 +106,17 @@ export const createDocument =
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 
-      if (isDatabaseUnavailable(err)) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      if (err instanceof DatabaseError) {
+        if (
+          err.code?.startsWith("08") ||
+          err.code === "53300" ||
+          err.code === "57P01" ||
+          err.code === "57P02" ||
+          err.code === "57P03" ||
+          err.code === "57014"
+        ) {
+          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        }
       }
 
       throw err;

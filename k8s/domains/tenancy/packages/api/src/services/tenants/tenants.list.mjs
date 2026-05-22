@@ -1,4 +1,4 @@
-import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
+import { DatabaseError } from "pg";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -26,8 +26,17 @@ export const listTenants =
         [currentUserId],
       ));
     } catch (err) {
-      if (isDatabaseUnavailable(err)) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      if (err instanceof DatabaseError) {
+        if (
+          err.code?.startsWith("08") ||
+          err.code === "53300" ||
+          err.code === "57P01" ||
+          err.code === "57P02" ||
+          err.code === "57P03" ||
+          err.code === "57014"
+        ) {
+          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        }
       }
 
       throw err;

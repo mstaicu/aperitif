@@ -14,7 +14,7 @@ export const TenantEventResourceSchema = Type.Object(
 
 export const TenantFeatureEventResourceSchema = Type.Object(
   {
-    code: Type.String({ minLength: 1 }),
+    id: Type.String({ minLength: 1 }),
     value: Type.Unknown(),
   },
   { additionalProperties: false },

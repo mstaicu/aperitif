@@ -1,10 +1,10 @@
-import { createTenantFeatureGrant } from "./tenant.feature-grant.create.mjs";
+import { addTenantFeatures } from "./tenant.feature-grant.create.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
 export const createTenantFeaturesService = (ctx) => ({
-  createTenantFeatureGrant: createTenantFeatureGrant(ctx),
+  addTenantFeatures: addTenantFeatures(ctx),
 });
 
 /**

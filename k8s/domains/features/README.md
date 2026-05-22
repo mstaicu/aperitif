@@ -3,7 +3,7 @@
 Features owns tenant feature authority:
 
 ```text
-feature definitions + tenant grants -> current tenant features -> events
+features + tenant features -> effective tenant features event
 ```
 
 It does not own commerce catalogues, checkout, subscriptions, payment provider
@@ -12,12 +12,10 @@ business-domain records.
 
 ## Domain Boundary
 
-- `feature_definitions` are the vocabulary of things the platform can enable
-  for a tenant.
-- `tenant_feature_grants` are tenant-specific grant inputs from explicit grant
-  commands.
-- `tenant_features` are the current effective feature values emitted to other
-  domains.
+- `features` are the vocabulary of things the platform can enable for a tenant.
+- `tenant_features` are current tenant-specific grant inputs from explicit grant
+  commands. Effective tenant feature state is calculated from these rows when
+  events are written.
 - `tenant_projection` is the local tenant existence projection consumed from
   tenancy events.
 - `outbox_events` is the durable publisher queue for feature authority events.
@@ -33,8 +31,8 @@ feature grants.
 identity = who the actor is
 tenant = authority root for tenant-scoped feature state
 feature = capability that can be granted to a tenant
-tenant_feature_grant = tenant-specific source value for one feature
-tenant_feature = current tenant feature value after grants are merged
+tenant_feature_grant = one current grant contribution for a tenant feature
+tenant_feature = effective feature value calculated from current grants
 ```
 
 The reducer is deliberately small:
@@ -49,12 +47,13 @@ number_sum
 
 ```text
 GET /v1/features
-POST /v1/features/grants
+POST /v1/features
 ```
 
-Routes require an identity-issued access token verified through JWKS. Grant
-requests carry `tenant_id`, `feature_code`, `value`, and an idempotency
-`grant_ref`. Grant commands require a platform operator access token.
+Routes require an identity-issued access token verified through JWKS.
+`POST /v1/features` carries `tenant_id` and a `features` array. Each feature
+item carries its own `grant_id`.
+It requires a platform operator access token.
 
 ## Deployment Units
 
@@ -143,12 +142,13 @@ Add both sides deliberately when accepting a new tenancy event schema version.
 
 ## Feature Events
 
-Features emits tenant-level feature state from `tenant_features`:
+Features emits tenant-level feature state calculated from `tenant_features`:
 
 - `features.tenant_features.updated`
 
-The event carries generic event `version` and the current tenant feature rows
-inside the payload. Consumers should use `version` to ignore stale events.
+The event carries generic event `version` and the calculated effective tenant
+feature rows inside the payload. Consumers should use `version` to ignore stale
+events.
 
 Producer contracts live under `packages/api/src/events/versions/`. The worker
 publishes durable rows from `outbox_events` to the `FEATURES` stream and then

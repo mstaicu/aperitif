@@ -1,13 +1,13 @@
-import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
+import { DatabaseError } from "pg";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {() => Promise<{
  *   features: {
- *     code: string,
+ *     id: string,
  *     merge_strategy: "boolean_or" | "number_max" | "number_sum",
  *     name: string,
- *     type: "boolean" | "number",
+ *     value_type: "boolean" | "number",
  *   }[],
  * }>}
  */
@@ -15,12 +15,12 @@ export const listFeatures = (ctx) => async () => {
   try {
     const { rows } = await ctx.persistence.db.query(
       `
-        SELECT code,
+        SELECT id,
+          merge_strategy,
           name,
-          type,
-          merge_strategy
-        FROM feature_definitions
-        ORDER BY code
+          value_type
+        FROM features
+        ORDER BY id
       `,
     );
 
@@ -28,8 +28,17 @@ export const listFeatures = (ctx) => async () => {
       features: rows,
     };
   } catch (err) {
-    if (isDatabaseUnavailable(err)) {
-      throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+    if (err instanceof DatabaseError) {
+      if (
+        err.code?.startsWith("08") ||
+        err.code === "53300" ||
+        err.code === "57P01" ||
+        err.code === "57P02" ||
+        err.code === "57P03" ||
+        err.code === "57014"
+      ) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      }
     }
 
     throw err;

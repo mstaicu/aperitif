@@ -46,22 +46,17 @@ COMMENT ON COLUMN workspace_projection.tenant_id IS 'Tenant that owns the worksp
 COMMENT ON COLUMN workspace_projection.version IS 'Latest upstream event version applied to this projected workspace.';
 
 CREATE TABLE tenant_feature_projection (
-    tenant_id UUID NOT NULL,
+    tenant_id UUID PRIMARY KEY,
 
-    feature_code TEXT NOT NULL,
+    features JSONB NOT NULL,
 
-    value JSONB NOT NULL,
-
-    version BIGINT NOT NULL,
-
-    PRIMARY KEY (tenant_id, feature_code)
+    version BIGINT NOT NULL
 );
 
-COMMENT ON TABLE tenant_feature_projection IS 'Local projection of features-owned tenant feature authority used by the documents domain.';
-COMMENT ON COLUMN tenant_feature_projection.tenant_id IS 'Tenant whose feature value is projected.';
-COMMENT ON COLUMN tenant_feature_projection.feature_code IS 'Feature code owned by the features domain.';
-COMMENT ON COLUMN tenant_feature_projection.value IS 'Projected effective feature value.';
-COMMENT ON COLUMN tenant_feature_projection.version IS 'Latest upstream event version applied to this tenant feature.';
+COMMENT ON TABLE tenant_feature_projection IS 'Local projection of features-owned tenant feature snapshots used by the documents domain.';
+COMMENT ON COLUMN tenant_feature_projection.tenant_id IS 'Tenant whose feature snapshot is projected.';
+COMMENT ON COLUMN tenant_feature_projection.features IS 'Projected effective feature snapshot.';
+COMMENT ON COLUMN tenant_feature_projection.version IS 'Latest upstream event version applied for this tenant.';
 
 CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

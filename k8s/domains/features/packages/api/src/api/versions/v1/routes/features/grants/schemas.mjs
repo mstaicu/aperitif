@@ -5,36 +5,47 @@ const TenantId = Type.String({
   format: "uuid",
 });
 
-const Code = Type.String({
-  description: "Stable local code.",
+const GrantId = Type.String({
+  description: "Stable identifier for one current tenant feature grant.",
+  format: "uuid",
+});
+
+const FeatureId = Type.String({
+  description: "Stable feature identifier.",
   minLength: 1,
 });
 
 const FeatureValue = Type.Unknown({
-  description:
-    "Boolean or number feature value. It must match the feature definition type.",
+  description: "Feature value granted to the tenant.",
 });
 
-const GrantRef = Type.String({
-  description: "Stable grant reference used for idempotency.",
-  maxLength: 160,
-  minLength: 1,
-});
-
-export const CreateFeatureGrantBody = Type.Object(
+const FeatureInput = Type.Object(
   {
-    feature_code: Code,
-    grant_ref: GrantRef,
-    tenant_id: TenantId,
+    feature_id: FeatureId,
+    grant_id: GrantId,
     value: FeatureValue,
   },
   {
     additionalProperties: false,
-    description: "Payload for granting one feature to a tenant.",
+    description: "Feature grant value added to the tenant.",
   },
 );
 
-export const GrantResponse = Type.Object(
+export const AddTenantFeaturesBody = Type.Object(
+  {
+    features: Type.Array(FeatureInput, {
+      description: "Feature grant values added to this tenant.",
+      minItems: 1,
+    }),
+    tenant_id: TenantId,
+  },
+  {
+    additionalProperties: false,
+    description: "Payload for adding current tenant feature grants.",
+  },
+);
+
+export const AddTenantFeaturesResponse = Type.Object(
   {
     tenant_id: TenantId,
   },

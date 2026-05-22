@@ -1,6 +1,9 @@
 import { authenticatePlatformOperator } from "../../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../../problem-details.mjs";
-import { CreateFeatureGrantBody, GrantResponse } from "./schemas.mjs";
+import {
+  AddTenantFeaturesBody,
+  AddTenantFeaturesResponse,
+} from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,22 +20,23 @@ export default async function (fastify, { jwks, tenantFeatures }) {
     "",
     {
       schema: {
-        body: CreateFeatureGrantBody,
+        body: AddTenantFeaturesBody,
         description:
-          "Platform operator command that grants one feature to a tenant and recomputes tenant features.",
-        operationId: "createFeatureGrant",
+          "Platform operator command that adds current tenant feature grants and recomputes effective tenant features.",
+        operationId: "addTenantFeatures",
         response: {
-          200: GrantResponse,
+          200: AddTenantFeaturesResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
           404: ProblemResponse,
+          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Grant tenant feature",
-        tags: ["feature grants"],
+        summary: "Add tenant feature grants",
+        tags: ["features"],
       },
     },
     async function (req, reply) {
@@ -42,11 +46,9 @@ export default async function (fastify, { jwks, tenantFeatures }) {
       });
 
       return reply.send(
-        await tenantFeatures.createTenantFeatureGrant({
-          featureCode: req.body.feature_code,
-          grantRef: req.body.grant_ref,
+        await tenantFeatures.addTenantFeatures({
+          features: req.body.features,
           tenantId: req.body.tenant_id,
-          value: req.body.value,
         }),
       );
     },

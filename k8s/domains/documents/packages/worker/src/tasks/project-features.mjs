@@ -86,43 +86,18 @@ async function projectFeaturesEvent(ctx, event) {
   try {
     await client.query("BEGIN");
 
-    const {
-      rows: [state],
-    } = await client.query(
-      `
-        SELECT max(version) AS version
-        FROM tenant_feature_projection
-        WHERE tenant_id = $1
-      `,
-      [tenantId],
-    );
-
-    if (state?.version && Number(state.version) >= event.version) {
-      await client.query("COMMIT");
-      return;
-    }
-
-    await client.query(
-      `
-        DELETE FROM tenant_feature_projection
-        WHERE tenant_id = $1
-      `,
-      [tenantId],
-    );
-
     await client.query(
       `
         INSERT INTO tenant_feature_projection (
           tenant_id,
-          feature_code,
-          value,
+          features,
           version
         )
-        SELECT $1,
-          feature->>'code',
-          feature->'value',
-          $3
-        FROM jsonb_array_elements($2::jsonb) AS feature
+        VALUES ($1, $2::jsonb, $3)
+        ON CONFLICT (tenant_id) DO UPDATE
+        SET features = EXCLUDED.features,
+          version = EXCLUDED.version
+        WHERE tenant_feature_projection.version < EXCLUDED.version
       `,
       [tenantId, JSON.stringify(event.payload.features), event.version],
     );

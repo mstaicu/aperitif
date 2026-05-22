@@ -11,34 +11,34 @@ Postgres is layered like this:
 Postgres server or instance
   features database
       public schema
-      feature_definitions
+      features
       tenant_projection
-      tenant_feature_grants
       tenant_features
       features_version_seq
       outbox_events
       flyway_schema_history
 ```
 
-`feature_definitions` is the tenant-level feature vocabulary. Current feature
-values are deliberately limited to booleans and numbers because those are the
-only merge strategies this domain currently supports.
+`features` is the tenant-level feature vocabulary. Current feature values are
+deliberately limited to booleans and numbers because those are the only merge
+strategies this domain currently supports.
 
 `tenant_projection` is the local tenant existence copy built from tenancy
 events. Projection writes are idempotent through natural keys and projection
 `version`.
 
-`tenant_feature_grants` records current tenant-specific inputs that grant
-feature values. `tenant_features` stores the current feature values for each
-tenant after grants are merged. `outbox_events` is the durable publisher queue
-for tenant feature events.
+`tenant_features` records current tenant-specific inputs that grant feature
+values. Effective tenant feature values are calculated from those rows when
+feature events are written. `outbox_events` is the durable publisher queue for
+tenant feature events.
 
 Feature authority rows store tenancy-owned `tenant_id` values, but they are not
 foreign-key children of projection tables. Rebuilding tenancy projections must
-not delete feature grants or tenant feature rows.
+not delete feature grant rows.
 
-Grant-writing code updates `tenant_features` and inserts the matching
-`outbox_events` row in the same transaction.
+Grant-writing code updates `tenant_features`, calculates the effective tenant
+feature values, and inserts the matching `outbox_events` row in the same
+transaction.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.
@@ -48,8 +48,8 @@ directly.
 - `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
 - `migrations/`: production Flyway migrations, named `V###__description.sql`.
 
-`V002__seed_feature_definitions.sql` seeds a few simple tenant-level feature
-definitions used to prove feature grants.
+`V002__seed_features.sql` seeds a few simple tenant-level features used to prove
+feature grants.
 
 ## Flyway Rules
 

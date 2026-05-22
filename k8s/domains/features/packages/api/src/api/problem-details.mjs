@@ -53,6 +53,11 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
+  FEATURE_GRANT_DUPLICATE: {
+    status: 409,
+    title: "Feature grant already exists",
+    type: "/problems/feature-grant-duplicate",
+  },
   FEATURE_NOT_FOUND: {
     status: 404,
     title: "Feature not found",

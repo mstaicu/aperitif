@@ -1,18 +1,39 @@
+import { DatabaseError } from "pg";
+
 import { buildTenantFeaturesUpdatedEvent } from "../../events/index.mjs";
-import { isDatabaseUnavailable } from "../../platform/persistence/errors.mjs";
+
+/**
+ * @typedef {"boolean_or" | "number_max" | "number_sum"} MergeStrategy
+ */
+
+/**
+ * @typedef {{
+ *   feature_id: string,
+ *   grant_id: string,
+ *   value: unknown,
+ * }} Feature
+ */
+
+/**
+ * @typedef {{
+ *   grant_id?: string,
+ *   id: string,
+ *   value: unknown,
+ *   merge_strategy: MergeStrategy | null,
+ *   value_type: "boolean" | "number" | null,
+ * }} Grant
+ */
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: {
- *   featureCode: string,
- *   grantRef: string,
+ *   features: Feature[],
  *   tenantId: string,
- *   value: unknown,
  * }) => Promise<{ tenant_id: string }>}
  */
-export const createTenantFeatureGrant =
+export const addTenantFeatures =
   (ctx) =>
-  async ({ featureCode, grantRef, tenantId, value }) => {
+  async ({ features, tenantId }) => {
     let client;
 
     try {
@@ -35,159 +56,148 @@ export const createTenantFeatureGrant =
         throw new Error("TENANT_NOT_FOUND");
       }
 
-      const {
-        rows: [feature],
-      } = await client.query(
-        `
-          SELECT type
-          FROM feature_definitions
-          WHERE code = $1
-        `,
-        [featureCode],
-      );
-
-      if (!feature) {
-        throw new Error("FEATURE_NOT_FOUND");
-      }
-
-      if (
-        (feature.type === "boolean" && typeof value !== "boolean") ||
-        (feature.type === "number" && typeof value !== "number")
-      ) {
-        throw new Error("INVALID_FEATURE_VALUE");
-      }
-
-      const result = await client.query(
-        `
-          INSERT INTO tenant_feature_grants (
-            tenant_id,
-            feature_code,
-            value,
-            grant_ref
-          )
-          VALUES ($1, $2, $3::jsonb, $4)
-          ON CONFLICT (
-            tenant_id,
-            feature_code,
-            grant_ref
-          )
-          DO UPDATE
-          SET value = EXCLUDED.value
-          WHERE tenant_feature_grants.value IS DISTINCT FROM EXCLUDED.value
-          RETURNING 1
-        `,
-        [tenantId, featureCode, JSON.stringify(value), grantRef],
-      );
-
-      const changed = (result.rowCount ?? 0) > 0;
-
-      if (changed) {
-        const versionResult = await client.query(
-          `
-            SELECT nextval('features_version_seq') AS version
-          `,
-        );
-        const version = versionResult.rows[0].version;
-
+      const { rows: grants } = /** @type {{ rows: Grant[] }} */ (
         await client.query(
           `
-            DELETE FROM tenant_features
-            WHERE tenant_id = $1
-          `,
-          [tenantId],
-        );
-
-        const { rows: grantRows } = await client.query(
-          `
-            SELECT d.code,
-              d.type,
-              d.merge_strategy,
-              jsonb_agg(g.value ORDER BY g.grant_ref) AS values
-            FROM tenant_feature_grants g
-            JOIN feature_definitions d ON d.code = g.feature_code
+            SELECT f.id,
+              g.value,
+              f.merge_strategy,
+              f.value_type
+            FROM tenant_features g
+            JOIN features f ON g.feature_id = f.id
             WHERE g.tenant_id = $1
-            GROUP BY d.code,
-              d.type,
-              d.merge_strategy
-            ORDER BY d.code
+            ORDER BY f.id
           `,
           [tenantId],
-        );
+        )
+      );
 
-        /** @type {{ code: string, value: unknown }[]} */
-        const tenantFeatures = [];
+      const { rows: requestedGrants } = /** @type {{ rows: Grant[] }} */ (
+        await client.query(
+          `
+            SELECT incoming.grant_id,
+              f.id,
+              incoming.value,
+              f.merge_strategy,
+              f.value_type
+            FROM jsonb_to_recordset($1::jsonb) AS incoming(
+              feature_id TEXT,
+              grant_id UUID,
+              value JSONB
+            )
+            LEFT JOIN features f ON f.id = incoming.feature_id
+            ORDER BY f.id
+          `,
+          [JSON.stringify(features)],
+        )
+      );
 
-        /** @type {{ code: string, merge_strategy: string, type: "boolean" | "number", values: unknown[] }[]} */
-        const grants = grantRows;
+      const pendingGrants = [...grants, ...requestedGrants];
 
-        for (const grant of grants) {
-          let mergedValue;
+      /** @type {Map<string, { id: string, value: unknown }>} */
+      const tenantFeaturesById = new Map();
 
-          switch (grant.merge_strategy) {
-            case "boolean_or":
-              mergedValue = grant.values.some(
-                (grantValue) => grantValue === true,
-              );
-              break;
-
-            case "number_max":
-              mergedValue = Math.max(...grant.values.map(Number));
-              break;
-
-            case "number_sum":
-              mergedValue = grant.values
-                .map(Number)
-                .reduce((sum, grantValue) => sum + grantValue, 0);
-              break;
-
-            default:
-              throw new Error("UNKNOWN_MERGE_STRATEGY");
-          }
-
-          tenantFeatures.push({
-            code: grant.code,
-            value: mergedValue,
-          });
+      for (const grant of pendingGrants) {
+        if (!grant.id || !grant.merge_strategy || !grant.value_type) {
+          throw new Error("FEATURE_NOT_FOUND");
         }
 
-        await client.query(
-          `
-            INSERT INTO tenant_features (
-              tenant_id,
-              feature_code,
-              value,
-              version
-            )
-            SELECT $1,
-              feature->>'code',
-              feature->'value',
-              $3
-            FROM jsonb_array_elements($2::jsonb) AS feature
-          `,
-          [tenantId, JSON.stringify(tenantFeatures), version],
-        );
+        if (
+          grant.value_type === "boolean" &&
+          typeof grant.value !== "boolean"
+        ) {
+          throw new Error("INVALID_FEATURE_VALUE");
+        }
 
-        const event = buildTenantFeaturesUpdatedEvent(
-          {
-            features: tenantFeatures,
-            tenant: {
-              id: tenantId,
-            },
-          },
-          Number(version),
-        );
+        if (
+          grant.value_type === "number" &&
+          (typeof grant.value !== "number" || !Number.isFinite(grant.value))
+        ) {
+          throw new Error("INVALID_FEATURE_VALUE");
+        }
 
-        await client.query(
-          `
-            INSERT INTO outbox_events (
-              id,
-              event
-            )
-            VALUES ($1, $2::jsonb)
-          `,
-          [event.id, JSON.stringify(event)],
-        );
+        const current = tenantFeaturesById.get(grant.id);
+
+        if (!current) {
+          tenantFeaturesById.set(grant.id, {
+            id: grant.id,
+            value: grant.value,
+          });
+          continue;
+        }
+
+        switch (grant.merge_strategy) {
+          case "boolean_or":
+            current.value = current.value === true || grant.value === true;
+            break;
+
+          case "number_max":
+            current.value = Math.max(
+              Number(current.value),
+              Number(grant.value),
+            );
+            break;
+
+          case "number_sum":
+            current.value = Number(current.value) + Number(grant.value);
+            break;
+
+          default:
+            throw new Error("UNKNOWN_MERGE_STRATEGY");
+        }
       }
+
+      const tenantFeatures = [...tenantFeaturesById.values()];
+
+      const {
+        rows: [{ version }],
+      } = await client.query(
+        `
+          SELECT nextval('features_version_seq') AS version
+        `,
+      );
+
+      await client.query(
+        `
+          INSERT INTO tenant_features (
+            tenant_id,
+            grant_id,
+            feature_id,
+            value
+          )
+          SELECT $1,
+            incoming.grant_id,
+            incoming.id,
+            incoming.value
+          FROM jsonb_to_recordset($2::jsonb) AS incoming(
+            grant_id UUID,
+            id TEXT,
+            value JSONB
+          )
+        `,
+        [tenantId, JSON.stringify(requestedGrants)],
+      );
+
+      const event = buildTenantFeaturesUpdatedEvent(
+        {
+          features: tenantFeatures,
+          tenant: {
+            id: tenantId,
+          },
+        },
+        Number(version),
+      );
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (
+            id,
+            event
+          )
+          VALUES ($1, $2::jsonb)
+        `,
+        [event.id, JSON.stringify(event)],
+      );
 
       await client.query("COMMIT");
 
@@ -197,8 +207,21 @@ export const createTenantFeatureGrant =
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 
-      if (isDatabaseUnavailable(err)) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      if (err instanceof DatabaseError) {
+        if (err.code === "23505" && err.constraint === "tenant_features_pkey") {
+          throw new Error("FEATURE_GRANT_DUPLICATE", { cause: err });
+        }
+
+        if (
+          err.code?.startsWith("08") ||
+          err.code === "53300" ||
+          err.code === "57P01" ||
+          err.code === "57P02" ||
+          err.code === "57P03" ||
+          err.code === "57014"
+        ) {
+          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        }
       }
 
       throw err;

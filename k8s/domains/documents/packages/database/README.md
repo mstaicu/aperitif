@@ -18,8 +18,9 @@ Postgres server or instance
 ```
 
 The projection tables are local authorization inputs copied from tenancy and
-features events. `documents` is the only product table owned by this domain.
-Other domains must not connect to this database.
+features events. `tenant_feature_projection` stores one feature snapshot per
+tenant. `documents` is the only product table owned by this domain. Other
+domains must not connect to this database.
 
 ## Roles
 
