@@ -1,16 +1,3 @@
--- Runtime grants.
-GRANT USAGE
-ON SCHEMA public
-TO capabilities_runtime;
-
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON ALL TABLES IN SCHEMA public
-TO capabilities_runtime;
-
-GRANT USAGE, SELECT
-ON ALL SEQUENCES IN SCHEMA public
-TO capabilities_runtime;
-
 -- Default grants for future Flyway objects.
 ALTER DEFAULT PRIVILEGES
 FOR ROLE capabilities_migrator
