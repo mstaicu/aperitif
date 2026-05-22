@@ -1,3 +1,31 @@
+-- Runtime grants.
+GRANT USAGE
+ON SCHEMA public
+TO documents_runtime;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO documents_runtime;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA public
+TO documents_runtime;
+
+-- Default grants for future Flyway objects.
+ALTER DEFAULT PRIVILEGES
+FOR ROLE documents_migrator
+IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLES TO documents_runtime;
+
+ALTER DEFAULT PRIVILEGES
+FOR ROLE documents_migrator
+IN SCHEMA public
+GRANT USAGE, SELECT
+ON SEQUENCES TO documents_runtime;
+
+--
+
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE tenant_projection (
@@ -53,32 +81,3 @@ CREATE TABLE documents (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX documents_workspace_idx
-ON documents (workspace_id, created_at DESC, id);
-
--- Runtime grants.
-GRANT USAGE
-ON SCHEMA public
-TO documents_runtime;
-
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON ALL TABLES IN SCHEMA public
-TO documents_runtime;
-
-GRANT USAGE, SELECT
-ON ALL SEQUENCES IN SCHEMA public
-TO documents_runtime;
-
--- Default grants for future Flyway objects.
-ALTER DEFAULT PRIVILEGES
-FOR ROLE documents_migrator
-IN SCHEMA public
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON TABLES TO documents_runtime;
-
-ALTER DEFAULT PRIVILEGES
-FOR ROLE documents_migrator
-IN SCHEMA public
-GRANT USAGE, SELECT
-ON SEQUENCES TO documents_runtime;

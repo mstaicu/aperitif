@@ -1,3 +1,31 @@
+-- Runtime grants.
+GRANT USAGE
+ON SCHEMA public
+TO identity_runtime;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO identity_runtime;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA public
+TO identity_runtime;
+
+-- Default grants for future Flyway objects.
+ALTER DEFAULT PRIVILEGES
+FOR ROLE identity_migrator
+IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLES TO identity_runtime;
+
+ALTER DEFAULT PRIVILEGES
+FOR ROLE identity_migrator
+IN SCHEMA public
+GRANT USAGE, SELECT
+ON SEQUENCES TO identity_runtime;
+
+--
+
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
@@ -53,33 +81,3 @@ CREATE TABLE session_refresh_tokens (
 
     consumed_at TIMESTAMPTZ
 );
-
-CREATE UNIQUE INDEX session_refresh_tokens_one_current_per_session
-ON session_refresh_tokens (session_id)
-WHERE consumed_at IS NULL;
-
--- Runtime grants.
-GRANT USAGE
-ON SCHEMA public
-TO identity_runtime;
-
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON ALL TABLES IN SCHEMA public
-TO identity_runtime;
-
-GRANT USAGE, SELECT
-ON ALL SEQUENCES IN SCHEMA public
-TO identity_runtime;
-
--- Default grants for future Flyway objects.
-ALTER DEFAULT PRIVILEGES
-FOR ROLE identity_migrator
-IN SCHEMA public
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON TABLES TO identity_runtime;
-
-ALTER DEFAULT PRIVILEGES
-FOR ROLE identity_migrator
-IN SCHEMA public
-GRANT USAGE, SELECT
-ON SEQUENCES TO identity_runtime;
