@@ -1,18 +1,5 @@
--- Managed Postgres bootstrap for the documents domain.
---
--- Run this before Flux reconciles documents-migrate, using the managed DB
--- provider/admin user while connected to the documents database.
---
--- Example:
---   /opt/homebrew/opt/libpq/bin/psql "$DOCUMENTS_ADMIN_DATABASE_URL" \
---     -v documents_migrator_password='replace-me' \
---     -v documents_api_password='replace-me' \
---     -v documents_worker_password='replace-me' \
---     -f domains/documents/packages/database/bootstrap/managed-postgres.sql
---
--- This script creates only roles and base grants. Flyway owns tables, indexes,
--- sequences, comments, triggers, and object-level runtime grants.
--- Mirror role/grant changes in infra/postgres/overlays/*/documents-postgres-init.sql.
+-- Managed Postgres bootstrap. Pass required password variables with psql.
+-- Keep roles/grants aligned with the matching infra/postgres overlay.
 
 \set ON_ERROR_STOP on
 

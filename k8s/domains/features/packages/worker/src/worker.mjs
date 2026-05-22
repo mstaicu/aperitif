@@ -27,17 +27,14 @@ const tasks = [
   runProjectTenancy(ctx, controller.signal),
   runPublishOutbox(ctx, controller.signal),
 ];
-const signal = Promise.race(
+const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
 );
-const taskFailure = Promise.race(tasks).then(() => {
-  throw new Error("worker task stopped unexpectedly");
-});
 
 console.log("features worker listening");
 
 try {
-  await Promise.race([signal, taskFailure]);
+  await Promise.race([...tasks, shutdown]);
 } finally {
   console.log("closing worker");
 

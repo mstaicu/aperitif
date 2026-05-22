@@ -1,17 +1,5 @@
--- Managed Postgres bootstrap for the identity domain.
---
--- Run this before Flux reconciles identity-migrate, using the managed DB
--- provider/admin user while connected to the identity database.
---
--- Example:
---   /opt/homebrew/opt/libpq/bin/psql "$IDENTITY_ADMIN_DATABASE_URL" \
---     -v identity_migrator_password='replace-me' \
---     -v identity_api_password='replace-me' \
---     -f domains/identity/packages/database/bootstrap/managed-postgres.sql
---
--- This script creates only roles and base grants. Flyway owns tables, indexes,
--- sequences, comments, triggers, and object-level runtime grants.
--- Mirror role/grant changes in infra/postgres/overlays/*/identity-postgres-init.sql.
+-- Managed Postgres bootstrap. Pass required password variables with psql.
+-- Keep roles/grants aligned with the matching infra/postgres overlay.
 
 \set ON_ERROR_STOP on
 

@@ -1,18 +1,5 @@
--- Managed Postgres bootstrap for the tenancy domain.
---
--- Run this before Flux reconciles tenancy-migrate, using the managed DB
--- provider/admin user while connected to the tenancy database.
---
--- Example:
---   /opt/homebrew/opt/libpq/bin/psql "$TENANCY_ADMIN_DATABASE_URL" \
---     -v tenancy_migrator_password='replace-me' \
---     -v tenancy_api_password='replace-me' \
---     -v tenancy_worker_password='replace-me' \
---     -f domains/tenancy/packages/database/bootstrap/managed-postgres.sql
---
--- This script creates only roles and base grants. Flyway owns tables, indexes,
--- sequences, comments, triggers, and object-level runtime grants.
--- Mirror role/grant changes in infra/postgres/overlays/*/tenancy-postgres-init.sql.
+-- Managed Postgres bootstrap. Pass required password variables with psql.
+-- Keep roles/grants aligned with the matching infra/postgres overlay.
 
 \set ON_ERROR_STOP on
 

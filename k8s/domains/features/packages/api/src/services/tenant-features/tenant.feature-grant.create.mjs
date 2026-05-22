@@ -3,31 +3,25 @@ import { DatabaseError } from "pg";
 import { buildTenantFeaturesUpdatedEvent } from "../../events/index.mjs";
 
 /**
- * @typedef {"boolean_or" | "number_max" | "number_sum"} MergeStrategy
+ * @typedef {object} FeatureGrantInput
+ * @property {string} feature_id
+ * @property {string} grant_id
+ * @property {unknown} value
  */
 
 /**
- * @typedef {{
- *   feature_id: string,
- *   grant_id: string,
- *   value: unknown,
- * }} Feature
- */
-
-/**
- * @typedef {{
- *   grant_id?: string,
- *   id: string,
- *   value: unknown,
- *   merge_strategy: MergeStrategy | null,
- *   value_type: "boolean" | "number" | null,
- * }} Grant
+ * @typedef {object} FeatureGrantRow
+ * @property {string | undefined} [grant_id]
+ * @property {string | null} id
+ * @property {"boolean_or" | "number_max" | "number_sum" | null} merge_strategy
+ * @property {unknown} value
+ * @property {"boolean" | "number" | null} value_type
  */
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: {
- *   features: Feature[],
+ *   features: FeatureGrantInput[],
  *   tenantId: string,
  * }) => Promise<{ tenant_id: string }>}
  */
@@ -56,41 +50,41 @@ export const addTenantFeatures =
         throw new Error("TENANT_NOT_FOUND");
       }
 
-      const { rows: grants } = /** @type {{ rows: Grant[] }} */ (
-        await client.query(
-          `
-            SELECT f.id,
-              g.value,
-              f.merge_strategy,
-              f.value_type
-            FROM tenant_features g
-            JOIN features f ON g.feature_id = f.id
-            WHERE g.tenant_id = $1
-            ORDER BY f.id
-          `,
-          [tenantId],
-        )
+      /** @type {{ rows: FeatureGrantRow[] }} */
+      const grantsResult = await client.query(
+        `
+          SELECT f.id,
+            g.value,
+            f.merge_strategy,
+            f.value_type
+          FROM tenant_features g
+          JOIN features f ON g.feature_id = f.id
+          WHERE g.tenant_id = $1
+          ORDER BY f.id
+        `,
+        [tenantId],
       );
+      const { rows: grants } = grantsResult;
 
-      const { rows: requestedGrants } = /** @type {{ rows: Grant[] }} */ (
-        await client.query(
-          `
-            SELECT incoming.grant_id,
-              f.id,
-              incoming.value,
-              f.merge_strategy,
-              f.value_type
-            FROM jsonb_to_recordset($1::jsonb) AS incoming(
-              feature_id TEXT,
-              grant_id UUID,
-              value JSONB
-            )
-            LEFT JOIN features f ON f.id = incoming.feature_id
-            ORDER BY f.id
-          `,
-          [JSON.stringify(features)],
-        )
+      /** @type {{ rows: FeatureGrantRow[] }} */
+      const requestedGrantsResult = await client.query(
+        `
+          SELECT incoming.grant_id,
+            f.id,
+            incoming.value,
+            f.merge_strategy,
+            f.value_type
+          FROM jsonb_to_recordset($1::jsonb) AS incoming(
+            feature_id TEXT,
+            grant_id UUID,
+            value JSONB
+          )
+          LEFT JOIN features f ON f.id = incoming.feature_id
+          ORDER BY f.id
+        `,
+        [JSON.stringify(features)],
       );
+      const { rows: requestedGrants } = requestedGrantsResult;
 
       const pendingGrants = [...grants, ...requestedGrants];
 

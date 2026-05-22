@@ -20,12 +20,6 @@ CREATE TABLE features (
     )
 );
 
-COMMENT ON TABLE features IS 'Vocabulary of features that can be granted to tenants.';
-COMMENT ON COLUMN features.id IS 'Stable feature identifier used by application code and other domains, for example members.max.';
-COMMENT ON COLUMN features.name IS 'Human-readable feature name.';
-COMMENT ON COLUMN features.value_type IS 'Expected value type for grants of this feature.';
-COMMENT ON COLUMN features.merge_strategy IS 'Rule used to merge multiple tenant grants for this feature.';
-
 CREATE TABLE tenant_features (
     tenant_id UUID NOT NULL,
 
@@ -39,29 +33,13 @@ CREATE TABLE tenant_features (
     PRIMARY KEY (tenant_id, grant_id, feature_id)
 );
 
-COMMENT ON TABLE tenant_features IS 'Current tenant-specific grant inputs that contribute feature values. Effective tenant feature state is calculated from these rows and emitted as events.';
-COMMENT ON COLUMN tenant_features.tenant_id IS 'Tenant receiving this feature grant.';
-COMMENT ON COLUMN tenant_features.grant_id IS 'Stable identifier for one current grant. Multiple rows with the same grant_id belong to the same grant.';
-COMMENT ON COLUMN tenant_features.feature_id IS 'Feature granted to the tenant.';
-COMMENT ON COLUMN tenant_features.value IS 'Feature value contributed by this grant.';
-
 CREATE SEQUENCE features_version_seq AS BIGINT;
-
-COMMENT ON SEQUENCE features_version_seq IS 'Monotonic authority version assigned to features-domain events.';
-
--- Projections
 
 CREATE TABLE tenant_projection (
     tenant_id UUID PRIMARY KEY,
 
     version BIGINT NOT NULL
 );
-
-COMMENT ON TABLE tenant_projection IS 'Local projection of tenancy-owned tenant authority used by the features domain.';
-COMMENT ON COLUMN tenant_projection.tenant_id IS 'Tenant id owned by the tenancy domain.';
-COMMENT ON COLUMN tenant_projection.version IS 'Latest upstream event version applied to this projected tenant.';
-
--- Outbox
 
 CREATE TABLE outbox_events (
     position BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -73,14 +51,7 @@ CREATE TABLE outbox_events (
     published_at TIMESTAMPTZ
 );
 
-COMMENT ON TABLE outbox_events IS 'Transactional outbox for durable features-domain events waiting to be published to the event bus.';
-COMMENT ON COLUMN outbox_events.position IS 'Local publish order for unpublished events.';
-COMMENT ON COLUMN outbox_events.id IS 'Stable event id copied from event.id for database uniqueness and NATS msgID.';
-COMMENT ON COLUMN outbox_events.event IS 'Complete event envelope published to the event bus.';
-COMMENT ON COLUMN outbox_events.published_at IS 'Null until a worker successfully publishes the event.';
-
--- Wake workers once after an INSERT statement adds outbox rows.
--- This is only a notification signal; outbox_events remains the durable source.
+-- Notification only; outbox_events remains durable.
 CREATE FUNCTION notify_outbox_event()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -94,16 +65,11 @@ AFTER INSERT ON outbox_events
 FOR EACH STATEMENT
 EXECUTE FUNCTION notify_outbox_event();
 
-COMMENT ON FUNCTION notify_outbox_event() IS 'Sends a lightweight Postgres notification after an INSERT statement adds outbox rows. Workers must still query outbox_events because notifications are not durable.';
-
 CREATE INDEX outbox_events_unpublished_idx
 ON outbox_events (position)
 WHERE published_at IS NULL;
 
-COMMENT ON INDEX outbox_events_unpublished_idx IS 'Keeps worker scans cheap by indexing only unpublished outbox rows in publish order.';
-
--- Runtime roles are created by the placeholder Postgres init SQL. Flyway
--- creates the schema objects, so object-level runtime grants live here.
+-- Runtime grants.
 GRANT USAGE
 ON SCHEMA public
 TO features_runtime;
@@ -116,8 +82,7 @@ GRANT USAGE, SELECT
 ON ALL SEQUENCES IN SCHEMA public
 TO features_runtime;
 
--- Future tables/sequences created by features_migrator should automatically
--- be usable by features_runtime without repeating grants in every migration.
+-- Default grants for future Flyway objects.
 ALTER DEFAULT PRIVILEGES
 FOR ROLE features_migrator
 IN SCHEMA public

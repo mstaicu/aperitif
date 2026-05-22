@@ -1,9 +1,9 @@
 import { addAbortListener } from "node:events";
 
 import {
-  TENANCY_EVENT_SCHEMA_VERSION,
   TenancyEventEnvelopeCheck,
   TenantUpdatedPayloadCheck,
+  TenantUpdatedSchemaVersion,
   TenantUpdatedSubject,
 } from "../events/index.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
@@ -28,8 +28,39 @@ export async function runProjectTenancy(ctx, signal) {
       signal.throwIfAborted();
 
       try {
-        await handleTenancyEvent(ctx, message);
-        message.ack();
+        if (message.subject !== TenantUpdatedSubject) {
+          message.ack();
+          continue;
+        }
+
+        const event = message.json();
+
+        if (
+          !TenancyEventEnvelopeCheck.Check(event) ||
+          event.subject !== message.subject
+        ) {
+          console.warn("ignoring invalid tenancy event envelope", {
+            subject: message.subject,
+          });
+          message.ack();
+          continue;
+        }
+
+        if (
+          event.schema_version === TenantUpdatedSchemaVersion &&
+          event.subject === TenantUpdatedSubject
+        ) {
+          if (!TenantUpdatedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid tenancy tenant updated payload");
+          }
+
+          await projectV1TenantUpdated(ctx, event);
+
+          message.ack();
+          continue;
+        }
+
+        throw new Error("Unsupported tenancy event");
       } catch (err) {
         message.nak();
         throw err;
@@ -43,46 +74,13 @@ export async function runProjectTenancy(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("@nats-io/jetstream").JsMsg} message
- */
-async function handleTenancyEvent(ctx, message) {
-  if (message.subject !== TenantUpdatedSubject) {
-    return;
-  }
-
-  const event = message.json();
-
-  if (
-    !TenancyEventEnvelopeCheck.Check(event) ||
-    event.subject !== message.subject
-  ) {
-    console.warn("ignoring invalid tenancy event envelope", {
-      subject: message.subject,
-    });
-    return;
-  }
-
-  if (event.schema_version !== TENANCY_EVENT_SCHEMA_VERSION) {
-    throw new Error("Unsupported tenancy event schema version");
-  }
-
-  await projectTenancyEvent(ctx, event);
-}
-
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {import("../events/index.mjs").TenancyEventEnvelope} event
  */
-async function projectTenancyEvent(ctx, event) {
-  if (event.subject !== TenantUpdatedSubject) {
-    return;
-  }
-
-  if (!TenantUpdatedPayloadCheck.Check(event.payload)) {
-    throw new Error("Invalid tenancy tenant updated payload");
-  }
-
-  const tenant = event.payload.tenant;
+async function projectV1TenantUpdated(ctx, event) {
+  const payload =
+    /** @type {import("../events/index.mjs").TenantUpdatedPayload} */ (
+      event.payload
+    );
   const client = await ctx.persistence.db.connect();
 
   try {
@@ -99,7 +97,7 @@ async function projectTenancyEvent(ctx, event) {
         SET version = EXCLUDED.version
         WHERE tenant_projection.version < EXCLUDED.version
       `,
-      [tenant.id, event.version],
+      [payload.tenant.id, event.version],
     );
 
     await client.query("COMMIT");

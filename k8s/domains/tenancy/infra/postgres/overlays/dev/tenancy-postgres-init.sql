@@ -1,7 +1,4 @@
--- Local/CI placeholder bootstrap. The official Postgres image runs this once
--- when the data directory is empty. Managed production should run an equivalent
--- bootstrap with real passwords outside the in-cluster Postgres unit.
--- Mirror role/grant changes in packages/database/bootstrap/managed-postgres.sql.
+-- Placeholder Postgres bootstrap. Keep roles/grants aligned with managed-postgres.sql.
 
 CREATE ROLE tenancy_migrator;
 CREATE ROLE tenancy_runtime;

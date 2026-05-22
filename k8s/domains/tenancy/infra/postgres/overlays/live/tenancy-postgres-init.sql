@@ -1,7 +1,4 @@
--- Live placeholder bootstrap for the in-cluster Postgres unit. Managed
--- production should run an equivalent bootstrap with real passwords outside the
--- cluster, then remove this Postgres unit from the Flux graph.
--- Mirror role/grant changes in packages/database/bootstrap/managed-postgres.sql.
+-- Placeholder Postgres bootstrap. Keep roles/grants aligned with managed-postgres.sql.
 
 CREATE ROLE tenancy_migrator;
 CREATE ROLE tenancy_runtime;

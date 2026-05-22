@@ -21,17 +21,14 @@ const health = http.createServer((req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [runPublishOutbox(ctx, controller.signal)];
-const signal = Promise.race(
+const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
 );
-const taskFailure = Promise.race(tasks).then(() => {
-  throw new Error("worker task stopped unexpectedly");
-});
 
 console.log("tenancy worker listening");
 
 try {
-  await Promise.race([signal, taskFailure]);
+  await Promise.race([...tasks, shutdown]);
 } finally {
   console.log("closing worker");
 

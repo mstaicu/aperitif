@@ -30,8 +30,39 @@ export async function runProjectFeatures(ctx, signal) {
       signal.throwIfAborted();
 
       try {
-        await handleFeaturesEvent(ctx, message);
-        message.ack();
+        if (!PROJECTED_SUBJECTS.has(message.subject)) {
+          message.ack();
+          continue;
+        }
+
+        const event = message.json();
+
+        if (
+          !FeaturesEventEnvelopeCheck.Check(event) ||
+          event.subject !== message.subject
+        ) {
+          console.warn("ignoring invalid features event envelope", {
+            subject: message.subject,
+          });
+          message.ack();
+          continue;
+        }
+
+        if (
+          event.schema_version === FEATURES_EVENT_SCHEMA_VERSION &&
+          event.subject === TenantFeaturesUpdatedSubject
+        ) {
+          if (!TenantFeaturesUpdatedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid features tenant features updated payload");
+          }
+
+          await projectV1TenantFeaturesUpdated(ctx, event);
+
+          message.ack();
+          continue;
+        }
+
+        throw new Error("Unsupported features event");
       } catch (err) {
         message.nak();
         throw err;
@@ -45,42 +76,13 @@ export async function runProjectFeatures(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("@nats-io/jetstream").JsMsg} message
- */
-async function handleFeaturesEvent(ctx, message) {
-  if (!PROJECTED_SUBJECTS.has(message.subject)) {
-    return;
-  }
-
-  const event = message.json();
-
-  if (
-    !FeaturesEventEnvelopeCheck.Check(event) ||
-    event.subject !== message.subject
-  ) {
-    console.warn("ignoring invalid features event envelope", {
-      subject: message.subject,
-    });
-    return;
-  }
-
-  if (event.schema_version !== FEATURES_EVENT_SCHEMA_VERSION) {
-    throw new Error("Unsupported features event schema version");
-  }
-
-  await projectFeaturesEvent(ctx, event);
-}
-
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {import("../events/features/index.mjs").FeaturesEventEnvelope} event
  */
-async function projectFeaturesEvent(ctx, event) {
-  if (!TenantFeaturesUpdatedPayloadCheck.Check(event.payload)) {
-    throw new Error("Invalid features tenant features updated payload");
-  }
-
-  const tenantId = event.payload.tenant.id;
+async function projectV1TenantFeaturesUpdated(ctx, event) {
+  const payload =
+    /** @type {import("../events/features/index.mjs").TenantFeaturesUpdatedPayload} */ (
+      event.payload
+    );
   const client = await ctx.persistence.db.connect();
 
   try {
@@ -99,7 +101,7 @@ async function projectFeaturesEvent(ctx, event) {
           version = EXCLUDED.version
         WHERE tenant_feature_projection.version < EXCLUDED.version
       `,
-      [tenantId, JSON.stringify(event.payload.features), event.version],
+      [payload.tenant.id, JSON.stringify(payload.features), event.version],
     );
 
     await client.query("COMMIT");
