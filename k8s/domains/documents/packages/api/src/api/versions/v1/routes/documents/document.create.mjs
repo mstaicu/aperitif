@@ -19,7 +19,7 @@ export default async function (fastify, { documents, jwks }) {
       schema: {
         body: CreateDocumentBody,
         description:
-          "Create a workspace-scoped document after checking the caller identity, tenant membership, workspace ownership, and required tenant feature projection.",
+          "Create a workspace-scoped document after checking the caller identity, tenant membership, workspace ownership, and required tenant capability projection.",
         operationId: "createDocument",
         response: {
           201: DocumentResponse,

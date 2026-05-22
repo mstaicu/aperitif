@@ -3,24 +3,24 @@
 Documents is a small product-domain proof of the platform spine:
 
 ```text
-JWT identity + tenancy projections + feature projections -> document command
+JWT identity + tenancy projections + capability projections -> document command
 ```
 
 It owns only workspace-scoped documents. It does not own identity, tenant
-records, tenant membership, workspaces, feature definitions, feature grants,
+records, tenant membership, workspaces, capability definitions, capability grants,
 payments, notifications, or workflow.
 
 ## Boundary
 
 - `documents` stores rows created by this domain.
-- `tenant_projection`, `tenant_membership_projection`, and `workspace_projection`
+- `projected_tenants`, `projected_tenant_memberships`, and `projected_workspaces`
   are local copies of tenancy authority from the `TENANCY` stream.
-- `tenant_feature_projection` is a local tenant feature snapshot from the
-  `FEATURES` stream.
+- `projected_tenant_capabilities` is a local tenant capability snapshot from the
+  `CAPABILITIES` stream.
 - The API verifies identity-issued JWTs through the identity JWKS endpoint.
 
 The domain uses projections for authorization. It never reaches into identity,
-tenancy, or features databases.
+tenancy, or capabilities databases.
 
 ## API
 
@@ -42,7 +42,7 @@ The command succeeds only when:
 - the access token is valid;
 - the workspace exists in the local tenancy projection;
 - the caller is a projected member of the workspace tenant;
-- the tenant has `documents.enabled = true` in the local feature projection.
+- the tenant has `documents.enabled = true` in the local capability projection.
 
 Docs are served at:
 
@@ -73,7 +73,7 @@ make dev-documents
 ```
 
 The root Makefile deploys required dependencies first: identity, tenancy,
-event-bus, and features.
+event-bus, and capabilities.
 
 Domain-owned checks:
 
@@ -92,7 +92,7 @@ Flux Kustomizations live in `clusters/prod-eu/domains/`:
 - `documents-worker`
 
 The live graph keeps `documents-worker` behind `tenancy-worker` and
-`features-worker` because those workers create the streams this worker consumes.
+`capabilities-worker` because those workers create the streams this worker consumes.
 
 When live moves to managed Postgres, remove only `documents-postgres` from the
 Flux graph, run `packages/database/bootstrap/managed-postgres.sql` against the

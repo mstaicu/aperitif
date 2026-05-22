@@ -48,15 +48,15 @@ const INTERNAL_SERVER_ERROR = {
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
+  CAPABILITY_REQUIRED: {
+    status: 403,
+    title: "Capability required",
+    type: "/problems/capability-required",
+  },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",
     type: "/problems/database-unavailable",
-  },
-  FEATURE_REQUIRED: {
-    status: 403,
-    title: "Feature required",
-    type: "/problems/feature-required",
   },
   FORBIDDEN: {
     status: 403,

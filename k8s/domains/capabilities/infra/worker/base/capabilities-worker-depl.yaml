@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: capabilities-worker-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: capabilities-worker
+  template:
+    metadata:
+      labels:
+        app: capabilities-worker
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: capabilities-worker
+      # Defense in deep, disable this at the pod level
+      # to prevent overwrites at the service account level
+      automountServiceAccountToken: false
+
+      containers:
+        - name: capabilities-worker
+          image: mdstaicu/capabilities-worker
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: capabilities-worker-db
+                  key: DATABASE_URL
+
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
+
+          ports:
+            - name: health
+              containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2

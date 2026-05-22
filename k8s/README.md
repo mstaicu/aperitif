@@ -44,8 +44,8 @@ platform/
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
   tenancy/                tenant authority, memberships, workspaces
-  features/               feature authority and tenancy projection
-  documents/              product-domain ABAC proof using tenancy/features projections
+  capabilities/           capability authority and tenancy projection
+  documents/              product-domain ABAC proof using tenancy/capabilities projections
 
 Makefile                  local orchestration
 Brewfile                  local toolchain
@@ -70,8 +70,8 @@ Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
 - `tenancy`: owns tenant authority, tenant memberships, and workspaces.
-- `features`: owns feature definitions, tenant feature grants, and effective feature events.
-- `documents`: owns workspace-scoped documents and proves product-domain ABAC from identity, tenancy, and features projections.
+- `capabilities`: owns capability definitions, tenant capability grants, and effective capability events.
+- `documents`: owns workspace-scoped documents and proves product-domain ABAC from identity, tenancy, and capabilities projections.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -144,7 +144,7 @@ Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of
 make dev
 make dev-identity
 make dev-tenancy
-make dev-features
+make dev-capabilities
 make dev-documents
 ```
 
@@ -153,7 +153,7 @@ Deploy-and-exit targets are useful for checks and CI-style local testing:
 ```sh
 make deploy-identity
 make deploy-tenancy
-make deploy-features
+make deploy-capabilities
 make deploy-documents
 ```
 
@@ -263,7 +263,7 @@ Events are not implicit. If a domain emits or consumes an event, document the su
 
 Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/database`.
 
-Tenant/workspace-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant/workspace-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `tenant_projection`, `tenant_membership_projection`, and `workspace_projection`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
+Tenant/workspace-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant/workspace-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `projected_tenants`, `projected_tenant_memberships`, and `projected_workspaces`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 
 ## How To Work Here
 
@@ -284,11 +284,11 @@ When changing a domain API:
 
 When adding a new domain:
 
-- Create `domains/<domain>` using `identity`, `tenancy`, and `features` as examples.
+- Create `domains/<domain>` using `identity`, `tenancy`, and `capabilities` as examples.
 - Copy the unit spine you need: `identity` is the example for auth API and
-  Remix UI, `tenancy` is the example for tenant authority, and `features` is
-  the example for feature authority. `documents` is the example for a product
-  API using local tenancy and features projections for ABAC.
+  Remix UI, `tenancy` is the example for tenant authority, and `capabilities` is
+  the example for capability authority. `documents` is the example for a product
+  API using local tenancy and capabilities projections for ABAC.
 - Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
 - Add `domains/<domain>/README.md`.
 - Add Skaffold modules for local units.
@@ -306,7 +306,7 @@ Prefer domain-owned checks:
 ```sh
 make -C domains/identity pre-deploy-infra
 make -C domains/tenancy pre-deploy-infra
-make -C domains/features pre-deploy-infra
+make -C domains/capabilities pre-deploy-infra
 make -C domains/documents pre-deploy-infra
 git diff --check
 ```

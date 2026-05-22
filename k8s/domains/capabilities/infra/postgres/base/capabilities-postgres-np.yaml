@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-capabilities-units-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: capabilities-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: capabilities-api
+        - podSelector:
+            matchLabels:
+              app: capabilities-migrate
+        - podSelector:
+            matchLabels:
+              app: capabilities-worker
+      ports:
+        - protocol: TCP
+          port: 5432

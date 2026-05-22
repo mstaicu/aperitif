@@ -131,21 +131,21 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
 
     await client.query(
       `
-        INSERT INTO tenant_projection (
+        INSERT INTO projected_tenants (
           tenant_id,
           version
         )
         VALUES ($1, $2)
         ON CONFLICT (tenant_id) DO UPDATE
         SET version = EXCLUDED.version
-        WHERE tenant_projection.version < EXCLUDED.version
+        WHERE projected_tenants.version < EXCLUDED.version
       `,
       [payload.tenant.id, event.version],
     );
 
     await client.query(
       `
-        INSERT INTO tenant_membership_projection (
+        INSERT INTO projected_tenant_memberships (
           tenant_id,
           user_id,
           role,
@@ -155,7 +155,7 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
         ON CONFLICT (tenant_id, user_id) DO UPDATE
         SET role = EXCLUDED.role,
           version = EXCLUDED.version
-        WHERE tenant_membership_projection.version < EXCLUDED.version
+        WHERE projected_tenant_memberships.version < EXCLUDED.version
       `,
       [
         payload.membership.tenant_id,
@@ -191,14 +191,14 @@ async function projectV1TenantUpdated(ctx, event) {
 
     await client.query(
       `
-        INSERT INTO tenant_projection (
+        INSERT INTO projected_tenants (
           tenant_id,
           version
         )
         VALUES ($1, $2)
         ON CONFLICT (tenant_id) DO UPDATE
         SET version = EXCLUDED.version
-        WHERE tenant_projection.version < EXCLUDED.version
+        WHERE projected_tenants.version < EXCLUDED.version
       `,
       [payload.tenant.id, event.version],
     );
@@ -234,21 +234,21 @@ async function projectV1WorkspaceUpdated(ctx, event) {
 
     await client.query(
       `
-        INSERT INTO tenant_projection (
+        INSERT INTO projected_tenants (
           tenant_id,
           version
         )
         VALUES ($1, $2)
         ON CONFLICT (tenant_id) DO UPDATE
         SET version = EXCLUDED.version
-        WHERE tenant_projection.version < EXCLUDED.version
+        WHERE projected_tenants.version < EXCLUDED.version
       `,
       [payload.tenant.id, event.version],
     );
 
     await client.query(
       `
-        INSERT INTO workspace_projection (
+        INSERT INTO projected_workspaces (
           workspace_id,
           tenant_id,
           version
@@ -257,7 +257,7 @@ async function projectV1WorkspaceUpdated(ctx, event) {
         ON CONFLICT (workspace_id) DO UPDATE
         SET tenant_id = EXCLUDED.tenant_id,
           version = EXCLUDED.version
-        WHERE workspace_projection.version < EXCLUDED.version
+        WHERE projected_workspaces.version < EXCLUDED.version
       `,
       [payload.workspace.id, payload.workspace.tenant_id, event.version],
     );

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: capabilities
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+patches:
+  - path: capabilities-postgres-depl.yaml
+
+configMapGenerator:
+  - name: capabilities-postgres-init
+    files:
+      - capabilities-postgres-init.sql

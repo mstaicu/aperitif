@@ -9,16 +9,16 @@ the documents database.
 Postgres server or instance
   documents database
     public schema
-      tenant_projection
-      tenant_membership_projection
-      workspace_projection
-      tenant_feature_projection
+      projected_tenants
+      projected_tenant_memberships
+      projected_workspaces
+      projected_tenant_capabilities
       documents
       flyway_schema_history
 ```
 
 The projection tables are local authorization inputs copied from tenancy and
-features events. `tenant_feature_projection` stores one feature snapshot per
+capabilities events. `projected_tenant_capabilities` stores one capability snapshot per
 tenant. `documents` is the only product table owned by this domain. Other
 domains must not connect to this database.
 

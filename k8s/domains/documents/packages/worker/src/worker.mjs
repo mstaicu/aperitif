@@ -3,15 +3,15 @@ import http from "node:http";
 import process from "node:process";
 
 import { createContext } from "./platform/context.mjs";
-import { ensureFeaturesConsumer } from "./platform/messaging/features-consumer.mjs";
+import { ensureCapabilitiesConsumer } from "./platform/messaging/capabilities-consumer.mjs";
 import { ensureTenancyConsumer } from "./platform/messaging/tenancy-consumer.mjs";
-import { runProjectFeatures } from "./tasks/project-features.mjs";
+import { runProjectCapabilities } from "./tasks/project-capabilities.mjs";
 import { runProjectTenancy } from "./tasks/project-tenancy.mjs";
 
 const ctx = await createContext();
 const controller = new AbortController();
 
-await ensureFeaturesConsumer(ctx);
+await ensureCapabilitiesConsumer(ctx);
 await ensureTenancyConsumer(ctx);
 
 const health = http.createServer((req, res) => {
@@ -24,7 +24,7 @@ const health = http.createServer((req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectFeatures(ctx, controller.signal),
+  runProjectCapabilities(ctx, controller.signal),
   runProjectTenancy(ctx, controller.signal),
 ];
 const shutdown = Promise.race(

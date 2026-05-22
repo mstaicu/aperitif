@@ -9,7 +9,7 @@ workspaces.
 - `tenant_memberships` grant tenant-level authority to authenticated identity.
 - `workspaces` are operational resource containers inside a tenant.
 
-Identity stays in `identity`. Feature grants, profiles, documents,
+Identity stays in `identity`. Capability grants, profiles, documents,
 notifications, workflow, and integrations should live in their own domains and
 reference `tenant_id` or `workspace_id` when they own tenant/workspace-scoped
 resources.

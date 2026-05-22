@@ -1,6 +1,6 @@
 import { DatabaseError } from "pg";
 
-const REQUIRED_FEATURE_ID = "documents.enabled";
+const REQUIRED_CAPABILITY_ID = "documents.enabled";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -30,8 +30,8 @@ export const createDocument =
       } = await client.query(
         `
           SELECT w.tenant_id
-          FROM workspace_projection w
-          JOIN tenant_projection t ON t.tenant_id = w.tenant_id
+          FROM projected_workspaces w
+          JOIN projected_tenants t ON t.tenant_id = w.tenant_id
           WHERE w.workspace_id = $1
         `,
         [workspaceId],
@@ -46,7 +46,7 @@ export const createDocument =
       } = await client.query(
         `
           SELECT 1
-          FROM tenant_membership_projection
+          FROM projected_tenant_memberships
           WHERE tenant_id = $1
             AND user_id = $2
         `,
@@ -58,25 +58,29 @@ export const createDocument =
       }
 
       const {
-        rows: [featureProjection],
-      } = await client.query(
-        `
-          SELECT features
-          FROM tenant_feature_projection
-          WHERE tenant_id = $1
-        `,
-        [workspace.tenant_id],
-      );
-
-      const hasRequiredFeature =
-        Array.isArray(featureProjection?.features) &&
-        featureProjection.features.some(
-          (feature) =>
-            feature?.id === REQUIRED_FEATURE_ID && feature?.value === true,
+        rows: [capabilityProjection],
+      } =
+        /** @type {{ rows: { capabilities?: { id?: unknown, value?: unknown }[] }[] }} */ (
+          await client.query(
+            `
+              SELECT capabilities
+              FROM projected_tenant_capabilities
+              WHERE tenant_id = $1
+            `,
+            [workspace.tenant_id],
+          )
         );
 
-      if (!hasRequiredFeature) {
-        throw new Error("FEATURE_REQUIRED");
+      const hasRequiredCapability =
+        Array.isArray(capabilityProjection?.capabilities) &&
+        capabilityProjection.capabilities.some(
+          (capability) =>
+            capability?.id === REQUIRED_CAPABILITY_ID &&
+            capability?.value === true,
+        );
+
+      if (!hasRequiredCapability) {
+        throw new Error("CAPABILITY_REQUIRED");
       }
 
       const {

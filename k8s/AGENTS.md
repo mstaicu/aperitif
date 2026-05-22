@@ -7,7 +7,7 @@ failure cases.
 - Treat this `k8s/` directory as the working repo root. GitHub workflows are
   intentionally under `k8s/.github`.
 - Use Make targets for integration deploy checks: `make deploy-identity`,
-  `make deploy-tenancy`, `make deploy-features`, or `make dev`. Do not invent
+  `make deploy-tenancy`, `make deploy-capabilities`, or `make dev`. Do not invent
   ad hoc deployment order.
 - Domain units stay separate: `postgres -> migrate -> api/worker`. Do not collapse
   them into one Kubernetes app abstraction.

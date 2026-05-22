@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: capabilities-postgres-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: capabilities-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+
+          volumeMounts:
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d/001-capabilities-init.sql
+              subPath: capabilities-postgres-init.sql
+              readOnly: true
+
+      volumes:
+        - name: postgres-init
+          configMap:
+            name: capabilities-postgres-init

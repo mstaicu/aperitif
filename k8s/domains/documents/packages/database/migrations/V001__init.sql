@@ -28,15 +28,15 @@ ON SEQUENCES TO documents_runtime;
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE tenant_projection (
+CREATE TABLE projected_tenants (
     tenant_id UUID PRIMARY KEY,
 
     version BIGINT NOT NULL
 );
 
-CREATE TABLE tenant_membership_projection (
+CREATE TABLE projected_tenant_memberships (
     tenant_id UUID NOT NULL
-        REFERENCES tenant_projection(tenant_id)
+        REFERENCES projected_tenants(tenant_id)
         ON DELETE CASCADE,
 
     user_id UUID NOT NULL,
@@ -48,20 +48,20 @@ CREATE TABLE tenant_membership_projection (
     PRIMARY KEY (tenant_id, user_id)
 );
 
-CREATE TABLE workspace_projection (
+CREATE TABLE projected_workspaces (
     workspace_id UUID PRIMARY KEY,
 
     tenant_id UUID NOT NULL
-        REFERENCES tenant_projection(tenant_id)
+        REFERENCES projected_tenants(tenant_id)
         ON DELETE CASCADE,
 
     version BIGINT NOT NULL
 );
 
-CREATE TABLE tenant_feature_projection (
+CREATE TABLE projected_tenant_capabilities (
     tenant_id UUID PRIMARY KEY,
 
-    features JSONB NOT NULL,
+    capabilities JSONB NOT NULL,
 
     version BIGINT NOT NULL
 );
@@ -70,10 +70,10 @@ CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     tenant_id UUID NOT NULL
-        REFERENCES tenant_projection(tenant_id),
+        REFERENCES projected_tenants(tenant_id),
 
     workspace_id UUID NOT NULL
-        REFERENCES workspace_projection(workspace_id),
+        REFERENCES projected_workspaces(workspace_id),
 
     title TEXT NOT NULL,
 

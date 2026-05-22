@@ -1,0 +1,1 @@
+export const CAPABILITIES_STREAM = "CAPABILITIES";

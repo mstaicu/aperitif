@@ -17,7 +17,7 @@ spec:
   dependsOn:
     - name: event-bus
     - name: tenancy-worker
-    - name: features-worker
+    - name: capabilities-worker
     - name: documents-migrate
   wait: true
   timeout: 5m

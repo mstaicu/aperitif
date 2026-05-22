@@ -44,10 +44,10 @@ spec:
               app: tenancy-api
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: features
+              kubernetes.io/metadata.name: capabilities
           podSelector:
             matchLabels:
-              app: features-api
+              app: capabilities-api
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: documents

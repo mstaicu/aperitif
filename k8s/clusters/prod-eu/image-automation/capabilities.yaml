@@ -1,0 +1,89 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: capabilities-api
+spec:
+  image: docker.io/mdstaicu/capabilities-api
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: capabilities-migrate
+spec:
+  image: docker.io/mdstaicu/capabilities-migrate
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: capabilities-worker
+spec:
+  image: docker.io/mdstaicu/capabilities-worker
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: capabilities-api-latest
+spec:
+  imageRepositoryRef:
+    name: capabilities-api
+  filterTags:
+    pattern: "^[a-f0-9]{7}$"
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: capabilities-migrate-latest
+spec:
+  imageRepositoryRef:
+    name: capabilities-migrate
+  filterTags:
+    pattern: "^[a-f0-9]{7}$"
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: capabilities-worker-latest
+spec:
+  imageRepositoryRef:
+    name: capabilities-worker
+  filterTags:
+    pattern: "^[a-f0-9]{7}$"
+  policy:
+    latest: {}
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+
+metadata:
+  name: capabilities
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: master
+    commit:
+      author:
+        email: flux@tma.com
+        name: FluxCD Bot
+    push:
+      branch: master
+  update:
+    path: ./k8s/domains/capabilities/infra
+    strategy: Setters

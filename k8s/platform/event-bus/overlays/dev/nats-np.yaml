@@ -84,10 +84,10 @@ spec:
               app: tenancy-worker
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: features
+              kubernetes.io/metadata.name: capabilities
           podSelector:
             matchLabels:
-              app: features-worker
+              app: capabilities-worker
       ports:
         - port: 4222
           protocol: TCP

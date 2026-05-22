@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: capabilities
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - capabilities-migrate-db.yaml
+
+images:
+  - name: mdstaicu/capabilities-migrate
+    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
+    # meaning: flux-system:capabilities-migrate-latest
+    newTag: latest # {"$imagepolicy": "flux-system:capabilities-migrate-latest"}
