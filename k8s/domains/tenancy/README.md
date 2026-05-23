@@ -81,7 +81,7 @@ postgres -> migrate -> api/worker
 Current Kubernetes-expressed units:
 
 - `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
-- `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
+- `migrate`: one-shot Flyway migration Job built from `packages/migrate/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `worker`: outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
 
@@ -96,7 +96,7 @@ Keep each deployable unit independently addressable. Do not hide `postgres`, `mi
 Local development is driven by Skaffold modules in `skaffold.yaml`:
 
 - `tenancy-postgres-dev` applies `infra/postgres/overlays/dev`.
-- `tenancy-migrate-dev` builds `mdstaicu/tenancy-migrate` from `packages/database/` and applies `infra/migrate/overlays/dev`.
+- `tenancy-migrate-dev` builds `mdstaicu/tenancy-migrate` from `packages/migrate/` and applies `infra/migrate/overlays/dev`.
 - `tenancy-api-dev` builds `mdstaicu/tenancy-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
 - `tenancy-worker-dev` builds `mdstaicu/tenancy-worker` from `packages/worker/`, applies `infra/worker/overlays/dev`, and syncs `packages/worker/src/**/*`.
 
@@ -111,7 +111,7 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `tenancy-api` points at `domains/tenancy/infra/api/overlays/live`, depends on `tenancy-migrate`, `identity-api`, and platform ingress.
 - `tenancy-worker` points at `domains/tenancy/infra/worker/overlays/live`, depends on `tenancy-migrate` and platform event-bus.
 
-The live order must remain `postgres -> migrate -> api/worker`. Migration, API, and worker images are Flux-managed through `clusters/prod-eu/image-automation/tenancy.yaml`.
+The live order must remain `postgres -> migrate -> api/worker`. Migration, API, and worker image tags are updated by the deployment workflow, then Flux reconciles the live overlays.
 
 Secrets are per deployable unit. Keep `tenancy-api-db`, `tenancy-migrate-db`, and `tenancy-worker-db` as separate Secret names because the API, migrator, and worker use different database roles.
 
@@ -126,7 +126,7 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
   stream. Outbox rows store the complete event envelope as JSON, so the worker
   publishes the event exactly as recorded in the transaction.
 - Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
-- Database: tenancy owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
+- Database: tenancy owns its schema and Flyway migration package in `packages/migrate/`. Other domains must not read or write this database directly.
 
 ## Event Publishing Mechanics
 

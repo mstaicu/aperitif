@@ -48,7 +48,7 @@ CREATE TABLE tenant_capability_grants (
     PRIMARY KEY (tenant_id, grant_id, capability_id)
 );
 
-CREATE SEQUENCE capability_version_seq AS BIGINT;
+CREATE SEQUENCE tenant_capabilities_version_seq AS BIGINT;
 
 CREATE TABLE projected_tenants (
     tenant_id UUID PRIMARY KEY,

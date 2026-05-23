@@ -24,13 +24,12 @@ postgres -> migrate -> api/ui/worker
 
 ```text
 .github/
-  workflows/              pull request integration workflows
+  workflows/              integration and deployment workflows
 
 clusters/
   prod-eu/
     platform/             Flux Kustomizations for platform units
     domains/              Flux Kustomizations for domain units
-    image-automation/     Flux image repositories, policies, and updates
     flux-system/          bootstrap notes; Flux creates runtime sync resources
   staging-eu/
     flux-system/          bootstrap notes
@@ -175,10 +174,10 @@ make deploy-ingress DOMAIN=example.test
 
 ## Pull Request Integration
 
-The GitHub workflow under `.github/workflows/domains.yaml` detects changed
-domains under `domains/**`, runs each domain's `pre-deploy` target, creates a
-kind cluster, deploys each selected domain through the matching root
-`deploy-<domain>` target, port-forwards Traefik, and runs each domain's
+The GitHub workflows under `.github/workflows/integration-*.yaml` run per domain.
+Each workflow watches one `domains/<domain>/**` tree, runs that domain's
+`pre-deploy` target, creates a kind cluster, deploys through the matching root
+`deploy-<domain>` target, port-forwards Traefik, and runs that domain's
 `post-deploy` target.
 
 This intentionally reuses the same dev overlays and Make/Skaffold path used locally.
@@ -193,11 +192,16 @@ clusters/prod-eu/kustomization.yaml
 
 That file includes:
 
-- `image-automation`
 - `platform.yaml`
 - `domains.yaml`
 
 `platform.yaml` reconciles platform units. `domains.yaml` reconciles domain units.
+
+Container image digests are updated by the per-unit
+`.github/workflows/deploy-*.yaml` workflows after a merge to `master`; Flux only
+reconciles the Git state. Images are pushed with tags derived from each
+deployable package tree, then live overlays are pinned to the digest returned by
+Docker Buildx.
 
 For each domain, live Flux Kustomizations should preserve this dependency order:
 
@@ -261,7 +265,7 @@ Route work should preserve:
 
 Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, consumers, and delivery expectation.
 
-Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/database`.
+Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/migrate`.
 
 Tenant/workspace-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant/workspace-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `projected_tenants`, `projected_tenant_memberships`, and `projected_workspaces`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 

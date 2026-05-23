@@ -12,7 +12,7 @@ import { buildTenantCapabilitiesUpdatedEvent } from "../../events/index.mjs";
 /**
  * @typedef {object} CapabilityGrantRow
  * @property {string | undefined} [grant_id]
- * @property {string | null} id
+ * @property {string | null} capability_id
  * @property {"boolean_or" | "number_max" | "number_sum" | null} merge_strategy
  * @property {unknown} value
  * @property {"boolean" | "number" | null} value_type
@@ -53,7 +53,7 @@ export const addTenantCapabilities =
       /** @type {{ rows: CapabilityGrantRow[] }} */
       const grantsResult = await client.query(
         `
-          SELECT f.id,
+          SELECT f.id AS capability_id,
             g.value,
             f.merge_strategy,
             f.value_type
@@ -70,7 +70,7 @@ export const addTenantCapabilities =
       const requestedGrantsResult = await client.query(
         `
           SELECT incoming.grant_id,
-            f.id,
+            f.id AS capability_id,
             incoming.value,
             f.merge_strategy,
             f.value_type
@@ -92,7 +92,11 @@ export const addTenantCapabilities =
       const tenantCapabilitiesById = new Map();
 
       for (const grant of pendingGrants) {
-        if (!grant.id || !grant.merge_strategy || !grant.value_type) {
+        if (
+          !grant.capability_id ||
+          !grant.merge_strategy ||
+          !grant.value_type
+        ) {
           throw new Error("CAPABILITY_NOT_FOUND");
         }
 
@@ -110,11 +114,11 @@ export const addTenantCapabilities =
           throw new Error("INVALID_CAPABILITY_VALUE");
         }
 
-        const current = tenantCapabilitiesById.get(grant.id);
+        const current = tenantCapabilitiesById.get(grant.capability_id);
 
         if (!current) {
-          tenantCapabilitiesById.set(grant.id, {
-            id: grant.id,
+          tenantCapabilitiesById.set(grant.capability_id, {
+            id: grant.capability_id,
             value: grant.value,
           });
           continue;
@@ -147,7 +151,7 @@ export const addTenantCapabilities =
         rows: [{ version }],
       } = await client.query(
         `
-          SELECT nextval('capability_version_seq') AS version
+          SELECT nextval('tenant_capabilities_version_seq') AS version
         `,
       );
 
@@ -161,11 +165,11 @@ export const addTenantCapabilities =
           )
           SELECT $1,
             incoming.grant_id,
-            incoming.id,
+            incoming.capability_id,
             incoming.value
           FROM jsonb_to_recordset($2::jsonb) AS incoming(
             grant_id UUID,
-            id TEXT,
+            capability_id TEXT,
             value JSONB
           )
         `,

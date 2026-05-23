@@ -13,6 +13,4 @@ patches:
 
 images:
   - name: mdstaicu/tenancy-api
-    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
-    # meaning: flux-system:tenancy-api-latest
-    newTag: latest # {"$imagepolicy": "flux-system:tenancy-api-latest"}
+    newTag: latest

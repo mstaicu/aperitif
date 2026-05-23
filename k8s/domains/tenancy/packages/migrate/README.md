@@ -1,6 +1,6 @@
-# Capabilities Database
+# Tenancy Database
 
-This package builds the `capabilities-migrate` unit. Flyway owns the capabilities
+This package builds the `tenancy-migrate` unit. Flyway owns the tenancy
 database schema history.
 
 ## Model
@@ -9,47 +9,30 @@ Postgres is layered like this:
 
 ```text
 Postgres server or instance
-  capabilities database
-      public schema
-      capabilities
-      projected_tenants
-      tenant_capability_grants
-      capability_version_seq
+  tenancy database
+    public schema
+      tenants
+      tenant_memberships
+      workspaces
       outbox_events
       flyway_schema_history
 ```
 
-`capabilities` is the tenant-level capability vocabulary. Current capability values are
-deliberately limited to booleans and numbers because those are the only merge
-strategies this domain currently supports.
-
-`projected_tenants` is the local tenant existence copy built from tenancy
-events. Projection writes are idempotent through natural keys and projection
-`version`.
-
-`tenant_capability_grants` records current tenant-specific inputs that grant capability
-values. Effective tenant capability values are calculated from those rows when
-capability events are written. `outbox_events` is the durable publisher queue for
-tenant capability events.
-
-Capability authority rows store tenancy-owned `tenant_id` values, but they are not
-foreign-key children of projection tables. Rebuilding tenancy projections must
-not delete capability grant rows.
-
-Grant-writing code updates `tenant_capability_grants`, calculates the effective tenant
-capability values, and inserts the matching `outbox_events` row in the same
-transaction.
+`public` is the default schema. After a client connects to the `tenancy`
+database, `SELECT * FROM tenants` means `SELECT * FROM public.tenants`.
 
 The domain boundary is the database. Other domains must not connect to it
 directly.
+
+`workspaces` are operational containers inside a tenant. Tenant creation does
+not require a workspace; resource domains create workspaces when they need
+operational resource containers. Tenant membership controls workspace access for
+now; there are no workspace memberships in this baseline.
 
 ## Files
 
 - `bootstrap/managed-postgres.sql`: admin-run managed DB role/grant bootstrap.
 - `migrations/`: production Flyway migrations, named `V###__description.sql`.
-
-`V002__seed_capabilities.sql` seeds a few simple tenant-level capabilities used to prove
-capability grants.
 
 ## Flyway Rules
 
@@ -68,33 +51,31 @@ V001__init.sql       versioned migration, applied once in version order
 | Role                | Login | Used by                 | Purpose                         |
 | ------------------- | ----- | ----------------------- | ------------------------------- |
 | `postgres`          | yes   | local/CI init only      | placeholder bootstrap superuser |
-| `capabilities_migrator` | yes   | Flyway Job              | create/change schema objects    |
-| `capabilities_api`      | yes   | API Deployment          | runtime table access            |
-| `capabilities_worker`   | yes   | Worker Deployment       | runtime table access            |
-| `capabilities_runtime`  | no    | inherited by API/worker | shared runtime grants           |
+| `tenancy_migrator` | yes   | Flyway Job              | create/change schema objects    |
+| `tenancy_api`      | yes   | API Deployment          | runtime table access            |
+| `tenancy_worker`   | yes   | Worker Deployment       | runtime table access            |
+| `tenancy_runtime`  | no    | inherited by API/worker | shared runtime grants           |
 
-Services connect with login roles only. `capabilities_runtime` is a no-login role
+Services connect with login roles only. `tenancy_runtime` is a no-login role
 so runtime grants have one stable target.
 
 ## Flow
 
-1. Local/CI starts the placeholder Postgres image with `POSTGRES_DB=capabilities`
+1. Local/CI starts the placeholder Postgres image with `POSTGRES_DB=tenancy`
    and overlay `POSTGRES_PASSWORD=postgres`.
 2. On an empty data directory, Postgres runs
-   `infra/postgres/overlays/{dev,live}/capabilities-postgres-init.sql` as the
+   `infra/postgres/overlays/{dev,live}/tenancy-postgres-init.sql` as the
    `postgres` superuser.
-3. That init SQL creates `capabilities_migrator`, `capabilities_api`,
-   `capabilities_worker`, and `capabilities_runtime`, then grants base database/schema
+3. That init SQL creates `tenancy_migrator`, `tenancy_api`,
+   `tenancy_worker`, and `tenancy_runtime`, then grants base database/schema
    access.
-4. The migrate Job reads `FLYWAY_*` from `capabilities-migrate-db` and connects as
-   `capabilities_migrator`.
+4. The migrate Job reads `FLYWAY_*` from `tenancy-migrate-db` and connects as
+   `tenancy_migrator`.
 5. Flyway applies this package's migrations. Migrations create objects and grant
-   table/sequence access to `capabilities_runtime`.
-6. The API and worker read `DATABASE_URL` from `capabilities-api-db` and
-   `capabilities-worker-db`, then connect as `capabilities_api` and `capabilities_worker`.
-   Both inherit `capabilities_runtime`.
-7. The worker consumes tenancy events into projection tables and publishes
-   capability events from `outbox_events` to NATS JetStream.
+   table/sequence access to `tenancy_runtime`.
+6. The API and worker read `DATABASE_URL` from `tenancy-api-db` and
+   `tenancy-worker-db`, then connect as `tenancy_api` and `tenancy_worker`.
+   Both inherit `tenancy_runtime`.
 
 The split is intentional: bootstrap creates roles and base permissions; Flyway
 owns schema objects and object-level grants.
@@ -112,23 +93,41 @@ Secret contains only database connection credentials.
 
 The in-cluster Postgres init SQL is for local/CI and the current live
 placeholder. Managed production should run `bootstrap/managed-postgres.sql`
-with real passwords before Flux reconciles `capabilities-migrate`.
+with real passwords before Flux reconciles `tenancy-migrate`.
 
 Secrets are scoped per deployable unit even when values match. The migrator
-uses `capabilities_migrator`; the API uses `capabilities_api`; the worker uses
-`capabilities_worker`.
+uses `tenancy_migrator`; the API uses `tenancy_api`; the worker uses
+`tenancy_worker`.
 
 ## Image
 
 The migration image is built from this package directory:
 
 ```sh
-docker build -t mdstaicu/capabilities-migrate:<tag> domains/capabilities/packages/database
+docker build --target prod -t mdstaicu/tenancy-migrate:<tag> domains/tenancy/packages/migrate
 ```
 
 Use a real immutable release tag for production. Use `:local` only for manual
-testing. Normally use `make deploy-capabilities`; Skaffold builds and tags this
+testing. Normally use `make deploy-tenancy`; Skaffold builds and tags this
 image for the domain deploy path.
+
+## Debug
+
+Render placeholder Postgres auth env:
+
+```sh
+kubectl kustomize infra/postgres/overlays/dev | rg "POSTGRES_DB|POSTGRES_PASSWORD|POSTGRES_HOST_AUTH_METHOD"
+```
+
+Check the API can connect with its configured secret:
+
+```sh
+kubectl exec -n tenancy deploy/tenancy-api-depl -- \
+  node --input-type=module -e 'import pg from "pg"; const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL }); await pool.query("select 1"); await pool.end(); console.log("connected");'
+```
+
+Do not use `psql -h 127.0.0.1` inside the Postgres container to prove service
+auth. The useful auth check is from another pod through `postgres-srv`.
 
 ## Migration Style
 
@@ -155,7 +154,7 @@ adding a value old code safely ignores.
 Run the full domain path instead of building or pushing the image by hand:
 
 ```sh
-make deploy-capabilities
+make deploy-tenancy
 ```
 
 Current local and placeholder-live order is `postgres -> migrate -> api/worker`.

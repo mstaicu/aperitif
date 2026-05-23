@@ -1,4 +1,4 @@
-FROM flyway/flyway:12.4.0
+FROM flyway/flyway:12.4.0 AS prod
 
 COPY migrations /db/migrations
 

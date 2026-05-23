@@ -1,22 +1,23 @@
+name: integration / documents
+
 on:
   pull_request:
     paths:
-      - "domains/*/**"
+      - "domains/documents/**"
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   integration:
     runs-on: ubuntu-latest
 
     concurrency:
-      group: pull-request-${{ github.event.pull_request.number || github.ref }}
+      group: integration-documents-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
 
     env:
-      CLUSTER_NAME: domains-${{ github.event.pull_request.number }}
+      CLUSTER_NAME: integration-documents-${{ github.event.pull_request.number }}
       DOMAIN: tma.com
       KSOPS_VERSION: 4.5.1
       MKCERT_VERSION: v1.4.4
@@ -27,46 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Scope this job to changed domain deployable units. The Make dry-run is
-      # the structural guard for new domains: a domain folder needs a matching
-      # root deploy target before CI can evaluate it.
-      - name: select domains
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const { execFileSync } = require("node:child_process");
-
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              per_page: 100,
-            });
-
-            const domains = [...new Set(
-              files
-                .map((file) => file.filename.match(/^domains\/([^/]+)\//)?.[1])
-                .filter(Boolean),
-            )].sort();
-
-            if (domains.length === 0) {
-              core.setFailed("No changed domain deploy target selected.");
-              return;
-            }
-
-            for (const domain of domains) {
-              execFileSync("make", ["-n", `deploy-${domain}`], { stdio: "ignore" });
-            }
-
-            core.exportVariable("CHANGED_DOMAINS", domains.join(" "));
-
-      # Install tools before domain checks, but do not create the cluster until
-      # the cheap domain-owned checks pass.
-      - name: setup kubectl
-        uses: azure/setup-kubectl@v4.0.1
-
-      - name: setup kustomize
-        uses: imranismail/setup-kustomize@v2.1.0
+      - uses: azure/setup-kubectl@v4.0.1
+      - uses: imranismail/setup-kustomize@v2.1.0
 
       - name: install tools
         run: |
@@ -89,7 +52,6 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
-      # CI uses the same encrypted dev overlays as local integration checks.
       - name: configure sops age key
         run: |
           if [ -z "$SOPS_AGE_KEY" ]; then
@@ -101,15 +63,9 @@ jobs:
           printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
           chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
           echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
-      #
-      # Keep GitHub Actions as orchestration and let each SCS own its
-      # pre-deploy checks through a domain-local Makefile.
-      #
-      - name: pre-deploy domains
-        run: |
-          for domain in $CHANGED_DOMAINS; do
-            make -C "domains/$domain" pre-deploy
-          done
+
+      - name: pre-deploy documents
+        run: make -C domains/documents pre-deploy
 
       - name: create kind cluster
         uses: helm/kind-action@v1.14.0
@@ -122,29 +78,17 @@ jobs:
           kubectl config use-context "kind-${CLUSTER_NAME}"
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
-      # Current required proof: each changed domain can deploy through the same
-      # Make/Skaffold path developers use locally.
-      - name: deploy domains
-        run: |
-          for domain in $CHANGED_DOMAINS; do
-            make "deploy-$domain"
-          done
+      - name: deploy documents
+        run: make deploy-documents
 
-      # Hit the real Gateway/Traefik path from the runner instead of calling
-      # services directly inside the cluster.
       - name: expose ingress
         run: |
           kubectl -n traefik port-forward svc/traefik-lb 8443:443 > /tmp/traefik-port-forward.log 2>&1 &
           echo "$!" > /tmp/traefik-port-forward.pid
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
-      # Keep PR post-deploy checks tiny and stable. Domain-local Makefiles own
-      # route ownership, startup, auth boundary behavior, and public contracts.
-      - name: post-deploy domains
-        run: |
-          for domain in $CHANGED_DOMAINS; do
-            make -C "domains/$domain" post-deploy DOMAIN="$DOMAIN" PORT=8443
-          done
+      - name: post-deploy documents
+        run: make -C domains/documents post-deploy DOMAIN="$DOMAIN" PORT=8443
 
       - name: cleanup
         if: always()

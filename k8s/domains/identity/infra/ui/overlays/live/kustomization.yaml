@@ -12,6 +12,4 @@ patches:
 
 images:
   - name: mdstaicu/identity-ui
-    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
-    # meaning: flux-system:identity-ui-latest
-    newTag: latest # {"$imagepolicy": "flux-system:identity-ui-latest"}
+    newTag: latest

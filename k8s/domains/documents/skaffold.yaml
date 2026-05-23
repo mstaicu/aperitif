@@ -25,7 +25,7 @@ build:
 
   artifacts:
     - image: mdstaicu/documents-migrate
-      context: packages/database
+      context: packages/migrate
       docker:
         dockerfile: Dockerfile
 

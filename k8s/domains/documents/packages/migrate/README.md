@@ -60,7 +60,7 @@ For managed production Postgres, run this before Flux reconciles
   -v documents_migrator_password='real-migrator-password' \
   -v documents_api_password='real-api-password' \
   -v documents_worker_password='real-worker-password' \
-  -f domains/documents/packages/database/bootstrap/managed-postgres.sql
+  -f domains/documents/packages/migrate/bootstrap/managed-postgres.sql
 ```
 
 Then put the matching credentials into the live SOPS Secrets for migrate, API,
@@ -80,7 +80,7 @@ or seed folders can be added later, but they are not part of this unit today.
 Build the production migration image from this package:
 
 ```sh
-docker build -t mdstaicu/documents-migrate:<tag> domains/documents/packages/database
+docker build --target prod -t mdstaicu/documents-migrate:<tag> domains/documents/packages/migrate
 ```
 
 Normally use the domain deployment path instead:

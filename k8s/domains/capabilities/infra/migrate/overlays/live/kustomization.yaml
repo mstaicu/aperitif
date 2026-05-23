@@ -10,6 +10,4 @@ resources:
 
 images:
   - name: mdstaicu/capabilities-migrate
-    # This field is managed by this ImagePolicy: <namespace>:<imagepolicy-name>
-    # meaning: flux-system:capabilities-migrate-latest
-    newTag: latest # {"$imagepolicy": "flux-system:capabilities-migrate-latest"}
+    newTag: latest

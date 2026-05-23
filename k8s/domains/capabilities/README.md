@@ -66,7 +66,7 @@ postgres -> migrate -> api/worker
 Current Kubernetes-expressed units:
 
 - `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
-- `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
+- `migrate`: one-shot Flyway migration Job built from `packages/migrate/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `worker`: tenancy projection consumer and capabilities outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
 
@@ -82,7 +82,7 @@ Keep each deployable unit independently addressable. Do not hide `postgres`,
 Local development is driven by Skaffold modules in `skaffold.yaml`:
 
 - `capabilities-postgres-dev` applies `infra/postgres/overlays/dev`.
-- `capabilities-migrate-dev` builds `mdstaicu/capabilities-migrate` from `packages/database/` and applies `infra/migrate/overlays/dev`.
+- `capabilities-migrate-dev` builds `mdstaicu/capabilities-migrate` from `packages/migrate/` and applies `infra/migrate/overlays/dev`.
 - `capabilities-api-dev` builds `mdstaicu/capabilities-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
 - `capabilities-worker-dev` builds `mdstaicu/capabilities-worker` from `packages/worker/`, applies `infra/worker/overlays/dev`, and syncs `packages/worker/src/**/*`.
 
@@ -102,8 +102,8 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 The live order must remain `postgres -> migrate -> api/worker`. The worker also
 depends on `tenancy-worker` because the tenancy domain owns the `TENANCY` event
 stream that capabilities consumes for local authority projections. Migration, API,
-and worker images are Flux-managed through
-`clusters/prod-eu/image-automation/capabilities.yaml`.
+and worker image tags are updated by the deployment workflow, then Flux reconciles
+the live overlays.
 
 Secrets are per deployable unit. Keep `capabilities-api-db`, `capabilities-migrate-db`,
 and `capabilities-worker-db` as separate Secret names because the API, migrator,
@@ -118,7 +118,7 @@ graph, run the database bootstrap SQL against the managed database, and keep
 - OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/capabilities/docs`.
 - Identity dependency: capabilities validates identity-issued tokens through the identity JWKS URL and the shared API audience. It does not own identity records.
 - Events: capabilities consumes tenancy authority events through the `capabilities-tenancy-projection` durable consumer on the tenancy-owned `TENANCY` stream. It publishes capability authority events from its own transactional outbox to the `CAPABILITIES` stream.
-- Database: capabilities owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
+- Database: capabilities owns its schema and Flyway migration package in `packages/migrate/`. Other domains must not read or write this database directly.
 
 ## Tenancy Projection
 

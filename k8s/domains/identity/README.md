@@ -43,7 +43,7 @@ postgres -> migrate -> api -> ui
 Current Kubernetes-deployable units:
 
 - `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
-- `migrate`: one-shot Flyway migration Job built from `packages/database/` and deployed from `infra/migrate/overlays/{dev,live}`.
+- `migrate`: one-shot Flyway migration Job built from `packages/migrate/` and deployed from `infra/migrate/overlays/{dev,live}`.
 - `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
 - `ui`: Remix 3 beta UI built from `packages/ui/` and expressed under `infra/ui/overlays/{dev,live}`.
 
@@ -56,7 +56,7 @@ Keep each deployable unit independently addressable. Do not hide `postgres`, `mi
 Local development is driven by Skaffold modules in `skaffold.yaml`:
 
 - `identity-postgres-dev` applies `infra/postgres/overlays/dev`.
-- `identity-migrate-dev` builds `mdstaicu/identity-migrate` from `packages/database/` and applies `infra/migrate/overlays/dev`.
+- `identity-migrate-dev` builds `mdstaicu/identity-migrate` from `packages/migrate/` and applies `infra/migrate/overlays/dev`.
 - `identity-api-dev` builds `mdstaicu/identity-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
 - `identity-ui-dev` builds `mdstaicu/identity-ui` from `packages/ui/`, applies `infra/ui/overlays/dev`, and syncs `packages/ui/app/**/*`, `packages/ui/public/**/*`, and `packages/ui/server.ts`.
 
@@ -71,7 +71,7 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `identity-api` points at `domains/identity/infra/api/overlays/live`, depends on `identity-migrate` and platform ingress.
 - `identity-ui` points at `domains/identity/infra/ui/overlays/live`, depends on `identity-api` and platform ingress.
 
-The live order must remain `postgres -> migrate -> api -> ui`. Migration, API, and UI images are Flux-managed through `clusters/prod-eu/image-automation/identity.yaml`.
+The live order must remain `postgres -> migrate -> api -> ui`. Migration, API, and UI image tags are updated by the deployment workflow, then Flux reconciles the live overlays.
 
 Secrets are per deployable unit. Keep `identity-api-db` and `identity-migrate-db` as separate Secret names because the API and migrator use different database roles.
 
@@ -85,4 +85,4 @@ When live moves to a managed database, remove `identity-postgres` from the Flux 
 - Session token endpoints use explicit token nouns: `POST /v1/sessions/access-token` creates a short-lived product API access token from the current refresh token, and `POST /v1/sessions/refresh-token` consumes the current refresh token and returns its replacement. Reusing a consumed or revoked refresh token revokes the session.
 - Observability: `identity-api` and `identity-ui` emit traces only when their overlays configure `OTEL_EXPORTER_OTLP_ENDPOINT`; metrics and logs stay disabled for both domain units.
 - Events: no committed event contract is currently defined for this domain. If eventing is added, document subject names and payload schemas beside producer and consumer code, then add worker source, `infra/worker`, Skaffold, and Flux wiring explicitly.
-- Database: identity owns its schema and Flyway migration package in `packages/database/`. Other domains must not read or write this database directly.
+- Database: identity owns its schema and Flyway migration package in `packages/migrate/`. Other domains must not read or write this database directly.

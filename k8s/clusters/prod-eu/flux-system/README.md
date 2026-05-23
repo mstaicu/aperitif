@@ -51,8 +51,7 @@ flux bootstrap github \
  --secret-name=flux-system \
  --personal \
  --token-auth \
- --components=source-controller,kustomize-controller \
- --components-extra=image-reflector-controller,image-automation-controller
+ --components=source-controller,kustomize-controller
 ```
 
 ## Parameter explanation
@@ -62,7 +61,7 @@ flux bootstrap github \
 - `--repository=aperitif`
   - GitHub repo name
 - `--branch=master`
-  - branch Flux will reconcile from and image automation will push back to
+  - branch Flux will reconcile from
 - `--path=k8s/clusters/prod-eu`
   - cluster root inside the Git repo for this specific cluster
 - `--namespace=flux-system`
@@ -75,8 +74,6 @@ flux bootstrap github \
   - use the GitHub PAT for Git auth over HTTPS and store that auth in `Secret/flux-system`
 - `--components=source-controller,kustomize-controller`
   - install the minimum controllers needed to fetch Git sources and reconcile manifests
-- `--components-extra=image-reflector-controller,image-automation-controller`
-  - add the image automation controllers needed to scan registries and commit image tag updates back to Git
 
 ## Components
 
@@ -87,27 +84,15 @@ kustomize
 helm
 notification
 
-Image controllers are not included by default.
-
-image-reflector-controller -> Watches container registries
-image-automation-controller -> Commits changes to Git
-
-If you only install:
+For this repo, install:
 
 ```bash
 flux bootstrap github \
  --components=source-controller,kustomize-controller
 ```
 
-you will not get image automation.
-
-For this repo, use:
-
-```bash
-flux bootstrap github \
- --components=source-controller,kustomize-controller \
- --components-extra=image-reflector-controller,image-automation-controller
-```
+Image builds and manifest tag updates are owned by GitHub Actions, not Flux image
+automation.
 
 ## Install export
 
@@ -124,14 +109,6 @@ flux install \
  --export > flux-install.yaml
 ```
 
-```bash
-flux install \
- --version=v2.8.1 \
- --components=source-controller,kustomize-controller \
- --components-extra=image-reflector-controller,image-automation-controller \
- --export > flux-install.yaml
-```
-
 ## Secrets
 
 | Secret         | Used By                                   | Required For                           |
@@ -141,7 +118,6 @@ flux install \
 
 source-controller → uses flux-system
 kustomize-controller → uses sops-age
-image-automation-controller → also uses flux-system
 
 ## Post-bootstrap SOPS secret
 

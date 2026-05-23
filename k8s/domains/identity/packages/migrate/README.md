@@ -100,7 +100,7 @@ uses `identity_migrator`; the API uses `identity_api`.
 The migration image is built from this package directory:
 
 ```sh
-docker build -t mdstaicu/identity-migrate:<tag> domains/identity/packages/database
+docker build --target prod -t mdstaicu/identity-migrate:<tag> domains/identity/packages/migrate
 ```
 
 Use a real immutable release tag for production. Use `:local` only for manual

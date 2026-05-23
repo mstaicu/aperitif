@@ -58,7 +58,7 @@ postgres -> migrate -> api/worker
 ```
 
 - `postgres`: local/CI placeholder Postgres unit.
-- `migrate`: Flyway Job from `packages/database`.
+- `migrate`: Flyway Job from `packages/migrate`.
 - `api`: Fastify API from `packages/api`.
 - `worker`: projection consumers from `packages/worker`.
 
@@ -95,5 +95,5 @@ The live graph keeps `documents-worker` behind `tenancy-worker` and
 `capabilities-worker` because those workers create the streams this worker consumes.
 
 When live moves to managed Postgres, remove only `documents-postgres` from the
-Flux graph, run `packages/database/bootstrap/managed-postgres.sql` against the
+Flux graph, run `packages/migrate/bootstrap/managed-postgres.sql` against the
 managed database, and keep `documents-migrate -> documents-api/worker`.
