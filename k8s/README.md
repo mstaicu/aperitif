@@ -197,11 +197,13 @@ That file includes:
 
 `platform.yaml` reconciles platform units. `domains.yaml` reconciles domain units.
 
-Container image digests are updated by the per-unit
+Container image digests are updated by the per-domain
 `.github/workflows/deploy-*.yaml` workflows after a merge to `master`; Flux only
-reconciles the Git state. Images are pushed with tags derived from each
-deployable package tree, then live overlays are pinned to the digest returned by
-Docker Buildx.
+reconciles the Git state. Each deployment workflow builds all deployable units in
+that domain in dependency order, updates the live overlays, and commits those
+manifest changes once. Images are pushed with tags derived from each deployable
+package tree, then live overlays are pinned to the digest returned by Docker
+Buildx.
 
 For each domain, live Flux Kustomizations should preserve this dependency order:
 

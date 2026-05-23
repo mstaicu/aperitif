@@ -1,0 +1,91 @@
+name: deployment / identity
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "domains/identity/packages/**"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: deployment-master
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: imranismail/setup-kustomize@v2.1.0
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: build-migrate
+        uses: docker/build-push-action@v6
+        with:
+          context: domains/identity/packages/migrate
+          target: prod
+          push: true
+          tags: mdstaicu/identity-migrate:${{ hashFiles('domains/identity/packages/migrate/**') }}
+
+      - name: update migrate manifest
+        working-directory: domains/identity/infra/migrate/overlays/live
+        run: kustomize edit set image "mdstaicu/identity-migrate=mdstaicu/identity-migrate@${{ steps.build-migrate.outputs.digest }}"
+
+      - id: build-api
+        uses: docker/build-push-action@v6
+        with:
+          context: domains/identity/packages/api
+          target: prod
+          push: true
+          tags: mdstaicu/identity-api:${{ hashFiles('domains/identity/packages/api/**') }}
+
+      - name: update api manifest
+        working-directory: domains/identity/infra/api/overlays/live
+        run: kustomize edit set image "mdstaicu/identity-api=mdstaicu/identity-api@${{ steps.build-api.outputs.digest }}"
+
+      - id: build-ui
+        uses: docker/build-push-action@v6
+        with:
+          context: domains/identity/packages/ui
+          target: prod
+          push: true
+          tags: mdstaicu/identity-ui:${{ hashFiles('domains/identity/packages/ui/**') }}
+
+      - name: update ui manifest
+        working-directory: domains/identity/infra/ui/overlays/live
+        run: kustomize edit set image "mdstaicu/identity-ui=mdstaicu/identity-ui@${{ steps.build-ui.outputs.digest }}"
+
+      - name: commit manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifests=(
+            domains/identity/infra/migrate/overlays/live/kustomization.yaml
+            domains/identity/infra/api/overlays/live/kustomization.yaml
+            domains/identity/infra/ui/overlays/live/kustomization.yaml
+          )
+
+          if git diff --quiet -- "${manifests[@]}"; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${manifests[@]}"
+          git commit -m "Deploy identity ${GITHUB_SHA::12}"
+          git push
