@@ -3,6 +3,7 @@ import swaggerUI from "@fastify/swagger-ui";
 
 import listCapabilities from "./routes/capabilities/capabilities.list.mjs";
 import addTenantCapabilities from "./routes/capabilities/grants/capability-grant.create.mjs";
+import revokeTenantCapabilities from "./routes/capabilities/grants/capability-grant.revoke.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -52,6 +53,11 @@ export default async (fastify, { jwks, services }) => {
   });
 
   await fastify.register(addTenantCapabilities, {
+    jwks,
+    prefix: "/capabilities",
+    tenantCapabilities: services.tenantCapabilities,
+  });
+  await fastify.register(revokeTenantCapabilities, {
     jwks,
     prefix: "/capabilities",
     tenantCapabilities: services.tenantCapabilities,

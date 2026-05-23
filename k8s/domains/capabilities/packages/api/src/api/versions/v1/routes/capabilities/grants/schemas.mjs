@@ -54,3 +54,38 @@ export const AddTenantCapabilitiesResponse = Type.Object(
     description: "Tenant whose capabilities were recomputed.",
   },
 );
+
+const CapabilityRevokeInput = Type.Object(
+  {
+    capability_id: CapabilityId,
+    grant_id: GrantId,
+  },
+  {
+    additionalProperties: false,
+    description: "Capability grant removed from the tenant.",
+  },
+);
+
+export const RevokeTenantCapabilitiesBody = Type.Object(
+  {
+    capabilities: Type.Array(CapabilityRevokeInput, {
+      description: "Capability grant values removed from this tenant.",
+      minItems: 1,
+    }),
+    tenant_id: TenantId,
+  },
+  {
+    additionalProperties: false,
+    description: "Payload for revoking current tenant capability grants.",
+  },
+);
+
+export const RevokeTenantCapabilitiesResponse = Type.Object(
+  {
+    tenant_id: TenantId,
+  },
+  {
+    additionalProperties: false,
+    description: "Tenant whose capabilities were recomputed.",
+  },
+);

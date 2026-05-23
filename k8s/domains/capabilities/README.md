@@ -48,11 +48,15 @@ number_sum
 ```text
 GET /v1/capabilities
 POST /v1/capabilities
+DELETE /v1/capabilities
 ```
 
 Routes require an identity-issued access token verified through JWKS.
 `POST /v1/capabilities` carries `tenant_id` and a `capabilities` array. Each capability
 item carries its own `grant_id`.
+`DELETE /v1/capabilities` carries `tenant_id` and the `grant_id` plus
+`capability_id` pairs to revoke. Missing grant rows are treated as already
+revoked.
 It requires a platform operator access token.
 
 ## Deployment Units
