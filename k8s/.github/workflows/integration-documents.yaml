@@ -11,6 +11,7 @@ permissions:
 jobs:
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     concurrency:
       group: integration-documents-${{ github.event.pull_request.number || github.ref }}
