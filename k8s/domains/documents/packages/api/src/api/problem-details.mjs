@@ -68,10 +68,10 @@ const PROBLEMS = {
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
   },
-  WORKSPACE_NOT_FOUND: {
+  TENANT_NOT_FOUND: {
     status: 404,
-    title: "Workspace not found",
-    type: "/problems/workspace-not-found",
+    title: "Tenant not found",
+    type: "/problems/tenant-not-found",
   },
 };
 

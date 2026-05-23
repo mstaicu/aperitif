@@ -35,16 +35,6 @@ CREATE TABLE projected_tenant_memberships (
     PRIMARY KEY (tenant_id, user_id)
 );
 
-CREATE TABLE projected_workspaces (
-    workspace_id UUID PRIMARY KEY,
-
-    tenant_id UUID NOT NULL
-        REFERENCES projected_tenants(tenant_id)
-        ON DELETE CASCADE,
-
-    version BIGINT NOT NULL
-);
-
 CREATE TABLE projected_tenant_capabilities (
     tenant_id UUID PRIMARY KEY,
 
@@ -58,9 +48,6 @@ CREATE TABLE documents (
 
     tenant_id UUID NOT NULL
         REFERENCES projected_tenants(tenant_id),
-
-    workspace_id UUID NOT NULL
-        REFERENCES projected_workspaces(workspace_id),
 
     title TEXT NOT NULL,
 

@@ -35,16 +35,6 @@ CREATE TABLE tenant_memberships (
     PRIMARY KEY (tenant_id, user_id)
 );
 
-CREATE TABLE workspaces (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    tenant_id UUID NOT NULL
-        REFERENCES tenants(id)
-        ON DELETE CASCADE,
-
-    name TEXT NOT NULL
-);
-
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
 

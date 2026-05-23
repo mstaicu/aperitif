@@ -36,4 +36,4 @@ pre-deploy-skaffold: ## Verify documents Skaffold modules before deploy.
 
 post-deploy: ## Verify the deployed documents boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/documents/docs/json"
-	test "$$(curl -ksS -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{"workspace_id":"00000000-0000-4000-8000-000000000000","title":"Smoke"}' --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/documents")" = "401"
+	test "$$(curl -ksS -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{"tenant_id":"00000000-0000-4000-8000-000000000000","title":"Smoke"}' --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/documents")" = "401"

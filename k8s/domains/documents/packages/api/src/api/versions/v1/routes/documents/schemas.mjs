@@ -6,10 +6,10 @@ const Uuid = Type.String({
 
 export const CreateDocumentBody = Type.Object(
   {
+    tenant_id: Uuid,
     title: Type.String({
       minLength: 1,
     }),
-    workspace_id: Uuid,
   },
   {
     additionalProperties: false,
@@ -22,7 +22,6 @@ export const DocumentResponse = Type.Object(
     id: Uuid,
     tenant_id: Uuid,
     title: Type.String(),
-    workspace_id: Uuid,
   },
   {
     additionalProperties: false,

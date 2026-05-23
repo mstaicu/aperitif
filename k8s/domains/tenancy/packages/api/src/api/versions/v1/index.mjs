@@ -1,7 +1,6 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import createTenantWorkspace from "./routes/tenants/tenant.workspace.create.mjs";
 import createTenant from "./routes/tenants/tenants.create.mjs";
 import listTenants from "./routes/tenants/tenants.list.mjs";
 
@@ -32,7 +31,7 @@ export default async (fastify, { jwks, services }) => {
         },
       },
       info: {
-        description: "Tenancy API for tenants and workspaces.",
+        description: "Tenancy API for tenants and tenant memberships.",
         title: "Tenancy",
         version: "v1",
       },
@@ -43,7 +42,7 @@ export default async (fastify, { jwks, services }) => {
       ],
       tags: [
         {
-          description: "Tenant authority and workspaces",
+          description: "Tenant authority",
           name: "tenants",
         },
       ],
@@ -56,11 +55,6 @@ export default async (fastify, { jwks, services }) => {
     tenancy: services.tenancy,
   });
   await fastify.register(createTenant, {
-    jwks,
-    prefix: "/tenants",
-    tenancy: services.tenancy,
-  });
-  await fastify.register(createTenantWorkspace, {
     jwks,
     prefix: "/tenants",
     tenancy: services.tenancy,

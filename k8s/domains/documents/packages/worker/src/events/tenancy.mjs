@@ -20,14 +20,6 @@ export const TenantEventResourceSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceEventResourceSchema = Type.Object(
-  {
-    id: UuidSchema,
-    tenant_id: UuidSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const TenancyEventEnvelopeSchema = Type.Object(
   {
     id: UuidSchema,
@@ -96,24 +88,4 @@ export const TenantUpdatedPayloadSchema = Type.Object(
 
 export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
   TenantUpdatedPayloadSchema,
-);
-
-export const WorkspaceUpdatedSubject = "tenancy.workspace.updated";
-
-export const WorkspaceUpdatedPayloadSchema = Type.Object(
-  {
-    tenant: TenantEventResourceSchema,
-    workspace: WorkspaceEventResourceSchema,
-  },
-  { additionalProperties: false },
-);
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
- *   typeof WorkspaceUpdatedPayloadSchema
- * >} WorkspaceUpdatedPayload
- */
-
-export const WorkspaceUpdatedPayloadCheck = TypeCompiler.Compile(
-  WorkspaceUpdatedPayloadSchema,
 );

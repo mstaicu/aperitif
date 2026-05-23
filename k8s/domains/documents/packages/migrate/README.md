@@ -11,7 +11,6 @@ Postgres server or instance
     public schema
       projected_tenants
       projected_tenant_memberships
-      projected_workspaces
       projected_tenant_capabilities
       documents
       flyway_schema_history

@@ -21,14 +21,6 @@ export const TenantEventResourceSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceEventResourceSchema = Type.Object(
-  {
-    id: UuidSchema,
-    tenant_id: UuidSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const TenancyEventEnvelopeSchema = Type.Object(
   {
     id: UuidSchema,
@@ -102,27 +94,6 @@ export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
   TenantUpdatedPayloadSchema,
 );
 
-export const WorkspaceUpdatedSubject = "tenancy.workspace.updated";
-export const WorkspaceUpdatedSchemaVersion = TENANCY_EVENT_SCHEMA_VERSION;
-
-export const WorkspaceUpdatedPayloadSchema = Type.Object(
-  {
-    tenant: TenantEventResourceSchema,
-    workspace: WorkspaceEventResourceSchema,
-  },
-  { additionalProperties: false },
-);
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
- *   typeof WorkspaceUpdatedPayloadSchema
- * >} WorkspaceUpdatedPayload
- */
-
-export const WorkspaceUpdatedPayloadCheck = TypeCompiler.Compile(
-  WorkspaceUpdatedPayloadSchema,
-);
-
 /**
  * @param {TenantMembershipUpdatedPayload} payload
  * @param {number} version
@@ -177,35 +148,6 @@ export function buildTenantUpdatedEvent(payload, version) {
     payload,
     schema_version: TenantUpdatedSchemaVersion,
     subject: TenantUpdatedSubject,
-    version,
-  };
-}
-
-/**
- * @param {WorkspaceUpdatedPayload} payload
- * @param {number} version
- * @returns {{
- *   id: string,
- *   payload: WorkspaceUpdatedPayload,
- *   schema_version: number,
- *   subject: string,
- *   version: number,
- * }}
- */
-export function buildWorkspaceUpdatedEvent(payload, version) {
-  if (!WorkspaceUpdatedPayloadCheck.Check(payload)) {
-    throw new Error("INVALID_EVENT_PAYLOAD");
-  }
-
-  if (!Number.isInteger(version) || version < 1) {
-    throw new Error("INVALID_EVENT_VERSION");
-  }
-
-  return {
-    id: randomUUID(),
-    payload,
-    schema_version: WorkspaceUpdatedSchemaVersion,
-    subject: WorkspaceUpdatedSubject,
     version,
   };
 }

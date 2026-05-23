@@ -42,7 +42,7 @@ platform/
 
 domains/
   identity/                passkeys, sessions, JWKS, identity signing keys
-  tenancy/                tenant authority, memberships, workspaces
+  tenancy/                tenant authority and memberships
   capabilities/           capability authority and tenancy projection
   documents/              product-domain ABAC proof using tenancy/capabilities projections
 
@@ -68,9 +68,9 @@ Each domain should document itself in `domains/<domain>/README.md`.
 Current domains:
 
 - `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
-- `tenancy`: owns tenant authority, tenant memberships, and workspaces.
+- `tenancy`: owns tenant authority and tenant memberships.
 - `capabilities`: owns capability definitions, tenant capability grants, and effective capability events.
-- `documents`: owns workspace-scoped documents and proves product-domain ABAC from identity, tenancy, and capabilities projections.
+- `documents`: owns tenant-scoped documents and proves product-domain ABAC from identity, tenancy, and capabilities projections.
 
 Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
 
@@ -269,7 +269,7 @@ Events are not implicit. If a domain emits or consumes an event, document the su
 
 Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/migrate`.
 
-Tenant/workspace-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant/workspace-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `projected_tenants`, `projected_tenant_memberships`, and `projected_workspaces`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
+Tenant-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `projected_tenants` and `projected_tenant_memberships`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
 
 ## How To Work Here
 
@@ -301,7 +301,7 @@ When adding a new domain:
 - Add Flux Kustomizations for live units.
 - Add a deployment workflow that builds the domain images and pins live overlay digests.
 - Add network policies for only the traffic the unit actually needs.
-- Tenant/workspace-scoped domains must authorize from local tenancy
+- Tenant-scoped domains must authorize from local tenancy
   projections, not by reading the tenancy database or calling tenancy
   synchronously on hot paths.
 

@@ -7,7 +7,7 @@ capabilities + tenant capabilities -> effective tenant capabilities event
 ```
 
 It does not own commerce catalogues, checkout, subscriptions, payment provider
-state, authentication, tenant records, memberships, workspaces, or
+state, authentication, tenant records, memberships, or
 business-domain records.
 
 ## Domain Boundary
@@ -20,7 +20,7 @@ business-domain records.
   tenancy events.
 - `outbox_events` is the durable publisher queue for capability authority events.
 
-Identity stays in `identity`. Tenant records, memberships, and workspaces stay
+Identity stays in `identity`. Tenant records and memberships stay
 in `tenancy`. Commerce catalogues, checkout, provider refs, invoices, and
 payment status belong outside this domain. Capabilities only records explicit
 capability grants.

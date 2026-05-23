@@ -6,15 +6,15 @@ Documents is a small product-domain proof of the platform spine:
 JWT identity + tenancy projections + capability projections -> document command
 ```
 
-It owns only workspace-scoped documents. It does not own identity, tenant
-records, tenant membership, workspaces, capability definitions, capability grants,
+It owns only tenant-scoped documents. It does not own identity, tenant
+records, tenant membership, capability definitions, capability grants,
 payments, notifications, or workflow.
 
 ## Boundary
 
 - `documents` stores rows created by this domain.
-- `projected_tenants`, `projected_tenant_memberships`, and `projected_workspaces`
-  are local copies of tenancy authority from the `TENANCY` stream.
+- `projected_tenants` and `projected_tenant_memberships` are local copies of
+  tenancy authority from the `TENANCY` stream.
 - `projected_tenant_capabilities` is a local tenant capability snapshot from the
   `CAPABILITIES` stream.
 - The API verifies identity-issued JWTs through the identity JWKS endpoint.
@@ -32,7 +32,7 @@ Body:
 
 ```json
 {
-  "workspace_id": "00000000-0000-4000-8000-000000000000",
+  "tenant_id": "00000000-0000-4000-8000-000000000000",
   "title": "Example"
 }
 ```
@@ -40,8 +40,8 @@ Body:
 The command succeeds only when:
 
 - the access token is valid;
-- the workspace exists in the local tenancy projection;
-- the caller is a projected member of the workspace tenant;
+- the tenant exists in the local tenancy projection;
+- the caller is a projected member of the tenant;
 - the tenant has `documents.enabled = true` in the local capability projection.
 
 Docs are served at:

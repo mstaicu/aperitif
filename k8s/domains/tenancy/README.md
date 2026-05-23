@@ -1,23 +1,19 @@
 # Tenancy Domain
 
-Tenancy owns tenant-scoped authority: tenants, tenant membership, and
-workspaces.
+Tenancy owns tenant-scoped authority: tenants and tenant membership.
 
 ## Domain Boundary
 
 - `tenants` are the authority root for tenant-scoped resources.
 - `tenant_memberships` grant tenant-level authority to authenticated identity.
-- `workspaces` are operational resource containers inside a tenant.
 
 Identity stays in `identity`. Capability grants, profiles, documents,
 notifications, workflow, and integrations should live in their own domains and
-reference `tenant_id` or `workspace_id` when they own tenant/workspace-scoped
-resources.
+reference `tenant_id` when they own tenant-scoped resources.
 
 The current API does not expose direct member creation, invite, membership
 inspection, membership deletion, or lifecycle toggles. Tenant creation grants
-owner membership to the caller. Workspaces are created separately when a domain
-needs an operational resource container.
+owner membership to the caller.
 
 ## Core Model
 
@@ -25,28 +21,23 @@ needs an operational resource container.
 identity = who the actor is
 tenant = authority root for tenant-scoped access
 tenant_membership = who can act in that tenant
-workspace = operational container for resource data inside the tenant
 ```
 
-Resources in other domains should generally be workspace-owned when
-they are operational data:
+Resources in other domains should carry `tenant_id` when they are tenant-owned:
 
 ```text
-resource.workspace_id
 resource.tenant_id
 ```
 
 Request handling should normally derive `user_id` from the bearer token and get
-`tenant_id` or `workspace_id` from the route, body, or loaded resource. Domain
-operations should require tenant membership and the referenced workspace when
-they are workspace-scoped.
+`tenant_id` from the route, body, or loaded resource. Domain operations should
+require tenant membership for tenant-scoped resources.
 
 ## Core API
 
 ```text
 GET /v1/tenants
 POST /v1/tenants
-POST /v1/tenants/:tenantId/workspaces
 ```
 
 ## Onboarding Examples
@@ -56,8 +47,6 @@ Consumer SaaS without required onboarding:
 ```text
 user registers through identity
 POST /v1/tenants { name: "<display name>" }
-resource domain creates a workspace only if it needs one
-POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 ```
 
 B2B SaaS:
@@ -65,8 +54,6 @@ B2B SaaS:
 ```text
 founder registers through identity
 POST /v1/tenants { name: "<organization name>" }
-resource domain creates one or more workspaces if it needs operational containers
-POST /v1/tenants/:tenantId/workspaces { name: "<workspace name>" }
 future invite/provisioning flow creates additional tenant memberships
 ```
 
@@ -134,7 +121,7 @@ Tenancy authority events follow this path:
 
 ```text
 request handler -> domain function -> DB transaction
-DB transaction -> tenant/tenant_membership/workspace change
+DB transaction -> tenant/tenant_membership change
 DB transaction -> outbox_events row
 Postgres trigger -> pg_notify wake-up
 worker -> drains unpublished outbox rows
@@ -150,7 +137,6 @@ Current event subjects:
 
 - `tenancy.tenant.updated`
 - `tenancy.tenant_membership.updated`
-- `tenancy.workspace.updated`
 
 Event payloads are intentionally projection-shaped and minimal. Consumers should
 use natural projection keys plus the latest applied event `version` to ignore

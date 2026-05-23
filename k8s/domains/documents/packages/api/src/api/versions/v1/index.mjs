@@ -31,7 +31,7 @@ export default async (fastify, { jwks, services }) => {
       },
       info: {
         description:
-          "Documents API for proving tenant, workspace, capability, and JWT authorization boundaries.",
+          "Documents API for proving tenant, capability, and JWT authorization boundaries.",
         title: "Documents",
         version: "v1",
       },
@@ -42,7 +42,7 @@ export default async (fastify, { jwks, services }) => {
       ],
       tags: [
         {
-          description: "Workspace-scoped documents",
+          description: "Tenant-scoped documents",
           name: "documents",
         },
       ],

@@ -7,8 +7,6 @@ import {
   TenantMembershipUpdatedSubject,
   TenantUpdatedPayloadCheck,
   TenantUpdatedSubject,
-  WorkspaceUpdatedPayloadCheck,
-  WorkspaceUpdatedSubject,
 } from "../events/tenancy.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
@@ -68,20 +66,6 @@ export async function runProjectTenancy(ctx, signal) {
           }
 
           await projectV1TenantMembershipUpdated(ctx, event);
-
-          message.ack();
-          continue;
-        }
-
-        if (
-          event.schema_version === TENANCY_EVENT_SCHEMA_VERSION &&
-          event.subject === WorkspaceUpdatedSubject
-        ) {
-          if (!WorkspaceUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid tenancy workspace updated payload");
-          }
-
-          await projectV1WorkspaceUpdated(ctx, event);
 
           message.ack();
           continue;
@@ -190,65 +174,6 @@ async function projectV1TenantUpdated(ctx, event) {
         WHERE projected_tenants.version < EXCLUDED.version
       `,
       [payload.tenant.id, event.version],
-    );
-
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
- */
-async function projectV1WorkspaceUpdated(ctx, event) {
-  const payload =
-    /** @type {import("../events/tenancy.mjs").WorkspaceUpdatedPayload} */ (
-      event.payload
-    );
-
-  if (payload.workspace.tenant_id !== payload.tenant.id) {
-    throw new Error("Invalid tenancy workspace tenant id");
-  }
-
-  const client = await ctx.persistence.db.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    await client.query(
-      `
-        INSERT INTO projected_tenants (
-          tenant_id,
-          version
-        )
-        VALUES ($1, $2)
-        ON CONFLICT (tenant_id) DO UPDATE
-        SET version = EXCLUDED.version
-        WHERE projected_tenants.version < EXCLUDED.version
-      `,
-      [payload.tenant.id, event.version],
-    );
-
-    await client.query(
-      `
-        INSERT INTO projected_workspaces (
-          workspace_id,
-          tenant_id,
-          version
-        )
-        VALUES ($1, $2, $3)
-        ON CONFLICT (workspace_id) DO UPDATE
-        SET tenant_id = EXCLUDED.tenant_id,
-          version = EXCLUDED.version
-        WHERE projected_workspaces.version < EXCLUDED.version
-      `,
-      [payload.workspace.id, payload.workspace.tenant_id, event.version],
     );
 
     await client.query("COMMIT");

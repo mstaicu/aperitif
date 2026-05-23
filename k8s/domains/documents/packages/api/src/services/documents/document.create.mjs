@@ -6,19 +6,18 @@ const REQUIRED_CAPABILITY_ID = "documents.enabled";
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: {
  *   currentUserId: string,
+ *   tenantId: string,
  *   title: string,
- *   workspaceId: string,
  * }) => Promise<{
  *   created_by: string,
  *   id: string,
  *   tenant_id: string,
  *   title: string,
- *   workspace_id: string,
  * }>}
  */
 export const createDocument =
   (ctx) =>
-  async ({ currentUserId, title, workspaceId }) => {
+  async ({ currentUserId, tenantId, title }) => {
     let client;
 
     try {
@@ -26,19 +25,18 @@ export const createDocument =
       await client.query("BEGIN");
 
       const {
-        rows: [workspace],
+        rows: [tenant],
       } = await client.query(
         `
-          SELECT w.tenant_id
-          FROM projected_workspaces w
-          JOIN projected_tenants t ON t.tenant_id = w.tenant_id
-          WHERE w.workspace_id = $1
+          SELECT tenant_id
+          FROM projected_tenants
+          WHERE tenant_id = $1
         `,
-        [workspaceId],
+        [tenantId],
       );
 
-      if (!workspace) {
-        throw new Error("WORKSPACE_NOT_FOUND");
+      if (!tenant) {
+        throw new Error("TENANT_NOT_FOUND");
       }
 
       const {
@@ -50,7 +48,7 @@ export const createDocument =
           WHERE tenant_id = $1
             AND user_id = $2
         `,
-        [workspace.tenant_id, currentUserId],
+        [tenant.tenant_id, currentUserId],
       );
 
       if (!membership) {
@@ -67,7 +65,7 @@ export const createDocument =
               FROM projected_tenant_capabilities
               WHERE tenant_id = $1
             `,
-            [workspace.tenant_id],
+            [tenant.tenant_id],
           )
         );
 
@@ -89,19 +87,17 @@ export const createDocument =
         `
           INSERT INTO documents (
             tenant_id,
-            workspace_id,
             title,
             created_by
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3)
           RETURNING
             created_by,
             id,
             tenant_id,
-            title,
-            workspace_id
+            title
         `,
-        [workspace.tenant_id, workspaceId, title, currentUserId],
+        [tenant.tenant_id, title, currentUserId],
       );
 
       await client.query("COMMIT");
