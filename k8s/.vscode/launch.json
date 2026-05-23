@@ -2,15 +2,92 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Attach to 'identities-api' service",
+      "name": "Attach identity-api",
       "type": "node",
       "request": "attach",
-      "port": 9229,
       "address": "localhost",
+      "port": 9229,
       "restart": true,
       "sourceMaps": true,
-      "localRoot": "${workspaceFolder}/domains/identities/api",
-      "remoteRoot": "/home/node/app" // WORKDIR defined in Dockerfile
+      "localRoot": "${workspaceFolder}/domains/identity/packages/api",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach identity-ui",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9230,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/identity/packages/ui",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach tenancy-api",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9231,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/tenancy/packages/api",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach tenancy-worker",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9232,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/tenancy/packages/worker",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach capabilities-api",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9233,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/capabilities/packages/api",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach capabilities-worker",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9234,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/capabilities/packages/worker",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach documents-api",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9235,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/documents/packages/api",
+      "remoteRoot": "/home/node/app"
+    },
+    {
+      "name": "Attach documents-worker",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9236,
+      "restart": true,
+      "sourceMaps": true,
+      "localRoot": "${workspaceFolder}/domains/documents/packages/worker",
+      "remoteRoot": "/home/node/app"
     }
   ]
 }
