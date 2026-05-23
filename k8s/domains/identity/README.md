@@ -71,7 +71,7 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `identity-api` points at `domains/identity/infra/api/overlays/live`, depends on `identity-migrate` and platform ingress.
 - `identity-ui` points at `domains/identity/infra/ui/overlays/live`, depends on `identity-api` and platform ingress.
 
-The live order must remain `postgres -> migrate -> api -> ui`. Migration, API, and UI image tags are updated by the deployment workflow, then Flux reconciles the live overlays.
+The live order must remain `postgres -> migrate -> api -> ui`. The deployment workflow builds the domain images, pins live overlay digests, and then Flux reconciles the live overlays.
 
 Secrets are per deployable unit. Keep `identity-api-db` and `identity-migrate-db` as separate Secret names because the API and migrator use different database roles.
 

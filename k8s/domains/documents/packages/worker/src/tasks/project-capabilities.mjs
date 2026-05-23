@@ -5,11 +5,9 @@ import {
   CapabilitiesEventEnvelopeCheck,
   TenantCapabilitiesUpdatedPayloadCheck,
   TenantCapabilitiesUpdatedSubject,
-} from "../events/capabilities/index.mjs";
+} from "../events/capabilities.mjs";
 import { CAPABILITIES_CONSUMER } from "../platform/messaging/capabilities-consumer.mjs";
 import { CAPABILITIES_STREAM } from "../platform/messaging/capabilities-stream.mjs";
-
-const PROJECTED_SUBJECTS = new Set([TenantCapabilitiesUpdatedSubject]);
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
@@ -30,11 +28,6 @@ export async function runProjectCapabilities(ctx, signal) {
       signal.throwIfAborted();
 
       try {
-        if (!PROJECTED_SUBJECTS.has(message.subject)) {
-          message.ack();
-          continue;
-        }
-
         const event = message.json();
 
         if (
@@ -78,11 +71,11 @@ export async function runProjectCapabilities(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/capabilities/index.mjs").CapabilitiesEventEnvelope} event
+ * @param {import("../events/capabilities.mjs").CapabilitiesEventEnvelope} event
  */
 async function projectV1TenantCapabilitiesUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/capabilities/index.mjs").TenantCapabilitiesUpdatedPayload} */ (
+    /** @type {import("../events/capabilities.mjs").TenantCapabilitiesUpdatedPayload} */ (
       event.payload
     );
   const client = await ctx.persistence.db.connect();

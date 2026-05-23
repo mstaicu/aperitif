@@ -102,8 +102,8 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 The live order must remain `postgres -> migrate -> api/worker`. The worker also
 depends on `tenancy-worker` because the tenancy domain owns the `TENANCY` event
 stream that capabilities consumes for local authority projections. Migration, API,
-and worker image tags are updated by the deployment workflow, then Flux reconciles
-the live overlays.
+and worker images are built by the deployment workflow, live overlay digests are
+pinned, and then Flux reconciles the live overlays.
 
 Secrets are per deployable unit. Keep `capabilities-api-db`, `capabilities-migrate-db`,
 and `capabilities-worker-db` as separate Secret names because the API, migrator,
@@ -136,7 +136,7 @@ safe rebuild shape is: stop the capabilities worker, clear the projection tables
 delete or rename the `capabilities-tenancy-projection` durable consumer, then start
 the worker so `DeliverPolicy.All` replays the stream into the empty projection.
 
-Tenancy event wire contracts live under `packages/worker/src/events/versions/`.
+Tenancy event wire contracts live in `packages/worker/src/events/tenancy.mjs`.
 Projection behavior lives in `packages/worker/src/tasks/project-tenancy.mjs`.
 Add both sides deliberately when accepting a new tenancy event schema version.
 
@@ -150,6 +150,6 @@ The event carries generic event `version` and the calculated effective tenant
 capability rows inside the payload. Consumers should use `version` to ignore stale
 events.
 
-Producer contracts live under `packages/api/src/events/versions/`. The worker
+Producer contracts live in `packages/api/src/events/index.mjs`. The worker
 publishes durable rows from `outbox_events` to the `CAPABILITIES` stream and then
 marks them as published.

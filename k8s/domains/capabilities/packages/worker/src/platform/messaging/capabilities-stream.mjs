@@ -13,7 +13,7 @@ export const CAPABILITIES_STREAM = "CAPABILITIES";
  */
 export async function ensureCapabilitiesStream(ctx) {
   const config = {
-    discard: DiscardPolicy.Old,
+    discard: DiscardPolicy.New,
     max_bytes: 1024 ** 3,
     name: CAPABILITIES_STREAM,
     num_replicas: ctx.app.streamReplicas,

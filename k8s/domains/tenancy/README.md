@@ -111,7 +111,7 @@ Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
 - `tenancy-api` points at `domains/tenancy/infra/api/overlays/live`, depends on `tenancy-migrate`, `identity-api`, and platform ingress.
 - `tenancy-worker` points at `domains/tenancy/infra/worker/overlays/live`, depends on `tenancy-migrate` and platform event-bus.
 
-The live order must remain `postgres -> migrate -> api/worker`. Migration, API, and worker image tags are updated by the deployment workflow, then Flux reconciles the live overlays.
+The live order must remain `postgres -> migrate -> api/worker`. The deployment workflow builds the domain images, pins live overlay digests, and then Flux reconciles the live overlays.
 
 Secrets are per deployable unit. Keep `tenancy-api-db`, `tenancy-migrate-db`, and `tenancy-worker-db` as separate Secret names because the API, migrator, and worker use different database roles.
 
@@ -125,7 +125,7 @@ When live moves to a managed database, remove `tenancy-postgres` from the Flux g
   ensures the `TENANCY` JetStream stream and publishes unpublished rows to that
   stream. Outbox rows store the complete event envelope as JSON, so the worker
   publishes the event exactly as recorded in the transaction.
-- Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/versions/v1/`. Add a new version folder only when a wire payload shape changes.
+- Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/index.mjs`.
 - Database: tenancy owns its schema and Flyway migration package in `packages/migrate/`. Other domains must not read or write this database directly.
 
 ## Event Publishing Mechanics

@@ -9,15 +9,9 @@ import {
   TenantUpdatedSubject,
   WorkspaceUpdatedPayloadCheck,
   WorkspaceUpdatedSubject,
-} from "../events/tenancy/index.mjs";
+} from "../events/tenancy.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
-
-const PROJECTED_SUBJECTS = new Set([
-  TenantMembershipUpdatedSubject,
-  TenantUpdatedSubject,
-  WorkspaceUpdatedSubject,
-]);
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
@@ -38,11 +32,6 @@ export async function runProjectTenancy(ctx, signal) {
       signal.throwIfAborted();
 
       try {
-        if (!PROJECTED_SUBJECTS.has(message.subject)) {
-          message.ack();
-          continue;
-        }
-
         const event = message.json();
 
         if (
@@ -112,11 +101,11 @@ export async function runProjectTenancy(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/tenancy/index.mjs").TenancyEventEnvelope} event
+ * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
 async function projectV1TenantMembershipUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/tenancy/index.mjs").TenantMembershipUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").TenantMembershipUpdatedPayload} */ (
       event.payload
     );
 
@@ -177,11 +166,11 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/tenancy/index.mjs").TenancyEventEnvelope} event
+ * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
 async function projectV1TenantUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/tenancy/index.mjs").TenantUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").TenantUpdatedPayload} */ (
       event.payload
     );
   const client = await ctx.persistence.db.connect();
@@ -215,11 +204,11 @@ async function projectV1TenantUpdated(ctx, event) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/tenancy/index.mjs").TenancyEventEnvelope} event
+ * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
 async function projectV1WorkspaceUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/tenancy/index.mjs").WorkspaceUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").WorkspaceUpdatedPayload} */ (
       event.payload
     );
 

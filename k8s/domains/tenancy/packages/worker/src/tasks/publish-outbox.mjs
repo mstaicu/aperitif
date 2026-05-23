@@ -23,13 +23,13 @@ export async function runPublishOutbox(ctx, signal) {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
     const notifications = on(listener, "notification", { signal });
 
-    await drainOutbox(ctx, signal);
+    while ((await publishOutboxBatch(ctx, signal)) === OUTBOX_BATCH_SIZE);
 
     for await (const [notification] of notifications) {
       signal.throwIfAborted();
 
       if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-        await drainOutbox(ctx, signal);
+        while ((await publishOutboxBatch(ctx, signal)) === OUTBOX_BATCH_SIZE);
       }
     }
   } catch (err) {
@@ -42,18 +42,6 @@ export async function runPublishOutbox(ctx, signal) {
     await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {});
 
     listener.release();
-  }
-}
-
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {AbortSignal} signal
- */
-async function drainOutbox(ctx, signal) {
-  let publishedCount = await publishOutboxBatch(ctx, signal);
-
-  while (publishedCount === OUTBOX_BATCH_SIZE) {
-    publishedCount = await publishOutboxBatch(ctx, signal);
   }
 }
 

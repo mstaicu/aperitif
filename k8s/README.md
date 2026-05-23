@@ -92,7 +92,7 @@ If a domain owns a browser surface, add `ui` as a separate deployable unit.
 
 HTTP route ownership lives in the unit that serves HTTP, usually `api` and sometimes `ui`. Postgres and migrate units should stay out of gateway concerns.
 
-Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Prefer immutable image tags or digests for migrations; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
+Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Live deployment workflows pin image digests; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
 
 Database access has three layers:
 
@@ -299,7 +299,7 @@ When adding a new domain:
 - Add `domains/<domain>/README.md`.
 - Add Skaffold modules for local units.
 - Add Flux Kustomizations for live units.
-- Add image automation only for images Flux should update.
+- Add a deployment workflow that builds the domain images and pins live overlay digests.
 - Add network policies for only the traffic the unit actually needs.
 - Tenant/workspace-scoped domains must authorize from local tenancy
   projections, not by reading the tenancy database or calling tenancy
@@ -325,4 +325,4 @@ kustomize build --enable-alpha-plugins --enable-exec <overlay>
 ```
 
 Use the full spine checks when changing shared structure, deployment ordering,
-namespaces, Gateway routing, secrets, or image automation.
+namespaces, Gateway routing, secrets, or image digest pinning.

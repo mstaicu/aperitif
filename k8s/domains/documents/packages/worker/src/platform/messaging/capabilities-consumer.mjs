@@ -6,6 +6,7 @@ import {
   ReplayPolicy,
 } from "@nats-io/jetstream";
 
+import { TenantCapabilitiesUpdatedSubject } from "../../events/capabilities.mjs";
 import { CAPABILITIES_STREAM } from "./capabilities-stream.mjs";
 
 export const CAPABILITIES_CONSUMER = "documents-capabilities-projection";
@@ -18,7 +19,7 @@ export async function ensureCapabilitiesConsumer(ctx) {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
     durable_name: CAPABILITIES_CONSUMER,
-    filter_subject: "capabilities.>",
+    filter_subject: TenantCapabilitiesUpdatedSubject,
     max_ack_pending: 1,
     replay_policy: ReplayPolicy.Instant,
   };

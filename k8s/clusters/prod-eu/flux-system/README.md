@@ -24,7 +24,7 @@ That means:
 So the intended model is:
 
 - bootstrap owns `clusters/prod-eu/flux-system`
-- cluster reconciliations and image automation point at `flux-system`
+- cluster reconciliations point at `flux-system`
 - `sops-age` remains a separate secret you create yourself
 
 If you run the bootstrap command from the root of the repo, Flux writes the
@@ -91,8 +91,8 @@ flux bootstrap github \
  --components=source-controller,kustomize-controller
 ```
 
-Image builds and manifest tag updates are owned by GitHub Actions, not Flux image
-automation.
+Image builds and manifest digest updates are owned by GitHub Actions. Flux only
+reconciles Git manifests.
 
 ## Install export
 

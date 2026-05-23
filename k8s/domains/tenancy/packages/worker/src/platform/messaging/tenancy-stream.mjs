@@ -13,7 +13,7 @@ export const TENANCY_STREAM = "TENANCY";
  */
 export async function ensureTenancyStream(ctx) {
   const config = {
-    discard: DiscardPolicy.Old,
+    discard: DiscardPolicy.New,
     max_bytes: 1024 ** 3,
     name: TENANCY_STREAM,
     num_replicas: ctx.app.streamReplicas,

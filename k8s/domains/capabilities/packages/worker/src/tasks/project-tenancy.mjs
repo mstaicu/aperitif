@@ -5,7 +5,7 @@ import {
   TenantUpdatedPayloadCheck,
   TenantUpdatedSchemaVersion,
   TenantUpdatedSubject,
-} from "../events/index.mjs";
+} from "../events/tenancy.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
 
@@ -74,11 +74,11 @@ export async function runProjectTenancy(ctx, signal) {
 
 /**
  * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/index.mjs").TenancyEventEnvelope} event
+ * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
 async function projectV1TenantUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/index.mjs").TenantUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").TenantUpdatedPayload} */ (
       event.payload
     );
   const client = await ctx.persistence.db.connect();
