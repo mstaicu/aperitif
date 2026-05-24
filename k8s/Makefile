@@ -148,6 +148,8 @@ deploy-observability: ## Deploy OpenTelemetry Collector and wait for readiness.
 	skaffold run -m observability
 	kubectl rollout status -n otel deploy/otel-collector --timeout=300s
 
+# Flux
+
 flux-bootstrap-prod-eu: ## Bootstrap Flux in prod-eu and create required Flux-local secrets.
 	@test -n "$$GITHUB_TOKEN" || { echo "GITHUB_TOKEN is required"; exit 1; }
 	@test -n "$$SOPS_AGE_KEY_FILE" || { echo "SOPS_AGE_KEY_FILE is required"; exit 1; }

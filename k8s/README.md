@@ -100,8 +100,8 @@ not installed.
 
 Bootstrap docs:
 
-- `clusters/prod-eu/flux-system/README.md`
-- `clusters/staging-eu/flux-system/README.md`
+- `clusters/prod-eu/README.md`
+- `clusters/staging-eu/README.md`
 
 Prod first-time bootstrap entrypoint: `make flux-bootstrap-prod-eu`.
 
