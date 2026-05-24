@@ -1,44 +1,24 @@
 # Observability Platform
 
-Observability contains OpenTelemetry Collector manifests. It is part of the active platform baseline for local and prod-eu composition.
+Observability owns OpenTelemetry Collector infrastructure.
 
-Do not assume OTel exists in an environment unless this platform unit is explicitly composed there.
+## Owns
 
-## Intended Boundary
+- collector deployment and service
+- namespace
+- telemetry network policy
+- environment-specific exporter configuration
 
-Observability should own cross-cutting telemetry infrastructure:
+Domain units decide whether to emit telemetry from runtime configuration.
 
-- OpenTelemetry Collector deployment,
-- collector service and namespace,
-- telemetry network policy,
-- environment-specific exporter configuration.
-
-It should not own domain instrumentation code. Domain deployable units decide whether they register real telemetry or no-op behavior based on runtime configuration.
-
-## Current State
-
-```text
-platform/observability/base
-platform/observability/overlays/dev
-platform/observability/overlays/live
-```
-
-The unit is deployed locally by the main domain/full-stack targets. It can also be deployed directly with:
+## Operations
 
 ```sh
 make deploy-observability
 ```
 
-Domain workloads register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured. Without that environment variable, workload OTel is a no-op so future overlays can opt out cleanly.
-
-## Enabling In An Environment
-
-Before making observability part of another environment:
-
-- decide local vs live exporter behavior,
-- set `OTEL_EXPORTER_OTLP_ENDPOINT` only on workloads that should emit telemetry,
-- add Flux Kustomizations under `clusters/<env>/platform`,
-- update network policies only for workloads that actually emit telemetry.
+Workloads register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
+Otherwise OTel is no-op.
 
 ## Checks
 

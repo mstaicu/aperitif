@@ -1,153 +1,66 @@
 # Aperitif Kubernetes
 
-This repo is the Kubernetes and delivery spine for Aperitif. It keeps platform capabilities and domain capabilities explicit, composable, and deployable through the same mental model in local development and Flux-managed environments.
+Treat this `k8s/` directory as the repo root. GitHub workflows intentionally
+live under `k8s/.github`.
 
-Treat this `k8s/` directory as the project root. All paths, Make targets, Skaffold commands, Flux paths, GitHub workflows, and checks in this README are relative to this directory, even when the parent Git repository contains other folders.
+This repo owns Kubernetes manifests, local deploy loops, Flux reconciliation, and
+domain delivery wiring.
 
-The project intentionally does not hide deployment units behind a fake "app" abstraction. A domain is composed from small units with clear ownership:
-
-```text
-postgres -> migrate -> api/ui/worker
-```
-
-`ui` and `worker` exist only when the domain actually owns those capabilities.
-
-## Principles
-
-- Keep deployable unit boundaries honest. `db`, `migrate`, `api`, `ui`, and `worker` are separate units with separate manifests and lifecycle.
-- Keep local and live composition on the same spine. Local uses Skaffold and Make; live uses Flux Kustomizations.
-- Keep contracts explicit. HTTP contracts are OpenAPI/TypeBox; event contracts must name subjects and payloads; database ownership is per domain.
-- Keep platform dependencies explicit. A domain should not silently assume platform capabilities unless those capabilities are deployed by the environment.
-- Keep deleting fake abstractions. Prefer direct, readable wiring over clever layers that hide ownership.
-
-## Current Shape
+## Shape
 
 ```text
-.github/
-  workflows/              integration and deployment workflows
-
-clusters/
-  prod-eu/
-    platform/             Flux Kustomizations for platform units
-    domains/              Flux Kustomizations for domain units
-    flux-system/          bootstrap notes; Flux creates runtime sync resources
-  staging-eu/
-    flux-system/          bootstrap notes
-
-platform/
-  ingress/                Traefik, Traefik CRDs, IngressRoutes
-  event-bus/              NATS JetStream for durable domain events
-  observability/          OpenTelemetry Collector
-  mesh/                   present, not currently composed
-
-domains/
-  identity/                passkeys, sessions, JWKS, identity signing keys
-  tenancy/                tenant authority and memberships
-  capabilities/           capability authority and tenancy projection
-  documents/              product-domain ABAC proof using tenancy/capabilities projections
-
-Makefile                  local orchestration
-Brewfile                  local toolchain
-.sops.yaml                SOPS age recipient rules
-skaffold.yaml             root Skaffold composition
+.github/workflows/      integration and deployment workflows
+clusters/prod-eu/       Flux live graph
+clusters/staging-eu/    Flux bootstrap notes
+platform/               ingress, event-bus, observability, inactive mesh
+domains/                identity, tenancy, capabilities, documents
+Makefile                local orchestration
+skaffold.yaml           local module graph
+.sops.yaml              encrypted Secret rules
+AGENTS.md               non-obvious agent rules
 ```
-
-The currently composed platform units are ingress, event-bus, and observability. Mesh exists, but it is not part of the active local/prod-eu spine unless explicitly added.
-
-## Agent Context
-
-Repo-wide agent instructions live in the root `AGENTS.md`. Do not add scoped
-agent files by default. If an agent instruction is discoverable from code,
-README files, tests, or Make targets, fix that source instead of adding
-agent-only context.
-
-## Domain Model
-
-Each domain should document itself in `domains/<domain>/README.md`.
-
-Current domains:
-
-- `identity`: owns passkey registration/login, sessions, token signing, and JWKS.
-- `tenancy`: owns tenant authority and tenant memberships.
-- `capabilities`: owns capability definitions, tenant capability grants, and effective capability events.
-- `documents`: owns tenant-scoped documents and proves product-domain ABAC from identity, tenancy, and capabilities projections.
-
-Each domain owns its database schema and migrations. Other domains must call the owning API or consume declared events; they must not read or write another domain database directly.
-
-## Deployment Units
-
-Each domain follows this order:
 
 ```text
 postgres -> migrate -> api/worker/ui
 ```
 
-If a domain owns async event publishing or consumption, add `worker` as a separate deployable unit:
+Domain units stay separate. `ui` and `worker` exist only when the domain owns
+that capability.
+
+## Domains
+
+- `identity`: passkeys, sessions, access tokens, JWKS.
+- `tenancy`: tenants and tenant memberships.
+- `capabilities`: capability definitions, tenant grants, effective capability events.
+- `documents`: product-domain proof using local tenancy/capability projections.
+
+Domains own their databases. Other domains use APIs or declared events.
+
+## Platform
+
+- `ingress`: Traefik CRDs, Traefik, local TLS, public/internal routes.
+- `event-bus`: NATS JetStream for durable domain events.
+- `observability`: OpenTelemetry Collector, composed in the active spine.
+- `mesh`: Linkerd manifests exist but are not currently composed.
+
+Domain HTTP units own their own Traefik `IngressRoute`s. Authority/state events use:
 
 ```text
-postgres -> migrate -> api/worker
+domain DB transaction -> outbox_events -> worker -> NATS JetStream
 ```
 
-If a domain owns a browser surface, add `ui` as a separate deployable unit.
+Postgres notifications only wake workers; the outbox is the durable source.
 
-HTTP route ownership lives in the unit that serves HTTP, usually `api` and sometimes `ui`. Postgres and migrate units should stay out of ingress concerns.
-
-Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Live deployment workflows pin image digests; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
-
-Database access has three layers:
-
-```text
-bootstrap/admin role -> migrator role -> api/worker runtime roles
-```
-
-The bootstrap/admin role creates the database roles and base grants. Flyway uses
-the migrator role to create or change schema objects. APIs and workers use
-runtime login roles that inherit a shared no-login runtime role. Runtime roles
-can use application tables, but should not own schema or perform DDL.
-
-`infra/postgres` is the domain-owned local/CI Postgres unit and the current live
-placeholder. When production moves to managed databases, keep `infra/postgres`
-for local/CI, remove the live Postgres Flux unit, run the domain bootstrap SQL
-against the managed database, and point the encrypted live DB Secrets at the
-managed host.
-
-## Platform Model
-
-Ingress and event-bus are the active platform baseline.
-
-Local ingress setup does three jobs:
-
-- Installs Traefik CRDs.
-- Creates local machine trust and host routing with `mkcert` and `/etc/hosts`.
-- Applies Traefik manifests through Skaffold/Kustomize.
-
-Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
-
-Domains own their own Traefik `IngressRoute`s. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/tenants`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes bind to the `http` entrypoint without hostnames.
-
-Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
-
-Observability is part of the active platform baseline. `make deploy-observability` deploys the OpenTelemetry Collector, and `make dev` plus domain deploy targets run it before OTel-emitting workloads. APIs still register OTel conditionally: `OTEL_EXPORTER_OTLP_ENDPOINT` present means real OTel, absent means no-op.
-
-## Local Development
-
-Install tools:
+## Local
 
 ```sh
 brew bundle
-```
-
-Start Docker Desktop, kind, or another local Kubernetes cluster, then run one of:
-
-```sh
 make dev
 make dev-identity
 make dev-tenancy
 make dev-capabilities
 make dev-documents
 ```
-
-Deploy-and-exit targets are useful for checks and CI-style local testing:
 
 ```sh
 make deploy-identity
@@ -156,158 +69,74 @@ make deploy-capabilities
 make deploy-documents
 ```
 
-The Make targets intentionally run the same dependency order as live:
-
-```text
-declared platform deps -> postgres -> migrate -> wait for migration Job -> api/ui/worker
-```
-
-Use `make deploy-ingress` when you only need Traefik, Traefik CRDs, local TLS, and local host routing.
-
-Use `make deploy-observability` when you only need the OpenTelemetry Collector.
-
-The default local domain is `tma.com`. Override it when needed:
-
 ```sh
-make deploy-ingress DOMAIN=example.test
+make deploy-ingress
+make deploy-event-bus
+make deploy-observability
 ```
 
-## Pull Request Integration
+Default local domain is `tma.com`; override with `DOMAIN=example.test`.
 
-The GitHub workflows under `.github/workflows/integration-*.yaml` run per domain.
-Each workflow watches one `domains/<domain>/**` tree, runs that domain's
-`pre-deploy` target, creates a kind cluster, deploys through the matching root
-`deploy-<domain>` target, port-forwards Traefik, and runs that domain's
-`post-deploy` target.
+## Live
 
-This intentionally reuses the same dev overlays and Make/Skaffold path used locally.
-
-## Live Deployment With Flux
-
-Flux live composition starts at:
+Flux starts at `clusters/prod-eu/kustomization.yaml`:
 
 ```text
-clusters/prod-eu/kustomization.yaml
+platform.yaml -> domains.yaml
 ```
 
-That file includes:
-
-- `platform.yaml`
-- `domains.yaml`
-
-`platform.yaml` reconciles platform units. `domains.yaml` reconciles domain units.
-
-Container image digests are updated by the per-domain
-`.github/workflows/deploy-*.yaml` workflows after a merge to `master`; Flux only
-reconciles the Git state. Each deployment workflow builds all deployable units in
-that domain in dependency order, updates the live overlays, and commits those
-manifest changes once. Images are pushed with tags derived from each deployable
-package tree, then live overlays are pinned to the digest returned by Docker
-Buildx.
-
-For each domain, live Flux Kustomizations should preserve this dependency order:
+Domain Flux order remains:
 
 ```text
 <domain>-postgres -> <domain>-migrate -> <domain>-api/worker/ui
 ```
 
-The API Kustomization depends on ingress and the domain migration unit. A UI
-Kustomization depends on ingress and, when it calls the domain API, the API
-unit. The migration Kustomization depends on the Postgres unit and uses
-`force: true`.
+Migration Kustomizations use `force: true` so completed Jobs can rerun on image
+digest changes.
 
-When production uses a managed database, remove the live Postgres Kustomization
-from the domain graph. The managed database and its bootstrap roles become an
-external precondition before Flux reconciles the migrate unit.
+Deployment workflows build images, push them, update live overlay tags/digests,
+and commit the manifest changes. Flux reconciles Git; Flux image automation is
+not installed.
 
-Bootstrap details live in:
+Bootstrap docs:
 
 - `clusters/prod-eu/flux-system/README.md`
 - `clusters/staging-eu/flux-system/README.md`
+
+Prod first-time bootstrap entrypoint: `make flux-bootstrap-prod-eu`.
 
 ## Secrets
 
 SOPS uses age recipients from `.sops.yaml`. The private key is never committed.
 
-Set your local key path:
-
 ```sh
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 ```
 
-Useful commands:
-
-```sh
-make sops-pubkey
-make sops-updatekeys
-make sops-secret
-```
-
-`make sops-secret` creates the Flux `sops-age` secret in `flux-system` from `SOPS_AGE_KEY_FILE`.
-
-Secrets are scoped per deployable unit. Even if two units use the same database URL, they should consume separate Secret names, for example `identity-api-db` and `identity-migrate-db`.
-
-Database Secrets are client credentials. They are not the Postgres bootstrap
-admin credentials. Migrator Secrets contain `FLYWAY_*` values for Flyway. API
-and worker Secrets contain `DATABASE_URL` values with the runtime login user in
-the URL.
+Secrets are scoped per deployable unit even when values match. Migrator Secrets
+contain `FLYWAY_*`; API/worker Secrets contain `DATABASE_URL`.
 
 ## Contracts
 
-APIs are Fastify services with TypeBox schemas and OpenAPI docs. Public API
-resources are resource-first under `api.tma.com/v1`, while generated docs are
-domain-scoped under `/v1/<domain>/docs`.
+- HTTP APIs are Fastify + TypeBox and expose OpenAPI docs.
+- Event contracts must name subject, schema version, payload, producer, and consumers.
+- Cross-domain events are current-state facts, not replay deltas.
+- Consumers apply newer `version` values and ack stale messages.
+- Tenant-scoped hot-path authorization uses local projections, not synchronous
+  calls to authority domains.
 
-Route work should preserve:
+## Agent Notes
 
-- Explicit request schemas.
-- Explicit success response schemas.
-- Explicit domain error responses.
-- Stable OpenAPI operation descriptions that are useful to generated clients and LLM tools.
-
-Events are not implicit. If a domain emits or consumes an event, document the subject, payload schema, consumers, and delivery expectation.
-
-Database ownership is exclusive to the owning domain. Migration packages live in `domains/<domain>/packages/migrate`.
-
-Tenant-scoped domains should authorize from local projections of tenancy authority. If a domain owns tenant-scoped resources or performs tenant-scoped authorization on hot request paths, it must consume tenancy events into local projection tables such as `projected_tenants` and `projected_tenant_memberships`. Do not read the tenancy database. Do not call tenancy synchronously for hot-path authorization.
-
-## How To Work Here
-
-When changing manifests:
-
-- Render the exact overlay you changed with `kubectl kustomize` or `kustomize build --enable-alpha-plugins --enable-exec` when KSOPS generators are involved.
-- Check local and live parity if the change affects deployable unit structure.
-- Keep generated Secrets and ConfigMaps in the intended namespace.
-- Do not make platform assumptions from domain manifests unless the platform unit is composed in that environment.
-
-When changing a domain API:
-
-- Keep route handlers thin.
-- Put business decisions in `packages/api/src/services/*`.
-- Put shared process concerns in `packages/api/src/platform/*`.
-- Keep TypeBox/OpenAPI schemas in sync with actual responses.
-- Treat request validation errors and domain errors as part of the API contract.
-
-When adding a new domain:
-
-- Create `domains/<domain>` using `identity`, `tenancy`, and `capabilities` as examples.
-- Copy the unit spine you need: `identity` is the example for auth API and
-  Remix UI, `tenancy` is the example for tenant authority, and `capabilities` is
-  the example for capability authority. `documents` is the example for a product
-  API using local tenancy and capabilities projections for ABAC.
-- Replace copied domain behavior; keep the deployment-unit shape and wiring patterns.
-- Add `domains/<domain>/README.md`.
-- Add Skaffold modules for local units.
-- Add Flux Kustomizations for live units.
-- Add a deployment workflow that builds the domain images and pins live overlay digests.
-- Add network policies for only the traffic the unit actually needs.
-- Tenant-scoped domains must authorize from local tenancy
-  projections, not by reading the tenancy database or calling tenancy
-  synchronously on hot paths.
+- Prefer Make targets for local/integration deploy checks.
+- Do not collapse domain units into one Kubernetes app abstraction.
+- Do not replace encrypted Secret manifests with plaintext.
+- Do not reintroduce mesh/observability assumptions unless those units are composed.
+- If a README explains obvious code, delete that prose and keep the rule close
+  to the code, test, Make target, or manifest.
 
 ## Checks
 
-Prefer domain-owned checks:
+Use the narrowest check that covers the change:
 
 ```sh
 make -C domains/identity pre-deploy-infra
@@ -317,12 +146,8 @@ make -C domains/documents pre-deploy-infra
 git diff --check
 ```
 
-Use narrower checks when changing a narrow part of the repo. Dev overlays with
-encrypted Secrets must render with KSOPS:
+Render overlays changed by the patch. KSOPS overlays require:
 
 ```sh
 kustomize build --enable-alpha-plugins --enable-exec <overlay>
 ```
-
-Use the full spine checks when changing shared structure, deployment ordering,
-namespaces, ingress routing, secrets, or image digest pinning.

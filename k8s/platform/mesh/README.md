@@ -1,41 +1,19 @@
 # Mesh Platform
 
-Mesh contains Linkerd manifests, but it is not currently part of the active local or prod-eu composition.
+Mesh contains Linkerd manifests, but it is not currently composed into local or
+prod-eu.
 
-Do not assume mTLS, service identity, or mesh policy exists unless this platform unit is explicitly composed into the environment.
+Do not assume mTLS, service identity, or mesh policy exists unless this platform
+unit is explicitly added to the environment.
 
-## Intended Boundary
+## Owns When Enabled
 
-Mesh should own only cross-cutting service-to-service transport concerns:
+- Linkerd control plane resources
+- proxy injection
+- service identity and mTLS
+- mesh policy
 
-- mTLS between workloads,
-- service identity,
-- mesh policy,
-- proxy injection,
-- Linkerd control plane resources.
-
-It should not own domain authentication, domain authorization, or business-level actor semantics.
-
-## Current State
-
-```text
-platform/mesh/base
-platform/mesh/overlays/dev
-platform/mesh/overlays/live
-```
-
-The overlays contain certificate material and webhook trust configuration for Linkerd. Treat this folder as inactive until it is deliberately added to the platform spine.
-
-## Enabling Later
-
-Before enabling mesh:
-
-- decide whether every domain namespace should be injected or only selected workloads,
-- verify local and live certificate management,
-- verify Gateway API CRD ownership does not conflict with ingress,
-- add explicit Flux Kustomizations under `clusters/<env>/platform`,
-- add Make/Skaffold targets only if local development needs it,
-- update network policies after observing actual traffic under the mesh.
+It does not own domain authentication, authorization, or actor semantics.
 
 ## Checks
 

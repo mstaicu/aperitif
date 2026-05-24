@@ -1,172 +1,75 @@
 # Tenancy Domain
 
-Tenancy owns tenant-scoped authority: tenants and tenant membership.
+Tenancy owns tenant-scoped authority.
 
-## Domain Boundary
+## Owns
 
-- `tenants` are the authority root for tenant-scoped resources.
-- `tenant_memberships` grant tenant-level authority to authenticated identity.
+- `tenants`
+- `tenant_memberships`
+- `outbox_events`
 
-Identity stays in `identity`. Capability grants, profiles, documents,
-notifications, workflow, and integrations should live in their own domains and
-reference `tenant_id` when they own tenant-scoped resources.
+Tenant creation grants owner membership to the caller. There is no public member
+management API yet.
 
-The current API does not expose direct member creation, invite, membership
-inspection, membership deletion, or lifecycle toggles. Tenant creation grants
-owner membership to the caller.
+## Does Not Own
 
-## Core Model
+- identity records
+- capability grants
+- billing, payments, checkout, subscriptions
+- product-domain resources
 
-```text
-identity = who the actor is
-tenant = authority root for tenant-scoped access
-tenant_membership = who can act in that tenant
-```
+Other domains store `tenant_id` on tenant-owned resources and authorize from
+their local projections.
 
-Resources in other domains should carry `tenant_id` when they are tenant-owned:
+## Units
 
 ```text
-resource.tenant_id
+postgres -> migrate -> api/worker
 ```
 
-Request handling should normally derive `user_id` from the bearer token and get
-`tenant_id` from the route, body, or loaded resource. Domain operations should
-require tenant membership for tenant-scoped resources.
+- `postgres`: local/CI placeholder database.
+- `migrate`: Flyway Job from `packages/migrate`.
+- `api`: Fastify API from `packages/api`.
+- `worker`: outbox publisher from `packages/worker`.
 
-## Core API
+## Public Contracts
 
 ```text
 GET /v1/tenants
 POST /v1/tenants
 ```
 
-## Onboarding Examples
-
-Consumer SaaS without required onboarding:
-
-```text
-user registers through identity
-POST /v1/tenants { name: "<display name>" }
-```
-
-B2B SaaS:
-
-```text
-founder registers through identity
-POST /v1/tenants { name: "<organization name>" }
-future invite/provisioning flow creates additional tenant memberships
-```
-
-## Deployment Units
-
-The domain unit spine is:
-
-```text
-postgres -> migrate -> api/worker
-```
-
-Current Kubernetes-expressed units:
-
-- `postgres`: local/CI PostgreSQL unit under `infra/postgres/overlays/{dev,live}`; live currently uses it as a placeholder until a managed database replaces it.
-- `migrate`: one-shot Flyway migration Job built from `packages/migrate/` and deployed from `infra/migrate/overlays/{dev,live}`.
-- `api`: Fastify API built from `packages/api/` and deployed from `infra/api/overlays/{dev,live}`.
-- `worker`: outbox publisher built from `packages/worker/` and deployed from `infra/worker/overlays/{dev,live}` when event-bus is composed into the environment.
-
-Current source-only units:
-
-- `ui`: not present yet. Add it only when this domain owns a browser surface.
-
-Keep each deployable unit independently addressable. Do not hide `postgres`, `migrate`, `api`, `ui`, or `worker` behind a fake all-in-one abstraction. A future UI should own `/tenants` on `tma.com`, while the public API keeps `/v1/tenants` on `api.tma.com`.
-
-## Local
-
-Local development is driven by Skaffold modules in `skaffold.yaml`:
-
-- `tenancy-postgres-dev` applies `infra/postgres/overlays/dev`.
-- `tenancy-migrate-dev` builds `mdstaicu/tenancy-migrate` from `packages/migrate/` and applies `infra/migrate/overlays/dev`.
-- `tenancy-api-dev` builds `mdstaicu/tenancy-api` from `packages/api/`, applies `infra/api/overlays/dev`, and syncs `packages/api/src/**/*`.
-- `tenancy-worker-dev` builds `mdstaicu/tenancy-worker` from `packages/worker/`, applies `infra/worker/overlays/dev`, and syncs `packages/worker/src/**/*`.
-
-The Makefile should preserve the startup order: run platform dependencies, run `postgres`, run `migrate`, wait for the migration Job to complete, then start `api` and `worker` in `skaffold dev`.
-
-## Live
-
-Live deployment is driven by Flux Kustomizations in `clusters/prod-eu/domains/`:
-
-- `tenancy-postgres` points at `domains/tenancy/infra/postgres/overlays/live`.
-- `tenancy-migrate` points at `domains/tenancy/infra/migrate/overlays/live`, depends on `tenancy-postgres`, and uses `force: true`.
-- `tenancy-api` points at `domains/tenancy/infra/api/overlays/live`, depends on `tenancy-migrate`, `identity-api`, and platform ingress.
-- `tenancy-worker` points at `domains/tenancy/infra/worker/overlays/live`, depends on `tenancy-migrate` and platform event-bus.
-
-The live order must remain `postgres -> migrate -> api/worker`. The deployment workflow builds the domain images, pins live overlay digests, and then Flux reconciles the live overlays.
-
-Secrets are per deployable unit. Keep `tenancy-api-db`, `tenancy-migrate-db`, and `tenancy-worker-db` as separate Secret names because the API, migrator, and worker use different database roles.
-
-When live moves to a managed database, remove `tenancy-postgres` from the Flux graph, run the database bootstrap SQL against the managed database, and keep `tenancy-migrate -> tenancy-api/worker`.
-
-## Contracts
-
-- OpenAPI: routes are TypeBox/Fastify contracts mounted under `/v1`; generated docs are served through `api.tma.com/v1/tenancy/docs`.
-- Identity dependency: tenancy validates identity-issued tokens through the identity JWKS URL and the shared API audience. It does not own identity records.
-- Events: the schema includes a transactional `outbox_events` table. The worker
-  ensures the `TENANCY` JetStream stream and publishes unpublished rows to that
-  stream. Outbox rows store the complete event envelope as JSON, so the worker
-  publishes the event exactly as recorded in the transaction.
-- Event schemas: TypeBox/JSDoc event contracts live in `packages/api/src/events/index.mjs`.
-- Database: tenancy owns its schema and Flyway migration package in `packages/migrate/`. Other domains must not read or write this database directly.
-
-## Event Publishing Mechanics
-
-Tenancy authority events follow this path:
-
-```text
-request handler -> domain function -> DB transaction
-DB transaction -> tenant/tenant_membership change
-DB transaction -> outbox_events row
-Postgres trigger -> pg_notify wake-up
-worker -> drains unpublished outbox rows
-worker -> publishes to TENANCY JetStream stream
-worker -> sets published_at after JetStream accepts the event
-```
-
-The durable source is `outbox_events`, not the Postgres notification. The notification only wakes the worker. On startup, the worker drains existing unpublished rows before waiting for new notifications.
-
-Request handlers must not publish tenancy authority events directly to NATS. They write state and event intent in the same database transaction.
+API docs: `GET api.tma.com/v1/tenancy/docs`.
 
 Current event subjects:
 
-- `tenancy.tenant.updated`
-- `tenancy.tenant_membership.updated`
-
-Event payloads are intentionally projection-shaped and minimal. Consumers should
-use natural projection keys plus the latest applied event `version` to ignore
-duplicate or stale events where `event.version <= projected.version`.
-
-Do not break an existing subject plus `schema_version` in place. Add a new
-schema version or subject, deploy consumers that understand it, then switch
-producers only after old consumers no longer depend on the previous contract.
-
-Every tenancy event payload must include `payload.tenant.id`, including future
-events for teams or other tenant-owned authority changes. Consumers use
-`payload.tenant.id` plus event `version` as the projection ordering key. Any
-authority-affecting tenancy event must increment `tenants.version` and publish
-the new value as the event `version`.
-
-```json
-{
-  "id": "event-id",
-  "subject": "tenancy.tenant_membership.updated",
-  "version": 2,
-  "schema_version": 1,
-  "payload": {
-    "tenant": {
-      "id": "tenant-id"
-    },
-    "membership": {
-      "tenant_id": "tenant-id",
-      "role": "owner",
-      "user_id": "user-id"
-    }
-  }
-}
+```text
+tenancy.tenant.updated
+tenancy.tenant_membership.updated
 ```
+
+Events are current-state facts. Consumers use natural projection keys plus event
+`version` and ack stale messages.
+
+## Operations
+
+```sh
+make deploy-tenancy
+make dev-tenancy
+```
+
+Live Flux units:
+
+```text
+tenancy-postgres -> tenancy-migrate -> tenancy-api/tenancy-worker
+```
+
+The API depends on identity/JWKS and ingress. The worker depends on event-bus.
+
+## Agent Notes
+
+- Request handlers do not publish authority events directly.
+- State changes and `outbox_events` rows belong in the same DB transaction.
+- Every authority-affecting event increments `tenants.version`.
+- If managed Postgres replaces the placeholder, remove only `tenancy-postgres`
+  from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

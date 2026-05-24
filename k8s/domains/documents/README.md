@@ -1,99 +1,78 @@
 # Documents Domain
 
-Documents is a small product-domain proof of the platform spine:
+Documents is the product-domain proof of the platform spine.
+
+## Owns
+
+- `documents`
+- `projected_tenants`
+- `projected_tenant_memberships`
+- `projected_tenant_capabilities`
+
+The projection tables are local authorization inputs copied from tenancy and
+capabilities events.
+
+## Does Not Own
+
+- identity records
+- tenant authority
+- capability authority
+- payments, notifications, workflow
+
+The API verifies identity-issued JWTs, then authorizes from local projections.
+
+## Units
 
 ```text
-JWT identity + tenancy projections + capability projections -> document command
+postgres -> migrate -> api/worker
 ```
 
-It owns only tenant-scoped documents. It does not own identity, tenant
-records, tenant membership, capability definitions, capability grants,
-payments, notifications, or workflow.
+- `postgres`: local/CI placeholder database.
+- `migrate`: Flyway Job from `packages/migrate`.
+- `api`: Fastify API from `packages/api`.
+- `worker`: projection consumers from `packages/worker`.
 
-## Boundary
+The worker consumes existing streams and does not publish events yet.
 
-- `documents` stores rows created by this domain.
-- `projected_tenants` and `projected_tenant_memberships` are local copies of
-  tenancy authority from the `TENANCY` stream.
-- `projected_tenant_capabilities` is a local tenant capability snapshot from the
-  `CAPABILITIES` stream.
-- The API verifies identity-issued JWTs through the identity JWKS endpoint.
-
-The domain uses projections for authorization. It never reaches into identity,
-tenancy, or capabilities databases.
-
-## API
+## Public Contracts
 
 ```text
 POST /v1/documents
 ```
 
-Body:
+The command requires:
 
-```json
-{
-  "tenant_id": "00000000-0000-4000-8000-000000000000",
-  "title": "Example"
-}
-```
+- valid identity token
+- projected tenant
+- projected tenant membership
+- `documents.enabled = true` in projected tenant capabilities
 
-The command succeeds only when:
-
-- the access token is valid;
-- the tenant exists in the local tenancy projection;
-- the caller is a projected member of the tenant;
-- the tenant has `documents.enabled = true` in the local capability projection.
-
-Docs are served at:
+API docs:
 
 ```text
 GET /v1/documents/docs
 GET /v1/documents/docs/json
 ```
 
-## Deployment Units
+## Operations
 
-```text
-postgres -> migrate -> api/worker
-```
-
-- `postgres`: local/CI placeholder Postgres unit.
-- `migrate`: Flyway Job from `packages/migrate`.
-- `api`: Fastify API from `packages/api`.
-- `worker`: projection consumers from `packages/worker`.
-
-The worker consumes existing platform streams. It does not create a stream and
-does not publish events yet.
-
-## Local
-
-```text
+```sh
 make deploy-documents
 make dev-documents
 ```
 
-The root Makefile deploys required dependencies first: identity, tenancy,
-event-bus, and capabilities.
-
-Domain-owned checks:
+Live Flux units:
 
 ```text
-make -C domains/documents pre-deploy
-make -C domains/documents post-deploy
+documents-postgres -> documents-migrate -> documents-api/documents-worker
 ```
 
-## Live
+The worker depends on tenancy and capabilities workers because those streams
+must exist before documents consumes them.
 
-Flux Kustomizations live in `clusters/prod-eu/domains/`:
+## Agent Notes
 
-- `documents-postgres`
-- `documents-migrate`
-- `documents-api`
-- `documents-worker`
-
-The live graph keeps `documents-worker` behind `tenancy-worker` and
-`capabilities-worker` because those workers create the streams this worker consumes.
-
-When live moves to managed Postgres, remove only `documents-postgres` from the
-Flux graph, run `packages/migrate/bootstrap/managed-postgres.sql` against the
-managed database, and keep `documents-migrate -> documents-api/worker`.
+- Do not call identity, tenancy, or capabilities synchronously for hot-path auth.
+- Do not read other domains' databases.
+- If managed Postgres replaces the placeholder, remove only `documents-postgres`
+  from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

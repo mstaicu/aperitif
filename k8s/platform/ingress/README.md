@@ -1,8 +1,6 @@
 # Ingress Platform
 
-Ingress owns Traefik, Traefik CRDs, and the local Traefik dashboard route.
-
-It does not own domain API or UI routes. Domain HTTP-serving units own their own `IngressRoute` resources.
+Ingress owns Traefik, Traefik CRDs, and local dashboard routing.
 
 ## Units
 
@@ -10,34 +8,22 @@ It does not own domain API or UI routes. Domain HTTP-serving units own their own
 crds -> ingress
 ```
 
-- `crds`: Traefik CRDs required before `IngressRoute` resources can be applied.
-- `ingress`: Traefik deployment, services, and the local dashboard route.
+- `crds`: Traefik CRDs.
+- `ingress`: Traefik deployment, services, dashboard route, TLS config.
+
+Domain API/UI units own their own `IngressRoute`s.
 
 ## Local
 
-`make deploy-ingress` is the local entrypoint. It:
-
-- applies Traefik CRDs,
-- waits for CRDs to be established,
-- installs the local mkcert CA,
-- adds the configured domain to `/etc/hosts`,
-- creates the local `traefik-tls` Secret,
-- deploys Traefik through Skaffold,
-- waits for `traefik-depl`.
-
-The default local domain is `tma.com`:
-
 ```sh
 make deploy-ingress
-```
-
-Override it when needed:
-
-```sh
 make deploy-ingress DOMAIN=example.test
 ```
 
-In kind or CI, prefer a port-forward instead of relying on host LoadBalancer behavior:
+The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, deploys
+Traefik, and waits for `traefik-depl`.
+
+For kind/CI, use a port-forward:
 
 ```sh
 kubectl -n traefik port-forward svc/traefik-lb 8443:443
@@ -45,23 +31,15 @@ kubectl -n traefik port-forward svc/traefik-lb 8443:443
 
 ## Live
 
-Live ingress is reconciled by Flux from:
+Flux reconciles:
 
 ```text
 clusters/prod-eu/platform/ingress.yaml
-```
-
-The Kustomization points at:
-
-```text
 platform/ingress/overlays/live
 ```
 
-Live TLS is issued by Traefik ACME through Cloudflare DNS-01. The Cloudflare token must be managed as environment-specific secret material. Do not commit generated local mkcert material.
-
-## Route Attachment
-
-Domain API/UI units own their own `IngressRoute`s. Public routes bind to the `https` entrypoint and internal routes bind to the `http` entrypoint.
+Live TLS is Traefik ACME with Cloudflare DNS-01. Do not commit local mkcert
+material.
 
 ## Checks
 
