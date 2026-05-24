@@ -11,6 +11,7 @@ spec:
       labels:
         app: tenancy-migrate
     spec:
+      automountServiceAccountToken: false
       restartPolicy: Never
 
       containers:
