@@ -10,6 +10,7 @@ resources:
 
 patches:
   - path: documents-api-depl.yaml
+  - path: documents-api-ingress.yaml
 
 images:
   - name: mdstaicu/documents-api

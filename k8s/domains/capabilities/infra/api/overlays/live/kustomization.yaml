@@ -10,6 +10,7 @@ resources:
 
 patches:
   - path: capabilities-api-depl.yaml
+  - path: capabilities-api-ingress.yaml
 
 images:
   - name: mdstaicu/capabilities-api

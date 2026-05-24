@@ -1,45 +1,33 @@
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
 
 metadata:
   name: capabilities-api-public
 spec:
-  hostnames:
-    - api.tma.com
+  entryPoints:
+    - https
 
-  parentRefs:
-    - name: traefik-pgw
-      namespace: traefik
-      sectionName: https-api
-
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/capabilities
-
-      backendRefs:
+  routes:
+    - kind: Rule
+      match: Host(`api.tma.com`) && PathPrefix(`/v1/capabilities`)
+      services:
         - name: capabilities-api-srv
           port: 3000
+  tls: {}
 
 ---
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
 
 metadata:
   name: capabilities-api-internal
 spec:
-  parentRefs:
-    - name: traefik-igw
-      namespace: traefik
-      sectionName: http
+  entryPoints:
+    - http
 
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/capabilities
-
-      backendRefs:
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/v1/capabilities`)
+      services:
         - name: capabilities-api-srv
           port: 3000

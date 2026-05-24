@@ -35,7 +35,7 @@ clusters/
     flux-system/          bootstrap notes
 
 platform/
-  ingress/                Traefik, Gateway API CRDs, Gateways, HTTPRoutes
+  ingress/                Traefik, Traefik CRDs, IngressRoutes
   event-bus/              NATS JetStream for durable domain events
   observability/          OpenTelemetry Collector
   mesh/                   present, not currently composed
@@ -90,7 +90,7 @@ postgres -> migrate -> api/worker
 
 If a domain owns a browser surface, add `ui` as a separate deployable unit.
 
-HTTP route ownership lives in the unit that serves HTTP, usually `api` and sometimes `ui`. Postgres and migrate units should stay out of gateway concerns.
+HTTP route ownership lives in the unit that serves HTTP, usually `api` and sometimes `ui`. Postgres and migrate units should stay out of ingress concerns.
 
 Migration units are one-shot Kubernetes Jobs. In live, migration Kustomizations must be Flux-managed and use `force: true` so reconciliation can recreate completed Jobs when migration image content changes. Live deployment workflows pin image digests; do not rely on a static `latest` tag when migration content needs to trigger a rerun.
 
@@ -117,13 +117,13 @@ Ingress and event-bus are the active platform baseline.
 
 Local ingress setup does three jobs:
 
-- Installs Gateway API CRDs.
+- Installs Traefik CRDs.
 - Creates local machine trust and host routing with `mkcert` and `/etc/hosts`.
-- Applies Traefik and Gateway API manifests through Skaffold/Kustomize.
+- Applies Traefik manifests through Skaffold/Kustomize.
 
 Live ingress is managed by Flux from `clusters/prod-eu/platform/ingress.yaml` and points at `platform/ingress/overlays/live`.
 
-Traefik Gateway listeners currently allow `HTTPRoute` attachment from all namespaces. This keeps domain route ownership simple: domains own their own `HTTPRoute`s, and the repo review boundary controls what attaches to the shared Gateway. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/tenants`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes stay on the internal Gateway without hostnames.
+Domains own their own Traefik `IngressRoute`s. Public browser UIs should use `tma.com`; public APIs should use resource-first paths under `api.tma.com/v1`, such as `/v1/tenants`, `/v1/passkeys`, and `/v1/sessions`. Internal HTTP routes bind to the `http` entrypoint without hostnames.
 
 Event-bus is NATS JetStream. Domains that emit authority/state events should write a transactional outbox row in the same database transaction as the state change, then let a domain worker publish to JetStream. Request handlers should not publish authority events directly.
 
@@ -162,7 +162,7 @@ The Make targets intentionally run the same dependency order as live:
 declared platform deps -> postgres -> migrate -> wait for migration Job -> api/ui/worker
 ```
 
-Use `make deploy-ingress` when you only need Traefik, Gateway API CRDs, local TLS, and local host routing.
+Use `make deploy-ingress` when you only need Traefik, Traefik CRDs, local TLS, and local host routing.
 
 Use `make deploy-observability` when you only need the OpenTelemetry Collector.
 
@@ -325,4 +325,4 @@ kustomize build --enable-alpha-plugins --enable-exec <overlay>
 ```
 
 Use the full spine checks when changing shared structure, deployment ordering,
-namespaces, Gateway routing, secrets, or image digest pinning.
+namespaces, ingress routing, secrets, or image digest pinning.

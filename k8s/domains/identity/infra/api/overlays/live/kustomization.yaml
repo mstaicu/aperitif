@@ -11,6 +11,7 @@ resources:
 
 patches:
   - path: identity-api-depl.yaml
+  - path: identity-api-ingress.yaml
 
 configMapGenerator:
   - name: identity-api-cm

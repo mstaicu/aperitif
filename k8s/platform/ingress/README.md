@@ -1,8 +1,8 @@
 # Ingress Platform
 
-Ingress owns Traefik, Gateway API CRDs, shared Gateways, and the Traefik dashboard route.
+Ingress owns Traefik, Traefik CRDs, and the local Traefik dashboard route.
 
-It does not own domain API or UI routes. Domain HTTP-serving units own their own `HTTPRoute` resources and attach to the shared Gateway.
+It does not own domain API or UI routes. Domain HTTP-serving units own their own `IngressRoute` resources.
 
 ## Units
 
@@ -10,14 +10,14 @@ It does not own domain API or UI routes. Domain HTTP-serving units own their own
 crds -> ingress
 ```
 
-- `crds`: Gateway API CRDs required before Gateway/HTTPRoute resources can be applied.
-- `ingress`: Traefik deployment, services, GatewayClass, Gateways, and dashboard route.
+- `crds`: Traefik CRDs required before `IngressRoute` resources can be applied.
+- `ingress`: Traefik deployment, services, and the local dashboard route.
 
 ## Local
 
 `make deploy-ingress` is the local entrypoint. It:
 
-- applies Gateway API CRDs,
+- applies Traefik CRDs,
 - waits for CRDs to be established,
 - installs the local mkcert CA,
 - adds the configured domain to `/etc/hosts`,
@@ -57,13 +57,11 @@ The Kustomization points at:
 platform/ingress/overlays/live
 ```
 
-Live TLS and DNS provider material must be managed as environment-specific secrets. Do not commit generated local mkcert material.
+Live TLS is issued by Traefik ACME through Cloudflare DNS-01. The Cloudflare token must be managed as environment-specific secret material. Do not commit generated local mkcert material.
 
 ## Route Attachment
 
-Gateway listeners currently accept routes from all namespaces. Domain API/UI units own their own `HTTPRoute`s; DB and migrate units should not own gateway concerns.
-
-The public Gateway has separate HTTPS listeners for browser UI traffic on `tma.com` and API traffic on `api.tma.com`. Public route host ownership still belongs on the `HTTPRoute`, and internal routes stay hostless on `traefik-igw`.
+Domain API/UI units own their own `IngressRoute`s. Public routes bind to the `https` entrypoint and internal routes bind to the `http` entrypoint.
 
 ## Checks
 

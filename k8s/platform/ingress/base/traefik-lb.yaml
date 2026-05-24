@@ -3,7 +3,6 @@ kind: Service
 
 metadata:
   name: traefik-lb
-  namespace: traefik
 spec:
   type: LoadBalancer
   selector:

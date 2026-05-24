@@ -9,6 +9,7 @@ resources:
 
 patches:
   - path: identity-ui-depl.yaml
+  - path: identity-ui-ingress.yaml
 
 images:
   - name: mdstaicu/identity-ui

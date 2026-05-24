@@ -2,9 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - customresourcedefinition-backendtlspolicies.gateway.networking.k8s.io.yaml
-  - customresourcedefinition-gatewayclasses.gateway.networking.k8s.io.yaml
-  - customresourcedefinition-gateways.gateway.networking.k8s.io.yaml
-  - customresourcedefinition-grpcroutes.gateway.networking.k8s.io.yaml
-  - customresourcedefinition-httproutes.gateway.networking.k8s.io.yaml
-  - customresourcedefinition-referencegrants.gateway.networking.k8s.io.yaml
+  - customresourcedefinition-ingressroutes.traefik.io.yaml
+  - customresourcedefinition-ingressroutetcps.traefik.io.yaml
+  - customresourcedefinition-ingressrouteudps.traefik.io.yaml
+  - customresourcedefinition-middlewares.traefik.io.yaml
+  - customresourcedefinition-middlewaretcps.traefik.io.yaml
+  - customresourcedefinition-serverstransports.traefik.io.yaml
+  - customresourcedefinition-serverstransporttcps.traefik.io.yaml
+  - customresourcedefinition-tlsoptions.traefik.io.yaml
+  - customresourcedefinition-tlsstores.traefik.io.yaml
+  - customresourcedefinition-traefikservices.traefik.io.yaml

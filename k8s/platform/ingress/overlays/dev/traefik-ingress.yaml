@@ -1,28 +1,16 @@
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
 
 metadata:
   name: traefik-dashboard
-  namespace: traefik
 spec:
-  hostnames:
-    - tma.com
+  entryPoints:
+    - https
 
-  parentRefs:
-    - name: traefik-pgw
-      sectionName: https-ui
-
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-
-        - path:
-            type: PathPrefix
-            value: /dashboard
-
-      backendRefs:
-        - group: traefik.io
-          kind: TraefikService
+  routes:
+    - kind: Rule
+      match: Host(`tma.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      services:
+        - kind: TraefikService
           name: api@internal
+  tls: {}

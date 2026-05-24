@@ -77,14 +77,7 @@ flux bootstrap github \
 
 ## Components
 
-Default bootstrap includes:
-
-source
-kustomize
-helm
-notification
-
-For this repo, install:
+Install only the controllers this repo uses:
 
 ```bash
 flux bootstrap github \
@@ -93,6 +86,14 @@ flux bootstrap github \
 
 Image builds and manifest digest updates are owned by GitHub Actions. Flux only
 reconciles Git manifests.
+
+Optional controllers, intentionally not installed for now:
+
+- `helm-controller`: add only if the repo starts reconciling `HelmRelease`
+  resources.
+- `notification-controller`: add only if Flux alerts or receivers are needed.
+- `image-reflector-controller` and `image-automation-controller`: do not add
+  while GitHub Actions owns image builds and digest updates.
 
 ## Install export
 

@@ -10,6 +10,7 @@ resources:
 
 patches:
   - path: tenancy-api-depl.yaml
+  - path: tenancy-api-ingress.yaml
 
 images:
   - name: mdstaicu/tenancy-api

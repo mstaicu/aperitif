@@ -29,5 +29,9 @@ spec:
   dependsOn:
     - name: ingress-crds
     - name: observability
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   wait: true
   timeout: 5m # wait ( wait=true ) 5m for resources to become ready

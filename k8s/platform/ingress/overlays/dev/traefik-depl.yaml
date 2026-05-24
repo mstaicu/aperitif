@@ -3,7 +3,6 @@ kind: Deployment
 
 metadata:
   name: traefik-depl
-  namespace: traefik
 spec:
   replicas: 1
   template:
@@ -11,8 +10,8 @@ spec:
       containers:
         - name: traefik
           args:
-            - --entrypoints.http.address=:80 # Local plain HTTP for pgw/igw and probe traffic.
-            - --entrypoints.https.address=:443 # Local TLS listener for the public gateway.
+            - --entrypoints.http.address=:80 # Local plain HTTP for internal routes and probes.
+            - --entrypoints.https.address=:443 # Local TLS listener for public routes.
             - --entrypoints.http.forwardedHeaders.insecure=true # Local only; trust dev proxy headers.
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow request reads at the shared edge.
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle keep-alives across local domains.
@@ -20,18 +19,18 @@ spec:
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow TLS request reads.
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public TLS sockets.
 
-            - --providers.kubernetesgateway=true # Domains publish HTTPRoutes; platform owns gateways.
+            - --providers.kubernetescrd=true # Domains publish Traefik IngressRoutes.
 
             - --log.level=DEBUG # Extra edge visibility while composing local SCSs.
             - --accesslog=true # Per-request edge log across all local domains.
 
             - --ping=true # Kubernetes probes ingress health through Traefik itself.
-            - --ping.entryPoint=http # Health lives on the plain listener shared by local gateways.
+            - --ping.entryPoint=http # Health lives on the plain listener.
 
             - --api=true # Enable local admin API for route debugging.
             - --api.dashboard=true # Expose the local-only Traefik dashboard.
 
-            - --metrics.otlp=true # Export gateway metrics to the platform collector.
+            - --metrics.otlp=true # Export ingress metrics to the platform collector.
             - --metrics.otlp.serviceName=traefik # Stable producer name for shared edge telemetry.
             - --metrics.otlp.grpc=true # Use OTLP gRPC to the in-cluster collector.
             - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
