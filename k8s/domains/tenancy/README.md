@@ -39,7 +39,7 @@ GET /v1/tenants
 POST /v1/tenants
 ```
 
-API docs: `GET api.tma.com/v1/tenancy/docs`.
+API docs: `GET api.tma.com/v1/tenants/docs`.
 
 Current event subjects:
 

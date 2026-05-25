@@ -1,0 +1,107 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-security-headers
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: no-referrer
+    stsSeconds: 31536000
+    stsIncludeSubdomains: false
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-rate-limit
+spec:
+  rateLimit:
+    average: 20
+    period: 1s
+    burst: 40
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-concurrency-limit
+spec:
+  inFlightReq:
+    amount: 50
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-body-limit
+spec:
+  buffering:
+    maxRequestBodyBytes: 262144
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public
+spec:
+  chain:
+    middlewares:
+      - name: identity-api-public-security-headers
+      - name: identity-api-public-rate-limit
+      - name: identity-api-public-concurrency-limit
+      - name: identity-api-public-body-limit
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-docs-jwks-security-headers
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: no-referrer
+    stsSeconds: 31536000
+    stsIncludeSubdomains: false
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-docs-jwks-rate-limit
+spec:
+  rateLimit:
+    average: 50
+    period: 1s
+    burst: 100
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-docs-jwks-concurrency-limit
+spec:
+  inFlightReq:
+    amount: 50
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: identity-api-public-docs-jwks
+spec:
+  chain:
+    middlewares:
+      - name: identity-api-public-docs-jwks-security-headers
+      - name: identity-api-public-docs-jwks-rate-limit
+      - name: identity-api-public-docs-jwks-concurrency-limit

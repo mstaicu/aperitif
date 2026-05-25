@@ -35,5 +35,5 @@ pre-deploy-skaffold: ## Verify tenancy Skaffold modules before deploy.
 	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null
 
 post-deploy: ## Verify the deployed tenancy boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/tenancy/docs/json"
+	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/tenants/docs/json"
 	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/tenants")" = "401"

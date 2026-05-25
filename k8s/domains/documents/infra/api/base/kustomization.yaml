@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - documents-api-ingress.yaml
+  - documents-api-middlewares.yaml
   - documents-np.yaml
   - documents-api-depl.yaml
   - documents-api-sa.yaml

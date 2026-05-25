@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - tenancy-api-ingress.yaml
+  - tenancy-api-middlewares.yaml
   - tenancy-np.yaml
   - tenancy-api-depl.yaml
   - tenancy-api-sa.yaml

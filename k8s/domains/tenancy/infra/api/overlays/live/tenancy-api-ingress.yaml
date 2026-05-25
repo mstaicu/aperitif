@@ -8,3 +8,15 @@ spec:
     certResolver: le
     domains:
       - main: api.tma.com
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: tenancy-api-public-docs
+spec:
+  tls:
+    certResolver: le
+    domains:
+      - main: api.tma.com

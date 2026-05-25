@@ -141,6 +141,7 @@ deploy-ingress: ## Deploy Traefik CRDs, dev TLS, hosts entry, and Traefik.
 	kubectl rollout status -n traefik deploy/traefik-depl --timeout=300s
 
 deploy-event-bus: ## Deploy NATS JetStream and wait for readiness.
+# 	skaffold run -m event-bus --port-forward=user
 	skaffold run -m event-bus
 	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
 

@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - capabilities-api-ingress.yaml
+  - capabilities-api-middlewares.yaml
   - capabilities-np.yaml
   - capabilities-api-depl.yaml
   - capabilities-api-sa.yaml

@@ -1,0 +1,107 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-security-headers
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: no-referrer
+    stsSeconds: 31536000
+    stsIncludeSubdomains: false
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-rate-limit
+spec:
+  rateLimit:
+    average: 100
+    period: 1s
+    burst: 200
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-concurrency-limit
+spec:
+  inFlightReq:
+    amount: 100
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-body-limit
+spec:
+  buffering:
+    maxRequestBodyBytes: 1048576
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public
+spec:
+  chain:
+    middlewares:
+      - name: tenancy-api-public-security-headers
+      - name: tenancy-api-public-rate-limit
+      - name: tenancy-api-public-concurrency-limit
+      - name: tenancy-api-public-body-limit
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-docs-security-headers
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: no-referrer
+    stsSeconds: 31536000
+    stsIncludeSubdomains: false
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-docs-rate-limit
+spec:
+  rateLimit:
+    average: 50
+    period: 1s
+    burst: 100
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-docs-concurrency-limit
+spec:
+  inFlightReq:
+    amount: 50
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+
+metadata:
+  name: tenancy-api-public-docs
+spec:
+  chain:
+    middlewares:
+      - name: tenancy-api-public-docs-security-headers
+      - name: tenancy-api-public-docs-rate-limit
+      - name: tenancy-api-public-docs-concurrency-limit

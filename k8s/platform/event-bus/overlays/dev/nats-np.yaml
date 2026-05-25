@@ -88,6 +88,12 @@ spec:
           podSelector:
             matchLabels:
               app: capabilities-worker
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: documents
+          podSelector:
+            matchLabels:
+              app: documents-worker
       ports:
         - port: 4222
           protocol: TCP

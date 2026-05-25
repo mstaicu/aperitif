@@ -62,6 +62,6 @@ export default async (fastify, { jwks, services }) => {
 
   await fastify.register(swaggerUI, {
     indexPrefix: "/v1",
-    routePrefix: "/tenancy/docs",
+    routePrefix: "/tenants/docs",
   });
 };
