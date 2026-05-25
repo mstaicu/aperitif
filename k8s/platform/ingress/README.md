@@ -41,6 +41,12 @@ platform/ingress/overlays/live
 Live TLS is Traefik ACME with Cloudflare DNS-01. Do not commit local mkcert
 material.
 
+TODO: when the public load balancer is restricted to Cloudflare IP ranges,
+configure the live `https` entrypoint to trust Cloudflare forwarded headers and
+make public route rate limits key on `CF-Connecting-IP`. Do not trust that
+header before direct load-balancer access is blocked. Do not apply this to the
+internal `http` entrypoint.
+
 ## Checks
 
 ```sh

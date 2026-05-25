@@ -12,12 +12,16 @@ spec:
           args:
             - --entrypoints.http.address=:80 # Local plain HTTP for internal routes and probes.
             - --entrypoints.https.address=:443 # Local TLS listener for public routes.
+
             - --entrypoints.http.forwardedHeaders.insecure=true # Local only; trust dev proxy headers.
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow request reads at the shared edge.
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle keep-alives across local domains.
+            - --entrypoints.http.http.maxheaderbytes=16384 # Match live header bounds in local dev.
+
             - --entrypoints.https.forwardedHeaders.insecure=true # Local only; same trust model on TLS.
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow TLS request reads.
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public TLS sockets.
+            - --entrypoints.https.http.maxheaderbytes=16384 # Match live header bounds in local dev.
 
             - --providers.kubernetescrd=true # Domains publish Traefik IngressRoutes.
 

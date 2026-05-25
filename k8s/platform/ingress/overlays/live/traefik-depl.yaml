@@ -12,21 +12,29 @@ spec:
           args:
             - --entrypoints.http.address=:80 # Internal cluster listener for SSR and service calls.
             - --entrypoints.https.address=:443 # Public listener behind Cloudflare.
+
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow internal request reads.
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle internal keep-alives.
-            - --entrypoints.http.transport.maxHeaderBytes=16384 # Bound header abuse from in-cluster callers.
+            - --entrypoints.http.http.maxheaderbytes=16384 # Bound header abuse from in-cluster callers.
+
+            # - --entrypoints.https.forwardedHeaders.trustedIPs=<CF CIDR>
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow public request reads after CF.
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public edge connections.
-            - --entrypoints.https.transport.maxHeaderBytes=16384 # Bound oversized public headers before domains.
+            - --entrypoints.https.http.maxheaderbytes=16384 # Bound oversized public headers before domains.
+
             - --certificatesresolvers.le.acme.email=ops@tma.com # Let's Encrypt account contact.
             - --certificatesresolvers.le.acme.dnschallenge=true # Mint public certs through DNS-01.
             - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare # Use Cloudflare as the DNS solver.
             - --certificatesresolvers.le.acme.storage=/data/acme.json # Persist issued cert state across pod restarts.
+
             - --providers.kubernetescrd=true # Domains attach Traefik IngressRoutes.
+
             - --log.level=INFO # Keep shared edge logs production-readable.
             - --accesslog=true # Retain request trail at the platform edge.
+
             - --ping=true # Kubernetes probes ingress availability through Traefik itself.
             - --ping.entryPoint=http # Health stays on the internal-only listener.
+
             - --metrics.otlp=true # Export edge metrics to the in-cluster collector.
             - --metrics.otlp.serviceName=traefik # Stable producer name for the shared edge.
             - --metrics.otlp.grpc=true # Use OTLP gRPC for the collector hop.

@@ -1,8 +1,6 @@
-#
-# Encrypt using age + sops, decrypt in flux.cd
-#
 apiVersion: v1
 kind: Secret
+
 metadata:
   name: cloudflare-dns
 type: Opaque
