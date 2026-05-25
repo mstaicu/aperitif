@@ -6,9 +6,8 @@ import { routes } from "../routes.ts";
 
 export const loginPage = {
   actions: {
-    action: ({ request }: { request: Request }) => finishLogin(request),
-    challenge: ({ request }: { request: Request }) =>
-      createLoginChallenge(request),
+    action: finishLogin,
+    challenge: createLoginChallenge,
     index: () =>
       createHtmlResponse(
         html`<html lang="en">

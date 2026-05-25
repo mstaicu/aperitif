@@ -9,9 +9,8 @@ import { routes } from "../routes.ts";
 
 export const signupPage = {
   actions: {
-    action: ({ request }: { request: Request }) => finishRegistration(request),
-    challenge: ({ request }: { request: Request }) =>
-      createRegistrationChallenge(request),
+    action: finishRegistration,
+    challenge: createRegistrationChallenge,
     index: () =>
       createHtmlResponse(
         html` <html lang="en">
