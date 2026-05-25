@@ -73,9 +73,10 @@ deploy-documents: ## Deploy documents plus required dependencies and exit.
 	kubectl delete job -n documents migrate --ignore-not-found
 	skaffold run --force -m documents-migrate-dev
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	skaffold run -m documents-api-dev,documents-worker-dev
+	skaffold run -m documents-api-dev,documents-worker-dev,documents-ui-dev
 	kubectl rollout status -n documents deploy/documents-api-depl --timeout=300s
 	kubectl rollout status -n documents deploy/documents-worker-depl --timeout=300s
+	kubectl rollout status -n documents deploy/documents-ui-depl --timeout=300s
 
 dev-documents: ## Prepare documents, then run documents in skaffold dev.
 	$(MAKE) deploy-capabilities
@@ -83,7 +84,7 @@ dev-documents: ## Prepare documents, then run documents in skaffold dev.
 	kubectl delete job -n documents migrate --ignore-not-found
 	skaffold run --force -m documents-migrate-dev
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m documents-api-dev,documents-worker-dev
+	exec skaffold dev -m documents-api-dev,documents-worker-dev,documents-ui-dev
 
 # Full stack
 
@@ -101,7 +102,7 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n capabilities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n capabilities job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
 
 # Platform dependencies
 

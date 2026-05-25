@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: documents-ui-srv
+spec:
+  selector:
+    app: documents-ui
+  ports:
+    - name: documents-ui
+      port: 3000
+      targetPort: 3000

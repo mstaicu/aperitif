@@ -7,22 +7,20 @@ const REQUIRED_CAPABILITY_ID = "documents.enabled";
  * @returns {(args: {
  *   currentUserId: string,
  *   tenantId: string,
- *   title: string,
  * }) => Promise<{
  *   created_by: string,
  *   id: string,
  *   tenant_id: string,
  *   title: string,
- * }>}
+ * }[]>}
  */
-export const createDocument =
+export const listDocuments =
   (ctx) =>
-  async ({ currentUserId, tenantId, title }) => {
+  async ({ currentUserId, tenantId }) => {
     let client;
 
     try {
       client = await ctx.persistence.db.connect();
-      await client.query("BEGIN");
 
       const {
         rows: [tenant],
@@ -76,41 +74,22 @@ export const createDocument =
         throw new Error("CAPABILITY_REQUIRED");
       }
 
-      const {
-        rows: [document],
-      } = await client.query(
+      const { rows: documents } = await client.query(
         `
-          INSERT INTO documents (
-            tenant_id,
-            title,
-            created_by
-          )
-          VALUES ($1, $2, $3)
-          RETURNING
+          SELECT
             created_by,
             id,
             tenant_id,
             title
+          FROM documents
+          WHERE tenant_id = $1
+          ORDER BY created_at DESC, id DESC
         `,
-        [tenant.tenant_id, title, currentUserId],
+        [tenant.tenant_id],
       );
 
-      await client.query("COMMIT");
-
-      console.log(
-        JSON.stringify({
-          created_by: document.created_by,
-          document_id: document.id,
-          event: "document_created",
-          level: "info",
-          tenant_id: document.tenant_id,
-        }),
-      );
-
-      return document;
+      return documents;
     } catch (err) {
-      await client?.query("ROLLBACK").catch(() => {});
-
       if (err instanceof DatabaseError) {
         if (
           err.code?.startsWith("08") ||

@@ -24,20 +24,23 @@ The API verifies identity-issued JWTs, then authorizes from local projections.
 ## Units
 
 ```text
-postgres -> migrate -> api/worker
+postgres -> migrate -> api/worker/ui
 ```
 
 - `postgres`: local/CI placeholder database.
 - `migrate`: Flyway Job from `packages/migrate`.
 - `api`: Fastify API from `packages/api`.
 - `worker`: projection consumers from `packages/worker`.
+- `ui`: server-rendered proof UI from `packages/ui`.
 
 The worker consumes existing streams and does not publish events yet.
 
 ## Public Contracts
 
 ```text
-POST /v1/documents
+POST /v1/tenants/:tenant_id/documents
+GET /v1/tenants/:tenant_id/documents
+GET /documents
 ```
 
 The command requires:
@@ -64,7 +67,7 @@ make dev-documents
 Live Flux units:
 
 ```text
-documents-postgres -> documents-migrate -> documents-api/documents-worker
+documents-postgres -> documents-migrate -> documents-api/documents-worker/documents-ui
 ```
 
 The worker depends on tenancy and capabilities workers because those streams

@@ -1,10 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import {
-  CreateDocumentBody,
-  DocumentResponse,
-  TenantParams,
-} from "./schemas.mjs";
+import { DocumentsResponse, TenantParams } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -17,17 +13,16 @@ import {
  * @param {{documents: DocumentsService, jwks: Jwks}} opts
  */
 export default async function (fastify, { documents, jwks }) {
-  fastify.post(
+  fastify.get(
     "",
     {
       schema: {
-        body: CreateDocumentBody,
         description:
-          "Create a tenant-scoped document after checking the caller identity, tenant membership, and required tenant capability projection.",
-        operationId: "createDocument",
+          "List tenant-scoped documents after checking the caller identity, tenant membership, and required tenant capability projection.",
+        operationId: "listDocuments",
         params: TenantParams,
         response: {
-          201: DocumentResponse,
+          200: DocumentsResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -36,7 +31,7 @@ export default async function (fastify, { documents, jwks }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Create document",
+        summary: "List documents",
         tags: ["documents"],
       },
     },
@@ -46,11 +41,10 @@ export default async function (fastify, { documents, jwks }) {
         jwks,
       });
 
-      return reply.code(201).send(
-        await documents.createDocument({
+      return reply.send(
+        await documents.listDocuments({
           currentUserId,
           tenantId: req.params.tenant_id,
-          title: req.body.title,
         }),
       );
     },

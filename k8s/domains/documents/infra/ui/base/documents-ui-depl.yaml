@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: documents-ui-depl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: documents-ui
+  template:
+    metadata:
+      labels:
+        app: documents-ui
+    spec:
+      terminationGracePeriodSeconds: 15
+      serviceAccountName: documents-ui
+      automountServiceAccountToken: false
+
+      containers:
+        - name: documents-ui
+          image: mdstaicu/documents-ui
+          env:
+            - name: PORT
+              value: "3000"
+
+            - name: API_INTERNAL_V1_URL
+              value: http://traefik-srv.traefik.svc.cluster.local/v1
+
+          ports:
+            - containerPort: 3000
+              name: http
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2

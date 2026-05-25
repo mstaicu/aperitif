@@ -101,7 +101,14 @@ async function projectV1TenantCapabilitiesUpdated(ctx, event) {
   try {
     await client.query("BEGIN");
 
-    const result = await client.query(
+    const capabilities = Object.fromEntries(
+      payload.capabilities.map((capability) => [
+        capability.id,
+        capability.value,
+      ]),
+    );
+
+    const { rowCount } = await client.query(
       `
         INSERT INTO projected_tenant_capabilities (
           tenant_id,
@@ -114,12 +121,12 @@ async function projectV1TenantCapabilitiesUpdated(ctx, event) {
           version = EXCLUDED.version
         WHERE projected_tenant_capabilities.version < EXCLUDED.version
       `,
-      [payload.tenant.id, JSON.stringify(payload.capabilities), event.version],
+      [payload.tenant.id, JSON.stringify(capabilities), event.version],
     );
 
     await client.query("COMMIT");
 
-    if (result.rowCount > 0) {
+    if (rowCount && rowCount > 0) {
       console.log(
         JSON.stringify({
           capability_count: payload.capabilities.length,

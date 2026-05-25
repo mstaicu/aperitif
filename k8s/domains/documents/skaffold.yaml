@@ -17,6 +17,39 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
+  name: documents-ui-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/documents-ui
+      context: packages/ui
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: app/**/*
+            dest: /home/node/app
+          - src: server.ts
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/ui/overlays/dev
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
   name: documents-migrate-dev
 
 build:

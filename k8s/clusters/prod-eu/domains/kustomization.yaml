@@ -18,3 +18,4 @@ resources:
   - documents-migrate.yaml
   - documents-api.yaml
   - documents-worker.yaml
+  - documents-ui.yaml

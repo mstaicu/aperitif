@@ -2,6 +2,7 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
 import createDocument from "./routes/documents/document.create.mjs";
+import listDocuments from "./routes/documents/document.list.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -52,7 +53,13 @@ export default async (fastify, { jwks, services }) => {
   await fastify.register(createDocument, {
     documents: services.documents,
     jwks,
-    prefix: "/documents",
+    prefix: "/tenants/:tenant_id/documents",
+  });
+
+  await fastify.register(listDocuments, {
+    documents: services.documents,
+    jwks,
+    prefix: "/tenants/:tenant_id/documents",
   });
 
   await fastify.register(swaggerUI, {

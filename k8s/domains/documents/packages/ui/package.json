@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild app/platform/observability/otel.ts --bundle --platform=node --format=esm --outfile=dist/otel.js --packages=external && esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
+    "dev": "tsx --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./app/platform/observability/otel.ts --watch server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/instrumentation-http": "^0.218.0",
+    "@opentelemetry/instrumentation-undici": "^0.28.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "remix": "^3.0.0-beta.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
