@@ -7,6 +7,7 @@ data:
   otel-config.yaml: |
     extensions:
       health_check:
+        endpoint: 0.0.0.0:13133
 
     receivers:
       filelog:
@@ -108,6 +109,26 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
 
+          ports:
+            - name: health
+              containerPort: 13133
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 1
+
           volumeMounts:
             - name: config
               mountPath: /conf
@@ -116,9 +137,6 @@ spec:
               readOnly: true
             - name: container-logs
               mountPath: /var/log/containers
-              readOnly: true
-            - name: docker-container-logs
-              mountPath: /var/lib/docker/containers
               readOnly: true
 
       volumes:
@@ -131,6 +149,3 @@ spec:
         - name: container-logs
           hostPath:
             path: /var/log/containers
-        - name: docker-container-logs
-          hostPath:
-            path: /var/lib/docker/containers
