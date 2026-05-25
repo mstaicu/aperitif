@@ -31,12 +31,24 @@ const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
 );
 
-console.log("capabilities worker listening");
+console.log(
+  JSON.stringify({
+    event: "worker_started",
+    level: "info",
+    service: "capabilities-worker",
+  }),
+);
 
 try {
   await Promise.race([...tasks, shutdown]);
 } finally {
-  console.log("closing worker");
+  console.log(
+    JSON.stringify({
+      event: "worker_closing",
+      level: "info",
+      service: "capabilities-worker",
+    }),
+  );
 
   controller.abort();
 
@@ -44,7 +56,19 @@ try {
 
   health.close();
 
-  console.log("closing context...");
+  console.log(
+    JSON.stringify({
+      event: "context_closing",
+      level: "info",
+      service: "capabilities-worker",
+    }),
+  );
   await ctx.lifecycle.close();
-  console.log("shutdown complete");
+  console.log(
+    JSON.stringify({
+      event: "worker_stopped",
+      level: "info",
+      service: "capabilities-worker",
+    }),
+  );
 }

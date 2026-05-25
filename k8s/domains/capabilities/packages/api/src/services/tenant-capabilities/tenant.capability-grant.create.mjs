@@ -199,6 +199,18 @@ export const addTenantCapabilities =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          capability_count: tenantCapabilities.length,
+          event: "tenant_capability_grants_added",
+          event_id: event.id,
+          grant_count: requestedGrants.length,
+          level: "info",
+          tenant_id: tenantId,
+          version: Number(version),
+        }),
+      );
+
       return {
         tenant_id: tenantId,
       };

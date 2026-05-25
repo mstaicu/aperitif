@@ -207,6 +207,18 @@ export const revokeTenantCapabilities =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          capability_count: tenantCapabilities.length,
+          event: "tenant_capability_grants_revoked",
+          event_id: event.id,
+          grant_count: deleted.rowCount,
+          level: "info",
+          tenant_id: tenantId,
+          version: Number(version),
+        }),
+      );
+
       return {
         tenant_id: tenantId,
       };

@@ -9,7 +9,16 @@ const server = http.createServer(
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 44100;
 let shuttingDown = false;
 
-server.listen(port, () => console.log(`listening on http://localhost:${port}`));
+server.listen(port, () =>
+  console.log(
+    JSON.stringify({
+      event: "server_started",
+      level: "info",
+      port,
+      service: "identity-ui",
+    }),
+  ),
+);
 
 async function shutdown() {
   if (shuttingDown) return;

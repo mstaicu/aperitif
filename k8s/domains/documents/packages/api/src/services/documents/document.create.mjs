@@ -102,6 +102,16 @@ export const createDocument =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          created_by: document.created_by,
+          document_id: document.id,
+          event: "document_created",
+          level: "info",
+          tenant_id: document.tenant_id,
+        }),
+      );
+
       return document;
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});

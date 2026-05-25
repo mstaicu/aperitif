@@ -63,6 +63,14 @@ export const rotateRefreshToken =
         );
 
         await client.query("COMMIT");
+        console.warn(
+          JSON.stringify({
+            event: "session_revoked",
+            level: "warn",
+            reason: "refresh_token_reuse",
+            session_id: refreshToken.session_id,
+          }),
+        );
         throw new Error("SESSION_NOT_FOUND");
       }
 
@@ -103,6 +111,14 @@ export const rotateRefreshToken =
       );
 
       await client.query("COMMIT");
+
+      console.log(
+        JSON.stringify({
+          event: "session_refreshed",
+          level: "info",
+          session_id: refreshToken.session_id,
+        }),
+      );
 
       return {
         refresh_token: token,

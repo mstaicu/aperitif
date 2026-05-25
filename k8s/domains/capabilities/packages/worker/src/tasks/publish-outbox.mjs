@@ -54,6 +54,7 @@ async function publishOutboxBatch(ctx, signal) {
   signal.throwIfAborted();
 
   const client = await ctx.persistence.db.connect();
+  let outboxEvent;
 
   try {
     await client.query("BEGIN");
@@ -72,6 +73,7 @@ async function publishOutboxBatch(ctx, signal) {
     );
 
     for (const { event, id } of outboxEvents) {
+      outboxEvent = { event, id };
       await ctx.messaging.js.publish(event.subject, JSON.stringify(event), {
         expect: {
           streamName: CAPABILITIES_STREAM,
@@ -94,9 +96,31 @@ async function publishOutboxBatch(ctx, signal) {
 
     await client.query("COMMIT");
 
+    if (outboxEvents.length > 0) {
+      console.log(
+        JSON.stringify({
+          event: "outbox_events_published",
+          event_count: outboxEvents.length,
+          level: "info",
+          service: "capabilities-worker",
+        }),
+      );
+    }
+
     return outboxEvents.length;
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
+
+    console.error(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : String(err),
+        event: "outbox_publish_failed",
+        event_id: outboxEvent?.id,
+        event_subject: outboxEvent?.event?.subject,
+        level: "error",
+        service: "capabilities-worker",
+      }),
+    );
 
     throw err;
   } finally {

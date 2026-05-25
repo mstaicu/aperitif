@@ -101,6 +101,16 @@ export const createTenant =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          event: "tenant_created",
+          level: "info",
+          owner_user_id: currentUserId,
+          tenant_id: tenant.id,
+          version: Number(membershipTenantVersion),
+        }),
+      );
+
       return {
         tenant: {
           id: tenant.id,

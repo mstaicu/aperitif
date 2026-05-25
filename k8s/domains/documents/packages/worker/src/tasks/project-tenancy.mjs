@@ -29,16 +29,23 @@ export async function runProjectTenancy(ctx, signal) {
     for await (const message of messages) {
       signal.throwIfAborted();
 
+      let event;
+
       try {
-        const event = message.json();
+        event = message.json();
 
         if (
           !TenancyEventEnvelopeCheck.Check(event) ||
           event.subject !== message.subject
         ) {
-          console.warn("ignoring invalid tenancy event envelope", {
-            subject: message.subject,
-          });
+          console.warn(
+            JSON.stringify({
+              event: "invalid_tenancy_event_ignored",
+              level: "warn",
+              service: "documents-worker",
+              subject: message.subject,
+            }),
+          );
           message.ack();
           continue;
         }
@@ -73,6 +80,17 @@ export async function runProjectTenancy(ctx, signal) {
 
         throw new Error("Unsupported tenancy event");
       } catch (err) {
+        console.error(
+          JSON.stringify({
+            error: err instanceof Error ? err.message : String(err),
+            event: "tenancy_projection_failed",
+            event_id: event?.id,
+            event_subject: event?.subject ?? message.subject,
+            level: "error",
+            service: "documents-worker",
+            version: event?.version,
+          }),
+        );
         message.nak();
         throw err;
       }
@@ -116,7 +134,7 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
       [payload.tenant.id, event.version],
     );
 
-    await client.query(
+    const membershipResult = await client.query(
       `
         INSERT INTO projected_tenant_memberships (
           tenant_id,
@@ -139,6 +157,19 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
     );
 
     await client.query("COMMIT");
+
+    if (membershipResult.rowCount > 0) {
+      console.log(
+        JSON.stringify({
+          event: "tenant_membership_projection_updated",
+          level: "info",
+          service: "documents-worker",
+          tenant_id: payload.membership.tenant_id,
+          user_id: payload.membership.user_id,
+          version: event.version,
+        }),
+      );
+    }
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
 
@@ -162,7 +193,7 @@ async function projectV1TenantUpdated(ctx, event) {
   try {
     await client.query("BEGIN");
 
-    await client.query(
+    const result = await client.query(
       `
         INSERT INTO projected_tenants (
           tenant_id,
@@ -177,6 +208,18 @@ async function projectV1TenantUpdated(ctx, event) {
     );
 
     await client.query("COMMIT");
+
+    if (result.rowCount > 0) {
+      console.log(
+        JSON.stringify({
+          event: "tenant_projection_updated",
+          level: "info",
+          service: "documents-worker",
+          tenant_id: payload.tenant.id,
+          version: event.version,
+        }),
+      );
+    }
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
 

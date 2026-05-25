@@ -37,11 +37,7 @@ export const createApp = async ({ ctx, fastifyOtel, services }) => {
   /**
    * @type {FastifyInstance}
    */
-  const app = Fastify({
-    logger: {
-      level: "debug",
-    },
-  })
+  const app = Fastify()
     .setValidatorCompiler(TypeBoxValidatorCompiler)
     .withTypeProvider();
 

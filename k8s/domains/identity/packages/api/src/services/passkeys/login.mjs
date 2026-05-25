@@ -190,6 +190,15 @@ export const login =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          event: "session_created",
+          level: "info",
+          session_id: session.id,
+          user_id: credential.user_id,
+        }),
+      );
+
       return {
         refresh_token: token,
       };

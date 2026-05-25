@@ -16,19 +16,11 @@ data:
             endpoint: 0.0.0.0:4317
 
     processors:
-      filter/edge_metrics:
-        metrics:
-          include:
-            match_type: strict
-            metric_names:
-              - traefik_entrypoint_request_duration_seconds
-              - traefik_entrypoint_requests_total
-
       batch:
 
     exporters:
       debug:
-        verbosity: detailed
+        verbosity: basic
 
     service:
       extensions:
@@ -44,11 +36,18 @@ data:
           exporters:
             - debug
 
+        logs:
+          receivers:
+            - otlp
+          processors:
+            - batch
+          exporters:
+            - debug
+
         metrics:
           receivers:
             - otlp
           processors:
-            - filter/edge_metrics
             - batch
           exporters:
             - debug

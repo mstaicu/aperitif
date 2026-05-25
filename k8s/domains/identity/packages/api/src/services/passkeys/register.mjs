@@ -183,6 +183,15 @@ export const register =
 
       await client.query("COMMIT");
 
+      console.log(
+        JSON.stringify({
+          event: "passkey_registered",
+          level: "info",
+          session_id: session.id,
+          user_id: userId,
+        }),
+      );
+
       return {
         refresh_token: token,
       };

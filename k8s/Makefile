@@ -147,6 +147,7 @@ deploy-event-bus: ## Deploy NATS JetStream and wait for readiness.
 deploy-observability: ## Deploy OpenTelemetry Collector and wait for readiness.
 	skaffold run -m observability
 	kubectl rollout status -n otel deploy/otel-collector --timeout=300s
+	kubectl rollout status -n otel daemonset/otel-agent --timeout=300s
 
 # Flux
 
