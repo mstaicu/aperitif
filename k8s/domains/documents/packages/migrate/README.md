@@ -5,15 +5,14 @@ This package builds `documents-migrate`. Flyway owns documents schema history.
 ## Tables
 
 ```text
-projected_tenants
-projected_tenant_memberships
+projected_tenant_members
 projected_tenant_capabilities
 documents
 flyway_schema_history
 ```
 
-Projection tables are local authorization inputs copied from tenancy and
-capabilities events. `documents` is the only product table owned here.
+Projection tables are local request inputs copied from tenancy and capabilities
+events. `documents` is the only product table owned here.
 
 ## Files
 

@@ -30,7 +30,7 @@ that capability.
 ## Domains
 
 - `identity`: passkeys, sessions, access tokens, JWKS.
-- `tenancy`: tenants and tenant memberships.
+- `tenancy`: tenants, memberships, roles, permissions.
 - `capabilities`: capability definitions, tenant grants, effective capability events.
 - `documents`: product-domain proof using local tenancy/capability projections.
 

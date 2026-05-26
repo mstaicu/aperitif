@@ -7,6 +7,9 @@ This package builds `tenancy-migrate`. Flyway owns tenancy schema history.
 ```text
 tenants
 tenant_memberships
+permissions
+roles
+role_permissions
 outbox_events
 flyway_schema_history
 ```

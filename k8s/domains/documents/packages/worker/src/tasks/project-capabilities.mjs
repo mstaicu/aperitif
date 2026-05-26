@@ -119,7 +119,7 @@ async function projectV1TenantCapabilitiesUpdated(ctx, event) {
         ON CONFLICT (tenant_id) DO UPDATE
         SET capabilities = EXCLUDED.capabilities,
           version = EXCLUDED.version
-        WHERE projected_tenant_capabilities.version < EXCLUDED.version
+        WHERE projected_tenant_capabilities.version <= EXCLUDED.version
       `,
       [payload.tenant.id, JSON.stringify(capabilities), event.version],
     );

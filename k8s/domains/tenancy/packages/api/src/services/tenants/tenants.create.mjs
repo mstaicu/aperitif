@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 import {
-  buildTenantMembershipUpdatedEvent,
+  buildTenantMemberUpdatedEvent,
   buildTenantUpdatedEvent,
 } from "../../events/index.mjs";
 
@@ -36,7 +36,11 @@ export const createTenant =
 
       await client.query(
         `
-          INSERT INTO tenant_memberships (tenant_id, user_id, role)
+          INSERT INTO tenant_memberships (
+            tenant_id,
+            user_id,
+            role_id
+          )
           VALUES ($1, $2, 'owner')
         `,
         [tenant.id, currentUserId],
@@ -63,7 +67,7 @@ export const createTenant =
       );
 
       const {
-        rows: [{ version: membershipTenantVersion }],
+        rows: [{ version: memberTenantVersion }],
       } = await client.query(
         `
           UPDATE tenants
@@ -74,18 +78,35 @@ export const createTenant =
         [tenant.id],
       );
 
-      const membershipUpdatedEvent = buildTenantMembershipUpdatedEvent(
+      const { rows: permissions } = await client.query(
+        `
+          SELECT DISTINCT rp.permission_id AS id
+          FROM tenant_memberships tm
+          JOIN role_permissions rp ON rp.role_id = tm.role_id
+          WHERE tm.tenant_id = $1
+            AND tm.user_id = $2
+          ORDER BY rp.permission_id
+        `,
+        [tenant.id, currentUserId],
+      );
+
+      const tenantMemberUpdatedEvent = buildTenantMemberUpdatedEvent(
         {
-          membership: {
-            role: "owner",
+          member: {
+            active: true,
+            role_id: "owner",
             tenant_id: tenant.id,
             user_id: currentUserId,
           },
+          permissions: permissions.map(({ id }) => ({
+            id,
+            value: true,
+          })),
           tenant: {
             id: tenant.id,
           },
         },
-        Number(membershipTenantVersion),
+        Number(memberTenantVersion),
       );
 
       await client.query(
@@ -96,7 +117,7 @@ export const createTenant =
           )
           VALUES ($1, $2::jsonb)
         `,
-        [membershipUpdatedEvent.id, JSON.stringify(membershipUpdatedEvent)],
+        [tenantMemberUpdatedEvent.id, JSON.stringify(tenantMemberUpdatedEvent)],
       );
 
       await client.query("COMMIT");
@@ -105,9 +126,8 @@ export const createTenant =
         JSON.stringify({
           event: "tenant_created",
           level: "info",
-          owner_user_id: currentUserId,
           tenant_id: tenant.id,
-          version: Number(membershipTenantVersion),
+          version: Number(memberTenantVersion),
         }),
       );
 

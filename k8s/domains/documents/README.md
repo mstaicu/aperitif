@@ -5,12 +5,11 @@ Documents is the product-domain proof of the platform spine.
 ## Owns
 
 - `documents`
-- `projected_tenants`
-- `projected_tenant_memberships`
+- `projected_tenant_members`
 - `projected_tenant_capabilities`
 
-The projection tables are local authorization inputs copied from tenancy and
-capabilities events.
+The projection tables are local permission and capability inputs copied from
+tenancy and capabilities events.
 
 ## Does Not Own
 
@@ -46,8 +45,7 @@ GET /documents
 The command requires:
 
 - valid identity token
-- projected tenant
-- projected tenant membership
+- active projected tenant member with required permission
 - `documents.enabled = true` in projected tenant capabilities
 
 API docs:

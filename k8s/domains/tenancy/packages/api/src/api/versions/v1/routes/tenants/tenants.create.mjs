@@ -19,7 +19,7 @@ export default async function (fastify, { jwks, tenancy }) {
       schema: {
         body: CreateTenantBody,
         description:
-          "Create a tenant as the authority root for tenant-scoped access. The authenticated caller becomes tenant owner.",
+          "Create a tenant as the authority root for tenant-scoped access.",
         operationId: "createTenant",
         response: {
           201: CreateTenantResponse,

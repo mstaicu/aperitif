@@ -6,10 +6,12 @@ Tenancy owns tenant-scoped authority.
 
 - `tenants`
 - `tenant_memberships`
+- `permissions`
+- `roles`
+- `role_permissions`
 - `outbox_events`
 
-Tenant creation grants owner membership to the caller. There is no public member
-management API yet.
+Tenant memberships carry one role per member.
 
 ## Does Not Own
 
@@ -18,8 +20,8 @@ management API yet.
 - billing, payments, checkout, subscriptions
 - product-domain resources
 
-Other domains store `tenant_id` on tenant-owned resources and authorize from
-their local projections.
+Other domains store `tenant_id` on tenant-owned resources and use local
+projections for tenant existence, membership, and member permissions.
 
 ## Units
 
@@ -37,6 +39,9 @@ postgres -> migrate -> api/worker
 ```text
 GET /v1/tenants
 POST /v1/tenants
+PUT /v1/tenants/:tenant_id/members/:user_id
+DELETE /v1/tenants/:tenant_id/members/:user_id
+PUT /v1/tenants/:tenant_id/members/:user_id/role
 ```
 
 API docs: `GET api.tma.com/v1/tenants/docs`.
@@ -45,7 +50,7 @@ Current event subjects:
 
 ```text
 tenancy.tenant.updated
-tenancy.tenant_membership.updated
+tenancy.tenant_member.updated
 ```
 
 Events are current-state facts. Consumers use natural projection keys plus event

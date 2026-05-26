@@ -6,10 +6,7 @@ import {
   ReplayPolicy,
 } from "@nats-io/jetstream";
 
-import {
-  TenantMembershipUpdatedSubject,
-  TenantUpdatedSubject,
-} from "../../events/tenancy.mjs";
+import { TenantMemberUpdatedSubject } from "../../events/tenancy.mjs";
 import { TENANCY_STREAM } from "./tenancy-stream.mjs";
 
 export const TENANCY_CONSUMER = "documents-tenancy-projection";
@@ -22,7 +19,7 @@ export async function ensureTenancyConsumer(ctx) {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
     durable_name: TENANCY_CONSUMER,
-    filter_subjects: [TenantMembershipUpdatedSubject, TenantUpdatedSubject],
+    filter_subjects: [TenantMemberUpdatedSubject],
     max_ack_pending: 1,
     replay_policy: ReplayPolicy.Instant,
   };

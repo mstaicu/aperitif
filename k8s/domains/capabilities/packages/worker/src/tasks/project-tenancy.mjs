@@ -113,7 +113,7 @@ async function projectV1TenantUpdated(ctx, event) {
         VALUES ($1, $2)
         ON CONFLICT (tenant_id) DO UPDATE
         SET version = EXCLUDED.version
-        WHERE projected_tenants.version < EXCLUDED.version
+        WHERE projected_tenants.version <= EXCLUDED.version
       `,
       [payload.tenant.id, event.version],
     );

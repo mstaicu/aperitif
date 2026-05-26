@@ -1,6 +1,7 @@
 import { DatabaseError } from "pg";
 
 const REQUIRED_CAPABILITY_ID = "documents.enabled";
+const REQUIRED_PERMISSION_ID = "documents.read";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -23,33 +24,28 @@ export const listDocuments =
       client = await ctx.persistence.db.connect();
 
       const {
-        rows: [tenant],
-      } = await client.query(
-        `
-          SELECT tenant_id
-          FROM projected_tenants
-          WHERE tenant_id = $1
-        `,
-        [tenantId],
+        rows: [member],
+      } = /** @type {{ rows: { permissions?: Record<string, unknown> }[] }} */ (
+        await client.query(
+          `
+            SELECT permissions
+            FROM projected_tenant_members
+            WHERE tenant_id = $1
+              AND user_id = $2
+              AND active = true
+          `,
+          [tenantId, currentUserId],
+        )
       );
 
-      if (!tenant) {
-        throw new Error("TENANT_NOT_FOUND");
+      if (!member) {
+        throw new Error("FORBIDDEN");
       }
 
-      const {
-        rows: [membership],
-      } = await client.query(
-        `
-          SELECT 1
-          FROM projected_tenant_memberships
-          WHERE tenant_id = $1
-            AND user_id = $2
-        `,
-        [tenant.tenant_id, currentUserId],
-      );
+      const hasRequiredPermission =
+        member.permissions?.[REQUIRED_PERMISSION_ID] === true;
 
-      if (!membership) {
+      if (!hasRequiredPermission) {
         throw new Error("FORBIDDEN");
       }
 
@@ -63,7 +59,7 @@ export const listDocuments =
               FROM projected_tenant_capabilities
               WHERE tenant_id = $1
             `,
-            [tenant.tenant_id],
+            [tenantId],
           )
         );
 
@@ -85,7 +81,7 @@ export const listDocuments =
           WHERE tenant_id = $1
           ORDER BY created_at DESC, id DESC
         `,
-        [tenant.tenant_id],
+        [tenantId],
       );
 
       return documents;

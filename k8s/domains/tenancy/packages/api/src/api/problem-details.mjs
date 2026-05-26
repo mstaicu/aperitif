@@ -63,6 +63,16 @@ const PROBLEMS = {
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
   },
+  ROLE_NOT_FOUND: {
+    status: 404,
+    title: "Role not found",
+    type: "/problems/role-not-found",
+  },
+  TENANT_MEMBERSHIP_NOT_FOUND: {
+    status: 404,
+    title: "Tenant membership not found",
+    type: "/problems/tenant-membership-not-found",
+  },
   TENANT_NOT_FOUND: {
     status: 404,
     title: "Tenant not found",

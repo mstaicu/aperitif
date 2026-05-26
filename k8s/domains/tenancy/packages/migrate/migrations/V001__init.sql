@@ -23,6 +23,28 @@ CREATE TABLE tenants (
     version BIGINT NOT NULL DEFAULT 1
 );
 
+CREATE TABLE permissions (
+    id TEXT PRIMARY KEY
+);
+
+CREATE TABLE roles (
+    id TEXT PRIMARY KEY,
+
+    name TEXT NOT NULL
+);
+
+CREATE TABLE role_permissions (
+    role_id TEXT NOT NULL
+        REFERENCES roles(id)
+        ON DELETE CASCADE,
+
+    permission_id TEXT NOT NULL
+        REFERENCES permissions(id)
+        ON DELETE CASCADE,
+
+    PRIMARY KEY (role_id, permission_id)
+);
+
 CREATE TABLE tenant_memberships (
     tenant_id UUID NOT NULL
         REFERENCES tenants(id)
@@ -30,7 +52,8 @@ CREATE TABLE tenant_memberships (
 
     user_id UUID NOT NULL,
 
-    role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
+    role_id TEXT NOT NULL
+        REFERENCES roles(id),
 
     PRIMARY KEY (tenant_id, user_id)
 );

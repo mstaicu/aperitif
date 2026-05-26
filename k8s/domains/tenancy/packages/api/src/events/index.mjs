@@ -9,11 +9,6 @@ export const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const TenantRoleSchema = Type.Union([
-  Type.Literal("owner"),
-  Type.Literal("member"),
-]);
-
 export const TenantEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
@@ -42,23 +37,31 @@ export const TenancyEventEnvelopeCheck = TypeCompiler.Compile(
   TenancyEventEnvelopeSchema,
 );
 
-export const TenantMembershipUpdatedSubject =
-  "tenancy.tenant_membership.updated";
-export const TenantMembershipUpdatedSchemaVersion =
-  TENANCY_EVENT_SCHEMA_VERSION;
+export const TenantMemberUpdatedSubject = "tenancy.tenant_member.updated";
+export const TenantMemberUpdatedSchemaVersion = TENANCY_EVENT_SCHEMA_VERSION;
 
-const TenantMembershipUpdatedEventResourceSchema = Type.Object(
+const TenantMemberEventResourceSchema = Type.Object(
   {
-    role: TenantRoleSchema,
+    active: Type.Boolean(),
+    role_id: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     tenant_id: UuidSchema,
     user_id: UuidSchema,
   },
   { additionalProperties: false },
 );
 
-export const TenantMembershipUpdatedPayloadSchema = Type.Object(
+const PermissionEventResourceSchema = Type.Object(
   {
-    membership: TenantMembershipUpdatedEventResourceSchema,
+    id: Type.String({ minLength: 1 }),
+    value: Type.Literal(true),
+  },
+  { additionalProperties: false },
+);
+
+export const TenantMemberUpdatedPayloadSchema = Type.Object(
+  {
+    member: TenantMemberEventResourceSchema,
+    permissions: Type.Array(PermissionEventResourceSchema),
     tenant: TenantEventResourceSchema,
   },
   { additionalProperties: false },
@@ -66,12 +69,12 @@ export const TenantMembershipUpdatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof TenantMembershipUpdatedPayloadSchema
- * >} TenantMembershipUpdatedPayload
+ *   typeof TenantMemberUpdatedPayloadSchema
+ * >} TenantMemberUpdatedPayload
  */
 
-export const TenantMembershipUpdatedPayloadCheck = TypeCompiler.Compile(
-  TenantMembershipUpdatedPayloadSchema,
+export const TenantMemberUpdatedPayloadCheck = TypeCompiler.Compile(
+  TenantMemberUpdatedPayloadSchema,
 );
 
 export const TenantUpdatedSubject = "tenancy.tenant.updated";
@@ -95,18 +98,18 @@ export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
 );
 
 /**
- * @param {TenantMembershipUpdatedPayload} payload
+ * @param {TenantMemberUpdatedPayload} payload
  * @param {number} version
  * @returns {{
  *   id: string,
- *   payload: TenantMembershipUpdatedPayload,
+ *   payload: TenantMemberUpdatedPayload,
  *   schema_version: number,
  *   subject: string,
  *   version: number,
  * }}
  */
-export function buildTenantMembershipUpdatedEvent(payload, version) {
-  if (!TenantMembershipUpdatedPayloadCheck.Check(payload)) {
+export function buildTenantMemberUpdatedEvent(payload, version) {
+  if (!TenantMemberUpdatedPayloadCheck.Check(payload)) {
     throw new Error("INVALID_EVENT_PAYLOAD");
   }
 
@@ -117,8 +120,8 @@ export function buildTenantMembershipUpdatedEvent(payload, version) {
   return {
     id: randomUUID(),
     payload,
-    schema_version: TenantMembershipUpdatedSchemaVersion,
-    subject: TenantMembershipUpdatedSubject,
+    schema_version: TenantMemberUpdatedSchemaVersion,
+    subject: TenantMemberUpdatedSubject,
     version,
   };
 }

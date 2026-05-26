@@ -3,10 +3,8 @@ import { addAbortListener } from "node:events";
 import {
   TENANCY_EVENT_SCHEMA_VERSION,
   TenancyEventEnvelopeCheck,
-  TenantMembershipUpdatedPayloadCheck,
-  TenantMembershipUpdatedSubject,
-  TenantUpdatedPayloadCheck,
-  TenantUpdatedSubject,
+  TenantMemberUpdatedPayloadCheck,
+  TenantMemberUpdatedSubject,
 } from "../events/tenancy.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
@@ -52,27 +50,13 @@ export async function runProjectTenancy(ctx, signal) {
 
         if (
           event.schema_version === TENANCY_EVENT_SCHEMA_VERSION &&
-          event.subject === TenantUpdatedSubject
+          event.subject === TenantMemberUpdatedSubject
         ) {
-          if (!TenantUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid tenancy tenant updated payload");
+          if (!TenantMemberUpdatedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid tenancy tenant member updated payload");
           }
 
-          await projectV1TenantUpdated(ctx, event);
-
-          message.ack();
-          continue;
-        }
-
-        if (
-          event.schema_version === TENANCY_EVENT_SCHEMA_VERSION &&
-          event.subject === TenantMembershipUpdatedSubject
-        ) {
-          if (!TenantMembershipUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid tenancy membership updated payload");
-          }
-
-          await projectV1TenantMembershipUpdated(ctx, event);
+          await projectV1TenantMemberUpdated(ctx, event);
 
           message.ack();
           continue;
@@ -105,14 +89,14 @@ export async function runProjectTenancy(ctx, signal) {
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
-async function projectV1TenantMembershipUpdated(ctx, event) {
+async function projectV1TenantMemberUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/tenancy.mjs").TenantMembershipUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").TenantMemberUpdatedPayload} */ (
       event.payload
     );
 
-  if (payload.membership.tenant_id !== payload.tenant.id) {
-    throw new Error("Invalid tenancy membership tenant id");
+  if (payload.member.tenant_id !== payload.tenant.id) {
+    throw new Error("Invalid tenancy member tenant id");
   }
 
   const client = await ctx.persistence.db.connect();
@@ -120,102 +104,51 @@ async function projectV1TenantMembershipUpdated(ctx, event) {
   try {
     await client.query("BEGIN");
 
-    await client.query(
-      `
-        INSERT INTO projected_tenants (
-          tenant_id,
-          version
-        )
-        VALUES ($1, $2)
-        ON CONFLICT (tenant_id) DO UPDATE
-        SET version = EXCLUDED.version
-        WHERE projected_tenants.version < EXCLUDED.version
-      `,
-      [payload.tenant.id, event.version],
+    const permissions = Object.fromEntries(
+      payload.permissions.map((permission) => [
+        permission.id,
+        permission.value,
+      ]),
     );
 
-    const membershipResult = await client.query(
+    const result = await client.query(
       `
-        INSERT INTO projected_tenant_memberships (
+        INSERT INTO projected_tenant_members (
           tenant_id,
           user_id,
-          role,
+          active,
+          permissions,
           version
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4::jsonb, $5)
         ON CONFLICT (tenant_id, user_id) DO UPDATE
-        SET role = EXCLUDED.role,
+        SET active = EXCLUDED.active,
+          permissions = EXCLUDED.permissions,
           version = EXCLUDED.version
-        WHERE projected_tenant_memberships.version < EXCLUDED.version
+        WHERE projected_tenant_members.version <= EXCLUDED.version
       `,
       [
-        payload.membership.tenant_id,
-        payload.membership.user_id,
-        payload.membership.role,
+        payload.member.tenant_id,
+        payload.member.user_id,
+        payload.member.active,
+        JSON.stringify(permissions),
         event.version,
       ],
     );
 
     await client.query("COMMIT");
 
-    if (membershipResult.rowCount > 0) {
+    if ((result.rowCount ?? 0) > 0) {
       console.log(
         JSON.stringify({
-          event: "tenant_membership_projection_updated",
+          active: payload.member.active,
+          event: "tenant_member_projection_updated",
           level: "info",
+          permission_count: payload.permissions.length,
+          role_id: payload.member.role_id,
           service: "documents-worker",
-          tenant_id: payload.membership.tenant_id,
-          user_id: payload.membership.user_id,
-          version: event.version,
-        }),
-      );
-    }
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
- */
-async function projectV1TenantUpdated(ctx, event) {
-  const payload =
-    /** @type {import("../events/tenancy.mjs").TenantUpdatedPayload} */ (
-      event.payload
-    );
-  const client = await ctx.persistence.db.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    const result = await client.query(
-      `
-        INSERT INTO projected_tenants (
-          tenant_id,
-          version
-        )
-        VALUES ($1, $2)
-        ON CONFLICT (tenant_id) DO UPDATE
-        SET version = EXCLUDED.version
-        WHERE projected_tenants.version < EXCLUDED.version
-      `,
-      [payload.tenant.id, event.version],
-    );
-
-    await client.query("COMMIT");
-
-    if (result.rowCount > 0) {
-      console.log(
-        JSON.stringify({
-          event: "tenant_projection_updated",
-          level: "info",
-          service: "documents-worker",
-          tenant_id: payload.tenant.id,
+          tenant_id: payload.member.tenant_id,
+          user_id: payload.member.user_id,
           version: event.version,
         }),
       );
