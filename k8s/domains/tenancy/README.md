@@ -52,12 +52,7 @@ API docs: `GET api.tma.com/v1/tenants/docs`.
 
 ## Event Contracts
 
-| Subject | Consumers | Meaning |
-| --- | --- | --- |
-| `tenancy.tenant_member.updated` | `capabilities`, `documents` | Tenant existence, member state, role, and permissions snapshot. |
-
-Events are current-state facts. Consumers use natural projection keys plus event
-`version` and ack stale messages.
+- [Events](contracts/events.md)
 
 ## Operations
 

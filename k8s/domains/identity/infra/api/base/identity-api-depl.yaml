@@ -50,10 +50,6 @@ spec:
               mountPath: /app/keys
               readOnly: true
 
-          #
-          # total probe time =
-          #     initialDelay + timeout + ( (periodSeconds + timeout) * (failureThreshold - 1) )
-          #
           readinessProbe:
             httpGet:
               path: /readyz

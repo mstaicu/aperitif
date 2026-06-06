@@ -6,14 +6,7 @@ const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
 const OUTBOX_BATCH_SIZE = 10;
 const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
-/**
- * The Postgres notification only wakes the worker. The durable event still
- * comes from outbox_events, so startup drain handles rows left behind before
- * this worker started.
- *
- * @param {import("../platform/context.mjs").WorkerContext} ctx
- * @param {AbortSignal} signal
- */
+// LISTEN only wakes the worker; outbox_events is the source of truth.
 export async function runPublishOutbox(ctx, signal) {
   signal.throwIfAborted();
 

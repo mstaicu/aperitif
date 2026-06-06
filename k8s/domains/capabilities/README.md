@@ -67,9 +67,7 @@ item carries its own `grant_id`.
 
 ## Event Contracts
 
-| Subject | Consumers | Meaning |
-| --- | --- | --- |
-| `capabilities.tenant_capabilities.updated` | `documents` | Full tenant capability snapshot. |
+- [Events](contracts/events.md)
 
 Consumes:
 
