@@ -24,6 +24,15 @@ capability snapshots are calculated when `outbox_events` rows are written.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
+## Seed / Snapshot Changes
+
+Capability vocabulary changes are normal Flyway migrations. If they change
+effective tenant capabilities, the same migration should write fresh
+`capabilities.tenant_capabilities.updated` outbox rows for affected tenants.
+
+Outbox rows contain full current-state snapshots. Consumers project by natural
+key and `version`.
+
 ## Roles
 
 | Role | Login | Used By |

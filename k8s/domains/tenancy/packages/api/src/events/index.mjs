@@ -77,26 +77,6 @@ export const TenantMemberUpdatedPayloadCheck = TypeCompiler.Compile(
   TenantMemberUpdatedPayloadSchema,
 );
 
-export const TenantUpdatedSubject = "tenancy.tenant.updated";
-export const TenantUpdatedSchemaVersion = TENANCY_EVENT_SCHEMA_VERSION;
-
-export const TenantUpdatedPayloadSchema = Type.Object(
-  {
-    tenant: TenantEventResourceSchema,
-  },
-  { additionalProperties: false },
-);
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
- *   typeof TenantUpdatedPayloadSchema
- * >} TenantUpdatedPayload
- */
-
-export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
-  TenantUpdatedPayloadSchema,
-);
-
 /**
  * @param {TenantMemberUpdatedPayload} payload
  * @param {number} version
@@ -122,35 +102,6 @@ export function buildTenantMemberUpdatedEvent(payload, version) {
     payload,
     schema_version: TenantMemberUpdatedSchemaVersion,
     subject: TenantMemberUpdatedSubject,
-    version,
-  };
-}
-
-/**
- * @param {TenantUpdatedPayload} payload
- * @param {number} version
- * @returns {{
- *   id: string,
- *   payload: TenantUpdatedPayload,
- *   schema_version: number,
- *   subject: string,
- *   version: number,
- * }}
- */
-export function buildTenantUpdatedEvent(payload, version) {
-  if (!TenantUpdatedPayloadCheck.Check(payload)) {
-    throw new Error("INVALID_EVENT_PAYLOAD");
-  }
-
-  if (!Number.isInteger(version) || version < 1) {
-    throw new Error("INVALID_EVENT_VERSION");
-  }
-
-  return {
-    id: randomUUID(),
-    payload,
-    schema_version: TenantUpdatedSchemaVersion,
-    subject: TenantUpdatedSubject,
     version,
   };
 }

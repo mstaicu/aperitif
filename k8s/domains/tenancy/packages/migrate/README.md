@@ -24,6 +24,15 @@ only wake the worker.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
+## Seed / Snapshot Changes
+
+Role or permission seed changes are normal Flyway migrations. If they change
+effective member permissions, the same migration should write fresh
+`tenancy.tenant_member.updated` outbox rows for affected memberships.
+
+Outbox rows contain full current-state snapshots. Consumers project by natural
+key and `version`.
+
 ## Roles
 
 | Role | Login | Used By |

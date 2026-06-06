@@ -6,8 +6,8 @@ const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const TenantUpdatedSchemaVersion = 1;
-export const TenantUpdatedSubject = "tenancy.tenant.updated";
+export const TenantMemberUpdatedSchemaVersion = 1;
+export const TenantMemberUpdatedSubject = "tenancy.tenant_member.updated";
 
 export const TenancyEventEnvelopeSchema = Type.Object(
   {
@@ -30,8 +30,28 @@ export const TenancyEventEnvelopeCheck = TypeCompiler.Compile(
   TenancyEventEnvelopeSchema,
 );
 
-export const TenantUpdatedPayloadSchema = Type.Object(
+const TenantMemberEventResourceSchema = Type.Object(
   {
+    active: Type.Boolean(),
+    role_id: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    tenant_id: UuidSchema,
+    user_id: UuidSchema,
+  },
+  { additionalProperties: false },
+);
+
+const PermissionEventResourceSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    value: Type.Literal(true),
+  },
+  { additionalProperties: false },
+);
+
+export const TenantMemberUpdatedPayloadSchema = Type.Object(
+  {
+    member: TenantMemberEventResourceSchema,
+    permissions: Type.Array(PermissionEventResourceSchema),
     tenant: Type.Object(
       {
         id: UuidSchema,
@@ -44,10 +64,10 @@ export const TenantUpdatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof TenantUpdatedPayloadSchema
- * >} TenantUpdatedPayload
+ *   typeof TenantMemberUpdatedPayloadSchema
+ * >} TenantMemberUpdatedPayload
  */
 
-export const TenantUpdatedPayloadCheck = TypeCompiler.Compile(
-  TenantUpdatedPayloadSchema,
+export const TenantMemberUpdatedPayloadCheck = TypeCompiler.Compile(
+  TenantMemberUpdatedPayloadSchema,
 );

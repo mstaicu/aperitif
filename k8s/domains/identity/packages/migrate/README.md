@@ -23,6 +23,11 @@ consumed/revoked refresh token revokes the session.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
+## Seed Changes
+
+Identity seed/schema changes are normal Flyway migrations. Identity publishes no
+domain events today, so migrations do not write outbox rows.
+
 ## Roles
 
 | Role | Login | Used By |

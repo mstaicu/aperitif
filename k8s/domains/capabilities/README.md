@@ -2,6 +2,10 @@
 
 Capabilities owns generic tenant capability authority.
 
+## Status
+
+Core authority domain. Publishes effective tenant capability snapshots.
+
 ## Owns
 
 - `capabilities`: seeded vocabulary and merge rules.
@@ -61,11 +65,17 @@ DELETE /v1/capabilities
 `POST` adds grant rows. `DELETE` revokes grant rows. Each requested capability
 item carries its own `grant_id`.
 
-Current event subject:
+## Event Contracts
 
-```text
-capabilities.tenant_capabilities.updated
-```
+| Subject | Consumers | Meaning |
+| --- | --- | --- |
+| `capabilities.tenant_capabilities.updated` | `documents` | Full tenant capability snapshot. |
+
+Consumes:
+
+| Subject | Producer | Meaning |
+| --- | --- | --- |
+| `tenancy.tenant_member.updated` | `tenancy` | Tenant existence snapshot carried by member lifecycle. |
 
 The event is a full tenant capability snapshot with one event-level `version`.
 

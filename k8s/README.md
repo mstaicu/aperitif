@@ -36,6 +36,13 @@ that capability.
 
 Domains own their databases. Other domains use APIs or declared events.
 
+## Status
+
+- Core: `identity`, `tenancy`, `capabilities`, outbox/projection spine.
+- Product proof: `documents`.
+- Platform: `ingress`, `event-bus`, `observability`.
+- Inactive: `mesh`.
+
 ## Platform
 
 - `ingress`: Traefik CRDs, Traefik, local TLS, public/internal routes.
@@ -124,6 +131,13 @@ contain `FLYWAY_*`; API/worker Secrets contain `DATABASE_URL`.
 - Consumers apply newer `version` values and ack stale messages.
 - Tenant-scoped hot-path authorization uses local projections, not synchronous
   calls to authority domains.
+
+Event catalog:
+
+| Subject | Producer | Consumers | Meaning |
+| --- | --- | --- | --- |
+| `tenancy.tenant_member.updated` | `tenancy` | `capabilities`, `documents` | Tenant existence, member state, role, and permissions snapshot. |
+| `capabilities.tenant_capabilities.updated` | `capabilities` | `documents` | Tenant capability snapshot. |
 
 ## Agent Notes
 

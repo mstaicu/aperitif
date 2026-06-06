@@ -2,6 +2,10 @@
 
 Identity owns authentication identity.
 
+## Status
+
+Core authority domain. Publishes no domain events today.
+
 ## Owns
 
 - `users`
@@ -42,7 +46,10 @@ No worker exists. Add one only with a real event contract.
 - API docs: `GET api.tma.com/v1/identity/docs`
 - UI routes: `/signup`, `/login`, and `/identity/assets/*` on `tma.com`.
 
-Identity emits no committed domain events today.
+## Event Contracts
+
+- Publishes: none.
+- Consumes: none.
 
 ## Operations
 

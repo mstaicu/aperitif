@@ -1,9 +1,6 @@
 import { DatabaseError } from "pg";
 
-import {
-  buildTenantMemberUpdatedEvent,
-  buildTenantUpdatedEvent,
-} from "../../events/index.mjs";
+import { buildTenantMemberUpdatedEvent } from "../../events/index.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -46,38 +43,6 @@ export const createTenant =
         [tenant.id, currentUserId],
       );
 
-      const tenantUpdatedEvent = buildTenantUpdatedEvent(
-        {
-          tenant: {
-            id: tenant.id,
-          },
-        },
-        Number(tenant.version),
-      );
-
-      await client.query(
-        `
-          INSERT INTO outbox_events (
-            id,
-            event
-          )
-          VALUES ($1, $2::jsonb)
-        `,
-        [tenantUpdatedEvent.id, JSON.stringify(tenantUpdatedEvent)],
-      );
-
-      const {
-        rows: [{ version: memberTenantVersion }],
-      } = await client.query(
-        `
-          UPDATE tenants
-          SET version = version + 1
-          WHERE id = $1
-          RETURNING version
-        `,
-        [tenant.id],
-      );
-
       const { rows: permissions } = await client.query(
         `
           SELECT DISTINCT rp.permission_id AS id
@@ -106,7 +71,7 @@ export const createTenant =
             id: tenant.id,
           },
         },
-        Number(memberTenantVersion),
+        Number(tenant.version),
       );
 
       await client.query(
@@ -127,7 +92,7 @@ export const createTenant =
           event: "tenant_created",
           level: "info",
           tenant_id: tenant.id,
-          version: Number(memberTenantVersion),
+          version: Number(tenant.version),
         }),
       );
 

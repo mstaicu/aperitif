@@ -2,6 +2,10 @@
 
 Documents is the product-domain proof of the platform spine.
 
+## Status
+
+Product proof domain. Consumes core projections; publishes no events today.
+
 ## Owns
 
 - `documents`
@@ -54,6 +58,17 @@ API docs:
 GET /v1/documents/docs
 GET /v1/documents/docs/json
 ```
+
+## Event Contracts
+
+Consumes:
+
+| Subject | Producer | Projection |
+| --- | --- | --- |
+| `tenancy.tenant_member.updated` | `tenancy` | `projected_tenant_members` |
+| `capabilities.tenant_capabilities.updated` | `capabilities` | `projected_tenant_capabilities` |
+
+Publishes: none.
 
 ## Operations
 

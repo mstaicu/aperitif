@@ -2,6 +2,10 @@
 
 Tenancy owns tenant-scoped authority.
 
+## Status
+
+Core authority domain. Publishes current tenant/member facts.
+
 ## Owns
 
 - `tenants`
@@ -46,12 +50,11 @@ PUT /v1/tenants/:tenant_id/members/:user_id/role
 
 API docs: `GET api.tma.com/v1/tenants/docs`.
 
-Current event subjects:
+## Event Contracts
 
-```text
-tenancy.tenant.updated
-tenancy.tenant_member.updated
-```
+| Subject | Consumers | Meaning |
+| --- | --- | --- |
+| `tenancy.tenant_member.updated` | `capabilities`, `documents` | Tenant existence, member state, role, and permissions snapshot. |
 
 Events are current-state facts. Consumers use natural projection keys plus event
 `version` and ack stale messages.
@@ -75,6 +78,7 @@ The API depends on identity/JWKS and ingress. The worker depends on event-bus.
 
 - Request handlers do not publish authority events directly.
 - State changes and `outbox_events` rows belong in the same DB transaction.
-- Every authority-affecting event increments `tenants.version`.
+- Authority events use the tenant's current `version`; membership changes
+  advance it before writing the outbox row.
 - If managed Postgres replaces the placeholder, remove only `tenancy-postgres`
   from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

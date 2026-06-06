@@ -2,9 +2,9 @@ import { addAbortListener } from "node:events";
 
 import {
   TenancyEventEnvelopeCheck,
-  TenantUpdatedPayloadCheck,
-  TenantUpdatedSchemaVersion,
-  TenantUpdatedSubject,
+  TenantMemberUpdatedPayloadCheck,
+  TenantMemberUpdatedSchemaVersion,
+  TenantMemberUpdatedSubject,
 } from "../events/tenancy.mjs";
 import { TENANCY_CONSUMER } from "../platform/messaging/tenancy-consumer.mjs";
 import { TENANCY_STREAM } from "../platform/messaging/tenancy-stream.mjs";
@@ -30,11 +30,6 @@ export async function runProjectTenancy(ctx, signal) {
       let event;
 
       try {
-        if (message.subject !== TenantUpdatedSubject) {
-          message.ack();
-          continue;
-        }
-
         event = message.json();
 
         if (
@@ -54,14 +49,14 @@ export async function runProjectTenancy(ctx, signal) {
         }
 
         if (
-          event.schema_version === TenantUpdatedSchemaVersion &&
-          event.subject === TenantUpdatedSubject
+          event.schema_version === TenantMemberUpdatedSchemaVersion &&
+          event.subject === TenantMemberUpdatedSubject
         ) {
-          if (!TenantUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid tenancy tenant updated payload");
+          if (!TenantMemberUpdatedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid tenancy tenant member updated payload");
           }
 
-          await projectV1TenantUpdated(ctx, event);
+          await projectV1TenantMemberUpdated(ctx, event);
 
           message.ack();
           continue;
@@ -94,9 +89,9 @@ export async function runProjectTenancy(ctx, signal) {
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {import("../events/tenancy.mjs").TenancyEventEnvelope} event
  */
-async function projectV1TenantUpdated(ctx, event) {
+async function projectV1TenantMemberUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/tenancy.mjs").TenantUpdatedPayload} */ (
+    /** @type {import("../events/tenancy.mjs").TenantMemberUpdatedPayload} */ (
       event.payload
     );
   const client = await ctx.persistence.db.connect();
@@ -120,7 +115,7 @@ async function projectV1TenantUpdated(ctx, event) {
 
     await client.query("COMMIT");
 
-    if (result.rowCount > 0) {
+    if ((result.rowCount ?? 0) > 0) {
       console.log(
         JSON.stringify({
           event: "tenant_projection_updated",
