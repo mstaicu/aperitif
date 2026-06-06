@@ -63,7 +63,7 @@ export const assignTenantMemberRole =
         rows: [membership],
       } = await client.query(
         `
-          SELECT 1
+          SELECT role_id
           FROM tenant_memberships
           WHERE tenant_id = $1
             AND user_id = $2
@@ -88,6 +88,24 @@ export const assignTenantMemberRole =
 
       if (!role) {
         throw new Error("ROLE_NOT_FOUND");
+      }
+
+      if (membership.role_id === "owner" && roleId !== "owner") {
+        const {
+          rows: [{ owner_count: ownerCount }],
+        } = await client.query(
+          `
+            SELECT COUNT(*)::int AS owner_count
+            FROM tenant_memberships
+            WHERE tenant_id = $1
+              AND role_id = 'owner'
+          `,
+          [tenantId],
+        );
+
+        if (ownerCount <= 1) {
+          throw new Error("FORBIDDEN");
+        }
       }
 
       const roleChange = await client.query(

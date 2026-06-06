@@ -9,6 +9,7 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
+ * @typedef {import('./services/operators/index.mjs').OperatorsService} OperatorsService
  * @typedef {import('./services/passkeys/index.mjs').PasskeysService} PasskeysService
  * @typedef {import('./services/sessions/index.mjs').SessionsService} SessionsService
  *
@@ -29,6 +30,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * @param {{
  *  ctx: Ctx,
  *  services: {
+ *    operators: OperatorsService,
  *    passkeys: PasskeysService,
  *    sessions: SessionsService,
  *  },
@@ -50,7 +52,7 @@ export const createApp = async ({ ctx, fastifyOtel, services }) => {
   }
   await app.register(probes, { db: ctx.persistence.db });
   await app.register(jwks, { jwks: ctx.security.jwks });
-  await app.register(v1, { prefix: "/v1", services });
+  await app.register(v1, { prefix: "/v1", security: ctx.security, services });
 
   return app;
 };

@@ -63,6 +63,16 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
+  FORBIDDEN: {
+    status: 403,
+    title: "Forbidden",
+    type: "/problems/forbidden",
+  },
+  INVALID_ACCESS_TOKEN: {
+    status: 401,
+    title: "Invalid access token",
+    type: "/problems/invalid-access-token",
+  },
   INVALID_AUTHENTICATION_RESPONSE: {
     status: 400,
     title: "Invalid authentication response",
@@ -88,10 +98,20 @@ const PROBLEMS = {
     title: "Registration verification failed",
     type: "/problems/registration-verification-failed",
   },
+  ROLE_NOT_FOUND: {
+    status: 404,
+    title: "Role not found",
+    type: "/problems/role-not-found",
+  },
   SESSION_NOT_FOUND: {
     status: 401,
     title: "Invalid refresh token",
     type: "/problems/invalid-refresh-token",
+  },
+  USER_NOT_FOUND: {
+    status: 404,
+    title: "User not found",
+    type: "/problems/user-not-found",
   },
 };
 

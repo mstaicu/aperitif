@@ -45,8 +45,8 @@ export default async function (fastify, { jwks, tenantRoles }) {
         jwks,
       });
       const isPlatformOperator =
-        Array.isArray(payload.platform_roles) &&
-        payload.platform_roles.includes("operator");
+        Array.isArray(payload.operator_permissions) &&
+        payload.operator_permissions.includes("tenants.manage");
 
       return reply.send(
         await tenantRoles.assignTenantMemberRole({

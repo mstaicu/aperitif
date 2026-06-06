@@ -18,7 +18,6 @@ configMapGenerator:
     literals:
       - ORIGIN=https://tma.com
       - ACCESS_TOKEN_AUDIENCE=aperitif-api
-      - PLATFORM_OPERATOR_USER_IDS=9eaef281-ad2c-4382-8c47-7208a66f2ed4
 
 images:
   - name: mdstaicu/identity-api

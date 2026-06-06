@@ -9,12 +9,6 @@ export const createSecurityContext = async () => {
    * @type {string}
    */
   const audience = nconf.get("ACCESS_TOKEN_AUDIENCE");
-  const platformOperatorUserIds = new Set(
-    String(nconf.get("PLATFORM_OPERATOR_USER_IDS") ?? "")
-      .split(",")
-      .map((userId) => userId.trim())
-      .filter(Boolean),
-  );
 
   if (!audience) {
     throw new Error("No ACCESS_TOKEN_AUDIENCE provided");
@@ -25,20 +19,23 @@ export const createSecurityContext = async () => {
     readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
   ]);
 
-  const [privateKey, publicJwk] = await Promise.all([
+  const [privateKey, publicKey] = await Promise.all([
     importPKCS8(privatePem, "ES256"),
-    importSPKI(publicPem, "ES256").then(exportJWK),
+    importSPKI(publicPem, "ES256"),
   ]);
+  const publicJwk = await exportJWK(publicKey);
 
   return {
     audience,
     jwks: {
       keys: [{ ...publicJwk, alg: "ES256", kid: KID, use: "sig" }],
     },
-    platformOperatorUserIds,
     signing: {
       kid: KID,
       privateKey,
+    },
+    verifying: {
+      publicKey,
     },
   };
 };

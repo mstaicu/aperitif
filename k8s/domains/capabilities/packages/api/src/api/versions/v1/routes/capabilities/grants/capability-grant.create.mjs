@@ -1,4 +1,4 @@
-import { authenticatePlatformOperator } from "../../../../../../platform/security/jwt.mjs";
+import { authenticateOperatorPermission } from "../../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../../problem-details.mjs";
 import {
   AddTenantCapabilitiesBody,
@@ -40,9 +40,10 @@ export default async function (fastify, { jwks, tenantCapabilities }) {
       },
     },
     async function (req, reply) {
-      await authenticatePlatformOperator({
+      await authenticateOperatorPermission({
         authorization: req.headers.authorization,
         jwks,
+        permission: "capabilities.grant",
       });
 
       return reply.send(

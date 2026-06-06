@@ -4,6 +4,7 @@ import process from "node:process";
 import { createApp } from "./app.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
+import { createOperatorsService } from "./services/operators/index.mjs";
 import { createPasskeysService } from "./services/passkeys/index.mjs";
 import { createSessionsService } from "./services/sessions/index.mjs";
 
@@ -17,6 +18,7 @@ const app = await createApp({
   ctx,
   fastifyOtel: otel.fastifyOtel,
   services: {
+    operators: createOperatorsService(ctx),
     passkeys: createPasskeysService(ctx),
     sessions: createSessionsService(ctx),
   },

@@ -15,6 +15,8 @@ export const createAccessToken =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
+    /** @type {string[]} */
+    let operatorPermissions;
     let session;
 
     try {
@@ -32,6 +34,26 @@ export const createAccessToken =
         `,
         [createHash("sha256").update(refresh_token).digest()],
       ));
+
+      if (!session) {
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      const { rows: permissions } = await ctx.persistence.db.query(
+        `
+          SELECT DISTINCT p.id
+          FROM operator_users ou
+          JOIN operator_role_permissions rp
+            ON rp.role_id = ou.role_id
+          JOIN operator_permissions p
+            ON rp.permission_id = p.id
+          WHERE ou.user_id = $1
+          ORDER BY p.id
+        `,
+        [session.user_id],
+      );
+
+      operatorPermissions = permissions.map(({ id }) => id);
     } catch (err) {
       if (err instanceof DatabaseError) {
         if (
@@ -49,20 +71,16 @@ export const createAccessToken =
       throw err;
     }
 
-    if (!session) {
-      throw new Error("SESSION_NOT_FOUND");
-    }
-
     const now = Math.floor(Date.now() / 1000);
     /**
-     * @type {{ platform_roles?: string[], sub: string }}
+     * @type {{ operator_permissions?: string[], sub: string }}
      */
     const claims = {
       sub: session.user_id,
     };
 
-    if (ctx.security.platformOperatorUserIds.has(session.user_id)) {
-      claims.platform_roles = ["operator"];
+    if (operatorPermissions.length > 0) {
+      claims.operator_permissions = operatorPermissions;
     }
 
     const access_token = await new SignJWT(claims)

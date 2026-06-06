@@ -15,14 +15,18 @@ export const authenticate = async ({ authorization, jwks }) => {
 };
 
 /**
- * @param {{ authorization?: string, jwks: Jwks }} args
+ * @param {{ authorization?: string, jwks: Jwks, permission: string }} args
  */
-export const authenticatePlatformOperator = async ({ authorization, jwks }) => {
+export const authenticateOperatorPermission = async ({
+  authorization,
+  jwks,
+  permission,
+}) => {
   const payload = await verifyAccessToken({ authorization, jwks });
 
   if (
-    !Array.isArray(payload.platform_roles) ||
-    !payload.platform_roles.includes("operator")
+    !Array.isArray(payload.operator_permissions) ||
+    !payload.operator_permissions.includes(permission)
   ) {
     throw new Error("FORBIDDEN");
   }
@@ -32,7 +36,7 @@ export const authenticatePlatformOperator = async ({ authorization, jwks }) => {
 
 /**
  * @param {{ authorization?: string, jwks: Jwks }} args
- * @returns {Promise<import("jose").JWTPayload & { sub: string, platform_roles?: unknown }>}
+ * @returns {Promise<import("jose").JWTPayload & { operator_permissions?: unknown, sub: string }>}
  */
 const verifyAccessToken = async ({ authorization, jwks }) => {
   const [type, token] = (authorization || "").split(" ");

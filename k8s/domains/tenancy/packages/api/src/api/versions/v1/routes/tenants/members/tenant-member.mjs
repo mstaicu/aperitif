@@ -40,8 +40,8 @@ export default async function (fastify, { jwks, tenancy }) {
         jwks,
       });
       const isPlatformOperator =
-        Array.isArray(payload.platform_roles) &&
-        payload.platform_roles.includes("operator");
+        Array.isArray(payload.operator_permissions) &&
+        payload.operator_permissions.includes("tenants.manage");
 
       return reply.send(
         await tenancy.addTenantMember({
@@ -81,8 +81,8 @@ export default async function (fastify, { jwks, tenancy }) {
         jwks,
       });
       const isPlatformOperator =
-        Array.isArray(payload.platform_roles) &&
-        payload.platform_roles.includes("operator");
+        Array.isArray(payload.operator_permissions) &&
+        payload.operator_permissions.includes("tenants.manage");
 
       return reply.send(
         await tenancy.removeTenantMember({

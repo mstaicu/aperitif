@@ -1,6 +1,7 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
+import operatorRole from "./routes/operators/operator-role.mjs";
 import loginChallenge from "./routes/passkeys/login.challenge.mjs";
 import login from "./routes/passkeys/login.mjs";
 import registerChallenge from "./routes/passkeys/register.challenge.mjs";
@@ -10,6 +11,8 @@ import refreshToken from "./routes/sessions/refresh-token.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
+ * @typedef {import("../../../platform/context.mjs").Context["security"]} Security
+ * @typedef {import("../../../services/operators/index.mjs").OperatorsService} OperatorsService
  * @typedef {import("../../../services/passkeys/index.mjs").PasskeysService} PasskeysService
  * @typedef {import("../../../services/sessions/index.mjs").SessionsService} SessionsService
  */
@@ -17,15 +20,21 @@ import refreshToken from "./routes/sessions/refresh-token.mjs";
 /**
  * @param {Fastify} fastify
  * @param {{services: {
+ *   operators: OperatorsService,
  *   passkeys: PasskeysService,
  *   sessions: SessionsService,
- * }}} opts
+ * }, security: Security}} opts
  */
-export default async (fastify, { services }) => {
+export default async (fastify, { security, services }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
         securitySchemes: {
+          bearerAuth: {
+            bearerFormat: "JWT",
+            scheme: "bearer",
+            type: "http",
+          },
           refreshTokenAuth: {
             bearerFormat: "RefreshToken",
             description:
@@ -47,6 +56,10 @@ export default async (fastify, { services }) => {
         },
       ],
       tags: [
+        {
+          description: "Platform operator role assignment",
+          name: "operators",
+        },
         {
           description: "Passkey registration and authentication flows",
           name: "passkeys",
@@ -74,6 +87,11 @@ export default async (fastify, { services }) => {
   await fastify.register(register, {
     passkeys: services.passkeys,
     prefix: "/passkeys",
+  });
+  await fastify.register(operatorRole, {
+    operators: services.operators,
+    prefix: "/operators",
+    security,
   });
   await fastify.register(accessToken, {
     prefix: "/sessions",

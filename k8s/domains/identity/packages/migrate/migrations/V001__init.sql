@@ -19,6 +19,40 @@ CREATE TABLE users (
     id UUID PRIMARY KEY
 );
 
+CREATE TABLE operator_permissions (
+    id TEXT PRIMARY KEY
+);
+
+CREATE TABLE operator_roles (
+    id TEXT PRIMARY KEY,
+
+    name TEXT NOT NULL
+);
+
+CREATE TABLE operator_role_permissions (
+    role_id TEXT NOT NULL
+        REFERENCES operator_roles(id)
+        ON DELETE CASCADE,
+
+    permission_id TEXT NOT NULL
+        REFERENCES operator_permissions(id)
+        ON DELETE CASCADE,
+
+    PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE operator_users (
+    user_id UUID NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    role_id TEXT NOT NULL
+        REFERENCES operator_roles(id)
+        ON DELETE CASCADE,
+
+    PRIMARY KEY (user_id, role_id)
+);
+
 CREATE TABLE passkey_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
