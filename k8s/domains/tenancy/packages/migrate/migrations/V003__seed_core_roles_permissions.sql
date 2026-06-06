@@ -1,7 +1,5 @@
 INSERT INTO permissions (id)
 VALUES
-    ('documents.read'),
-    ('documents.create'),
     ('members.manage')
 ON CONFLICT (id) DO NOTHING;
 
@@ -14,8 +12,5 @@ SET name = EXCLUDED.name;
 
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-    ('owner', 'documents.read'),
-    ('owner', 'documents.create'),
-    ('owner', 'members.manage'),
-    ('member', 'documents.read')
+    ('owner', 'members.manage')
 ON CONFLICT (role_id, permission_id) DO NOTHING;

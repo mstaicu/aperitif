@@ -37,10 +37,6 @@ BEGIN
     CREATE ROLE tenancy_migrator LOGIN;
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenancy_runtime') THEN
-    CREATE ROLE tenancy_runtime NOLOGIN;
-  END IF;
-
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenancy_api') THEN
     CREATE ROLE tenancy_api LOGIN;
   END IF;
@@ -55,9 +51,6 @@ ALTER ROLE tenancy_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'tenancy_migrator_password';
 
-ALTER ROLE tenancy_runtime
-WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
-
 ALTER ROLE tenancy_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'tenancy_api_password';
@@ -65,9 +58,6 @@ PASSWORD :'tenancy_api_password';
 ALTER ROLE tenancy_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'tenancy_worker_password';
-
-GRANT tenancy_runtime TO tenancy_api;
-GRANT tenancy_runtime TO tenancy_worker;
 
 REVOKE CONNECT, TEMPORARY ON DATABASE tenancy FROM PUBLIC;
 
@@ -77,7 +67,8 @@ TO tenancy_migrator;
 
 GRANT CONNECT
 ON DATABASE tenancy
-TO tenancy_runtime;
+TO tenancy_api,
+   tenancy_worker;
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
@@ -87,4 +78,5 @@ TO tenancy_migrator;
 
 GRANT USAGE
 ON SCHEMA public
-TO tenancy_runtime;
+TO tenancy_api,
+   tenancy_worker;

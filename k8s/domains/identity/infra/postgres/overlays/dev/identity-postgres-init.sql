@@ -1,21 +1,15 @@
 -- Placeholder Postgres bootstrap. Keep roles/grants aligned with managed-postgres.sql.
 
 CREATE ROLE identity_migrator;
-CREATE ROLE identity_runtime;
 CREATE ROLE identity_api;
 
 ALTER ROLE identity_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
 
-ALTER ROLE identity_runtime
-WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
-
 ALTER ROLE identity_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
-
-GRANT identity_runtime TO identity_api;
 
 REVOKE CONNECT, TEMPORARY ON DATABASE identity FROM PUBLIC;
 
@@ -25,7 +19,7 @@ TO identity_migrator;
 
 GRANT CONNECT
 ON DATABASE identity
-TO identity_runtime;
+TO identity_api;
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
@@ -35,4 +29,4 @@ TO identity_migrator;
 
 GRANT USAGE
 ON SCHEMA public
-TO identity_runtime;
+TO identity_api;

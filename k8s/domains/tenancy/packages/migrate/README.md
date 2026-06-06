@@ -30,6 +30,8 @@ Role or permission seed changes are normal Flyway migrations. If they change
 effective member permissions, the same migration should write fresh
 `tenancy.tenant_member.updated` outbox rows for affected memberships.
 
+Keep core tenancy seeds separate from product permission seeds.
+
 Outbox rows contain full current-state snapshots. Consumers project by natural
 key and `version`.
 
@@ -40,7 +42,6 @@ key and `version`.
 | `tenancy_migrator` | yes | Flyway Job |
 | `tenancy_api` | yes | API Deployment |
 | `tenancy_worker` | yes | Worker Deployment |
-| `tenancy_runtime` | no | inherited runtime grants |
 
 Local/CI placeholder Postgres creates these roles from
 `infra/postgres/overlays/{dev,live}/tenancy-postgres-init.sql`.
@@ -52,8 +53,8 @@ reconciles `tenancy-migrate`.
 
 ```text
 postgres init -> roles/base grants
-migrate Job -> schema objects/object grants
-api/worker -> runtime access only
+migrate Job -> schema objects/table grants
+api/worker -> explicit table grants
 ```
 
 Secrets stay scoped:

@@ -35,7 +35,6 @@ Projection writes must keep accepting stale/equal versions without failing.
 | `documents_migrator` | yes | Flyway Job |
 | `documents_api` | yes | API Deployment |
 | `documents_worker` | yes | Worker Deployment |
-| `documents_runtime` | no | inherited runtime grants |
 
 Local/CI placeholder Postgres creates these roles from
 `infra/postgres/overlays/{dev,live}/documents-postgres-init.sql`.
@@ -47,8 +46,8 @@ reconciles `documents-migrate`.
 
 ```text
 postgres init -> roles/base grants
-migrate Job -> schema objects/object grants
-api/worker -> runtime access only
+migrate Job -> schema objects/table grants
+api/worker -> explicit table grants
 ```
 
 Secrets stay scoped:

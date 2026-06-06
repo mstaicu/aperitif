@@ -1,16 +1,12 @@
 -- Placeholder Postgres bootstrap. Keep roles/grants aligned with managed-postgres.sql.
 
 CREATE ROLE tenancy_migrator;
-CREATE ROLE tenancy_runtime;
 CREATE ROLE tenancy_api;
 CREATE ROLE tenancy_worker;
 
 ALTER ROLE tenancy_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
-
-ALTER ROLE tenancy_runtime
-WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
 
 ALTER ROLE tenancy_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
@@ -20,9 +16,6 @@ ALTER ROLE tenancy_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
 
-GRANT tenancy_runtime TO tenancy_api;
-GRANT tenancy_runtime TO tenancy_worker;
-
 REVOKE CONNECT, TEMPORARY ON DATABASE tenancy FROM PUBLIC;
 
 GRANT CONNECT, CREATE, TEMPORARY
@@ -31,7 +24,8 @@ TO tenancy_migrator;
 
 GRANT CONNECT
 ON DATABASE tenancy
-TO tenancy_runtime;
+TO tenancy_api,
+   tenancy_worker;
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
@@ -41,4 +35,5 @@ TO tenancy_migrator;
 
 GRANT USAGE
 ON SCHEMA public
-TO tenancy_runtime;
+TO tenancy_api,
+   tenancy_worker;

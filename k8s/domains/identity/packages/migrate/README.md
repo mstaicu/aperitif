@@ -38,7 +38,6 @@ domain events today, so migrations do not write outbox rows.
 | --- | --- | --- |
 | `identity_migrator` | yes | Flyway Job |
 | `identity_api` | yes | API Deployment |
-| `identity_runtime` | no | inherited runtime grants |
 
 Local/CI placeholder Postgres creates these roles from
 `infra/postgres/overlays/{dev,live}/identity-postgres-init.sql`.
@@ -50,8 +49,8 @@ reconciles `identity-migrate`.
 
 ```text
 postgres init -> roles/base grants
-migrate Job -> schema objects/object grants
-api -> runtime access only
+migrate Job -> schema objects/table grants
+api -> explicit table grants
 ```
 
 Secrets stay scoped:

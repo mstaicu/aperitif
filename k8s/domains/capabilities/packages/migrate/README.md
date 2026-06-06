@@ -30,6 +30,8 @@ Capability vocabulary changes are normal Flyway migrations. If they change
 effective tenant capabilities, the same migration should write fresh
 `capabilities.tenant_capabilities.updated` outbox rows for affected tenants.
 
+Keep core capability seeds separate from product capability seeds.
+
 Outbox rows contain full current-state snapshots. Consumers project by natural
 key and `version`.
 
@@ -40,7 +42,6 @@ key and `version`.
 | `capabilities_migrator` | yes | Flyway Job |
 | `capabilities_api` | yes | API Deployment |
 | `capabilities_worker` | yes | Worker Deployment |
-| `capabilities_runtime` | no | inherited runtime grants |
 
 Local/CI placeholder Postgres creates these roles from
 `infra/postgres/overlays/{dev,live}/capabilities-postgres-init.sql`.
@@ -52,7 +53,7 @@ reconciles `capabilities-migrate`.
 
 ```text
 postgres init -> roles/base grants
-migrate Job -> schema objects/object grants
+migrate Job -> schema objects/table grants
 api -> grant commands
 worker -> tenancy projection + outbox publish
 ```

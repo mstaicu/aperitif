@@ -31,10 +31,6 @@ BEGIN
     CREATE ROLE identity_migrator LOGIN;
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_runtime') THEN
-    CREATE ROLE identity_runtime NOLOGIN;
-  END IF;
-
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_api') THEN
     CREATE ROLE identity_api LOGIN;
   END IF;
@@ -45,14 +41,9 @@ ALTER ROLE identity_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_migrator_password';
 
-ALTER ROLE identity_runtime
-WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
-
 ALTER ROLE identity_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_api_password';
-
-GRANT identity_runtime TO identity_api;
 
 REVOKE CONNECT, TEMPORARY ON DATABASE identity FROM PUBLIC;
 
@@ -62,7 +53,7 @@ TO identity_migrator;
 
 GRANT CONNECT
 ON DATABASE identity
-TO identity_runtime;
+TO identity_api;
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
@@ -72,4 +63,4 @@ TO identity_migrator;
 
 GRANT USAGE
 ON SCHEMA public
-TO identity_runtime;
+TO identity_api;

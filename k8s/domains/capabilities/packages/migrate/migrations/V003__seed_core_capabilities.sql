@@ -6,12 +6,6 @@ INSERT INTO capabilities (
 )
 VALUES
     (
-        'documents.enabled',
-        'Documents Enabled',
-        'boolean',
-        'boolean_or'
-    ),
-    (
         'members.max',
         'Maximum Members',
         'number',
@@ -22,4 +16,9 @@ VALUES
         'Storage GB',
         'number',
         'number_sum'
-    );
+    )
+ON CONFLICT (id) DO UPDATE
+SET
+    name = EXCLUDED.name,
+    value_type = EXCLUDED.value_type,
+    merge_strategy = EXCLUDED.merge_strategy;

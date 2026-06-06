@@ -37,10 +37,6 @@ BEGIN
     CREATE ROLE documents_migrator LOGIN;
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_runtime') THEN
-    CREATE ROLE documents_runtime NOLOGIN;
-  END IF;
-
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_api') THEN
     CREATE ROLE documents_api LOGIN;
   END IF;
@@ -55,9 +51,6 @@ ALTER ROLE documents_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_migrator_password';
 
-ALTER ROLE documents_runtime
-WITH NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
-
 ALTER ROLE documents_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_api_password';
@@ -65,9 +58,6 @@ PASSWORD :'documents_api_password';
 ALTER ROLE documents_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_worker_password';
-
-GRANT documents_runtime TO documents_api;
-GRANT documents_runtime TO documents_worker;
 
 REVOKE CONNECT, TEMPORARY ON DATABASE documents FROM PUBLIC;
 
@@ -77,7 +67,8 @@ TO documents_migrator;
 
 GRANT CONNECT
 ON DATABASE documents
-TO documents_runtime;
+TO documents_api,
+   documents_worker;
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
@@ -87,4 +78,5 @@ TO documents_migrator;
 
 GRANT USAGE
 ON SCHEMA public
-TO documents_runtime;
+TO documents_api,
+   documents_worker;

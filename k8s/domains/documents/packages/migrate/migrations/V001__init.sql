@@ -1,18 +1,3 @@
--- Default grants for future Flyway objects.
-ALTER DEFAULT PRIVILEGES
-FOR ROLE documents_migrator
-IN SCHEMA public
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON TABLES TO documents_runtime;
-
-ALTER DEFAULT PRIVILEGES
-FOR ROLE documents_migrator
-IN SCHEMA public
-GRANT USAGE, SELECT
-ON SEQUENCES TO documents_runtime;
-
---
-
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE projected_tenant_members (

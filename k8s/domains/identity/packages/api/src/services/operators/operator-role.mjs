@@ -1,6 +1,6 @@
 import { DatabaseError } from "pg";
 
-const ADMIN_ROLE_ID = "admin";
+const OPERATOR_ROLE_ID = "operator";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
@@ -102,7 +102,7 @@ export const revokeOperatorRole =
       client = await ctx.persistence.db.connect();
       await client.query("BEGIN");
 
-      if (roleId === ADMIN_ROLE_ID) {
+      if (roleId === OPERATOR_ROLE_ID) {
         await client.query(
           `
             SELECT 1
@@ -110,21 +110,21 @@ export const revokeOperatorRole =
             WHERE id = $1
             FOR UPDATE
           `,
-          [ADMIN_ROLE_ID],
+          [OPERATOR_ROLE_ID],
         );
 
         const {
-          rows: [{ admin_count: adminCount }],
+          rows: [{ operator_count: operatorCount }],
         } = await client.query(
           `
-            SELECT COUNT(*)::int AS admin_count
+            SELECT COUNT(*)::int AS operator_count
             FROM operator_users
             WHERE role_id = $1
           `,
-          [ADMIN_ROLE_ID],
+          [OPERATOR_ROLE_ID],
         );
 
-        if (adminCount <= 1) {
+        if (operatorCount <= 1) {
           throw new Error("FORBIDDEN");
         }
       }
