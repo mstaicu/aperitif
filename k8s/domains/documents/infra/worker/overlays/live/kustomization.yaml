@@ -8,6 +8,9 @@ resources:
   - ../../base
   - documents-worker-db.yaml
 
+patches:
+  - path: documents-worker-depl.yaml
+
 images:
   - name: mdstaicu/documents-worker
     newTag: latest

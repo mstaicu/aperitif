@@ -26,9 +26,11 @@ Flyway scans only `filesystem:/db/migrations` in the migration image.
 
 ## Seed / Snapshot Changes
 
-Capability vocabulary changes are normal Flyway migrations. If they change
-effective tenant capabilities, the same migration should write fresh
-`capabilities.tenant_capabilities.updated` outbox rows for affected tenants.
+Capability vocabulary changes are normal Flyway migrations.
+
+Invariant: if a migration changes projected tenant capabilities, the same
+migration writes fresh `capabilities.tenant_capabilities.updated` outbox rows
+for affected tenants.
 
 Keep core capability seeds separate from product capability seeds.
 

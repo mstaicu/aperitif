@@ -14,14 +14,18 @@ spec:
         app: capabilities-api
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: capabilities-api
-      # Defense in deep, disable this at the pod level
-      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
 
       containers:
         - name: capabilities-api
           image: mdstaicu/capabilities-api
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: DATABASE_URL
               valueFrom:

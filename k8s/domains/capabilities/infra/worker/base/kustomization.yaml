@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - capabilities-worker-depl.yaml
   - capabilities-worker-np.yaml
-  - capabilities-worker-sa.yaml

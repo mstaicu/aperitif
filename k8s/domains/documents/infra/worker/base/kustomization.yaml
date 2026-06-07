@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - documents-worker-depl.yaml
   - documents-worker-np.yaml
-  - documents-worker-sa.yaml

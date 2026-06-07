@@ -8,6 +8,9 @@ resources:
   - ../../base
   - tenancy-migrate-db.yaml
 
+patches:
+  - path: tenancy-migrate-job.yaml
+
 images:
   - name: mdstaicu/tenancy-migrate
     newTag: latest

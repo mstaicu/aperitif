@@ -14,12 +14,18 @@ spec:
         app: identity-ui
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: identity-ui
       automountServiceAccountToken: false
 
       containers:
         - name: identity-ui
           image: mdstaicu/identity-ui
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: PORT
               value: "3000"

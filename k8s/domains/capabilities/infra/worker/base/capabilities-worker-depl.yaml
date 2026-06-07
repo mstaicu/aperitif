@@ -14,14 +14,18 @@ spec:
         app: capabilities-worker
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: capabilities-worker
-      # Defense in deep, disable this at the pod level
-      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
 
       containers:
         - name: capabilities-worker
           image: mdstaicu/capabilities-worker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: DATABASE_URL
               valueFrom:

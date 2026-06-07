@@ -1,8 +1,8 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 
 metadata:
-  name: capabilities-worker-depl
+  name: migrate
 spec:
   template:
     spec:
@@ -15,12 +15,9 @@ spec:
         - name: tmp
           emptyDir: {}
       containers:
-        - name: capabilities-worker
+        - name: migrate
           securityContext:
             readOnlyRootFilesystem: true
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-          env:
-            - name: NATS_STREAM_REPLICAS
-              value: "3"

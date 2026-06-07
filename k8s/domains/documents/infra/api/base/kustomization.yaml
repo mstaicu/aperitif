@@ -6,5 +6,4 @@ resources:
   - documents-api-middlewares.yaml
   - documents-np.yaml
   - documents-api-depl.yaml
-  - documents-api-sa.yaml
   - documents-api-srv.yaml

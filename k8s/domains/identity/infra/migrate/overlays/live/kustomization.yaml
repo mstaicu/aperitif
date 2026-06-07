@@ -8,6 +8,9 @@ resources:
   - ../../base
   - identity-migrate-db.yaml
 
+patches:
+  - path: identity-migrate-job.yaml
+
 images:
   - name: mdstaicu/identity-migrate
     newTag: latest

@@ -14,14 +14,18 @@ spec:
         app: tenancy-api
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: tenancy-api
-      # Defense in deep, disable this at the pod level
-      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
 
       containers:
         - name: tenancy-api
           image: mdstaicu/tenancy-api
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: DATABASE_URL
               valueFrom:

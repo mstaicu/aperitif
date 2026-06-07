@@ -14,12 +14,18 @@ spec:
         app: documents-ui
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: documents-ui
       automountServiceAccountToken: false
 
       containers:
         - name: documents-ui
           image: mdstaicu/documents-ui
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: PORT
               value: "3000"

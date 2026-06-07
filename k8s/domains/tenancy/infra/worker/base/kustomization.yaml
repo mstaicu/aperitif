@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - tenancy-worker-depl.yaml
   - tenancy-worker-np.yaml
-  - tenancy-worker-sa.yaml

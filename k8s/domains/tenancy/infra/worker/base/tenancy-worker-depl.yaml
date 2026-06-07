@@ -14,14 +14,18 @@ spec:
         app: tenancy-worker
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: tenancy-worker
-      # Defense in deep, disable this at the pod level
-      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
 
       containers:
         - name: tenancy-worker
           image: mdstaicu/tenancy-worker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: DATABASE_URL
               valueFrom:

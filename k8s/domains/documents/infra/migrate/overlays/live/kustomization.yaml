@@ -8,6 +8,9 @@ resources:
   - ../../base
   - documents-migrate-db.yaml
 
+patches:
+  - path: documents-migrate-job.yaml
+
 images:
   - name: mdstaicu/documents-migrate
     newTag: latest

@@ -14,14 +14,18 @@ spec:
         app: identity-api
     spec:
       terminationGracePeriodSeconds: 15
-      serviceAccountName: identity-api
-      # Defense in deep, disable this at the pod level
-      # to prevent overwrites at the service account level
       automountServiceAccountToken: false
 
       containers:
         - name: identity-api
           image: mdstaicu/identity-api
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: DATABASE_URL
               valueFrom:

@@ -6,5 +6,4 @@ resources:
   - tenancy-api-middlewares.yaml
   - tenancy-np.yaml
   - tenancy-api-depl.yaml
-  - tenancy-api-sa.yaml
   - tenancy-api-srv.yaml

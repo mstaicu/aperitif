@@ -26,6 +26,9 @@ Flyway scans only `filesystem:/db/migrations` in the migration image.
 Projection schema changes are normal Flyway migrations. New projection columns
 are backfilled by replaying or republishing the source domain snapshot events.
 
+Invariant: source domains write fresh outbox rows when migrations change
+projected state.
+
 Projection writes must keep accepting stale/equal versions without failing.
 
 ## Roles

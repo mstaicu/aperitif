@@ -6,5 +6,4 @@ resources:
   - capabilities-api-middlewares.yaml
   - capabilities-np.yaml
   - capabilities-api-depl.yaml
-  - capabilities-api-sa.yaml
   - capabilities-api-srv.yaml

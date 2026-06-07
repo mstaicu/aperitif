@@ -6,5 +6,4 @@ resources:
   - identity-ui-ingress.yaml
   - identity-ui-middlewares.yaml
   - identity-ui-np.yaml
-  - identity-ui-sa.yaml
   - identity-ui-srv.yaml
