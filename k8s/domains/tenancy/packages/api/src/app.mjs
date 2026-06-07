@@ -8,7 +8,6 @@ import v1 from "./api/versions/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
- * @typedef {import('./services/tenant-roles/index.mjs').TenantRolesService} TenantRolesService
  * @typedef {import('./services/tenants/index.mjs').TenancyService} TenancyService
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
@@ -28,7 +27,6 @@ import v1 from "./api/versions/v1/index.mjs";
  * @param {{
  *  ctx: Ctx,
  *  services: {
- *    tenantRoles: TenantRolesService,
  *    tenancy: TenancyService,
  *  },
  *  fastifyOtel?: FastifyOtelInstrumentation

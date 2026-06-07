@@ -43,9 +43,6 @@ postgres -> migrate -> api/worker
 ```text
 GET /v1/tenants
 POST /v1/tenants
-PUT /v1/tenants/:tenant_id/members/:user_id
-DELETE /v1/tenants/:tenant_id/members/:user_id
-PUT /v1/tenants/:tenant_id/members/:user_id/role
 ```
 
 API docs: `GET api.tma.com/v1/tenants/docs`.
@@ -73,7 +70,6 @@ The API depends on identity/JWKS and ingress. The worker depends on event-bus.
 
 - Request handlers do not publish authority events directly.
 - State changes and `outbox_events` rows belong in the same DB transaction.
-- Authority events use the tenant's current `version`; membership changes
-  advance it before writing the outbox row.
+- Authority events use the tenant's current `version`.
 - If managed Postgres replaces the placeholder, remove only `tenancy-postgres`
   from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

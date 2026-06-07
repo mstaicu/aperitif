@@ -53,30 +53,10 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  FORBIDDEN: {
-    status: 403,
-    title: "Forbidden",
-    type: "/problems/forbidden",
-  },
   INVALID_ACCESS_TOKEN: {
     status: 401,
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
-  },
-  ROLE_NOT_FOUND: {
-    status: 404,
-    title: "Role not found",
-    type: "/problems/role-not-found",
-  },
-  TENANT_MEMBERSHIP_NOT_FOUND: {
-    status: 404,
-    title: "Tenant membership not found",
-    type: "/problems/tenant-membership-not-found",
-  },
-  TENANT_NOT_FOUND: {
-    status: 404,
-    title: "Tenant not found",
-    type: "/problems/tenant-not-found",
   },
 };
 

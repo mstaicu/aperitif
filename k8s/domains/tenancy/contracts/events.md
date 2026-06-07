@@ -11,9 +11,8 @@ Schema version: `1`
 Emitted when:
 
 - a tenant is created
-- a tenant member is added
-- a tenant member is removed
-- a tenant member role changes
+
+Future member lifecycle flows should reuse this event.
 
 Envelope:
 
