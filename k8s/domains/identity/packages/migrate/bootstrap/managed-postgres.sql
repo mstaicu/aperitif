@@ -1,6 +1,3 @@
--- Managed Postgres bootstrap. Pass required password variables with psql.
--- Keep roles/grants aligned with the matching infra/postgres overlay.
-
 \set ON_ERROR_STOP on
 
 \if :{?identity_migrator_password}
@@ -25,23 +22,11 @@ SELECT CASE WHEN current_database() = 'identity' THEN 'true' ELSE 'false' END
   \quit 1
 \endif
 
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_migrator') THEN
-    CREATE ROLE identity_migrator LOGIN;
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'identity_api') THEN
-    CREATE ROLE identity_api LOGIN;
-  END IF;
-END
-$$;
-
-ALTER ROLE identity_migrator
+CREATE ROLE identity_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_migrator_password';
 
-ALTER ROLE identity_api
+CREATE ROLE identity_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'identity_api_password';
 

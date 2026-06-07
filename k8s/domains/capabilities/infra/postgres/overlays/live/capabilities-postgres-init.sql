@@ -1,18 +1,12 @@
--- Placeholder Postgres bootstrap. Keep roles/grants aligned with managed-postgres.sql.
-
-CREATE ROLE capabilities_migrator;
-CREATE ROLE capabilities_api;
-CREATE ROLE capabilities_worker;
-
-ALTER ROLE capabilities_migrator
+CREATE ROLE capabilities_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
 
-ALTER ROLE capabilities_api
+CREATE ROLE capabilities_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
 
-ALTER ROLE capabilities_worker
+CREATE ROLE capabilities_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD 'dev';
 

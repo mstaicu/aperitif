@@ -3,14 +3,11 @@ VALUES
     ('operators.manage'),
     ('tenants.manage'),
     ('capabilities.grant'),
-    ('capabilities.revoke')
-ON CONFLICT (id) DO NOTHING;
+    ('capabilities.revoke');
 
 INSERT INTO operator_roles (id, name)
 VALUES
-    ('operator', 'Operator')
-ON CONFLICT (id) DO UPDATE
-SET name = EXCLUDED.name;
+    ('operator', 'Operator');
 
 INSERT INTO operator_role_permissions (role_id, permission_id)
 SELECT 'operator', id
@@ -20,5 +17,4 @@ WHERE id IN (
     'tenants.manage',
     'capabilities.grant',
     'capabilities.revoke'
-)
-ON CONFLICT DO NOTHING;
+);

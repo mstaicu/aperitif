@@ -1,6 +1,3 @@
--- Managed Postgres bootstrap. Pass required password variables with psql.
--- Keep roles/grants aligned with the matching infra/postgres overlay.
-
 \set ON_ERROR_STOP on
 
 \if :{?documents_migrator_password}
@@ -31,31 +28,15 @@ SELECT CASE WHEN current_database() = 'documents' THEN 'true' ELSE 'false' END
   \quit 1
 \endif
 
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_migrator') THEN
-    CREATE ROLE documents_migrator LOGIN;
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_api') THEN
-    CREATE ROLE documents_api LOGIN;
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documents_worker') THEN
-    CREATE ROLE documents_worker LOGIN;
-  END IF;
-END
-$$;
-
-ALTER ROLE documents_migrator
+CREATE ROLE documents_migrator
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_migrator_password';
 
-ALTER ROLE documents_api
+CREATE ROLE documents_api
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_api_password';
 
-ALTER ROLE documents_worker
+CREATE ROLE documents_worker
 WITH LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
 PASSWORD :'documents_worker_password';
 

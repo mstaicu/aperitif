@@ -43,6 +43,7 @@ spec:
             - --metrics.otlp.addEntryPointsLabels=true # Keep public vs internal edge latency split.
             - --metrics.otlp.addRoutersLabels=false # Avoid per-route cardinality at the edge.
             - --metrics.otlp.addServicesLabels=false # Avoid per-backend cardinality at the edge.
+
             - --tracing.otlp=true # Emit edge traces into the shared collector.
             - --tracing.serviceName=traefik # Stable trace service name for ingress.
             - --tracing.otlp.grpc=true # Use OTLP gRPC for the collector hop.

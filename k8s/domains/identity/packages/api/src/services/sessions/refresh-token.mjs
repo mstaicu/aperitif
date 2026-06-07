@@ -63,6 +63,7 @@ export const rotateRefreshToken =
         );
 
         await client.query("COMMIT");
+
         console.warn(
           JSON.stringify({
             event: "session_revoked",
@@ -71,6 +72,7 @@ export const rotateRefreshToken =
             session_id: refreshToken.session_id,
           }),
         );
+
         throw new Error("SESSION_NOT_FOUND");
       }
 

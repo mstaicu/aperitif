@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION "pgcrypto";
 
 CREATE TABLE projected_tenant_members (
     tenant_id UUID NOT NULL,

@@ -15,9 +15,10 @@ export const createAccessToken =
       throw new Error("INVALID_REFRESH_TOKEN");
     }
 
+    let session;
+
     /** @type {string[]} */
     let operatorPermissions;
-    let session;
 
     try {
       ({
@@ -75,7 +76,7 @@ export const createAccessToken =
     /**
      * @type {{ operator_permissions?: string[], sub: string }}
      */
-    const claims = {
+    let claims = {
       sub: session.user_id,
     };
 
