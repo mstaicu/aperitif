@@ -14,10 +14,29 @@ const controller = new AbortController();
 await ensureCapabilitiesStream(ctx);
 await ensureTenancyConsumer(ctx);
 
-const health = http.createServer((req, res) => {
-  res.writeHead(req.url === "/livez" || req.url === "/readyz" ? 200 : 404, {
-    "content-type": "text/plain",
-  });
+const health = http.createServer(async (req, res) => {
+  if (req.url === "/livez") {
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("ok");
+    return;
+  }
+
+  if (req.url === "/readyz") {
+    try {
+      await ctx.persistence.db.query("SELECT 1");
+      await ctx.messaging.nc.flush();
+
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end("ok");
+      return;
+    } catch {
+      res.writeHead(503, { "content-type": "text/plain" });
+      res.end("not ready");
+      return;
+    }
+  }
+
+  res.writeHead(404, { "content-type": "text/plain" });
   res.end();
 });
 

@@ -17,5 +17,6 @@ export async function createNatsContext() {
     },
     js: jetstream(nc),
     jsm: await jetstreamManager(nc),
+    nc,
   };
 }

@@ -27,6 +27,7 @@ export const createContext = async () => {
       messaging: {
         js: nats.js,
         jsm: nats.jsm,
+        nc: nats.nc,
       },
       persistence: {
         db: pg.db,

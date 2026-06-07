@@ -46,7 +46,7 @@ spec:
               port: health
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             failureThreshold: 2
 
           livenessProbe:
