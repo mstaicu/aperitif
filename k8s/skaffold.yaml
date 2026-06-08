@@ -10,6 +10,6 @@ requires:
   - path: platform/observability
 
   - path: domains/identity
-  - path: domains/tenancy
+  - path: domains/accounts
   - path: domains/capabilities
   - path: domains/documents

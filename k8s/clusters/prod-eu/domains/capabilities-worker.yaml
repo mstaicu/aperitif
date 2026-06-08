@@ -16,7 +16,7 @@ spec:
       name: sops-age
   dependsOn:
     - name: event-bus
-    - name: tenancy-worker
+    - name: accounts-worker
     - name: capabilities-migrate
   wait: true
   timeout: 5m

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: accounts-worker-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts-worker
+  template:
+    metadata:
+      labels:
+        app: accounts-worker
+    spec:
+      terminationGracePeriodSeconds: 15
+      automountServiceAccountToken: false
+
+      containers:
+        - name: accounts-worker
+          image: mdstaicu/accounts-worker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: accounts-worker-db
+                  key: DATABASE_URL
+
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
+
+          ports:
+            - name: health
+              containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2

@@ -15,9 +15,9 @@ export const CreateDocumentBody = Type.Object(
   },
 );
 
-export const TenantParams = Type.Object(
+export const AccountParams = Type.Object(
   {
-    tenant_id: Uuid,
+    account_id: Uuid,
   },
   {
     additionalProperties: false,
@@ -26,9 +26,9 @@ export const TenantParams = Type.Object(
 
 export const DocumentResponse = Type.Object(
   {
+    account_id: Uuid,
     created_by: Uuid,
     id: Uuid,
-    tenant_id: Uuid,
     title: Type.String(),
   },
   {

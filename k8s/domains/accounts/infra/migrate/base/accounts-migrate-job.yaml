@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: migrate
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: accounts-migrate
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+
+      containers:
+        - name: migrate
+          image: mdstaicu/accounts-migrate
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+          env:
+            - name: FLYWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: accounts-migrate-db
+                  key: FLYWAY_URL
+            - name: FLYWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: accounts-migrate-db
+                  key: FLYWAY_USER
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: accounts-migrate-db
+                  key: FLYWAY_PASSWORD
+            - name: FLYWAY_LOCATIONS
+              value: filesystem:/db/migrations
+            - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS
+              value: "true"

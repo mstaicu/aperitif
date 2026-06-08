@@ -1,26 +1,26 @@
 # Capabilities Domain
 
-Capabilities owns generic tenant capability authority.
+Capabilities owns generic account capability authority.
 
 ## Status
 
-Core authority domain. Publishes effective tenant capability snapshots.
+Core authority domain. Publishes effective account capability snapshots.
 
 ## Owns
 
 - `capabilities`: seeded vocabulary and merge rules.
-- `tenant_capability_grants`: current grant contributions.
-- `projected_tenants`: local tenant existence projection.
+- `account_capability_grants`: current grant contributions.
+- `projected_accounts`: local account existence projection.
 - `outbox_events`: durable capability event queue.
 
-Effective tenant capabilities are calculated from current grants when events are
+Effective account capabilities are calculated from current grants when events are
 written. They are not stored as a separate hot-path table.
 
 ## Does Not Own
 
 - commerce catalogues
 - checkout, subscriptions, invoices, payment provider state
-- tenant records or memberships
+- account records or memberships
 - product-domain resources
 
 Other domains may call these concepts features, entitlements, limits, checks, or
@@ -52,7 +52,7 @@ postgres -> migrate -> api/worker
 - `postgres`: local/CI placeholder database.
 - `migrate`: Flyway Job from `packages/migrate`.
 - `api`: Fastify API from `packages/api`.
-- `worker`: tenancy projection consumer and outbox publisher.
+- `worker`: accounts projection consumer and outbox publisher.
 
 ## Public Contracts
 
@@ -73,9 +73,9 @@ Consumes:
 
 | Subject | Producer | Meaning |
 | --- | --- | --- |
-| `tenancy.tenant_member.updated` | `tenancy` | Tenant existence snapshot carried by member lifecycle. |
+| `accounts.account_member.updated` | `accounts` | Account existence snapshot carried by member lifecycle. |
 
-The event is a full tenant capability snapshot with one event-level `version`.
+The event is a full account capability snapshot with one event-level `version`.
 
 ## Operations
 
@@ -90,7 +90,7 @@ Live Flux units:
 capabilities-postgres -> capabilities-migrate -> capabilities-api/capabilities-worker
 ```
 
-The worker depends on tenancy events and event-bus.
+The worker depends on accounts events and event-bus.
 
 ## Agent Notes
 

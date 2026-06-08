@@ -3,16 +3,16 @@ import http from "node:http";
 import process from "node:process";
 
 import { createContext } from "./platform/context.mjs";
+import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
 import { ensureCapabilitiesStream } from "./platform/messaging/capabilities-stream.mjs";
-import { ensureTenancyConsumer } from "./platform/messaging/tenancy-consumer.mjs";
-import { runProjectTenancy } from "./tasks/project-tenancy.mjs";
+import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
 const ctx = await createContext();
 const controller = new AbortController();
 
 await ensureCapabilitiesStream(ctx);
-await ensureTenancyConsumer(ctx);
+await ensureAccountsConsumer(ctx);
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -43,7 +43,7 @@ const health = http.createServer(async (req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectTenancy(ctx, controller.signal),
+  runProjectAccounts(ctx, controller.signal),
   runPublishOutbox(ctx, controller.signal),
 ];
 const shutdown = Promise.race(

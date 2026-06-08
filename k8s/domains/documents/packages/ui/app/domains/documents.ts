@@ -7,7 +7,7 @@ const apiInternalV1Url = (
 
 export async function loadDocuments({ request }: RequestContext) {
   const url = new URL(request.url);
-  const tenantId = url.searchParams.get("tenant_id");
+  const accountId = url.searchParams.get("account_id");
   const refreshToken = request.headers
     .get("Cookie")
     ?.split(";")
@@ -19,8 +19,8 @@ export async function loadDocuments({ request }: RequestContext) {
     return { error: "missing refresh_token cookie" };
   }
 
-  if (!tenantId) {
-    return { error: "missing tenant_id query parameter" };
+  if (!accountId) {
+    return { error: "missing account_id query parameter" };
   }
 
   const accessTokenResponse = await fetch(
@@ -44,7 +44,7 @@ export async function loadDocuments({ request }: RequestContext) {
   }
 
   const documentsResponse = await fetch(
-    `${apiInternalV1Url}/tenants/${encodeURIComponent(tenantId)}/documents`,
+    `${apiInternalV1Url}/accounts/${encodeURIComponent(accountId)}/documents`,
     {
       headers: {
         Authorization: `Bearer ${accessToken.access_token}`,

@@ -9,16 +9,16 @@ Product proof domain. Consumes core projections; publishes no events today.
 ## Owns
 
 - `documents`
-- `projected_tenant_members`
-- `projected_tenant_capabilities`
+- `projected_account_members`
+- `projected_account_capabilities`
 
 The projection tables are local permission and capability inputs copied from
-tenancy and capabilities events.
+accounts and capabilities events.
 
 ## Does Not Own
 
 - identity records
-- tenant authority
+- account authority
 - capability authority
 - payments, notifications, workflow
 
@@ -41,16 +41,16 @@ The worker consumes existing streams and does not publish events yet.
 ## Public Contracts
 
 ```text
-POST /v1/tenants/:tenant_id/documents
-GET /v1/tenants/:tenant_id/documents
+POST /v1/accounts/:account_id/documents
+GET /v1/accounts/:account_id/documents
 GET /documents
 ```
 
 The command requires:
 
 - valid identity token
-- active projected tenant member with required permission
-- `documents.enabled = true` in projected tenant capabilities
+- active projected account member with required permission
+- `documents.enabled = true` in projected account capabilities
 
 API docs:
 
@@ -65,8 +65,8 @@ Consumes:
 
 | Subject | Producer | Projection |
 | --- | --- | --- |
-| `tenancy.tenant_member.updated` | `tenancy` | `projected_tenant_members` |
-| `capabilities.tenant_capabilities.updated` | `capabilities` | `projected_tenant_capabilities` |
+| `accounts.account_member.updated` | `accounts` | `projected_account_members` |
+| `capabilities.account_capabilities.updated` | `capabilities` | `projected_account_capabilities` |
 
 Publishes: none.
 
@@ -83,12 +83,12 @@ Live Flux units:
 documents-postgres -> documents-migrate -> documents-api/documents-worker/documents-ui
 ```
 
-The worker depends on tenancy and capabilities workers because those streams
+The worker depends on accounts and capabilities workers because those streams
 must exist before documents consumes them.
 
 ## Agent Notes
 
-- Do not call identity, tenancy, or capabilities synchronously for hot-path auth.
+- Do not call identity, accounts, or capabilities synchronously for hot-path auth.
 - Do not read other domains' databases.
 - If managed Postgres replaces the placeholder, remove only `documents-postgres`
   from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

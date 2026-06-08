@@ -7,18 +7,18 @@ const REQUIRED_PERMISSION_ID = "documents.create";
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: {
  *   currentUserId: string,
- *   tenantId: string,
+ *   accountId: string,
  *   title: string,
  * }) => Promise<{
  *   created_by: string,
  *   id: string,
- *   tenant_id: string,
+ *   account_id: string,
  *   title: string,
  * }>}
  */
 export const createDocument =
   (ctx) =>
-  async ({ currentUserId, tenantId, title }) => {
+  async ({ accountId, currentUserId, title }) => {
     let client;
 
     try {
@@ -31,12 +31,12 @@ export const createDocument =
         await client.query(
           `
             SELECT permissions
-            FROM projected_tenant_members
-            WHERE tenant_id = $1
+            FROM projected_account_members
+            WHERE account_id = $1
               AND user_id = $2
               AND active = true
           `,
-          [tenantId, currentUserId],
+          [accountId, currentUserId],
         )
       );
 
@@ -58,10 +58,10 @@ export const createDocument =
           await client.query(
             `
               SELECT capabilities
-              FROM projected_tenant_capabilities
-              WHERE tenant_id = $1
+              FROM projected_account_capabilities
+              WHERE account_id = $1
             `,
-            [tenantId],
+            [accountId],
           )
         );
 
@@ -77,7 +77,7 @@ export const createDocument =
       } = await client.query(
         `
           INSERT INTO documents (
-            tenant_id,
+            account_id,
             title,
             created_by
           )
@@ -85,21 +85,21 @@ export const createDocument =
           RETURNING
             created_by,
             id,
-            tenant_id,
+            account_id,
             title
         `,
-        [tenantId, title, currentUserId],
+        [accountId, title, currentUserId],
       );
 
       await client.query("COMMIT");
 
       console.log(
         JSON.stringify({
+          account_id: document.account_id,
           created_by: document.created_by,
           document_id: document.id,
           event: "document_created",
           level: "info",
-          tenant_id: document.tenant_id,
         }),
       );
 

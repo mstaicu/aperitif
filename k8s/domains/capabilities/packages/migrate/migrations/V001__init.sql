@@ -18,8 +18,8 @@ CREATE TABLE capabilities (
     )
 );
 
-CREATE TABLE tenant_capability_grants (
-    tenant_id UUID NOT NULL,
+CREATE TABLE account_capability_grants (
+    account_id UUID NOT NULL,
 
     grant_id UUID NOT NULL,
 
@@ -28,13 +28,13 @@ CREATE TABLE tenant_capability_grants (
 
     value JSONB NOT NULL,
 
-    PRIMARY KEY (tenant_id, grant_id, capability_id)
+    PRIMARY KEY (account_id, grant_id, capability_id)
 );
 
-CREATE SEQUENCE tenant_capabilities_version_seq AS BIGINT;
+CREATE SEQUENCE account_capabilities_version_seq AS BIGINT;
 
-CREATE TABLE projected_tenants (
-    tenant_id UUID PRIMARY KEY,
+CREATE TABLE projected_accounts (
+    account_id UUID PRIMARY KEY,
 
     version BIGINT NOT NULL
 );

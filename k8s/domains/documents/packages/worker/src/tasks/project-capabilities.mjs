@@ -1,10 +1,10 @@
 import { addAbortListener } from "node:events";
 
 import {
+  AccountCapabilitiesUpdatedPayloadCheck,
+  AccountCapabilitiesUpdatedSubject,
   CAPABILITIES_EVENT_SCHEMA_VERSION,
   CapabilitiesEventEnvelopeCheck,
-  TenantCapabilitiesUpdatedPayloadCheck,
-  TenantCapabilitiesUpdatedSubject,
 } from "../events/capabilities.mjs";
 import { CAPABILITIES_CONSUMER } from "../platform/messaging/capabilities-consumer.mjs";
 import { CAPABILITIES_STREAM } from "../platform/messaging/capabilities-stream.mjs";
@@ -50,15 +50,15 @@ export async function runProjectCapabilities(ctx, signal) {
 
         if (
           event.schema_version === CAPABILITIES_EVENT_SCHEMA_VERSION &&
-          event.subject === TenantCapabilitiesUpdatedSubject
+          event.subject === AccountCapabilitiesUpdatedSubject
         ) {
-          if (!TenantCapabilitiesUpdatedPayloadCheck.Check(event.payload)) {
+          if (!AccountCapabilitiesUpdatedPayloadCheck.Check(event.payload)) {
             throw new Error(
-              "Invalid capabilities tenant capabilities updated payload",
+              "Invalid capabilities account capabilities updated payload",
             );
           }
 
-          await projectV1TenantCapabilitiesUpdated(ctx, event);
+          await projectV1AccountCapabilitiesUpdated(ctx, event);
 
           message.ack();
           continue;
@@ -91,9 +91,9 @@ export async function runProjectCapabilities(ctx, signal) {
  * @param {import("../platform/context.mjs").WorkerContext} ctx
  * @param {import("../events/capabilities.mjs").CapabilitiesEventEnvelope} event
  */
-async function projectV1TenantCapabilitiesUpdated(ctx, event) {
+async function projectV1AccountCapabilitiesUpdated(ctx, event) {
   const payload =
-    /** @type {import("../events/capabilities.mjs").TenantCapabilitiesUpdatedPayload} */ (
+    /** @type {import("../events/capabilities.mjs").AccountCapabilitiesUpdatedPayload} */ (
       event.payload
     );
   const client = await ctx.persistence.db.connect();
@@ -110,18 +110,18 @@ async function projectV1TenantCapabilitiesUpdated(ctx, event) {
 
     const { rowCount } = await client.query(
       `
-        INSERT INTO projected_tenant_capabilities (
-          tenant_id,
+        INSERT INTO projected_account_capabilities (
+          account_id,
           capabilities,
           version
         )
         VALUES ($1, $2::jsonb, $3)
-        ON CONFLICT (tenant_id) DO UPDATE
+        ON CONFLICT (account_id) DO UPDATE
         SET capabilities = EXCLUDED.capabilities,
           version = EXCLUDED.version
-        WHERE projected_tenant_capabilities.version <= EXCLUDED.version
+        WHERE projected_account_capabilities.version <= EXCLUDED.version
       `,
-      [payload.tenant.id, JSON.stringify(capabilities), event.version],
+      [payload.account.id, JSON.stringify(capabilities), event.version],
     );
 
     await client.query("COMMIT");
@@ -129,11 +129,11 @@ async function projectV1TenantCapabilitiesUpdated(ctx, event) {
     if (rowCount && rowCount > 0) {
       console.log(
         JSON.stringify({
+          account_id: payload.account.id,
           capability_count: payload.capabilities.length,
-          event: "tenant_capabilities_projection_updated",
+          event: "account_capabilities_projection_updated",
           level: "info",
           service: "documents-worker",
-          tenant_id: payload.tenant.id,
           version: event.version,
         }),
       );

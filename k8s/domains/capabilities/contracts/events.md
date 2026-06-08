@@ -4,22 +4,22 @@ Capabilities publishes current-state facts. Consumers project by natural key and
 apply events only when the incoming `version` is greater than or equal to the
 stored projection version.
 
-## `capabilities.tenant_capabilities.updated`
+## `capabilities.account_capabilities.updated`
 
 Schema version: `1`
 
 Emitted when:
 
-- tenant capability grants are added
-- tenant capability grants are revoked
-- effective tenant capabilities are recalculated
+- account capability grants are added
+- account capability grants are revoked
+- effective account capabilities are recalculated
 
 Envelope:
 
 ```json
 {
   "id": "uuid",
-  "subject": "capabilities.tenant_capabilities.updated",
+  "subject": "capabilities.account_capabilities.updated",
   "schema_version": 1,
   "version": 1,
   "payload": {}
@@ -30,7 +30,7 @@ Payload:
 
 ```json
 {
-  "tenant": {
+  "account": {
     "id": "uuid"
   },
   "capabilities": [
@@ -44,9 +44,9 @@ Payload:
 
 Semantics:
 
-- This is the full effective capability snapshot for one tenant.
+- This is the full effective capability snapshot for one account.
 - Consumers replace their projected capability map with this snapshot.
-- `version` is the tenant capability snapshot version after recalculation.
+- `version` is the account capability snapshot version after recalculation.
 - Consumers should ack stale events where `version` is older than local state.
 
 Known consumers:

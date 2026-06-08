@@ -13,7 +13,7 @@ domain delivery wiring.
 clusters/prod-eu/       Flux live graph
 clusters/staging-eu/    Flux bootstrap notes
 platform/               ingress, event-bus, observability, inactive mesh
-domains/                identity, tenancy, capabilities, documents
+domains/                identity, accounts, capabilities, documents
 Makefile                local orchestration
 skaffold.yaml           local module graph
 .sops.yaml              encrypted Secret rules
@@ -30,15 +30,15 @@ that capability.
 ## Domains
 
 - `identity`: passkeys, sessions, access tokens, JWKS.
-- `tenancy`: tenants, memberships, roles, permissions.
-- `capabilities`: capability definitions, tenant grants, effective capability events.
-- `documents`: product-domain proof using local tenancy/capability projections.
+- `accounts`: accounts, memberships, roles, permissions.
+- `capabilities`: capability definitions, account grants, effective capability events.
+- `documents`: product-domain proof using local accounts/capability projections.
 
 Domains own their databases. Other domains use APIs or declared events.
 
 ## Status
 
-- Core: `identity`, `tenancy`, `capabilities`, outbox/projection spine.
+- Core: `identity`, `accounts`, `capabilities`, outbox/projection spine.
 - Product proof: `documents`.
 - Platform: `ingress`, `event-bus`, `observability`.
 - Inactive: `mesh`.
@@ -64,14 +64,14 @@ Postgres notifications only wake workers; the outbox is the durable source.
 brew bundle
 make dev
 make dev-identity
-make dev-tenancy
+make dev-accounts
 make dev-capabilities
 make dev-documents
 ```
 
 ```sh
 make deploy-identity
-make deploy-tenancy
+make deploy-accounts
 make deploy-capabilities
 make deploy-documents
 ```
@@ -129,15 +129,15 @@ contain `FLYWAY_*`; API/worker Secrets contain `DATABASE_URL`.
 - Event contracts must name subject, schema version, payload, producer, and consumers.
 - Cross-domain events are current-state facts, not replay deltas.
 - Consumers apply newer `version` values and ack stale messages.
-- Tenant-scoped hot-path authorization uses local projections, not synchronous
+- Account-scoped hot-path authorization uses local projections, not synchronous
   calls to authority domains.
 
 Event catalog:
 
 | Subject | Producer | Consumers | Meaning |
 | --- | --- | --- | --- |
-| `tenancy.tenant_member.updated` | `tenancy` | `capabilities`, `documents` | Tenant existence, member state, role, and permissions snapshot. |
-| `capabilities.tenant_capabilities.updated` | `capabilities` | `documents` | Tenant capability snapshot. |
+| `accounts.account_member.updated` | `accounts` | `capabilities`, `documents` | Account existence, member state, role, and permissions snapshot. |
+| `capabilities.account_capabilities.updated` | `capabilities` | `documents` | Account capability snapshot. |
 
 ## Agent Notes
 
@@ -154,7 +154,7 @@ Use the narrowest check that covers the change:
 
 ```sh
 make -C domains/identity pre-deploy-infra
-make -C domains/tenancy pre-deploy-infra
+make -C domains/accounts pre-deploy-infra
 make -C domains/capabilities pre-deploy-infra
 make -C domains/documents pre-deploy-infra
 git diff --check

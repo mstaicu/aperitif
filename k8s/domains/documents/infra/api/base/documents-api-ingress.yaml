@@ -9,7 +9,7 @@ spec:
 
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && (PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/tenants/[^/]+/documents$`))
+      match: Host(`api.tma.com`) && (PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/accounts/[^/]+/documents$`))
       middlewares:
         - name: documents-api-public
       services:
@@ -29,7 +29,7 @@ spec:
 
   routes:
     - kind: Rule
-      match: PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/tenants/[^/]+/documents$`)
+      match: PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/accounts/[^/]+/documents$`)
       services:
         - name: documents-api-srv
           port: 3000

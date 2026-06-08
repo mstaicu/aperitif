@@ -24,25 +24,25 @@
       "remoteRoot": "/home/node/app"
     },
     {
-      "name": "Attach tenancy-api",
+      "name": "Attach accounts-api",
       "type": "node",
       "request": "attach",
       "address": "localhost",
       "port": 9231,
       "restart": true,
       "sourceMaps": true,
-      "localRoot": "${workspaceFolder}/domains/tenancy/packages/api",
+      "localRoot": "${workspaceFolder}/domains/accounts/packages/api",
       "remoteRoot": "/home/node/app"
     },
     {
-      "name": "Attach tenancy-worker",
+      "name": "Attach accounts-worker",
       "type": "node",
       "request": "attach",
       "address": "localhost",
       "port": 9232,
       "restart": true,
       "sourceMaps": true,
-      "localRoot": "${workspaceFolder}/domains/tenancy/packages/worker",
+      "localRoot": "${workspaceFolder}/domains/accounts/packages/worker",
       "remoteRoot": "/home/node/app"
     },
     {

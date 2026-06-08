@@ -1,7 +1,7 @@
 INSERT INTO operator_permissions (id)
 VALUES
     ('operators.manage'),
-    ('tenants.manage'),
+    ('accounts.manage'),
     ('capabilities.grant'),
     ('capabilities.revoke');
 
@@ -14,7 +14,7 @@ SELECT 'operator', id
 FROM operator_permissions
 WHERE id IN (
     'operators.manage',
-    'tenants.manage',
+    'accounts.manage',
     'capabilities.grant',
     'capabilities.revoke'
 );

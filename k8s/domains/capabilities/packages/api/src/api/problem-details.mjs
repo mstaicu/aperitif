@@ -48,6 +48,11 @@ const INTERNAL_SERVER_ERROR = {
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
+  ACCOUNT_NOT_FOUND: {
+    status: 404,
+    title: "Account not found",
+    type: "/problems/account-not-found",
+  },
   CAPABILITY_GRANT_DUPLICATE: {
     status: 409,
     title: "Capability grant already exists",
@@ -77,11 +82,6 @@ const PROBLEMS = {
     status: 400,
     title: "Invalid capability value",
     type: "/problems/invalid-capability-value",
-  },
-  TENANT_NOT_FOUND: {
-    status: 404,
-    title: "Tenant not found",
-    type: "/problems/tenant-not-found",
   },
 };
 

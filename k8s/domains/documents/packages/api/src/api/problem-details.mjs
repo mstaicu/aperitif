@@ -48,6 +48,11 @@ const INTERNAL_SERVER_ERROR = {
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
+  ACCOUNT_NOT_FOUND: {
+    status: 404,
+    title: "Account not found",
+    type: "/problems/account-not-found",
+  },
   CAPABILITY_REQUIRED: {
     status: 403,
     title: "Capability required",
@@ -67,11 +72,6 @@ const PROBLEMS = {
     status: 401,
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
-  },
-  TENANT_NOT_FOUND: {
-    status: 404,
-    title: "Tenant not found",
-    type: "/problems/tenant-not-found",
   },
 };
 

@@ -78,10 +78,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: tenancy
+              kubernetes.io/metadata.name: accounts
           podSelector:
             matchLabels:
-              app: tenancy-worker
+              app: accounts-worker
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: capabilities

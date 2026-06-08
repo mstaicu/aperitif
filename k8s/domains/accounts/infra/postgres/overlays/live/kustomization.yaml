@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: accounts
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+patches:
+  - path: accounts-postgres-depl.yaml
+
+configMapGenerator:
+  - name: accounts-postgres-init
+    files:
+      - accounts-postgres-init.sql

@@ -1,0 +1,128 @@
+import { DatabaseError } from "pg";
+
+import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
+
+/**
+ * @param {import("../../platform/context.mjs").Context} ctx
+ * @returns {(args: { currentUserId: string, name: string }) => Promise<{
+ *   account: {
+ *     id: string,
+ *     name: string,
+ *   },
+ * }>}
+ */
+export const createAccount =
+  (ctx) =>
+  async ({ currentUserId, name }) => {
+    let client;
+
+    try {
+      client = await ctx.persistence.db.connect();
+      await client.query("BEGIN");
+
+      const {
+        rows: [account],
+      } = await client.query(
+        `
+          INSERT INTO accounts (name)
+          VALUES ($1)
+          RETURNING id, name, version
+        `,
+        [name],
+      );
+
+      await client.query(
+        `
+          INSERT INTO account_members (
+            account_id,
+            user_id,
+            role_id
+          )
+          VALUES ($1, $2, 'owner')
+        `,
+        [account.id, currentUserId],
+      );
+
+      const { rows: permissions } = await client.query(
+        `
+          SELECT DISTINCT rp.permission_id AS id
+          FROM account_members am
+          JOIN role_permissions rp ON rp.role_id = am.role_id
+          WHERE am.account_id = $1
+            AND am.user_id = $2
+          ORDER BY rp.permission_id
+        `,
+        [account.id, currentUserId],
+      );
+
+      const accountMemberUpdatedEvent = buildAccountMemberUpdatedEvent(
+        {
+          account: {
+            id: account.id,
+          },
+          member: {
+            account_id: account.id,
+            active: true,
+            role_id: "owner",
+            user_id: currentUserId,
+          },
+          permissions: permissions.map(({ id }) => ({
+            id,
+            value: true,
+          })),
+        },
+        Number(account.version),
+      );
+
+      await client.query(
+        `
+          INSERT INTO outbox_events (
+            id,
+            event
+          )
+          VALUES ($1, $2::jsonb)
+        `,
+        [
+          accountMemberUpdatedEvent.id,
+          JSON.stringify(accountMemberUpdatedEvent),
+        ],
+      );
+
+      await client.query("COMMIT");
+
+      console.log(
+        JSON.stringify({
+          account_id: account.id,
+          event: "account_created",
+          level: "info",
+          version: Number(account.version),
+        }),
+      );
+
+      return {
+        account: {
+          id: account.id,
+          name: account.name,
+        },
+      };
+    } catch (err) {
+      await client?.query("ROLLBACK").catch(() => {});
+
+      if (err instanceof DatabaseError) {
+        if (
+          err.code?.startsWith("08") ||
+          err.code === "53300" ||
+          err.code === "57P01" ||
+          err.code === "57P02" ||
+          err.code === "57P03" ||
+          err.code === "57014"
+        ) {
+          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        }
+      }
+
+      throw err;
+    } finally {
+      client?.release();
+    }
+  };

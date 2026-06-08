@@ -2,19 +2,23 @@ brew "age" # SOPS age key generation and encryption
 brew "ksops" # Kustomize plugin for decrypting SOPS secrets
 brew "sops" # Encrypt Kubernetes Secret manifests
 
-brew "libpq" # PostgreSQL CLI tools such as psql
 brew "mkcert" # Local trusted TLS certificates for Traefik dev
 
-brew "k9s" # Terminal UI for inspecting Kubernetes clusters
 brew "kubernetes-cli" # Installs kubectl
 brew "kustomize" # Render Kubernetes overlays
 brew "skaffold" # Local Kubernetes dev/debug loop
 
+#
 # Optional
+#
 # tap "fluxcd/tap"
 # brew "fluxcd/tap/flux"
 #
 # brew "helm"
+#
+# brew "k9s"
+#
+# brew "libpq" # PostgreSQL CLI tools such as psql
 #
 # tap "nats-io/nats-tools"
 # brew "nats-io/nats-tools/nats"

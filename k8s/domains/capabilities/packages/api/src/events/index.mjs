@@ -9,14 +9,14 @@ export const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const TenantEventResourceSchema = Type.Object(
+export const AccountEventResourceSchema = Type.Object(
   {
     id: UuidSchema,
   },
   { additionalProperties: false },
 );
 
-export const TenantCapabilityEventResourceSchema = Type.Object(
+export const AccountCapabilityEventResourceSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
     value: Type.Unknown(),
@@ -45,42 +45,42 @@ export const CapabilitiesEventEnvelopeCheck = TypeCompiler.Compile(
   CapabilitiesEventEnvelopeSchema,
 );
 
-export const TenantCapabilitiesUpdatedSubject =
-  "capabilities.tenant_capabilities.updated";
-export const TenantCapabilitiesUpdatedSchemaVersion =
+export const AccountCapabilitiesUpdatedSubject =
+  "capabilities.account_capabilities.updated";
+export const AccountCapabilitiesUpdatedSchemaVersion =
   CAPABILITIES_EVENT_SCHEMA_VERSION;
 
-export const TenantCapabilitiesUpdatedPayloadSchema = Type.Object(
+export const AccountCapabilitiesUpdatedPayloadSchema = Type.Object(
   {
-    capabilities: Type.Array(TenantCapabilityEventResourceSchema),
-    tenant: TenantEventResourceSchema,
+    account: AccountEventResourceSchema,
+    capabilities: Type.Array(AccountCapabilityEventResourceSchema),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof TenantCapabilitiesUpdatedPayloadSchema
- * >} TenantCapabilitiesUpdatedPayload
+ *   typeof AccountCapabilitiesUpdatedPayloadSchema
+ * >} AccountCapabilitiesUpdatedPayload
  */
 
-export const TenantCapabilitiesUpdatedPayloadCheck = TypeCompiler.Compile(
-  TenantCapabilitiesUpdatedPayloadSchema,
+export const AccountCapabilitiesUpdatedPayloadCheck = TypeCompiler.Compile(
+  AccountCapabilitiesUpdatedPayloadSchema,
 );
 
 /**
- * @param {TenantCapabilitiesUpdatedPayload} payload
+ * @param {AccountCapabilitiesUpdatedPayload} payload
  * @param {number} version
  * @returns {{
  *   id: string,
- *   payload: TenantCapabilitiesUpdatedPayload,
+ *   payload: AccountCapabilitiesUpdatedPayload,
  *   schema_version: number,
  *   subject: string,
  *   version: number,
  * }}
  */
-export function buildTenantCapabilitiesUpdatedEvent(payload, version) {
-  if (!TenantCapabilitiesUpdatedPayloadCheck.Check(payload)) {
+export function buildAccountCapabilitiesUpdatedEvent(payload, version) {
+  if (!AccountCapabilitiesUpdatedPayloadCheck.Check(payload)) {
     throw new Error("INVALID_EVENT_PAYLOAD");
   }
 
@@ -91,8 +91,8 @@ export function buildTenantCapabilitiesUpdatedEvent(payload, version) {
   return {
     id: randomUUID(),
     payload,
-    schema_version: TenantCapabilitiesUpdatedSchemaVersion,
-    subject: TenantCapabilitiesUpdatedSubject,
+    schema_version: AccountCapabilitiesUpdatedSchemaVersion,
+    subject: AccountCapabilitiesUpdatedSubject,
     version,
   };
 }

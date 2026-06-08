@@ -44,5 +44,5 @@ pre-deploy-skaffold: ## Verify documents Skaffold modules before deploy.
 post-deploy: ## Verify the deployed documents boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "$(DOMAIN):$(PORT):127.0.0.1" "https://$(DOMAIN):$(PORT)/documents"
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/documents/docs/json"
-	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/tenants/00000000-0000-4000-8000-000000000000/documents")" = "401"
-	test "$$(curl -ksS -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{"title":"Smoke"}' --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/tenants/00000000-0000-4000-8000-000000000000/documents")" = "401"
+	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/00000000-0000-4000-8000-000000000000/documents")" = "401"
+	test "$$(curl -ksS -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{"title":"Smoke"}' --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/00000000-0000-4000-8000-000000000000/documents")" = "401"

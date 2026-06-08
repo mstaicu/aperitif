@@ -3,16 +3,16 @@ import http from "node:http";
 import process from "node:process";
 
 import { createContext } from "./platform/context.mjs";
+import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
 import { ensureCapabilitiesConsumer } from "./platform/messaging/capabilities-consumer.mjs";
-import { ensureTenancyConsumer } from "./platform/messaging/tenancy-consumer.mjs";
+import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runProjectCapabilities } from "./tasks/project-capabilities.mjs";
-import { runProjectTenancy } from "./tasks/project-tenancy.mjs";
 
 const ctx = await createContext();
 const controller = new AbortController();
 
 await ensureCapabilitiesConsumer(ctx);
-await ensureTenancyConsumer(ctx);
+await ensureAccountsConsumer(ctx);
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -44,7 +44,7 @@ health.listen(3000, "0.0.0.0");
 
 const tasks = [
   runProjectCapabilities(ctx, controller.signal),
-  runProjectTenancy(ctx, controller.signal),
+  runProjectAccounts(ctx, controller.signal),
 ];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),

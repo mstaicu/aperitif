@@ -1,7 +1,7 @@
 CREATE EXTENSION "pgcrypto";
 
-CREATE TABLE projected_tenant_members (
-    tenant_id UUID NOT NULL,
+CREATE TABLE projected_account_members (
+    account_id UUID NOT NULL,
 
     user_id UUID NOT NULL,
 
@@ -11,11 +11,11 @@ CREATE TABLE projected_tenant_members (
 
     version BIGINT NOT NULL,
 
-    PRIMARY KEY (tenant_id, user_id)
+    PRIMARY KEY (account_id, user_id)
 );
 
-CREATE TABLE projected_tenant_capabilities (
-    tenant_id UUID PRIMARY KEY,
+CREATE TABLE projected_account_capabilities (
+    account_id UUID PRIMARY KEY,
 
     capabilities JSONB NOT NULL,
 
@@ -25,7 +25,7 @@ CREATE TABLE projected_tenant_capabilities (
 CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    tenant_id UUID NOT NULL,
+    account_id UUID NOT NULL,
 
     title TEXT NOT NULL,
 

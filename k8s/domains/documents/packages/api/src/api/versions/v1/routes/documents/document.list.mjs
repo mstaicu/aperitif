@@ -1,6 +1,6 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { DocumentsResponse, TenantParams } from "./schemas.mjs";
+import { AccountParams, DocumentsResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -18,9 +18,9 @@ export default async function (fastify, { documents, jwks }) {
     {
       schema: {
         description:
-          "List tenant-scoped documents after checking the caller identity, tenant membership, and required tenant capability projection.",
+          "List account-scoped documents after checking the caller identity, account membership, and required account capability projection.",
         operationId: "listDocuments",
-        params: TenantParams,
+        params: AccountParams,
         response: {
           200: DocumentsResponse,
           400: ProblemResponse,
@@ -43,8 +43,8 @@ export default async function (fastify, { documents, jwks }) {
 
       return reply.send(
         await documents.listDocuments({
+          accountId: req.params.account_id,
           currentUserId,
-          tenantId: req.params.tenant_id,
         }),
       );
     },

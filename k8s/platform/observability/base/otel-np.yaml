@@ -38,10 +38,10 @@ spec:
               app: identity-ui
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: tenancy
+              kubernetes.io/metadata.name: accounts
           podSelector:
             matchLabels:
-              app: tenancy-api
+              app: accounts-api
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: capabilities

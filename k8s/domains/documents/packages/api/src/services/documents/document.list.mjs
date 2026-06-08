@@ -7,17 +7,17 @@ const REQUIRED_PERMISSION_ID = "documents.read";
  * @param {import("../../platform/context.mjs").Context} ctx
  * @returns {(args: {
  *   currentUserId: string,
- *   tenantId: string,
+ *   accountId: string,
  * }) => Promise<{
  *   created_by: string,
  *   id: string,
- *   tenant_id: string,
+ *   account_id: string,
  *   title: string,
  * }[]>}
  */
 export const listDocuments =
   (ctx) =>
-  async ({ currentUserId, tenantId }) => {
+  async ({ accountId, currentUserId }) => {
     let client;
 
     try {
@@ -29,12 +29,12 @@ export const listDocuments =
         await client.query(
           `
             SELECT permissions
-            FROM projected_tenant_members
-            WHERE tenant_id = $1
+            FROM projected_account_members
+            WHERE account_id = $1
               AND user_id = $2
               AND active = true
           `,
-          [tenantId, currentUserId],
+          [accountId, currentUserId],
         )
       );
 
@@ -56,10 +56,10 @@ export const listDocuments =
           await client.query(
             `
               SELECT capabilities
-              FROM projected_tenant_capabilities
-              WHERE tenant_id = $1
+              FROM projected_account_capabilities
+              WHERE account_id = $1
             `,
-            [tenantId],
+            [accountId],
           )
         );
 
@@ -75,13 +75,13 @@ export const listDocuments =
           SELECT
             created_by,
             id,
-            tenant_id,
+            account_id,
             title
           FROM documents
-          WHERE tenant_id = $1
+          WHERE account_id = $1
           ORDER BY created_at DESC, id DESC
         `,
-        [tenantId],
+        [accountId],
       );
 
       return documents;

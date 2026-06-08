@@ -21,7 +21,7 @@ Core authority domain. Publishes no domain events today.
 
 ## Does Not Own
 
-- tenants or memberships
+- accounts or memberships
 - product permissions
 - capability grants
 - business-domain records
@@ -76,7 +76,7 @@ Secrets stay per unit: `identity-migrate-db`, `identity-api-db`, and
 ## Agent Notes
 
 - Other domains verify tokens through JWKS and authorize from their own state.
-- Do not add tenant, membership, or product permission concepts here.
-- Operator permissions are platform authority claims, not tenant permissions.
+- Do not add account, membership, or product permission concepts here.
+- Operator permissions are platform authority claims, not account permissions.
 - If managed Postgres replaces the placeholder, remove only `identity-postgres`
   from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

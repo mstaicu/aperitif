@@ -9,7 +9,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
  * @typedef {import('./services/capabilities/index.mjs').CapabilitiesService} CapabilitiesService
- * @typedef {import('./services/tenant-capabilities/index.mjs').TenantCapabilitiesService} TenantCapabilitiesService
+ * @typedef {import('./services/account-capabilities/index.mjs').AccountCapabilitiesService} AccountCapabilitiesService
  *
  * @typedef {import('./platform/context.mjs').Context} Ctx
  */
@@ -29,7 +29,7 @@ import v1 from "./api/versions/v1/index.mjs";
  *  ctx: Ctx,
  *  services: {
  *    capabilities: CapabilitiesService,
- *    tenantCapabilities: TenantCapabilitiesService,
+ *    accountCapabilities: AccountCapabilitiesService,
  *  },
  *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args

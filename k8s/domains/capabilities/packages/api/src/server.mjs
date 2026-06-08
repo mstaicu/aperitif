@@ -4,8 +4,8 @@ import process from "node:process";
 import { createApp } from "./app.mjs";
 import { createContext } from "./platform/context.mjs";
 import { createOtelContext } from "./platform/observability/otel.mjs";
+import { createAccountCapabilitiesService } from "./services/account-capabilities/index.mjs";
 import { createCapabilitiesService } from "./services/capabilities/index.mjs";
-import { createTenantCapabilitiesService } from "./services/tenant-capabilities/index.mjs";
 
 const otel = createOtelContext();
 
@@ -17,8 +17,8 @@ const app = await createApp({
   ctx,
   fastifyOtel: otel.fastifyOtel,
   services: {
+    accountCapabilities: createAccountCapabilitiesService(ctx),
     capabilities: createCapabilitiesService(ctx),
-    tenantCapabilities: createTenantCapabilitiesService(ctx),
   },
 });
 

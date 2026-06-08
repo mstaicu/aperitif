@@ -6,10 +6,10 @@ resources:
   - identity-migrate.yaml
   - identity-api.yaml
   - identity-ui.yaml
-  - tenancy-postgres.yaml
-  - tenancy-migrate.yaml
-  - tenancy-api.yaml
-  - tenancy-worker.yaml
+  - accounts-postgres.yaml
+  - accounts-migrate.yaml
+  - accounts-api.yaml
+  - accounts-worker.yaml
   - capabilities-postgres.yaml
   - capabilities-migrate.yaml
   - capabilities-api.yaml

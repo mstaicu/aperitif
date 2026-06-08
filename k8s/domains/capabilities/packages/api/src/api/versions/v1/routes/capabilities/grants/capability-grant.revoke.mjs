@@ -1,31 +1,31 @@
 import { authenticateOperatorPermission } from "../../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../../problem-details.mjs";
 import {
-  RevokeTenantCapabilitiesBody,
-  RevokeTenantCapabilitiesResponse,
+  RevokeAccountCapabilitiesBody,
+  RevokeAccountCapabilitiesResponse,
 } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../../app.mjs").FastifyInstance} Fastify
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
- * @typedef {import("../../../../../../services/tenant-capabilities/index.mjs").TenantCapabilitiesService} TenantCapabilitiesService
+ * @typedef {import("../../../../../../services/account-capabilities/index.mjs").AccountCapabilitiesService} AccountCapabilitiesService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{tenantCapabilities: TenantCapabilitiesService, jwks: Jwks}} opts
+ * @param {{accountCapabilities: AccountCapabilitiesService, jwks: Jwks}} opts
  */
-export default async function (fastify, { jwks, tenantCapabilities }) {
+export default async function (fastify, { accountCapabilities, jwks }) {
   fastify.delete(
     "",
     {
       schema: {
-        body: RevokeTenantCapabilitiesBody,
+        body: RevokeAccountCapabilitiesBody,
         description:
-          "Platform operator command that revokes current tenant capability grants and recomputes effective tenant capabilities.",
-        operationId: "revokeTenantCapabilities",
+          "Platform operator command that revokes current account capability grants and recomputes effective account capabilities.",
+        operationId: "revokeAccountCapabilities",
         response: {
-          200: RevokeTenantCapabilitiesResponse,
+          200: RevokeAccountCapabilitiesResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -34,7 +34,7 @@ export default async function (fastify, { jwks, tenantCapabilities }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Revoke tenant capability grants",
+        summary: "Revoke account capability grants",
         tags: ["capabilities"],
       },
     },
@@ -46,9 +46,9 @@ export default async function (fastify, { jwks, tenantCapabilities }) {
       });
 
       return reply.send(
-        await tenantCapabilities.revokeTenantCapabilities({
+        await accountCapabilities.revokeAccountCapabilities({
+          accountId: req.body.account_id,
           capabilities: req.body.capabilities,
-          tenantId: req.body.tenant_id,
         }),
       );
     },

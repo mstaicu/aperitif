@@ -1,9 +1,9 @@
 import { authenticate } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../problem-details.mjs";
 import {
+  AccountParams,
   CreateDocumentBody,
   DocumentResponse,
-  TenantParams,
 } from "./schemas.mjs";
 
 /**
@@ -23,9 +23,9 @@ export default async function (fastify, { documents, jwks }) {
       schema: {
         body: CreateDocumentBody,
         description:
-          "Create a tenant-scoped document after checking the caller identity, tenant membership, and required tenant capability projection.",
+          "Create a account-scoped document after checking the caller identity, account membership, and required account capability projection.",
         operationId: "createDocument",
-        params: TenantParams,
+        params: AccountParams,
         response: {
           201: DocumentResponse,
           400: ProblemResponse,
@@ -48,8 +48,8 @@ export default async function (fastify, { documents, jwks }) {
 
       return reply.code(201).send(
         await documents.createDocument({
+          accountId: req.params.account_id,
           currentUserId,
-          tenantId: req.params.tenant_id,
           title: req.body.title,
         }),
       );

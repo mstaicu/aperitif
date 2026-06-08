@@ -32,7 +32,7 @@ export default async (fastify, { jwks, services }) => {
       },
       info: {
         description:
-          "Documents API for proving tenant, capability, and JWT authorization boundaries.",
+          "Documents API for proving account, capability, and JWT authorization boundaries.",
         title: "Documents",
         version: "v1",
       },
@@ -43,7 +43,7 @@ export default async (fastify, { jwks, services }) => {
       ],
       tags: [
         {
-          description: "Tenant-scoped documents",
+          description: "Account-scoped documents",
           name: "documents",
         },
       ],
@@ -53,13 +53,13 @@ export default async (fastify, { jwks, services }) => {
   await fastify.register(createDocument, {
     documents: services.documents,
     jwks,
-    prefix: "/tenants/:tenant_id/documents",
+    prefix: "/accounts/:account_id/documents",
   });
 
   await fastify.register(listDocuments, {
     documents: services.documents,
     jwks,
-    prefix: "/tenants/:tenant_id/documents",
+    prefix: "/accounts/:account_id/documents",
   });
 
   await fastify.register(swaggerUI, {

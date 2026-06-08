@@ -7,14 +7,14 @@ history.
 
 ```text
 capabilities
-projected_tenants
-tenant_capability_grants
-tenant_capabilities_version_seq
+projected_accounts
+account_capability_grants
+account_capabilities_version_seq
 outbox_events
 flyway_schema_history
 ```
 
-`tenant_capability_grants` stores current grant contributions. Effective
+`account_capability_grants` stores current grant contributions. Effective
 capability snapshots are calculated when `outbox_events` rows are written.
 
 ## Files
@@ -28,9 +28,9 @@ Flyway scans only `filesystem:/db/migrations` in the migration image.
 
 Capability vocabulary changes are normal Flyway migrations.
 
-Invariant: if a migration changes projected tenant capabilities, the same
-migration writes fresh `capabilities.tenant_capabilities.updated` outbox rows
-for affected tenants.
+Invariant: if a migration changes projected account capabilities, the same
+migration writes fresh `capabilities.account_capabilities.updated` outbox rows
+for affected accounts.
 
 Keep core capability seeds separate from product capability seeds.
 
@@ -57,7 +57,7 @@ reconciles `capabilities-migrate`.
 postgres init -> roles/base grants
 migrate Job -> schema objects/table grants
 api -> grant commands
-worker -> tenancy projection + outbox publish
+worker -> accounts projection + outbox publish
 ```
 
 Secrets stay scoped:
@@ -79,6 +79,6 @@ docker build --target prod -t mdstaicu/capabilities-migrate:<tag> domains/capabi
 
 - Use expand/contract for runtime-affecting schema changes.
 - Migrations must be safe if deployed before, after, or without API/worker.
-- Capability authority rows reference tenancy-owned `tenant_id` values but are
+- Capability authority rows reference accounts-owned `account_id` values but are
   not deleted when projections rebuild.
 - Keep each migration small and versioned as `V###__description.sql`.

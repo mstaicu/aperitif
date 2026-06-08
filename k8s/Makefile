@@ -2,7 +2,7 @@
 
 DOMAIN ?= tma.com
 
-.PHONY: help flux-bootstrap-prod-eu deploy-identity dev-identity deploy-tenancy dev-tenancy deploy-capabilities dev-capabilities deploy-documents dev-documents dev deploy-ingress deploy-event-bus deploy-observability
+.PHONY: help flux-bootstrap-prod-eu deploy-identity dev-identity deploy-accounts dev-accounts deploy-capabilities dev-capabilities deploy-documents dev-documents dev deploy-ingress deploy-event-bus deploy-observability
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -29,28 +29,28 @@ dev-identity: ## Prepare identity, then run identity in skaffold dev.
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 	exec skaffold dev -m identity-api-dev,identity-ui-dev
 
-deploy-tenancy: ## Deploy tenancy plus required dependencies and exit.
+deploy-accounts: ## Deploy accounts plus required dependencies and exit.
 	$(MAKE) deploy-identity
 	$(MAKE) deploy-event-bus
-	skaffold run -m tenancy-postgres-dev
-	kubectl delete job -n tenancy migrate --ignore-not-found
-	skaffold run --force -m tenancy-migrate-dev
-	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
-	skaffold run -m tenancy-api-dev,tenancy-worker-dev
-	kubectl rollout status -n tenancy deploy/tenancy-api-depl --timeout=300s
-	kubectl rollout status -n tenancy deploy/tenancy-worker-depl --timeout=300s
+	skaffold run -m accounts-postgres-dev
+	kubectl delete job -n accounts migrate --ignore-not-found
+	skaffold run --force -m accounts-migrate-dev
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
+	skaffold run -m accounts-api-dev,accounts-worker-dev
+	kubectl rollout status -n accounts deploy/accounts-api-depl --timeout=300s
+	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
 
-dev-tenancy: ## Prepare tenancy, then run tenancy in skaffold dev.
+dev-accounts: ## Prepare accounts, then run accounts in skaffold dev.
 	$(MAKE) deploy-identity
 	$(MAKE) deploy-event-bus
-	skaffold run -m tenancy-postgres-dev
-	kubectl delete job -n tenancy migrate --ignore-not-found
-	skaffold run --force -m tenancy-migrate-dev
-	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m tenancy-api-dev,tenancy-worker-dev
+	skaffold run -m accounts-postgres-dev
+	kubectl delete job -n accounts migrate --ignore-not-found
+	skaffold run --force -m accounts-migrate-dev
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
+	exec skaffold dev -m accounts-api-dev,accounts-worker-dev
 
 deploy-capabilities: ## Deploy capabilities plus required dependencies and exit.
-	$(MAKE) deploy-tenancy
+	$(MAKE) deploy-accounts
 	skaffold run -m capabilities-postgres-dev
 	kubectl delete job -n capabilities migrate --ignore-not-found
 	skaffold run --force -m capabilities-migrate-dev
@@ -60,7 +60,7 @@ deploy-capabilities: ## Deploy capabilities plus required dependencies and exit.
 	kubectl rollout status -n capabilities deploy/capabilities-worker-depl --timeout=300s
 
 dev-capabilities: ## Prepare capabilities, then run capabilities in skaffold dev.
-	$(MAKE) deploy-tenancy
+	$(MAKE) deploy-accounts
 	skaffold run -m capabilities-postgres-dev
 	kubectl delete job -n capabilities migrate --ignore-not-found
 	skaffold run --force -m capabilities-migrate-dev
@@ -92,17 +92,17 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	$(MAKE) deploy-observability
 	$(MAKE) deploy-ingress
 	$(MAKE) deploy-event-bus
-	skaffold run -m identity-postgres-dev,tenancy-postgres-dev,capabilities-postgres-dev,documents-postgres-dev
+	skaffold run -m identity-postgres-dev,accounts-postgres-dev,capabilities-postgres-dev,documents-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
-	kubectl delete job -n tenancy migrate --ignore-not-found
+	kubectl delete job -n accounts migrate --ignore-not-found
 	kubectl delete job -n capabilities migrate --ignore-not-found
 	kubectl delete job -n documents migrate --ignore-not-found
-	skaffold run --force -m identity-migrate-dev,tenancy-migrate-dev,capabilities-migrate-dev,documents-migrate-dev
+	skaffold run --force -m identity-migrate-dev,accounts-migrate-dev,capabilities-migrate-dev,documents-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
-	kubectl wait -n tenancy --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n tenancy job/migrate --all-containers=true; exit 1; }
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n capabilities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n capabilities job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,tenancy-api-dev,tenancy-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,accounts-api-dev,accounts-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
 
 # Platform dependencies
 
