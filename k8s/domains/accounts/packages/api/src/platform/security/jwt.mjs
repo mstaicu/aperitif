@@ -16,7 +16,7 @@ export const authenticate = async ({ authorization, jwks }) => {
 
 /**
  * @param {{ authorization?: string, jwks: Jwks }} args
- * @returns {Promise<import("jose").JWTPayload & { operator_permissions?: unknown, sub: string }>}
+ * @returns {Promise<import("jose").JWTPayload & { operator?: unknown, sub: string }>}
  */
 export const verifyAccessToken = async ({ authorization, jwks }) => {
   const [type, token] = (authorization || "").split(" ");

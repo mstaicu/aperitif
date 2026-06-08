@@ -1,8 +1,6 @@
-import { authenticateOperatorPermission } from "../../../../../platform/security/jwt.mjs";
+import { authenticateOperator } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { OperatorRoleParams, OperatorRoleResponse } from "./schemas.mjs";
-
-const REQUIRED_PERMISSION = "operators.manage";
+import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -16,14 +14,14 @@ const REQUIRED_PERMISSION = "operators.manage";
  */
 export default async function (fastify, { operators, security }) {
   fastify.put(
-    "/:user_id/roles/:role_id",
+    "/:user_id",
     {
       schema: {
-        description: "Assign a platform operator role to a user.",
-        operationId: "assignOperatorRole",
-        params: OperatorRoleParams,
+        description: "Assign platform operator access to a user.",
+        operationId: "assignOperator",
+        params: OperatorParams,
         response: {
-          200: OperatorRoleResponse,
+          200: OperatorResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -31,21 +29,19 @@ export default async function (fastify, { operators, security }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Assign operator role",
+        summary: "Assign operator",
         tags: ["operators"],
       },
     },
     async function (req, reply) {
-      await authenticateOperatorPermission({
+      await authenticateOperator({
         audience: security.audience,
         authorization: req.headers.authorization,
-        permission: REQUIRED_PERMISSION,
         publicKey: security.verifying.publicKey,
       });
 
       return reply.send(
-        await operators.assignOperatorRole({
-          roleId: req.params.role_id,
+        await operators.assignOperator({
           userId: req.params.user_id,
         }),
       );
@@ -53,14 +49,14 @@ export default async function (fastify, { operators, security }) {
   );
 
   fastify.delete(
-    "/:user_id/roles/:role_id",
+    "/:user_id",
     {
       schema: {
-        description: "Remove a platform operator role from a user.",
-        operationId: "revokeOperatorRole",
-        params: OperatorRoleParams,
+        description: "Remove platform operator access from a user.",
+        operationId: "revokeOperator",
+        params: OperatorParams,
         response: {
-          200: OperatorRoleResponse,
+          200: OperatorResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           403: ProblemResponse,
@@ -69,21 +65,19 @@ export default async function (fastify, { operators, security }) {
           503: ProblemResponse,
         },
         security: [{ bearerAuth: [] }],
-        summary: "Revoke operator role",
+        summary: "Revoke operator",
         tags: ["operators"],
       },
     },
     async function (req, reply) {
-      await authenticateOperatorPermission({
+      await authenticateOperator({
         audience: security.audience,
         authorization: req.headers.authorization,
-        permission: REQUIRED_PERMISSION,
         publicKey: security.verifying.publicKey,
       });
 
       return reply.send(
-        await operators.revokeOperatorRole({
-          roleId: req.params.role_id,
+        await operators.revokeOperator({
           userId: req.params.user_id,
         }),
       );

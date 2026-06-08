@@ -6,10 +6,7 @@ This package builds `identity-migrate`. Flyway owns identity schema history.
 
 ```text
 users
-operator_permissions
-operator_roles
-operator_role_permissions
-operator_users
+operators
 passkey_credentials
 challenges
 sessions

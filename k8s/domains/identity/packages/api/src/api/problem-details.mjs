@@ -98,11 +98,6 @@ const PROBLEMS = {
     title: "Registration verification failed",
     type: "/problems/registration-verification-failed",
   },
-  ROLE_NOT_FOUND: {
-    status: 404,
-    title: "Role not found",
-    type: "/problems/role-not-found",
-  },
   SESSION_NOT_FOUND: {
     status: 401,
     title: "Invalid refresh token",

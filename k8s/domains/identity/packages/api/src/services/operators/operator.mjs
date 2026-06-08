@@ -1,17 +1,12 @@
 import { DatabaseError } from "pg";
 
-const OPERATOR_ROLE_ID = "operator";
-
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: {
- *   roleId: string,
- *   userId: string,
- * }) => Promise<{ role_id: string, user_id: string }>}
+ * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
-export const assignOperatorRole =
+export const assignOperator =
   (ctx) =>
-  async ({ roleId, userId }) => {
+  async ({ userId }) => {
     try {
       const {
         rows: [user],
@@ -28,44 +23,24 @@ export const assignOperatorRole =
         throw new Error("USER_NOT_FOUND");
       }
 
-      const {
-        rows: [role],
-      } = await ctx.persistence.db.query(
-        `
-          SELECT 1
-          FROM operator_roles
-          WHERE id = $1
-        `,
-        [roleId],
-      );
-
-      if (!role) {
-        throw new Error("ROLE_NOT_FOUND");
-      }
-
       await ctx.persistence.db.query(
         `
-          INSERT INTO operator_users (
-            user_id,
-            role_id
-          )
-          VALUES ($1, $2)
+          INSERT INTO operators (user_id)
+          VALUES ($1)
           ON CONFLICT DO NOTHING
         `,
-        [userId, roleId],
+        [userId],
       );
 
       console.log(
         JSON.stringify({
-          event: "operator_role_assigned",
+          event: "operator_assigned",
           level: "info",
-          role_id: roleId,
           user_id: userId,
         }),
       );
 
       return {
-        role_id: roleId,
         user_id: userId,
       };
     } catch (err) {
@@ -88,69 +63,52 @@ export const assignOperatorRole =
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
- * @returns {(args: {
- *   roleId: string,
- *   userId: string,
- * }) => Promise<{ role_id: string, user_id: string }>}
+ * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
-export const revokeOperatorRole =
+export const revokeOperator =
   (ctx) =>
-  async ({ roleId, userId }) => {
+  async ({ userId }) => {
     let client;
 
     try {
       client = await ctx.persistence.db.connect();
       await client.query("BEGIN");
 
-      if (roleId === OPERATOR_ROLE_ID) {
-        await client.query(
-          `
-            SELECT 1
-            FROM operator_roles
-            WHERE id = $1
-            FOR UPDATE
-          `,
-          [OPERATOR_ROLE_ID],
-        );
+      const { rows: operators } = await client.query(
+        `
+          SELECT user_id
+          FROM operators
+          FOR UPDATE
+        `,
+      );
 
-        const {
-          rows: [{ operator_count: operatorCount }],
-        } = await client.query(
-          `
-            SELECT COUNT(*)::int AS operator_count
-            FROM operator_users
-            WHERE role_id = $1
-          `,
-          [OPERATOR_ROLE_ID],
-        );
+      const removesLastOperator =
+        operators.length <= 1 &&
+        operators.some((operator) => operator.user_id === userId);
 
-        if (operatorCount <= 1) {
-          throw new Error("FORBIDDEN");
-        }
+      if (removesLastOperator) {
+        throw new Error("FORBIDDEN");
       }
 
       await client.query(
         `
-          DELETE FROM operator_users
+          DELETE FROM operators
           WHERE user_id = $1
-            AND role_id = $2
         `,
-        [userId, roleId],
+        [userId],
       );
 
       await client.query("COMMIT");
 
       console.log(
         JSON.stringify({
-          event: "operator_role_revoked",
+          event: "operator_revoked",
           level: "info",
-          role_id: roleId,
           user_id: userId,
         }),
       );
 
       return {
-        role_id: roleId,
         user_id: userId,
       };
     } catch (err) {

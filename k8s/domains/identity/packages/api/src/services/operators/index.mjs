@@ -1,11 +1,11 @@
-import { assignOperatorRole, revokeOperatorRole } from "./operator-role.mjs";
+import { assignOperator, revokeOperator } from "./operator.mjs";
 
 /**
  * @param {import("../../platform/context.mjs").Context} ctx
  */
 export const createOperatorsService = (ctx) => ({
-  assignOperatorRole: assignOperatorRole(ctx),
-  revokeOperatorRole: revokeOperatorRole(ctx),
+  assignOperator: assignOperator(ctx),
+  revokeOperator: revokeOperator(ctx),
 });
 
 /**

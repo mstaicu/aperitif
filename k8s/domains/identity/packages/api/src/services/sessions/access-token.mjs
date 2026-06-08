@@ -17,8 +17,7 @@ export const createAccessToken =
 
     let session;
 
-    /** @type {string[]} */
-    let operatorPermissions;
+    let operator;
 
     try {
       ({
@@ -40,21 +39,18 @@ export const createAccessToken =
         throw new Error("SESSION_NOT_FOUND");
       }
 
-      const { rows: permissions } = await ctx.persistence.db.query(
+      const {
+        rows: [operatorUser],
+      } = await ctx.persistence.db.query(
         `
-          SELECT DISTINCT p.id
-          FROM operator_users ou
-          JOIN operator_role_permissions rp
-            ON rp.role_id = ou.role_id
-          JOIN operator_permissions p
-            ON rp.permission_id = p.id
-          WHERE ou.user_id = $1
-          ORDER BY p.id
+          SELECT 1
+          FROM operators
+          WHERE user_id = $1
         `,
         [session.user_id],
       );
 
-      operatorPermissions = permissions.map(({ id }) => id);
+      operator = Boolean(operatorUser);
     } catch (err) {
       if (err instanceof DatabaseError) {
         if (
@@ -74,14 +70,14 @@ export const createAccessToken =
 
     const now = Math.floor(Date.now() / 1000);
     /**
-     * @type {{ operator_permissions?: string[], sub: string }}
+     * @type {{ operator?: true, sub: string }}
      */
     let claims = {
       sub: session.user_id,
     };
 
-    if (operatorPermissions.length > 0) {
-      claims.operator_permissions = operatorPermissions;
+    if (operator) {
+      claims.operator = true;
     }
 
     const access_token = await new SignJWT(claims)

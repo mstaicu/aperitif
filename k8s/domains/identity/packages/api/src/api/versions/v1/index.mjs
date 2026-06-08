@@ -1,7 +1,7 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import operatorRole from "./routes/operators/operator-role.mjs";
+import operator from "./routes/operators/operator.mjs";
 import loginChallenge from "./routes/passkeys/login.challenge.mjs";
 import login from "./routes/passkeys/login.mjs";
 import registerChallenge from "./routes/passkeys/register.challenge.mjs";
@@ -57,7 +57,7 @@ export default async (fastify, { security, services }) => {
       ],
       tags: [
         {
-          description: "Platform operator role assignment",
+          description: "Platform operator assignment",
           name: "operators",
         },
         {
@@ -88,7 +88,7 @@ export default async (fastify, { security, services }) => {
     passkeys: services.passkeys,
     prefix: "/passkeys",
   });
-  await fastify.register(operatorRole, {
+  await fastify.register(operator, {
     operators: services.operators,
     prefix: "/operators",
     security,

@@ -9,10 +9,7 @@ Core authority domain. Publishes no domain events today.
 ## Owns
 
 - `users`
-- `operator_permissions`
-- `operator_roles`
-- `operator_role_permissions`
-- `operator_users`
+- `operators`
 - `passkey_credentials`
 - `challenges`
 - `sessions`
@@ -26,9 +23,8 @@ Core authority domain. Publishes no domain events today.
 - capability grants
 - business-domain records
 
-Platform operator access uses DB-seeded operator roles and
-`operator_permissions` JWT claims. Passkeys authenticate users; they do not
-grant product authority.
+Platform operators are DB-seeded users with full platform admin rights. Passkeys
+authenticate users; they do not grant product authority.
 
 ## Units
 
@@ -48,7 +44,7 @@ No worker exists. Add one only with a real event contract.
 - JWKS: `GET api.tma.com/.well-known/jwks.json`
 - Passkey registration/login routes are under `/v1/passkeys`.
 - Session token routes are under `/v1/sessions`.
-- Operator role routes are under `/v1/operators`.
+- Operator routes are under `/v1/operators`.
 - API docs: `GET api.tma.com/v1/identity/docs`
 - UI routes: `/signup`, `/login`, and `/identity/assets/*` on `tma.com`.
 
@@ -77,6 +73,6 @@ Secrets stay per unit: `identity-migrate-db`, `identity-api-db`, and
 
 - Other domains verify tokens through JWKS and authorize from their own state.
 - Do not add account, membership, or product permission concepts here.
-- Operator permissions are platform authority claims, not account permissions.
+- Operator access is platform authority, not account membership authority.
 - If managed Postgres replaces the placeholder, remove only `identity-postgres`
   from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.

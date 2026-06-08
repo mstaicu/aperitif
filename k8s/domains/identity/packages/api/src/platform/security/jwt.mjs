@@ -7,7 +7,7 @@ import { jwtVerify } from "jose";
  *   publicKey: import("jose").CryptoKey,
  * }} args
  * @returns {Promise<import("jose").JWTPayload & {
- *   operator_permissions?: unknown,
+ *   operator?: unknown,
  *   sub: string,
  * }>}
  */
@@ -42,14 +42,12 @@ export const verifyAccessToken = async ({
  * @param {{
  *   audience: string,
  *   authorization?: string,
- *   permission: string,
  *   publicKey: import("jose").CryptoKey,
  * }} args
  */
-export const authenticateOperatorPermission = async ({
+export const authenticateOperator = async ({
   audience,
   authorization,
-  permission,
   publicKey,
 }) => {
   const payload = await verifyAccessToken({
@@ -58,10 +56,7 @@ export const authenticateOperatorPermission = async ({
     publicKey,
   });
 
-  if (
-    !Array.isArray(payload.operator_permissions) ||
-    !payload.operator_permissions.includes(permission)
-  ) {
+  if (payload.operator !== true) {
     throw new Error("FORBIDDEN");
   }
 
