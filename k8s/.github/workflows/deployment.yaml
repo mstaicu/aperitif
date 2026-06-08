@@ -1,0 +1,85 @@
+name: deployment / unit
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        required: true
+        type: string
+      domain:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      manifest:
+        required: true
+        type: string
+      unit:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_TOKEN:
+        required: true
+      DOCKERHUB_USERNAME:
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    concurrency:
+      group: deployment-master
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: imranismail/setup-kustomize@v2.1.0
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: check inputs
+        run: |
+          test -d "${{ inputs.context }}"
+          test -f "${{ inputs.manifest }}/kustomization.yaml"
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          target: prod
+          push: true
+          tags: ${{ inputs.image }}:${{ github.sha }}
+
+      - name: update manifest
+        working-directory: ${{ inputs.manifest }}
+        run: kustomize edit set image "${{ inputs.image }}=${{ inputs.image }}@${{ steps.build.outputs.digest }}"
+
+      - name: commit manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifest="${{ inputs.manifest }}/kustomization.yaml"
+
+          if git diff --quiet -- "$manifest"; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$manifest"
+          git commit -m "Deploy ${{ inputs.domain }} ${{ inputs.unit }} ${GITHUB_SHA::12}"
+          git push
