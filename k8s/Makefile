@@ -19,6 +19,7 @@ deploy-identity: ## Deploy identity and exit.
 	skaffold run -m identity-api-dev,identity-ui-dev
 	kubectl rollout status -n identity deploy/identity-api-depl --timeout=300s
 	kubectl rollout status -n identity deploy/identity-ui-depl --timeout=300s
+	skaffold run -m identity-cleanup-dev
 
 dev-identity: ## Prepare identity, then run identity in skaffold dev.
 	$(MAKE) deploy-observability
@@ -27,7 +28,7 @@ dev-identity: ## Prepare identity, then run identity in skaffold dev.
 	kubectl delete job -n identity migrate --ignore-not-found
 	skaffold run --force -m identity-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,identity-cleanup-dev
 
 deploy-accounts: ## Deploy accounts plus required dependencies and exit.
 	$(MAKE) deploy-identity
@@ -102,7 +103,7 @@ dev: ## Prepare the full local stack, then run all domains in skaffold dev.
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n capabilities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n capabilities job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,accounts-api-dev,accounts-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,identity-cleanup-dev,accounts-api-dev,accounts-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
 
 # Platform dependencies
 

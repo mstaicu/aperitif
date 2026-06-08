@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: allow-identity-api-and-migrate-to-postgres
+  name: allow-identity-runtime-to-postgres
 spec:
   podSelector:
     matchLabels:
@@ -14,6 +14,9 @@ spec:
         - podSelector:
             matchLabels:
               app: identity-api
+        - podSelector:
+            matchLabels:
+              app: identity-cleanup
         - podSelector:
             matchLabels:
               app: identity-migrate

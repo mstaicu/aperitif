@@ -5,6 +5,7 @@ resources:
   - identity-postgres.yaml
   - identity-migrate.yaml
   - identity-api.yaml
+  - identity-cleanup.yaml
   - identity-ui.yaml
   - accounts-postgres.yaml
   - accounts-migrate.yaml

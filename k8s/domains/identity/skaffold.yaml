@@ -17,6 +17,21 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
+  name: identity-cleanup-dev
+
+manifests:
+  kustomize:
+    paths:
+      - infra/cleanup/overlays/dev
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
   name: identity-migrate-dev
 
 build:

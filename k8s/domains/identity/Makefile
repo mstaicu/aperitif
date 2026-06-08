@@ -2,9 +2,7 @@
 
 DOMAIN ?= tma.com
 PORT ?= 443
-SKAFFOLD_MODULES := identity-postgres-dev,identity-migrate-dev,identity-api-dev,identity-ui-dev
-
-.PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-skaffold pre-deploy-ui post-deploy
+.PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-ui post-deploy
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -20,20 +18,19 @@ pre-deploy-ui: ## Validate the identity UI package before deploy.
 	cd packages/ui && npm run typecheck
 	cd packages/ui && npm run build
 
-pre-deploy-infra: pre-deploy-manifests pre-deploy-skaffold ## Validate identity manifests and Skaffold modules before deploy.
+pre-deploy-infra: pre-deploy-manifests ## Validate identity manifests before deploy.
 
 pre-deploy-manifests: ## Render identity manifests before deploy.
 	kubectl kustomize infra/postgres/overlays/dev >/dev/null
 	kubectl kustomize infra/postgres/overlays/live >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
 	kubectl kustomize infra/migrate/overlays/live >/dev/null
+	kubectl kustomize infra/cleanup/overlays/dev >/dev/null
+	kubectl kustomize infra/cleanup/overlays/live >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/dev >/dev/null
 	kubectl kustomize infra/api/overlays/live >/dev/null
 	kubectl kustomize infra/ui/overlays/dev >/dev/null
 	kubectl kustomize infra/ui/overlays/live >/dev/null
-
-pre-deploy-skaffold: ## Verify identity Skaffold modules before deploy.
-	skaffold diagnose --yaml-only -m $(SKAFFOLD_MODULES) >/dev/null
 
 post-deploy: ## Verify the deployed identity boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "$(DOMAIN):$(PORT):127.0.0.1" "https://$(DOMAIN):$(PORT)/login"

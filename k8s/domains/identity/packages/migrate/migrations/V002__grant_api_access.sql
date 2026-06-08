@@ -8,8 +8,11 @@ TO identity_api;
 
 GRANT SELECT, INSERT, UPDATE
 ON passkey_credentials,
-   sessions,
    session_refresh_tokens
+TO identity_api;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON sessions
 TO identity_api;
 
 GRANT SELECT, INSERT, DELETE

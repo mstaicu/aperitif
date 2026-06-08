@@ -1,0 +1,16 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: identity-cleanup
+spec:
+  interval: 10m
+  path: ./k8s/domains/identity/infra/cleanup/overlays/live
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: identity-api
+  wait: true
+  timeout: 5m
