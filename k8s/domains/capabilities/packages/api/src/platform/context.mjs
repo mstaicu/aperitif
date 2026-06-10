@@ -1,5 +1,3 @@
-import nconf from "nconf";
-
 import { createPgContext } from "./persistence/pg.mjs";
 import { createSecurityContext } from "./security/index.mjs";
 
@@ -11,7 +9,7 @@ export const createContext = async () => {
 
     return {
       app: {
-        region: nconf.get("REGION") ?? "local",
+        region: process.env.REGION ?? "local",
       },
       lifecycle: {
         close: () => pg.close(),

@@ -1,19 +1,18 @@
-import nconf from "nconf";
+const requiredEnv = [
+  "DATABASE_URL",
+  "JWT_PRIVATE_KEY_PATH",
+  "JWT_PUBLIC_KEY_PATH",
+  "ACCESS_TOKEN_AUDIENCE",
+  "ORIGIN",
+];
 
-nconf
-  .env()
-  .required([
-    "DATABASE_URL",
+for (const name of requiredEnv) {
+  if (!process.env[name]) {
+    throw new Error(`${name} is required`);
+  }
+}
 
-    "JWT_PRIVATE_KEY_PATH",
-    "JWT_PUBLIC_KEY_PATH",
-
-    "ACCESS_TOKEN_AUDIENCE",
-
-    "ORIGIN",
-  ]);
-
-const origin = nconf.get("ORIGIN");
+const origin = process.env.ORIGIN;
 
 try {
   new URL(origin);

@@ -1,11 +1,10 @@
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
-import nconf from "nconf";
 
 export async function createNatsContext() {
   const nc = await connect({
     name: "accounts-worker",
-    servers: [nconf.get("NATS_URL")],
+    servers: [process.env.NATS_URL],
   });
 
   return {

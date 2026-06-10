@@ -1,9 +1,8 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import nconf from "nconf";
 
 export const createOtelContext = () => {
-  if (!nconf.get("OTEL_EXPORTER_OTLP_ENDPOINT")) {
+  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     return {
       close: async () => {},
       fastifyOtel: undefined,
@@ -11,7 +10,9 @@ export const createOtelContext = () => {
     };
   }
 
-  nconf.required(["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_SERVICE_NAME"]);
+  if (!process.env.OTEL_SERVICE_NAME) {
+    throw new Error("OTEL_SERVICE_NAME is required");
+  }
 
   const fastifyOtel = new FastifyOtelInstrumentation({
     ignorePaths: ({ url }) => url === "/healthz" || url === "/readyz",
@@ -19,7 +20,7 @@ export const createOtelContext = () => {
 
   const otel = new NodeSDK({
     instrumentations: [fastifyOtel],
-    serviceName: nconf.get("OTEL_SERVICE_NAME"),
+    serviceName: process.env.OTEL_SERVICE_NAME,
   });
 
   return {

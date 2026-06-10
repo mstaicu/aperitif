@@ -1,7 +1,13 @@
-import nconf from "nconf";
+const requiredEnv = [
+  "DATABASE_URL",
+  "IDENTITY_JWKS_URL",
+  "ACCESS_TOKEN_AUDIENCE",
+];
 
-nconf
-  .env()
-  .required(["DATABASE_URL", "IDENTITY_JWKS_URL", "ACCESS_TOKEN_AUDIENCE"]);
+for (const name of requiredEnv) {
+  if (!process.env[name]) {
+    throw new Error(`${name} is required`);
+  }
+}
 
 await import("./server.mjs");

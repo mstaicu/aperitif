@@ -13,6 +13,7 @@ spec:
       labels:
         app: identity-postgres
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: identity-postgres
           image: docker.io/postgres:18

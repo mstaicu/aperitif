@@ -1,9 +1,8 @@
-import nconf from "nconf";
 import { Pool } from "pg";
 
 export const createPgContext = () => {
   const pool = new Pool({
-    connectionString: nconf.get("DATABASE_URL"),
+    connectionString: process.env.DATABASE_URL,
     connectionTimeoutMillis: 2000,
     // https://node-postgres.com/apis/pool
     // max_connections on postgres = 100,

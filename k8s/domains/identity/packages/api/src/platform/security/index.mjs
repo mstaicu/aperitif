@@ -1,5 +1,4 @@
 import { exportJWK, importPKCS8, importSPKI } from "jose";
-import nconf from "nconf";
 import { readFile } from "node:fs/promises";
 
 const KID = "k1";
@@ -8,15 +7,15 @@ export const createSecurityContext = async () => {
   /**
    * @type {string}
    */
-  const audience = nconf.get("ACCESS_TOKEN_AUDIENCE");
+  const audience = process.env.ACCESS_TOKEN_AUDIENCE;
 
   if (!audience) {
     throw new Error("No ACCESS_TOKEN_AUDIENCE provided");
   }
 
   const [privatePem, publicPem] = await Promise.all([
-    readFile(nconf.get("JWT_PRIVATE_KEY_PATH"), "utf8"),
-    readFile(nconf.get("JWT_PUBLIC_KEY_PATH"), "utf8"),
+    readFile(process.env.JWT_PRIVATE_KEY_PATH, "utf8"),
+    readFile(process.env.JWT_PUBLIC_KEY_PATH, "utf8"),
   ]);
 
   const [privateKey, publicKey] = await Promise.all([

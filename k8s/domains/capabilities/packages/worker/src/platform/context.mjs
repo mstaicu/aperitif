@@ -1,5 +1,3 @@
-import nconf from "nconf";
-
 import { createNatsContext } from "./messaging/nats.mjs";
 import { createPgContext } from "./persistence/pg.mjs";
 
@@ -12,7 +10,7 @@ export const createContext = async () => {
 
     return {
       app: {
-        region: nconf.get("REGION") ?? "local",
+        region: process.env.REGION ?? "local",
         streamReplicas,
       },
       lifecycle: {
@@ -40,7 +38,7 @@ export const createContext = async () => {
 };
 
 function getStreamReplicas() {
-  const replicas = Number(nconf.get("NATS_STREAM_REPLICAS"));
+  const replicas = Number(process.env.NATS_STREAM_REPLICAS);
 
   if (!Number.isInteger(replicas) || replicas < 1) {
     throw new Error("NATS_STREAM_REPLICAS must be a positive integer");

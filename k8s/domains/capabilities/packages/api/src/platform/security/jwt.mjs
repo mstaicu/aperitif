@@ -1,5 +1,4 @@
 import { jwtVerify } from "jose";
-import nconf from "nconf";
 
 /**
  * @typedef {import("jose").JWTVerifyGetKey} Jwks
@@ -40,7 +39,7 @@ const verifyAccessToken = async ({ authorization, jwks }) => {
 
   try {
     const { payload } = await jwtVerify(token, jwks, {
-      audience: nconf.get("ACCESS_TOKEN_AUDIENCE"),
+      audience: process.env.ACCESS_TOKEN_AUDIENCE,
     });
 
     if (typeof payload.sub !== "string") {
