@@ -10,13 +10,13 @@ import { CAPABILITIES_CONSUMER } from "../platform/messaging/capabilities-consum
 import { CAPABILITIES_STREAM } from "../platform/messaging/capabilities-stream.mjs";
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
  * @param {AbortSignal} signal
  */
-export async function runProjectCapabilities(ctx, signal) {
+export async function runProjectCapabilities(runtime, signal) {
   signal.throwIfAborted();
 
-  const consumer = await ctx.messaging.js.consumers.get(
+  const consumer = await runtime.messaging.js.consumers.get(
     CAPABILITIES_STREAM,
     CAPABILITIES_CONSUMER,
   );
@@ -58,7 +58,7 @@ export async function runProjectCapabilities(ctx, signal) {
             );
           }
 
-          await projectV1AccountCapabilitiesUpdated(ctx, event);
+          await projectV1AccountCapabilitiesUpdated(runtime, event);
 
           message.ack();
           continue;
@@ -88,15 +88,15 @@ export async function runProjectCapabilities(ctx, signal) {
 }
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
  * @param {import("../events/capabilities.mjs").CapabilitiesEventEnvelope} event
  */
-async function projectV1AccountCapabilitiesUpdated(ctx, event) {
+async function projectV1AccountCapabilitiesUpdated(runtime, event) {
   const payload =
     /** @type {import("../events/capabilities.mjs").AccountCapabilitiesUpdatedPayload} */ (
       event.payload
     );
-  const client = await ctx.persistence.db.connect();
+  const client = await runtime.persistence.db.connect();
 
   try {
     await client.query("BEGIN");

@@ -4,13 +4,13 @@ import { createRegisterChallenge } from "./register.challenge.mjs";
 import { register } from "./register.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  */
-export const createPasskeysService = (ctx) => ({
-  createLoginChallenge: createLoginChallenge(ctx),
-  createRegisterChallenge: createRegisterChallenge(ctx),
-  login: login(ctx),
-  register: register(ctx),
+export const createPasskeysService = (runtime) => ({
+  createLoginChallenge: createLoginChallenge(runtime),
+  createRegisterChallenge: createRegisterChallenge(runtime),
+  login: login(runtime),
+  register: register(runtime),
 });
 
 /**

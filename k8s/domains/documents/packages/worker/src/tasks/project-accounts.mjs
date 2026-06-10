@@ -10,13 +10,13 @@ import { ACCOUNTS_CONSUMER } from "../platform/messaging/accounts-consumer.mjs";
 import { ACCOUNTS_STREAM } from "../platform/messaging/accounts-stream.mjs";
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
  * @param {AbortSignal} signal
  */
-export async function runProjectAccounts(ctx, signal) {
+export async function runProjectAccounts(runtime, signal) {
   signal.throwIfAborted();
 
-  const consumer = await ctx.messaging.js.consumers.get(
+  const consumer = await runtime.messaging.js.consumers.get(
     ACCOUNTS_STREAM,
     ACCOUNTS_CONSUMER,
   );
@@ -56,7 +56,7 @@ export async function runProjectAccounts(ctx, signal) {
             throw new Error("Invalid accounts account member updated payload");
           }
 
-          await projectV1AccountMemberUpdated(ctx, event);
+          await projectV1AccountMemberUpdated(runtime, event);
 
           message.ack();
           continue;
@@ -86,10 +86,10 @@ export async function runProjectAccounts(ctx, signal) {
 }
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
  * @param {import("../events/accounts.mjs").AccountsEventEnvelope} event
  */
-async function projectV1AccountMemberUpdated(ctx, event) {
+async function projectV1AccountMemberUpdated(runtime, event) {
   const payload =
     /** @type {import("../events/accounts.mjs").AccountMemberUpdatedPayload} */ (
       event.payload
@@ -99,7 +99,7 @@ async function projectV1AccountMemberUpdated(ctx, event) {
     throw new Error("Invalid accounts member account id");
   }
 
-  const client = await ctx.persistence.db.connect();
+  const client = await runtime.persistence.db.connect();
 
   try {
     await client.query("BEGIN");

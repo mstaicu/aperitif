@@ -1,11 +1,11 @@
 import { assignOperator, revokeOperator } from "./operator.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  */
-export const createOperatorsService = (ctx) => ({
-  assignOperator: assignOperator(ctx),
-  revokeOperator: revokeOperator(ctx),
+export const createOperatorsService = (runtime) => ({
+  assignOperator: assignOperator(runtime),
+  revokeOperator: revokeOperator(runtime),
 });
 
 /**

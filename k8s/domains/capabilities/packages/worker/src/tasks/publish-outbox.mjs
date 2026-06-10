@@ -7,22 +7,24 @@ const OUTBOX_BATCH_SIZE = 10;
 const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
 // LISTEN only wakes the worker; outbox_events is the source of truth.
-export async function runPublishOutbox(ctx, signal) {
+export async function runPublishOutbox(runtime, signal) {
   signal.throwIfAborted();
 
-  const listener = await ctx.persistence.db.connect();
+  const listener = await runtime.persistence.db.connect();
 
   try {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
     const notifications = on(listener, "notification", { signal });
 
-    while ((await publishOutboxBatch(ctx, signal)) === OUTBOX_BATCH_SIZE);
+    while ((await publishOutboxBatch(runtime, signal)) === OUTBOX_BATCH_SIZE);
 
     for await (const [notification] of notifications) {
       signal.throwIfAborted();
 
       if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-        while ((await publishOutboxBatch(ctx, signal)) === OUTBOX_BATCH_SIZE);
+        while (
+          (await publishOutboxBatch(runtime, signal)) === OUTBOX_BATCH_SIZE
+        );
       }
     }
   } catch (err) {
@@ -39,14 +41,14 @@ export async function runPublishOutbox(ctx, signal) {
 }
 
 /**
- * @param {import("../platform/context.mjs").WorkerContext} ctx
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
  * @param {AbortSignal} signal
  * @returns {Promise<number>}
  */
-async function publishOutboxBatch(ctx, signal) {
+async function publishOutboxBatch(runtime, signal) {
   signal.throwIfAborted();
 
-  const client = await ctx.persistence.db.connect();
+  const client = await runtime.persistence.db.connect();
   let outboxEvent;
 
   try {
@@ -67,7 +69,7 @@ async function publishOutboxBatch(ctx, signal) {
 
     for (const { event, id } of outboxEvents) {
       outboxEvent = { event, id };
-      await ctx.messaging.js.publish(event.subject, JSON.stringify(event), {
+      await runtime.messaging.js.publish(event.subject, JSON.stringify(event), {
         expect: {
           streamName: CAPABILITIES_STREAM,
         },

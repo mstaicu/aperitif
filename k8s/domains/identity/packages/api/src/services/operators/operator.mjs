@@ -1,16 +1,16 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const assignOperator =
-  (ctx) =>
+  (runtime) =>
   async ({ userId }) => {
     try {
       const {
         rows: [user],
-      } = await ctx.persistence.db.query(
+      } = await runtime.persistence.db.query(
         `
           SELECT 1
           FROM users
@@ -23,7 +23,7 @@ export const assignOperator =
         throw new Error("USER_NOT_FOUND");
       }
 
-      await ctx.persistence.db.query(
+      await runtime.persistence.db.query(
         `
           INSERT INTO operators (user_id)
           VALUES ($1)
@@ -62,16 +62,16 @@ export const assignOperator =
   };
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const revokeOperator =
-  (ctx) =>
+  (runtime) =>
   async ({ userId }) => {
     let client;
 
     try {
-      client = await ctx.persistence.db.connect();
+      client = await runtime.persistence.db.connect();
       await client.query("BEGIN");
 
       const { rows: operators } = await client.query(

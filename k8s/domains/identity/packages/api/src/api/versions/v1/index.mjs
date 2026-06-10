@@ -11,7 +11,7 @@ import refreshToken from "./routes/sessions/refresh-token.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../platform/context.mjs").Context["security"]} Security
+ * @typedef {import("../../../platform/runtime.mjs").Runtime["security"]} Security
  * @typedef {import("../../../services/operators/index.mjs").OperatorsService} OperatorsService
  * @typedef {import("../../../services/passkeys/index.mjs").PasskeysService} PasskeysService
  * @typedef {import("../../../services/sessions/index.mjs").SessionsService} SessionsService

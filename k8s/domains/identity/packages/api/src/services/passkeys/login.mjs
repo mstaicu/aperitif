@@ -19,13 +19,13 @@ const generateRefreshToken = () => {
 };
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(input: LoginInput) => Promise<{refresh_token: string}>}
  */
 export const login =
-  (ctx) =>
+  (runtime) =>
   async ({ authentication }) => {
-    const { app, persistence } = ctx;
+    const { app, persistence } = runtime;
 
     const { hostname, origin } = new URL(app.origin);
 

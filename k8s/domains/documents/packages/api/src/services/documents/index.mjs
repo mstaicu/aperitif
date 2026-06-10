@@ -2,11 +2,11 @@ import { createDocument } from "./document.create.mjs";
 import { listDocuments } from "./document.list.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  */
-export const createDocumentsService = (ctx) => ({
-  createDocument: createDocument(ctx),
-  listDocuments: listDocuments(ctx),
+export const createDocumentsService = (runtime) => ({
+  createDocument: createDocument(runtime),
+  listDocuments: listDocuments(runtime),
 });
 
 /**

@@ -9,22 +9,22 @@ import {
 export const ACCOUNTS_STREAM = "ACCOUNTS";
 
 /**
- * @param {import("../context.mjs").WorkerContext} ctx
+ * @param {import("../runtime.mjs").WorkerRuntime} runtime
  */
-export async function ensureAccountsStream(ctx) {
+export async function ensureAccountsStream(runtime) {
   const config = {
     discard: DiscardPolicy.New,
     max_bytes: 1024 ** 3,
     name: ACCOUNTS_STREAM,
-    num_replicas: ctx.app.streamReplicas,
+    num_replicas: runtime.app.streamReplicas,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
     subjects: ["accounts.>"],
   };
 
   try {
-    await ctx.messaging.jsm.streams.info(ACCOUNTS_STREAM);
-    await ctx.messaging.jsm.streams.update(ACCOUNTS_STREAM, config);
+    await runtime.messaging.jsm.streams.info(ACCOUNTS_STREAM);
+    await runtime.messaging.jsm.streams.update(ACCOUNTS_STREAM, config);
   } catch (err) {
     if (
       !(
@@ -35,6 +35,6 @@ export async function ensureAccountsStream(ctx) {
       throw err;
     }
 
-    await ctx.messaging.jsm.streams.add(config);
+    await runtime.messaging.jsm.streams.add(config);
   }
 }

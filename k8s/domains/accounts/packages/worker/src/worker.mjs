@@ -2,14 +2,14 @@ import { once } from "node:events";
 import http from "node:http";
 import process from "node:process";
 
-import { createContext } from "./platform/context.mjs";
 import { ensureAccountsStream } from "./platform/messaging/accounts-stream.mjs";
+import { createRuntime } from "./platform/runtime.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
-const ctx = await createContext();
+const runtime = await createRuntime();
 const controller = new AbortController();
 
-await ensureAccountsStream(ctx);
+await ensureAccountsStream(runtime);
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -20,8 +20,8 @@ const health = http.createServer(async (req, res) => {
 
   if (req.url === "/readyz") {
     try {
-      await ctx.persistence.db.query("SELECT 1");
-      await ctx.messaging.nc.flush();
+      await runtime.persistence.db.query("SELECT 1");
+      await runtime.messaging.nc.flush();
 
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
@@ -39,7 +39,7 @@ const health = http.createServer(async (req, res) => {
 
 health.listen(3000, "0.0.0.0");
 
-const tasks = [runPublishOutbox(ctx, controller.signal)];
+const tasks = [runPublishOutbox(runtime, controller.signal)];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
 );
@@ -76,7 +76,7 @@ try {
       service: "accounts-worker",
     }),
   );
-  await ctx.lifecycle.close();
+  await runtime.lifecycle.close();
   console.log(
     JSON.stringify({
       event: "worker_stopped",

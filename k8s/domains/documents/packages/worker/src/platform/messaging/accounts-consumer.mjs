@@ -12,9 +12,9 @@ import { ACCOUNTS_STREAM } from "./accounts-stream.mjs";
 export const ACCOUNTS_CONSUMER = "documents-accounts-projection";
 
 /**
- * @param {import("../context.mjs").WorkerContext} ctx
+ * @param {import("../runtime.mjs").WorkerRuntime} runtime
  */
-export async function ensureAccountsConsumer(ctx) {
+export async function ensureAccountsConsumer(runtime) {
   const createConfig = {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
@@ -31,8 +31,11 @@ export async function ensureAccountsConsumer(ctx) {
   };
 
   try {
-    await ctx.messaging.jsm.consumers.info(ACCOUNTS_STREAM, ACCOUNTS_CONSUMER);
-    await ctx.messaging.jsm.consumers.update(
+    await runtime.messaging.jsm.consumers.info(
+      ACCOUNTS_STREAM,
+      ACCOUNTS_CONSUMER,
+    );
+    await runtime.messaging.jsm.consumers.update(
       ACCOUNTS_STREAM,
       ACCOUNTS_CONSUMER,
       updateConfig,
@@ -47,6 +50,6 @@ export async function ensureAccountsConsumer(ctx) {
       throw err;
     }
 
-    await ctx.messaging.jsm.consumers.add(ACCOUNTS_STREAM, createConfig);
+    await runtime.messaging.jsm.consumers.add(ACCOUNTS_STREAM, createConfig);
   }
 }

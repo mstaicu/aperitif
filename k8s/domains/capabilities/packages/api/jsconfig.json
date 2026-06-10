@@ -4,7 +4,7 @@
     "strict": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2024"]
+    "lib": ["ES2024", "ESNext.Error"]
   },
   "exclude": ["node_modules"]
 }

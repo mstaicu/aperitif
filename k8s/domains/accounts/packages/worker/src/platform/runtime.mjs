@@ -1,12 +1,12 @@
-import { createNatsContext } from "./messaging/nats.mjs";
-import { createPgContext } from "./persistence/pg.mjs";
+import { createNats } from "./nats.mjs";
+import { createPostgres } from "./postgres.mjs";
 
-export const createContext = async () => {
-  const pg = createPgContext();
+export const createRuntime = async () => {
+  const postgres = createPostgres();
 
   try {
     const streamReplicas = getStreamReplicas();
-    const nats = await createNatsContext();
+    const nats = await createNats();
 
     return {
       app: {
@@ -18,7 +18,7 @@ export const createContext = async () => {
           try {
             await nats.close();
           } finally {
-            await pg.close();
+            await postgres.close();
           }
         },
       },
@@ -28,11 +28,11 @@ export const createContext = async () => {
         nc: nats.nc,
       },
       persistence: {
-        db: pg.db,
+        db: postgres.db,
       },
     };
   } catch (err) {
-    await pg.close().catch(() => {});
+    await postgres.close().catch(() => {});
     throw err;
   }
 };
@@ -48,5 +48,5 @@ function getStreamReplicas() {
 }
 
 /**
- * @typedef {Awaited<ReturnType<typeof createContext>>} WorkerContext
+ * @typedef {Awaited<ReturnType<typeof createRuntime>>} WorkerRuntime
  */

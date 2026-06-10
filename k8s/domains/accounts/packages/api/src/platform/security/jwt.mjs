@@ -9,7 +9,6 @@ import { jwtVerify } from "jose";
  */
 export const authenticate = async ({ authorization, jwks }) => {
   const payload = await verifyAccessToken({ authorization, jwks });
-
   return payload.sub;
 };
 

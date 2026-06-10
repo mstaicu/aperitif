@@ -12,9 +12,9 @@ import { CAPABILITIES_STREAM } from "./capabilities-stream.mjs";
 export const CAPABILITIES_CONSUMER = "documents-capabilities-projection";
 
 /**
- * @param {import("../context.mjs").WorkerContext} ctx
+ * @param {import("../runtime.mjs").WorkerRuntime} runtime
  */
-export async function ensureCapabilitiesConsumer(ctx) {
+export async function ensureCapabilitiesConsumer(runtime) {
   const createConfig = {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
@@ -30,11 +30,11 @@ export async function ensureCapabilitiesConsumer(ctx) {
   };
 
   try {
-    await ctx.messaging.jsm.consumers.info(
+    await runtime.messaging.jsm.consumers.info(
       CAPABILITIES_STREAM,
       CAPABILITIES_CONSUMER,
     );
-    await ctx.messaging.jsm.consumers.update(
+    await runtime.messaging.jsm.consumers.update(
       CAPABILITIES_STREAM,
       CAPABILITIES_CONSUMER,
       updateConfig,
@@ -49,6 +49,9 @@ export async function ensureCapabilitiesConsumer(ctx) {
       throw err;
     }
 
-    await ctx.messaging.jsm.consumers.add(CAPABILITIES_STREAM, createConfig);
+    await runtime.messaging.jsm.consumers.add(
+      CAPABILITIES_STREAM,
+      createConfig,
+    );
   }
 }

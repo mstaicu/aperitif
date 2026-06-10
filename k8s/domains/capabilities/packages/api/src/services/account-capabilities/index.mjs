@@ -2,11 +2,11 @@ import { addAccountCapabilities } from "./account.capability-grant.create.mjs";
 import { revokeAccountCapabilities } from "./account.capability-grant.revoke.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  */
-export const createAccountCapabilitiesService = (ctx) => ({
-  addAccountCapabilities: addAccountCapabilities(ctx),
-  revokeAccountCapabilities: revokeAccountCapabilities(ctx),
+export const createAccountCapabilitiesService = (runtime) => ({
+  addAccountCapabilities: addAccountCapabilities(runtime),
+  revokeAccountCapabilities: revokeAccountCapabilities(runtime),
 });
 
 /**

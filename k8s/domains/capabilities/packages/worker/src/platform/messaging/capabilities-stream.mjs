@@ -9,22 +9,22 @@ import {
 export const CAPABILITIES_STREAM = "CAPABILITIES";
 
 /**
- * @param {import("../context.mjs").WorkerContext} ctx
+ * @param {import("../runtime.mjs").WorkerRuntime} runtime
  */
-export async function ensureCapabilitiesStream(ctx) {
+export async function ensureCapabilitiesStream(runtime) {
   const config = {
     discard: DiscardPolicy.New,
     max_bytes: 1024 ** 3,
     name: CAPABILITIES_STREAM,
-    num_replicas: ctx.app.streamReplicas,
+    num_replicas: runtime.app.streamReplicas,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
     subjects: ["capabilities.>"],
   };
 
   try {
-    await ctx.messaging.jsm.streams.info(CAPABILITIES_STREAM);
-    await ctx.messaging.jsm.streams.update(CAPABILITIES_STREAM, config);
+    await runtime.messaging.jsm.streams.info(CAPABILITIES_STREAM);
+    await runtime.messaging.jsm.streams.update(CAPABILITIES_STREAM, config);
   } catch (err) {
     if (
       !(
@@ -35,6 +35,6 @@ export async function ensureCapabilitiesStream(ctx) {
       throw err;
     }
 
-    await ctx.messaging.jsm.streams.add(config);
+    await runtime.messaging.jsm.streams.add(config);
   }
 }

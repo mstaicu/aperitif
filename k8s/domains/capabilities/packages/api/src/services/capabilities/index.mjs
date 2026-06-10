@@ -1,10 +1,10 @@
 import { listCapabilities } from "./capabilities.list.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  */
-export const createCapabilitiesService = (ctx) => ({
-  listCapabilities: listCapabilities(ctx),
+export const createCapabilitiesService = (runtime) => ({
+  listCapabilities: listCapabilities(runtime),
 });
 
 /**

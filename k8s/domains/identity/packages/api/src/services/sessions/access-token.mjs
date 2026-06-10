@@ -5,11 +5,11 @@ import { DatabaseError } from "pg";
 const TTL_SECONDS = 60;
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { refresh_token: string }) => Promise<{ access_token: string }>}
  */
 export const createAccessToken =
-  (ctx) =>
+  (runtime) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -22,7 +22,7 @@ export const createAccessToken =
     try {
       ({
         rows: [session],
-      } = await ctx.persistence.db.query(
+      } = await runtime.persistence.db.query(
         `
           SELECT s.user_id
           FROM session_refresh_tokens rt
@@ -41,7 +41,7 @@ export const createAccessToken =
 
       const {
         rows: [operatorUser],
-      } = await ctx.persistence.db.query(
+      } = await runtime.persistence.db.query(
         `
           SELECT 1
           FROM operators
@@ -83,12 +83,12 @@ export const createAccessToken =
     const access_token = await new SignJWT(claims)
       .setProtectedHeader({
         alg: "ES256",
-        kid: ctx.security.signing.kid,
+        kid: runtime.security.signing.kid,
       })
-      .setAudience(ctx.security.audience)
+      .setAudience(runtime.security.audience)
       .setIssuedAt(now)
       .setExpirationTime(now + TTL_SECONDS)
-      .sign(ctx.security.signing.privateKey);
+      .sign(runtime.security.signing.privateKey);
 
     return {
       access_token,

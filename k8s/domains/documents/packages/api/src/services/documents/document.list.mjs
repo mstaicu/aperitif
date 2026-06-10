@@ -4,7 +4,7 @@ const REQUIRED_CAPABILITY_ID = "documents.enabled";
 const REQUIRED_PERMISSION_ID = "documents.read";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: {
  *   currentUserId: string,
  *   accountId: string,
@@ -16,12 +16,12 @@ const REQUIRED_PERMISSION_ID = "documents.read";
  * }[]>}
  */
 export const listDocuments =
-  (ctx) =>
+  (runtime) =>
   async ({ accountId, currentUserId }) => {
     let client;
 
     try {
-      client = await ctx.persistence.db.connect();
+      client = await runtime.persistence.db.connect();
 
       const {
         rows: [member],

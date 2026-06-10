@@ -2,26 +2,26 @@ import { once } from "node:events";
 import process from "node:process";
 
 import { createApp } from "./app.mjs";
-import { createContext } from "./platform/context.mjs";
-import { createOtelContext } from "./platform/observability/otel.mjs";
+import { createRuntime } from "./platform/runtime.mjs";
+import { createTracing } from "./platform/tracing.mjs";
 import { createDocumentsService } from "./services/documents/index.mjs";
 
-const otel = createOtelContext();
+const tracing = createTracing();
 
-otel.start();
+tracing.start();
 
-const ctx = await createContext();
+const runtime = await createRuntime();
 
 const app = await createApp({
-  ctx,
-  fastifyOtel: otel.fastifyOtel,
+  fastifyOtel: tracing.fastifyOtel,
+  runtime,
   services: {
-    documents: createDocumentsService(ctx),
+    documents: createDocumentsService(runtime),
   },
 });
 
-app.addHook("onClose", () => otel.close());
-app.addHook("onClose", () => ctx.lifecycle.close());
+app.addHook("onClose", () => tracing.close());
+app.addHook("onClose", () => runtime.lifecycle.close());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

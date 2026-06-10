@@ -1,9 +1,14 @@
 import { Pool } from "pg";
 
-export const createPgContext = () => {
+export const createPostgres = () => {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     connectionTimeoutMillis: 2000,
+    // https://node-postgres.com/apis/pool
+    // max_connections on postgres = 100,
+    //  minus 20 for other services = 80
+    //  budget for accounts-api = 80 * 75% = 60
+    //  per accounts-api replica = 60 / 3 replicas = 20
     max: 20,
     query_timeout: 2000,
     statement_timeout: 2000,

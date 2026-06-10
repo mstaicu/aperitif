@@ -7,10 +7,10 @@ import { DatabaseError } from "pg";
  */
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {() => Promise<PublicKeyCredentialCreationOptionsJSON>}
  */
-export const createRegisterChallenge = (ctx) => async () => {
+export const createRegisterChallenge = (runtime) => async () => {
   try {
     const userId = randomUUID();
     const userLabel = `identity-${userId.slice(0, 8)}`;
@@ -18,7 +18,7 @@ export const createRegisterChallenge = (ctx) => async () => {
     const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
     const challenge = randomBytes(32);
 
-    await ctx.persistence.db.query(
+    await runtime.persistence.db.query(
       `
         INSERT INTO challenges (user_id, challenge)
         VALUES ($1, $2)
@@ -26,7 +26,7 @@ export const createRegisterChallenge = (ctx) => async () => {
       [userId, challenge],
     );
 
-    const { hostname } = new URL(ctx.app.origin);
+    const { hostname } = new URL(runtime.app.origin);
 
     return generateRegistrationOptions({
       attestationType: "none",

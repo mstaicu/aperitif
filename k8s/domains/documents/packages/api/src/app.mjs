@@ -10,7 +10,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
  * @typedef {import('./services/documents/index.mjs').DocumentsService} DocumentsService
  *
- * @typedef {import('./platform/context.mjs').Context} Ctx
+ * @typedef {import('./platform/runtime.mjs').Runtime} Runtime
  */
 
 /**
@@ -25,7 +25,7 @@ import v1 from "./api/versions/v1/index.mjs";
 
 /**
  * @param {{
- *  ctx: Ctx,
+ *  runtime: Runtime,
  *  services: {
  *    documents: DocumentsService,
  *  },
@@ -33,7 +33,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ ctx, fastifyOtel, services }) => {
+export const createApp = async ({ fastifyOtel, runtime, services }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -45,8 +45,12 @@ export const createApp = async ({ ctx, fastifyOtel, services }) => {
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db: ctx.persistence.db });
-  await app.register(v1, { jwks: ctx.security.jwks, prefix: "/v1", services });
+  await app.register(probes, { db: runtime.persistence.db });
+  await app.register(v1, {
+    jwks: runtime.security.jwks,
+    prefix: "/v1",
+    services,
+  });
 
   return app;
 };

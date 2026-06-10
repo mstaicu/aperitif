@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { currentUserId: string }) => Promise<{
  *   accounts: {
  *     id: string,
@@ -10,12 +10,12 @@ import { DatabaseError } from "pg";
  * }>}
  */
 export const listAccounts =
-  (ctx) =>
+  (runtime) =>
   async ({ currentUserId }) => {
     let rows;
 
     try {
-      ({ rows } = await ctx.persistence.db.query(
+      ({ rows } = await runtime.persistence.db.query(
         `
           SELECT a.id, a.name
           FROM account_members am

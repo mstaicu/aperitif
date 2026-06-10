@@ -4,7 +4,7 @@ import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../platform/context.mjs").Context["security"]} Security
+ * @typedef {import("../../../../../platform/runtime.mjs").Runtime["security"]} Security
  * @typedef {import("../../../../../services/operators/index.mjs").OperatorsService} OperatorsService
  */
 

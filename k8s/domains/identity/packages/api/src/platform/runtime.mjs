@@ -1,8 +1,8 @@
-import { createPgContext } from "./persistence/pg.mjs";
+import { createPostgres } from "./postgres.mjs";
 import { createSecurityContext } from "./security/index.mjs";
 
-export const createContext = async () => {
-  const pg = createPgContext();
+export const createRuntime = async () => {
+  const postgres = createPostgres();
 
   try {
     const security = await createSecurityContext();
@@ -13,19 +13,19 @@ export const createContext = async () => {
         region: process.env.REGION ?? "local",
       },
       lifecycle: {
-        close: () => pg.close(),
+        close: () => postgres.close(),
       },
       persistence: {
-        db: pg.db,
+        db: postgres.db,
       },
       security,
     };
   } catch (err) {
-    await pg.close().catch(() => {});
+    await postgres.close().catch(() => {});
     throw err;
   }
 };
 
 /**
- * @typedef {Awaited<ReturnType<typeof createContext>>} Context
+ * @typedef {Awaited<ReturnType<typeof createRuntime>>} Runtime
  */

@@ -2,17 +2,17 @@ import { once } from "node:events";
 import http from "node:http";
 import process from "node:process";
 
-import { createContext } from "./platform/context.mjs";
 import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
 import { ensureCapabilitiesStream } from "./platform/messaging/capabilities-stream.mjs";
+import { createRuntime } from "./platform/runtime.mjs";
 import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
-const ctx = await createContext();
+const runtime = await createRuntime();
 const controller = new AbortController();
 
-await ensureCapabilitiesStream(ctx);
-await ensureAccountsConsumer(ctx);
+await ensureCapabilitiesStream(runtime);
+await ensureAccountsConsumer(runtime);
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -23,8 +23,8 @@ const health = http.createServer(async (req, res) => {
 
   if (req.url === "/readyz") {
     try {
-      await ctx.persistence.db.query("SELECT 1");
-      await ctx.messaging.nc.flush();
+      await runtime.persistence.db.query("SELECT 1");
+      await runtime.messaging.nc.flush();
 
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
@@ -43,8 +43,8 @@ const health = http.createServer(async (req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectAccounts(ctx, controller.signal),
-  runPublishOutbox(ctx, controller.signal),
+  runProjectAccounts(runtime, controller.signal),
+  runPublishOutbox(runtime, controller.signal),
 ];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
@@ -82,7 +82,7 @@ try {
       service: "capabilities-worker",
     }),
   );
-  await ctx.lifecycle.close();
+  await runtime.lifecycle.close();
   console.log(
     JSON.stringify({
       event: "worker_stopped",

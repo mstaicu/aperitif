@@ -19,19 +19,19 @@ import { buildAccountCapabilitiesUpdatedEvent } from "../../events/index.mjs";
  */
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: {
  *   capabilities: CapabilityGrantInput[],
  *   accountId: string,
  * }) => Promise<{ account_id: string }>}
  */
 export const addAccountCapabilities =
-  (ctx) =>
+  (runtime) =>
   async ({ accountId, capabilities }) => {
     let client;
 
     try {
-      client = await ctx.persistence.db.connect();
+      client = await runtime.persistence.db.connect();
       await client.query("BEGIN");
 
       const {

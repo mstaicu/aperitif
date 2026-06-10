@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {() => Promise<{
  *   capabilities: {
  *     id: string,
@@ -11,9 +11,9 @@ import { DatabaseError } from "pg";
  *   }[],
  * }>}
  */
-export const listCapabilities = (ctx) => async () => {
+export const listCapabilities = (runtime) => async () => {
   try {
-    const { rows } = await ctx.persistence.db.query(
+    const { rows } = await runtime.persistence.db.query(
       `
         SELECT id,
           merge_strategy,

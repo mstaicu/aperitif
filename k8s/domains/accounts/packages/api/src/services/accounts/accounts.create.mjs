@@ -3,7 +3,7 @@ import { DatabaseError } from "pg";
 import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { currentUserId: string, name: string }) => Promise<{
  *   account: {
  *     id: string,
@@ -12,12 +12,12 @@ import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
  * }>}
  */
 export const createAccount =
-  (ctx) =>
+  (runtime) =>
   async ({ currentUserId, name }) => {
     let client;
 
     try {
-      client = await ctx.persistence.db.connect();
+      client = await runtime.persistence.db.connect();
       await client.query("BEGIN");
 
       const {

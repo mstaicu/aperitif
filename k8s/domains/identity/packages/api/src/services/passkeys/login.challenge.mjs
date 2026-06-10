@@ -7,14 +7,14 @@ import { DatabaseError } from "pg";
  */
 
 /**
- * @param {import("../../platform/context.mjs").Context} ctx
+ * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {() => Promise<PublicKeyCredentialRequestOptionsJSON>}
  */
-export const createLoginChallenge = (ctx) => async () => {
+export const createLoginChallenge = (runtime) => async () => {
   try {
     const challenge = randomBytes(32);
 
-    await ctx.persistence.db.query(
+    await runtime.persistence.db.query(
       `
         INSERT INTO challenges (user_id, challenge)
         VALUES (NULL, $1)
@@ -24,7 +24,7 @@ export const createLoginChallenge = (ctx) => async () => {
 
     return generateAuthenticationOptions({
       challenge,
-      rpID: new URL(ctx.app.origin).hostname,
+      rpID: new URL(runtime.app.origin).hostname,
       userVerification: "required",
     });
   } catch (err) {

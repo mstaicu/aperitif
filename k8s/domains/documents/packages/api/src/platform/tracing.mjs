@@ -1,7 +1,7 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-export const createOtelContext = () => {
+export const createTracing = () => {
   if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     return {
       close: async () => {},
