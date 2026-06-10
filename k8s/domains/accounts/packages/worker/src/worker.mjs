@@ -67,7 +67,7 @@ try {
 
   await Promise.allSettled(tasks);
 
-  health.close();
+  await health[Symbol.asyncDispose]();
 
   console.log(
     JSON.stringify({

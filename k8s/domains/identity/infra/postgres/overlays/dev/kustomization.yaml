@@ -6,11 +6,3 @@ namespace: identity
 resources:
   - namespace.yaml
   - ../../base
-
-patches:
-  - path: identity-postgres-depl.yaml
-
-configMapGenerator:
-  - name: identity-postgres-init
-    files:
-      - identity-postgres-init.sql

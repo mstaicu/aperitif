@@ -71,5 +71,5 @@ The API depends on identity/JWKS and ingress. The worker depends on event-bus.
 - Request handlers do not publish authority events directly.
 - State changes and `outbox_events` rows belong in the same DB transaction.
 - Authority events use the account's current `version`.
-- If managed Postgres replaces the placeholder, remove only `accounts-postgres`
-  from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.
+- The placeholder Postgres unit uses the default `postgres` admin user. API,
+  worker, and migrate units use the same admin connection URL for now.

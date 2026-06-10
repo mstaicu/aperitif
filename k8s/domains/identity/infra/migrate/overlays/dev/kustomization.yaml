@@ -6,6 +6,3 @@ namespace: identity
 resources:
   - namespace.yaml
   - ../../base
-
-generators:
-  - identity-migrate-ksops-generator.yaml

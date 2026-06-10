@@ -6,11 +6,3 @@ namespace: documents
 resources:
   - namespace.yaml
   - ../../base
-
-patches:
-  - path: documents-postgres-depl.yaml
-
-configMapGenerator:
-  - name: documents-postgres-init
-    files:
-      - documents-postgres-init.sql

@@ -6,6 +6,3 @@ namespace: accounts
 resources:
   - namespace.yaml
   - ../../base
-
-generators:
-  - accounts-migrate-ksops-generator.yaml

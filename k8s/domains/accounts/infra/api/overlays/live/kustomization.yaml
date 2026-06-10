@@ -6,7 +6,6 @@ namespace: accounts
 resources:
   - namespace.yaml
   - ../../base
-  - accounts-api-db.yaml
 
 patches:
   - path: accounts-api-depl.yaml

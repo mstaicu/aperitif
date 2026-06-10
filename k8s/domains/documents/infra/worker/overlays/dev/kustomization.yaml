@@ -6,6 +6,3 @@ namespace: documents
 resources:
   - namespace.yaml
   - ../../base
-
-generators:
-  - documents-worker-ksops-generator.yaml

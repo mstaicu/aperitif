@@ -6,7 +6,6 @@ namespace: documents
 resources:
   - namespace.yaml
   - ../../base
-  - documents-api-db.yaml
 
 patches:
   - path: documents-api-depl.yaml

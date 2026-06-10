@@ -6,6 +6,3 @@ namespace: capabilities
 resources:
   - namespace.yaml
   - ../../base
-
-generators:
-  - capabilities-migrate-ksops-generator.yaml

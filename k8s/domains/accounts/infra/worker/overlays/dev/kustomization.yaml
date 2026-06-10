@@ -7,8 +7,5 @@ resources:
   - namespace.yaml
   - ../../base
 
-generators:
-  - accounts-worker-ksops-generator.yaml
-
 patches:
   - path: accounts-worker-depl.yaml

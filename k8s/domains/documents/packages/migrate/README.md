@@ -17,7 +17,6 @@ events. `documents` is the only product table owned here.
 ## Files
 
 - `migrations/V###__*.sql`: Flyway migrations.
-- `bootstrap/managed-postgres.sql`: admin-run managed Postgres bootstrap.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
@@ -31,34 +30,10 @@ projected state.
 
 Projection writes must keep accepting stale/equal versions without failing.
 
-## Roles
-
-| Role | Login | Used By |
-| --- | --- | --- |
-| `documents_migrator` | yes | Flyway Job |
-| `documents_api` | yes | API Deployment |
-| `documents_worker` | yes | Worker Deployment |
-
-Local/CI placeholder Postgres creates these roles from
-`infra/postgres/overlays/{dev,live}/documents-postgres-init.sql`.
-
-Managed Postgres must run `bootstrap/managed-postgres.sql` before Flux
-reconciles `documents-migrate`.
-
 ## Flow
 
 ```text
-postgres init -> roles/base grants
-migrate Job -> schema objects/table grants
-api/worker -> explicit table grants
-```
-
-Secrets stay scoped:
-
-```text
-documents-migrate-db -> documents_migrator
-documents-api-db     -> documents_api
-documents-worker-db  -> documents_worker
+postgres -> migrate Job -> api/worker
 ```
 
 ## Commands

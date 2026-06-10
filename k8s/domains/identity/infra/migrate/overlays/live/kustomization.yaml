@@ -6,7 +6,6 @@ namespace: identity
 resources:
   - namespace.yaml
   - ../../base
-  - identity-migrate-db.yaml
 
 patches:
   - path: identity-migrate-job.yaml

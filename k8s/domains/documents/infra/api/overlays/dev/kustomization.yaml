@@ -7,8 +7,5 @@ resources:
   - namespace.yaml
   - ../../base
 
-generators:
-  - documents-api-ksops-generator.yaml
-
 patches:
   - path: documents-api-depl.yaml

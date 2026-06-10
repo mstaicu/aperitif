@@ -7,8 +7,5 @@ resources:
   - namespace.yaml
   - ../../base
 
-generators:
-  - capabilities-worker-ksops-generator.yaml
-
 patches:
   - path: capabilities-worker-depl.yaml

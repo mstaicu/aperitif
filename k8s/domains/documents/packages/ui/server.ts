@@ -25,10 +25,8 @@ async function shutdown() {
 
   shuttingDown = true;
 
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => (error ? reject(error) : resolve()));
-    server.closeAllConnections();
-  });
+  server.closeAllConnections();
+  await server[Symbol.asyncDispose]();
 }
 
 ["SIGINT", "SIGTERM"].forEach((signal) =>

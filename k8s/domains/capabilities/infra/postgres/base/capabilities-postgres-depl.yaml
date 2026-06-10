@@ -20,6 +20,8 @@ spec:
           env:
             - name: POSTGRES_DB
               value: capabilities
+            - name: POSTGRES_PASSWORD
+              value: postgres
 
           readinessProbe:
             exec:

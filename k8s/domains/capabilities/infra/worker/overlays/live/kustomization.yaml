@@ -6,7 +6,6 @@ namespace: capabilities
 resources:
   - namespace.yaml
   - ../../base
-  - capabilities-worker-db.yaml
 
 patches:
   - path: capabilities-worker-depl.yaml

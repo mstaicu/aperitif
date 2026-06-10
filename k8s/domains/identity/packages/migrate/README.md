@@ -20,7 +20,6 @@ consumed/revoked refresh token revokes the session.
 ## Files
 
 - `migrations/V###__*.sql`: Flyway migrations.
-- `bootstrap/managed-postgres.sql`: admin-run managed Postgres bootstrap.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
@@ -29,32 +28,10 @@ Flyway scans only `filesystem:/db/migrations` in the migration image.
 Identity seed/schema changes are normal Flyway migrations. Identity publishes no
 domain events today, so migrations do not write outbox rows.
 
-## Roles
-
-| Role | Login | Used By |
-| --- | --- | --- |
-| `identity_migrator` | yes | Flyway Job |
-| `identity_api` | yes | API Deployment |
-
-Local/CI placeholder Postgres creates these roles from
-`infra/postgres/overlays/{dev,live}/identity-postgres-init.sql`.
-
-Managed Postgres must run `bootstrap/managed-postgres.sql` before Flux
-reconciles `identity-migrate`.
-
 ## Flow
 
 ```text
-postgres init -> roles/base grants
-migrate Job -> schema objects/table grants
-api -> explicit table grants
-```
-
-Secrets stay scoped:
-
-```text
-identity-migrate-db -> identity_migrator
-identity-api-db     -> identity_api
+postgres -> migrate Job -> api
 ```
 
 ## Commands

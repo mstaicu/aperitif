@@ -20,7 +20,6 @@ capability snapshots are calculated when `outbox_events` rows are written.
 ## Files
 
 - `migrations/V###__*.sql`: Flyway migrations.
-- `bootstrap/managed-postgres.sql`: admin-run managed Postgres bootstrap.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
@@ -37,35 +36,10 @@ Keep core capability seeds separate from product capability seeds.
 Outbox rows contain full current-state snapshots. Consumers project by natural
 key and `version`.
 
-## Roles
-
-| Role | Login | Used By |
-| --- | --- | --- |
-| `capabilities_migrator` | yes | Flyway Job |
-| `capabilities_api` | yes | API Deployment |
-| `capabilities_worker` | yes | Worker Deployment |
-
-Local/CI placeholder Postgres creates these roles from
-`infra/postgres/overlays/{dev,live}/capabilities-postgres-init.sql`.
-
-Managed Postgres must run `bootstrap/managed-postgres.sql` before Flux
-reconciles `capabilities-migrate`.
-
 ## Flow
 
 ```text
-postgres init -> roles/base grants
-migrate Job -> schema objects/table grants
-api -> grant commands
-worker -> accounts projection + outbox publish
-```
-
-Secrets stay scoped:
-
-```text
-capabilities-migrate-db -> capabilities_migrator
-capabilities-api-db     -> capabilities_api
-capabilities-worker-db  -> capabilities_worker
+postgres -> migrate Job -> api/worker
 ```
 
 ## Commands

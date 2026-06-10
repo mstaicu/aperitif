@@ -9,4 +9,3 @@ metadata:
         path: ksops
 files:
   - identity-api-jwt.yaml
-  - identity-api-db.yaml

@@ -20,7 +20,6 @@ only wake the worker.
 ## Files
 
 - `migrations/V###__*.sql`: Flyway migrations.
-- `bootstrap/managed-postgres.sql`: admin-run managed Postgres bootstrap.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
@@ -37,34 +36,10 @@ Keep core accounts seeds separate from product permission seeds.
 Outbox rows contain full current-state snapshots. Consumers project by natural
 key and `version`.
 
-## Roles
-
-| Role | Login | Used By |
-| --- | --- | --- |
-| `accounts_migrator` | yes | Flyway Job |
-| `accounts_api` | yes | API Deployment |
-| `accounts_worker` | yes | Worker Deployment |
-
-Local/CI placeholder Postgres creates these roles from
-`infra/postgres/overlays/{dev,live}/accounts-postgres-init.sql`.
-
-Managed Postgres must run `bootstrap/managed-postgres.sql` before Flux
-reconciles `accounts-migrate`.
-
 ## Flow
 
 ```text
-postgres init -> roles/base grants
-migrate Job -> schema objects/table grants
-api/worker -> explicit table grants
-```
-
-Secrets stay scoped:
-
-```text
-accounts-migrate-db -> accounts_migrator
-accounts-api-db     -> accounts_api
-accounts-worker-db  -> accounts_worker
+postgres -> migrate Job -> api/worker
 ```
 
 ## Commands

@@ -6,7 +6,6 @@ namespace: documents
 resources:
   - namespace.yaml
   - ../../base
-  - documents-migrate-db.yaml
 
 patches:
   - path: documents-migrate-job.yaml

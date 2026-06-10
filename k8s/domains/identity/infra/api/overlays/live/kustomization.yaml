@@ -7,7 +7,6 @@ resources:
   - namespace.yaml
   - ../../base
   - identity-api-jwt.yaml
-  - identity-api-db.yaml
 
 patches:
   - path: identity-api-depl.yaml

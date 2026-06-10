@@ -6,11 +6,3 @@ namespace: accounts
 resources:
   - namespace.yaml
   - ../../base
-
-patches:
-  - path: accounts-postgres-depl.yaml
-
-configMapGenerator:
-  - name: accounts-postgres-init
-    files:
-      - accounts-postgres-init.sql

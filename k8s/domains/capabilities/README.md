@@ -98,6 +98,5 @@ The worker depends on accounts events and event-bus.
 - Projection writes are idempotent by natural key plus `version`.
 - If projection tables are reset while NATS streams survive, reset the matching
   durable consumer before restarting the worker.
-- If managed Postgres replaces the placeholder, remove only
-  `capabilities-postgres` from the live graph and run
-  `packages/migrate/bootstrap/managed-postgres.sql`.
+- The placeholder Postgres unit uses the default `postgres` admin user. API,
+  worker, and migrate units use the same admin connection URL for now.

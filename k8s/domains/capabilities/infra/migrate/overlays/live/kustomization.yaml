@@ -6,7 +6,6 @@ namespace: capabilities
 resources:
   - namespace.yaml
   - ../../base
-  - capabilities-migrate-db.yaml
 
 patches:
   - path: capabilities-migrate-job.yaml

@@ -40,7 +40,7 @@ npm run dev
 
 ## Runtime Defaults
 
-- `PORT=44100`
+- `PORT=3000`
 - `API_INTERNAL_V1_URL=http://traefik-srv.traefik.svc.cluster.local/v1`
 - `COOKIE_SECURE=true`
 - OTel is enabled only when the overlay sets `OTEL_EXPORTER_OTLP_ENDPOINT`.

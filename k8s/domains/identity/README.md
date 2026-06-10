@@ -66,13 +66,11 @@ Live Flux units:
 identity-postgres -> identity-migrate -> identity-api -> identity-ui
 ```
 
-Secrets stay per unit: `identity-migrate-db`, `identity-api-db`, and
-`identity-api-jwt`.
+The placeholder Postgres unit uses the default `postgres` admin user. API,
+cleanup, and migrate units use the same admin connection URL for now.
 
 ## Agent Notes
 
 - Other domains verify tokens through JWKS and authorize from their own state.
 - Do not add account, membership, or product permission concepts here.
 - Operator access is platform authority, not account membership authority.
-- If managed Postgres replaces the placeholder, remove only `identity-postgres`
-  from the live graph and run `packages/migrate/bootstrap/managed-postgres.sql`.
