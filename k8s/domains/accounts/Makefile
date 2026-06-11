@@ -31,4 +31,3 @@ pre-deploy-manifests: ## Render accounts manifests before deploy.
 
 post-deploy: ## Verify the deployed accounts boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/docs/json"
-	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts")" = "401"

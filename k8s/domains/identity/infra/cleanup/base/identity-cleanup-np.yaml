@@ -2,26 +2,13 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: default-deny-identity-cleanup
+  name: identity-cleanup
 spec:
   podSelector:
     matchLabels:
       app: identity-cleanup
   policyTypes:
     - Ingress
-    - Egress
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-identity-cleanup-dns
-spec:
-  podSelector:
-    matchLabels:
-      app: identity-cleanup
-  policyTypes:
     - Egress
   egress:
     - to:
@@ -33,20 +20,6 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-identity-cleanup-to-postgres
-spec:
-  podSelector:
-    matchLabels:
-      app: identity-cleanup
-  policyTypes:
-    - Egress
-  egress:
     - to:
         - podSelector:
             matchLabels:

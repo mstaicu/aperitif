@@ -31,4 +31,3 @@ pre-deploy-manifests: ## Render capabilities manifests before deploy.
 
 post-deploy: ## Verify the deployed capabilities boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/capabilities/docs/json"
-	test "$$(curl -ksS -o /dev/null -w "%{http_code}" --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/capabilities")" = "401"

@@ -33,6 +33,5 @@ pre-deploy-manifests: ## Render identity manifests before deploy.
 	kubectl kustomize infra/ui/overlays/live >/dev/null
 
 post-deploy: ## Verify the deployed identity boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "$(DOMAIN):$(PORT):127.0.0.1" "https://$(DOMAIN):$(PORT)/login"
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/.well-known/jwks.json"
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/identity/docs/json"

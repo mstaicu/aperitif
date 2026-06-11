@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: default-deny-nats
+  name: nats
 spec:
   podSelector:
     matchLabels:
@@ -10,17 +10,6 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-nats-cluster
-spec:
-  podSelector:
-    matchLabels:
-      app: nats
   ingress:
     - from:
         - podSelector:
@@ -29,52 +18,6 @@ spec:
       ports:
         - port: 6222
           protocol: TCP
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: nats
-      ports:
-        - port: 6222
-          protocol: TCP
-  policyTypes:
-    - Ingress
-    - Egress
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-nats-dns
-spec:
-  podSelector:
-    matchLabels:
-      app: nats
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - port: 53
-          protocol: UDP
-        - port: 53
-          protocol: TCP
-  policyTypes:
-    - Egress
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-domain-workers-to-nats
-spec:
-  podSelector:
-    matchLabels:
-      app: nats
-  ingress:
     - from:
         - namespaceSelector:
             matchLabels:
@@ -97,5 +40,20 @@ spec:
       ports:
         - port: 4222
           protocol: TCP
-  policyTypes:
-    - Ingress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nats
+      ports:
+        - port: 6222
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: default-deny-capabilities-api
+  name: capabilities-api
 spec:
   podSelector:
     matchLabels:
@@ -10,42 +10,6 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-capabilities-api-dns
-spec:
-  podSelector:
-    matchLabels:
-      app: capabilities-api
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-traefik-to-capabilities-api
-spec:
-  podSelector:
-    matchLabels:
-      app: capabilities-api
-  policyTypes:
-    - Ingress
   ingress:
     - from:
         - namespaceSelector:
@@ -57,20 +21,16 @@ spec:
       ports:
         - protocol: TCP
           port: 3000
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-capabilities-api-to-traefik
-spec:
-  podSelector:
-    matchLabels:
-      app: capabilities-api
-  policyTypes:
-    - Egress
   egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
     - to:
         - namespaceSelector:
             matchLabels:
@@ -81,20 +41,6 @@ spec:
       ports:
         - protocol: TCP
           port: 80
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-capabilities-api-to-postgres
-spec:
-  podSelector:
-    matchLabels:
-      app: capabilities-api
-  policyTypes:
-    - Egress
-  egress:
     - to:
         - podSelector:
             matchLabels:
@@ -102,20 +48,6 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-
-metadata:
-  name: allow-capabilities-api-to-otel
-spec:
-  podSelector:
-    matchLabels:
-      app: capabilities-api
-  policyTypes:
-    - Egress
-  egress:
     - to:
         - namespaceSelector:
             matchLabels:
