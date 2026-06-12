@@ -1,19 +1,12 @@
 import { Type } from "@sinclair/typebox";
 
-/**
- * @param {string} description
- */
-const TokenString = (description) =>
-  Type.String({
-    description,
-    minLength: 1,
-  });
-
 export const RefreshTokenResponse = Type.Object(
   {
-    refresh_token: TokenString(
-      "Rotated opaque refresh token representing the current identity session.",
-    ),
+    refresh_token: Type.String({
+      description:
+        "Rotated opaque refresh token representing the current identity session.",
+      minLength: 1,
+    }),
   },
   {
     additionalProperties: false,
@@ -24,7 +17,10 @@ export const RefreshTokenResponse = Type.Object(
 
 export const AccessTokenResponse = Type.Object(
   {
-    access_token: TokenString("Short-lived JWT access token."),
+    access_token: Type.String({
+      description: "Short-lived JWT access token.",
+      minLength: 1,
+    }),
   },
   {
     additionalProperties: false,
