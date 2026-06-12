@@ -25,7 +25,7 @@ const generateRefreshToken = () => {
 export const login =
   (runtime) =>
   async ({ authentication }) => {
-    const { app, persistence } = runtime;
+    const { app, db } = runtime;
 
     const { hostname, origin } = new URL(app.origin);
 
@@ -67,7 +67,7 @@ export const login =
     try {
       const {
         rows: [challengeRow],
-      } = await persistence.db.query(
+      } = await db.query(
         `
           DELETE FROM challenges
           WHERE challenge = $1
@@ -82,7 +82,7 @@ export const login =
         throw new Error("AUTHENTICATION_FAILED");
       }
 
-      client = await persistence.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

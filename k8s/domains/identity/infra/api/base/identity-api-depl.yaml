@@ -35,11 +35,6 @@ spec:
                 configMapKeyRef:
                   name: identity-api-cm
                   key: ORIGIN
-            - name: ACCESS_TOKEN_AUDIENCE
-              valueFrom:
-                configMapKeyRef:
-                  name: identity-api-cm
-                  key: ACCESS_TOKEN_AUDIENCE
 
             - name: JWT_PRIVATE_KEY_PATH
               value: /app/keys/jwt-private.pem

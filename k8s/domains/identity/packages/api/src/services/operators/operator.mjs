@@ -10,7 +10,7 @@ export const assignOperator =
     try {
       const {
         rows: [user],
-      } = await runtime.persistence.db.query(
+      } = await runtime.db.query(
         `
           SELECT 1
           FROM users
@@ -23,7 +23,7 @@ export const assignOperator =
         throw new Error("USER_NOT_FOUND");
       }
 
-      await runtime.persistence.db.query(
+      await runtime.db.query(
         `
           INSERT INTO operators (user_id)
           VALUES ($1)
@@ -71,7 +71,7 @@ export const revokeOperator =
     let client;
 
     try {
-      client = await runtime.persistence.db.connect();
+      client = await runtime.db.connect();
       await client.query("BEGIN");
 
       const { rows: operators } = await client.query(

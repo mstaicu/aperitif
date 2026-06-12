@@ -15,7 +15,7 @@ export const listAccounts =
     let rows;
 
     try {
-      ({ rows } = await runtime.persistence.db.query(
+      ({ rows } = await runtime.db.query(
         `
           SELECT a.id, a.name
           FROM account_members am

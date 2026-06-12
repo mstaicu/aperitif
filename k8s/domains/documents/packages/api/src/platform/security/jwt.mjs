@@ -15,9 +15,7 @@ export const authenticate = async ({ authorization, jwks }) => {
   }
 
   try {
-    const { payload } = await jwtVerify(token, jwks, {
-      audience: process.env.ACCESS_TOKEN_AUDIENCE,
-    });
+    const { payload } = await jwtVerify(token, jwks);
 
     if (typeof payload.sub !== "string") {
       throw new Error("INVALID_ACCESS_TOKEN");

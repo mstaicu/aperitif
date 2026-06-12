@@ -10,7 +10,7 @@ const PUBLISH_ACK_TIMEOUT_MS = 5000;
 export async function runPublishOutbox(runtime, signal) {
   signal.throwIfAborted();
 
-  const listener = await runtime.persistence.db.connect();
+  const listener = await runtime.db.connect();
 
   try {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
@@ -48,7 +48,7 @@ export async function runPublishOutbox(runtime, signal) {
 async function publishOutboxBatch(runtime, signal) {
   signal.throwIfAborted();
 
-  const client = await runtime.persistence.db.connect();
+  const client = await runtime.db.connect();
   let outboxEvent;
 
   try {

@@ -18,7 +18,7 @@ export const createRegisterChallenge = (runtime) => async () => {
     const webauthnUserHandle = Buffer.from(userId.replace(/-/g, ""), "hex");
     const challenge = randomBytes(32);
 
-    await runtime.persistence.db.query(
+    await runtime.db.query(
       `
         INSERT INTO challenges (user_id, challenge)
         VALUES ($1, $2)

@@ -7,16 +7,17 @@ export const createRuntime = async () => {
   try {
     const security = await createSecurityContext();
 
+    if (!process.env.ORIGIN) {
+      throw new Error("ORIGIN is required");
+    }
+
     return {
       app: {
         origin: process.env.ORIGIN,
-        region: process.env.REGION ?? "local",
       },
+      db: postgres.db,
       lifecycle: {
         close: () => postgres.close(),
-      },
-      persistence: {
-        db: postgres.db,
       },
       security,
     };

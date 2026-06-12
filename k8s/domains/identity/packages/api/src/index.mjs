@@ -2,7 +2,6 @@ const requiredEnv = [
   "DATABASE_URL",
   "JWT_PRIVATE_KEY_PATH",
   "JWT_PUBLIC_KEY_PATH",
-  "ACCESS_TOKEN_AUDIENCE",
   "ORIGIN",
 ];
 
@@ -12,12 +11,14 @@ for (const name of requiredEnv) {
   }
 }
 
-const origin = process.env.ORIGIN;
+if (!process.env.ORIGIN) {
+  throw new Error("ORIGIN is required");
+}
 
 try {
-  new URL(origin);
+  new URL(process.env.ORIGIN);
 } catch {
-  throw new Error(`Invalid ORIGIN: ${origin}`);
+  throw new Error(`Invalid ORIGIN: ${process.env.ORIGIN}`);
 }
 
 await import("./server.mjs");

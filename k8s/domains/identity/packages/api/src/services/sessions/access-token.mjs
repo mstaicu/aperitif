@@ -2,8 +2,6 @@ import { SignJWT } from "jose";
 import { createHash } from "node:crypto";
 import { DatabaseError } from "pg";
 
-const TTL_SECONDS = 60;
-
 /**
  * @param {import("../../platform/runtime.mjs").Runtime} runtime
  * @returns {(args: { refresh_token: string }) => Promise<{ access_token: string }>}
@@ -22,7 +20,7 @@ export const createAccessToken =
     try {
       ({
         rows: [session],
-      } = await runtime.persistence.db.query(
+      } = await runtime.db.query(
         `
           SELECT s.user_id
           FROM session_refresh_tokens rt
@@ -39,18 +37,16 @@ export const createAccessToken =
         throw new Error("SESSION_NOT_FOUND");
       }
 
-      const {
-        rows: [operatorUser],
-      } = await runtime.persistence.db.query(
+      ({
+        rows: [operator],
+      } = await runtime.db.query(
         `
           SELECT 1
           FROM operators
           WHERE user_id = $1
         `,
         [session.user_id],
-      );
-
-      operator = Boolean(operatorUser);
+      ));
     } catch (err) {
       if (err instanceof DatabaseError) {
         if (
@@ -69,6 +65,7 @@ export const createAccessToken =
     }
 
     const now = Math.floor(Date.now() / 1000);
+
     /**
      * @type {{ operator?: true, sub: string }}
      */
@@ -83,12 +80,11 @@ export const createAccessToken =
     const access_token = await new SignJWT(claims)
       .setProtectedHeader({
         alg: "ES256",
-        kid: runtime.security.signing.kid,
+        kid: runtime.security.signingKey.kid,
       })
-      .setAudience(runtime.security.audience)
       .setIssuedAt(now)
-      .setExpirationTime(now + TTL_SECONDS)
-      .sign(runtime.security.signing.privateKey);
+      .setExpirationTime(now + 60)
+      .sign(runtime.security.signingKey.privateKey);
 
     return {
       access_token,

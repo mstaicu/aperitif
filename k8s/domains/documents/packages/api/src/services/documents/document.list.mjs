@@ -21,7 +21,7 @@ export const listDocuments =
     let client;
 
     try {
-      client = await runtime.persistence.db.connect();
+      client = await runtime.db.connect();
 
       const {
         rows: [member],

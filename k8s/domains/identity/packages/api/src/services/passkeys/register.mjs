@@ -25,7 +25,7 @@ const generateRefreshToken = () => {
 export const register =
   (runtime) =>
   async ({ credential }) => {
-    const { app, persistence } = runtime;
+    const { app, db } = runtime;
 
     const { hostname, origin } = new URL(app.origin);
 
@@ -66,7 +66,7 @@ export const register =
     try {
       const {
         rows: [challengeRow],
-      } = await persistence.db.query(
+      } = await db.query(
         `
           DELETE FROM challenges
           WHERE challenge = $1
@@ -124,7 +124,7 @@ export const register =
       const publicKey = Buffer.from(registrationCredential.publicKey);
       const signCount = registrationCredential.counter;
 
-      client = await persistence.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       /** @type {string} */

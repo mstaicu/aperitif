@@ -13,7 +13,7 @@ import { DatabaseError } from "pg";
  */
 export const listCapabilities = (runtime) => async () => {
   try {
-    const { rows } = await runtime.persistence.db.query(
+    const { rows } = await runtime.db.query(
       `
         SELECT id,
           merge_strategy,

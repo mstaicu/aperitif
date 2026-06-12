@@ -99,7 +99,7 @@ async function projectV1AccountMemberUpdated(runtime, event) {
     throw new Error("Invalid accounts member account id");
   }
 
-  const client = await runtime.persistence.db.connect();
+  const client = await runtime.db.connect();
 
   try {
     await client.query("BEGIN");

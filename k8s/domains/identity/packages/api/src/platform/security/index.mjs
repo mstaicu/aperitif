@@ -1,16 +1,13 @@
 import { exportJWK, importPKCS8, importSPKI } from "jose";
 import { readFile } from "node:fs/promises";
 
-const KID = "k1";
-
 export const createSecurityContext = async () => {
-  /**
-   * @type {string}
-   */
-  const audience = process.env.ACCESS_TOKEN_AUDIENCE;
+  if (!process.env.JWT_PRIVATE_KEY_PATH) {
+    throw new Error("JWT_PRIVATE_KEY_PATH is required");
+  }
 
-  if (!audience) {
-    throw new Error("No ACCESS_TOKEN_AUDIENCE provided");
+  if (!process.env.JWT_PUBLIC_KEY_PATH) {
+    throw new Error("JWT_PUBLIC_KEY_PATH is required");
   }
 
   const [privatePem, publicPem] = await Promise.all([
@@ -24,17 +21,16 @@ export const createSecurityContext = async () => {
   ]);
   const publicJwk = await exportJWK(publicKey);
 
+  /** @type {import("jose").JSONWebKeySet} */
+  const jwks = {
+    keys: [{ ...publicJwk, alg: "ES256", kid: "k1", use: "sig" }],
+  };
+
   return {
-    audience,
-    jwks: {
-      keys: [{ ...publicJwk, alg: "ES256", kid: KID, use: "sig" }],
-    },
-    signing: {
-      kid: KID,
+    jwks,
+    signingKey: {
+      kid: "k1",
       privateKey,
-    },
-    verifying: {
-      publicKey,
     },
   };
 };

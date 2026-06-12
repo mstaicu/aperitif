@@ -16,7 +16,7 @@ export default async function (fastify, { sessions }) {
     {
       schema: {
         description:
-          "Create a short-lived product API access token from a refresh token supplied in the Authorization bearer header. The minted token uses the identity service configured JWT audience.",
+          "Create a short-lived access token from a refresh token supplied in the Authorization bearer header.",
         operationId: "createSessionAccessToken",
         response: {
           200: AccessTokenResponse,

@@ -23,7 +23,7 @@ const health = http.createServer(async (req, res) => {
 
   if (req.url === "/readyz") {
     try {
-      await runtime.persistence.db.query("SELECT 1");
+      await runtime.db.query("SELECT 1");
       await runtime.messaging.nc.flush();
 
       res.writeHead(200, { "content-type": "text/plain" });

@@ -8,6 +8,7 @@ export const createRuntime = async () => {
     const nats = await createNats();
 
     return {
+      db: postgres.db,
       lifecycle: {
         close: async () => {
           try {
@@ -21,9 +22,6 @@ export const createRuntime = async () => {
         js: nats.js,
         jsm: nats.jsm,
         nc: nats.nc,
-      },
-      persistence: {
-        db: postgres.db,
       },
     };
   } catch (err) {

@@ -94,7 +94,7 @@ async function projectV1AccountMemberUpdated(runtime, event) {
     /** @type {import("../events/accounts.mjs").AccountMemberUpdatedPayload} */ (
       event.payload
     );
-  const client = await runtime.persistence.db.connect();
+  const client = await runtime.db.connect();
 
   try {
     await client.query("BEGIN");

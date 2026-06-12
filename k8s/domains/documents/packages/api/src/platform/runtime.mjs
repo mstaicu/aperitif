@@ -8,14 +8,9 @@ export const createRuntime = async () => {
     const security = createSecurityContext();
 
     return {
-      app: {
-        region: process.env.REGION ?? "local",
-      },
+      db: postgres.db,
       lifecycle: {
         close: () => postgres.close(),
-      },
-      persistence: {
-        db: postgres.db,
       },
       security,
     };

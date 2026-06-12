@@ -35,9 +35,8 @@ export default async function (fastify, { operators, security }) {
     },
     async function (req, reply) {
       await authenticateOperator({
-        audience: security.audience,
         authorization: req.headers.authorization,
-        publicKey: security.verifying.publicKey,
+        jwks: security.jwks,
       });
 
       return reply.send(
@@ -71,9 +70,8 @@ export default async function (fastify, { operators, security }) {
     },
     async function (req, reply) {
       await authenticateOperator({
-        audience: security.audience,
         authorization: req.headers.authorization,
-        publicKey: security.verifying.publicKey,
+        jwks: security.jwks,
       });
 
       return reply.send(

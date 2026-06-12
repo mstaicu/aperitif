@@ -33,9 +33,6 @@ spec:
             - name: IDENTITY_JWKS_URL
               value: http://traefik-srv.traefik.svc.cluster.local/.well-known/jwks.json
 
-            - name: ACCESS_TOKEN_AUDIENCE
-              value: aperitif-api
-
           readinessProbe:
             httpGet:
               path: /readyz

@@ -14,7 +14,7 @@ export const createLoginChallenge = (runtime) => async () => {
   try {
     const challenge = randomBytes(32);
 
-    await runtime.persistence.db.query(
+    await runtime.db.query(
       `
         INSERT INTO challenges (user_id, challenge)
         VALUES (NULL, $1)

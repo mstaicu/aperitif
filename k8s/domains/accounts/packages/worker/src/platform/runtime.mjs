@@ -10,9 +10,9 @@ export const createRuntime = async () => {
 
     return {
       app: {
-        region: process.env.REGION ?? "local",
         streamReplicas,
       },
+      db: postgres.db,
       lifecycle: {
         close: async () => {
           try {
@@ -27,9 +27,6 @@ export const createRuntime = async () => {
         jsm: nats.jsm,
         nc: nats.nc,
       },
-      persistence: {
-        db: postgres.db,
-      },
     };
   } catch (err) {
     await postgres.close().catch(() => {});
@@ -38,6 +35,10 @@ export const createRuntime = async () => {
 };
 
 function getStreamReplicas() {
+  if (!process.env.NATS_STREAM_REPLICAS) {
+    throw new Error("NATS_STREAM_REPLICAS is required");
+  }
+
   const replicas = Number(process.env.NATS_STREAM_REPLICAS);
 
   if (!Number.isInteger(replicas) || replicas < 1) {

@@ -1,8 +1,4 @@
-const requiredEnv = [
-  "DATABASE_URL",
-  "IDENTITY_JWKS_URL",
-  "ACCESS_TOKEN_AUDIENCE",
-];
+const requiredEnv = ["DATABASE_URL", "IDENTITY_JWKS_URL"];
 
 for (const name of requiredEnv) {
   if (!process.env[name]) {

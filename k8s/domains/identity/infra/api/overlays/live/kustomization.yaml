@@ -16,7 +16,6 @@ configMapGenerator:
   - name: identity-api-cm
     literals:
       - ORIGIN=https://tma.com
-      - ACCESS_TOKEN_AUDIENCE=aperitif-api
 
 images:
   - name: mdstaicu/identity-api

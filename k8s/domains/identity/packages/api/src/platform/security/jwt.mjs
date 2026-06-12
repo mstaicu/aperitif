@@ -1,21 +1,16 @@
-import { jwtVerify } from "jose";
+import { createLocalJWKSet, jwtVerify } from "jose";
 
 /**
  * @param {{
- *   audience: string,
  *   authorization?: string,
- *   publicKey: import("jose").CryptoKey,
+ *   jwks: import("jose").JSONWebKeySet,
  * }} args
  * @returns {Promise<import("jose").JWTPayload & {
  *   operator?: unknown,
  *   sub: string,
  * }>}
  */
-export const verifyAccessToken = async ({
-  audience,
-  authorization,
-  publicKey,
-}) => {
+export const verifyAccessToken = async ({ authorization, jwks }) => {
   const [type, token] = (authorization || "").split(" ");
 
   if (type !== "Bearer" || !token) {
@@ -23,7 +18,7 @@ export const verifyAccessToken = async ({
   }
 
   try {
-    const { payload } = await jwtVerify(token, publicKey, { audience });
+    const { payload } = await jwtVerify(token, createLocalJWKSet(jwks));
 
     if (typeof payload.sub !== "string") {
       throw new Error("INVALID_ACCESS_TOKEN");
@@ -40,20 +35,14 @@ export const verifyAccessToken = async ({
 
 /**
  * @param {{
- *   audience: string,
  *   authorization?: string,
- *   publicKey: import("jose").CryptoKey,
+ *   jwks: import("jose").JSONWebKeySet,
  * }} args
  */
-export const authenticateOperator = async ({
-  audience,
-  authorization,
-  publicKey,
-}) => {
+export const authenticateOperator = async ({ authorization, jwks }) => {
   const payload = await verifyAccessToken({
-    audience,
     authorization,
-    publicKey,
+    jwks,
   });
 
   if (payload.operator !== true) {

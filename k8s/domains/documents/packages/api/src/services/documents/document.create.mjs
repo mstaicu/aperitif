@@ -22,7 +22,7 @@ export const createDocument =
     let client;
 
     try {
-      client = await runtime.persistence.db.connect();
+      client = await runtime.db.connect();
       await client.query("BEGIN");
 
       const {

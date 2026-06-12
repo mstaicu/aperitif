@@ -50,7 +50,7 @@ export const createApp = async ({ fastifyOtel, runtime, services }) => {
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db: runtime.persistence.db });
+  await app.register(probes, { db: runtime.db });
   await app.register(jwks, { jwks: runtime.security.jwks });
   await app.register(v1, {
     prefix: "/v1",

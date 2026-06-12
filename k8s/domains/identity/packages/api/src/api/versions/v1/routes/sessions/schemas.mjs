@@ -24,13 +24,10 @@ export const RefreshTokenResponse = Type.Object(
 
 export const AccessTokenResponse = Type.Object(
   {
-    access_token: TokenString(
-      "Short-lived JWT access token minted for the product API audience.",
-    ),
+    access_token: TokenString("Short-lived JWT access token."),
   },
   {
     additionalProperties: false,
-    description:
-      "Product API access token returned after validating the refresh token.",
+    description: "Access token returned after validating the refresh token.",
   },
 );
