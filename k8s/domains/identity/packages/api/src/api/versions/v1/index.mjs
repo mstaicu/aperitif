@@ -8,6 +8,7 @@ import registerChallenge from "./routes/passkeys/register.challenge.mjs";
 import register from "./routes/passkeys/register.mjs";
 import accessToken from "./routes/sessions/access-token.mjs";
 import refreshToken from "./routes/sessions/refresh-token.mjs";
+import deleteSession from "./routes/sessions/session.delete.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify
@@ -98,6 +99,10 @@ export default async (fastify, { security, services }) => {
     sessions: services.sessions,
   });
   await fastify.register(refreshToken, {
+    prefix: "/sessions",
+    sessions: services.sessions,
+  });
+  await fastify.register(deleteSession, {
     prefix: "/sessions",
     sessions: services.sessions,
   });
