@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { LoginBody, LoginSuccessResponse } from "./schemas.mjs";
+import { LoginBody, LoginSuccessResponse } from "./passkey.schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -31,14 +31,10 @@ export default async function (fastify, { passkeys }) {
       },
     },
     async function (request, reply) {
-      const input = {
-        authentication: request.body.authentication,
-      };
-
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply.code(200).send(await passkeys.login(input));
+      return reply.code(200).send(await passkeys.login(request.body));
     },
   );
 }

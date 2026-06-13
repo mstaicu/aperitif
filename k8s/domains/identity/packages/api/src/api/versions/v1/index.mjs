@@ -4,6 +4,8 @@ import swaggerUI from "@fastify/swagger-ui";
 import operator from "./routes/operators/operator.mjs";
 import loginChallenge from "./routes/passkeys/login.challenge.mjs";
 import login from "./routes/passkeys/login.mjs";
+import passkeyChallenge from "./routes/passkeys/passkey.challenge.mjs";
+import passkeyCreate from "./routes/passkeys/passkey.create.mjs";
 import registerChallenge from "./routes/passkeys/register.challenge.mjs";
 import register from "./routes/passkeys/register.mjs";
 import accessToken from "./routes/sessions/access-token.create.mjs";
@@ -62,7 +64,8 @@ export default async (fastify, { security, services }) => {
           name: "operators",
         },
         {
-          description: "Passkey registration and authentication flows",
+          description:
+            "Passkey registration, authentication, and credential management",
           name: "passkeys",
         },
         {
@@ -80,6 +83,16 @@ export default async (fastify, { security, services }) => {
   await fastify.register(login, {
     passkeys: services.passkeys,
     prefix: "/passkeys",
+  });
+  await fastify.register(passkeyChallenge, {
+    passkeys: services.passkeys,
+    prefix: "/passkeys",
+    security,
+  });
+  await fastify.register(passkeyCreate, {
+    passkeys: services.passkeys,
+    prefix: "/passkeys",
+    security,
   });
   await fastify.register(registerChallenge, {
     passkeys: services.passkeys,

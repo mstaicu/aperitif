@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { AuthenticationChallengeResponse } from "./schemas.mjs";
+import { AuthenticationChallengeResponse } from "./passkey.schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify

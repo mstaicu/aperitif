@@ -1,5 +1,8 @@
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { RegistrationBody, RegistrationSuccessResponse } from "./schemas.mjs";
+import {
+  PasskeyRegistrationBody,
+  RegistrationSuccessResponse,
+} from "./passkey.schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -15,9 +18,9 @@ export default async function (fastify, { passkeys }) {
     "/register",
     {
       schema: {
-        body: RegistrationBody,
+        body: PasskeyRegistrationBody,
         description:
-          "Verifies the WebAuthn registration response, creates the identity if needed, stores the credential, and issues the first refresh token.",
+          "Verifies the WebAuthn registration response, stores the first passkey, and issues the first refresh token.",
         operationId: "registerPasskey",
         response: {
           201: RegistrationSuccessResponse,
@@ -32,14 +35,10 @@ export default async function (fastify, { passkeys }) {
       },
     },
     async function (request, reply) {
-      const input = {
-        credential: request.body.credential,
-      };
-
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply.code(201).send(await passkeys.register(input));
+      return reply.code(201).send(await passkeys.register(request.body));
     },
   );
 }

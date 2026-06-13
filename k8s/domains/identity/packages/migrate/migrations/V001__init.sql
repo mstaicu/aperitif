@@ -1,7 +1,10 @@
 CREATE EXTENSION "pgcrypto";
 
 CREATE TABLE users (
-    id UUID PRIMARY KEY
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    email TEXT NOT NULL UNIQUE
+        CHECK (email = lower(btrim(email)))
 );
 
 CREATE TABLE operators (
@@ -24,12 +27,20 @@ CREATE TABLE passkey_credentials (
     sign_count BIGINT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE challenges (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE registration_challenges (
+    challenge BYTEA PRIMARY KEY,
 
-    user_id UUID,
+    user_id UUID NOT NULL,
 
-    challenge BYTEA NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE
+        CHECK (email = lower(btrim(email))),
+
+    expires_at TIMESTAMPTZ NOT NULL
+        DEFAULT NOW() + INTERVAL '2 minutes'
+);
+
+CREATE TABLE authentication_challenges (
+    challenge BYTEA PRIMARY KEY,
 
     expires_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW() + INTERVAL '2 minutes'

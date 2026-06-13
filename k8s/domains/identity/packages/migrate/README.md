@@ -8,7 +8,8 @@ This package builds `identity-migrate`. Flyway owns identity schema history.
 users
 operators
 passkey_credentials
-challenges
+registration_challenges
+authentication_challenges
 sessions
 session_refresh_tokens
 flyway_schema_history
@@ -16,6 +17,8 @@ flyway_schema_history
 
 Refresh tokens are stored as hashes in `session_refresh_tokens`. Reuse of a
 consumed/revoked refresh token revokes the session.
+
+`users.email` is the human account identifier.
 
 ## Files
 

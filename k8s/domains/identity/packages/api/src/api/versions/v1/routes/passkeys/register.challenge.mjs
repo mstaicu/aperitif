@@ -1,5 +1,8 @@
 import { ProblemResponse } from "../../../../problem-details.mjs";
-import { RegistrationChallengeResponse } from "./schemas.mjs";
+import {
+  RegistrationChallengeBody,
+  RegistrationChallengeResponse,
+} from "./passkey.schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
@@ -15,11 +18,15 @@ export default async function (fastify, { passkeys }) {
     "/register/challenge",
     {
       schema: {
+        body: RegistrationChallengeBody,
         description:
-          "Generates and persists a one-time WebAuthn credential creation challenge used to register a new passkey and bootstrap a new identity.",
+          "Generates and persists a one-time WebAuthn credential creation challenge used to create a new identity.",
         operationId: "createPasskeyRegistrationChallenge",
         response: {
           200: RegistrationChallengeResponse,
+          400: ProblemResponse,
+          404: ProblemResponse,
+          409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
@@ -27,13 +34,15 @@ export default async function (fastify, { passkeys }) {
         tags: ["passkeys"],
       },
     },
-    async function (_, reply) {
+    async function (req, reply) {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply
-        .code(200)
-        .send({ publicKey: await passkeys.createRegisterChallenge() });
+      return reply.code(200).send({
+        publicKey: await passkeys.createRegisterChallenge({
+          email: req.body?.email,
+        }),
+      });
     },
   );
 }

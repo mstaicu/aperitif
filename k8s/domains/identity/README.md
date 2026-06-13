@@ -11,7 +11,8 @@ Core authority domain. Publishes no domain events today.
 - `users`
 - `operators`
 - `passkey_credentials`
-- `challenges`
+- `registration_challenges`
+- `authentication_challenges`
 - `sessions`
 - `session_refresh_tokens`
 - JWKS for identity-issued access-token verification
@@ -23,8 +24,9 @@ Core authority domain. Publishes no domain events today.
 - capability grants
 - business-domain records
 
-Platform operators are DB-seeded users with full platform admin rights. Passkeys
-authenticate users; they do not grant product authority.
+Users have an email account identifier. Passkeys authenticate users; they do not
+grant product authority. Platform operators are users with full platform admin
+rights.
 
 ## Units
 
@@ -42,7 +44,7 @@ No worker exists. Add one only with a real event contract.
 ## Public Contracts
 
 - JWKS: `GET api.tma.com/.well-known/jwks.json`
-- Passkey registration/login routes are under `/v1/passkeys`.
+- Email-first passkey registration/login routes are under `/v1/passkeys`.
 - Session token routes are under `/v1/sessions`.
 - Operator routes are under `/v1/operators`.
 - API docs: `GET api.tma.com/v1/identity/docs`

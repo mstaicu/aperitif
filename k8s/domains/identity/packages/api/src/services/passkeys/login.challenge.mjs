@@ -16,8 +16,8 @@ export const createLoginChallenge = (runtime) => async () => {
 
     await runtime.db.query(
       `
-        INSERT INTO challenges (user_id, challenge)
-        VALUES (NULL, $1)
+        INSERT INTO authentication_challenges (challenge)
+        VALUES ($1)
       `,
       [challenge],
     );

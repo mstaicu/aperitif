@@ -63,6 +63,11 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
+  EMAIL_REQUIRED: {
+    status: 400,
+    title: "Email required",
+    type: "/problems/email-required",
+  },
   FORBIDDEN: {
     status: 403,
     title: "Forbidden",
@@ -102,6 +107,11 @@ const PROBLEMS = {
     status: 401,
     title: "Invalid refresh token",
     type: "/problems/invalid-refresh-token",
+  },
+  USER_ALREADY_REGISTERED: {
+    status: 409,
+    title: "User already registered",
+    type: "/problems/user-already-registered",
   },
   USER_NOT_FOUND: {
     status: 404,

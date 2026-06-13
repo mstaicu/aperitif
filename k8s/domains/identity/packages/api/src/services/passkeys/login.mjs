@@ -25,10 +25,6 @@ const generateRefreshToken = () => {
 export const login =
   (runtime) =>
   async ({ authentication }) => {
-    const { app, db } = runtime;
-
-    const { hostname, origin } = new URL(app.origin);
-
     if (authentication.id !== authentication.rawId) {
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
@@ -54,35 +50,26 @@ export const login =
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
-    let challengeBytes;
-
-    try {
-      challengeBytes = Buffer.from(clientDataJSON.challenge, "base64url");
-    } catch {
-      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
-    }
-
     let client;
 
     try {
       const {
         rows: [challengeRow],
-      } = await db.query(
+      } = await runtime.db.query(
         `
-          DELETE FROM challenges
+          DELETE FROM authentication_challenges
           WHERE challenge = $1
-            AND user_id IS NULL
             AND expires_at > NOW()
           RETURNING challenge
         `,
-        [challengeBytes],
+        [Buffer.from(clientDataJSON.challenge, "base64url")],
       );
 
       if (!challengeRow) {
         throw new Error("AUTHENTICATION_FAILED");
       }
 
-      client = await db.connect();
+      client = await runtime.db.connect();
       await client.query("BEGIN");
 
       const {
@@ -116,6 +103,8 @@ export const login =
           throw new Error("AUTHENTICATION_FAILED");
         }
       }
+
+      const { hostname, origin } = new URL(runtime.app.origin);
 
       let verification;
 

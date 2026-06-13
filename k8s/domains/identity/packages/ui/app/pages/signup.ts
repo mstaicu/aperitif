@@ -82,6 +82,23 @@ export const signupPage = {
                 text-decoration: none;
               }
 
+              label {
+                display: grid;
+                gap: 0.5rem;
+                margin: 1.5rem 0 1rem;
+                color: #5f5548;
+                font-weight: 700;
+              }
+
+              input {
+                border: 1px solid #d8cfbf;
+                border-radius: 999px;
+                background: #fffaf0;
+                color: #14110f;
+                font: inherit;
+                padding: 0.9rem 1rem;
+              }
+
               .status,
               .back {
                 min-height: 1.5rem;
@@ -104,6 +121,10 @@ export const signupPage = {
                 Create a passkey and let the identity API issue the first
                 session.
               </p>
+              <label>
+                Email
+                <input type="email" autocomplete="email" data-email required />
+              </label>
               <button
                 type="button"
                 data-signup

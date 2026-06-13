@@ -38,12 +38,10 @@ export const revokeSession =
       );
 
       if (!refreshToken?.session_id) {
-        await client.query("ROLLBACK");
         throw new Error("SESSION_NOT_FOUND");
       }
 
       if (refreshToken.consumed_at || refreshToken.session_revoked_at) {
-        await client.query("ROLLBACK");
         throw new Error("SESSION_NOT_FOUND");
       }
 
@@ -76,6 +74,8 @@ export const revokeSession =
         }),
       );
     } catch (err) {
+      await client?.query("ROLLBACK").catch(() => {});
+
       if (err instanceof DatabaseError) {
         if (
           err.code?.startsWith("08") ||

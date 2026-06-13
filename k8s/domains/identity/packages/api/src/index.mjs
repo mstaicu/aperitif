@@ -11,12 +11,8 @@ for (const name of requiredEnv) {
   }
 }
 
-if (!process.env.ORIGIN) {
-  throw new Error("ORIGIN is required");
-}
-
 try {
-  new URL(process.env.ORIGIN);
+  new URL(/** @type {string} */ (process.env.ORIGIN));
 } catch {
   throw new Error(`Invalid ORIGIN: ${process.env.ORIGIN}`);
 }

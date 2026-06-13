@@ -38,7 +38,10 @@ spec:
                 - -c
                 - |
                   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
-                  DELETE FROM challenges
+                  DELETE FROM registration_challenges
+                  WHERE expires_at < NOW() - INTERVAL '10 minutes';
+
+                  DELETE FROM authentication_challenges
                   WHERE expires_at < NOW() - INTERVAL '10 minutes';
 
                   DELETE FROM sessions

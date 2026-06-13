@@ -15,14 +15,18 @@ export const createAccessToken =
 
     let session;
 
-    let operator;
-
     try {
       ({
         rows: [session],
       } = await runtime.db.query(
         `
-          SELECT s.user_id
+          SELECT
+            s.user_id,
+            EXISTS (
+              SELECT 1
+              FROM operators o
+              WHERE o.user_id = s.user_id
+            ) AS operator
           FROM session_refresh_tokens rt
           JOIN sessions s ON s.id = rt.session_id
           WHERE rt.token_hash = $1
@@ -36,17 +40,6 @@ export const createAccessToken =
       if (!session) {
         throw new Error("SESSION_NOT_FOUND");
       }
-
-      ({
-        rows: [operator],
-      } = await runtime.db.query(
-        `
-          SELECT 1
-          FROM operators
-          WHERE user_id = $1
-        `,
-        [session.user_id],
-      ));
     } catch (err) {
       if (err instanceof DatabaseError) {
         if (
@@ -73,7 +66,7 @@ export const createAccessToken =
       sub: session.user_id,
     };
 
-    if (operator) {
+    if (session.operator) {
       claims.operator = true;
     }
 

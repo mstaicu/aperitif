@@ -3,7 +3,7 @@ import { Type } from "@sinclair/typebox";
 /**
  * @param {string} description
  */
-const base64UrlString = (description) =>
+export const Base64UrlString = (description) =>
   Type.String({
     description,
     maxLength: 8192,
@@ -11,7 +11,7 @@ const base64UrlString = (description) =>
     pattern: "^[A-Za-z0-9_-]+={0,2}$",
   });
 
-const AuthenticatorTransport = Type.Union([
+export const AuthenticatorTransport = Type.Union([
   Type.Literal("ble"),
   Type.Literal("cable"),
   Type.Literal("hybrid"),
@@ -21,15 +21,15 @@ const AuthenticatorTransport = Type.Union([
   Type.Literal("usb"),
 ]);
 
-const PublicKeyCredentialHint = Type.Union([
+export const PublicKeyCredentialHint = Type.Union([
   Type.Literal("client-device"),
   Type.Literal("hybrid"),
   Type.Literal("security-key"),
 ]);
 
-const PublicKeyCredentialDescriptorJSON = Type.Object(
+export const PublicKeyCredentialDescriptorJSON = Type.Object(
   {
-    id: base64UrlString("Credential identifier encoded as base64url."),
+    id: Base64UrlString("Credential identifier encoded as base64url."),
     transports: Type.Optional(
       Type.Array(AuthenticatorTransport, {
         description:
@@ -44,13 +44,13 @@ const PublicKeyCredentialDescriptorJSON = Type.Object(
   },
 );
 
-const PublicKeyCredentialUserEntityJSON = Type.Object(
+export const PublicKeyCredentialUserEntityJSON = Type.Object(
   {
     displayName: Type.String({
       description: "Human-readable display name shown by the authenticator UI.",
       minLength: 1,
     }),
-    id: base64UrlString("User handle encoded as base64url."),
+    id: Base64UrlString("User handle encoded as base64url."),
     name: Type.String({
       description: "Stable username label carried into the authenticator UI.",
       minLength: 1,
@@ -62,7 +62,7 @@ const PublicKeyCredentialUserEntityJSON = Type.Object(
   },
 );
 
-const PublicKeyCredentialParameters = Type.Object(
+export const PublicKeyCredentialParameters = Type.Object(
   {
     alg: Type.Integer({
       description: "COSE algorithm identifier supported for the credential.",
@@ -75,7 +75,7 @@ const PublicKeyCredentialParameters = Type.Object(
   },
 );
 
-const AuthenticatorSelectionCriteria = Type.Object(
+export const AuthenticatorSelectionCriteria = Type.Object(
   {
     authenticatorAttachment: Type.Optional(
       Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")], {
@@ -112,21 +112,21 @@ const AuthenticatorSelectionCriteria = Type.Object(
   },
 );
 
-const AuthenticatorAttestationResponseJSON = Type.Object(
+export const AuthenticatorAttestationResponseJSON = Type.Object(
   {
-    attestationObject: base64UrlString(
+    attestationObject: Base64UrlString(
       "Attestation object returned by the authenticator during registration.",
     ),
     authenticatorData: Type.Optional(
-      base64UrlString(
+      Base64UrlString(
         "Authenticator data, when surfaced separately by the browser.",
       ),
     ),
-    clientDataJSON: base64UrlString(
+    clientDataJSON: Base64UrlString(
       "Client data JSON blob returned by the browser during registration.",
     ),
     publicKey: Type.Optional(
-      base64UrlString(
+      Base64UrlString(
         "Public key bytes, when surfaced separately by the browser.",
       ),
     ),
@@ -148,19 +148,19 @@ const AuthenticatorAttestationResponseJSON = Type.Object(
   },
 );
 
-const AuthenticatorAssertionResponseJSON = Type.Object(
+export const AuthenticatorAssertionResponseJSON = Type.Object(
   {
-    authenticatorData: base64UrlString(
+    authenticatorData: Base64UrlString(
       "Authenticator data returned during authentication.",
     ),
-    clientDataJSON: base64UrlString(
+    clientDataJSON: Base64UrlString(
       "Client data JSON blob returned by the browser during authentication.",
     ),
-    signature: base64UrlString(
+    signature: Base64UrlString(
       "Assertion signature returned by the authenticator.",
     ),
     userHandle: Type.Optional(
-      base64UrlString(
+      Base64UrlString(
         "User handle returned by the authenticator, when present.",
       ),
     ),
@@ -171,7 +171,7 @@ const AuthenticatorAssertionResponseJSON = Type.Object(
   },
 );
 
-const RegistrationResponseJSON = Type.Object(
+export const RegistrationResponseJSON = Type.Object(
   {
     authenticatorAttachment: Type.Optional(
       Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")], {
@@ -182,8 +182,8 @@ const RegistrationResponseJSON = Type.Object(
       description:
         "Browser-reported extension results from the registration ceremony.",
     }),
-    id: base64UrlString("Credential identifier returned by the browser."),
-    rawId: base64UrlString(
+    id: Base64UrlString("Credential identifier returned by the browser."),
+    rawId: Base64UrlString(
       "Raw credential identifier returned by the browser.",
     ),
     response: AuthenticatorAttestationResponseJSON,
@@ -195,7 +195,7 @@ const RegistrationResponseJSON = Type.Object(
   },
 );
 
-const AuthenticationResponseJSON = Type.Object(
+export const AuthenticationResponseJSON = Type.Object(
   {
     authenticatorAttachment: Type.Optional(
       Type.Union([Type.Literal("platform"), Type.Literal("cross-platform")], {
@@ -207,8 +207,8 @@ const AuthenticationResponseJSON = Type.Object(
       description:
         "Browser-reported extension results from the authentication ceremony.",
     }),
-    id: base64UrlString("Credential identifier returned by the browser."),
-    rawId: base64UrlString(
+    id: Base64UrlString("Credential identifier returned by the browser."),
+    rawId: Base64UrlString(
       "Raw credential identifier returned by the browser.",
     ),
     response: AuthenticatorAssertionResponseJSON,
@@ -233,7 +233,7 @@ export const RegistrationChallengeResponse = Type.Object(
           }),
         ),
         authenticatorSelection: Type.Optional(AuthenticatorSelectionCriteria),
-        challenge: base64UrlString(
+        challenge: Base64UrlString(
           "One-time registration challenge encoded as base64url.",
         ),
         excludeCredentials: Type.Optional(
@@ -307,7 +307,7 @@ export const AuthenticationChallengeResponse = Type.Object(
               "Allowed credentials, when the browser should scope authentication to known credentials.",
           }),
         ),
-        challenge: base64UrlString(
+        challenge: Base64UrlString(
           "One-time authentication challenge encoded as base64url.",
         ),
         extensions: Type.Optional(
@@ -359,57 +359,5 @@ export const AuthenticationChallengeResponse = Type.Object(
     additionalProperties: false,
     description:
       "Authentication challenge response wrapping the WebAuthn publicKey options object.",
-  },
-);
-
-export const RegistrationBody = Type.Object(
-  {
-    credential: RegistrationResponseJSON,
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Passkey registration payload received from the browser after the WebAuthn registration ceremony.",
-  },
-);
-
-export const LoginBody = Type.Object(
-  {
-    authentication: AuthenticationResponseJSON,
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Passkey authentication payload received from the browser after the WebAuthn login ceremony.",
-  },
-);
-
-export const RegistrationSuccessResponse = Type.Object(
-  {
-    refresh_token: Type.String({
-      description:
-        "Opaque refresh token issued for the newly created identity session.",
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Successful registration result containing the first refresh token for the new identity.",
-  },
-);
-
-export const LoginSuccessResponse = Type.Object(
-  {
-    refresh_token: Type.String({
-      description:
-        "Opaque refresh token issued for the authenticated identity session.",
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Successful authentication result containing a refresh token for the existing identity.",
   },
 );
