@@ -44,17 +44,8 @@ export const assignOperator =
         user_id: userId,
       };
     } catch (err) {
-      if (err instanceof DatabaseError) {
-        if (
-          err.code?.startsWith("08") ||
-          err.code === "53300" ||
-          err.code === "57P01" ||
-          err.code === "57P02" ||
-          err.code === "57P03" ||
-          err.code === "57014"
-        ) {
-          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-        }
+      if (err instanceof DatabaseError && err.code?.startsWith("08")) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;
@@ -114,17 +105,8 @@ export const revokeOperator =
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 
-      if (err instanceof DatabaseError) {
-        if (
-          err.code?.startsWith("08") ||
-          err.code === "53300" ||
-          err.code === "57P01" ||
-          err.code === "57P02" ||
-          err.code === "57P03" ||
-          err.code === "57014"
-        ) {
-          throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-        }
+      if (err instanceof DatabaseError && err.code?.startsWith("08")) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;
