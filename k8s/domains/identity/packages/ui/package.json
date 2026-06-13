@@ -7,16 +7,16 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/instrumentation-http": "^0.218.0",
-    "@opentelemetry/instrumentation-undici": "^0.28.0",
-    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/instrumentation-http": "^0.219.0",
+    "@opentelemetry/instrumentation-undici": "^0.29.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
     "@simplewebauthn/browser": "^13.3.0",
-    "remix": "^3.0.0-beta.2"
+    "remix": "^3.0.0-beta.4"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
-    "esbuild": "^0.28.0",
-    "tsx": "^4.22.3",
+    "@types/node": "^25.9.3",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
