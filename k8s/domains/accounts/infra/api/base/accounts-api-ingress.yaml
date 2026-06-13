@@ -10,8 +10,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && PathPrefix(`/v1/accounts`)
-      middlewares:
-        - name: accounts-api-public
       services:
         - name: accounts-api-srv
           port: 3000
@@ -30,8 +28,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && PathPrefix(`/v1/accounts/docs`)
-      middlewares:
-        - name: accounts-api-public-docs
       services:
         - name: accounts-api-srv
           port: 3000

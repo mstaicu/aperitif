@@ -4,6 +4,5 @@ kind: Kustomization
 resources:
   - identity-api-depl.yaml
   - identity-api-ingress.yaml
-  - identity-api-middlewares.yaml
   - identity-api-srv.yaml
   - identity-np.yaml

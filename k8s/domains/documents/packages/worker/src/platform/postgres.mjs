@@ -7,10 +7,16 @@ export function createPostgres() {
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    connectionTimeoutMillis: 2000,
-    max: 5,
-    query_timeout: 5000,
-    statement_timeout: 5000,
+  });
+
+  pool.on("error", (err) => {
+    console.error(
+      JSON.stringify({
+        code: "code" in err ? err.code : undefined,
+        event: "database_idle_client_error",
+        level: "error",
+      }),
+    );
   });
 
   return {

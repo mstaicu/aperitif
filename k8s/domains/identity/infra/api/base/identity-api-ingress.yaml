@@ -10,8 +10,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && (PathPrefix(`/v1/operators`) || PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`))
-      middlewares:
-        - name: identity-api-public
       services:
         - name: identity-api-srv
           port: 3000
@@ -30,8 +28,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && PathPrefix(`/v1/identity/docs`)
-      middlewares:
-        - name: identity-api-public-docs-jwks
       services:
         - name: identity-api-srv
           port: 3000
@@ -50,8 +46,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && Path(`/.well-known/jwks.json`)
-      middlewares:
-        - name: identity-api-public-docs-jwks
       services:
         - name: identity-api-srv
           port: 3000

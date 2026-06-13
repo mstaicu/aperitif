@@ -10,8 +10,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`api.tma.com`) && PathPrefix(`/v1/capabilities`)
-      middlewares:
-        - name: capabilities-api-public
       services:
         - name: capabilities-api-srv
           port: 3000

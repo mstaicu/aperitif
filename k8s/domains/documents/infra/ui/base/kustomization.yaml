@@ -4,6 +4,5 @@ kind: Kustomization
 resources:
   - documents-ui-depl.yaml
   - documents-ui-ingress.yaml
-  - documents-ui-middlewares.yaml
   - documents-ui-np.yaml
   - documents-ui-srv.yaml

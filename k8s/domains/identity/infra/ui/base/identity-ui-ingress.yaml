@@ -10,8 +10,6 @@ spec:
   routes:
     - kind: Rule
       match: Host(`tma.com`) && (PathPrefix(`/login`) || PathPrefix(`/signup`) || PathPrefix(`/identity/assets`))
-      middlewares:
-        - name: identity-ui-public
       services:
         - name: identity-ui-srv
           port: 3000
