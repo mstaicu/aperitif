@@ -28,7 +28,17 @@ export const listCapabilities = (runtime) => async () => {
       capabilities: rows,
     };
   } catch (err) {
-    if (err instanceof DatabaseError && err.code?.startsWith("08")) {
+    if (
+      (err instanceof DatabaseError &&
+        (err.code?.startsWith("08") ||
+          err.code === "57P01" ||
+          err.code === "57P03" ||
+          err.code === "53300")) ||
+      (err instanceof Error &&
+        "code" in err &&
+        "syscall" in err &&
+        typeof err.code === "string")
+    ) {
       throw new Error("DATABASE_UNAVAILABLE", { cause: err });
     }
 

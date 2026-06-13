@@ -107,7 +107,17 @@ export const createDocument =
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 
-      if (err instanceof DatabaseError && err.code?.startsWith("08")) {
+      if (
+        (err instanceof DatabaseError &&
+          (err.code?.startsWith("08") ||
+            err.code === "57P01" ||
+            err.code === "57P03" ||
+            err.code === "53300")) ||
+        (err instanceof Error &&
+          "code" in err &&
+          "syscall" in err &&
+          typeof err.code === "string")
+      ) {
         throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
