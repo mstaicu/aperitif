@@ -20,7 +20,6 @@ export default async function (fastify, { sessions }) {
         response: {
           204: {
             description: "Session revoked.",
-            type: "null",
           },
           401: ProblemResponse,
           500: ProblemResponse,
@@ -40,7 +39,7 @@ export default async function (fastify, { sessions }) {
 
       await sessions.revokeSession({ refresh_token: token });
 
-      return reply.code(204).send(null);
+      return reply.code(204).send();
     },
   );
 }

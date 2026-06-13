@@ -6,9 +6,9 @@ import loginChallenge from "./routes/passkeys/login.challenge.mjs";
 import login from "./routes/passkeys/login.mjs";
 import registerChallenge from "./routes/passkeys/register.challenge.mjs";
 import register from "./routes/passkeys/register.mjs";
-import accessToken from "./routes/sessions/access-token.mjs";
-import refreshToken from "./routes/sessions/refresh-token.mjs";
-import deleteSession from "./routes/sessions/session.delete.mjs";
+import accessToken from "./routes/sessions/access-token.create.mjs";
+import refreshToken from "./routes/sessions/refresh-token.rotate.mjs";
+import deleteSession from "./routes/sessions/session.revoke.mjs";
 
 /**
  * @typedef {import("../../../app.mjs").FastifyInstance} Fastify

@@ -6,7 +6,12 @@ const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
 const OUTBOX_BATCH_SIZE = 10;
 const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
-// LISTEN only wakes the worker; outbox_events is the source of truth.
+/**
+ * LISTEN only wakes the worker; outbox_events is the source of truth.
+ *
+ * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {AbortSignal} signal
+ */
 export async function runPublishOutbox(runtime, signal) {
   signal.throwIfAborted();
 

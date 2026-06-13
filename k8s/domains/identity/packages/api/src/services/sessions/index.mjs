@@ -1,6 +1,6 @@
-import { createAccessToken } from "./access-token.mjs";
-import { rotateRefreshToken } from "./refresh-token.mjs";
-import { revokeSession } from "./session.mjs";
+import { createAccessToken } from "./access-token.create.mjs";
+import { rotateRefreshToken } from "./refresh-token.rotate.mjs";
+import { revokeSession } from "./session.revoke.mjs";
 
 /**
  * @param {import("../../platform/runtime.mjs").Runtime} runtime
