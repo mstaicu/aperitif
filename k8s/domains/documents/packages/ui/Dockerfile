@@ -23,11 +23,11 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
-EXPOSE 3000 9229
+EXPOSE 3000
 
 USER node
 
-CMD ["./node_modules/.bin/tsx", "--experimental-loader=@opentelemetry/instrumentation/hook.mjs", "--import", "./app/platform/observability/otel.ts", "--watch", "server.ts"]
+CMD ["./node_modules/.bin/tsx", "--watch", "server.ts"]
 
 FROM base AS build
 
@@ -50,4 +50,4 @@ EXPOSE 3000
 
 USER node
 
-CMD ["node", "--experimental-loader=@opentelemetry/instrumentation/hook.mjs", "--import", "./dist/otel.js", "dist/server.js"]
+CMD ["node", "dist/server.js"]

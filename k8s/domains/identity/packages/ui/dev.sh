@@ -17,9 +17,5 @@ esbuild app/pages/*.client.ts \
 assets_pid="$!"
 trap 'kill "$assets_pid" 2>/dev/null || true' EXIT INT TERM
 
-# tsx preloads OTel before server.ts so HTTP/Undici instrumentation can patch
-# the runtime before Remix creates the server and performs internal fetches.
 NODE_ENV=development tsx \
-  --experimental-loader=@opentelemetry/instrumentation/hook.mjs \
-  --import ./app/platform/observability/otel.ts \
   --watch server.ts

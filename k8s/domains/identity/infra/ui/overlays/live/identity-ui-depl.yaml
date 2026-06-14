@@ -22,6 +22,8 @@ spec:
             - name: tmp
               mountPath: /tmp
           env:
+            - name: NODE_OPTIONS
+              value: "--experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./dist/otel.js"
             - name: OTEL_SERVICE_NAME
               value: identity-ui
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

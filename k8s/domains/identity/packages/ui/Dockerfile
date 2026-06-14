@@ -36,8 +36,7 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
-# 9229 should be for debugger
-EXPOSE 3000 9229
+EXPOSE 3000
 
 USER node
 
@@ -45,7 +44,7 @@ USER node
 #   tini
 #     sh ./dev.sh
 #       esbuild --watch=forever
-#       tsx --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./app/platform/observability/otel.ts --watch server.ts
+#       tsx --watch server.ts
 # Keep npm out of the container process chain. `dev.sh` starts both watchers,
 # leaves the server watcher in the foreground, and cleans up the asset watcher
 # on exit. Tini's process-group mode sends SIGTERM to both watchers during
@@ -76,10 +75,4 @@ EXPOSE 3000
 
 USER node
 
-# Prod process tree:
-#   tini
-#     node --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./dist/otel.js dist/server.js
-# Run node directly in prod so SIGTERM reaches the server through one tiny init
-# layer, without npm or shell signal-forwarding behavior in the middle. OTel is
-# preloaded before the server so automatic HTTP instrumentation can patch first.
-CMD ["node", "--experimental-loader=@opentelemetry/instrumentation/hook.mjs", "--import", "./dist/otel.js", "dist/server.js"]
+CMD ["node", "dist/server.js"]

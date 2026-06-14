@@ -34,8 +34,7 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
-# 9229 should be for debugger
-EXPOSE 9229
+EXPOSE 3000
 
 USER node
 
