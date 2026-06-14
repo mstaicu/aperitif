@@ -6,16 +6,22 @@ import { buildAccountCapabilitiesUpdatedEvent } from "../../events/index.mjs";
  * @typedef {object} CapabilityGrantInput
  * @property {string} capability_id
  * @property {string} grant_id
- * @property {unknown} value
+ * @property {boolean | number} value
  */
 
 /**
- * @typedef {object} CapabilityGrantRow
- * @property {string | undefined} [grant_id]
- * @property {string | null} capability_id
- * @property {"boolean_or" | "number_max" | "number_sum" | null} merge_strategy
- * @property {unknown} value
- * @property {"boolean" | "number" | null} value_type
+ * @typedef {object} CapabilityDefinition
+ * @property {string} id
+ * @property {"boolean_or" | "number_max" | "number_sum"} merge_strategy
+ * @property {"boolean" | "number"} value_type
+ */
+
+/**
+ * @typedef {object} StoredCapabilityGrant
+ * @property {string} capability_id
+ * @property {"boolean_or" | "number_max" | "number_sum"} merge_strategy
+ * @property {boolean | number} value
+ * @property {"boolean" | "number"} value_type
  */
 
 /**
@@ -50,56 +56,92 @@ export const addAccountCapabilities =
         throw new Error("ACCOUNT_NOT_FOUND");
       }
 
-      /** @type {{ rows: CapabilityGrantRow[] }} */
-      const grantsResult = await client.query(
+      const capabilityIds = [
+        ...new Set(capabilities.map((capability) => capability.capability_id)),
+      ];
+
+      /** @type {{ rows: CapabilityDefinition[] }} */
+      const { rows: capabilityDefinitions } = await client.query(
         `
-          SELECT f.id AS capability_id,
-            g.value,
-            f.merge_strategy,
-            f.value_type
-          FROM account_capability_grants g
-          JOIN capabilities f ON g.capability_id = f.id
-          WHERE g.account_id = $1
-          ORDER BY f.id
+          SELECT id,
+            merge_strategy,
+            value_type
+          FROM capabilities
+          WHERE id = ANY($1::text[])
         `,
-        [accountId],
+        [capabilityIds],
       );
-      const { rows: grants } = grantsResult;
 
-      /** @type {{ rows: CapabilityGrantRow[] }} */
-      const requestedGrantsResult = await client.query(
-        `
-          SELECT incoming.grant_id,
-            f.id AS capability_id,
-            incoming.value,
-            f.merge_strategy,
-            f.value_type
-          FROM jsonb_to_recordset($1::jsonb) AS incoming(
-            capability_id TEXT,
-            grant_id UUID,
-            value JSONB
-          )
-          LEFT JOIN capabilities f ON f.id = incoming.capability_id
-          ORDER BY f.id
-        `,
-        [JSON.stringify(capabilities)],
+      const capabilityDefinitionsById = new Map(
+        capabilityDefinitions.map((capability) => [capability.id, capability]),
       );
-      const { rows: requestedGrants } = requestedGrantsResult;
 
-      const pendingGrants = [...grants, ...requestedGrants];
+      for (const capability of capabilities) {
+        const definition = capabilityDefinitionsById.get(
+          capability.capability_id,
+        );
 
-      /** @type {Map<string, { id: string, value: unknown }>} */
-      const accountCapabilitiesById = new Map();
-
-      for (const grant of pendingGrants) {
-        if (
-          !grant.capability_id ||
-          !grant.merge_strategy ||
-          !grant.value_type
-        ) {
+        if (!capability.grant_id || !definition) {
           throw new Error("CAPABILITY_NOT_FOUND");
         }
 
+        if (
+          definition.value_type === "boolean" &&
+          typeof capability.value !== "boolean"
+        ) {
+          throw new Error("INVALID_CAPABILITY_VALUE");
+        }
+
+        if (
+          definition.value_type === "number" &&
+          (typeof capability.value !== "number" ||
+            !Number.isFinite(capability.value))
+        ) {
+          throw new Error("INVALID_CAPABILITY_VALUE");
+        }
+      }
+
+      for (const capability of capabilities) {
+        await client.query(
+          `
+            INSERT INTO account_capability_grants (
+              account_id,
+              grant_id,
+              capability_id,
+              value
+            )
+            VALUES ($1, $2, $3, $4::jsonb)
+            ON CONFLICT (account_id, grant_id, capability_id)
+            DO UPDATE SET value = EXCLUDED.value
+          `,
+          [
+            accountId,
+            capability.grant_id,
+            capability.capability_id,
+            JSON.stringify(capability.value),
+          ],
+        );
+      }
+
+      /** @type {{ rows: StoredCapabilityGrant[] }} */
+      const { rows: grants } = await client.query(
+        `
+          SELECT g.capability_id,
+            g.value,
+            c.merge_strategy,
+            c.value_type
+          FROM account_capability_grants g
+          JOIN capabilities c ON c.id = g.capability_id
+          WHERE g.account_id = $1
+          ORDER BY g.capability_id
+        `,
+        [accountId],
+      );
+
+      /** @type {Map<string, { id: string, value: boolean | number }>} */
+      const accountCapabilitiesById = new Map();
+
+      for (const grant of grants) {
         if (
           grant.value_type === "boolean" &&
           typeof grant.value !== "boolean"
@@ -124,24 +166,16 @@ export const addAccountCapabilities =
           continue;
         }
 
-        switch (grant.merge_strategy) {
-          case "boolean_or":
-            current.value = current.value === true || grant.value === true;
-            break;
+        if (grant.merge_strategy === "boolean_or") {
+          current.value = current.value === true || grant.value === true;
+        }
 
-          case "number_max":
-            current.value = Math.max(
-              Number(current.value),
-              Number(grant.value),
-            );
-            break;
+        if (grant.merge_strategy === "number_max") {
+          current.value = Math.max(Number(current.value), Number(grant.value));
+        }
 
-          case "number_sum":
-            current.value = Number(current.value) + Number(grant.value);
-            break;
-
-          default:
-            throw new Error("UNKNOWN_MERGE_STRATEGY");
+        if (grant.merge_strategy === "number_sum") {
+          current.value = Number(current.value) + Number(grant.value);
         }
       }
 
@@ -153,27 +187,6 @@ export const addAccountCapabilities =
         `
           SELECT nextval('account_capabilities_version_seq') AS version
         `,
-      );
-
-      await client.query(
-        `
-          INSERT INTO account_capability_grants (
-            account_id,
-            grant_id,
-            capability_id,
-            value
-          )
-          SELECT $1,
-            incoming.grant_id,
-            incoming.capability_id,
-            incoming.value
-          FROM jsonb_to_recordset($2::jsonb) AS incoming(
-            grant_id UUID,
-            capability_id TEXT,
-            value JSONB
-          )
-        `,
-        [accountId, JSON.stringify(requestedGrants)],
       );
 
       const event = buildAccountCapabilitiesUpdatedEvent(
@@ -203,9 +216,9 @@ export const addAccountCapabilities =
         JSON.stringify({
           account_id: accountId,
           capability_count: accountCapabilities.length,
-          event: "account_capability_grants_added",
+          event: "account_capability_grants_set",
           event_id: event.id,
-          grant_count: requestedGrants.length,
+          grant_count: capabilities.length,
           level: "info",
           version: Number(version),
         }),
@@ -216,14 +229,6 @@ export const addAccountCapabilities =
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
-
-      if (
-        err instanceof DatabaseError &&
-        err.code === "23505" &&
-        err.constraint === "account_capability_grants_pkey"
-      ) {
-        throw new Error("CAPABILITY_GRANT_DUPLICATE", { cause: err });
-      }
 
       if (
         (err instanceof DatabaseError &&

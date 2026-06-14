@@ -60,7 +60,7 @@ const verifyPasskeyRegistration = async (runtime, credential) => {
       DELETE FROM registration_challenges
       WHERE challenge = $1
         AND expires_at > NOW()
-      RETURNING user_id, email, challenge
+      RETURNING user_id, challenge
     `,
     [Buffer.from(clientDataJSON.challenge, "base64url")],
   );
@@ -107,7 +107,6 @@ const verifyPasskeyRegistration = async (runtime, credential) => {
 
   return {
     credentialId: Buffer.from(registrationCredential.id, "base64url"),
-    email: /** @type {string} */ (challengeRow.email),
     publicKey: Buffer.from(registrationCredential.publicKey),
     signCount: registrationCredential.counter,
     userId: /** @type {string} */ (challengeRow.user_id),
@@ -134,12 +133,12 @@ export const register =
         rows: [user],
       } = await client.query(
         `
-          INSERT INTO users (id, email)
-          VALUES ($1, $2)
+          INSERT INTO users (id)
+          VALUES ($1)
           ON CONFLICT DO NOTHING
           RETURNING id
         `,
-        [registration.userId, registration.email],
+        [registration.userId],
       );
 
       if (!user) {

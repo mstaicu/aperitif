@@ -18,7 +18,7 @@ export const AccountEventResourceSchema = Type.Object(
 export const AccountCapabilityEventResourceSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
-    value: Type.Unknown(),
+    value: Type.Union([Type.Boolean(), Type.Number()]),
   },
   { additionalProperties: false },
 );

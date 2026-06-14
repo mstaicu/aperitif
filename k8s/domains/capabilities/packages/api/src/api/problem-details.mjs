@@ -53,11 +53,6 @@ const PROBLEMS = {
     title: "Account not found",
     type: "/problems/account-not-found",
   },
-  CAPABILITY_GRANT_DUPLICATE: {
-    status: 409,
-    title: "Capability grant already exists",
-    type: "/problems/capability-grant-duplicate",
-  },
   CAPABILITY_NOT_FOUND: {
     status: 404,
     title: "Capability not found",

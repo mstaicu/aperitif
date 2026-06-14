@@ -4,13 +4,10 @@ import {
 } from "@simplewebauthn/browser";
 
 const button = document.querySelector<HTMLButtonElement>("[data-signup]")!;
-const email = document.querySelector<HTMLInputElement>("[data-email]")!;
 const status = document.querySelector<HTMLElement>("[data-status]")!;
 
 button.addEventListener("click", async () => {
   try {
-    if (!email.reportValidity()) return;
-
     const actionUrl = button.dataset.actionUrl!;
     const challengeUrl = button.dataset.challengeUrl!;
 
@@ -18,8 +15,6 @@ button.addEventListener("click", async () => {
     status.textContent = "Waiting for passkey...";
 
     const challenge = await fetch(challengeUrl, {
-      body: JSON.stringify({ email: email.value }),
-      headers: { "Content-Type": "application/json" },
       method: "POST",
     });
     const { publicKey } = (await challenge.json()) as {

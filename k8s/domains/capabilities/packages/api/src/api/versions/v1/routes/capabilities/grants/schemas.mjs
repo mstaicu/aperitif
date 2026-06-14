@@ -15,7 +15,7 @@ const CapabilityId = Type.String({
   minLength: 1,
 });
 
-const CapabilityValue = Type.Unknown({
+const CapabilityValue = Type.Union([Type.Boolean(), Type.Number()], {
   description: "Capability value granted to the account.",
 });
 

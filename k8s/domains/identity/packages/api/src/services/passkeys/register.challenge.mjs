@@ -8,94 +8,64 @@ import { DatabaseError } from "pg";
 
 /**
  * @param {import("../../platform/runtime.mjs").Runtime} runtime
- * @returns {(args: {email: string}) => Promise<PublicKeyCredentialCreationOptionsJSON>}
+ * @returns {() => Promise<PublicKeyCredentialCreationOptionsJSON>}
  */
-export const createRegisterChallenge =
-  (runtime) =>
-  async ({ email }) => {
-    const normalizedEmail = email?.trim().toLowerCase();
+export const createRegisterChallenge = (runtime) => async () => {
+  try {
+    const challenge = randomBytes(32);
 
-    if (!normalizedEmail) {
-      throw new Error("EMAIL_REQUIRED");
-    }
-
-    try {
-      const {
-        rows: [existingUser],
-      } = await runtime.db.query(
-        `
-          SELECT 1
-          FROM users
-          WHERE email = $1
-          LIMIT 1
-        `,
-        [normalizedEmail],
-      );
-
-      if (existingUser) {
-        throw new Error("USER_ALREADY_REGISTERED");
-      }
-
-      const challenge = randomBytes(32);
-
-      const {
-        rows: [registrationChallenge],
-      } = await runtime.db.query(
-        `
+    const {
+      rows: [registrationChallenge],
+    } = await runtime.db.query(
+      `
           INSERT INTO registration_challenges (
-            email,
             challenge,
             user_id
           )
-          VALUES ($1, $2, gen_random_uuid())
-          ON CONFLICT (email)
-          DO UPDATE SET
-            challenge = EXCLUDED.challenge,
-            expires_at = NOW() + INTERVAL '2 minutes',
-            user_id = gen_random_uuid()
-          RETURNING user_id, email
+          VALUES ($1, gen_random_uuid())
+          RETURNING user_id
         `,
-        [normalizedEmail, challenge],
-      );
+      [challenge],
+    );
 
-      const { hostname } = new URL(runtime.app.origin);
-      const webauthnUserHandle = Buffer.from(
-        registrationChallenge.user_id.replace(/-/g, ""),
-        "hex",
-      );
+    const { hostname } = new URL(runtime.app.origin);
+    const webauthnUserHandle = Buffer.from(
+      registrationChallenge.user_id.replace(/-/g, ""),
+      "hex",
+    );
 
-      return generateRegistrationOptions({
-        attestationType: "none",
-        authenticatorSelection: {
-          residentKey: "required",
-          userVerification: "required",
-        },
-        challenge,
-        rpID: hostname,
-        rpName: hostname,
-        timeout: 60000,
-        userDisplayName: registrationChallenge.email,
-        userID: webauthnUserHandle,
-        userName: registrationChallenge.email,
-      });
-    } catch (err) {
-      if (
-        (err instanceof DatabaseError &&
-          (err.code?.startsWith("08") ||
-            err.code === "57P01" ||
-            err.code === "57P03" ||
-            err.code === "53300")) ||
-        (err instanceof Error &&
-          "code" in err &&
-          "syscall" in err &&
-          typeof err.code === "string")
-      ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-      }
-
-      throw err;
+    return generateRegistrationOptions({
+      attestationType: "none",
+      authenticatorSelection: {
+        residentKey: "required",
+        userVerification: "required",
+      },
+      challenge,
+      rpID: hostname,
+      rpName: hostname,
+      timeout: 60000,
+      userDisplayName: registrationChallenge.user_id,
+      userID: webauthnUserHandle,
+      userName: registrationChallenge.user_id,
+    });
+  } catch (err) {
+    if (
+      (err instanceof DatabaseError &&
+        (err.code?.startsWith("08") ||
+          err.code === "57P01" ||
+          err.code === "57P03" ||
+          err.code === "53300")) ||
+      (err instanceof Error &&
+        "code" in err &&
+        "syscall" in err &&
+        typeof err.code === "string")
+    ) {
+      throw new Error("DATABASE_UNAVAILABLE", { cause: err });
     }
-  };
+
+    throw err;
+  }
+};
 
 /**
  * @param {import("../../platform/runtime.mjs").Runtime} runtime
@@ -109,7 +79,7 @@ export const createPasskeyChallenge =
         rows: [user],
       } = await runtime.db.query(
         `
-          SELECT id, email
+          SELECT id
           FROM users
           WHERE id = $1
         `,
@@ -127,19 +97,13 @@ export const createPasskeyChallenge =
       } = await runtime.db.query(
         `
           INSERT INTO registration_challenges (
-            email,
             challenge,
             user_id
           )
-          VALUES ($1, $2, $3)
-          ON CONFLICT (email)
-          DO UPDATE SET
-            challenge = EXCLUDED.challenge,
-            expires_at = NOW() + INTERVAL '2 minutes',
-            user_id = EXCLUDED.user_id
-          RETURNING user_id, email
+          VALUES ($1, $2)
+          RETURNING user_id
         `,
-        [user.email, challenge, user.id],
+        [challenge, user.id],
       );
 
       const { hostname } = new URL(runtime.app.origin);
@@ -158,9 +122,9 @@ export const createPasskeyChallenge =
         rpID: hostname,
         rpName: hostname,
         timeout: 60000,
-        userDisplayName: registrationChallenge.email,
+        userDisplayName: registrationChallenge.user_id,
         userID: webauthnUserHandle,
-        userName: registrationChallenge.email,
+        userName: registrationChallenge.user_id,
       });
     } catch (err) {
       if (

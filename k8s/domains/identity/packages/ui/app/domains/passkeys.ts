@@ -5,12 +5,10 @@ const apiInternalV1Url = (
   "http://traefik-srv.traefik.svc.cluster.local/v1"
 ).replace(/\/+$/, "");
 
-export async function createRegistrationChallenge({ request }: RequestContext) {
+export async function createRegistrationChallenge() {
   const response = await fetch(
     `${apiInternalV1Url}/passkeys/register/challenge`,
     {
-      body: JSON.stringify(await request.json()),
-      headers: { "Content-Type": "application/json" },
       method: "POST",
     },
   );

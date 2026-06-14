@@ -9,22 +9,6 @@ import {
 
 export { AuthenticationChallengeResponse, RegistrationChallengeResponse };
 
-export const RegistrationChallengeBody = Type.Object(
-  {
-    email: Type.String({
-      description:
-        "Email address used as the human account identifier during passkey registration.",
-      format: "email",
-      maxLength: 320,
-      minLength: 3,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description: "Passkey registration challenge request.",
-  },
-);
-
 export const PasskeyRegistrationBody = Type.Object(
   {
     credential: RegistrationResponseJSON,

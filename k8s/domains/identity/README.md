@@ -24,9 +24,9 @@ Core authority domain. Publishes no domain events today.
 - capability grants
 - business-domain records
 
-Users have an email account identifier. Passkeys authenticate users; they do not
-grant product authority. Platform operators are users with full platform admin
-rights.
+Users are stable authentication subjects. Passkeys authenticate users; they do
+not grant product authority. Platform operators are users with full platform
+admin rights.
 
 ## Units
 
@@ -44,7 +44,7 @@ No worker exists. Add one only with a real event contract.
 ## Public Contracts
 
 - JWKS: `GET api.tma.com/.well-known/jwks.json`
-- Email-first passkey registration/login routes are under `/v1/passkeys`.
+- Passkey registration/login routes are under `/v1/passkeys`.
 - Session token routes are under `/v1/sessions`.
 - Operator routes are under `/v1/operators`.
 - API docs: `GET api.tma.com/v1/identity/docs`

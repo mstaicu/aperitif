@@ -9,12 +9,16 @@ import { buildAccountCapabilitiesUpdatedEvent } from "../../events/index.mjs";
  */
 
 /**
- * @typedef {object} CapabilityGrantRow
- * @property {string | undefined} [grant_id]
- * @property {string | null} capability_id
- * @property {"boolean_or" | "number_max" | "number_sum" | null} merge_strategy
- * @property {unknown} value
- * @property {"boolean" | "number" | null} value_type
+ * @typedef {object} CapabilityDefinition
+ * @property {string} id
+ */
+
+/**
+ * @typedef {object} StoredCapabilityGrant
+ * @property {string} capability_id
+ * @property {"boolean_or" | "number_max" | "number_sum"} merge_strategy
+ * @property {boolean | number} value
+ * @property {"boolean" | "number"} value_type
  */
 
 /**
@@ -49,51 +53,50 @@ export const revokeAccountCapabilities =
         throw new Error("ACCOUNT_NOT_FOUND");
       }
 
-      /** @type {{ rows: CapabilityGrantRow[] }} */
-      const requestedGrantsResult = await client.query(
-        `
-          SELECT incoming.grant_id,
-            f.id AS capability_id,
-            NULL::jsonb AS value,
-            f.merge_strategy,
-            f.value_type
-          FROM jsonb_to_recordset($1::jsonb) AS incoming(
-            capability_id TEXT,
-            grant_id UUID
-          )
-          LEFT JOIN capabilities f ON f.id = incoming.capability_id
-          ORDER BY f.id
-        `,
-        [JSON.stringify(capabilities)],
-      );
-      const { rows: requestedGrants } = requestedGrantsResult;
+      const capabilityIds = [
+        ...new Set(capabilities.map((capability) => capability.capability_id)),
+      ];
 
-      for (const grant of requestedGrants) {
+      /** @type {{ rows: CapabilityDefinition[] }} */
+      const { rows: capabilityDefinitions } = await client.query(
+        `
+          SELECT id
+          FROM capabilities
+          WHERE id = ANY($1::text[])
+        `,
+        [capabilityIds],
+      );
+
+      const capabilityDefinitionsById = new Map(
+        capabilityDefinitions.map((capability) => [capability.id, capability]),
+      );
+
+      for (const capability of capabilities) {
         if (
-          !grant.grant_id ||
-          !grant.capability_id ||
-          !grant.merge_strategy ||
-          !grant.value_type
+          !capability.grant_id ||
+          !capabilityDefinitionsById.has(capability.capability_id)
         ) {
           throw new Error("CAPABILITY_NOT_FOUND");
         }
       }
 
-      const deleted = await client.query(
-        `
-          DELETE FROM account_capability_grants g
-          USING jsonb_to_recordset($2::jsonb) AS incoming(
-            grant_id UUID,
-            capability_id TEXT
-          )
-          WHERE g.account_id = $1
-            AND g.grant_id = incoming.grant_id
-            AND g.capability_id = incoming.capability_id
-        `,
-        [accountId, JSON.stringify(requestedGrants)],
-      );
+      let deletedCount = 0;
 
-      if (deleted.rowCount === 0) {
+      for (const capability of capabilities) {
+        const deleted = await client.query(
+          `
+            DELETE FROM account_capability_grants
+            WHERE account_id = $1
+              AND grant_id = $2
+              AND capability_id = $3
+          `,
+          [accountId, capability.grant_id, capability.capability_id],
+        );
+
+        deletedCount += deleted.rowCount ?? 0;
+      }
+
+      if (deletedCount === 0) {
         await client.query("COMMIT");
 
         return {
@@ -101,34 +104,25 @@ export const revokeAccountCapabilities =
         };
       }
 
-      /** @type {{ rows: CapabilityGrantRow[] }} */
-      const grantsResult = await client.query(
+      /** @type {{ rows: StoredCapabilityGrant[] }} */
+      const { rows: grants } = await client.query(
         `
-          SELECT f.id AS capability_id,
+          SELECT g.capability_id,
             g.value,
-            f.merge_strategy,
-            f.value_type
+            c.merge_strategy,
+            c.value_type
           FROM account_capability_grants g
-          JOIN capabilities f ON g.capability_id = f.id
+          JOIN capabilities c ON c.id = g.capability_id
           WHERE g.account_id = $1
-          ORDER BY f.id
+          ORDER BY g.capability_id
         `,
         [accountId],
       );
-      const { rows: grants } = grantsResult;
 
-      /** @type {Map<string, { id: string, value: unknown }>} */
+      /** @type {Map<string, { id: string, value: boolean | number }>} */
       const accountCapabilitiesById = new Map();
 
       for (const grant of grants) {
-        if (
-          !grant.capability_id ||
-          !grant.merge_strategy ||
-          !grant.value_type
-        ) {
-          throw new Error("CAPABILITY_NOT_FOUND");
-        }
-
         if (
           grant.value_type === "boolean" &&
           typeof grant.value !== "boolean"
@@ -153,24 +147,16 @@ export const revokeAccountCapabilities =
           continue;
         }
 
-        switch (grant.merge_strategy) {
-          case "boolean_or":
-            current.value = current.value === true || grant.value === true;
-            break;
+        if (grant.merge_strategy === "boolean_or") {
+          current.value = current.value === true || grant.value === true;
+        }
 
-          case "number_max":
-            current.value = Math.max(
-              Number(current.value),
-              Number(grant.value),
-            );
-            break;
+        if (grant.merge_strategy === "number_max") {
+          current.value = Math.max(Number(current.value), Number(grant.value));
+        }
 
-          case "number_sum":
-            current.value = Number(current.value) + Number(grant.value);
-            break;
-
-          default:
-            throw new Error("UNKNOWN_MERGE_STRATEGY");
+        if (grant.merge_strategy === "number_sum") {
+          current.value = Number(current.value) + Number(grant.value);
         }
       }
 
@@ -213,7 +199,7 @@ export const revokeAccountCapabilities =
           capability_count: accountCapabilities.length,
           event: "account_capability_grants_revoked",
           event_id: event.id,
-          grant_count: deleted.rowCount,
+          grant_count: deletedCount,
           level: "info",
           version: Number(version),
         }),

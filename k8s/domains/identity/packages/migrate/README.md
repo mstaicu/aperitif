@@ -18,8 +18,6 @@ flyway_schema_history
 Refresh tokens are stored as hashes in `session_refresh_tokens`. Reuse of a
 consumed/revoked refresh token revokes the session.
 
-`users.email` is the human account identifier.
-
 ## Files
 
 - `migrations/V###__*.sql`: Flyway migrations.

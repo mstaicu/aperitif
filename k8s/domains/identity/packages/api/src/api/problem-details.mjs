@@ -63,11 +63,6 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  EMAIL_REQUIRED: {
-    status: 400,
-    title: "Email required",
-    type: "/problems/email-required",
-  },
   FORBIDDEN: {
     status: 403,
     title: "Forbidden",

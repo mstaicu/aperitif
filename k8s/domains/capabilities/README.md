@@ -54,7 +54,7 @@ postgres -> migrate -> api/worker
 - `api`: Fastify API from `packages/api`.
 - `worker`: accounts projection consumer and outbox publisher.
 
-## Public Contracts
+## Operator API
 
 ```text
 GET /v1/capabilities
@@ -62,7 +62,7 @@ POST /v1/capabilities
 DELETE /v1/capabilities
 ```
 
-`POST` adds grant rows. `DELETE` revokes grant rows. Each requested capability
+`POST` sets grant rows. `DELETE` revokes grant rows. Each requested capability
 item carries its own `grant_id`.
 
 ## Event Contracts

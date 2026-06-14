@@ -1,4 +1,4 @@
-import { authenticate } from "../../../../../platform/security/jwt.mjs";
+import { authenticateOperator } from "../../../../../platform/security/jwt.mjs";
 import { ProblemResponse } from "../../../../problem-details.mjs";
 import { CapabilitiesResponse } from "./schemas.mjs";
 
@@ -17,11 +17,13 @@ export default async function (fastify, { capabilities, jwks }) {
     "/",
     {
       schema: {
-        description: "List capabilities known to the capabilities domain.",
+        description:
+          "Platform operator query that lists capabilities known to the capabilities domain.",
         operationId: "listCapabilities",
         response: {
           200: CapabilitiesResponse,
           401: ProblemResponse,
+          403: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
@@ -31,7 +33,7 @@ export default async function (fastify, { capabilities, jwks }) {
       },
     },
     async function (req, reply) {
-      await authenticate({
+      await authenticateOperator({
         authorization: req.headers.authorization,
         jwks,
       });
