@@ -23,6 +23,6 @@ Otherwise OTel is no-op.
 ## Checks
 
 ```sh
-kubectl kustomize platform/observability/overlays/dev
-kubectl kustomize platform/observability/overlays/live
+kubectl kustomize platform/observability/overlays/ephemeral
+kubectl kustomize platform/observability/overlays/prod-eu
 ```

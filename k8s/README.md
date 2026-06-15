@@ -10,7 +10,7 @@ domain delivery wiring.
 
 ```text
 .github/workflows/      integration and deployment workflows
-clusters/prod-eu/       Flux live graph
+clusters/prod-eu/       Flux prod-eu graph
 clusters/staging-eu/    Flux bootstrap notes
 platform/               ingress, event-bus, observability, inactive mesh
 domains/                identity, accounts, capabilities, documents
@@ -101,7 +101,7 @@ Domain Flux order remains:
 Migration Kustomizations use `force: true` so completed Jobs can rerun on image
 digest changes.
 
-Deployment workflows build images, push them, update live overlay tags/digests,
+Deployment workflows build images, push them, update prod-eu overlay tags/digests,
 and commit the manifest changes. Flux reconciles Git; Flux image automation is
 not installed.
 

@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: accounts
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - accounts-api-ingress.yaml
+
+patches:
+  - path: accounts-api-depl.yaml

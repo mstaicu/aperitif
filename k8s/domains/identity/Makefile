@@ -21,16 +21,16 @@ pre-deploy-ui: ## Validate the identity UI package before deploy.
 pre-deploy-infra: pre-deploy-manifests ## Validate identity manifests before deploy.
 
 pre-deploy-manifests: ## Render identity manifests before deploy.
-	kubectl kustomize infra/postgres/overlays/dev >/dev/null
-	kubectl kustomize infra/postgres/overlays/live >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
-	kubectl kustomize infra/migrate/overlays/live >/dev/null
-	kubectl kustomize infra/cleanup/overlays/dev >/dev/null
-	kubectl kustomize infra/cleanup/overlays/live >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/dev >/dev/null
-	kubectl kustomize infra/api/overlays/live >/dev/null
-	kubectl kustomize infra/ui/overlays/dev >/dev/null
-	kubectl kustomize infra/ui/overlays/live >/dev/null
+	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/migrate/overlays/prod-eu >/dev/null
+	kubectl kustomize infra/cleanup/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/cleanup/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/api/overlays/prod-eu >/dev/null
+	kubectl kustomize infra/ui/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/ui/overlays/prod-eu >/dev/null
 
 post-deploy: ## Verify the deployed identity boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/.well-known/jwks.json"

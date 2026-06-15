@@ -18,6 +18,6 @@ jobs:
       context: domains/capabilities/packages/migrate
       domain: capabilities
       image: mdstaicu/capabilities-migrate
-      manifest: domains/capabilities/infra/migrate/overlays/live
+      manifest: domains/capabilities/infra/migrate/overlays/prod-eu
       unit: migrate
     secrets: inherit

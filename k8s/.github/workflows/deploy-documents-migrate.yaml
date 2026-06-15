@@ -18,6 +18,6 @@ jobs:
       context: domains/documents/packages/migrate
       domain: documents
       image: mdstaicu/documents-migrate
-      manifest: domains/documents/infra/migrate/overlays/live
+      manifest: domains/documents/infra/migrate/overlays/prod-eu
       unit: migrate
     secrets: inherit

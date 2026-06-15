@@ -17,6 +17,6 @@ jobs:
       context: domains/documents/packages/ui
       domain: documents
       image: mdstaicu/documents-ui
-      manifest: domains/documents/infra/ui/overlays/live
+      manifest: domains/documents/infra/ui/overlays/prod-eu
       unit: ui
     secrets: inherit

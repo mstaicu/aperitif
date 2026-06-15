@@ -4,7 +4,6 @@ kind: Service
 metadata:
   name: traefik-lb
 spec:
-  type: LoadBalancer
   selector:
     app: traefik
   ports:

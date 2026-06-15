@@ -3,6 +3,5 @@ kind: Kustomization
 
 resources:
   - identity-ui-depl.yaml
-  - identity-ui-ingress.yaml
   - identity-ui-np.yaml
   - identity-ui-srv.yaml

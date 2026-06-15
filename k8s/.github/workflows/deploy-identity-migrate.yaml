@@ -18,6 +18,6 @@ jobs:
       context: domains/identity/packages/migrate
       domain: identity
       image: mdstaicu/identity-migrate
-      manifest: domains/identity/infra/migrate/overlays/live
+      manifest: domains/identity/infra/migrate/overlays/prod-eu
       unit: migrate
     secrets: inherit

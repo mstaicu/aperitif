@@ -5,7 +5,7 @@ metadata:
   name: event-bus
 spec:
   interval: 10m
-  path: ./k8s/platform/event-bus/overlays/live
+  path: ./k8s/platform/event-bus/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

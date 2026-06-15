@@ -21,7 +21,7 @@ metadata:
   name: ingress
 spec:
   interval: 10m
-  path: ./k8s/platform/ingress/overlays/live
+  path: ./k8s/platform/ingress/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

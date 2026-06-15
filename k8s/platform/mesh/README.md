@@ -18,6 +18,6 @@ It does not own domain authentication, authorization, or actor semantics.
 ## Checks
 
 ```sh
-kubectl kustomize platform/mesh/overlays/dev
-kubectl kustomize platform/mesh/overlays/live
+kubectl kustomize platform/mesh/overlays/ephemeral
+kubectl kustomize platform/mesh/overlays/prod-eu
 ```

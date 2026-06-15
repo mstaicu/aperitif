@@ -35,7 +35,7 @@ Flux reconciles:
 
 ```text
 clusters/prod-eu/platform/ingress.yaml
-platform/ingress/overlays/live
+platform/ingress/overlays/prod-eu
 ```
 
 Live TLS is Traefik ACME with Cloudflare DNS-01. Do not commit local mkcert
@@ -51,6 +51,6 @@ internal `http` entrypoint.
 
 ```sh
 kubectl kustomize platform/ingress/crds
-kubectl kustomize platform/ingress/overlays/dev
-kubectl kustomize platform/ingress/overlays/live
+kubectl kustomize platform/ingress/overlays/ephemeral
+kubectl kustomize platform/ingress/overlays/prod-eu
 ```

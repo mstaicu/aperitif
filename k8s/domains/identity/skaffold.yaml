@@ -7,7 +7,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - infra/postgres/overlays/dev
+      - infra/postgres/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -22,7 +22,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - infra/cleanup/overlays/dev
+      - infra/cleanup/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -47,7 +47,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/migrate/overlays/dev
+      - infra/migrate/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -81,7 +81,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/api/overlays/dev
+      - infra/api/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -119,7 +119,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/ui/overlays/dev
+      - infra/ui/overlays/ephemeral
 
 deploy:
   kubectl: {}

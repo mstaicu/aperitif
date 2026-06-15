@@ -5,7 +5,7 @@ metadata:
   name: accounts-postgres
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/infra/postgres/overlays/live
+  path: ./k8s/domains/accounts/infra/postgres/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

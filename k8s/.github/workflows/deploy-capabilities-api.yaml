@@ -17,6 +17,6 @@ jobs:
       context: domains/capabilities/packages/api
       domain: capabilities
       image: mdstaicu/capabilities-api
-      manifest: domains/capabilities/infra/api/overlays/live
+      manifest: domains/capabilities/infra/api/overlays/prod-eu
       unit: api
     secrets: inherit

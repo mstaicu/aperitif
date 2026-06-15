@@ -30,9 +30,6 @@ spec:
             - name: PORT
               value: "3000"
 
-            - name: API_INTERNAL_V1_URL
-              value: http://traefik-srv.traefik.svc.cluster.local/v1
-
           ports:
             - containerPort: 3000
               name: http

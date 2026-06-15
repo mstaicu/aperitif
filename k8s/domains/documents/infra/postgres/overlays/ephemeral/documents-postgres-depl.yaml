@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: documents-postgres-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: documents-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres

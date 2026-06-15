@@ -5,7 +5,7 @@ metadata:
   name: accounts-migrate
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/infra/migrate/overlays/live
+  path: ./k8s/domains/accounts/infra/migrate/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

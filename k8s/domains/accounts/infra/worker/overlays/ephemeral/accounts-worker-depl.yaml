@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: accounts-worker-depl
+spec:
+  template:
+    spec:
+      containers:
+        - name: accounts-worker
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres-srv:5432/accounts"
+            - name: NATS_URL
+              value: nats://nats-srv.nats.svc.cluster.local:4222
+            - name: NATS_STREAM_REPLICAS
+              value: "3"

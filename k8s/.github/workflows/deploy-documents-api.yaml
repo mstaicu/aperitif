@@ -17,6 +17,6 @@ jobs:
       context: domains/documents/packages/api
       domain: documents
       image: mdstaicu/documents-api
-      manifest: domains/documents/infra/api/overlays/live
+      manifest: domains/documents/infra/api/overlays/prod-eu
       unit: api
     secrets: inherit

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: accounts-api-depl
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: accounts-api
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres-srv:5432/accounts"
+            - name: IDENTITY_JWKS_URL
+              value: http://traefik-srv.traefik.svc.cluster.local/.well-known/jwks.json
+            - name: OTEL_SERVICE_NAME
+              value: accounts-api
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-srv.otel.svc.cluster.local:4318
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: none

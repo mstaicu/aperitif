@@ -5,7 +5,7 @@ metadata:
   name: documents-ui
 spec:
   interval: 10m
-  path: ./k8s/domains/documents/infra/ui/overlays/live
+  path: ./k8s/domains/documents/infra/ui/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

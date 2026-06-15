@@ -5,7 +5,7 @@ metadata:
   name: identity-postgres
 spec:
   interval: 10m
-  path: ./k8s/domains/identity/infra/postgres/overlays/live
+  path: ./k8s/domains/identity/infra/postgres/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

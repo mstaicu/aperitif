@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: documents-api-public
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`api.tma.com`) && (PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/accounts/[^/]+/documents$`))
+      services:
+        - name: documents-api-srv
+          port: 3000
+  tls:
+    certResolver: le
+    domains:
+      - main: api.tma.com

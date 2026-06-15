@@ -26,13 +26,6 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-          env:
-            - name: DATABASE_URL
-              value: "postgres://postgres:postgres@postgres-srv:5432/capabilities"
-
-            - name: NATS_URL
-              value: nats://nats-srv.nats.svc.cluster.local:4222
-
           ports:
             - name: health
               containerPort: 3000

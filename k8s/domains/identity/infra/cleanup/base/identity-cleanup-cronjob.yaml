@@ -31,8 +31,6 @@ spec:
                 seccompProfile:
                   type: RuntimeDefault
               env:
-                - name: DATABASE_URL
-                  value: "postgres://postgres:postgres@postgres-srv:5432/identity"
               command:
                 - sh
                 - -c

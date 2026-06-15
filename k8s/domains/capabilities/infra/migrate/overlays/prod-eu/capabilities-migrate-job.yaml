@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: migrate
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: migrate
+          securityContext:
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: FLYWAY_URL
+              value: "jdbc:postgresql://postgres-srv:5432/capabilities?user=postgres&password=postgres"

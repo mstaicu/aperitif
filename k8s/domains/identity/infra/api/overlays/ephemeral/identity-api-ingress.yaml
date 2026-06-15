@@ -1,0 +1,49 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: identity-api-public
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`api.tma.com`) && (PathPrefix(`/v1/operators`) || PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`))
+      services:
+        - name: identity-api-srv
+          port: 3000
+  tls: {}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: identity-api-public-docs
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`api.tma.com`) && PathPrefix(`/v1/identity/docs`)
+      services:
+        - name: identity-api-srv
+          port: 3000
+  tls: {}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: identity-api-public-jwks
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`api.tma.com`) && Path(`/.well-known/jwks.json`)
+      services:
+        - name: identity-api-srv
+          port: 3000
+  tls: {}

@@ -17,6 +17,6 @@ jobs:
       context: domains/capabilities/packages/worker
       domain: capabilities
       image: mdstaicu/capabilities-worker
-      manifest: domains/capabilities/infra/worker/overlays/live
+      manifest: domains/capabilities/infra/worker/overlays/prod-eu
       unit: worker
     secrets: inherit

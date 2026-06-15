@@ -26,8 +26,6 @@ spec:
               type: RuntimeDefault
 
           env:
-            - name: FLYWAY_URL
-              value: "jdbc:postgresql://postgres-srv:5432/accounts?user=postgres&password=postgres"
             - name: FLYWAY_LOCATIONS
               value: filesystem:/db/migrations
             - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS

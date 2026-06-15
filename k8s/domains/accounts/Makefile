@@ -20,14 +20,14 @@ pre-deploy-worker: ## Validate the accounts worker package before deploy.
 pre-deploy-infra: pre-deploy-manifests ## Validate accounts manifests before deploy.
 
 pre-deploy-manifests: ## Render accounts manifests before deploy.
-	kubectl kustomize infra/postgres/overlays/dev >/dev/null
-	kubectl kustomize infra/postgres/overlays/live >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/dev >/dev/null
-	kubectl kustomize infra/migrate/overlays/live >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/dev >/dev/null
-	kubectl kustomize infra/api/overlays/live >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/dev >/dev/null
-	kubectl kustomize infra/worker/overlays/live >/dev/null
+	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/migrate/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/api/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/ephemeral >/dev/null
+	kubectl kustomize infra/worker/overlays/prod-eu >/dev/null
 
 post-deploy: ## Verify the deployed accounts boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/docs/json"

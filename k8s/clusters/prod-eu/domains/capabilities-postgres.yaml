@@ -5,7 +5,7 @@ metadata:
   name: capabilities-postgres
 spec:
   interval: 10m
-  path: ./k8s/domains/capabilities/infra/postgres/overlays/live
+  path: ./k8s/domains/capabilities/infra/postgres/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

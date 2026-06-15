@@ -17,6 +17,6 @@ jobs:
       context: domains/accounts/packages/worker
       domain: accounts
       image: mdstaicu/accounts-worker
-      manifest: domains/accounts/infra/worker/overlays/live
+      manifest: domains/accounts/infra/worker/overlays/prod-eu
       unit: worker
     secrets: inherit

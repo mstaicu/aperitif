@@ -17,6 +17,6 @@ jobs:
       context: domains/identity/packages/ui
       domain: identity
       image: mdstaicu/identity-ui
-      manifest: domains/identity/infra/ui/overlays/live
+      manifest: domains/identity/infra/ui/overlays/prod-eu
       unit: ui
     secrets: inherit

@@ -5,7 +5,7 @@ metadata:
   name: identity-cleanup
 spec:
   interval: 10m
-  path: ./k8s/domains/identity/infra/cleanup/overlays/live
+  path: ./k8s/domains/identity/infra/cleanup/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

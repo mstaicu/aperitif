@@ -12,7 +12,7 @@ event-bus
 Manifests live under:
 
 ```text
-platform/event-bus/overlays/{dev,live}
+platform/event-bus/overlays/{ephemeral,prod-eu}
 ```
 
 ## Operations
@@ -21,7 +21,7 @@ platform/event-bus/overlays/{dev,live}
 make deploy-event-bus
 ```
 
-Flux live entry:
+Flux prod-eu entry:
 
 ```text
 clusters/prod-eu/platform/event-bus.yaml
@@ -40,6 +40,6 @@ Request handlers do not directly publish critical authority events.
 ## Checks
 
 ```sh
-kubectl kustomize platform/event-bus/overlays/dev
-kubectl kustomize platform/event-bus/overlays/live
+kubectl kustomize platform/event-bus/overlays/ephemeral
+kubectl kustomize platform/event-bus/overlays/prod-eu
 ```

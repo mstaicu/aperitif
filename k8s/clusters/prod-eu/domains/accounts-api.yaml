@@ -5,7 +5,7 @@ metadata:
   name: accounts-api
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/infra/api/overlays/live
+  path: ./k8s/domains/accounts/infra/api/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
