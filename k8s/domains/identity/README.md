@@ -59,7 +59,6 @@ No worker exists. Add one only with a real event contract.
 
 ```sh
 make deploy-identity
-make dev-identity
 ```
 
 Live Flux units:

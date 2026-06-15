@@ -81,7 +81,6 @@ The event is a full account capability snapshot with one event-level `version`.
 
 ```sh
 make deploy-capabilities
-make dev-capabilities
 ```
 
 Live Flux units:

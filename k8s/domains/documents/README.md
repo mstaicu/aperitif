@@ -74,7 +74,6 @@ Publishes: none.
 
 ```sh
 make deploy-documents
-make dev-documents
 ```
 
 Live Flux units:

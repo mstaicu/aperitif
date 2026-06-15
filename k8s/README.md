@@ -62,25 +62,26 @@ Postgres notifications only wake workers; the outbox is the durable source.
 
 ```sh
 brew bundle
+make deploy-core
 make dev
-make dev-identity
-make dev-accounts
-make dev-capabilities
-make dev-documents
 ```
 
 ```sh
+make dev-all
+make deploy-all
+```
+
+```sh
+make deploy-platform
 make deploy-identity
 make deploy-accounts
 make deploy-capabilities
 make deploy-documents
 ```
 
-```sh
-make deploy-ingress
-make deploy-event-bus
-make deploy-observability
-```
+`deploy-*` targets deploy only the named platform/domain boundary.
+`integration-*`, `deploy-core`, `deploy-all`, and `dev-all` compose dependency
+chains explicitly.
 
 Default local domain is `tma.com`; override with `DOMAIN=example.test`.
 

@@ -55,7 +55,6 @@ API docs: `GET api.tma.com/v1/accounts/docs`.
 
 ```sh
 make deploy-accounts
-make dev-accounts
 ```
 
 Live Flux units:

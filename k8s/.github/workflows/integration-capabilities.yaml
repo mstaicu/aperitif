@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/integration.yaml
     with:
       domain: capabilities
-      make_target: deploy-capabilities
+      make_target: integration-capabilities
     secrets: inherit

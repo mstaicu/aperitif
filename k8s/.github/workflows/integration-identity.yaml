@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/integration.yaml
     with:
       domain: identity
-      make_target: deploy-identity
+      make_target: integration-identity
     secrets: inherit

@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/integration.yaml
     with:
       domain: documents
-      make_target: deploy-documents
+      make_target: integration-documents
     secrets: inherit

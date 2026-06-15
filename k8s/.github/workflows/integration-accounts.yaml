@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/integration.yaml
     with:
       domain: accounts
-      make_target: deploy-accounts
+      make_target: integration-accounts
     secrets: inherit
