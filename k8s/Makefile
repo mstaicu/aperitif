@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := help
+.NOTPARALLEL:
 
 DOMAIN ?= tma.com
 

@@ -2,24 +2,24 @@
 
 DOMAIN ?= tma.com
 PORT ?= 443
-.PHONY: help pre-deploy pre-deploy-api pre-deploy-infra pre-deploy-manifests pre-deploy-worker post-deploy
+.PHONY: help check check-api check-infra check-manifests check-worker smoke pre-deploy post-deploy
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-pre-deploy: pre-deploy-api pre-deploy-worker pre-deploy-infra ## Validate accounts before deploying it.
+check: check-api check-worker check-infra ## Validate accounts.
 
-pre-deploy-api: ## Validate the accounts API package before deploy.
+check-api: ## Validate the accounts API package.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
 
-pre-deploy-worker: ## Validate the accounts worker package before deploy.
+check-worker: ## Validate the accounts worker package.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
 
-pre-deploy-infra: pre-deploy-manifests ## Validate accounts manifests before deploy.
+check-infra: check-manifests ## Validate accounts manifests.
 
-pre-deploy-manifests: ## Render accounts manifests before deploy.
+check-manifests: ## Render accounts manifests.
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
@@ -29,5 +29,9 @@ pre-deploy-manifests: ## Render accounts manifests before deploy.
 	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/worker/overlays/prod-eu >/dev/null
 
-post-deploy: ## Verify the deployed accounts boundary through Traefik.
+smoke: ## Verify the deployed accounts boundary through Traefik.
 	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/accounts/docs/json"
+
+pre-deploy: check
+
+post-deploy: smoke

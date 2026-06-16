@@ -1,43 +1,29 @@
 import {
   AckPolicy,
-  DeliverPolicy,
   JetStreamApiCodes,
   JetStreamApiError,
-  ReplayPolicy,
 } from "@nats-io/jetstream";
 
 import { AccountMemberUpdatedSubject } from "../../events/accounts.mjs";
-import { ACCOUNTS_STREAM } from "./accounts-stream.mjs";
 
+export const ACCOUNTS_STREAM = "ACCOUNTS";
 export const ACCOUNTS_CONSUMER = "capabilities-accounts-projection";
 
 /**
  * @param {import("../runtime.mjs").WorkerRuntime} runtime
  */
 export async function ensureAccountsConsumer(runtime) {
-  const createConfig = {
+  const config = {
     ack_policy: AckPolicy.Explicit,
-    deliver_policy: DeliverPolicy.All,
     durable_name: ACCOUNTS_CONSUMER,
     filter_subject: AccountMemberUpdatedSubject,
     max_ack_pending: 1,
-    replay_policy: ReplayPolicy.Instant,
-  };
-
-  const updateConfig = {
-    filter_subject: createConfig.filter_subject,
-    max_ack_pending: createConfig.max_ack_pending,
   };
 
   try {
     await runtime.messaging.jsm.consumers.info(
       ACCOUNTS_STREAM,
       ACCOUNTS_CONSUMER,
-    );
-    await runtime.messaging.jsm.consumers.update(
-      ACCOUNTS_STREAM,
-      ACCOUNTS_CONSUMER,
-      updateConfig,
     );
   } catch (err) {
     if (
@@ -49,6 +35,6 @@ export async function ensureAccountsConsumer(runtime) {
       throw err;
     }
 
-    await runtime.messaging.jsm.consumers.add(ACCOUNTS_STREAM, createConfig);
+    await runtime.messaging.jsm.consumers.add(ACCOUNTS_STREAM, config);
   }
 }

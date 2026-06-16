@@ -6,8 +6,10 @@ import {
   CAPABILITIES_EVENT_SCHEMA_VERSION,
   CapabilitiesEventEnvelopeCheck,
 } from "../events/capabilities.mjs";
-import { CAPABILITIES_CONSUMER } from "../platform/messaging/capabilities-consumer.mjs";
-import { CAPABILITIES_STREAM } from "../platform/messaging/capabilities-stream.mjs";
+import {
+  CAPABILITIES_CONSUMER,
+  CAPABILITIES_STREAM,
+} from "../platform/messaging/capabilities-consumer.mjs";
 
 /**
  * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime

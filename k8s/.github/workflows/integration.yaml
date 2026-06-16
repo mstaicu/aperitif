@@ -73,8 +73,8 @@ jobs:
           chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
           echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
 
-      - name: pre-deploy domain
-        run: make -C "domains/${{ inputs.domain }}" pre-deploy
+      - name: check domain
+        run: make -C "domains/${{ inputs.domain }}" check
 
       - name: create kind cluster
         uses: helm/kind-action@v1.14.0
@@ -96,8 +96,8 @@ jobs:
           echo "$!" > /tmp/traefik-port-forward.pid
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
-      - name: post-deploy domain
-        run: make -C "domains/${{ inputs.domain }}" post-deploy DOMAIN="$DOMAIN" PORT=8443
+      - name: smoke domain
+        run: make -C "domains/${{ inputs.domain }}" smoke DOMAIN="$DOMAIN" PORT=8443
 
       - name: cleanup
         if: always()

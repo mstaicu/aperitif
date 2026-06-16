@@ -6,8 +6,10 @@ import {
   AccountMemberUpdatedSubject,
   AccountsEventEnvelopeCheck,
 } from "../events/accounts.mjs";
-import { ACCOUNTS_CONSUMER } from "../platform/messaging/accounts-consumer.mjs";
-import { ACCOUNTS_STREAM } from "../platform/messaging/accounts-stream.mjs";
+import {
+  ACCOUNTS_CONSUMER,
+  ACCOUNTS_STREAM,
+} from "../platform/messaging/accounts-consumer.mjs";
 
 /**
  * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
