@@ -7,17 +7,19 @@ import { DatabaseError } from "pg";
  */
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {() => Promise<PublicKeyCredentialCreationOptionsJSON>}
  */
-export const createRegisterChallenge = (runtime) => async () => {
-  try {
-    const challenge = randomBytes(32);
+export const createRegisterChallenge =
+  ({ db, origin }) =>
+  async () => {
+    try {
+      const challenge = randomBytes(32);
 
-    const {
-      rows: [registrationChallenge],
-    } = await runtime.db.query(
-      `
+      const {
+        rows: [registrationChallenge],
+      } = await db.query(
+        `
           INSERT INTO registration_challenges (
             challenge,
             user_id
@@ -25,59 +27,59 @@ export const createRegisterChallenge = (runtime) => async () => {
           VALUES ($1, gen_random_uuid())
           RETURNING user_id
         `,
-      [challenge],
-    );
+        [challenge],
+      );
 
-    const { hostname } = new URL(runtime.app.origin);
-    const webauthnUserHandle = Buffer.from(
-      registrationChallenge.user_id.replace(/-/g, ""),
-      "hex",
-    );
+      const { hostname } = new URL(origin);
+      const webauthnUserHandle = Buffer.from(
+        registrationChallenge.user_id.replace(/-/g, ""),
+        "hex",
+      );
 
-    return generateRegistrationOptions({
-      attestationType: "none",
-      authenticatorSelection: {
-        residentKey: "required",
-        userVerification: "required",
-      },
-      challenge,
-      rpID: hostname,
-      rpName: hostname,
-      timeout: 60000,
-      userDisplayName: registrationChallenge.user_id,
-      userID: webauthnUserHandle,
-      userName: registrationChallenge.user_id,
-    });
-  } catch (err) {
-    if (
-      (err instanceof DatabaseError &&
-        (err.code?.startsWith("08") ||
-          err.code === "57P01" ||
-          err.code === "57P03" ||
-          err.code === "53300")) ||
-      (err instanceof Error &&
-        "code" in err &&
-        "syscall" in err &&
-        typeof err.code === "string")
-    ) {
-      throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      return generateRegistrationOptions({
+        attestationType: "none",
+        authenticatorSelection: {
+          residentKey: "required",
+          userVerification: "required",
+        },
+        challenge,
+        rpID: hostname,
+        rpName: hostname,
+        timeout: 60000,
+        userDisplayName: registrationChallenge.user_id,
+        userID: webauthnUserHandle,
+        userName: registrationChallenge.user_id,
+      });
+    } catch (err) {
+      if (
+        (err instanceof DatabaseError &&
+          (err.code?.startsWith("08") ||
+            err.code === "57P01" ||
+            err.code === "57P03" ||
+            err.code === "53300")) ||
+        (err instanceof Error &&
+          "code" in err &&
+          "syscall" in err &&
+          typeof err.code === "string")
+      ) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      }
+
+      throw err;
     }
-
-    throw err;
-  }
-};
+  };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {(args: {userId: string}) => Promise<PublicKeyCredentialCreationOptionsJSON>}
  */
 export const createPasskeyChallenge =
-  (runtime) =>
+  ({ db, origin }) =>
   async ({ userId }) => {
     try {
       const {
         rows: [user],
-      } = await runtime.db.query(
+      } = await db.query(
         `
           SELECT id
           FROM users
@@ -94,7 +96,7 @@ export const createPasskeyChallenge =
 
       const {
         rows: [registrationChallenge],
-      } = await runtime.db.query(
+      } = await db.query(
         `
           INSERT INTO registration_challenges (
             challenge,
@@ -106,7 +108,7 @@ export const createPasskeyChallenge =
         [challenge, user.id],
       );
 
-      const { hostname } = new URL(runtime.app.origin);
+      const { hostname } = new URL(origin);
       const webauthnUserHandle = Buffer.from(
         registrationChallenge.user_id.replace(/-/g, ""),
         "hex",

@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {() => Promise<{
  *   capabilities: {
  *     id: string,
@@ -11,10 +11,12 @@ import { DatabaseError } from "pg";
  *   }[],
  * }>}
  */
-export const listCapabilities = (runtime) => async () => {
-  try {
-    const { rows } = await runtime.db.query(
-      `
+export const listCapabilities =
+  ({ db }) =>
+  async () => {
+    try {
+      const { rows } = await db.query(
+        `
         SELECT id,
           merge_strategy,
           name,
@@ -22,26 +24,26 @@ export const listCapabilities = (runtime) => async () => {
         FROM capabilities
         ORDER BY id
       `,
-    );
+      );
 
-    return {
-      capabilities: rows,
-    };
-  } catch (err) {
-    if (
-      (err instanceof DatabaseError &&
-        (err.code?.startsWith("08") ||
-          err.code === "57P01" ||
-          err.code === "57P03" ||
-          err.code === "53300")) ||
-      (err instanceof Error &&
-        "code" in err &&
-        "syscall" in err &&
-        typeof err.code === "string")
-    ) {
-      throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      return {
+        capabilities: rows,
+      };
+    } catch (err) {
+      if (
+        (err instanceof DatabaseError &&
+          (err.code?.startsWith("08") ||
+            err.code === "57P01" ||
+            err.code === "57P03" ||
+            err.code === "53300")) ||
+        (err instanceof Error &&
+          "code" in err &&
+          "syscall" in err &&
+          typeof err.code === "string")
+      ) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      }
+
+      throw err;
     }
-
-    throw err;
-  }
-};
+  };

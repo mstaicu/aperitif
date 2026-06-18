@@ -22,19 +22,19 @@ import { buildAccountCapabilitiesUpdatedEvent } from "../../events/index.mjs";
  */
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: {
  *   capabilities: CapabilityGrantRevokeInput[],
  *   accountId: string,
  * }) => Promise<{ account_id: string }>}
  */
 export const revokeAccountCapabilities =
-  (runtime) =>
+  ({ db }) =>
   async ({ accountId, capabilities }) => {
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

@@ -3,7 +3,7 @@ import { DatabaseError } from "pg";
 import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { currentUserId: string, name: string }) => Promise<{
  *   account: {
  *     id: string,
@@ -12,12 +12,12 @@ import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
  * }>}
  */
 export const createAccount =
-  (runtime) =>
+  ({ db }) =>
   async ({ currentUserId, name }) => {
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

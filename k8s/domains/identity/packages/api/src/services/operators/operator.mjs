@@ -1,16 +1,16 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const assignOperator =
-  (runtime) =>
+  ({ db }) =>
   async ({ userId }) => {
     try {
       const {
         rows: [user],
-      } = await runtime.db.query(
+      } = await db.query(
         `
           SELECT 1
           FROM users
@@ -23,7 +23,7 @@ export const assignOperator =
         throw new Error("USER_NOT_FOUND");
       }
 
-      await runtime.db.query(
+      await db.query(
         `
           INSERT INTO operators (user_id)
           VALUES ($1)
@@ -63,16 +63,16 @@ export const assignOperator =
   };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const revokeOperator =
-  (runtime) =>
+  ({ db }) =>
   async ({ userId }) => {
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const { rows: operators } = await client.query(

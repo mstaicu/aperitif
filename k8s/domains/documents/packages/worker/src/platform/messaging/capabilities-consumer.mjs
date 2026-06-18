@@ -10,9 +10,9 @@ export const CAPABILITIES_STREAM = "CAPABILITIES";
 export const CAPABILITIES_CONSUMER = "documents-capabilities-projection";
 
 /**
- * @param {import("../runtime.mjs").WorkerRuntime} runtime
+ * @param {{ nats: import("../nats.mjs").NatsClient }} args
  */
-export async function ensureCapabilitiesConsumer(runtime) {
+export async function ensureCapabilitiesConsumer({ nats }) {
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: CAPABILITIES_CONSUMER,
@@ -21,10 +21,7 @@ export async function ensureCapabilitiesConsumer(runtime) {
   };
 
   try {
-    await runtime.messaging.jsm.consumers.info(
-      CAPABILITIES_STREAM,
-      CAPABILITIES_CONSUMER,
-    );
+    await nats.jsm.consumers.info(CAPABILITIES_STREAM, CAPABILITIES_CONSUMER);
   } catch (err) {
     if (
       !(
@@ -35,6 +32,6 @@ export async function ensureCapabilitiesConsumer(runtime) {
       throw err;
     }
 
-    await runtime.messaging.jsm.consumers.add(CAPABILITIES_STREAM, config);
+    await nats.jsm.consumers.add(CAPABILITIES_STREAM, config);
   }
 }

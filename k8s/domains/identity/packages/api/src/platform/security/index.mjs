@@ -1,7 +1,7 @@
 import { exportJWK, importPKCS8, importSPKI } from "jose";
 import { readFile } from "node:fs/promises";
 
-export const createSecurityContext = async () => {
+export const createJwtKeys = async () => {
   if (!process.env.JWT_PRIVATE_KEY_PATH) {
     throw new Error("JWT_PRIVATE_KEY_PATH is required");
   }
@@ -34,3 +34,7 @@ export const createSecurityContext = async () => {
     },
   };
 };
+
+/**
+ * @typedef {Awaited<ReturnType<typeof createJwtKeys>>} JwtKeys
+ */

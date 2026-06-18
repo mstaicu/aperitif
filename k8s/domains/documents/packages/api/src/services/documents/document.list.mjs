@@ -4,7 +4,7 @@ const REQUIRED_CAPABILITY_ID = "documents.enabled";
 const REQUIRED_PERMISSION_ID = "documents.read";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: {
  *   currentUserId: string,
  *   accountId: string,
@@ -16,12 +16,12 @@ const REQUIRED_PERMISSION_ID = "documents.read";
  * }[]>}
  */
 export const listDocuments =
-  (runtime) =>
+  ({ db }) =>
   async ({ accountId, currentUserId }) => {
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
 
       const {
         rows: [member],

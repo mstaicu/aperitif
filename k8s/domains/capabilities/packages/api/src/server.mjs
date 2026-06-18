@@ -2,7 +2,8 @@ import { once } from "node:events";
 import process from "node:process";
 
 import { createApp } from "./app.mjs";
-import { createRuntime } from "./platform/runtime.mjs";
+import { createPostgres } from "./platform/postgres.mjs";
+import { createIdentityJwks } from "./platform/security/index.mjs";
 import { createTracing } from "./platform/tracing.mjs";
 import { createAccountCapabilitiesService } from "./services/account-capabilities/index.mjs";
 import { createCapabilitiesService } from "./services/capabilities/index.mjs";
@@ -11,19 +12,21 @@ const tracing = createTracing();
 
 tracing.start();
 
-const runtime = await createRuntime();
+const postgres = createPostgres();
+const jwks = createIdentityJwks();
 
 const app = await createApp({
+  db: postgres.db,
   fastifyOtel: tracing.fastifyOtel,
-  runtime,
+  jwks,
   services: {
-    accountCapabilities: createAccountCapabilitiesService(runtime),
-    capabilities: createCapabilitiesService(runtime),
+    accountCapabilities: createAccountCapabilitiesService({ db: postgres.db }),
+    capabilities: createCapabilitiesService({ db: postgres.db }),
   },
 });
 
 app.addHook("onClose", () => tracing.close());
-app.addHook("onClose", () => runtime.lifecycle.close());
+app.addHook("onClose", () => postgres.close());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

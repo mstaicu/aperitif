@@ -3,11 +3,14 @@ import { createHash } from "node:crypto";
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
+ * }} resources
  * @returns {(args: { refresh_token: string }) => Promise<{ access_token: string }>}
  */
 export const createAccessToken =
-  (runtime) =>
+  ({ db, signingKey }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -18,7 +21,7 @@ export const createAccessToken =
     try {
       ({
         rows: [session],
-      } = await runtime.db.query(
+      } = await db.query(
         `
           SELECT
             s.user_id,
@@ -74,11 +77,11 @@ export const createAccessToken =
     const access_token = await new SignJWT(claims)
       .setProtectedHeader({
         alg: "ES256",
-        kid: runtime.security.signingKey.kid,
+        kid: signingKey.kid,
       })
       .setIssuedAt(now)
       .setExpirationTime(now + 60)
-      .sign(runtime.security.signingKey.privateKey);
+      .sign(signingKey.privateKey);
 
     return {
       access_token,

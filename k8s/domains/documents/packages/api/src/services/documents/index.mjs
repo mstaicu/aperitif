@@ -2,11 +2,11 @@ import { createDocument } from "./document.create.mjs";
 import { listDocuments } from "./document.list.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  */
-export const createDocumentsService = (runtime) => ({
-  createDocument: createDocument(runtime),
-  listDocuments: listDocuments(runtime),
+export const createDocumentsService = ({ db }) => ({
+  createDocument: createDocument({ db }),
+  listDocuments: listDocuments({ db }),
 });
 
 /**

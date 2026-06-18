@@ -9,11 +9,11 @@ const generateRefreshToken = () => {
 };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { refresh_token: string }) => Promise<{ refresh_token: string }>}
  */
 export const rotateRefreshToken =
-  (runtime) =>
+  ({ db }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -26,7 +26,7 @@ export const rotateRefreshToken =
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

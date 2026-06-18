@@ -3,13 +3,16 @@ import http from "node:http";
 import process from "node:process";
 
 import { ensureAccountsStream } from "./platform/messaging/accounts-stream.mjs";
-import { createRuntime } from "./platform/runtime.mjs";
+import { createNats } from "./platform/nats.mjs";
+import { createPostgres } from "./platform/postgres.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
-const runtime = await createRuntime();
+const streamReplicas = getStreamReplicas();
+const postgres = createPostgres();
+const nats = await createNats();
 const controller = new AbortController();
 
-await ensureAccountsStream(runtime);
+await ensureAccountsStream({ nats, streamReplicas });
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -20,8 +23,8 @@ const health = http.createServer(async (req, res) => {
 
   if (req.url === "/readyz") {
     try {
-      await runtime.db.query("SELECT 1");
-      await runtime.messaging.nc.flush();
+      await postgres.db.query("SELECT 1");
+      await nats.nc.flush();
 
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
@@ -39,7 +42,7 @@ const health = http.createServer(async (req, res) => {
 
 health.listen(3000, "0.0.0.0");
 
-const tasks = [runPublishOutbox(runtime, controller.signal)];
+const tasks = [runPublishOutbox({ db: postgres.db, nats }, controller.signal)];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
 );
@@ -71,12 +74,16 @@ try {
 
   console.log(
     JSON.stringify({
-      event: "context_closing",
+      event: "resources_closing",
       level: "info",
       service: "accounts-worker",
     }),
   );
-  await runtime.lifecycle.close();
+  try {
+    await nats.close();
+  } finally {
+    await postgres.close();
+  }
   console.log(
     JSON.stringify({
       event: "worker_stopped",
@@ -84,4 +91,18 @@ try {
       service: "accounts-worker",
     }),
   );
+}
+
+function getStreamReplicas() {
+  if (!process.env.NATS_STREAM_REPLICAS) {
+    throw new Error("NATS_STREAM_REPLICAS is required");
+  }
+
+  const replicas = Number(process.env.NATS_STREAM_REPLICAS);
+
+  if (!Number.isInteger(replicas) || replicas < 1) {
+    throw new Error("NATS_STREAM_REPLICAS must be a positive integer");
+  }
+
+  return replicas;
 }

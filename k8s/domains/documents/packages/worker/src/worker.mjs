@@ -4,15 +4,17 @@ import process from "node:process";
 
 import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
 import { ensureCapabilitiesConsumer } from "./platform/messaging/capabilities-consumer.mjs";
-import { createRuntime } from "./platform/runtime.mjs";
+import { createNats } from "./platform/nats.mjs";
+import { createPostgres } from "./platform/postgres.mjs";
 import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runProjectCapabilities } from "./tasks/project-capabilities.mjs";
 
-const runtime = await createRuntime();
+const postgres = createPostgres();
+const nats = await createNats();
 const controller = new AbortController();
 
-await ensureCapabilitiesConsumer(runtime);
-await ensureAccountsConsumer(runtime);
+await ensureCapabilitiesConsumer({ nats });
+await ensureAccountsConsumer({ nats });
 
 const health = http.createServer(async (req, res) => {
   if (req.url === "/livez") {
@@ -23,8 +25,8 @@ const health = http.createServer(async (req, res) => {
 
   if (req.url === "/readyz") {
     try {
-      await runtime.db.query("SELECT 1");
-      await runtime.messaging.nc.flush();
+      await postgres.db.query("SELECT 1");
+      await nats.nc.flush();
 
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
@@ -43,8 +45,8 @@ const health = http.createServer(async (req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectCapabilities(runtime, controller.signal),
-  runProjectAccounts(runtime, controller.signal),
+  runProjectCapabilities({ db: postgres.db, nats }, controller.signal),
+  runProjectAccounts({ db: postgres.db, nats }, controller.signal),
 ];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
@@ -77,12 +79,16 @@ try {
 
   console.log(
     JSON.stringify({
-      event: "context_closing",
+      event: "resources_closing",
       level: "info",
       service: "documents-worker",
     }),
   );
-  await runtime.lifecycle.close();
+  try {
+    await nats.close();
+  } finally {
+    await postgres.close();
+  }
   console.log(
     JSON.stringify({
       event: "worker_stopped",

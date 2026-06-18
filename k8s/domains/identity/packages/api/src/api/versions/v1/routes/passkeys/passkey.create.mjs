@@ -4,15 +4,15 @@ import { PasskeyRegistrationBody } from "./passkey.schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../platform/runtime.mjs").Runtime["security"]} Security
+ * @typedef {import("../../../../../platform/security/index.mjs").JwtKeys["jwks"]} JsonWebKeySet
  * @typedef {import("../../../../../services/passkeys/index.mjs").PasskeysService} PasskeysService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{passkeys: PasskeysService, security: Security}} opts
+ * @param {{jwks: JsonWebKeySet, passkeys: PasskeysService}} opts
  */
-export default async function (fastify, { passkeys, security }) {
+export default async function (fastify, { jwks, passkeys }) {
   fastify.post(
     "",
     {
@@ -41,7 +41,7 @@ export default async function (fastify, { passkeys, security }) {
     async function (req, reply) {
       const payload = await verifyAccessToken({
         authorization: req.headers.authorization,
-        jwks: security.jwks,
+        jwks,
       });
 
       await passkeys.createPasskey({

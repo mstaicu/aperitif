@@ -9,26 +9,31 @@ const PUBLISH_ACK_TIMEOUT_MS = 5000;
 /**
  * LISTEN only wakes the worker; outbox_events is the source of truth.
  *
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   nats: import("../platform/nats.mjs").NatsClient,
+ * }} resources
  * @param {AbortSignal} signal
  */
-export async function runPublishOutbox(runtime, signal) {
+export async function runPublishOutbox({ db, nats }, signal) {
   signal.throwIfAborted();
 
-  const listener = await runtime.db.connect();
+  const listener = await db.connect();
 
   try {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
     const notifications = on(listener, "notification", { signal });
 
-    while ((await publishOutboxBatch(runtime, signal)) === OUTBOX_BATCH_SIZE);
+    while (
+      (await publishOutboxBatch({ db, nats }, signal)) === OUTBOX_BATCH_SIZE
+    );
 
     for await (const [notification] of notifications) {
       signal.throwIfAborted();
 
       if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
         while (
-          (await publishOutboxBatch(runtime, signal)) === OUTBOX_BATCH_SIZE
+          (await publishOutboxBatch({ db, nats }, signal)) === OUTBOX_BATCH_SIZE
         );
       }
     }
@@ -46,14 +51,17 @@ export async function runPublishOutbox(runtime, signal) {
 }
 
 /**
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   nats: import("../platform/nats.mjs").NatsClient,
+ * }} resources
  * @param {AbortSignal} signal
  * @returns {Promise<number>}
  */
-async function publishOutboxBatch(runtime, signal) {
+async function publishOutboxBatch({ db, nats }, signal) {
   signal.throwIfAborted();
 
-  const client = await runtime.db.connect();
+  const client = await db.connect();
   let outboxEvent;
 
   try {
@@ -74,7 +82,7 @@ async function publishOutboxBatch(runtime, signal) {
 
     for (const { event, id } of outboxEvents) {
       outboxEvent = { event, id };
-      await runtime.messaging.js.publish(event.subject, JSON.stringify(event), {
+      await nats.js.publish(event.subject, JSON.stringify(event), {
         expect: {
           streamName: ACCOUNTS_STREAM,
         },

@@ -4,15 +4,15 @@ import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**
  * @typedef {import("../../../../../app.mjs").FastifyInstance} Fastify
- * @typedef {import("../../../../../platform/runtime.mjs").Runtime["security"]} Security
+ * @typedef {import("../../../../../platform/security/index.mjs").JwtKeys["jwks"]} JsonWebKeySet
  * @typedef {import("../../../../../services/operators/index.mjs").OperatorsService} OperatorsService
  */
 
 /**
  * @param {Fastify} fastify
- * @param {{operators: OperatorsService, security: Security}} opts
+ * @param {{jwks: JsonWebKeySet, operators: OperatorsService}} opts
  */
-export default async function (fastify, { operators, security }) {
+export default async function (fastify, { jwks, operators }) {
   fastify.put(
     "/:user_id",
     {
@@ -37,7 +37,7 @@ export default async function (fastify, { operators, security }) {
     async function (req, reply) {
       await authenticateOperator({
         authorization: req.headers.authorization,
-        jwks: security.jwks,
+        jwks,
       });
 
       return reply.send(
@@ -71,7 +71,7 @@ export default async function (fastify, { operators, security }) {
     async function (req, reply) {
       await authenticateOperator({
         authorization: req.headers.authorization,
-        jwks: security.jwks,
+        jwks,
       });
 
       return reply.send(

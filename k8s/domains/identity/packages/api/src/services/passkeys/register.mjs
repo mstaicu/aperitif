@@ -25,10 +25,10 @@ const generateRefreshToken = () => {
 };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @param {RegistrationResponseJSON} credential
  */
-const verifyPasskeyRegistration = async (runtime, credential) => {
+const verifyPasskeyRegistration = async ({ db, origin }, credential) => {
   if (credential.id !== credential.rawId) {
     throw new Error("INVALID_REGISTRATION_RESPONSE");
   }
@@ -55,7 +55,7 @@ const verifyPasskeyRegistration = async (runtime, credential) => {
 
   const {
     rows: [challengeRow],
-  } = await runtime.db.query(
+  } = await db.query(
     `
       DELETE FROM registration_challenges
       WHERE challenge = $1
@@ -69,14 +69,14 @@ const verifyPasskeyRegistration = async (runtime, credential) => {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
-  const { hostname, origin } = new URL(runtime.app.origin);
+  const { hostname, origin: expectedOrigin } = new URL(origin);
 
   let verification;
 
   try {
     verification = await verifyRegistrationResponse({
       expectedChallenge: challengeRow.challenge.toString("base64url"),
-      expectedOrigin: origin,
+      expectedOrigin,
       expectedRPID: hostname,
       requireUserVerification: true,
       response: {
@@ -114,18 +114,21 @@ const verifyPasskeyRegistration = async (runtime, credential) => {
 };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {(input: RegisterInput) => Promise<{refresh_token: string}>}
  */
 export const register =
-  (runtime) =>
+  ({ db, origin }) =>
   async ({ credential }) => {
     let client;
 
     try {
-      const registration = await verifyPasskeyRegistration(runtime, credential);
+      const registration = await verifyPasskeyRegistration(
+        { db, origin },
+        credential,
+      );
 
-      client = await runtime.db.connect();
+      client = await db.connect();
 
       await client.query("BEGIN");
 
@@ -236,22 +239,25 @@ export const register =
   };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {(input: CreatePasskeyInput) => Promise<void>}
  */
 export const createPasskey =
-  (runtime) =>
+  ({ db, origin }) =>
   async ({ credential, userId }) => {
     let client;
 
     try {
-      const registration = await verifyPasskeyRegistration(runtime, credential);
+      const registration = await verifyPasskeyRegistration(
+        { db, origin },
+        credential,
+      );
 
       if (registration.userId !== userId) {
         throw new Error("FORBIDDEN");
       }
 
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

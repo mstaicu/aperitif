@@ -9,22 +9,25 @@ import {
 export const CAPABILITIES_STREAM = "CAPABILITIES";
 
 /**
- * @param {import("../runtime.mjs").WorkerRuntime} runtime
+ * @param {{
+ *   nats: import("../nats.mjs").NatsClient,
+ *   streamReplicas: number,
+ * }} args
  */
-export async function ensureCapabilitiesStream(runtime) {
+export async function ensureCapabilitiesStream({ nats, streamReplicas }) {
   const config = {
     discard: DiscardPolicy.New,
     max_bytes: 1024 ** 3,
     name: CAPABILITIES_STREAM,
-    num_replicas: runtime.app.streamReplicas,
+    num_replicas: streamReplicas,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
     subjects: ["capabilities.>"],
   };
 
   try {
-    await runtime.messaging.jsm.streams.info(CAPABILITIES_STREAM);
-    await runtime.messaging.jsm.streams.update(CAPABILITIES_STREAM, config);
+    await nats.jsm.streams.info(CAPABILITIES_STREAM);
+    await nats.jsm.streams.update(CAPABILITIES_STREAM, config);
   } catch (err) {
     if (
       !(
@@ -35,6 +38,6 @@ export async function ensureCapabilitiesStream(runtime) {
       throw err;
     }
 
-    await runtime.messaging.jsm.streams.add(config);
+    await nats.jsm.streams.add(config);
   }
 }

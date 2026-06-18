@@ -9,8 +9,6 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
  * @typedef {import('./services/documents/index.mjs').DocumentsService} DocumentsService
- *
- * @typedef {import('./platform/runtime.mjs').Runtime} Runtime
  */
 
 /**
@@ -25,7 +23,8 @@ import v1 from "./api/versions/v1/index.mjs";
 
 /**
  * @param {{
- *  runtime: Runtime,
+ *  db: import("pg").Pool,
+ *  jwks: import("./platform/security/index.mjs").IdentityJwks,
  *  services: {
  *    documents: DocumentsService,
  *  },
@@ -33,7 +32,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ fastifyOtel, runtime, services }) => {
+export const createApp = async ({ db, fastifyOtel, jwks, services }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -45,9 +44,9 @@ export const createApp = async ({ fastifyOtel, runtime, services }) => {
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db: runtime.db });
+  await app.register(probes, { db });
   await app.register(v1, {
-    jwks: runtime.security.jwks,
+    jwks,
     prefix: "/v1",
     services,
   });

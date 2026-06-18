@@ -7,15 +7,15 @@ import {
 import { createPasskey, register } from "./register.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  */
-export const createPasskeysService = (runtime) => ({
-  createLoginChallenge: createLoginChallenge(runtime),
-  createPasskey: createPasskey(runtime),
-  createPasskeyChallenge: createPasskeyChallenge(runtime),
-  createRegisterChallenge: createRegisterChallenge(runtime),
-  login: login(runtime),
-  register: register(runtime),
+export const createPasskeysService = ({ db, origin }) => ({
+  createLoginChallenge: createLoginChallenge({ db, origin }),
+  createPasskey: createPasskey({ db, origin }),
+  createPasskeyChallenge: createPasskeyChallenge({ db, origin }),
+  createRegisterChallenge: createRegisterChallenge({ db, origin }),
+  login: login({ db, origin }),
+  register: register({ db, origin }),
 });
 
 /**

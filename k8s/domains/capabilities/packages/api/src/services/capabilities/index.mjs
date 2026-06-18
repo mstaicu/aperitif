@@ -1,10 +1,10 @@
 import { listCapabilities } from "./capabilities.list.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  */
-export const createCapabilitiesService = (runtime) => ({
-  listCapabilities: listCapabilities(runtime),
+export const createCapabilitiesService = ({ db }) => ({
+  listCapabilities: listCapabilities({ db }),
 });
 
 /**

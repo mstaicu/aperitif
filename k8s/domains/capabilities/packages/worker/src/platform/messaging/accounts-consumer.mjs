@@ -10,9 +10,9 @@ export const ACCOUNTS_STREAM = "ACCOUNTS";
 export const ACCOUNTS_CONSUMER = "capabilities-accounts-projection";
 
 /**
- * @param {import("../runtime.mjs").WorkerRuntime} runtime
+ * @param {{ nats: import("../nats.mjs").NatsClient }} args
  */
-export async function ensureAccountsConsumer(runtime) {
+export async function ensureAccountsConsumer({ nats }) {
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ACCOUNTS_CONSUMER,
@@ -21,10 +21,7 @@ export async function ensureAccountsConsumer(runtime) {
   };
 
   try {
-    await runtime.messaging.jsm.consumers.info(
-      ACCOUNTS_STREAM,
-      ACCOUNTS_CONSUMER,
-    );
+    await nats.jsm.consumers.info(ACCOUNTS_STREAM, ACCOUNTS_CONSUMER);
   } catch (err) {
     if (
       !(
@@ -35,6 +32,6 @@ export async function ensureAccountsConsumer(runtime) {
       throw err;
     }
 
-    await runtime.messaging.jsm.consumers.add(ACCOUNTS_STREAM, config);
+    await nats.jsm.consumers.add(ACCOUNTS_STREAM, config);
   }
 }

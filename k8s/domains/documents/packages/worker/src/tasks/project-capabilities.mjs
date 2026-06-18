@@ -12,13 +12,16 @@ import {
 } from "../platform/messaging/capabilities-consumer.mjs";
 
 /**
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   nats: import("../platform/nats.mjs").NatsClient,
+ * }} resources
  * @param {AbortSignal} signal
  */
-export async function runProjectCapabilities(runtime, signal) {
+export async function runProjectCapabilities({ db, nats }, signal) {
   signal.throwIfAborted();
 
-  const consumer = await runtime.messaging.js.consumers.get(
+  const consumer = await nats.js.consumers.get(
     CAPABILITIES_STREAM,
     CAPABILITIES_CONSUMER,
   );
@@ -60,7 +63,7 @@ export async function runProjectCapabilities(runtime, signal) {
             );
           }
 
-          await projectV1AccountCapabilitiesUpdated(runtime, event);
+          await projectV1AccountCapabilitiesUpdated({ db }, event);
 
           message.ack();
           continue;
@@ -90,15 +93,15 @@ export async function runProjectCapabilities(runtime, signal) {
 }
 
 /**
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @param {import("../events/capabilities.mjs").CapabilitiesEventEnvelope} event
  */
-async function projectV1AccountCapabilitiesUpdated(runtime, event) {
+async function projectV1AccountCapabilitiesUpdated({ db }, event) {
   const payload =
     /** @type {import("../events/capabilities.mjs").AccountCapabilitiesUpdatedPayload} */ (
       event.payload
     );
-  const client = await runtime.db.connect();
+  const client = await db.connect();
 
   try {
     await client.query("BEGIN");

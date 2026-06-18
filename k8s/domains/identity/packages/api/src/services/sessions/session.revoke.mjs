@@ -2,11 +2,11 @@ import { createHash } from "node:crypto";
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { refresh_token: string }) => Promise<void>}
  */
 export const revokeSession =
-  (runtime) =>
+  ({ db }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -17,7 +17,7 @@ export const revokeSession =
     let client;
 
     try {
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {

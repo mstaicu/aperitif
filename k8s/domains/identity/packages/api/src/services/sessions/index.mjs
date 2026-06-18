@@ -3,12 +3,15 @@ import { rotateRefreshToken } from "./refresh-token.rotate.mjs";
 import { revokeSession } from "./session.revoke.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
+ * }} resources
  */
-export const createSessionsService = (runtime) => ({
-  createAccessToken: createAccessToken(runtime),
-  revokeSession: revokeSession(runtime),
-  rotateRefreshToken: rotateRefreshToken(runtime),
+export const createSessionsService = ({ db, signingKey }) => ({
+  createAccessToken: createAccessToken({ db, signingKey }),
+  revokeSession: revokeSession({ db }),
+  rotateRefreshToken: rotateRefreshToken({ db }),
 });
 
 /**

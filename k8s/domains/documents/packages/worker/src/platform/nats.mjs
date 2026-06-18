@@ -23,3 +23,7 @@ export async function createNats() {
     nc,
   };
 }
+
+/**
+ * @typedef {Awaited<ReturnType<typeof createNats>>} NatsClient
+ */

@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @returns {(args: { currentUserId: string }) => Promise<{
  *   accounts: {
  *     id: string,
@@ -10,12 +10,12 @@ import { DatabaseError } from "pg";
  * }>}
  */
 export const listAccounts =
-  (runtime) =>
+  ({ db }) =>
   async ({ currentUserId }) => {
     let rows;
 
     try {
-      ({ rows } = await runtime.db.query(
+      ({ rows } = await db.query(
         `
           SELECT a.id, a.name
           FROM account_members am

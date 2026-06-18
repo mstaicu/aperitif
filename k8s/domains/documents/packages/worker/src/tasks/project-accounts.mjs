@@ -12,13 +12,16 @@ import {
 } from "../platform/messaging/accounts-consumer.mjs";
 
 /**
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{
+ *   db: import("pg").Pool,
+ *   nats: import("../platform/nats.mjs").NatsClient,
+ * }} resources
  * @param {AbortSignal} signal
  */
-export async function runProjectAccounts(runtime, signal) {
+export async function runProjectAccounts({ db, nats }, signal) {
   signal.throwIfAborted();
 
-  const consumer = await runtime.messaging.js.consumers.get(
+  const consumer = await nats.js.consumers.get(
     ACCOUNTS_STREAM,
     ACCOUNTS_CONSUMER,
   );
@@ -58,7 +61,7 @@ export async function runProjectAccounts(runtime, signal) {
             throw new Error("Invalid accounts account member updated payload");
           }
 
-          await projectV1AccountMemberUpdated(runtime, event);
+          await projectV1AccountMemberUpdated({ db }, event);
 
           message.ack();
           continue;
@@ -88,10 +91,10 @@ export async function runProjectAccounts(runtime, signal) {
 }
 
 /**
- * @param {import("../platform/runtime.mjs").WorkerRuntime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  * @param {import("../events/accounts.mjs").AccountsEventEnvelope} event
  */
-async function projectV1AccountMemberUpdated(runtime, event) {
+async function projectV1AccountMemberUpdated({ db }, event) {
   const payload =
     /** @type {import("../events/accounts.mjs").AccountMemberUpdatedPayload} */ (
       event.payload
@@ -101,7 +104,7 @@ async function projectV1AccountMemberUpdated(runtime, event) {
     throw new Error("Invalid accounts member account id");
   }
 
-  const client = await runtime.db.connect();
+  const client = await db.connect();
 
   try {
     await client.query("BEGIN");

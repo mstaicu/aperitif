@@ -1,7 +1,7 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 
-import jwks from "./api/jwks.mjs";
+import jwksRoutes from "./api/jwks.mjs";
 import probes from "./api/probes.mjs";
 import problemDetails from "./api/problem-details.mjs";
 import v1 from "./api/versions/v1/index.mjs";
@@ -12,8 +12,6 @@ import v1 from "./api/versions/v1/index.mjs";
  * @typedef {import('./services/operators/index.mjs').OperatorsService} OperatorsService
  * @typedef {import('./services/passkeys/index.mjs').PasskeysService} PasskeysService
  * @typedef {import('./services/sessions/index.mjs').SessionsService} SessionsService
- *
- * @typedef {import('./platform/runtime.mjs').Runtime} Runtime
  */
 
 /**
@@ -28,7 +26,8 @@ import v1 from "./api/versions/v1/index.mjs";
 
 /**
  * @param {{
- *  runtime: Runtime,
+ *  db: import("pg").Pool,
+ *  jwks: import("./platform/security/index.mjs").JwtKeys["jwks"],
  *  services: {
  *    operators: OperatorsService,
  *    passkeys: PasskeysService,
@@ -38,7 +37,7 @@ import v1 from "./api/versions/v1/index.mjs";
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ fastifyOtel, runtime, services }) => {
+export const createApp = async ({ db, fastifyOtel, jwks, services }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -50,11 +49,11 @@ export const createApp = async ({ fastifyOtel, runtime, services }) => {
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db: runtime.db });
-  await app.register(jwks, { jwks: runtime.security.jwks });
+  await app.register(probes, { db });
+  await app.register(jwksRoutes, { jwks });
   await app.register(v1, {
+    jwks,
     prefix: "/v1",
-    security: runtime.security,
     services,
   });
 

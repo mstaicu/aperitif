@@ -19,11 +19,11 @@ const generateRefreshToken = () => {
 };
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {(input: LoginInput) => Promise<{refresh_token: string}>}
  */
 export const login =
-  (runtime) =>
+  ({ db, origin }) =>
   async ({ authentication }) => {
     if (authentication.id !== authentication.rawId) {
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
@@ -55,7 +55,7 @@ export const login =
     try {
       const {
         rows: [challengeRow],
-      } = await runtime.db.query(
+      } = await db.query(
         `
           DELETE FROM authentication_challenges
           WHERE challenge = $1
@@ -69,7 +69,7 @@ export const login =
         throw new Error("AUTHENTICATION_FAILED");
       }
 
-      client = await runtime.db.connect();
+      client = await db.connect();
       await client.query("BEGIN");
 
       const {
@@ -104,7 +104,7 @@ export const login =
         }
       }
 
-      const { hostname, origin } = new URL(runtime.app.origin);
+      const { hostname, origin: expectedOrigin } = new URL(origin);
 
       let verification;
 
@@ -116,7 +116,7 @@ export const login =
             publicKey: new Uint8Array(credential.public_key),
           },
           expectedChallenge: challengeRow.challenge.toString("base64url"),
-          expectedOrigin: origin,
+          expectedOrigin,
           expectedRPID: hostname,
           requireUserVerification: true,
           response: authentication,

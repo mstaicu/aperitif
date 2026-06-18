@@ -1,11 +1,11 @@
 import { assignOperator, revokeOperator } from "./operator.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  */
-export const createOperatorsService = (runtime) => ({
-  assignOperator: assignOperator(runtime),
-  revokeOperator: revokeOperator(runtime),
+export const createOperatorsService = ({ db }) => ({
+  assignOperator: assignOperator({ db }),
+  revokeOperator: revokeOperator({ db }),
 });
 
 /**

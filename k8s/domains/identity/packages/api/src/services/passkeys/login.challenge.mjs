@@ -7,41 +7,43 @@ import { DatabaseError } from "pg";
  */
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool, origin: string }} resources
  * @returns {() => Promise<PublicKeyCredentialRequestOptionsJSON>}
  */
-export const createLoginChallenge = (runtime) => async () => {
-  try {
-    const challenge = randomBytes(32);
+export const createLoginChallenge =
+  ({ db, origin }) =>
+  async () => {
+    try {
+      const challenge = randomBytes(32);
 
-    await runtime.db.query(
-      `
+      await db.query(
+        `
         INSERT INTO authentication_challenges (challenge)
         VALUES ($1)
       `,
-      [challenge],
-    );
+        [challenge],
+      );
 
-    return generateAuthenticationOptions({
-      challenge,
-      rpID: new URL(runtime.app.origin).hostname,
-      userVerification: "required",
-    });
-  } catch (err) {
-    if (
-      (err instanceof DatabaseError &&
-        (err.code?.startsWith("08") ||
-          err.code === "57P01" ||
-          err.code === "57P03" ||
-          err.code === "53300")) ||
-      (err instanceof Error &&
-        "code" in err &&
-        "syscall" in err &&
-        typeof err.code === "string")
-    ) {
-      throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      return generateAuthenticationOptions({
+        challenge,
+        rpID: new URL(origin).hostname,
+        userVerification: "required",
+      });
+    } catch (err) {
+      if (
+        (err instanceof DatabaseError &&
+          (err.code?.startsWith("08") ||
+            err.code === "57P01" ||
+            err.code === "57P03" ||
+            err.code === "53300")) ||
+        (err instanceof Error &&
+          "code" in err &&
+          "syscall" in err &&
+          typeof err.code === "string")
+      ) {
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+      }
+
+      throw err;
     }
-
-    throw err;
-  }
-};
+  };

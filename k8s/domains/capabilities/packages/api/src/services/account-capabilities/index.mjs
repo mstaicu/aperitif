@@ -2,11 +2,11 @@ import { addAccountCapabilities } from "./account.capability-grant.create.mjs";
 import { revokeAccountCapabilities } from "./account.capability-grant.revoke.mjs";
 
 /**
- * @param {import("../../platform/runtime.mjs").Runtime} runtime
+ * @param {{ db: import("pg").Pool }} resources
  */
-export const createAccountCapabilitiesService = (runtime) => ({
-  addAccountCapabilities: addAccountCapabilities(runtime),
-  revokeAccountCapabilities: revokeAccountCapabilities(runtime),
+export const createAccountCapabilitiesService = ({ db }) => ({
+  addAccountCapabilities: addAccountCapabilities({ db }),
+  revokeAccountCapabilities: revokeAccountCapabilities({ db }),
 });
 
 /**
