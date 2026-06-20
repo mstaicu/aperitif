@@ -62,7 +62,6 @@ async function publishOutboxBatch({ db, nats }, signal) {
   signal.throwIfAborted();
 
   const client = await db.connect();
-  let outboxEvent;
 
   try {
     await client.query("BEGIN");
@@ -81,7 +80,6 @@ async function publishOutboxBatch({ db, nats }, signal) {
     );
 
     for (const { event, id } of outboxEvents) {
-      outboxEvent = { event, id };
       await nats.js.publish(event.subject, JSON.stringify(event), {
         expect: {
           streamName: CAPABILITIES_STREAM,
@@ -123,8 +121,6 @@ async function publishOutboxBatch({ db, nats }, signal) {
       JSON.stringify({
         error: err instanceof Error ? err.message : String(err),
         event: "outbox_publish_failed",
-        event_id: outboxEvent?.id,
-        event_subject: outboxEvent?.event?.subject,
         level: "error",
         service: "capabilities-worker",
       }),
