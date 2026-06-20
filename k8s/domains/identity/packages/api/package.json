@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "test": "node --test \"src/**/*.test.mjs\""
+  },
   "overrides": {
     "minimatch": "^10.2.4",
     "glob": "^13.0.6"
