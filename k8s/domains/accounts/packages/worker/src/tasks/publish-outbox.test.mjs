@@ -80,3 +80,61 @@ test("publishes unpublished outbox events to NATS", async (t) => {
 
   assert.ok(outbox.published_at);
 });
+
+test("keeps outbox events unpublished when NATS publish fails", async (t) => {
+  // Arrange
+  const db = await startPostgres(t);
+  const nats = await startNats(t);
+  const controller = new AbortController();
+  const accountId = randomUUID();
+  const event = {
+    id: randomUUID(),
+    payload: {
+      account: {
+        id: accountId,
+      },
+      member: {
+        account_id: accountId,
+        active: true,
+        role_id: "owner",
+        user_id: randomUUID(),
+      },
+      permissions: [
+        {
+          id: "members.manage",
+          value: true,
+        },
+      ],
+    },
+    schema_version: 1,
+    subject: "accounts.account_member.updated",
+    version: 1,
+  };
+
+  await db.query(
+    `
+      INSERT INTO outbox_events (id, event)
+      VALUES ($1, $2::jsonb)
+    `,
+    [event.id, JSON.stringify(event)],
+  );
+
+  // Act
+  const publish = runPublishOutbox({ db, nats }, controller.signal);
+
+  // Assert
+  await assert.rejects(publish);
+
+  const {
+    rows: [outbox],
+  } = await db.query(
+    `
+      SELECT published_at
+      FROM outbox_events
+      WHERE id = $1
+    `,
+    [event.id],
+  );
+
+  assert.equal(outbox.published_at, null);
+});
