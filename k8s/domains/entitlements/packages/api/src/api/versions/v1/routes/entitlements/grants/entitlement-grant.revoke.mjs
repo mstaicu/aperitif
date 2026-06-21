@@ -16,8 +16,8 @@ import {
  * @param {{accountEntitlements: AccountEntitlementsService, jwks: Jwks}} opts
  */
 export default async function (fastify, { accountEntitlements, jwks }) {
-  fastify.delete(
-    "",
+  fastify.post(
+    "/grants/revoke",
     {
       schema: {
         body: RevokeAccountEntitlementsBody,

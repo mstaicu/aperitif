@@ -17,7 +17,7 @@ import {
  */
 export default async function (fastify, { accountEntitlements, jwks }) {
   fastify.post(
-    "",
+    "/grants",
     {
       schema: {
         body: AddAccountEntitlementsBody,

@@ -58,12 +58,12 @@ postgres -> migrate -> api/worker
 
 ```text
 GET /v1/entitlements
-POST /v1/entitlements
-DELETE /v1/entitlements
+POST /v1/entitlements/grants
+POST /v1/entitlements/grants/revoke
 ```
 
-`POST` sets grant rows. `DELETE` revokes grant rows. Each requested entitlement
-item carries its own `grant_id`.
+`POST /grants` sets grant rows. `POST /grants/revoke` revokes grant rows. Each
+requested entitlement item carries its own `grant_id`.
 
 ## Event Contracts
 
