@@ -1,0 +1,22 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-worker
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/infra/worker/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: event-bus
+    - name: accounts-worker
+    - name: entitlements-migrate
+  wait: true
+  timeout: 5m

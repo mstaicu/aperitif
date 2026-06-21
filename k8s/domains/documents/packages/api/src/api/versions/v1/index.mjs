@@ -32,7 +32,7 @@ export default async (fastify, { jwks, services }) => {
       },
       info: {
         description:
-          "Documents API for proving account, capability, and JWT authorization boundaries.",
+          "Documents API for proving account, entitlement, and JWT authorization boundaries.",
         title: "Documents",
         version: "v1",
       },

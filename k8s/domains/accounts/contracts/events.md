@@ -59,5 +59,5 @@ Semantics:
 
 Known consumers:
 
-- `capabilities`
+- `entitlements`
 - `documents`

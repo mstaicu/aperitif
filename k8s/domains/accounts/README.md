@@ -20,7 +20,7 @@ Account memberships carry one role per member.
 ## Does Not Own
 
 - identity records
-- capability grants
+- entitlement grants
 - billing, payments, checkout, subscriptions
 - product-domain resources
 

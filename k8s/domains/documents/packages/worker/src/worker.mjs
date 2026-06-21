@@ -3,17 +3,17 @@ import http from "node:http";
 import process from "node:process";
 
 import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
-import { ensureCapabilitiesConsumer } from "./platform/messaging/capabilities-consumer.mjs";
+import { ensureEntitlementsConsumer } from "./platform/messaging/entitlements-consumer.mjs";
 import { createNats } from "./platform/nats.mjs";
 import { createPostgres } from "./platform/postgres.mjs";
 import { runProjectAccounts } from "./tasks/project-accounts.mjs";
-import { runProjectCapabilities } from "./tasks/project-capabilities.mjs";
+import { runProjectEntitlements } from "./tasks/project-entitlements.mjs";
 
 const postgres = createPostgres();
 const nats = await createNats();
 const controller = new AbortController();
 
-await ensureCapabilitiesConsumer({ nats });
+await ensureEntitlementsConsumer({ nats });
 await ensureAccountsConsumer({ nats });
 
 const health = http.createServer(async (req, res) => {
@@ -45,7 +45,7 @@ const health = http.createServer(async (req, res) => {
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectCapabilities({ db: postgres.db, nats }, controller.signal),
+  runProjectEntitlements({ db: postgres.db, nats }, controller.signal),
   runProjectAccounts({ db: postgres.db, nats }, controller.signal),
 ];
 const shutdown = Promise.race(

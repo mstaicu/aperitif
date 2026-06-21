@@ -53,15 +53,15 @@ const PROBLEMS = {
     title: "Account not found",
     type: "/problems/account-not-found",
   },
-  CAPABILITY_REQUIRED: {
-    status: 403,
-    title: "Capability required",
-    type: "/problems/capability-required",
-  },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",
     type: "/problems/database-unavailable",
+  },
+  ENTITLEMENT_REQUIRED: {
+    status: 403,
+    title: "Entitlement required",
+    type: "/problems/entitlement-required",
   },
   FORBIDDEN: {
     status: 403,

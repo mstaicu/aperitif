@@ -1,0 +1,23 @@
+name: deployment / entitlements / migrate
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "domains/entitlements/packages/migrate/Dockerfile"
+      - "domains/entitlements/packages/migrate/migrations/**"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deployment.yaml
+    with:
+      context: domains/entitlements/packages/migrate
+      domain: entitlements
+      image: mdstaicu/entitlements-migrate
+      manifest: domains/entitlements/infra/migrate/overlays/prod-eu
+      unit: migrate
+    secrets: inherit

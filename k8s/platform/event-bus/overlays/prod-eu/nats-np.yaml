@@ -27,10 +27,10 @@ spec:
               app: accounts-worker
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: capabilities
+              kubernetes.io/metadata.name: entitlements
           podSelector:
             matchLabels:
-              app: capabilities-worker
+              app: entitlements-worker
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: documents

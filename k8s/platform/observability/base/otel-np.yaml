@@ -31,10 +31,10 @@ spec:
               app: accounts-api
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: capabilities
+              kubernetes.io/metadata.name: entitlements
           podSelector:
             matchLabels:
-              app: capabilities-api
+              app: entitlements-api
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: documents

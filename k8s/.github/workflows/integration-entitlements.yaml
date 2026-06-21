@@ -1,0 +1,17 @@
+name: integration / entitlements
+
+on:
+  pull_request:
+    paths:
+      - "domains/entitlements/**"
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    uses: ./.github/workflows/integration.yaml
+    with:
+      domain: entitlements
+      make_target: integration-entitlements
+    secrets: inherit

@@ -1,0 +1,109 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: entitlements-postgres-dev
+
+manifests:
+  kustomize:
+    paths:
+      - infra/postgres/overlays/ephemeral
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: entitlements-migrate-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/entitlements-migrate
+      context: packages/migrate
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - infra/migrate/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: entitlements-api-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/entitlements-api
+      context: packages/api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/api/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: entitlements-worker-dev
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/entitlements-worker
+      context: packages/worker
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/worker/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

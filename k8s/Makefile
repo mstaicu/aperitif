@@ -7,10 +7,10 @@ DOMAIN ?= tma.com
 .PHONY: deploy-ingress-crds deploy-ingress deploy-event-bus deploy-observability deploy-platform
 .PHONY: apply-identity-db run-identity-migrations apply-identity-api apply-identity-ui apply-identity-cleanup deploy-identity
 .PHONY: apply-accounts-db run-accounts-migrations apply-accounts-api apply-accounts-worker deploy-accounts
-.PHONY: apply-capabilities-db run-capabilities-migrations apply-capabilities-api apply-capabilities-worker deploy-capabilities
+.PHONY: apply-entitlements-db run-entitlements-migrations apply-entitlements-api apply-entitlements-worker deploy-entitlements
 .PHONY: apply-documents-db run-documents-migrations apply-documents-api apply-documents-worker apply-documents-ui deploy-documents
 .PHONY: deploy-core deploy-all
-.PHONY: integration-identity integration-accounts integration-capabilities integration-documents
+.PHONY: integration-identity integration-accounts integration-entitlements integration-documents
 .PHONY: dev-all dev
 .PHONY: flux-bootstrap-prod-eu
 
@@ -100,25 +100,25 @@ apply-accounts-worker: ## Apply the accounts worker.
 
 deploy-accounts: apply-accounts-db run-accounts-migrations apply-accounts-api apply-accounts-worker ## Deploy accounts only.
 
-# Capabilities
+# Entitlements
 
-apply-capabilities-db: ## Apply the capabilities database.
-	skaffold run -m capabilities-postgres-dev
+apply-entitlements-db: ## Apply the entitlements database.
+	skaffold run -m entitlements-postgres-dev
 
-run-capabilities-migrations: ## Run capabilities migrations.
-	kubectl delete job -n capabilities migrate --ignore-not-found
-	skaffold run --force -m capabilities-migrate-dev
-	kubectl wait -n capabilities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n capabilities job/migrate --all-containers=true; exit 1; }
+run-entitlements-migrations: ## Run entitlements migrations.
+	kubectl delete job -n entitlements migrate --ignore-not-found
+	skaffold run --force -m entitlements-migrate-dev
+	kubectl wait -n entitlements --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n entitlements job/migrate --all-containers=true; exit 1; }
 
-apply-capabilities-api: ## Apply the capabilities API.
-	skaffold run -m capabilities-api-dev
-	kubectl rollout status -n capabilities deploy/capabilities-api-depl --timeout=300s
+apply-entitlements-api: ## Apply the entitlements API.
+	skaffold run -m entitlements-api-dev
+	kubectl rollout status -n entitlements deploy/entitlements-api-depl --timeout=300s
 
-apply-capabilities-worker: ## Apply the capabilities worker.
-	skaffold run -m capabilities-worker-dev
-	kubectl rollout status -n capabilities deploy/capabilities-worker-depl --timeout=300s
+apply-entitlements-worker: ## Apply the entitlements worker.
+	skaffold run -m entitlements-worker-dev
+	kubectl rollout status -n entitlements deploy/entitlements-worker-depl --timeout=300s
 
-deploy-capabilities: apply-capabilities-db run-capabilities-migrations apply-capabilities-api apply-capabilities-worker ## Deploy capabilities only.
+deploy-entitlements: apply-entitlements-db run-entitlements-migrations apply-entitlements-api apply-entitlements-worker ## Deploy entitlements only.
 
 # Documents
 
@@ -146,7 +146,7 @@ deploy-documents: apply-documents-db run-documents-migrations apply-documents-ap
 
 # Scenarios
 
-deploy-core: deploy-platform deploy-identity deploy-accounts deploy-capabilities ## Deploy core domains and shared platform dependencies.
+deploy-core: deploy-platform deploy-identity deploy-accounts deploy-entitlements ## Deploy core domains and shared platform dependencies.
 
 deploy-all: deploy-core deploy-documents ## Deploy the full ephemeral stack.
 
@@ -154,24 +154,24 @@ integration-identity: deploy-platform deploy-identity ## Deploy identity with it
 
 integration-accounts: deploy-platform deploy-identity deploy-accounts ## Deploy accounts with its integration dependencies.
 
-integration-capabilities: deploy-core ## Deploy capabilities with its integration dependencies.
+integration-entitlements: deploy-core ## Deploy entitlements with its integration dependencies.
 
 integration-documents: deploy-all ## Deploy documents with its integration dependencies.
 
 # Dev loop
 
 dev-all: deploy-platform ## Prepare the full stack, then run all domains in skaffold dev.
-	skaffold run -m identity-postgres-dev,accounts-postgres-dev,capabilities-postgres-dev,documents-postgres-dev
+	skaffold run -m identity-postgres-dev,accounts-postgres-dev,entitlements-postgres-dev,documents-postgres-dev
 	kubectl delete job -n identity migrate --ignore-not-found
 	kubectl delete job -n accounts migrate --ignore-not-found
-	kubectl delete job -n capabilities migrate --ignore-not-found
+	kubectl delete job -n entitlements migrate --ignore-not-found
 	kubectl delete job -n documents migrate --ignore-not-found
-	skaffold run --force -m identity-migrate-dev,accounts-migrate-dev,capabilities-migrate-dev,documents-migrate-dev
+	skaffold run --force -m identity-migrate-dev,accounts-migrate-dev,entitlements-migrate-dev,documents-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
-	kubectl wait -n capabilities --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n capabilities job/migrate --all-containers=true; exit 1; }
+	kubectl wait -n entitlements --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n entitlements job/migrate --all-containers=true; exit 1; }
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
-	exec skaffold dev -m identity-api-dev,identity-ui-dev,identity-cleanup-dev,accounts-api-dev,accounts-worker-dev,capabilities-api-dev,capabilities-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
+	exec skaffold dev -m identity-api-dev,identity-ui-dev,identity-cleanup-dev,accounts-api-dev,accounts-worker-dev,entitlements-api-dev,entitlements-worker-dev,documents-api-dev,documents-worker-dev,documents-ui-dev
 
 dev: dev-all ## Alias for dev-all.
 

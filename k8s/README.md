@@ -13,7 +13,7 @@ domain delivery wiring.
 clusters/prod-eu/       Flux prod-eu graph
 clusters/staging-eu/    Flux bootstrap notes
 platform/               ingress, event-bus, observability, inactive mesh
-domains/                identity, accounts, capabilities, documents
+domains/                identity, accounts, entitlements, documents
 Makefile                local orchestration
 skaffold.yaml           local module graph
 .sops.yaml              encrypted Secret rules
@@ -25,20 +25,20 @@ postgres -> migrate -> api/worker/ui
 ```
 
 Domain units stay separate. `ui` and `worker` exist only when the domain owns
-that capability.
+that entitlement.
 
 ## Domains
 
 - `identity`: passkeys, sessions, access tokens, JWKS.
 - `accounts`: accounts, memberships, roles, permissions.
-- `capabilities`: capability definitions, account grants, effective capability events.
-- `documents`: product-domain proof using local accounts/capability projections.
+- `entitlements`: entitlement definitions, account grants, effective entitlement events.
+- `documents`: product-domain proof using local accounts/entitlement projections.
 
 Domains own their databases. Other domains use APIs or declared events.
 
 ## Status
 
-- Core: `identity`, `accounts`, `capabilities`, outbox/projection spine.
+- Core: `identity`, `accounts`, `entitlements`, outbox/projection spine.
 - Product proof: `documents`.
 - Platform: `ingress`, `event-bus`, `observability`.
 - Inactive: `mesh`.
@@ -75,7 +75,7 @@ make deploy-all
 make deploy-platform
 make deploy-identity
 make deploy-accounts
-make deploy-capabilities
+make deploy-entitlements
 make deploy-documents
 ```
 
@@ -137,8 +137,8 @@ Event catalog:
 
 | Subject | Producer | Consumers | Meaning |
 | --- | --- | --- | --- |
-| `accounts.account_member.updated` | `accounts` | `capabilities`, `documents` | Account existence, member state, role, and permissions snapshot. |
-| `capabilities.account_capabilities.updated` | `capabilities` | `documents` | Account capability snapshot. |
+| `accounts.account_member.updated` | `accounts` | `entitlements`, `documents` | Account existence, member state, role, and permissions snapshot. |
+| `entitlements.account_entitlements.updated` | `entitlements` | `documents` | Account entitlement snapshot. |
 
 ## Agent Notes
 
@@ -156,7 +156,7 @@ Use the narrowest check that covers the change:
 ```sh
 make -C domains/identity pre-deploy-infra
 make -C domains/accounts pre-deploy-infra
-make -C domains/capabilities pre-deploy-infra
+make -C domains/entitlements pre-deploy-infra
 make -C domains/documents pre-deploy-infra
 git diff --check
 ```

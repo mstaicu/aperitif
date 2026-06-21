@@ -1,0 +1,22 @@
+name: deployment / entitlements / api
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "domains/entitlements/packages/api/**"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deployment.yaml
+    with:
+      context: domains/entitlements/packages/api
+      domain: entitlements
+      image: mdstaicu/entitlements-api
+      manifest: domains/entitlements/infra/api/overlays/prod-eu
+      unit: api
+    secrets: inherit

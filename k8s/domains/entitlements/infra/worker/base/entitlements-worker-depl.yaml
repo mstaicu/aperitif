@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: entitlements-worker-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entitlements-worker
+  template:
+    metadata:
+      labels:
+        app: entitlements-worker
+    spec:
+      terminationGracePeriodSeconds: 15
+      automountServiceAccountToken: false
+
+      containers:
+        - name: entitlements-worker
+          image: mdstaicu/entitlements-worker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: health
+              containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2

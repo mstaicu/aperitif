@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: entitlements
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - entitlements-api-ingress.yaml
+
+patches:
+  - path: entitlements-api-depl.yaml
+
+images:
+  - name: mdstaicu/entitlements-api
+    newTag: latest

@@ -1,8 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - capabilities-api-ingress.yaml
-  - capabilities-np.yaml
-  - capabilities-api-depl.yaml
-  - capabilities-api-srv.yaml

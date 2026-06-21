@@ -18,7 +18,7 @@ export default async function (fastify, { documents, jwks }) {
     {
       schema: {
         description:
-          "List account-scoped documents after checking the caller identity, account membership, and required account capability projection.",
+          "List account-scoped documents after checking the caller identity, account membership, and required account entitlement projection.",
         operationId: "listDocuments",
         params: AccountParams,
         response: {

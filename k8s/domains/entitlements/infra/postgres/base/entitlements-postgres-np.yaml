@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-entitlements-units-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: entitlements-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: entitlements-api
+        - podSelector:
+            matchLabels:
+              app: entitlements-migrate
+        - podSelector:
+            matchLabels:
+              app: entitlements-worker
+      ports:
+        - protocol: TCP
+          port: 5432

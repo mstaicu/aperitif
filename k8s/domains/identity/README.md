@@ -21,7 +21,7 @@ Core authority domain. Publishes no domain events today.
 
 - accounts or memberships
 - product permissions
-- capability grants
+- entitlement grants
 - business-domain records
 
 Users are stable authentication subjects. Passkeys authenticate users; they do

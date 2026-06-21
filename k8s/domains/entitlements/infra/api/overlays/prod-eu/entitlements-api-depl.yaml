@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: entitlements-api-depl
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: entitlements-api
+          securityContext:
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres-srv:5432/entitlements"
+            - name: IDENTITY_JWKS_URL
+              value: http://traefik-srv.traefik.svc.cluster.local/.well-known/jwks.json
+            - name: OTEL_SERVICE_NAME
+              value: entitlements-api
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-srv.otel.svc.cluster.local:4318
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: none

@@ -14,10 +14,10 @@ CREATE TABLE projected_account_members (
     PRIMARY KEY (account_id, user_id)
 );
 
-CREATE TABLE projected_account_capabilities (
+CREATE TABLE projected_account_entitlements (
     account_id UUID PRIMARY KEY,
 
-    capabilities JSONB NOT NULL,
+    entitlements JSONB NOT NULL,
 
     version BIGINT NOT NULL
 );

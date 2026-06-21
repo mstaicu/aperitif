@@ -1,6 +1,6 @@
 import { DatabaseError } from "pg";
 
-const REQUIRED_CAPABILITY_ID = "documents.enabled";
+const REQUIRED_ENTITLEMENT_ID = "documents.enabled";
 const REQUIRED_PERMISSION_ID = "documents.create";
 
 /**
@@ -52,24 +52,24 @@ export const createDocument =
       }
 
       const {
-        rows: [capabilityProjection],
+        rows: [entitlementProjection],
       } =
-        /** @type {{ rows: { capabilities?: Record<string, unknown> }[] }} */ (
+        /** @type {{ rows: { entitlements?: Record<string, unknown> }[] }} */ (
           await client.query(
             `
-              SELECT capabilities
-              FROM projected_account_capabilities
+              SELECT entitlements
+              FROM projected_account_entitlements
               WHERE account_id = $1
             `,
             [accountId],
           )
         );
 
-      const hasRequiredCapability =
-        capabilityProjection?.capabilities?.[REQUIRED_CAPABILITY_ID] === true;
+      const hasRequiredEntitlement =
+        entitlementProjection?.entitlements?.[REQUIRED_ENTITLEMENT_ID] === true;
 
-      if (!hasRequiredCapability) {
-        throw new Error("CAPABILITY_REQUIRED");
+      if (!hasRequiredEntitlement) {
+        throw new Error("ENTITLEMENT_REQUIRED");
       }
 
       const {

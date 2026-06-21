@@ -6,12 +6,12 @@ This package builds `documents-migrate`. Flyway owns documents schema history.
 
 ```text
 projected_account_members
-projected_account_capabilities
+projected_account_entitlements
 documents
 flyway_schema_history
 ```
 
-Projection tables are local request inputs copied from accounts and capabilities
+Projection tables are local request inputs copied from accounts and entitlements
 events. `documents` is the only product table owned here.
 
 ## Files

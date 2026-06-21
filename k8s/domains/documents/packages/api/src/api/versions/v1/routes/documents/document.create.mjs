@@ -23,7 +23,7 @@ export default async function (fastify, { documents, jwks }) {
       schema: {
         body: CreateDocumentBody,
         description:
-          "Create a account-scoped document after checking the caller identity, account membership, and required account capability projection.",
+          "Create a account-scoped document after checking the caller identity, account membership, and required account entitlement projection.",
         operationId: "createDocument",
         params: AccountParams,
         response: {

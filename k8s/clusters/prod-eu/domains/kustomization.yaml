@@ -11,10 +11,10 @@ resources:
   - accounts-migrate.yaml
   - accounts-api.yaml
   - accounts-worker.yaml
-  - capabilities-postgres.yaml
-  - capabilities-migrate.yaml
-  - capabilities-api.yaml
-  - capabilities-worker.yaml
+  - entitlements-postgres.yaml
+  - entitlements-migrate.yaml
+  - entitlements-api.yaml
+  - entitlements-worker.yaml
   - documents-postgres.yaml
   - documents-migrate.yaml
   - documents-api.yaml

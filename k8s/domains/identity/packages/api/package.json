@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "test": "node --test \"src/**/*.test.mjs\""
+    "test": "node --test --test-concurrency=1 \"src/**/*.test.mjs\""
   },
   "overrides": {
     "minimatch": "^10.2.4",

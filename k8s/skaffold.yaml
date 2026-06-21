@@ -11,5 +11,5 @@ requires:
 
   - path: domains/identity
   - path: domains/accounts
-  - path: domains/capabilities
+  - path: domains/entitlements
   - path: domains/documents
