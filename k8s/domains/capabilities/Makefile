@@ -12,10 +12,12 @@ check: check-api check-worker check-infra ## Validate capabilities.
 check-api: ## Validate the capabilities API package.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
+	cd packages/api && npm test
 
 check-worker: ## Validate the capabilities worker package.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
+	cd packages/worker && npm test
 
 check-infra: check-manifests ## Validate capabilities manifests.
 
