@@ -7,9 +7,6 @@ This package builds `accounts-migrate`. Flyway owns accounts schema history.
 ```text
 accounts
 account_members
-permissions
-roles
-role_permissions
 outbox_events
 flyway_schema_history
 ```
@@ -23,15 +20,7 @@ only wake the worker.
 
 Flyway scans only `filesystem:/db/migrations` in the migration image.
 
-## Seed / Snapshot Changes
-
-Role or permission seed changes are normal Flyway migrations.
-
-Invariant: if a migration changes projected member permissions, the same
-migration writes fresh `accounts.account_member.updated` outbox rows for affected
-memberships.
-
-Keep core accounts seeds separate from product permission seeds.
+## Snapshot Changes
 
 Outbox rows contain full current-state snapshots. Consumers project by natural
 key and `version`.

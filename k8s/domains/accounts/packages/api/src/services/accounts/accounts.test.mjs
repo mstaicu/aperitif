@@ -89,18 +89,7 @@ test("accounts write account member snapshot events to the outbox", async (t) =>
   });
   assert.deepEqual(outbox.event.payload.member, {
     account_id: created.account.id,
-    active: true,
-    role_id: "owner",
+    role: "owner",
     user_id: currentUserId,
   });
-  const permissions = /** @type {{ id: string, value: true }[]} */ (
-    outbox.event.payload.permissions
-  );
-
-  assert.ok(
-    permissions.some(
-      (permission) =>
-        permission.id === "members.manage" && permission.value === true,
-    ),
-  );
 });

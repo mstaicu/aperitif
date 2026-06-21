@@ -12,8 +12,8 @@ Product proof domain. Consumes core projections; publishes no events today.
 - `projected_account_members`
 - `projected_account_entitlements`
 
-The projection tables are local permission and entitlement inputs copied from
-accounts and entitlements events.
+The projection tables are local account membership and entitlement inputs copied
+from accounts and entitlements events.
 
 ## Does Not Own
 
@@ -49,7 +49,7 @@ GET /documents
 The command requires:
 
 - valid identity token
-- active projected account member with required permission
+- projected account owner membership
 - `documents.enabled = true` in projected account entitlements
 
 API docs:

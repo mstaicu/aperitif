@@ -36,21 +36,9 @@ export const createAccount =
           INSERT INTO account_members (
             account_id,
             user_id,
-            role_id
+            role
           )
           VALUES ($1, $2, 'owner')
-        `,
-        [account.id, currentUserId],
-      );
-
-      const { rows: permissions } = await client.query(
-        `
-          SELECT DISTINCT rp.permission_id AS id
-          FROM account_members am
-          JOIN role_permissions rp ON rp.role_id = am.role_id
-          WHERE am.account_id = $1
-            AND am.user_id = $2
-          ORDER BY rp.permission_id
         `,
         [account.id, currentUserId],
       );
@@ -62,14 +50,9 @@ export const createAccount =
           },
           member: {
             account_id: account.id,
-            active: true,
-            role_id: "owner",
+            role: "owner",
             user_id: currentUserId,
           },
-          permissions: permissions.map(({ id }) => ({
-            id,
-            value: true,
-          })),
         },
         Number(account.version),
       );

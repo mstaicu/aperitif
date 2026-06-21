@@ -19,16 +19,9 @@ test("builds account member updated events", () => {
     },
     member: {
       account_id: accountId,
-      active: true,
-      role_id: "owner",
+      role: "owner",
       user_id: userId,
     },
-    permissions: [
-      {
-        id: "members.manage",
-        value: true,
-      },
-    ],
   };
 
   // Act
@@ -49,11 +42,9 @@ test("rejects invalid account member updated payloads", () => {
       id: randomUUID(),
     },
     member: {
-      active: true,
-      role_id: "owner",
+      role: "owner",
       user_id: randomUUID(),
     },
-    permissions: [],
   };
 
   // Act
@@ -74,11 +65,9 @@ test("rejects invalid account member updated versions", () => {
     },
     member: {
       account_id: accountId,
-      active: true,
-      role_id: "owner",
+      role: "owner",
       user_id: randomUUID(),
     },
-    permissions: [],
   };
 
   // Act

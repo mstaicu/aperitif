@@ -33,17 +33,8 @@ export const AccountsEventEnvelopeCheck = TypeCompiler.Compile(
 const AccountMemberEventResourceSchema = Type.Object(
   {
     account_id: UuidSchema,
-    active: Type.Boolean(),
-    role_id: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    role: Type.String({ minLength: 1 }),
     user_id: UuidSchema,
-  },
-  { additionalProperties: false },
-);
-
-const PermissionEventResourceSchema = Type.Object(
-  {
-    id: Type.String({ minLength: 1 }),
-    value: Type.Literal(true),
   },
   { additionalProperties: false },
 );
@@ -57,7 +48,6 @@ export const AccountMemberUpdatedPayloadSchema = Type.Object(
       { additionalProperties: false },
     ),
     member: AccountMemberEventResourceSchema,
-    permissions: Type.Array(PermissionEventResourceSchema),
   },
   { additionalProperties: false },
 );

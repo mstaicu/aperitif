@@ -109,34 +109,24 @@ async function projectV1AccountMemberUpdated({ db }, event) {
   try {
     await client.query("BEGIN");
 
-    const permissions = Object.fromEntries(
-      payload.permissions.map((permission) => [
-        permission.id,
-        permission.value,
-      ]),
-    );
-
     const result = await client.query(
       `
         INSERT INTO projected_account_members (
           account_id,
           user_id,
-          active,
-          permissions,
+          role,
           version
         )
-        VALUES ($1, $2, $3, $4::jsonb, $5)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (account_id, user_id) DO UPDATE
-        SET active = EXCLUDED.active,
-          permissions = EXCLUDED.permissions,
+        SET role = EXCLUDED.role,
           version = EXCLUDED.version
         WHERE projected_account_members.version <= EXCLUDED.version
       `,
       [
         payload.member.account_id,
         payload.member.user_id,
-        payload.member.active,
-        JSON.stringify(permissions),
+        payload.member.role,
         event.version,
       ],
     );
@@ -147,11 +137,9 @@ async function projectV1AccountMemberUpdated({ db }, event) {
       console.log(
         JSON.stringify({
           account_id: payload.member.account_id,
-          active: payload.member.active,
           event: "account_member_projection_updated",
           level: "info",
-          permission_count: payload.permissions.length,
-          role_id: payload.member.role_id,
+          role: payload.member.role,
           service: "documents-worker",
           user_id: payload.member.user_id,
           version: event.version,

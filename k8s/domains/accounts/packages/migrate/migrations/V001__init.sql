@@ -8,28 +8,6 @@ CREATE TABLE accounts (
     version BIGINT NOT NULL DEFAULT 1
 );
 
-CREATE TABLE permissions (
-    id TEXT PRIMARY KEY
-);
-
-CREATE TABLE roles (
-    id TEXT PRIMARY KEY,
-
-    name TEXT NOT NULL
-);
-
-CREATE TABLE role_permissions (
-    role_id TEXT NOT NULL
-        REFERENCES roles(id)
-        ON DELETE CASCADE,
-
-    permission_id TEXT NOT NULL
-        REFERENCES permissions(id)
-        ON DELETE CASCADE,
-
-    PRIMARY KEY (role_id, permission_id)
-);
-
 CREATE TABLE account_members (
     account_id UUID NOT NULL
         REFERENCES accounts(id)
@@ -37,8 +15,7 @@ CREATE TABLE account_members (
 
     user_id UUID NOT NULL,
 
-    role_id TEXT NOT NULL
-        REFERENCES roles(id),
+    role TEXT NOT NULL CHECK (role IN ('owner')),
 
     PRIMARY KEY (account_id, user_id)
 );

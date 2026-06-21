@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 const REQUIRED_ENTITLEMENT_ID = "documents.enabled";
-const REQUIRED_PERMISSION_ID = "documents.create";
+const REQUIRED_ROLE = "owner";
 
 /**
  * @param {{ db: import("pg").Pool }} resources
@@ -27,27 +27,19 @@ export const createDocument =
 
       const {
         rows: [member],
-      } = /** @type {{ rows: { permissions?: Record<string, unknown> }[] }} */ (
+      } = /** @type {{ rows: { role?: string }[] }} */ (
         await client.query(
           `
-            SELECT permissions
+            SELECT role
             FROM projected_account_members
             WHERE account_id = $1
               AND user_id = $2
-              AND active = true
           `,
           [accountId, currentUserId],
         )
       );
 
-      if (!member) {
-        throw new Error("FORBIDDEN");
-      }
-
-      const hasRequiredPermission =
-        member.permissions?.[REQUIRED_PERMISSION_ID] === true;
-
-      if (!hasRequiredPermission) {
+      if (member?.role !== REQUIRED_ROLE) {
         throw new Error("FORBIDDEN");
       }
 

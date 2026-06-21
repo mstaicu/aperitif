@@ -11,8 +11,9 @@ documents
 flyway_schema_history
 ```
 
-Projection tables are local request inputs copied from accounts and entitlements
-events. `documents` is the only product table owned here.
+Projection tables are local account membership and entitlement inputs copied
+from accounts and entitlements events. `documents` is the only product table
+owned here.
 
 ## Files
 

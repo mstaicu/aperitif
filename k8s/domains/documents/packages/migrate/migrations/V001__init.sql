@@ -5,9 +5,7 @@ CREATE TABLE projected_account_members (
 
     user_id UUID NOT NULL,
 
-    active BOOLEAN NOT NULL,
-
-    permissions JSONB NOT NULL,
+    role TEXT NOT NULL,
 
     version BIGINT NOT NULL,
 

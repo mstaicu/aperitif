@@ -30,7 +30,7 @@ that entitlement.
 ## Domains
 
 - `identity`: passkeys, sessions, access tokens, JWKS.
-- `accounts`: accounts, memberships, roles, permissions.
+- `accounts`: accounts and account memberships.
 - `entitlements`: entitlement definitions, account grants, effective entitlement events.
 - `documents`: product-domain proof using local accounts/entitlement projections.
 
@@ -137,7 +137,7 @@ Event catalog:
 
 | Subject | Producer | Consumers | Meaning |
 | --- | --- | --- | --- |
-| `accounts.account_member.updated` | `accounts` | `entitlements`, `documents` | Account existence, member state, role, and permissions snapshot. |
+| `accounts.account_member.updated` | `accounts` | `entitlements`, `documents` | Account existence and member role snapshot. |
 | `entitlements.account_entitlements.updated` | `entitlements` | `documents` | Account entitlement snapshot. |
 
 ## Agent Notes

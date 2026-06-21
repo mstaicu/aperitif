@@ -36,24 +36,14 @@ Payload:
   "member": {
     "account_id": "uuid",
     "user_id": "uuid",
-    "role_id": "owner",
-    "active": true
-  },
-  "permissions": [
-    {
-      "id": "documents.read",
-      "value": true
-    }
-  ]
+    "role": "owner"
+  }
 }
 ```
 
 Semantics:
 
 - This is a full snapshot for one account member.
-- `active: false` means the member is no longer active in that account.
-- `role_id` is `null` when `active` is `false`.
-- `permissions` is the full current permission set for that member.
 - `version` is the account version after the change.
 - Consumers should ack stale events where `version` is older than local state.
 

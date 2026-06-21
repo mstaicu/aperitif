@@ -21,16 +21,9 @@ test("publishes unpublished outbox events to NATS", async (t) => {
       },
       member: {
         account_id: accountId,
-        active: true,
-        role_id: "owner",
+        role: "owner",
         user_id: randomUUID(),
       },
-      permissions: [
-        {
-          id: "members.manage",
-          value: true,
-        },
-      ],
     },
     schema_version: 1,
     subject: "accounts.account_member.updated",
@@ -95,16 +88,9 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
       },
       member: {
         account_id: accountId,
-        active: true,
-        role_id: "owner",
+        role: "owner",
         user_id: randomUUID(),
       },
-      permissions: [
-        {
-          id: "members.manage",
-          value: true,
-        },
-      ],
     },
     schema_version: 1,
     subject: "accounts.account_member.updated",

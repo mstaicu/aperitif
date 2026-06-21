@@ -10,12 +10,10 @@ Core authority domain. Publishes current account/member facts.
 
 - `accounts`
 - `account_members`
-- `permissions`
-- `roles`
-- `role_permissions`
 - `outbox_events`
 
-Account memberships carry one role per member.
+Account memberships carry one role per member. New accounts create one `owner`
+member.
 
 ## Does Not Own
 
@@ -25,7 +23,7 @@ Account memberships carry one role per member.
 - product-domain resources
 
 Other domains store `account_id` on account-owned resources and use local
-projections for account existence, membership, and member permissions.
+projections for account existence and membership.
 
 ## Units
 
