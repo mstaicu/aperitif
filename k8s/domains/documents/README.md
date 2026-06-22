@@ -65,7 +65,7 @@ Consumes:
 
 | Subject | Producer | Projection |
 | --- | --- | --- |
-| `accounts.account_member.updated` | `accounts` | `projected_account_members` |
+| `accounts.account.opened` | `accounts` | `projected_account_members` |
 | `entitlements.account_entitlements.updated` | `entitlements` | `projected_account_entitlements` |
 
 Publishes: none.

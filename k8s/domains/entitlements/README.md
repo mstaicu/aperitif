@@ -73,7 +73,7 @@ Consumes:
 
 | Subject | Producer | Meaning |
 | --- | --- | --- |
-| `accounts.account_member.updated` | `accounts` | Account existence snapshot carried by member lifecycle. |
+| `accounts.account.opened` | `accounts` | Account existence snapshot carried by account opening. |
 
 The event is a full account entitlement snapshot with one event-level `version`.
 

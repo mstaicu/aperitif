@@ -53,10 +53,13 @@ export async function runProjectEntitlements({ db, nats }, signal) {
           continue;
         }
 
-        if (
-          event.schema_version === ENTITLEMENTS_EVENT_SCHEMA_VERSION &&
-          event.subject === AccountEntitlementsUpdatedSubject
-        ) {
+        if (event.subject === AccountEntitlementsUpdatedSubject) {
+          if (event.schema_version !== ENTITLEMENTS_EVENT_SCHEMA_VERSION) {
+            throw new Error(
+              "Unsupported entitlements account entitlements updated schema version",
+            );
+          }
+
           if (!AccountEntitlementsUpdatedPayloadCheck.Check(event.payload)) {
             throw new Error(
               "Invalid entitlements account entitlements updated payload",
@@ -69,7 +72,8 @@ export async function runProjectEntitlements({ db, nats }, signal) {
           continue;
         }
 
-        throw new Error("Unsupported entitlements event");
+        message.ack();
+        continue;
       } catch (err) {
         console.error(
           JSON.stringify({

@@ -1,9 +1,9 @@
 import { addAbortListener } from "node:events";
 
 import {
-  AccountMemberUpdatedPayloadCheck,
-  AccountMemberUpdatedSchemaVersion,
-  AccountMemberUpdatedSubject,
+  AccountOpenedPayloadCheck,
+  AccountOpenedSchemaVersion,
+  AccountOpenedSubject,
   AccountsEventEnvelopeCheck,
 } from "../events/accounts.mjs";
 import {
@@ -53,21 +53,25 @@ export async function runProjectAccounts({ db, nats }, signal) {
           continue;
         }
 
-        if (
-          event.schema_version === AccountMemberUpdatedSchemaVersion &&
-          event.subject === AccountMemberUpdatedSubject
-        ) {
-          if (!AccountMemberUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid accounts account member updated payload");
+        if (event.subject === AccountOpenedSubject) {
+          if (event.schema_version !== AccountOpenedSchemaVersion) {
+            throw new Error(
+              "Unsupported accounts account opened schema version",
+            );
           }
 
-          await projectV1AccountMemberUpdated({ db }, event);
+          if (!AccountOpenedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid accounts account opened payload");
+          }
+
+          await projectV1AccountOpened({ db }, event);
 
           message.ack();
           continue;
         }
 
-        throw new Error("Unsupported accounts event");
+        message.ack();
+        continue;
       } catch (err) {
         console.error(
           JSON.stringify({
@@ -94,9 +98,9 @@ export async function runProjectAccounts({ db, nats }, signal) {
  * @param {{ db: import("pg").Pool }} resources
  * @param {import("../events/accounts.mjs").AccountsEventEnvelope} event
  */
-async function projectV1AccountMemberUpdated({ db }, event) {
+async function projectV1AccountOpened({ db }, event) {
   const payload =
-    /** @type {import("../events/accounts.mjs").AccountMemberUpdatedPayload} */ (
+    /** @type {import("../events/accounts.mjs").AccountOpenedPayload} */ (
       event.payload
     );
   const client = await db.connect();

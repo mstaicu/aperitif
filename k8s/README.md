@@ -137,7 +137,7 @@ Event catalog:
 
 | Subject | Producer | Consumers | Meaning |
 | --- | --- | --- | --- |
-| `accounts.account_member.updated` | `accounts` | `entitlements`, `documents` | Account existence and member role snapshot. |
+| `accounts.account.opened` | `accounts` | `entitlements`, `documents` | Account existence and initial owner snapshot. |
 | `entitlements.account_entitlements.updated` | `entitlements` | `documents` | Account entitlement snapshot. |
 
 ## Agent Notes

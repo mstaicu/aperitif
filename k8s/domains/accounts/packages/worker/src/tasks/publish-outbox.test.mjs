@@ -20,13 +20,12 @@ test("publishes unpublished outbox events to NATS", async (t) => {
         id: accountId,
       },
       member: {
-        account_id: accountId,
         role: "owner",
         user_id: randomUUID(),
       },
     },
     schema_version: 1,
-    subject: "accounts.account_member.updated",
+    subject: "accounts.account.opened",
     version: 1,
   };
 
@@ -87,13 +86,12 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
         id: accountId,
       },
       member: {
-        account_id: accountId,
         role: "owner",
         user_id: randomUUID(),
       },
     },
     schema_version: 1,
-    subject: "accounts.account_member.updated",
+    subject: "accounts.account.opened",
     version: 1,
   };
 

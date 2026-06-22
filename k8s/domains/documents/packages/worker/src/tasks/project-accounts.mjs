@@ -1,8 +1,8 @@
 import { addAbortListener } from "node:events";
 
 import {
-  AccountMemberUpdatedPayloadCheck,
-  AccountMemberUpdatedSubject,
+  AccountOpenedPayloadCheck,
+  AccountOpenedSubject,
   ACCOUNTS_EVENT_SCHEMA_VERSION,
   AccountsEventEnvelopeCheck,
 } from "../events/accounts.mjs";
@@ -53,21 +53,25 @@ export async function runProjectAccounts({ db, nats }, signal) {
           continue;
         }
 
-        if (
-          event.schema_version === ACCOUNTS_EVENT_SCHEMA_VERSION &&
-          event.subject === AccountMemberUpdatedSubject
-        ) {
-          if (!AccountMemberUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid accounts account member updated payload");
+        if (event.subject === AccountOpenedSubject) {
+          if (event.schema_version !== ACCOUNTS_EVENT_SCHEMA_VERSION) {
+            throw new Error(
+              "Unsupported accounts account opened schema version",
+            );
           }
 
-          await projectV1AccountMemberUpdated({ db }, event);
+          if (!AccountOpenedPayloadCheck.Check(event.payload)) {
+            throw new Error("Invalid accounts account opened payload");
+          }
+
+          await projectV1AccountOpened({ db }, event);
 
           message.ack();
           continue;
         }
 
-        throw new Error("Unsupported accounts event");
+        message.ack();
+        continue;
       } catch (err) {
         console.error(
           JSON.stringify({
@@ -94,15 +98,11 @@ export async function runProjectAccounts({ db, nats }, signal) {
  * @param {{ db: import("pg").Pool }} resources
  * @param {import("../events/accounts.mjs").AccountsEventEnvelope} event
  */
-async function projectV1AccountMemberUpdated({ db }, event) {
+async function projectV1AccountOpened({ db }, event) {
   const payload =
-    /** @type {import("../events/accounts.mjs").AccountMemberUpdatedPayload} */ (
+    /** @type {import("../events/accounts.mjs").AccountOpenedPayload} */ (
       event.payload
     );
-
-  if (payload.member.account_id !== payload.account.id) {
-    throw new Error("Invalid accounts member account id");
-  }
 
   const client = await db.connect();
 
@@ -124,7 +124,7 @@ async function projectV1AccountMemberUpdated({ db }, event) {
         WHERE projected_account_members.version <= EXCLUDED.version
       `,
       [
-        payload.member.account_id,
+        payload.account.id,
         payload.member.user_id,
         payload.member.role,
         event.version,
@@ -136,7 +136,7 @@ async function projectV1AccountMemberUpdated({ db }, event) {
     if ((result.rowCount ?? 0) > 0) {
       console.log(
         JSON.stringify({
-          account_id: payload.member.account_id,
+          account_id: payload.account.id,
           event: "account_member_projection_updated",
           level: "info",
           role: payload.member.role,

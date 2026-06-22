@@ -37,19 +37,18 @@ export const AccountsEventEnvelopeCheck = TypeCompiler.Compile(
   AccountsEventEnvelopeSchema,
 );
 
-export const AccountMemberUpdatedSubject = "accounts.account_member.updated";
-export const AccountMemberUpdatedSchemaVersion = ACCOUNTS_EVENT_SCHEMA_VERSION;
+export const AccountOpenedSubject = "accounts.account.opened";
+export const AccountOpenedSchemaVersion = ACCOUNTS_EVENT_SCHEMA_VERSION;
 
 const AccountMemberEventResourceSchema = Type.Object(
   {
-    account_id: UuidSchema,
     role: Type.String({ minLength: 1 }),
     user_id: UuidSchema,
   },
   { additionalProperties: false },
 );
 
-export const AccountMemberUpdatedPayloadSchema = Type.Object(
+export const AccountOpenedPayloadSchema = Type.Object(
   {
     account: AccountEventResourceSchema,
     member: AccountMemberEventResourceSchema,
@@ -59,27 +58,27 @@ export const AccountMemberUpdatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountMemberUpdatedPayloadSchema
- * >} AccountMemberUpdatedPayload
+ *   typeof AccountOpenedPayloadSchema
+ * >} AccountOpenedPayload
  */
 
-export const AccountMemberUpdatedPayloadCheck = TypeCompiler.Compile(
-  AccountMemberUpdatedPayloadSchema,
+export const AccountOpenedPayloadCheck = TypeCompiler.Compile(
+  AccountOpenedPayloadSchema,
 );
 
 /**
- * @param {AccountMemberUpdatedPayload} payload
+ * @param {AccountOpenedPayload} payload
  * @param {number} version
  * @returns {{
  *   id: string,
- *   payload: AccountMemberUpdatedPayload,
+ *   payload: AccountOpenedPayload,
  *   schema_version: number,
  *   subject: string,
  *   version: number,
  * }}
  */
-export function buildAccountMemberUpdatedEvent(payload, version) {
-  if (!AccountMemberUpdatedPayloadCheck.Check(payload)) {
+export function buildAccountOpenedEvent(payload, version) {
+  if (!AccountOpenedPayloadCheck.Check(payload)) {
     throw new Error("INVALID_EVENT_PAYLOAD");
   }
 
@@ -90,8 +89,8 @@ export function buildAccountMemberUpdatedEvent(payload, version) {
   return {
     id: randomUUID(),
     payload,
-    schema_version: AccountMemberUpdatedSchemaVersion,
-    subject: AccountMemberUpdatedSubject,
+    schema_version: AccountOpenedSchemaVersion,
+    subject: AccountOpenedSubject,
     version,
   };
 }

@@ -6,8 +6,8 @@ const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-export const AccountMemberUpdatedSchemaVersion = 1;
-export const AccountMemberUpdatedSubject = "accounts.account_member.updated";
+export const AccountOpenedSchemaVersion = 1;
+export const AccountOpenedSubject = "accounts.account.opened";
 
 export const AccountsEventEnvelopeSchema = Type.Object(
   {
@@ -32,14 +32,13 @@ export const AccountsEventEnvelopeCheck = TypeCompiler.Compile(
 
 const AccountMemberEventResourceSchema = Type.Object(
   {
-    account_id: UuidSchema,
     role: Type.String({ minLength: 1 }),
     user_id: UuidSchema,
   },
   { additionalProperties: false },
 );
 
-export const AccountMemberUpdatedPayloadSchema = Type.Object(
+export const AccountOpenedPayloadSchema = Type.Object(
   {
     account: Type.Object(
       {
@@ -54,10 +53,10 @@ export const AccountMemberUpdatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountMemberUpdatedPayloadSchema
- * >} AccountMemberUpdatedPayload
+ *   typeof AccountOpenedPayloadSchema
+ * >} AccountOpenedPayload
  */
 
-export const AccountMemberUpdatedPayloadCheck = TypeCompiler.Compile(
-  AccountMemberUpdatedPayloadSchema,
+export const AccountOpenedPayloadCheck = TypeCompiler.Compile(
+  AccountOpenedPayloadSchema,
 );

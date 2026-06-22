@@ -4,22 +4,22 @@ Accounts publishes current-state facts. Consumers project by natural key and
 apply events only when the incoming `version` is greater than or equal to the
 stored projection version.
 
-## `accounts.account_member.updated`
+## `accounts.account.opened`
 
 Schema version: `1`
 
 Emitted when:
 
-- a account is created
+- an account is opened with its initial member member
 
-Future member lifecycle flows should reuse this event.
+Future member lifecycle flows should add separate member events.
 
 Envelope:
 
 ```json
 {
   "id": "uuid",
-  "subject": "accounts.account_member.updated",
+  "subject": "accounts.account.opened",
   "schema_version": 1,
   "version": 1,
   "payload": {}
@@ -34,7 +34,6 @@ Payload:
     "id": "uuid"
   },
   "member": {
-    "account_id": "uuid",
     "user_id": "uuid",
     "role": "owner"
   }
@@ -43,7 +42,7 @@ Payload:
 
 Semantics:
 
-- This is a full snapshot for one account member.
+- This is a full snapshot for a newly opened account and its initial member.
 - `version` is the account version after the change.
 - Consumers should ack stale events where `version` is older than local state.
 

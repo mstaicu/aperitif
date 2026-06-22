@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { AccountMemberUpdatedSubject } from "../../events/index.mjs";
+import { AccountOpenedSubject } from "../../events/index.mjs";
 import { createAccountsService } from "./index.mjs";
 
 test("accounts create accounts owned by the current user", async (t) => {
@@ -55,7 +55,7 @@ test("accounts list only accounts for the current user", async (t) => {
   });
 });
 
-test("accounts write account member snapshot events to the outbox", async (t) => {
+test("accounts write account opened events to the outbox", async (t) => {
   // Arrange
   const db = await startPostgres(t);
   const accounts = createAccountsService({ db });
@@ -77,18 +77,17 @@ test("accounts write account member snapshot events to the outbox", async (t) =>
       WHERE event->>'subject' = $1
         AND event #>> '{payload,account,id}' = $2
     `,
-    [AccountMemberUpdatedSubject, created.account.id],
+    [AccountOpenedSubject, created.account.id],
   );
 
   assert.ok(outbox);
-  assert.equal(outbox.event.subject, AccountMemberUpdatedSubject);
+  assert.equal(outbox.event.subject, AccountOpenedSubject);
   assert.equal(outbox.event.schema_version, 1);
   assert.equal(outbox.event.version, 1);
   assert.deepEqual(outbox.event.payload.account, {
     id: created.account.id,
   });
   assert.deepEqual(outbox.event.payload.member, {
-    account_id: created.account.id,
     role: "owner",
     user_id: currentUserId,
   });

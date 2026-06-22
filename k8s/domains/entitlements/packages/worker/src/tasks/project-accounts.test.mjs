@@ -11,8 +11,8 @@ import { setTimeout } from "node:timers/promises";
 import { startNats } from "../../test/fixtures/nats.mjs";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import {
-  AccountMemberUpdatedSchemaVersion,
-  AccountMemberUpdatedSubject,
+  AccountOpenedSchemaVersion,
+  AccountOpenedSubject,
 } from "../events/accounts.mjs";
 import {
   ACCOUNTS_CONSUMER,
@@ -21,7 +21,7 @@ import {
 } from "../platform/messaging/accounts-consumer.mjs";
 import { runProjectAccounts } from "./project-accounts.mjs";
 
-test("projects account member events", async (t) => {
+test("projects account opened events", async (t) => {
   // Arrange
   const db = await startPostgres(t);
   const nats = await startNats(t);
@@ -34,13 +34,12 @@ test("projects account member events", async (t) => {
         id: accountId,
       },
       member: {
-        account_id: accountId,
         role: "owner",
         user_id: userId,
       },
     },
-    schema_version: AccountMemberUpdatedSchemaVersion,
-    subject: AccountMemberUpdatedSubject,
+    schema_version: AccountOpenedSchemaVersion,
+    subject: AccountOpenedSubject,
     version: 1,
   };
 
@@ -97,7 +96,7 @@ test("projects account member events", async (t) => {
   });
 });
 
-test("ignores stale account member events", async (t) => {
+test("ignores stale account opened events", async (t) => {
   // Arrange
   const db = await startPostgres(t);
   const nats = await startNats(t);
@@ -109,13 +108,12 @@ test("ignores stale account member events", async (t) => {
         id: accountId,
       },
       member: {
-        account_id: accountId,
         role: "owner",
         user_id: randomUUID(),
       },
     },
-    schema_version: AccountMemberUpdatedSchemaVersion,
-    subject: AccountMemberUpdatedSubject,
+    schema_version: AccountOpenedSchemaVersion,
+    subject: AccountOpenedSubject,
     version: 1,
   };
 

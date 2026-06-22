@@ -27,7 +27,6 @@ export async function ensureEntitlementsStream({ nats, streamReplicas }) {
 
   try {
     await nats.jsm.streams.info(ENTITLEMENTS_STREAM);
-    await nats.jsm.streams.update(ENTITLEMENTS_STREAM, config);
   } catch (err) {
     if (
       !(

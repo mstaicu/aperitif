@@ -27,7 +27,6 @@ export async function ensureAccountsStream({ nats, streamReplicas }) {
 
   try {
     await nats.jsm.streams.info(ACCOUNTS_STREAM);
-    await nats.jsm.streams.update(ACCOUNTS_STREAM, config);
   } catch (err) {
     if (
       !(

@@ -15,7 +15,7 @@ CREATE TABLE account_members (
 
     user_id UUID NOT NULL,
 
-    role TEXT NOT NULL CHECK (role IN ('owner')),
+    role TEXT NOT NULL,
 
     PRIMARY KEY (account_id, user_id)
 );

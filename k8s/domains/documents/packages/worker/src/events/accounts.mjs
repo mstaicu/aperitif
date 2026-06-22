@@ -36,18 +36,17 @@ export const AccountsEventEnvelopeCheck = TypeCompiler.Compile(
   AccountsEventEnvelopeSchema,
 );
 
-export const AccountMemberUpdatedSubject = "accounts.account_member.updated";
+export const AccountOpenedSubject = "accounts.account.opened";
 
 const AccountMemberEventResourceSchema = Type.Object(
   {
-    account_id: UuidSchema,
     role: Type.String({ minLength: 1 }),
     user_id: UuidSchema,
   },
   { additionalProperties: false },
 );
 
-export const AccountMemberUpdatedPayloadSchema = Type.Object(
+export const AccountOpenedPayloadSchema = Type.Object(
   {
     account: AccountEventResourceSchema,
     member: AccountMemberEventResourceSchema,
@@ -57,10 +56,10 @@ export const AccountMemberUpdatedPayloadSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountMemberUpdatedPayloadSchema
- * >} AccountMemberUpdatedPayload
+ *   typeof AccountOpenedPayloadSchema
+ * >} AccountOpenedPayload
  */
 
-export const AccountMemberUpdatedPayloadCheck = TypeCompiler.Compile(
-  AccountMemberUpdatedPayloadSchema,
+export const AccountOpenedPayloadCheck = TypeCompiler.Compile(
+  AccountOpenedPayloadSchema,
 );

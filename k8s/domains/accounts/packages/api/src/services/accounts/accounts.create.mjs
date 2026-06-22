@@ -1,6 +1,6 @@
 import { DatabaseError } from "pg";
 
-import { buildAccountMemberUpdatedEvent } from "../../events/index.mjs";
+import { buildAccountOpenedEvent } from "../../events/index.mjs";
 
 /**
  * @param {{ db: import("pg").Pool }} resources
@@ -43,13 +43,12 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountMemberUpdatedEvent = buildAccountMemberUpdatedEvent(
+      const accountOpenedEvent = buildAccountOpenedEvent(
         {
           account: {
             id: account.id,
           },
           member: {
-            account_id: account.id,
             role: "owner",
             user_id: currentUserId,
           },
@@ -65,10 +64,7 @@ export const createAccount =
           )
           VALUES ($1, $2::jsonb)
         `,
-        [
-          accountMemberUpdatedEvent.id,
-          JSON.stringify(accountMemberUpdatedEvent),
-        ],
+        [accountOpenedEvent.id, JSON.stringify(accountOpenedEvent)],
       );
 
       await client.query("COMMIT");
