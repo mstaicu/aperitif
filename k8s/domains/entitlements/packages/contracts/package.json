@@ -1,0 +1,13 @@
+{
+  "name": "@aperitif/entitlements-contracts",
+  "private": true,
+  "type": "module",
+  "main": "src/index.mjs",
+  "files": [
+    "src",
+    "examples"
+  ],
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.49"
+  }
+}

@@ -1,24 +1,21 @@
-# Observability Platform
+# Observability
 
-Observability owns OpenTelemetry Collector infrastructure.
+OpenTelemetry Collector infrastructure.
 
 ## Owns
 
 - collector deployment and service
-- namespace
+- collector agent
 - telemetry network policy
 - environment-specific exporter configuration
 
-Domain units decide whether to emit telemetry from runtime configuration.
+Workloads emit telemetry only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
 
 ## Operations
 
 ```sh
 make deploy-observability
 ```
-
-Workloads register real OTel only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
-Otherwise OTel is no-op.
 
 ## Checks
 

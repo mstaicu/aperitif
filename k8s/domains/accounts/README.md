@@ -1,10 +1,6 @@
 # Accounts Domain
 
-Accounts owns account-scoped authority.
-
-## Status
-
-Core authority domain. Publishes current account/member facts.
+Accounts owns the resource boundary that product data lives under.
 
 ## Owns
 
@@ -12,18 +8,10 @@ Core authority domain. Publishes current account/member facts.
 - `account_members`
 - `outbox_events`
 
-Account memberships carry one role per member. New accounts create one `owner`
-member.
+New accounts create one `owner` member. Future member lifecycle belongs here.
 
-## Does Not Own
-
-- identity records
-- entitlement grants
-- billing, payments, checkout, subscriptions
-- product-domain resources
-
-Other domains store `account_id` on account-owned resources and use local
-projections for account existence and membership.
+Accounts does not own identity records, entitlement grants, payments, or product
+resources.
 
 ## Units
 
@@ -31,42 +19,35 @@ projections for account existence and membership.
 postgres -> migrate -> api/worker
 ```
 
-- `postgres`: local/CI placeholder database.
-- `migrate`: Flyway Job from `packages/migrate`.
-- `api`: Fastify API from `packages/api`.
-- `worker`: outbox publisher from `packages/worker`.
+The worker publishes outbox events.
 
-## Public Contracts
+## Public API
 
 ```text
-GET /v1/accounts
+GET  /v1/accounts
 POST /v1/accounts
+GET  /v1/accounts/docs
 ```
-
-API docs: `GET api.tma.com/v1/accounts/docs`.
 
 ## Event Contracts
 
-- [Events](contracts/events.md)
+Contracts: `packages/contracts`.
+
+Publishes:
+
+```text
+accounts.account.opened
+```
 
 ## Operations
 
 ```sh
 make deploy-accounts
+make -C domains/accounts check
 ```
 
-Live Flux units:
+## Rules
 
-```text
-accounts-postgres -> accounts-migrate -> accounts-api/accounts-worker
-```
-
-The API depends on identity/JWKS and ingress. The worker depends on event-bus.
-
-## Agent Notes
-
-- Request handlers do not publish authority events directly.
 - State changes and `outbox_events` rows belong in the same DB transaction.
-- Authority events use the account's current `version`.
-- The placeholder Postgres unit uses the default `postgres` admin user. API,
-  worker, and migrate units use the same admin connection URL for now.
+- Events use the account's current `version`.
+- Do not read identity or entitlement databases.

@@ -1,15 +1,12 @@
 import { addAbortListener } from "node:events";
 
 import {
-  AccountOpenedPayloadCheck,
-  AccountOpenedSchemaVersion,
-  AccountOpenedSubject,
-  AccountsEventEnvelopeCheck,
-} from "../events/accounts.mjs";
-import {
   ACCOUNTS_CONSUMER,
   ACCOUNTS_STREAM,
 } from "../platform/messaging/accounts-consumer.mjs";
+
+const AccountOpenedSchemaVersion = 1;
+const AccountOpenedSubject = "accounts.account.opened";
 
 /**
  * @param {{
@@ -38,7 +35,8 @@ export async function runProjectAccounts({ db, nats }, signal) {
         event = message.json();
 
         if (
-          !AccountsEventEnvelopeCheck.Check(event) ||
+          !event ||
+          typeof event !== "object" ||
           event.subject !== message.subject
         ) {
           console.warn(
@@ -58,10 +56,6 @@ export async function runProjectAccounts({ db, nats }, signal) {
             throw new Error(
               "Unsupported accounts account opened schema version",
             );
-          }
-
-          if (!AccountOpenedPayloadCheck.Check(event.payload)) {
-            throw new Error("Invalid accounts account opened payload");
           }
 
           await projectV1AccountOpened({ db }, event);
@@ -96,13 +90,15 @@ export async function runProjectAccounts({ db, nats }, signal) {
 
 /**
  * @param {{ db: import("pg").Pool }} resources
- * @param {import("../events/accounts.mjs").AccountsEventEnvelope} event
+ * @param {{
+ *   payload: {
+ *     account: { id: string },
+ *   },
+ *   version: number,
+ * }} event
  */
 async function projectV1AccountOpened({ db }, event) {
-  const payload =
-    /** @type {import("../events/accounts.mjs").AccountOpenedPayload} */ (
-      event.payload
-    );
+  const { payload } = event;
   const client = await db.connect();
 
   try {

@@ -1,15 +1,6 @@
-# Ingress Platform
+# Ingress
 
-Ingress owns Traefik, Traefik CRDs, and local dashboard routing.
-
-## Units
-
-```text
-crds -> ingress
-```
-
-- `crds`: Traefik CRDs.
-- `ingress`: Traefik deployment, services, dashboard route, TLS config.
+Traefik CRDs, Traefik, local TLS, and dashboard routing.
 
 Domain API/UI units own their own `IngressRoute`s.
 
@@ -20,10 +11,10 @@ make deploy-ingress
 make deploy-ingress DOMAIN=example.test
 ```
 
-The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, deploys
-Traefik, and waits for `traefik-depl`.
+The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, and
+deploys Traefik.
 
-For kind/CI, use a port-forward:
+For kind/CI:
 
 ```sh
 kubectl -n traefik port-forward svc/traefik-lb 8443:443
@@ -31,21 +22,12 @@ kubectl -n traefik port-forward svc/traefik-lb 8443:443
 
 ## Live
 
-Flux reconciles:
-
-```text
-clusters/prod-eu/platform/ingress.yaml
-platform/ingress/overlays/prod-eu
-```
-
 Live TLS is Traefik ACME with Cloudflare DNS-01. Do not commit local mkcert
 material.
 
-TODO: when the public load balancer is restricted to Cloudflare IP ranges,
-configure the live `https` entrypoint to trust Cloudflare forwarded headers and
-make public route rate limits key on `CF-Connecting-IP`. Do not trust that
-header before direct load-balancer access is blocked. Do not apply this to the
-internal `http` entrypoint.
+TODO: after direct load-balancer access is blocked to Cloudflare IP ranges, make
+the live `https` entrypoint trust Cloudflare forwarded headers. Do not apply
+that to the internal `http` entrypoint.
 
 ## Checks
 

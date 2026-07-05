@@ -1,19 +1,8 @@
-# Event-Bus Platform
+# Event Bus
 
-Event-bus owns NATS JetStream infrastructure. Domains own streams, consumers,
-event schemas, outbox tables, and workers.
+NATS JetStream infrastructure.
 
-## Unit
-
-```text
-event-bus
-```
-
-Manifests live under:
-
-```text
-platform/event-bus/overlays/{ephemeral,prod-eu}
-```
+Domains own streams, consumers, event contracts, outbox tables, and workers.
 
 ## Operations
 
@@ -21,21 +10,15 @@ platform/event-bus/overlays/{ephemeral,prod-eu}
 make deploy-event-bus
 ```
 
-Flux prod-eu entry:
+## Rule
 
-```text
-clusters/prod-eu/platform/event-bus.yaml
-```
-
-## Event Rule
-
-Authority/state events use:
+Critical authority events use:
 
 ```text
 domain DB transaction -> outbox_events -> domain worker -> JetStream
 ```
 
-Request handlers do not directly publish critical authority events.
+Request handlers do not directly publish those events.
 
 ## Checks
 

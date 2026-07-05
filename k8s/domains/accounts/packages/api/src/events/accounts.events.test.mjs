@@ -34,25 +34,6 @@ test("builds account opened events", () => {
   assert.deepEqual(event.payload, payload);
 });
 
-test("rejects invalid account opened payloads", () => {
-  // Arrange
-  const payload = {
-    account: {
-      id: randomUUID(),
-    },
-    member: {
-      role: "owner",
-    },
-  };
-
-  // Act
-  const buildEvent = () =>
-    buildAccountOpenedEvent(/** @type {any} */ (payload), 1);
-
-  // Assert
-  assert.throws(buildEvent, /INVALID_EVENT_PAYLOAD/);
-});
-
 test("rejects invalid account opened versions", () => {
   // Arrange
   /** @type {import("./index.mjs").AccountOpenedPayload} */

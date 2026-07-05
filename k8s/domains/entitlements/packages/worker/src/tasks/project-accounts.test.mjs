@@ -11,15 +11,14 @@ import { setTimeout } from "node:timers/promises";
 import { startNats } from "../../test/fixtures/nats.mjs";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import {
-  AccountOpenedSchemaVersion,
-  AccountOpenedSubject,
-} from "../events/accounts.mjs";
-import {
   ACCOUNTS_CONSUMER,
   ACCOUNTS_STREAM,
   ensureAccountsConsumer,
 } from "../platform/messaging/accounts-consumer.mjs";
 import { runProjectAccounts } from "./project-accounts.mjs";
+
+const AccountOpenedSchemaVersion = 1;
+const AccountOpenedSubject = "accounts.account.opened";
 
 test("projects account opened events", async (t) => {
   // Arrange

@@ -1,19 +1,10 @@
-# Mesh Platform
+# Mesh
 
-Mesh contains Linkerd manifests, but it is not currently composed into local or
+Linkerd manifests exist, but mesh is not currently composed into local or
 prod-eu.
 
 Do not assume mTLS, service identity, or mesh policy exists unless this platform
 unit is explicitly added to the environment.
-
-## Owns When Enabled
-
-- Linkerd control plane resources
-- proxy injection
-- service identity and mTLS
-- mesh policy
-
-It does not own domain authentication, authorization, or actor semantics.
 
 ## Checks
 

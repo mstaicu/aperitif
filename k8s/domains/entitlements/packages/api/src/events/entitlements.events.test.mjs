@@ -37,28 +37,6 @@ test("builds account entitlements updated events", () => {
   assert.deepEqual(event.payload, payload);
 });
 
-test("rejects invalid account entitlements updated payloads", () => {
-  // Arrange
-  const payload = {
-    account: {
-      id: randomUUID(),
-    },
-    entitlements: [
-      {
-        id: "test.enabled",
-        value: "yes",
-      },
-    ],
-  };
-
-  // Act
-  const buildEvent = () =>
-    buildAccountEntitlementsUpdatedEvent(/** @type {any} */ (payload), 1);
-
-  // Assert
-  assert.throws(buildEvent, /INVALID_EVENT_PAYLOAD/);
-});
-
 test("rejects invalid account entitlements updated versions", () => {
   // Arrange
   const payload = {

@@ -1,62 +1,53 @@
 # Aperitif Kubernetes
 
-Treat this `k8s/` directory as the repo root. GitHub workflows intentionally
-live under `k8s/.github`.
-
-This repo owns Kubernetes manifests, local deploy loops, Flux reconciliation, and
-domain delivery wiring.
+Treat this `k8s/` directory as the repo root. GitHub workflows live under
+`k8s/.github`.
 
 ## Shape
 
 ```text
 .github/workflows/      integration and deployment workflows
-clusters/prod-eu/       Flux prod-eu graph
-clusters/staging-eu/    Flux bootstrap notes
+clusters/               Flux cluster graphs
 platform/               ingress, event-bus, observability, inactive mesh
 domains/                identity, accounts, entitlements, documents
 Makefile                local orchestration
-skaffold.yaml           local module graph
-.sops.yaml              encrypted Secret rules
+skaffold.yaml           local dev graph
+.sops.yaml              encrypted Secret recipients
 AGENTS.md               non-obvious agent rules
 ```
+
+Domain unit shape:
 
 ```text
 postgres -> migrate -> api/worker/ui
 ```
 
-Domain units stay separate. `ui` and `worker` exist only when the domain owns
-that entitlement.
+Units stay independently deployable. A domain only has the units it needs.
 
 ## Domains
 
-- `identity`: passkeys, sessions, access tokens, JWKS.
-- `accounts`: accounts and account memberships.
-- `entitlements`: entitlement definitions, account grants, effective entitlement events.
-- `documents`: product-domain proof using local accounts/entitlement projections.
+- `identity`: users, passkeys, sessions, refresh tokens, operators, JWKS.
+- `accounts`: account resource boundary and initial owner membership.
+- `entitlements`: account entitlement grants and effective snapshots.
+- `documents`: product proof using account and entitlement projections.
 
-Domains own their databases. Other domains use APIs or declared events.
-
-## Status
-
-- Core: `identity`, `accounts`, `entitlements`, outbox/projection spine.
-- Product proof: `documents`.
-- Platform: `ingress`, `event-bus`, `observability`.
-- Inactive: `mesh`.
+Domains own their databases. Cross-domain reads use APIs or declared events,
+never another domain's database.
 
 ## Platform
 
-- `ingress`: Traefik CRDs, Traefik, local TLS, public/internal routes.
-- `event-bus`: NATS JetStream for durable domain events.
-- `observability`: OpenTelemetry Collector, composed in the active spine.
-- `mesh`: Linkerd manifests exist but are not currently composed.
+- `ingress`: Traefik CRDs, Traefik, local TLS, routes.
+- `event-bus`: NATS JetStream.
+- `observability`: OpenTelemetry Collector.
+- `mesh`: Linkerd manifests, not currently composed.
 
-Domain HTTP units own their own Traefik `IngressRoute`s. Authority/state events use:
+Authority/state event path:
 
 ```text
 domain DB transaction -> outbox_events -> worker -> NATS JetStream
 ```
 
-Postgres notifications only wake workers; the outbox is the durable source.
+Postgres notifications only wake workers. The outbox is the durable source.
 
 ## Local
 
@@ -66,10 +57,7 @@ make deploy-core
 make dev
 ```
 
-```sh
-make dev-all
-make deploy-all
-```
+Useful deploy targets:
 
 ```sh
 make deploy-platform
@@ -77,91 +65,74 @@ make deploy-identity
 make deploy-accounts
 make deploy-entitlements
 make deploy-documents
+make deploy-all
 ```
-
-`deploy-*` targets deploy only the named platform/domain boundary.
-`integration-*`, `deploy-core`, `deploy-all`, and `dev-all` compose dependency
-chains explicitly.
 
 Default local domain is `tma.com`; override with `DOMAIN=example.test`.
 
-## Live
+## Flux
 
-Flux starts at `clusters/prod-eu/kustomization.yaml`:
+Prod starts at `clusters/prod-eu/kustomization.yaml`:
 
 ```text
 platform.yaml -> domains.yaml
 ```
 
-Domain Flux order remains:
+Domain order:
 
 ```text
 <domain>-postgres -> <domain>-migrate -> <domain>-api/worker/ui
 ```
 
-Migration Kustomizations use `force: true` so completed Jobs can rerun on image
-digest changes.
+GitHub deployment workflows build images, push them, update prod-eu image
+digests, and commit the manifest changes. Flux image automation is not used.
 
-Deployment workflows build images, push them, update prod-eu overlay tags/digests,
-and commit the manifest changes. Flux reconciles Git; Flux image automation is
-not installed.
+Bootstrap prod with:
 
-Bootstrap docs:
+```sh
+make flux-bootstrap-prod-eu
+```
 
-- `clusters/prod-eu/README.md`
-- `clusters/staging-eu/README.md`
-
-Prod first-time bootstrap entrypoint: `make flux-bootstrap-prod-eu`.
+See `clusters/prod-eu/README.md`.
 
 ## Secrets
 
-SOPS uses age recipients from `.sops.yaml`. The private key is never committed.
+SOPS uses age recipients from `.sops.yaml`.
 
 ```sh
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 ```
 
-Secrets are scoped per deployable unit even when values match. Migrator Secrets
-contain `FLYWAY_*`; API/worker Secrets contain `DATABASE_URL`.
+Keep encrypted Secret manifests encrypted. Do not commit local TLS material.
 
 ## Contracts
 
-- HTTP APIs are Fastify + TypeBox and expose OpenAPI docs.
-- Event contracts must name subject, schema version, payload, producer, and consumers.
+- HTTP APIs use Fastify + TypeBox and expose OpenAPI docs.
+- Event contracts live in the producing domain's `packages/contracts`.
 - Cross-domain events are current-state facts, not replay deltas.
-- Consumers apply newer `version` values and ack stale messages.
-- Account-scoped hot-path authorization uses local projections, not synchronous
-  calls to authority domains.
+- `schema_version` is event shape version.
+- `version` is producer state version for stale/out-of-order protection.
 
-Event catalog:
+Current event catalog:
 
-| Subject | Producer | Consumers | Meaning |
-| --- | --- | --- | --- |
-| `accounts.account.opened` | `accounts` | `entitlements`, `documents` | Account existence and initial owner snapshot. |
-| `entitlements.account_entitlements.updated` | `entitlements` | `documents` | Account entitlement snapshot. |
-
-## Agent Notes
-
-- Prefer Make targets for local/integration deploy checks.
-- Do not collapse domain units into one Kubernetes app abstraction.
-- Do not replace encrypted Secret manifests with plaintext.
-- Do not reintroduce mesh/observability assumptions unless those units are composed.
-- If a README explains obvious code, delete that prose and keep the rule close
-  to the code, test, Make target, or manifest.
+| Subject | Producer | Consumers |
+| --- | --- | --- |
+| `accounts.account.opened` | `accounts` | `entitlements`, `documents` |
+| `entitlements.account_entitlements.updated` | `entitlements` | `documents` |
 
 ## Checks
 
 Use the narrowest check that covers the change:
 
 ```sh
-make -C domains/identity pre-deploy-infra
-make -C domains/accounts pre-deploy-infra
-make -C domains/entitlements pre-deploy-infra
-make -C domains/documents pre-deploy-infra
+make -C domains/identity check
+make -C domains/accounts check
+make -C domains/entitlements check
+make -C domains/documents check
 git diff --check
 ```
 
-Render overlays changed by the patch. KSOPS overlays require:
+Render changed KSOPS overlays with:
 
 ```sh
 kustomize build --enable-alpha-plugins --enable-exec <overlay>

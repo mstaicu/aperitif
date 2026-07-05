@@ -1,10 +1,6 @@
 # Documents Domain
 
-Documents is the product-domain proof of the platform spine.
-
-## Status
-
-Product proof domain. Consumes core projections; publishes no events today.
+Documents is the product proof domain.
 
 ## Owns
 
@@ -12,17 +8,7 @@ Product proof domain. Consumes core projections; publishes no events today.
 - `projected_account_members`
 - `projected_account_entitlements`
 
-The projection tables are local account membership and entitlement inputs copied
-from accounts and entitlements events.
-
-## Does Not Own
-
-- identity records
-- account authority
-- entitlement authority
-- payments, notifications, workflow
-
-The API verifies identity-issued JWTs, then authorizes from local projections.
+Documents does not own identity, account authority, or entitlement authority.
 
 ## Units
 
@@ -30,64 +16,36 @@ The API verifies identity-issued JWTs, then authorizes from local projections.
 postgres -> migrate -> api/worker/ui
 ```
 
-- `postgres`: local/CI placeholder database.
-- `migrate`: Flyway Job from `packages/migrate`.
-- `api`: Fastify API from `packages/api`.
-- `worker`: projection consumers from `packages/worker`.
-- `ui`: server-rendered proof UI from `packages/ui`.
+The worker consumes account and entitlement events. It publishes no events today.
 
-The worker consumes existing streams and does not publish events yet.
-
-## Public Contracts
+## Public API
 
 ```text
 POST /v1/accounts/:account_id/documents
-GET /v1/accounts/:account_id/documents
-GET /documents
+GET  /v1/accounts/:account_id/documents
+GET  /v1/documents/docs
 ```
 
-The command requires:
+The API checks identity JWTs, projected account membership, and projected
+`documents.enabled` entitlement.
 
-- valid identity token
-- projected account owner membership
-- `documents.enabled = true` in projected account entitlements
-
-API docs:
+## Event Inputs
 
 ```text
-GET /v1/documents/docs
-GET /v1/documents/docs/json
+accounts.account.opened
+entitlements.account_entitlements.updated
 ```
 
-## Event Contracts
-
-Consumes:
-
-| Subject | Producer | Projection |
-| --- | --- | --- |
-| `accounts.account.opened` | `accounts` | `projected_account_members` |
-| `entitlements.account_entitlements.updated` | `entitlements` | `projected_account_entitlements` |
-
-Publishes: none.
+Use the producer domains' `packages/contracts` as the source of event shape.
 
 ## Operations
 
 ```sh
 make deploy-documents
+make -C domains/documents check
 ```
 
-Live Flux units:
+## Rules
 
-```text
-documents-postgres -> documents-migrate -> documents-api/documents-worker/documents-ui
-```
-
-The worker depends on accounts and entitlements workers because those streams
-must exist before documents consumes them.
-
-## Agent Notes
-
-- Do not call identity, accounts, or entitlements synchronously for hot-path auth.
+- Do not call core domains synchronously for hot-path authorization.
 - Do not read other domains' databases.
-- The placeholder Postgres unit uses the default `postgres` admin user. API,
-  worker, and migrate units use the same admin connection URL for now.

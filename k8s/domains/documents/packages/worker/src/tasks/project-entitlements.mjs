@@ -1,15 +1,13 @@
 import { addAbortListener } from "node:events";
 
 import {
-  AccountEntitlementsUpdatedPayloadCheck,
-  AccountEntitlementsUpdatedSubject,
-  ENTITLEMENTS_EVENT_SCHEMA_VERSION,
-  EntitlementsEventEnvelopeCheck,
-} from "../events/entitlements.mjs";
-import {
   ENTITLEMENTS_CONSUMER,
   ENTITLEMENTS_STREAM,
 } from "../platform/messaging/entitlements-consumer.mjs";
+
+const AccountEntitlementsUpdatedSchemaVersion = 1;
+const AccountEntitlementsUpdatedSubject =
+  "entitlements.account_entitlements.updated";
 
 /**
  * @param {{
@@ -38,7 +36,8 @@ export async function runProjectEntitlements({ db, nats }, signal) {
         event = message.json();
 
         if (
-          !EntitlementsEventEnvelopeCheck.Check(event) ||
+          !event ||
+          typeof event !== "object" ||
           event.subject !== message.subject
         ) {
           console.warn(
@@ -54,15 +53,11 @@ export async function runProjectEntitlements({ db, nats }, signal) {
         }
 
         if (event.subject === AccountEntitlementsUpdatedSubject) {
-          if (event.schema_version !== ENTITLEMENTS_EVENT_SCHEMA_VERSION) {
+          if (
+            event.schema_version !== AccountEntitlementsUpdatedSchemaVersion
+          ) {
             throw new Error(
               "Unsupported entitlements account entitlements updated schema version",
-            );
-          }
-
-          if (!AccountEntitlementsUpdatedPayloadCheck.Check(event.payload)) {
-            throw new Error(
-              "Invalid entitlements account entitlements updated payload",
             );
           }
 
@@ -98,13 +93,16 @@ export async function runProjectEntitlements({ db, nats }, signal) {
 
 /**
  * @param {{ db: import("pg").Pool }} resources
- * @param {import("../events/entitlements.mjs").EntitlementsEventEnvelope} event
+ * @param {{
+ *   payload: {
+ *     account: { id: string },
+ *     entitlements: Array<{ id: string, value: boolean | number }>,
+ *   },
+ *   version: number,
+ * }} event
  */
 async function projectV1AccountEntitlementsUpdated({ db }, event) {
-  const payload =
-    /** @type {import("../events/entitlements.mjs").AccountEntitlementsUpdatedPayload} */ (
-      event.payload
-    );
+  const { payload } = event;
   const client = await db.connect();
 
   try {

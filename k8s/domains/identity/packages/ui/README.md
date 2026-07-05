@@ -1,13 +1,6 @@
-# identity-ui
+# Identity UI
 
 Remix UI for passkey signup and login.
-
-## Files
-
-- `app/router.ts`: explicit route wiring.
-- `app/pages/*`: server-rendered routes.
-- `app/pages/*.client.ts`: browser-only WebAuthn code.
-- `app/domains/passkeys.ts`: identity API calls.
 
 ## Routes
 
@@ -21,7 +14,7 @@ POST /login
 GET  /identity/assets/*
 ```
 
-The UI stores returned refresh tokens in HttpOnly cookies.
+Refresh tokens are stored in HttpOnly cookies.
 
 ## Local
 
@@ -30,17 +23,10 @@ npm install
 npm run dev
 ```
 
-Host-only HTTPS testing:
+Required environment:
 
-```sh
-NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" \
-API_INTERNAL_V1_URL=https://api.tma.com/v1 \
-npm run dev
+```text
+API_INTERNAL_V1_URL
+COOKIE_SECURE
+PORT
 ```
-
-## Runtime Defaults
-
-- `PORT=3000`
-- `API_INTERNAL_V1_URL=http://traefik-srv.traefik.svc.cluster.local/v1`
-- `COOKIE_SECURE=true`
-- OTel is enabled only when the overlay sets `OTEL_EXPORTER_OTLP_ENDPOINT`.
