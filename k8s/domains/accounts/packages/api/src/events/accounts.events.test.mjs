@@ -3,17 +3,18 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import {
-  AccountOpenedSchemaVersion,
-  AccountOpenedSubject,
-  buildAccountOpenedEvent,
-} from "./index.mjs";
+  AccountOpenedEventCheck,
+  AccountOpenedSource,
+  AccountOpenedType,
+} from "@mstaicu/accounts-contracts";
+
+import { buildAccountOpenedEvent } from "./index.mjs";
 
 test("builds account opened events", () => {
   // Arrange
   const accountId = randomUUID();
   const userId = randomUUID();
-  /** @type {import("./index.mjs").AccountOpenedPayload} */
-  const payload = {
+  const data = {
     account: {
       id: accountId,
     },
@@ -24,20 +25,25 @@ test("builds account opened events", () => {
   };
 
   // Act
-  const event = buildAccountOpenedEvent(payload, 1);
+  const event = buildAccountOpenedEvent(data, 1);
 
   // Assert
+  assert.equal(AccountOpenedEventCheck.Check(event), true);
+  assert.equal(event.datacontenttype, "application/json");
   assert.equal(typeof event.id, "string");
-  assert.equal(event.subject, AccountOpenedSubject);
-  assert.equal(event.schema_version, AccountOpenedSchemaVersion);
-  assert.equal(event.version, 1);
-  assert.deepEqual(event.payload, payload);
+  assert.equal(event.source, AccountOpenedSource);
+  assert.equal(event.specversion, "1.0");
+  assert.equal(typeof event.time, "string");
+  assert.equal(event.type, AccountOpenedType);
+  assert.deepEqual(event.data, {
+    ...data,
+    version: 1,
+  });
 });
 
 test("rejects invalid account opened versions", () => {
   // Arrange
-  /** @type {import("./index.mjs").AccountOpenedPayload} */
-  const payload = {
+  const data = {
     account: {
       id: randomUUID(),
     },
@@ -48,7 +54,7 @@ test("rejects invalid account opened versions", () => {
   };
 
   // Act
-  const buildEvent = () => buildAccountOpenedEvent(payload, 0);
+  const buildEvent = () => buildAccountOpenedEvent(data, 0);
 
   // Assert
   assert.throws(buildEvent, /INVALID_EVENT_VERSION/);

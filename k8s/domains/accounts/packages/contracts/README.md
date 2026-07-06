@@ -2,9 +2,19 @@
 
 Public event contracts emitted by the accounts domain.
 
-| Subject | Version | Schema | Example |
-| --- | ---: | --- | --- |
-| `accounts.account.opened` | 1 | `src/events/accounts.account.opened.v1.mjs` | `examples/accounts.account.opened.v1.json` |
+| CloudEvents type | Schema | Example |
+| --- | --- | --- |
+| `accounts.account.opened.v1` | `src/events/accounts.account.opened.v1.mjs` | `examples/accounts.account.opened.v1.json` |
 
-`schema_version` is the event shape version. `version` is the account state
-version used by consumers to ignore stale messages.
+Events use the CloudEvents JSON shape:
+
+- `specversion` is `1.0`.
+- `source` identifies the producing domain.
+- `type` is the versioned event name.
+- `data` contains the domain fact.
+- `data.version` is the account state version used by consumers to ignore stale messages.
+
+Potential future tooling:
+
+- `cloudevents` can help create and parse CloudEvents if runtime bindings become useful.
+- AsyncAPI tooling can document which domains publish and consume these events.

@@ -14,8 +14,8 @@ test("publishes unpublished outbox events to NATS", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
@@ -23,15 +23,18 @@ test("publishes unpublished outbox events to NATS", async (t) => {
         role: "owner",
         user_id: randomUUID(),
       },
+      version: 1,
     },
-    schema_version: 1,
-    subject: "accounts.account.opened",
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/accounts",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: "accounts.account.opened.v1",
   };
 
   await ensureAccountsStream({ nats, streamReplicas: 1 });
 
-  const subscription = nats.nc.subscribe(event.subject, {
+  const subscription = nats.nc.subscribe(event.type, {
     max: 1,
     timeout: 5000,
   });
@@ -80,8 +83,8 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
@@ -89,10 +92,13 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
         role: "owner",
         user_id: randomUUID(),
       },
+      version: 1,
     },
-    schema_version: 1,
-    subject: "accounts.account.opened",
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/accounts",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: "accounts.account.opened.v1",
   };
 
   await db.query(

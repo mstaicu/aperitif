@@ -1,12 +1,14 @@
 import { addAbortListener } from "node:events";
 
 import {
+  AccountOpenedEventCheck,
+  AccountOpenedType,
+} from "@mstaicu/accounts-contracts";
+
+import {
   ACCOUNTS_CONSUMER,
   ACCOUNTS_STREAM,
 } from "../platform/messaging/accounts-consumer.mjs";
-
-const AccountOpenedSchemaVersion = 1;
-const AccountOpenedSubject = "accounts.account.opened";
 
 /**
  * @param {{
@@ -37,7 +39,7 @@ export async function runProjectAccounts({ db, nats }, signal) {
         if (
           !event ||
           typeof event !== "object" ||
-          event.subject !== message.subject
+          event.type !== message.subject
         ) {
           console.warn(
             JSON.stringify({
@@ -51,11 +53,18 @@ export async function runProjectAccounts({ db, nats }, signal) {
           continue;
         }
 
-        if (event.subject === AccountOpenedSubject) {
-          if (event.schema_version !== AccountOpenedSchemaVersion) {
-            throw new Error(
-              "Unsupported accounts account opened schema version",
+        if (event.type === AccountOpenedType) {
+          if (!AccountOpenedEventCheck.Check(event)) {
+            console.warn(
+              JSON.stringify({
+                event: "invalid_account_opened_event_ignored",
+                level: "warn",
+                service: "entitlements-worker",
+                type: event.type,
+              }),
             );
+            message.ack();
+            continue;
           }
 
           await projectV1AccountOpened({ db }, event);
@@ -72,10 +81,10 @@ export async function runProjectAccounts({ db, nats }, signal) {
             error: err instanceof Error ? err.message : String(err),
             event: "accounts_projection_failed",
             event_id: event?.id,
-            event_subject: event?.subject ?? message.subject,
+            event_type: event?.type ?? message.subject,
             level: "error",
             service: "entitlements-worker",
-            version: event?.version,
+            version: event?.data?.version,
           }),
         );
         message.nak();
@@ -91,14 +100,14 @@ export async function runProjectAccounts({ db, nats }, signal) {
 /**
  * @param {{ db: import("pg").Pool }} resources
  * @param {{
- *   payload: {
+ *   data: {
  *     account: { id: string },
+ *     version: number,
  *   },
- *   version: number,
  * }} event
  */
 async function projectV1AccountOpened({ db }, event) {
-  const { payload } = event;
+  const { data } = event;
   const client = await db.connect();
 
   try {
@@ -115,7 +124,7 @@ async function projectV1AccountOpened({ db }, event) {
         SET version = EXCLUDED.version
         WHERE projected_accounts.version <= EXCLUDED.version
       `,
-      [payload.account.id, event.version],
+      [data.account.id, data.version],
     );
 
     await client.query("COMMIT");
@@ -123,11 +132,11 @@ async function projectV1AccountOpened({ db }, event) {
     if ((result.rowCount ?? 0) > 0) {
       console.log(
         JSON.stringify({
-          account_id: payload.account.id,
+          account_id: data.account.id,
           event: "account_projection_updated",
           level: "info",
           service: "entitlements-worker",
-          version: event.version,
+          version: data.version,
         }),
       );
     }

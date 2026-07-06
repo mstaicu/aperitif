@@ -1,36 +1,47 @@
 import { randomUUID } from "node:crypto";
 
-export const AccountOpenedSubject = "accounts.account.opened";
-export const AccountOpenedSchemaVersion = 1;
+import {
+  AccountOpenedSource,
+  AccountOpenedType,
+} from "@mstaicu/accounts-contracts";
+
+export { AccountOpenedType };
 
 /**
  * @typedef {{
  *   account: { id: string },
  *   member: { role: string, user_id: string },
- * }} AccountOpenedPayload
+ * }} AccountOpenedData
  */
 
 /**
- * @param {AccountOpenedPayload} payload
+ * @param {AccountOpenedData} data
  * @param {number} version
  * @returns {{
+ *   datacontenttype: "application/json",
+ *   data: AccountOpenedData & { version: number },
  *   id: string,
- *   payload: AccountOpenedPayload,
- *   schema_version: number,
- *   subject: string,
- *   version: number,
+ *   source: string,
+ *   specversion: "1.0",
+ *   time: string,
+ *   type: string,
  * }}
  */
-export function buildAccountOpenedEvent(payload, version) {
+export function buildAccountOpenedEvent(data, version) {
   if (!Number.isInteger(version) || version < 1) {
     throw new Error("INVALID_EVENT_VERSION");
   }
 
   return {
+    datacontenttype: "application/json",
+    data: {
+      ...data,
+      version,
+    },
     id: randomUUID(),
-    payload,
-    schema_version: AccountOpenedSchemaVersion,
-    subject: AccountOpenedSubject,
-    version,
+    source: AccountOpenedSource,
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountOpenedType,
   };
 }

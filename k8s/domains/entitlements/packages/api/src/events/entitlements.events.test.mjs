@@ -3,14 +3,16 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import {
-  AccountEntitlementsUpdatedSchemaVersion,
-  AccountEntitlementsUpdatedSubject,
-  buildAccountEntitlementsUpdatedEvent,
-} from "./index.mjs";
+  AccountEntitlementsUpdatedEventCheck,
+  AccountEntitlementsUpdatedSource,
+  AccountEntitlementsUpdatedType,
+} from "@mstaicu/entitlements-contracts";
+
+import { buildAccountEntitlementsUpdatedEvent } from "./index.mjs";
 
 test("builds account entitlements updated events", () => {
   // Arrange
-  const payload = {
+  const data = {
     account: {
       id: randomUUID(),
     },
@@ -27,19 +29,25 @@ test("builds account entitlements updated events", () => {
   };
 
   // Act
-  const event = buildAccountEntitlementsUpdatedEvent(payload, 1);
+  const event = buildAccountEntitlementsUpdatedEvent(data, 1);
 
   // Assert
+  assert.equal(AccountEntitlementsUpdatedEventCheck.Check(event), true);
+  assert.equal(event.datacontenttype, "application/json");
   assert.equal(typeof event.id, "string");
-  assert.equal(event.subject, AccountEntitlementsUpdatedSubject);
-  assert.equal(event.schema_version, AccountEntitlementsUpdatedSchemaVersion);
-  assert.equal(event.version, 1);
-  assert.deepEqual(event.payload, payload);
+  assert.equal(event.source, AccountEntitlementsUpdatedSource);
+  assert.equal(event.specversion, "1.0");
+  assert.equal(typeof event.time, "string");
+  assert.equal(event.type, AccountEntitlementsUpdatedType);
+  assert.deepEqual(event.data, {
+    ...data,
+    version: 1,
+  });
 });
 
 test("rejects invalid account entitlements updated versions", () => {
   // Arrange
-  const payload = {
+  const data = {
     account: {
       id: randomUUID(),
     },
@@ -47,7 +55,7 @@ test("rejects invalid account entitlements updated versions", () => {
   };
 
   // Act
-  const buildEvent = () => buildAccountEntitlementsUpdatedEvent(payload, 0);
+  const buildEvent = () => buildAccountEntitlementsUpdatedEvent(data, 0);
 
   // Assert
   assert.throws(buildEvent, /INVALID_EVENT_VERSION/);

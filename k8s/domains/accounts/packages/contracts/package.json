@@ -1,12 +1,15 @@
 {
-  "name": "@aperitif/accounts-contracts",
-  "private": true,
+  "name": "@mstaicu/accounts-contracts",
+  "version": "0.1.0",
   "type": "module",
   "main": "src/index.mjs",
   "files": [
     "src",
     "examples"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@sinclair/typebox": "^0.34.49"
   }

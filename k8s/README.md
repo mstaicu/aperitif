@@ -109,16 +109,17 @@ Keep encrypted Secret manifests encrypted. Do not commit local TLS material.
 
 - HTTP APIs use Fastify + TypeBox and expose OpenAPI docs.
 - Event contracts live in the producing domain's `packages/contracts`.
+- Events use the CloudEvents JSON shape.
 - Cross-domain events are current-state facts, not replay deltas.
-- `schema_version` is event shape version.
-- `version` is producer state version for stale/out-of-order protection.
+- Event `type` is versioned, for example `accounts.account.opened.v1`.
+- `data.version` is producer state version for stale/out-of-order protection.
 
 Current event catalog:
 
-| Subject | Producer | Consumers |
+| Type | Producer | Consumers |
 | --- | --- | --- |
-| `accounts.account.opened` | `accounts` | `entitlements`, `documents` |
-| `entitlements.account_entitlements.updated` | `entitlements` | `documents` |
+| `accounts.account.opened.v1` | `accounts` | `entitlements`, `documents` |
+| `entitlements.account_entitlements.updated.v1` | `entitlements` | `documents` |
 
 ## Checks
 

@@ -8,6 +8,8 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { setTimeout } from "node:timers/promises";
 
+import { AccountOpenedType } from "@mstaicu/accounts-contracts";
+
 import { startNats } from "../../test/fixtures/nats.mjs";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import {
@@ -17,9 +19,6 @@ import {
 } from "../platform/messaging/accounts-consumer.mjs";
 import { runProjectAccounts } from "./project-accounts.mjs";
 
-const AccountOpenedSchemaVersion = 1;
-const AccountOpenedSubject = "accounts.account.opened";
-
 test("projects account opened events", async (t) => {
   // Arrange
   const db = await startPostgres(t);
@@ -27,8 +26,8 @@ test("projects account opened events", async (t) => {
   const accountId = randomUUID();
   const userId = randomUUID();
   const event = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
@@ -36,10 +35,13 @@ test("projects account opened events", async (t) => {
         role: "owner",
         user_id: userId,
       },
+      version: 1,
     },
-    schema_version: AccountOpenedSchemaVersion,
-    subject: AccountOpenedSubject,
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/accounts",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountOpenedType,
   };
 
   await nats.jsm.streams.add({
@@ -56,7 +58,7 @@ test("projects account opened events", async (t) => {
   const controller = new AbortController();
   const task = runProjectAccounts({ db, nats }, controller.signal);
 
-  await nats.js.publish(event.subject, JSON.stringify(event));
+  await nats.js.publish(event.type, JSON.stringify(event));
 
   let projectedAccount;
 
@@ -101,8 +103,8 @@ test("ignores stale account opened events", async (t) => {
   const nats = await startNats(t);
   const accountId = randomUUID();
   const staleEvent = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
@@ -110,10 +112,13 @@ test("ignores stale account opened events", async (t) => {
         role: "owner",
         user_id: randomUUID(),
       },
+      version: 1,
     },
-    schema_version: AccountOpenedSchemaVersion,
-    subject: AccountOpenedSubject,
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/accounts",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountOpenedType,
   };
 
   await nats.jsm.streams.add({
@@ -141,7 +146,7 @@ test("ignores stale account opened events", async (t) => {
   const controller = new AbortController();
   const task = runProjectAccounts({ db, nats }, controller.signal);
 
-  await nats.js.publish(staleEvent.subject, JSON.stringify(staleEvent));
+  await nats.js.publish(staleEvent.type, JSON.stringify(staleEvent));
 
   for (let attempt = 0; attempt < 50; attempt += 1) {
     const consumer = await nats.jsm.consumers.info(

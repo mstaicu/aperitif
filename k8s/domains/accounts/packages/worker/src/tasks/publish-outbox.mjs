@@ -80,7 +80,7 @@ async function publishOutboxBatch({ db, nats }, signal) {
     );
 
     for (const { event, id } of outboxEvents) {
-      await nats.js.publish(event.subject, JSON.stringify(event), {
+      await nats.js.publish(event.type, JSON.stringify(event), {
         expect: {
           streamName: ACCOUNTS_STREAM,
         },

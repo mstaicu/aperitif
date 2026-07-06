@@ -19,7 +19,7 @@ flyway_schema_history
 - Use expand/contract for runtime-affecting schema changes.
 - Keep core seeds separate from product seeds.
 - If a migration changes effective account entitlements, insert fresh
-  `entitlements.account_entitlements.updated` outbox snapshots for affected
+  `entitlements.account_entitlements.updated.v1` outbox snapshots for affected
   accounts in the same migration.
 
 ## Build

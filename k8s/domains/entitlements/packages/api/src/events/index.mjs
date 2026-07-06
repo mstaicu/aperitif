@@ -1,37 +1,47 @@
 import { randomUUID } from "node:crypto";
 
-export const AccountEntitlementsUpdatedSubject =
-  "entitlements.account_entitlements.updated";
-export const AccountEntitlementsUpdatedSchemaVersion = 1;
+import {
+  AccountEntitlementsUpdatedSource,
+  AccountEntitlementsUpdatedType,
+} from "@mstaicu/entitlements-contracts";
+
+export { AccountEntitlementsUpdatedType };
 
 /**
  * @typedef {{
  *   account: { id: string },
  *   entitlements: Array<{ id: string, value: boolean | number }>,
- * }} AccountEntitlementsUpdatedPayload
+ * }} AccountEntitlementsUpdatedData
  */
 
 /**
- * @param {AccountEntitlementsUpdatedPayload} payload
+ * @param {AccountEntitlementsUpdatedData} data
  * @param {number} version
  * @returns {{
+ *   datacontenttype: "application/json",
+ *   data: AccountEntitlementsUpdatedData & { version: number },
  *   id: string,
- *   payload: AccountEntitlementsUpdatedPayload,
- *   schema_version: number,
- *   subject: string,
- *   version: number,
+ *   source: string,
+ *   specversion: "1.0",
+ *   time: string,
+ *   type: string,
  * }}
  */
-export function buildAccountEntitlementsUpdatedEvent(payload, version) {
+export function buildAccountEntitlementsUpdatedEvent(data, version) {
   if (!Number.isInteger(version) || version < 1) {
     throw new Error("INVALID_EVENT_VERSION");
   }
 
   return {
+    datacontenttype: "application/json",
+    data: {
+      ...data,
+      version,
+    },
     id: randomUUID(),
-    payload,
-    schema_version: AccountEntitlementsUpdatedSchemaVersion,
-    subject: AccountEntitlementsUpdatedSubject,
-    version,
+    source: AccountEntitlementsUpdatedSource,
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountEntitlementsUpdatedType,
   };
 }

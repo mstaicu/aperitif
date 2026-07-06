@@ -1,8 +1,7 @@
 export {
+  AccountEntitlementsUpdatedDataSchema,
   AccountEntitlementsUpdatedEventCheck,
   AccountEntitlementsUpdatedEventSchema,
-  AccountEntitlementsUpdatedPayloadCheck,
-  AccountEntitlementsUpdatedPayloadSchema,
-  AccountEntitlementsUpdatedSchemaVersion,
-  AccountEntitlementsUpdatedSubject,
+  AccountEntitlementsUpdatedSource,
+  AccountEntitlementsUpdatedType,
 } from "./events/entitlements.account_entitlements.updated.v1.mjs";

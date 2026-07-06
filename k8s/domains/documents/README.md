@@ -32,8 +32,8 @@ The API checks identity JWTs, projected account membership, and projected
 ## Event Inputs
 
 ```text
-accounts.account.opened
-entitlements.account_entitlements.updated
+accounts.account.opened.v1
+entitlements.account_entitlements.updated.v1
 ```
 
 Use the producer domains' `packages/contracts` as the source of event shape.

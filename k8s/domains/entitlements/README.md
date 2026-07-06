@@ -57,13 +57,13 @@ Contracts: `packages/contracts`.
 Consumes:
 
 ```text
-accounts.account.opened
+accounts.account.opened.v1
 ```
 
 Publishes:
 
 ```text
-entitlements.account_entitlements.updated
+entitlements.account_entitlements.updated.v1
 ```
 
 ## Operations

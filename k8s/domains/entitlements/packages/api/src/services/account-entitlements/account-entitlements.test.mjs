@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
+import {
+  AccountEntitlementsUpdatedEventCheck,
+  AccountEntitlementsUpdatedType,
+} from "@mstaicu/entitlements-contracts";
+
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { AccountEntitlementsUpdatedSubject } from "../../events/index.mjs";
 import { createAccountEntitlementsService } from "./index.mjs";
 
 /** @param {import("pg").Pool} db */
@@ -52,12 +56,12 @@ const latestOutboxEvent = async ({ accountId, db }) => {
     `
       SELECT event
       FROM outbox_events
-      WHERE event->>'subject' = $1
-        AND event #>> '{payload,account,id}' = $2
-      ORDER BY (event->>'version')::bigint DESC
+      WHERE event->>'type' = $1
+        AND event #>> '{data,account,id}' = $2
+      ORDER BY (event #>> '{data,version}')::bigint DESC
       LIMIT 1
     `,
-    [AccountEntitlementsUpdatedSubject, accountId],
+    [AccountEntitlementsUpdatedType, accountId],
   );
 
   return outbox.event;
@@ -113,13 +117,13 @@ test("account entitlements add grants and publish a reduced snapshot", async (t)
 
   const event = await latestOutboxEvent({ accountId, db });
 
-  assert.equal(event.subject, AccountEntitlementsUpdatedSubject);
-  assert.equal(event.schema_version, 1);
-  assert.equal(event.version, 1);
-  assert.deepEqual(event.payload.account, {
+  assert.equal(AccountEntitlementsUpdatedEventCheck.Check(event), true);
+  assert.equal(event.type, AccountEntitlementsUpdatedType);
+  assert.equal(event.data.version, 1);
+  assert.deepEqual(event.data.account, {
     id: accountId,
   });
-  assert.deepEqual(event.payload.entitlements, [
+  assert.deepEqual(event.data.entitlements, [
     {
       id: "test.enabled",
       value: true,
@@ -176,10 +180,10 @@ test("account entitlements revoke grants and publish a reduced snapshot", async 
 
   const event = await latestOutboxEvent({ accountId, db });
 
-  assert.equal(event.subject, AccountEntitlementsUpdatedSubject);
-  assert.equal(event.schema_version, 1);
-  assert.equal(event.version, 2);
-  assert.deepEqual(event.payload.entitlements, [
+  assert.equal(AccountEntitlementsUpdatedEventCheck.Check(event), true);
+  assert.equal(event.type, AccountEntitlementsUpdatedType);
+  assert.equal(event.data.version, 2);
+  assert.deepEqual(event.data.entitlements, [
     {
       id: "test.max",
       value: 10,

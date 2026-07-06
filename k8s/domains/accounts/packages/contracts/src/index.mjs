@@ -1,8 +1,7 @@
 export {
+  AccountOpenedDataSchema,
   AccountOpenedEventCheck,
   AccountOpenedEventSchema,
-  AccountOpenedPayloadCheck,
-  AccountOpenedPayloadSchema,
-  AccountOpenedSchemaVersion,
-  AccountOpenedSubject,
+  AccountOpenedSource,
+  AccountOpenedType,
 } from "./events/accounts.account.opened.v1.mjs";

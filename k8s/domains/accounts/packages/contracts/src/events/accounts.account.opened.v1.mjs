@@ -1,15 +1,12 @@
 import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
-export const AccountOpenedSubject = "accounts.account.opened";
-export const AccountOpenedSchemaVersion = 1;
+import { UuidSchema } from "../schemas.mjs";
 
-export const UuidSchema = Type.String({
-  pattern:
-    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{12}$",
-});
+export const AccountOpenedSource = "/domains/accounts";
+export const AccountOpenedType = "accounts.account.opened.v1";
 
-export const AccountOpenedPayloadSchema = Type.Object(
+export const AccountOpenedDataSchema = Type.Object(
   {
     account: Type.Object(
       {
@@ -24,25 +21,28 @@ export const AccountOpenedPayloadSchema = Type.Object(
       },
       { additionalProperties: false },
     ),
+    version: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
 );
 
 export const AccountOpenedEventSchema = Type.Object(
   {
+    datacontenttype: Type.Literal("application/json"),
+    data: AccountOpenedDataSchema,
     id: UuidSchema,
-    payload: AccountOpenedPayloadSchema,
-    schema_version: Type.Literal(AccountOpenedSchemaVersion),
-    subject: Type.Literal(AccountOpenedSubject),
-    version: Type.Integer({ minimum: 1 }),
+    source: Type.Literal(AccountOpenedSource),
+    specversion: Type.Literal("1.0"),
+    time: Type.String({ minLength: 1 }),
+    type: Type.Literal(AccountOpenedType),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountOpenedPayloadSchema
- * >} AccountOpenedPayload
+ *   typeof AccountOpenedDataSchema
+ * >} AccountOpenedData
  */
 
 /**
@@ -50,10 +50,6 @@ export const AccountOpenedEventSchema = Type.Object(
  *   typeof AccountOpenedEventSchema
  * >} AccountOpenedEvent
  */
-
-export const AccountOpenedPayloadCheck = TypeCompiler.Compile(
-  AccountOpenedPayloadSchema,
-);
 
 export const AccountOpenedEventCheck = TypeCompiler.Compile(
   AccountOpenedEventSchema,

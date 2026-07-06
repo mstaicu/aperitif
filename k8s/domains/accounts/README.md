@@ -36,7 +36,7 @@ Contracts: `packages/contracts`.
 Publishes:
 
 ```text
-accounts.account.opened
+accounts.account.opened.v1
 ```
 
 ## Operations
@@ -49,5 +49,5 @@ make -C domains/accounts check
 ## Rules
 
 - State changes and `outbox_events` rows belong in the same DB transaction.
-- Events use the account's current `version`.
+- Events use CloudEvents. `data.version` is the account state version.
 - Do not read identity or entitlement databases.

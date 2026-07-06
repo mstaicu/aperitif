@@ -14,23 +14,29 @@ test("publishes unpublished outbox events to NATS", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
-      entitlements: {
-        "members.max": 10,
-      },
+      entitlements: [
+        {
+          id: "members.max",
+          value: 10,
+        },
+      ],
+      version: 1,
     },
-    schema_version: 1,
-    subject: "entitlements.account_entitlements.updated",
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/entitlements",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: "entitlements.account_entitlements.updated.v1",
   };
 
   await ensureEntitlementsStream({ nats, streamReplicas: 1 });
 
-  const subscription = nats.nc.subscribe(event.subject, {
+  const subscription = nats.nc.subscribe(event.type, {
     max: 1,
     timeout: 5000,
   });
@@ -79,18 +85,24 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    id: randomUUID(),
-    payload: {
+    datacontenttype: "application/json",
+    data: {
       account: {
         id: accountId,
       },
-      entitlements: {
-        "members.max": 10,
-      },
+      entitlements: [
+        {
+          id: "members.max",
+          value: 10,
+        },
+      ],
+      version: 1,
     },
-    schema_version: 1,
-    subject: "entitlements.account_entitlements.updated",
-    version: 1,
+    id: randomUUID(),
+    source: "/domains/entitlements",
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: "entitlements.account_entitlements.updated.v1",
   };
 
   await db.query(

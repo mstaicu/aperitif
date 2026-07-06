@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
+import {
+  AccountOpenedEventCheck,
+  AccountOpenedType,
+} from "@mstaicu/accounts-contracts";
+
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { AccountOpenedSubject } from "../../events/index.mjs";
 import { createAccountsService } from "./index.mjs";
 
 test("accounts create accounts owned by the current user", async (t) => {
@@ -74,20 +78,20 @@ test("accounts write account opened events to the outbox", async (t) => {
     `
       SELECT event
       FROM outbox_events
-      WHERE event->>'subject' = $1
-        AND event #>> '{payload,account,id}' = $2
+      WHERE event->>'type' = $1
+        AND event #>> '{data,account,id}' = $2
     `,
-    [AccountOpenedSubject, created.account.id],
+    [AccountOpenedType, created.account.id],
   );
 
   assert.ok(outbox);
-  assert.equal(outbox.event.subject, AccountOpenedSubject);
-  assert.equal(outbox.event.schema_version, 1);
-  assert.equal(outbox.event.version, 1);
-  assert.deepEqual(outbox.event.payload.account, {
+  assert.equal(AccountOpenedEventCheck.Check(outbox.event), true);
+  assert.equal(outbox.event.type, AccountOpenedType);
+  assert.equal(outbox.event.data.version, 1);
+  assert.deepEqual(outbox.event.data.account, {
     id: created.account.id,
   });
-  assert.deepEqual(outbox.event.payload.member, {
+  assert.deepEqual(outbox.event.data.member, {
     role: "owner",
     user_id: currentUserId,
   });

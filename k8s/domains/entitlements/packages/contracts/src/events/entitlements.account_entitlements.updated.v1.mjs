@@ -1,16 +1,13 @@
 import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
-export const AccountEntitlementsUpdatedSubject =
-  "entitlements.account_entitlements.updated";
-export const AccountEntitlementsUpdatedSchemaVersion = 1;
+import { UuidSchema } from "../schemas.mjs";
 
-export const UuidSchema = Type.String({
-  pattern:
-    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{12}$",
-});
+export const AccountEntitlementsUpdatedSource = "/domains/entitlements";
+export const AccountEntitlementsUpdatedType =
+  "entitlements.account_entitlements.updated.v1";
 
-export const AccountEntitlementsUpdatedPayloadSchema = Type.Object(
+export const AccountEntitlementsUpdatedDataSchema = Type.Object(
   {
     account: Type.Object(
       {
@@ -27,25 +24,28 @@ export const AccountEntitlementsUpdatedPayloadSchema = Type.Object(
         { additionalProperties: false },
       ),
     ),
+    version: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
 );
 
 export const AccountEntitlementsUpdatedEventSchema = Type.Object(
   {
+    datacontenttype: Type.Literal("application/json"),
+    data: AccountEntitlementsUpdatedDataSchema,
     id: UuidSchema,
-    payload: AccountEntitlementsUpdatedPayloadSchema,
-    schema_version: Type.Literal(AccountEntitlementsUpdatedSchemaVersion),
-    subject: Type.Literal(AccountEntitlementsUpdatedSubject),
-    version: Type.Integer({ minimum: 1 }),
+    source: Type.Literal(AccountEntitlementsUpdatedSource),
+    specversion: Type.Literal("1.0"),
+    time: Type.String({ minLength: 1 }),
+    type: Type.Literal(AccountEntitlementsUpdatedType),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountEntitlementsUpdatedPayloadSchema
- * >} AccountEntitlementsUpdatedPayload
+ *   typeof AccountEntitlementsUpdatedDataSchema
+ * >} AccountEntitlementsUpdatedData
  */
 
 /**
@@ -53,10 +53,6 @@ export const AccountEntitlementsUpdatedEventSchema = Type.Object(
  *   typeof AccountEntitlementsUpdatedEventSchema
  * >} AccountEntitlementsUpdatedEvent
  */
-
-export const AccountEntitlementsUpdatedPayloadCheck = TypeCompiler.Compile(
-  AccountEntitlementsUpdatedPayloadSchema,
-);
 
 export const AccountEntitlementsUpdatedEventCheck = TypeCompiler.Compile(
   AccountEntitlementsUpdatedEventSchema,

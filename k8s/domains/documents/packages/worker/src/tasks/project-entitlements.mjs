@@ -1,13 +1,14 @@
 import { addAbortListener } from "node:events";
 
 import {
+  AccountEntitlementsUpdatedEventCheck,
+  AccountEntitlementsUpdatedType,
+} from "@mstaicu/entitlements-contracts";
+
+import {
   ENTITLEMENTS_CONSUMER,
   ENTITLEMENTS_STREAM,
 } from "../platform/messaging/entitlements-consumer.mjs";
-
-const AccountEntitlementsUpdatedSchemaVersion = 1;
-const AccountEntitlementsUpdatedSubject =
-  "entitlements.account_entitlements.updated";
 
 /**
  * @param {{
@@ -38,7 +39,7 @@ export async function runProjectEntitlements({ db, nats }, signal) {
         if (
           !event ||
           typeof event !== "object" ||
-          event.subject !== message.subject
+          event.type !== message.subject
         ) {
           console.warn(
             JSON.stringify({
@@ -52,13 +53,18 @@ export async function runProjectEntitlements({ db, nats }, signal) {
           continue;
         }
 
-        if (event.subject === AccountEntitlementsUpdatedSubject) {
-          if (
-            event.schema_version !== AccountEntitlementsUpdatedSchemaVersion
-          ) {
-            throw new Error(
-              "Unsupported entitlements account entitlements updated schema version",
+        if (event.type === AccountEntitlementsUpdatedType) {
+          if (!AccountEntitlementsUpdatedEventCheck.Check(event)) {
+            console.warn(
+              JSON.stringify({
+                event: "invalid_account_entitlements_updated_event_ignored",
+                level: "warn",
+                service: "documents-worker",
+                type: event.type,
+              }),
             );
+            message.ack();
+            continue;
           }
 
           await projectV1AccountEntitlementsUpdated({ db }, event);
@@ -75,10 +81,10 @@ export async function runProjectEntitlements({ db, nats }, signal) {
             error: err instanceof Error ? err.message : String(err),
             event: "entitlements_projection_failed",
             event_id: event?.id,
-            event_subject: event?.subject ?? message.subject,
+            event_type: event?.type ?? message.subject,
             level: "error",
             service: "documents-worker",
-            version: event?.version,
+            version: event?.data?.version,
           }),
         );
         message.nak();
@@ -94,22 +100,22 @@ export async function runProjectEntitlements({ db, nats }, signal) {
 /**
  * @param {{ db: import("pg").Pool }} resources
  * @param {{
- *   payload: {
+ *   data: {
  *     account: { id: string },
  *     entitlements: Array<{ id: string, value: boolean | number }>,
+ *     version: number,
  *   },
- *   version: number,
  * }} event
  */
 async function projectV1AccountEntitlementsUpdated({ db }, event) {
-  const { payload } = event;
+  const { data } = event;
   const client = await db.connect();
 
   try {
     await client.query("BEGIN");
 
     const entitlements = Object.fromEntries(
-      payload.entitlements.map((entitlement) => [
+      data.entitlements.map((entitlement) => [
         entitlement.id,
         entitlement.value,
       ]),
@@ -128,7 +134,7 @@ async function projectV1AccountEntitlementsUpdated({ db }, event) {
           version = EXCLUDED.version
         WHERE projected_account_entitlements.version <= EXCLUDED.version
       `,
-      [payload.account.id, JSON.stringify(entitlements), event.version],
+      [data.account.id, JSON.stringify(entitlements), data.version],
     );
 
     await client.query("COMMIT");
@@ -136,12 +142,12 @@ async function projectV1AccountEntitlementsUpdated({ db }, event) {
     if (rowCount && rowCount > 0) {
       console.log(
         JSON.stringify({
-          account_id: payload.account.id,
-          entitlement_count: payload.entitlements.length,
+          account_id: data.account.id,
+          entitlement_count: data.entitlements.length,
           event: "account_entitlements_projection_updated",
           level: "info",
           service: "documents-worker",
-          version: event.version,
+          version: data.version,
         }),
       );
     }
