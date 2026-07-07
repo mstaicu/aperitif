@@ -6,6 +6,7 @@ import { DatabaseError } from "pg";
  *   accounts: {
  *     id: string,
  *     name: string,
+ *     type: "personal" | "business",
  *   }[],
  * }>}
  */
@@ -17,7 +18,9 @@ export const listAccounts =
     try {
       ({ rows } = await db.query(
         `
-          SELECT a.id, a.name
+          SELECT a.id,
+            a.name,
+            a.type
           FROM account_members am
           JOIN accounts a ON a.id = am.account_id
           WHERE am.user_id = $1
@@ -47,6 +50,7 @@ export const listAccounts =
       accounts: rows.map((row) => ({
         id: row.id,
         name: row.name,
+        type: row.type,
       })),
     };
   };

@@ -1,6 +1,5 @@
+import { buildAccountEntitlementsUpdatedEvent } from "@mstaicu/entitlements-contracts";
 import { DatabaseError } from "pg";
-
-import { buildAccountEntitlementsUpdatedEvent } from "../../events/index.mjs";
 
 /**
  * @typedef {boolean | number} EntitlementValue

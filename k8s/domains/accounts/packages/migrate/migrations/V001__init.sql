@@ -3,6 +3,10 @@ CREATE EXTENSION "pgcrypto";
 CREATE TABLE accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
+    type TEXT NOT NULL CHECK (
+        type IN ('personal', 'business')
+    ),
+
     name TEXT NOT NULL,
 
     version BIGINT NOT NULL DEFAULT 1

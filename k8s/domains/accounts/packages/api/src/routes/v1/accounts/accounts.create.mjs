@@ -1,5 +1,5 @@
-import { ProblemResponse } from "../../../api/problem-details.mjs";
 import { authenticate } from "../../../platform/security/jwt.mjs";
+import { ProblemResponse } from "../../problem-details.mjs";
 import { CreateAccountBody, CreateAccountResponse } from "./schemas.mjs";
 
 /**
@@ -44,6 +44,7 @@ export function registerCreateAccountRoute(
         await accounts.createAccount({
           currentUserId,
           name: req.body.name,
+          type: req.body.type,
         }),
       );
     },

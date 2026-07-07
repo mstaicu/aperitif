@@ -1,8 +1,8 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 
-import probes from "./api/probes.mjs";
-import problemDetails from "./api/problem-details.mjs";
+import probes from "./routes/probes.mjs";
+import problemDetails from "./routes/problem-details.mjs";
 import { registerV1Routes } from "./routes/v1/index.mjs";
 
 /**

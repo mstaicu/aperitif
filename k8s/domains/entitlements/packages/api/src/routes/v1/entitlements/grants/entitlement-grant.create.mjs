@@ -1,5 +1,5 @@
-import { ProblemResponse } from "../../../../api/problem-details.mjs";
 import { authenticateOperator } from "../../../../platform/security/jwt.mjs";
+import { ProblemResponse } from "../../../problem-details.mjs";
 import {
   AddAccountEntitlementsBody,
   AddAccountEntitlementsResponse,

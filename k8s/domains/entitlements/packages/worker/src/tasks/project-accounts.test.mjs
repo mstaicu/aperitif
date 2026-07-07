@@ -28,6 +28,7 @@ test("projects account opened events", async (t) => {
     data: {
       account: {
         id: accountId,
+        type: "business",
       },
       member: {
         role: "owner",
@@ -66,7 +67,8 @@ test("projects account opened events", async (t) => {
       rows: [row],
     } = await db.query(
       `
-        SELECT account_id,
+      SELECT account_id,
+          type,
           version
         FROM projected_accounts
         WHERE account_id = $1
@@ -92,6 +94,7 @@ test("projects account opened events", async (t) => {
   // Assert
   assert.deepEqual(projectedAccount, {
     account_id: accountId,
+    type: "business",
     version: "1",
   });
 });
@@ -105,6 +108,7 @@ test("ignores stale account opened events", async (t) => {
     data: {
       account: {
         id: accountId,
+        type: "personal",
       },
       member: {
         role: "owner",
@@ -134,11 +138,12 @@ test("ignores stale account opened events", async (t) => {
     `
       INSERT INTO projected_accounts (
         account_id,
+        type,
         version
       )
-      VALUES ($1, $2)
+      VALUES ($1, $2, $3)
     `,
-    [accountId, 2],
+    [accountId, "business", 2],
   );
 
   // Act
@@ -165,6 +170,7 @@ test("ignores stale account opened events", async (t) => {
   } = await db.query(
     `
       SELECT account_id,
+        type,
         version
       FROM projected_accounts
       WHERE account_id = $1
@@ -182,6 +188,7 @@ test("ignores stale account opened events", async (t) => {
   // Assert
   assert.deepEqual(projectedAccount, {
     account_id: accountId,
+    type: "business",
     version: "2",
   });
 });

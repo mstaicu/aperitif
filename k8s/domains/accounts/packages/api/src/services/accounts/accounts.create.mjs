@@ -1,19 +1,23 @@
+import { buildAccountOpenedEvent } from "@mstaicu/accounts-contracts";
 import { DatabaseError } from "pg";
-
-import { buildAccountOpenedEvent } from "../../events/index.mjs";
 
 /**
  * @param {{ db: import("pg").Pool }} resources
- * @returns {(args: { currentUserId: string, name: string }) => Promise<{
+ * @returns {(args: {
+ *   currentUserId: string,
+ *   name: string,
+ *   type: "personal" | "business",
+ * }) => Promise<{
  *   account: {
  *     id: string,
  *     name: string,
+ *     type: "personal" | "business",
  *   },
  * }>}
  */
 export const createAccount =
   ({ db }) =>
-  async ({ currentUserId, name }) => {
+  async ({ currentUserId, name, type }) => {
     let client;
 
     try {
@@ -24,11 +28,11 @@ export const createAccount =
         rows: [account],
       } = await client.query(
         `
-          INSERT INTO accounts (name)
-          VALUES ($1)
-          RETURNING id, name, version
+          INSERT INTO accounts (type, name)
+          VALUES ($1, $2)
+          RETURNING id, type, name, version
         `,
-        [name],
+        [type, name],
       );
 
       await client.query(
@@ -47,6 +51,7 @@ export const createAccount =
         {
           account: {
             id: account.id,
+            type: account.type,
           },
           member: {
             role: "owner",
@@ -82,6 +87,7 @@ export const createAccount =
         account: {
           id: account.id,
           name: account.name,
+          type: account.type,
         },
       };
     } catch (err) {

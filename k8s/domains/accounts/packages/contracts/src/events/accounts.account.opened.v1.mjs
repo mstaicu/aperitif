@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { randomUUID } from "node:crypto";
 
 import { UuidSchema } from "../schemas.mjs";
 
@@ -11,6 +12,7 @@ export const AccountOpenedDataSchema = Type.Object(
     account: Type.Object(
       {
         id: UuidSchema,
+        type: Type.Union([Type.Literal("personal"), Type.Literal("business")]),
       },
       { additionalProperties: false },
     ),
@@ -54,3 +56,27 @@ export const AccountOpenedEventSchema = Type.Object(
 export const AccountOpenedEventCheck = TypeCompiler.Compile(
   AccountOpenedEventSchema,
 );
+
+/**
+ * @param {Omit<AccountOpenedData, "version">} data
+ * @param {number} version
+ * @returns {AccountOpenedEvent}
+ */
+export function buildAccountOpenedEvent(data, version) {
+  if (!Number.isInteger(version) || version < 1) {
+    throw new Error("INVALID_EVENT_VERSION");
+  }
+
+  return {
+    data: {
+      ...data,
+      version,
+    },
+    datacontenttype: "application/json",
+    id: randomUUID(),
+    source: AccountOpenedSource,
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountOpenedType,
+  };
+}

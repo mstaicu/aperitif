@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { randomUUID } from "node:crypto";
 
 import { UuidSchema } from "../schemas.mjs";
 
@@ -57,3 +58,27 @@ export const AccountEntitlementsUpdatedEventSchema = Type.Object(
 export const AccountEntitlementsUpdatedEventCheck = TypeCompiler.Compile(
   AccountEntitlementsUpdatedEventSchema,
 );
+
+/**
+ * @param {Omit<AccountEntitlementsUpdatedData, "version">} data
+ * @param {number} version
+ * @returns {AccountEntitlementsUpdatedEvent}
+ */
+export function buildAccountEntitlementsUpdatedEvent(data, version) {
+  if (!Number.isInteger(version) || version < 1) {
+    throw new Error("INVALID_EVENT_VERSION");
+  }
+
+  return {
+    data: {
+      ...data,
+      version,
+    },
+    datacontenttype: "application/json",
+    id: randomUUID(),
+    source: AccountEntitlementsUpdatedSource,
+    specversion: "1.0",
+    time: new Date().toISOString(),
+    type: AccountEntitlementsUpdatedType,
+  };
+}

@@ -100,7 +100,7 @@ export async function runProjectAccounts({ db, nats }, signal) {
  * @param {{ db: import("pg").Pool }} resources
  * @param {{
  *   data: {
- *     account: { id: string },
+ *     account: { id: string, type: "personal" | "business" },
  *     version: number,
  *   },
  * }} event
@@ -116,14 +116,16 @@ async function projectV1AccountOpened({ db }, event) {
       `
         INSERT INTO projected_accounts (
           account_id,
+          type,
           version
         )
-        VALUES ($1, $2)
+        VALUES ($1, $2, $3)
         ON CONFLICT (account_id) DO UPDATE
-        SET version = EXCLUDED.version
+        SET type = EXCLUDED.type,
+          version = EXCLUDED.version
         WHERE projected_accounts.version <= EXCLUDED.version
       `,
-      [data.account.id, data.version],
+      [data.account.id, data.account.type, data.version],
     );
 
     await client.query("COMMIT");

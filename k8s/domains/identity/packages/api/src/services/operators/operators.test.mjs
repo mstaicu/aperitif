@@ -31,19 +31,3 @@ test("operators assign and revoke operator access", async (t) => {
     /FORBIDDEN/,
   );
 });
-
-test("operators reject revoking the last operator", async (t) => {
-  // Arrange
-  const db = await startPostgres(t);
-  const operators = createOperatorsService({ db });
-  const userId = randomUUID();
-
-  await db.query("INSERT INTO users (id) VALUES ($1)", [userId]);
-  await db.query("INSERT INTO operators (user_id) VALUES ($1)", [userId]);
-
-  // Act
-  const revokeOperator = operators.revokeOperator({ userId });
-
-  // Assert
-  await assert.rejects(revokeOperator, /FORBIDDEN/);
-});

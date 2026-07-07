@@ -4,7 +4,7 @@ Public event contracts emitted by the entitlements domain.
 
 | CloudEvents type | Schema | Example |
 | --- | --- | --- |
-| `entitlements.account_entitlements.updated.v1` | `src/events/entitlements.account_entitlements.updated.v1.mjs` | `examples/entitlements.account_entitlements.updated.v1.json` |
+| `entitlements.account_entitlements.updated.v1` | `src/events/entitlements.account_entitlements.updated.v1.mjs` | `examples/events/entitlements.account_entitlements.updated.v1.json` |
 
 Events use the CloudEvents JSON shape:
 
@@ -13,6 +13,9 @@ Events use the CloudEvents JSON shape:
 - `type` is the versioned event name.
 - `data` contains the domain fact.
 - `data.version` is the entitlement snapshot state version used by consumers to ignore stale messages.
+
+Producers should use the exported `buildAccountEntitlementsUpdatedEvent` helper
+so the published event matches the contract.
 
 Potential future tooling:
 

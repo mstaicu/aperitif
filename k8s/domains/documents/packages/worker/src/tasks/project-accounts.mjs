@@ -100,7 +100,7 @@ export async function runProjectAccounts({ db, nats }, signal) {
  * @param {{ db: import("pg").Pool }} resources
  * @param {{
  *   data: {
- *     account: { id: string },
+ *     account: { id: string, type: "personal" | "business" },
  *     member: { role: string, user_id: string },
  *     version: number,
  *   },

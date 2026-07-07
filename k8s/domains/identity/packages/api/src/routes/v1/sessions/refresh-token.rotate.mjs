@@ -1,4 +1,4 @@
-import { ProblemResponse } from "../../../api/problem-details.mjs";
+import { ProblemResponse } from "../../problem-details.mjs";
 import { RefreshTokenResponse } from "./schemas.mjs";
 
 /**

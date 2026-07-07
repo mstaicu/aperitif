@@ -9,10 +9,18 @@ const AccountName = Type.String({
   maxLength: 160,
   minLength: 1,
 });
+const AccountType = Type.Union(
+  [Type.Literal("personal"), Type.Literal("business")],
+  {
+    description:
+      "Kind of account boundary being opened. Personal accounts represent an individual context. Business accounts represent an organization context.",
+  },
+);
 
 export const CreateAccountBody = Type.Object(
   {
     name: AccountName,
+    type: AccountType,
   },
   {
     additionalProperties: false,
@@ -24,6 +32,7 @@ export const Account = Type.Object(
   {
     id: AccountId,
     name: AccountName,
+    type: AccountType,
   },
   {
     additionalProperties: false,

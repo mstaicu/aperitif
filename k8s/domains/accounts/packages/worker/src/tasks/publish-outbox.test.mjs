@@ -17,6 +17,7 @@ test("publishes unpublished outbox events to NATS", async (t) => {
     data: {
       account: {
         id: accountId,
+        type: "personal",
       },
       member: {
         role: "owner",
@@ -86,6 +87,7 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
     data: {
       account: {
         id: accountId,
+        type: "business",
       },
       member: {
         role: "owner",

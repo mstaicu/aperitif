@@ -33,8 +33,8 @@ const createProjectedAccount = async (db) => {
 
   await db.query(
     `
-      INSERT INTO projected_accounts (account_id, version)
-      VALUES ($1, 1)
+      INSERT INTO projected_accounts (account_id, type, version)
+      VALUES ($1, 'business', 1)
     `,
     [accountId],
   );

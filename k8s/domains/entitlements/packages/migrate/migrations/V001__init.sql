@@ -36,6 +36,10 @@ CREATE SEQUENCE account_entitlements_version_seq AS BIGINT;
 CREATE TABLE projected_accounts (
     account_id UUID PRIMARY KEY,
 
+    type TEXT NOT NULL CHECK (
+        type IN ('personal', 'business')
+    ),
+
     version BIGINT NOT NULL
 );
 

@@ -1,6 +1,7 @@
 # Accounts Domain
 
 Accounts owns the resource boundary that product data lives under.
+Each account has a required `type`: `personal` or `business`.
 
 ## Owns
 
