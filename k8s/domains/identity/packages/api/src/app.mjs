@@ -4,7 +4,7 @@ import Fastify from "fastify";
 import jwksRoutes from "./api/jwks.mjs";
 import probes from "./api/probes.mjs";
 import problemDetails from "./api/problem-details.mjs";
-import v1 from "./api/versions/v1/index.mjs";
+import { registerV1Routes } from "./routes/v1/index.mjs";
 
 /**
  * @typedef {import("fastify")} Fastify
@@ -56,7 +56,7 @@ export const createApp = async ({
   }
   await app.register(probes, { db });
   await app.register(jwksRoutes, { jwks });
-  await app.register(v1, {
+  await registerV1Routes(app, {
     jwks,
     operators,
     passkeys,

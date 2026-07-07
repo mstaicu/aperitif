@@ -1,0 +1,43 @@
+import { ProblemResponse } from "../../../api/problem-details.mjs";
+
+/**
+ * @param {import("../../../app.mjs").FastifyInstance} fastify
+ * @param {{
+ *   sessions: import("../../../services/sessions/index.mjs").SessionsService,
+ *   prefix: string,
+ * }} opts
+ */
+export function registerRevokeSessionRoute(fastify, { prefix, sessions }) {
+  fastify.delete(
+    prefix,
+    {
+      schema: {
+        description:
+          "Revoke the identity session represented by the refresh token supplied in the Authorization bearer header.",
+        operationId: "revokeSession",
+        response: {
+          204: {
+            description: "Session revoked.",
+          },
+          401: ProblemResponse,
+          500: ProblemResponse,
+          503: ProblemResponse,
+        },
+        security: [{ refreshTokenAuth: [] }],
+        summary: "Revoke session",
+        tags: ["sessions"],
+      },
+    },
+    async function (req, reply) {
+      const [type, token] = (req.headers.authorization || "").split(" ");
+
+      if (type !== "Bearer" || !token) {
+        throw new Error("INVALID_AUTHORIZATION_HEADER");
+      }
+
+      await sessions.revokeSession({ refresh_token: token });
+
+      return reply.code(204).send();
+    },
+  );
+}
