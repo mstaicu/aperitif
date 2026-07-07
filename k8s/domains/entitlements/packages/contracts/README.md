@@ -17,4 +17,4 @@ Events use the CloudEvents JSON shape:
 Potential future tooling:
 
 - `cloudevents` can help create and parse CloudEvents if runtime bindings become useful.
-- AsyncAPI tooling can document which domains publish and consume these events.
+- AsyncAPI is the future event catalog/docs layer. Add it when event discovery, generated docs, or event API diffing becomes useful. TypeBox remains the active schema source.
