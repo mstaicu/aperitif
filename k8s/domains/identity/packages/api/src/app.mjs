@@ -28,16 +28,21 @@ import v1 from "./api/versions/v1/index.mjs";
  * @param {{
  *  db: import("pg").Pool,
  *  jwks: import("./platform/security/index.mjs").JwtKeys["jwks"],
- *  services: {
- *    operators: OperatorsService,
- *    passkeys: PasskeysService,
- *    sessions: SessionsService,
- *  },
+ *  operators: OperatorsService,
+ *  passkeys: PasskeysService,
+ *  sessions: SessionsService,
  *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ db, fastifyOtel, jwks, services }) => {
+export const createApp = async ({
+  db,
+  fastifyOtel,
+  jwks,
+  operators,
+  passkeys,
+  sessions,
+}) => {
   /**
    * @type {FastifyInstance}
    */
@@ -53,8 +58,10 @@ export const createApp = async ({ db, fastifyOtel, jwks, services }) => {
   await app.register(jwksRoutes, { jwks });
   await app.register(v1, {
     jwks,
+    operators,
+    passkeys,
     prefix: "/v1",
-    services,
+    sessions,
   });
 
   return app;

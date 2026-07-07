@@ -1,9 +1,8 @@
-import { addAbortListener } from "node:events";
-
 import {
   AccountOpenedEventCheck,
   AccountOpenedType,
 } from "@mstaicu/accounts-contracts";
+import { addAbortListener } from "node:events";
 
 import {
   ACCOUNTS_CONSUMER,
@@ -129,12 +128,7 @@ async function projectV1AccountOpened({ db }, event) {
           version = EXCLUDED.version
         WHERE projected_account_members.version <= EXCLUDED.version
       `,
-      [
-        data.account.id,
-        data.member.user_id,
-        data.member.role,
-        data.version,
-      ],
+      [data.account.id, data.member.user_id, data.member.role, data.version],
     );
 
     await client.query("COMMIT");

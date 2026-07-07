@@ -1,12 +1,11 @@
-import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import test from "node:test";
-
 import {
   AccountEntitlementsUpdatedEventCheck,
   AccountEntitlementsUpdatedSource,
   AccountEntitlementsUpdatedType,
 } from "@mstaicu/entitlements-contracts";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import test from "node:test";
 
 import { buildAccountEntitlementsUpdatedEvent } from "./index.mjs";
 

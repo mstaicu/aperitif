@@ -1,9 +1,8 @@
-import { addAbortListener } from "node:events";
-
 import {
   AccountOpenedEventCheck,
   AccountOpenedType,
 } from "@mstaicu/accounts-contracts";
+import { addAbortListener } from "node:events";
 
 import {
   ACCOUNTS_CONSUMER,

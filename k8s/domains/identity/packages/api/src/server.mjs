@@ -20,21 +20,23 @@ if (!process.env.ORIGIN) {
   throw new Error("ORIGIN is required");
 }
 
+const operators = createOperatorsService({ db: postgres.db });
+const passkeys = createPasskeysService({
+  db: postgres.db,
+  origin: process.env.ORIGIN,
+});
+const sessions = createSessionsService({
+  db: postgres.db,
+  signingKey,
+});
+
 const app = await createApp({
   db: postgres.db,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
-  services: {
-    operators: createOperatorsService({ db: postgres.db }),
-    passkeys: createPasskeysService({
-      db: postgres.db,
-      origin: process.env.ORIGIN,
-    }),
-    sessions: createSessionsService({
-      db: postgres.db,
-      signingKey,
-    }),
-  },
+  operators,
+  passkeys,
+  sessions,
 });
 
 app.addHook("onClose", () => tracing.close());

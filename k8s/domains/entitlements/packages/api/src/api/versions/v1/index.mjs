@@ -14,12 +14,13 @@ import revokeAccountEntitlements from "./routes/entitlements/grants/entitlement-
 
 /**
  * @param {Fastify} fastify
- * @param {{services: {
- *   entitlements: EntitlementsService,
+ * @param {{
  *   accountEntitlements: AccountEntitlementsService,
- * }, jwks: Jwks}} opts
+ *   entitlements: EntitlementsService,
+ *   jwks: Jwks,
+ * }} opts
  */
-export default async (fastify, { jwks, services }) => {
+export default async (fastify, { accountEntitlements, entitlements, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -53,17 +54,17 @@ export default async (fastify, { jwks, services }) => {
   });
 
   await fastify.register(addAccountEntitlements, {
-    accountEntitlements: services.accountEntitlements,
+    accountEntitlements,
     jwks,
     prefix: "/entitlements",
   });
   await fastify.register(revokeAccountEntitlements, {
-    accountEntitlements: services.accountEntitlements,
+    accountEntitlements,
     jwks,
     prefix: "/entitlements",
   });
   await fastify.register(listEntitlements, {
-    entitlements: services.entitlements,
+    entitlements,
     jwks,
     prefix: "/entitlements",
   });

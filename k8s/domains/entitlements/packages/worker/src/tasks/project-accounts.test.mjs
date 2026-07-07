@@ -1,3 +1,4 @@
+import { AccountOpenedType } from "@mstaicu/accounts-contracts";
 import {
   DiscardPolicy,
   RetentionPolicy,
@@ -7,8 +8,6 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { setTimeout } from "node:timers/promises";
-
-import { AccountOpenedType } from "@mstaicu/accounts-contracts";
 
 import { startNats } from "../../test/fixtures/nats.mjs";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
@@ -26,7 +25,6 @@ test("projects account opened events", async (t) => {
   const accountId = randomUUID();
   const userId = randomUUID();
   const event = {
-    datacontenttype: "application/json",
     data: {
       account: {
         id: accountId,
@@ -37,6 +35,7 @@ test("projects account opened events", async (t) => {
       },
       version: 1,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: "/domains/accounts",
     specversion: "1.0",
@@ -103,7 +102,6 @@ test("ignores stale account opened events", async (t) => {
   const nats = await startNats(t);
   const accountId = randomUUID();
   const staleEvent = {
-    datacontenttype: "application/json",
     data: {
       account: {
         id: accountId,
@@ -114,6 +112,7 @@ test("ignores stale account opened events", async (t) => {
       },
       version: 1,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: "/domains/accounts",
     specversion: "1.0",

@@ -14,7 +14,6 @@ test("publishes unpublished outbox events to NATS", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    datacontenttype: "application/json",
     data: {
       account: {
         id: accountId,
@@ -25,6 +24,7 @@ test("publishes unpublished outbox events to NATS", async (t) => {
       },
       version: 1,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: "/domains/accounts",
     specversion: "1.0",
@@ -83,7 +83,6 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
-    datacontenttype: "application/json",
     data: {
       account: {
         id: accountId,
@@ -94,6 +93,7 @@ test("keeps outbox events unpublished when NATS publish fails", async (t) => {
       },
       version: 1,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: "/domains/accounts",
     specversion: "1.0",

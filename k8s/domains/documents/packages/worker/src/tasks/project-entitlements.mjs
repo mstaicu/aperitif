@@ -1,9 +1,8 @@
-import { addAbortListener } from "node:events";
-
 import {
   AccountEntitlementsUpdatedEventCheck,
   AccountEntitlementsUpdatedType,
 } from "@mstaicu/entitlements-contracts";
+import { addAbortListener } from "node:events";
 
 import {
   ENTITLEMENTS_CONSUMER,

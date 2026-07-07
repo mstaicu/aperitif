@@ -14,7 +14,6 @@ export async function ensureEntitlementsConsumer({ nats }) {
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ENTITLEMENTS_CONSUMER,
-    max_ack_pending: 1,
   };
 
   try {

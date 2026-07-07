@@ -1,9 +1,8 @@
-import { randomUUID } from "node:crypto";
-
 import {
   AccountEntitlementsUpdatedSource,
   AccountEntitlementsUpdatedType,
 } from "@mstaicu/entitlements-contracts";
+import { randomUUID } from "node:crypto";
 
 export { AccountEntitlementsUpdatedType };
 
@@ -33,11 +32,11 @@ export function buildAccountEntitlementsUpdatedEvent(data, version) {
   }
 
   return {
-    datacontenttype: "application/json",
     data: {
       ...data,
       version,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: AccountEntitlementsUpdatedSource,
     specversion: "1.0",

@@ -1,11 +1,10 @@
-import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import test from "node:test";
-
 import {
   AccountEntitlementsUpdatedEventCheck,
   AccountEntitlementsUpdatedType,
 } from "@mstaicu/entitlements-contracts";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createAccountEntitlementsService } from "./index.mjs";

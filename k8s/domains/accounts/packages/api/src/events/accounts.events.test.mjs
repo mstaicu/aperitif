@@ -1,12 +1,11 @@
-import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import test from "node:test";
-
 import {
   AccountOpenedEventCheck,
   AccountOpenedSource,
   AccountOpenedType,
 } from "@mstaicu/accounts-contracts";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import test from "node:test";
 
 import { buildAccountOpenedEvent } from "./index.mjs";
 

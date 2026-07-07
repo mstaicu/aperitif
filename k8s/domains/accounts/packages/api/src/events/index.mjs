@@ -1,9 +1,8 @@
-import { randomUUID } from "node:crypto";
-
 import {
   AccountOpenedSource,
   AccountOpenedType,
 } from "@mstaicu/accounts-contracts";
+import { randomUUID } from "node:crypto";
 
 export { AccountOpenedType };
 
@@ -33,11 +32,11 @@ export function buildAccountOpenedEvent(data, version) {
   }
 
   return {
-    datacontenttype: "application/json",
     data: {
       ...data,
       version,
     },
+    datacontenttype: "application/json",
     id: randomUUID(),
     source: AccountOpenedSource,
     specversion: "1.0",

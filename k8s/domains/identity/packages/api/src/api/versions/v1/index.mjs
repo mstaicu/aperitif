@@ -22,13 +22,14 @@ import deleteSession from "./routes/sessions/session.revoke.mjs";
 
 /**
  * @param {Fastify} fastify
- * @param {{services: {
+ * @param {{
+ *   jwks: JsonWebKeySet,
  *   operators: OperatorsService,
  *   passkeys: PasskeysService,
  *   sessions: SessionsService,
- * }, jwks: JsonWebKeySet}} opts
+ * }} opts
  */
-export default async (fastify, { jwks, services }) => {
+export default async (fastify, { jwks, operators, passkeys, sessions }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -77,47 +78,47 @@ export default async (fastify, { jwks, services }) => {
   });
 
   await fastify.register(loginChallenge, {
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(login, {
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(passkeyChallenge, {
     jwks,
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(passkeyCreate, {
     jwks,
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(registerChallenge, {
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(register, {
-    passkeys: services.passkeys,
+    passkeys,
     prefix: "/passkeys",
   });
   await fastify.register(operator, {
     jwks,
-    operators: services.operators,
+    operators,
     prefix: "/operators",
   });
   await fastify.register(accessToken, {
     prefix: "/sessions",
-    sessions: services.sessions,
+    sessions,
   });
   await fastify.register(refreshToken, {
     prefix: "/sessions",
-    sessions: services.sessions,
+    sessions,
   });
   await fastify.register(deleteSession, {
     prefix: "/sessions",
-    sessions: services.sessions,
+    sessions,
   });
 
   await fastify.register(swaggerUI, {

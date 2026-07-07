@@ -14,15 +14,17 @@ tracing.start();
 
 const postgres = createPostgres();
 const jwks = createIdentityJwks();
+const accountEntitlements = createAccountEntitlementsService({
+  db: postgres.db,
+});
+const entitlements = createEntitlementsService({ db: postgres.db });
 
 const app = await createApp({
+  accountEntitlements,
   db: postgres.db,
+  entitlements,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
-  services: {
-    accountEntitlements: createAccountEntitlementsService({ db: postgres.db }),
-    entitlements: createEntitlementsService({ db: postgres.db }),
-  },
 });
 
 app.addHook("onClose", () => tracing.close());

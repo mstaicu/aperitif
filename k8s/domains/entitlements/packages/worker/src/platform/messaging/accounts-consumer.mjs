@@ -14,7 +14,6 @@ export async function ensureAccountsConsumer({ nats }) {
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ACCOUNTS_CONSUMER,
-    max_ack_pending: 1,
   };
 
   try {

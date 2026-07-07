@@ -12,11 +12,12 @@ import listAccounts from "./routes/accounts/accounts.list.mjs";
 
 /**
  * @param {Fastify} fastify
- * @param {{services: {
+ * @param {{
  *   accounts: AccountsService,
- * }, jwks: Jwks}} opts
+ *   jwks: Jwks,
+ * }} opts
  */
-export default async (fastify, { jwks, services }) => {
+export default async (fastify, { accounts, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -50,12 +51,12 @@ export default async (fastify, { jwks, services }) => {
   });
 
   await fastify.register(listAccounts, {
-    accounts: services.accounts,
+    accounts,
     jwks,
     prefix: "/accounts",
   });
   await fastify.register(createAccount, {
-    accounts: services.accounts,
+    accounts,
     jwks,
     prefix: "/accounts",
   });
