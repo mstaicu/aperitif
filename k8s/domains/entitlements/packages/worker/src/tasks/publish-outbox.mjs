@@ -4,7 +4,6 @@ import { ENTITLEMENTS_STREAM } from "../platform/messaging/entitlements-stream.m
 
 const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
 const OUTBOX_BATCH_SIZE = 10;
-const PUBLISH_ACK_TIMEOUT_MS = 5000;
 
 /**
  * LISTEN only wakes the worker; outbox_events is the source of truth.
@@ -22,19 +21,15 @@ export async function runPublishOutbox({ db, nats }, signal) {
 
   try {
     await listener.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
-    const notifications = on(listener, "notification", { signal });
 
-    while (
-      (await publishOutboxBatch({ db, nats }, signal)) === OUTBOX_BATCH_SIZE
-    );
-
-    for await (const [notification] of notifications) {
+    // eslint-disable-next-line
+    for await (const _ of outboxDrainRequests(listener, signal)) {
       signal.throwIfAborted();
 
-      if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-        while (
-          (await publishOutboxBatch({ db, nats }, signal)) === OUTBOX_BATCH_SIZE
-        );
+      while (
+        (await publishOutboxBatch({ db, nats }, signal)) === OUTBOX_BATCH_SIZE
+      ) {
+        signal.throwIfAborted();
       }
     }
   } catch (err) {
@@ -47,6 +42,24 @@ export async function runPublishOutbox({ db, nats }, signal) {
     await listener.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {});
 
     listener.release();
+  }
+}
+
+/**
+ * @param {import("pg").PoolClient} listener
+ * @param {AbortSignal} signal
+ */
+async function* outboxDrainRequests(listener, signal) {
+  const notifications = on(listener, "notification", { signal });
+
+  yield;
+
+  for await (const [notification] of notifications) {
+    signal.throwIfAborted();
+
+    if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
+      yield;
+    }
   }
 }
 
@@ -85,7 +98,6 @@ async function publishOutboxBatch({ db, nats }, signal) {
           streamName: ENTITLEMENTS_STREAM,
         },
         msgID: id,
-        timeout: PUBLISH_ACK_TIMEOUT_MS,
       });
     }
 
