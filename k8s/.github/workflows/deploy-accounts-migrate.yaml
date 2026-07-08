@@ -5,8 +5,8 @@ on:
     branches:
       - master
     paths:
-      - "domains/accounts/packages/migrate/Dockerfile"
-      - "domains/accounts/packages/migrate/migrations/**"
+      - "domains/accounts/packages/database/Dockerfile"
+      - "domains/accounts/packages/database/sql/**"
 
 permissions:
   contents: write
@@ -15,7 +15,7 @@ jobs:
   deploy:
     uses: ./.github/workflows/deployment.yaml
     with:
-      context: domains/accounts/packages/migrate
+      context: domains/accounts/packages/database
       domain: accounts
       image: mdstaicu/accounts-migrate
       manifest: domains/accounts/infra/migrate/overlays/prod-eu

@@ -1,6 +1,6 @@
-# Entitlements Migrations
+# Entitlements Database
 
-Flyway owns entitlements schema history.
+Flyway owns entitlements database schema history.
 
 ## Tables
 
@@ -15,7 +15,7 @@ flyway_schema_history
 
 ## Rules
 
-- Add changes as `migrations/V###__description.sql`.
+- Add changes as `sql/V###__description.sql`.
 - Use expand/contract for runtime-affecting schema changes.
 - Keep core seeds separate from product seeds.
 - If a migration changes effective account entitlements, insert fresh
@@ -25,5 +25,5 @@ flyway_schema_history
 ## Build
 
 ```sh
-docker build --target prod -t mdstaicu/entitlements-migrate:<tag> domains/entitlements/packages/migrate
+docker build --target prod -t mdstaicu/entitlements-migrate:<tag> domains/entitlements/packages/database
 ```

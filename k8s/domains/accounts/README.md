@@ -20,6 +20,9 @@ resources.
 postgres -> migrate -> api/worker
 ```
 
+Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
+job that runs it.
+
 The worker publishes outbox events.
 
 ## Public API

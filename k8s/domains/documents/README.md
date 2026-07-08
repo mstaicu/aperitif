@@ -16,6 +16,9 @@ Documents does not own identity, account authority, or entitlement authority.
 postgres -> migrate -> api/worker/ui
 ```
 
+Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
+job that runs it.
+
 The worker consumes account and entitlement events. It publishes no events today.
 
 ## Public API

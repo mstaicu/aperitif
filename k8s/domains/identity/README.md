@@ -19,6 +19,9 @@ Identity does not own accounts, product authority, or business resources.
 postgres -> migrate -> api -> ui -> cleanup
 ```
 
+Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
+job that runs it.
+
 No worker exists because identity publishes no domain events today.
 
 ## Public API

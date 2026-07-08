@@ -1,9 +1,9 @@
+import { AccountOpenedV1Type } from "@mstaicu/accounts-contracts";
 import {
   AckPolicy,
   JetStreamApiCodes,
   JetStreamApiError,
 } from "@nats-io/jetstream";
-import { AccountOpenedV1Type } from "@mstaicu/accounts-contracts";
 
 export const ACCOUNTS_STREAM = "ACCOUNTS";
 export const ACCOUNTS_CONSUMER = "entitlements-accounts-projection";

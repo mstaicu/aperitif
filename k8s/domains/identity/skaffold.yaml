@@ -40,7 +40,7 @@ build:
 
   artifacts:
     - image: mdstaicu/identity-migrate
-      context: packages/migrate
+      context: packages/database
       docker:
         dockerfile: Dockerfile
 

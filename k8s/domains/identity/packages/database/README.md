@@ -1,6 +1,6 @@
-# Identity Migrations
+# Identity Database
 
-Flyway owns identity schema history.
+Flyway owns identity database schema history.
 
 ## Tables
 
@@ -17,7 +17,7 @@ flyway_schema_history
 
 ## Rules
 
-- Add changes as `migrations/V###__description.sql`.
+- Add changes as `sql/V###__description.sql`.
 - Use expand/contract for runtime-affecting schema changes.
 - Identity publishes no domain events today, so migrations do not write outbox
   rows.
@@ -25,5 +25,5 @@ flyway_schema_history
 ## Build
 
 ```sh
-docker build --target prod -t mdstaicu/identity-migrate:<tag> domains/identity/packages/migrate
+docker build --target prod -t mdstaicu/identity-migrate:<tag> domains/identity/packages/database
 ```

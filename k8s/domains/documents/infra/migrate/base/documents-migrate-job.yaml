@@ -27,6 +27,6 @@ spec:
 
           env:
             - name: FLYWAY_LOCATIONS
-              value: filesystem:/db/migrations
+              value: filesystem:/db/sql
             - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS
               value: "true"

@@ -29,6 +29,8 @@ CREATE TABLE outbox_events (
 
     event JSONB NOT NULL,
 
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
     published_at TIMESTAMPTZ
 );
 

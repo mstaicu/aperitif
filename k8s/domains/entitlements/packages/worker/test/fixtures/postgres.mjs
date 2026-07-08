@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { GenericContainer, Network, Wait } from "testcontainers";
 
 const fixtureDir = dirname(fileURLToPath(import.meta.url));
-const migrationsPath = resolve(fixtureDir, "../../../migrate/migrations");
+const sqlPath = resolve(fixtureDir, "../../../database/sql");
 
 /**
  * @param {import("node:test").TestContext} t
@@ -29,7 +29,7 @@ export const startPostgres = async (t) => {
       .withNetwork(network)
       .withBindMounts([
         {
-          source: migrationsPath,
+          source: sqlPath,
           target: "/flyway/sql",
         },
       ])

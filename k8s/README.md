@@ -23,6 +23,8 @@ postgres -> migrate -> api/worker/ui
 ```
 
 Units stay independently deployable. A domain only has the units it needs.
+Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
+job that runs it.
 
 ## Domains
 
@@ -48,6 +50,8 @@ domain DB transaction -> outbox_events -> worker -> NATS JetStream
 ```
 
 Postgres notifications only wake workers. The outbox is the durable source.
+Outbox tables use `id`, `event`, `created_at`, `published_at`, and an insert
+trigger that notifies `outbox_events`.
 
 ## Local
 

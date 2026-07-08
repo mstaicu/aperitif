@@ -1,9 +1,9 @@
+import { AccountEntitlementsUpdatedV1Type } from "@mstaicu/entitlements-contracts";
 import {
   AckPolicy,
   JetStreamApiCodes,
   JetStreamApiError,
 } from "@nats-io/jetstream";
-import { AccountEntitlementsUpdatedV1Type } from "@mstaicu/entitlements-contracts";
 
 export const ENTITLEMENTS_STREAM = "ENTITLEMENTS";
 export const ENTITLEMENTS_CONSUMER = "documents-entitlements-projection";

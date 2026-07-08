@@ -5,10 +5,10 @@ DOMAIN ?= tma.com
 
 .PHONY: help
 .PHONY: deploy-ingress-crds deploy-ingress deploy-event-bus deploy-observability deploy-platform
-.PHONY: apply-identity-db run-identity-migrations apply-identity-api apply-identity-ui apply-identity-cleanup deploy-identity
-.PHONY: apply-accounts-db run-accounts-migrations apply-accounts-api apply-accounts-worker deploy-accounts
-.PHONY: apply-entitlements-db run-entitlements-migrations apply-entitlements-api apply-entitlements-worker deploy-entitlements
-.PHONY: apply-documents-db run-documents-migrations apply-documents-api apply-documents-worker apply-documents-ui deploy-documents
+.PHONY: apply-identity-db run-identity-migrate apply-identity-api apply-identity-ui apply-identity-cleanup deploy-identity
+.PHONY: apply-accounts-db run-accounts-migrate apply-accounts-api apply-accounts-worker deploy-accounts
+.PHONY: apply-entitlements-db run-entitlements-migrate apply-entitlements-api apply-entitlements-worker deploy-entitlements
+.PHONY: apply-documents-db run-documents-migrate apply-documents-api apply-documents-worker apply-documents-ui deploy-documents
 .PHONY: deploy-core deploy-all
 .PHONY: integration-identity integration-accounts integration-entitlements integration-documents
 .PHONY: dev-all dev
@@ -62,7 +62,7 @@ deploy-platform: deploy-observability deploy-ingress deploy-event-bus ## Deploy 
 apply-identity-db: ## Apply the identity database.
 	skaffold run -m identity-postgres-dev
 
-run-identity-migrations: ## Run identity migrations.
+run-identity-migrate: ## Run identity database migrations.
 	kubectl delete job -n identity migrate --ignore-not-found
 	skaffold run --force -m identity-migrate-dev
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
@@ -78,14 +78,14 @@ apply-identity-ui: ## Apply the identity UI.
 apply-identity-cleanup: ## Apply identity cleanup jobs.
 	skaffold run -m identity-cleanup-dev
 
-deploy-identity: apply-identity-db run-identity-migrations apply-identity-api apply-identity-ui apply-identity-cleanup ## Deploy identity only.
+deploy-identity: apply-identity-db run-identity-migrate apply-identity-api apply-identity-ui apply-identity-cleanup ## Deploy identity only.
 
 # Accounts
 
 apply-accounts-db: ## Apply the accounts database.
 	skaffold run -m accounts-postgres-dev
 
-run-accounts-migrations: ## Run accounts migrations.
+run-accounts-migrate: ## Run accounts database migrations.
 	kubectl delete job -n accounts migrate --ignore-not-found
 	skaffold run --force -m accounts-migrate-dev
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
@@ -98,14 +98,14 @@ apply-accounts-worker: ## Apply the accounts worker.
 	skaffold run -m accounts-worker-dev
 	kubectl rollout status -n accounts deploy/accounts-worker-depl --timeout=300s
 
-deploy-accounts: apply-accounts-db run-accounts-migrations apply-accounts-api apply-accounts-worker ## Deploy accounts only.
+deploy-accounts: apply-accounts-db run-accounts-migrate apply-accounts-api apply-accounts-worker ## Deploy accounts only.
 
 # Entitlements
 
 apply-entitlements-db: ## Apply the entitlements database.
 	skaffold run -m entitlements-postgres-dev
 
-run-entitlements-migrations: ## Run entitlements migrations.
+run-entitlements-migrate: ## Run entitlements database migrations.
 	kubectl delete job -n entitlements migrate --ignore-not-found
 	skaffold run --force -m entitlements-migrate-dev
 	kubectl wait -n entitlements --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n entitlements job/migrate --all-containers=true; exit 1; }
@@ -118,14 +118,14 @@ apply-entitlements-worker: ## Apply the entitlements worker.
 	skaffold run -m entitlements-worker-dev
 	kubectl rollout status -n entitlements deploy/entitlements-worker-depl --timeout=300s
 
-deploy-entitlements: apply-entitlements-db run-entitlements-migrations apply-entitlements-api apply-entitlements-worker ## Deploy entitlements only.
+deploy-entitlements: apply-entitlements-db run-entitlements-migrate apply-entitlements-api apply-entitlements-worker ## Deploy entitlements only.
 
 # Documents
 
 apply-documents-db: ## Apply the documents database.
 	skaffold run -m documents-postgres-dev
 
-run-documents-migrations: ## Run documents migrations.
+run-documents-migrate: ## Run documents database migrations.
 	kubectl delete job -n documents migrate --ignore-not-found
 	skaffold run --force -m documents-migrate-dev
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
@@ -142,7 +142,7 @@ apply-documents-ui: ## Apply the documents UI.
 	skaffold run -m documents-ui-dev
 	kubectl rollout status -n documents deploy/documents-ui-depl --timeout=300s
 
-deploy-documents: apply-documents-db run-documents-migrations apply-documents-api apply-documents-worker apply-documents-ui ## Deploy documents only.
+deploy-documents: apply-documents-db run-documents-migrate apply-documents-api apply-documents-worker apply-documents-ui ## Deploy documents only.
 
 # Scenarios
 

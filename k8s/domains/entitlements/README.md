@@ -39,6 +39,9 @@ number_sum
 postgres -> migrate -> api/worker
 ```
 
+Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
+job that runs it.
+
 The worker projects accounts and publishes outbox events.
 
 ## Operator API

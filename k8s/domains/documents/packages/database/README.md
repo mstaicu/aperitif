@@ -1,6 +1,6 @@
-# Documents Migrations
+# Documents Database
 
-Flyway owns documents schema history.
+Flyway owns documents database schema history.
 
 ## Tables
 
@@ -13,7 +13,7 @@ flyway_schema_history
 
 ## Rules
 
-- Add changes as `migrations/V###__description.sql`.
+- Add changes as `sql/V###__description.sql`.
 - Use expand/contract for runtime-affecting schema changes.
 - Projection schema changes are backfilled by replaying or republishing source
   domain snapshot events.
@@ -22,5 +22,5 @@ flyway_schema_history
 ## Build
 
 ```sh
-docker build --target prod -t mdstaicu/documents-migrate:<tag> domains/documents/packages/migrate
+docker build --target prod -t mdstaicu/documents-migrate:<tag> domains/documents/packages/database
 ```
