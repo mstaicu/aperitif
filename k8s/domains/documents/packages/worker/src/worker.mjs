@@ -1,7 +1,7 @@
 import { once } from "node:events";
-import http from "node:http";
 import process from "node:process";
 
+import { createHealthServer } from "./platform/health.mjs";
 import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
 import { ensureEntitlementsConsumer } from "./platform/messaging/entitlements-consumer.mjs";
 import { createNats } from "./platform/nats.mjs";
@@ -16,32 +16,7 @@ const controller = new AbortController();
 await ensureEntitlementsConsumer({ nats });
 await ensureAccountsConsumer({ nats });
 
-const health = http.createServer(async (req, res) => {
-  if (req.url === "/livez") {
-    res.writeHead(200, { "content-type": "text/plain" });
-    res.end("ok");
-    return;
-  }
-
-  if (req.url === "/readyz") {
-    try {
-      await postgres.db.query("SELECT 1");
-      await nats.nc.flush();
-
-      res.writeHead(200, { "content-type": "text/plain" });
-      res.end("ok");
-      return;
-    } catch {
-      res.writeHead(503, { "content-type": "text/plain" });
-      res.end("not ready");
-      return;
-    }
-  }
-
-  res.writeHead(404, { "content-type": "text/plain" });
-  res.end();
-});
-
+const health = createHealthServer({ db: postgres.db, nats });
 health.listen(3000, "0.0.0.0");
 
 const tasks = [

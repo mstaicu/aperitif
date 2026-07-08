@@ -1,45 +1,22 @@
 import { once } from "node:events";
-import http from "node:http";
 import process from "node:process";
 
+import { createHealthServer } from "./platform/health.mjs";
 import { ensureAccountsStream } from "./platform/messaging/accounts-stream.mjs";
 import { createNats } from "./platform/nats.mjs";
 import { createPostgres } from "./platform/postgres.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
-const streamReplicas = getStreamReplicas();
 const postgres = createPostgres();
 const nats = await createNats();
 const controller = new AbortController();
 
-await ensureAccountsStream({ nats, streamReplicas });
-
-const health = http.createServer(async (req, res) => {
-  if (req.url === "/livez") {
-    res.writeHead(200, { "content-type": "text/plain" });
-    res.end("ok");
-    return;
-  }
-
-  if (req.url === "/readyz") {
-    try {
-      await postgres.db.query("SELECT 1");
-      await nats.nc.flush();
-
-      res.writeHead(200, { "content-type": "text/plain" });
-      res.end("ok");
-      return;
-    } catch {
-      res.writeHead(503, { "content-type": "text/plain" });
-      res.end("not ready");
-      return;
-    }
-  }
-
-  res.writeHead(404, { "content-type": "text/plain" });
-  res.end();
+await ensureAccountsStream({
+  nats,
+  streamReplicas: Number(process.env.NATS_STREAM_REPLICAS),
 });
 
+const health = createHealthServer({ db: postgres.db, nats });
 health.listen(3000, "0.0.0.0");
 
 const tasks = [runPublishOutbox({ db: postgres.db, nats }, controller.signal)];
@@ -91,18 +68,4 @@ try {
       service: "accounts-worker",
     }),
   );
-}
-
-function getStreamReplicas() {
-  if (!process.env.NATS_STREAM_REPLICAS) {
-    throw new Error("NATS_STREAM_REPLICAS is required");
-  }
-
-  const replicas = Number(process.env.NATS_STREAM_REPLICAS);
-
-  if (!Number.isInteger(replicas) || replicas < 1) {
-    throw new Error("NATS_STREAM_REPLICAS must be a positive integer");
-  }
-
-  return replicas;
 }
