@@ -1,6 +1,6 @@
 import {
-  AccountEntitlementsUpdatedEventCheck,
-  AccountEntitlementsUpdatedType,
+  AccountEntitlementsUpdatedV1EventCheck,
+  AccountEntitlementsUpdatedV1Type,
 } from "@mstaicu/entitlements-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -60,7 +60,7 @@ const latestOutboxEvent = async ({ accountId, db }) => {
       ORDER BY (event #>> '{data,version}')::bigint DESC
       LIMIT 1
     `,
-    [AccountEntitlementsUpdatedType, accountId],
+    [AccountEntitlementsUpdatedV1Type, accountId],
   );
 
   return outbox.event;
@@ -116,8 +116,8 @@ test("account entitlements add grants and publish a reduced snapshot", async (t)
 
   const event = await latestOutboxEvent({ accountId, db });
 
-  assert.equal(AccountEntitlementsUpdatedEventCheck.Check(event), true);
-  assert.equal(event.type, AccountEntitlementsUpdatedType);
+  assert.equal(AccountEntitlementsUpdatedV1EventCheck.Check(event), true);
+  assert.equal(event.type, AccountEntitlementsUpdatedV1Type);
   assert.equal(event.data.version, 1);
   assert.deepEqual(event.data.account, {
     id: accountId,
@@ -179,8 +179,8 @@ test("account entitlements revoke grants and publish a reduced snapshot", async 
 
   const event = await latestOutboxEvent({ accountId, db });
 
-  assert.equal(AccountEntitlementsUpdatedEventCheck.Check(event), true);
-  assert.equal(event.type, AccountEntitlementsUpdatedType);
+  assert.equal(AccountEntitlementsUpdatedV1EventCheck.Check(event), true);
+  assert.equal(event.type, AccountEntitlementsUpdatedV1Type);
   assert.equal(event.data.version, 2);
   assert.deepEqual(event.data.entitlements, [
     {

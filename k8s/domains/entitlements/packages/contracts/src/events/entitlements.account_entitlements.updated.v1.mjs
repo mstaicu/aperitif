@@ -4,11 +4,11 @@ import { randomUUID } from "node:crypto";
 
 import { UuidSchema } from "../schemas.mjs";
 
-export const AccountEntitlementsUpdatedSource = "/domains/entitlements";
-export const AccountEntitlementsUpdatedType =
+export const AccountEntitlementsUpdatedV1Source = "/domains/entitlements";
+export const AccountEntitlementsUpdatedV1Type =
   "entitlements.account_entitlements.updated.v1";
 
-export const AccountEntitlementsUpdatedDataSchema = Type.Object(
+export const AccountEntitlementsUpdatedV1DataSchema = Type.Object(
   {
     account: Type.Object(
       {
@@ -30,41 +30,41 @@ export const AccountEntitlementsUpdatedDataSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const AccountEntitlementsUpdatedEventSchema = Type.Object(
+export const AccountEntitlementsUpdatedV1EventSchema = Type.Object(
   {
     datacontenttype: Type.Literal("application/json"),
-    data: AccountEntitlementsUpdatedDataSchema,
+    data: AccountEntitlementsUpdatedV1DataSchema,
     id: UuidSchema,
-    source: Type.Literal(AccountEntitlementsUpdatedSource),
+    source: Type.Literal(AccountEntitlementsUpdatedV1Source),
     specversion: Type.Literal("1.0"),
     time: Type.String({ minLength: 1 }),
-    type: Type.Literal(AccountEntitlementsUpdatedType),
+    type: Type.Literal(AccountEntitlementsUpdatedV1Type),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountEntitlementsUpdatedDataSchema
- * >} AccountEntitlementsUpdatedData
+ *   typeof AccountEntitlementsUpdatedV1DataSchema
+ * >} AccountEntitlementsUpdatedV1Data
  */
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountEntitlementsUpdatedEventSchema
- * >} AccountEntitlementsUpdatedEvent
+ *   typeof AccountEntitlementsUpdatedV1EventSchema
+ * >} AccountEntitlementsUpdatedV1Event
  */
 
-export const AccountEntitlementsUpdatedEventCheck = TypeCompiler.Compile(
-  AccountEntitlementsUpdatedEventSchema,
+export const AccountEntitlementsUpdatedV1EventCheck = TypeCompiler.Compile(
+  AccountEntitlementsUpdatedV1EventSchema,
 );
 
 /**
- * @param {Omit<AccountEntitlementsUpdatedData, "version">} data
+ * @param {Omit<AccountEntitlementsUpdatedV1Data, "version">} data
  * @param {number} version
- * @returns {AccountEntitlementsUpdatedEvent}
+ * @returns {AccountEntitlementsUpdatedV1Event}
  */
-export function buildAccountEntitlementsUpdatedEvent(data, version) {
+export function buildAccountEntitlementsUpdatedV1Event(data, version) {
   if (!Number.isInteger(version) || version < 1) {
     throw new Error("INVALID_EVENT_VERSION");
   }
@@ -76,9 +76,9 @@ export function buildAccountEntitlementsUpdatedEvent(data, version) {
     },
     datacontenttype: "application/json",
     id: randomUUID(),
-    source: AccountEntitlementsUpdatedSource,
+    source: AccountEntitlementsUpdatedV1Source,
     specversion: "1.0",
     time: new Date().toISOString(),
-    type: AccountEntitlementsUpdatedType,
+    type: AccountEntitlementsUpdatedV1Type,
   };
 }

@@ -1,6 +1,6 @@
 import {
-  AccountOpenedEventCheck,
-  AccountOpenedType,
+  AccountOpenedV1EventCheck,
+  AccountOpenedV1Type,
 } from "@mstaicu/accounts-contracts";
 import { addAbortListener } from "node:events";
 
@@ -52,28 +52,30 @@ export async function runProjectAccounts({ db, nats }, signal) {
           continue;
         }
 
-        if (event.type === AccountOpenedType) {
-          if (!AccountOpenedEventCheck.Check(event)) {
-            console.warn(
-              JSON.stringify({
-                event: "invalid_account_opened_event_ignored",
-                level: "warn",
-                service: "entitlements-worker",
-                type: event.type,
-              }),
-            );
+        switch (event.type) {
+          case AccountOpenedV1Type:
+            if (!AccountOpenedV1EventCheck.Check(event)) {
+              console.warn(
+                JSON.stringify({
+                  event: "invalid_account_opened_event_ignored",
+                  level: "warn",
+                  service: "entitlements-worker",
+                  type: event.type,
+                }),
+              );
+              message.ack();
+              continue;
+            }
+
+            await projectV1AccountOpened({ db }, event);
+
             message.ack();
             continue;
-          }
 
-          await projectV1AccountOpened({ db }, event);
-
-          message.ack();
-          continue;
+          default:
+            message.ack();
+            continue;
         }
-
-        message.ack();
-        continue;
       } catch (err) {
         console.error(
           JSON.stringify({

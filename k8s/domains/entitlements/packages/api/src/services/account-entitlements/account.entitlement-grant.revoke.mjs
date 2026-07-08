@@ -1,4 +1,4 @@
-import { buildAccountEntitlementsUpdatedEvent } from "@mstaicu/entitlements-contracts";
+import { buildAccountEntitlementsUpdatedV1Event } from "@mstaicu/entitlements-contracts";
 import { DatabaseError } from "pg";
 
 /**
@@ -180,7 +180,7 @@ export const revokeAccountEntitlements =
         `,
       );
 
-      const event = buildAccountEntitlementsUpdatedEvent(
+      const event = buildAccountEntitlementsUpdatedV1Event(
         {
           account: {
             id: accountId,

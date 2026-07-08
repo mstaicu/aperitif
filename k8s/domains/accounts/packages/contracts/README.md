@@ -15,7 +15,7 @@ Events use the CloudEvents JSON shape:
 - `data.version` is the account state version used by consumers to ignore stale messages.
 - `data.account.type` is `personal` or `business`.
 
-Producers should use the exported `buildAccountOpenedEvent` helper so the
+Producers should use the exported `buildAccountOpenedV1Event` helper so the
 published event matches the contract.
 
 Potential future tooling:

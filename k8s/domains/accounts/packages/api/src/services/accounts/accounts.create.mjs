@@ -1,4 +1,4 @@
-import { buildAccountOpenedEvent } from "@mstaicu/accounts-contracts";
+import { buildAccountOpenedV1Event } from "@mstaicu/accounts-contracts";
 import { DatabaseError } from "pg";
 
 /**
@@ -47,7 +47,7 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountOpenedEvent = buildAccountOpenedEvent(
+      const accountOpenedEvent = buildAccountOpenedV1Event(
         {
           account: {
             id: account.id,

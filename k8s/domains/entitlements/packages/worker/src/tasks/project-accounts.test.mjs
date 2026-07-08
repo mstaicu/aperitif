@@ -1,4 +1,4 @@
-import { AccountOpenedType } from "@mstaicu/accounts-contracts";
+import { AccountOpenedV1Type } from "@mstaicu/accounts-contracts";
 import {
   DiscardPolicy,
   RetentionPolicy,
@@ -41,7 +41,7 @@ test("projects account opened events", async (t) => {
     source: "/domains/accounts",
     specversion: "1.0",
     time: new Date().toISOString(),
-    type: AccountOpenedType,
+    type: AccountOpenedV1Type,
   };
 
   await nats.jsm.streams.add({
@@ -121,7 +121,7 @@ test("ignores stale account opened events", async (t) => {
     source: "/domains/accounts",
     specversion: "1.0",
     time: new Date().toISOString(),
-    type: AccountOpenedType,
+    type: AccountOpenedV1Type,
   };
 
   await nats.jsm.streams.add({

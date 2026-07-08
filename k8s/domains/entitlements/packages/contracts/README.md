@@ -14,7 +14,7 @@ Events use the CloudEvents JSON shape:
 - `data` contains the domain fact.
 - `data.version` is the entitlement snapshot state version used by consumers to ignore stale messages.
 
-Producers should use the exported `buildAccountEntitlementsUpdatedEvent` helper
+Producers should use the exported `buildAccountEntitlementsUpdatedV1Event` helper
 so the published event matches the contract.
 
 Potential future tooling:

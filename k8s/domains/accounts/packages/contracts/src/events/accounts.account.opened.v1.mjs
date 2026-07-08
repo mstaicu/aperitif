@@ -4,10 +4,10 @@ import { randomUUID } from "node:crypto";
 
 import { UuidSchema } from "../schemas.mjs";
 
-export const AccountOpenedSource = "/domains/accounts";
-export const AccountOpenedType = "accounts.account.opened.v1";
+export const AccountOpenedV1Source = "/domains/accounts";
+export const AccountOpenedV1Type = "accounts.account.opened.v1";
 
-export const AccountOpenedDataSchema = Type.Object(
+export const AccountOpenedV1DataSchema = Type.Object(
   {
     account: Type.Object(
       {
@@ -28,41 +28,41 @@ export const AccountOpenedDataSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const AccountOpenedEventSchema = Type.Object(
+export const AccountOpenedV1EventSchema = Type.Object(
   {
     datacontenttype: Type.Literal("application/json"),
-    data: AccountOpenedDataSchema,
+    data: AccountOpenedV1DataSchema,
     id: UuidSchema,
-    source: Type.Literal(AccountOpenedSource),
+    source: Type.Literal(AccountOpenedV1Source),
     specversion: Type.Literal("1.0"),
     time: Type.String({ minLength: 1 }),
-    type: Type.Literal(AccountOpenedType),
+    type: Type.Literal(AccountOpenedV1Type),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountOpenedDataSchema
- * >} AccountOpenedData
+ *   typeof AccountOpenedV1DataSchema
+ * >} AccountOpenedV1Data
  */
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountOpenedEventSchema
- * >} AccountOpenedEvent
+ *   typeof AccountOpenedV1EventSchema
+ * >} AccountOpenedV1Event
  */
 
-export const AccountOpenedEventCheck = TypeCompiler.Compile(
-  AccountOpenedEventSchema,
+export const AccountOpenedV1EventCheck = TypeCompiler.Compile(
+  AccountOpenedV1EventSchema,
 );
 
 /**
- * @param {Omit<AccountOpenedData, "version">} data
+ * @param {Omit<AccountOpenedV1Data, "version">} data
  * @param {number} version
- * @returns {AccountOpenedEvent}
+ * @returns {AccountOpenedV1Event}
  */
-export function buildAccountOpenedEvent(data, version) {
+export function buildAccountOpenedV1Event(data, version) {
   if (!Number.isInteger(version) || version < 1) {
     throw new Error("INVALID_EVENT_VERSION");
   }
@@ -74,9 +74,9 @@ export function buildAccountOpenedEvent(data, version) {
     },
     datacontenttype: "application/json",
     id: randomUUID(),
-    source: AccountOpenedSource,
+    source: AccountOpenedV1Source,
     specversion: "1.0",
     time: new Date().toISOString(),
-    type: AccountOpenedType,
+    type: AccountOpenedV1Type,
   };
 }

@@ -1,6 +1,6 @@
 import {
-  AccountEntitlementsUpdatedEventCheck,
-  AccountEntitlementsUpdatedType,
+  AccountEntitlementsUpdatedV1EventCheck,
+  AccountEntitlementsUpdatedV1Type,
 } from "@mstaicu/entitlements-contracts";
 import { addAbortListener } from "node:events";
 
@@ -52,28 +52,30 @@ export async function runProjectEntitlements({ db, nats }, signal) {
           continue;
         }
 
-        if (event.type === AccountEntitlementsUpdatedType) {
-          if (!AccountEntitlementsUpdatedEventCheck.Check(event)) {
-            console.warn(
-              JSON.stringify({
-                event: "invalid_account_entitlements_updated_event_ignored",
-                level: "warn",
-                service: "documents-worker",
-                type: event.type,
-              }),
-            );
+        switch (event.type) {
+          case AccountEntitlementsUpdatedV1Type:
+            if (!AccountEntitlementsUpdatedV1EventCheck.Check(event)) {
+              console.warn(
+                JSON.stringify({
+                  event: "invalid_account_entitlements_updated_event_ignored",
+                  level: "warn",
+                  service: "documents-worker",
+                  type: event.type,
+                }),
+              );
+              message.ack();
+              continue;
+            }
+
+            await projectV1AccountEntitlementsUpdated({ db }, event);
+
             message.ack();
             continue;
-          }
 
-          await projectV1AccountEntitlementsUpdated({ db }, event);
-
-          message.ack();
-          continue;
+          default:
+            message.ack();
+            continue;
         }
-
-        message.ack();
-        continue;
       } catch (err) {
         console.error(
           JSON.stringify({

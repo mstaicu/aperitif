@@ -1,6 +1,6 @@
 import {
-  AccountOpenedEventCheck,
-  AccountOpenedType,
+  AccountOpenedV1EventCheck,
+  AccountOpenedV1Type,
 } from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -86,12 +86,12 @@ test("accounts write account opened events to the outbox", async (t) => {
       WHERE event->>'type' = $1
         AND event #>> '{data,account,id}' = $2
     `,
-    [AccountOpenedType, created.account.id],
+    [AccountOpenedV1Type, created.account.id],
   );
 
   assert.ok(outbox);
-  assert.equal(AccountOpenedEventCheck.Check(outbox.event), true);
-  assert.equal(outbox.event.type, AccountOpenedType);
+  assert.equal(AccountOpenedV1EventCheck.Check(outbox.event), true);
+  assert.equal(outbox.event.type, AccountOpenedV1Type);
   assert.equal(outbox.event.data.version, 1);
   assert.deepEqual(outbox.event.data.account, {
     id: created.account.id,
