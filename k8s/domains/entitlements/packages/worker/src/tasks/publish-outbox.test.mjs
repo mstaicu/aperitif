@@ -7,10 +7,10 @@ import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import { ensureEntitlementsStream } from "../platform/messaging/entitlements-stream.mjs";
 import { runPublishOutbox } from "./publish-outbox.mjs";
 
-test("publishes unpublished outbox events to NATS", async (t) => {
+test("publishes unpublished outbox events to NATS", async () => {
   // Arrange
-  const db = await startPostgres(t);
-  const nats = await startNats(t);
+  await using db = await startPostgres();
+  await using nats = await startNats();
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {
@@ -78,10 +78,10 @@ test("publishes unpublished outbox events to NATS", async (t) => {
   assert.ok(outbox.published_at);
 });
 
-test("keeps outbox events unpublished when NATS publish fails", async (t) => {
+test("keeps outbox events unpublished when NATS publish fails", async () => {
   // Arrange
-  const db = await startPostgres(t);
-  const nats = await startNats(t);
+  await using db = await startPostgres();
+  await using nats = await startNats();
   const controller = new AbortController();
   const accountId = randomUUID();
   const event = {

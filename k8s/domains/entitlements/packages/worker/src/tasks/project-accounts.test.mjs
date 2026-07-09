@@ -18,10 +18,10 @@ import {
 } from "../platform/messaging/accounts-consumer.mjs";
 import { runProjectAccounts } from "./project-accounts.mjs";
 
-test("projects account opened events", async (t) => {
+test("projects account opened events", async () => {
   // Arrange
-  const db = await startPostgres(t);
-  const nats = await startNats(t);
+  await using db = await startPostgres();
+  await using nats = await startNats();
   const accountId = randomUUID();
   const userId = randomUUID();
   const event = {
@@ -99,10 +99,10 @@ test("projects account opened events", async (t) => {
   });
 });
 
-test("ignores stale account opened events", async (t) => {
+test("ignores stale account opened events", async () => {
   // Arrange
-  const db = await startPostgres(t);
-  const nats = await startNats(t);
+  await using db = await startPostgres();
+  await using nats = await startNats();
   const accountId = randomUUID();
   const staleEvent = {
     data: {

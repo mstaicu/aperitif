@@ -85,7 +85,7 @@ async function publishOutboxBatch({ db, nats }, signal) {
           event
         FROM outbox_events
         WHERE published_at IS NULL
-        ORDER BY id
+        ORDER BY created_at, id
         LIMIT $1
         FOR UPDATE SKIP LOCKED
       `,

@@ -44,9 +44,9 @@ const insertSession = async (db, userId = randomUUID()) => {
   };
 };
 
-test("sessions issue access tokens", async (t) => {
+test("sessions issue access tokens", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const jwt = await createJwtFixture();
   const sessions = createSessionsService({
     db,
@@ -67,9 +67,9 @@ test("sessions issue access tokens", async (t) => {
   assert.equal(payload.operator, undefined);
 });
 
-test("sessions include operator claims from database state", async (t) => {
+test("sessions include operator claims from database state", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const jwt = await createJwtFixture();
   const sessions = createSessionsService({
     db,
@@ -96,9 +96,9 @@ test("sessions include operator claims from database state", async (t) => {
   assert.equal(operatorPayload.operator, true);
 });
 
-test("sessions rotate refresh tokens and reject reused tokens", async (t) => {
+test("sessions rotate refresh tokens and reject reused tokens", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const jwt = await createJwtFixture();
   const sessions = createSessionsService({
     db,
@@ -129,9 +129,9 @@ test("sessions rotate refresh tokens and reject reused tokens", async (t) => {
   );
 });
 
-test("sessions revoke the session represented by a refresh token", async (t) => {
+test("sessions revoke the session represented by a refresh token", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const jwt = await createJwtFixture();
   const sessions = createSessionsService({
     db,

@@ -66,9 +66,9 @@ const latestOutboxEvent = async ({ accountId, db }) => {
   return outbox.event;
 };
 
-test("account entitlements add grants and publish a reduced snapshot", async (t) => {
+test("account entitlements add grants and publish a reduced snapshot", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accountEntitlements = createAccountEntitlementsService({ db });
   const accountId = await createProjectedAccount(db);
 
@@ -138,9 +138,9 @@ test("account entitlements add grants and publish a reduced snapshot", async (t)
   ]);
 });
 
-test("account entitlements revoke grants and publish a reduced snapshot", async (t) => {
+test("account entitlements revoke grants and publish a reduced snapshot", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accountEntitlements = createAccountEntitlementsService({ db });
   const accountId = await createProjectedAccount(db);
   const lowerGrantId = randomUUID();
@@ -190,9 +190,9 @@ test("account entitlements revoke grants and publish a reduced snapshot", async 
   ]);
 });
 
-test("account entitlements reject grants for missing accounts", async (t) => {
+test("account entitlements reject grants for missing accounts", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accountEntitlements = createAccountEntitlementsService({ db });
 
   await seedTestEntitlements(db);
@@ -213,9 +213,9 @@ test("account entitlements reject grants for missing accounts", async (t) => {
   await assert.rejects(addGrant, /ACCOUNT_NOT_FOUND/);
 });
 
-test("account entitlements reject invalid grant values", async (t) => {
+test("account entitlements reject invalid grant values", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accountEntitlements = createAccountEntitlementsService({ db });
   const accountId = await createProjectedAccount(db);
 

@@ -9,9 +9,9 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createAccountsService } from "./index.mjs";
 
-test("accounts create accounts owned by the current user", async (t) => {
+test("accounts create accounts owned by the current user", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accounts = createAccountsService({ db });
   const currentUserId = randomUUID();
 
@@ -32,9 +32,9 @@ test("accounts create accounts owned by the current user", async (t) => {
   });
 });
 
-test("accounts list only accounts for the current user", async (t) => {
+test("accounts list only accounts for the current user", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accounts = createAccountsService({ db });
   const currentUserId = randomUUID();
 
@@ -63,9 +63,9 @@ test("accounts list only accounts for the current user", async (t) => {
   });
 });
 
-test("accounts write account opened events to the outbox", async (t) => {
+test("accounts write account opened events to the outbox", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const accounts = createAccountsService({ db });
   const currentUserId = randomUUID();
 

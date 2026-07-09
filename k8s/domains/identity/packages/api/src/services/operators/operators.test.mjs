@@ -5,9 +5,9 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createOperatorsService } from "./index.mjs";
 
-test("operators assign and revoke operator access", async (t) => {
+test("operators assign and revoke operator access", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const operators = createOperatorsService({ db });
   const operatorId = randomUUID();
   const userId = randomUUID();

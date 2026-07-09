@@ -4,9 +4,9 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createEntitlementsService } from "./index.mjs";
 
-test("entitlements list entitlement definitions", async (t) => {
+test("entitlements list entitlement definitions", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const entitlements = createEntitlementsService({ db });
 
   await db.query(

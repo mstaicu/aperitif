@@ -8,9 +8,9 @@ const fixtureDir = dirname(fileURLToPath(import.meta.url));
 const sqlPath = resolve(fixtureDir, "../../../database/sql");
 
 /**
- * @param {import("node:test").TestContext} t
+ * @returns {Promise<Pool & AsyncDisposable>}
  */
-export const startPostgres = async (t) => {
+export const startPostgres = async () => {
   const network = await new Network().start();
 
   /** @type {import("@testcontainers/postgresql").StartedPostgreSqlContainer | undefined} */
@@ -48,13 +48,13 @@ export const startPostgres = async (t) => {
       connectionString: postgres.getConnectionUri(),
     });
 
-    t.after(async () => {
-      await db?.end();
-      await postgres?.stop();
-      await network.stop();
+    return Object.assign(Object.create(db), {
+      async [Symbol.asyncDispose]() {
+        await db?.end().catch(() => {});
+        await postgres?.stop().catch(() => {});
+        await network.stop().catch(() => {});
+      },
     });
-
-    return db;
   } catch (err) {
     await db?.end().catch(() => {});
     await postgres?.stop().catch(() => {});

@@ -7,9 +7,9 @@ import { createPasskeysService } from "./index.mjs";
 
 const ORIGIN = "https://identity.test";
 
-test("passkeys create registration challenges", async (t) => {
+test("passkeys create registration challenges", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const passkeys = createPasskeysService({ db, origin: ORIGIN });
 
   // Act
@@ -25,9 +25,9 @@ test("passkeys create registration challenges", async (t) => {
   assert.ok(challenge.challenge.length > 0);
 });
 
-test("passkeys create add-passkey challenges for existing users", async (t) => {
+test("passkeys create add-passkey challenges for existing users", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const passkeys = createPasskeysService({ db, origin: ORIGIN });
   const userId = randomUUID();
 
@@ -46,9 +46,9 @@ test("passkeys create add-passkey challenges for existing users", async (t) => {
   assert.ok(challenge.challenge.length > 0);
 });
 
-test("passkeys create login challenges", async (t) => {
+test("passkeys create login challenges", async () => {
   // Arrange
-  const db = await startPostgres(t);
+  await using db = await startPostgres();
   const passkeys = createPasskeysService({ db, origin: ORIGIN });
 
   // Act
