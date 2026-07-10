@@ -1,6 +1,5 @@
 import pluginJs from "@eslint/js";
-import eslintConfigPrettier from "eslint-config-prettier";
-import eslintPluginPerfectionst from "eslint-plugin-perfectionist";
+import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 
@@ -11,7 +10,6 @@ export default [
     },
   },
   pluginJs.configs.recommended,
-  eslintPluginPerfectionst.configs["recommended-natural"],
+  eslintPluginPerfectionist.configs["recommended-natural"],
   eslintPluginPrettierRecommended,
-  eslintConfigPrettier,
 ];

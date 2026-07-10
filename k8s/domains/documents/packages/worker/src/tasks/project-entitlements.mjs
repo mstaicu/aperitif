@@ -24,9 +24,11 @@ export async function runProjectEntitlements({ db, nats }, signal) {
     ENTITLEMENTS_CONSUMER,
   );
   const messages = await consumer.consume({ max_messages: 1 });
-  const stopOnAbort = addAbortListener(signal, () => messages.stop());
 
   try {
+    // eslint-disable-next-line
+    using stopOnAbort = addAbortListener(signal, () => messages.stop());
+
     for await (const message of messages) {
       signal.throwIfAborted();
 
@@ -93,7 +95,6 @@ export async function runProjectEntitlements({ db, nats }, signal) {
       }
     }
   } finally {
-    stopOnAbort[Symbol.dispose]();
     messages.stop();
   }
 }

@@ -12,6 +12,7 @@ check: check-api check-ui check-infra ## Validate identity.
 check-api: ## Validate the identity API package.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
+	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
 	cd packages/api && npm test
 
 check-ui: ## Validate the identity UI package.

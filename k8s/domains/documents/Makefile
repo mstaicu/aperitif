@@ -12,10 +12,12 @@ check: check-api check-worker check-ui check-infra ## Validate documents.
 check-api: ## Validate the documents API package.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
+	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
 
 check-worker: ## Validate the documents worker package.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
+	cd packages/worker && npm exec -- tsc -p jsconfig.json --noEmit
 
 check-ui: ## Validate the documents UI package.
 	cd packages/ui && npm ci
