@@ -15,49 +15,50 @@ import { GenericContainer, Wait } from "testcontainers";
  * @returns {Promise<NatsFixture>}
  */
 export const startNats = async () => {
-  /** @type {import("testcontainers").StartedTestContainer | undefined} */
-  let container;
-
-  /** @type {NatsFixture | undefined} */
-  let nats;
+  const stack = new AsyncDisposableStack();
 
   try {
-    container = await new GenericContainer("nats:2.14.2-alpine")
-      .withCommand(["-js"])
-      .withExposedPorts(4222)
-      .withWaitStrategy(Wait.forListeningPorts())
-      .start();
-
-    const nc = await connect({
-      name: "accounts-worker-test",
-      servers: [`nats://localhost:${container.getMappedPort(4222)}`],
-    });
-
-    nats = Object.assign(
-      {},
-      {
-        close: async () => {
-          if (!nc.isClosed()) {
-            await nc.drain();
-            await nc.closed();
-          }
-        },
-        js: jetstream(nc),
-        jsm: await jetstreamManager(nc),
-        nc,
-      },
-      {
-        async [Symbol.asyncDispose]() {
-          await nats?.close().catch(() => {});
-          await container?.stop().catch(() => {});
-        },
+    const container = stack.adopt(
+      await new GenericContainer("nats:2.14.2-alpine")
+        .withCommand(["-js"])
+        .withExposedPorts(4222)
+        .withWaitStrategy(Wait.forListeningPorts())
+        .start(),
+      async (container) => {
+        await container.stop();
       },
     );
 
-    return nats;
+    const nc = stack.adopt(
+      await connect({
+        name: "accounts-worker-test",
+        servers: [`nats://localhost:${container.getMappedPort(4222)}`],
+      }),
+      async (nc) => {
+        if (!nc.isClosed()) {
+          await nc.drain();
+          await nc.closed();
+        }
+      },
+    );
+
+    const resources = stack.move();
+    const close = async () => {
+      await resources.disposeAsync();
+    };
+
+    return {
+      close,
+      js: jetstream(nc),
+      jsm: await jetstreamManager(nc),
+      nc,
+
+      async [Symbol.asyncDispose]() {
+        await close();
+      },
+    };
   } catch (err) {
-    await nats?.close().catch(() => {});
-    await container?.stop().catch(() => {});
+    await stack.disposeAsync().catch(() => {});
 
     throw err;
   }

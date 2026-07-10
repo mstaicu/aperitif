@@ -11,19 +11,25 @@ const sqlPath = resolve(fixtureDir, "../../../database/sql");
  * @returns {Promise<Pool & AsyncDisposable>}
  */
 export const startPostgres = async () => {
-  const network = await new Network().start();
-
-  /** @type {import("@testcontainers/postgresql").StartedPostgreSqlContainer | undefined} */
-  let postgres;
-
-  /** @type {Pool | undefined} */
-  let db;
+  const stack = new AsyncDisposableStack();
 
   try {
-    postgres = await new PostgreSqlContainer("postgres:18")
-      .withNetwork(network)
-      .withNetworkAliases("postgres")
-      .start();
+    const network = stack.adopt(
+      await new Network().start(),
+      async (network) => {
+        await network.stop();
+      },
+    );
+
+    const postgres = stack.adopt(
+      await new PostgreSqlContainer("postgres:18")
+        .withNetwork(network)
+        .withNetworkAliases("postgres")
+        .start(),
+      async (postgres) => {
+        await postgres.stop();
+      },
+    );
 
     const flyway = await new GenericContainer("flyway/flyway:12.8.1")
       .withNetwork(network)
@@ -44,21 +50,22 @@ export const startPostgres = async () => {
 
     await flyway.stop().catch(() => {});
 
-    db = new Pool({
-      connectionString: postgres.getConnectionUri(),
-    });
+    const db = stack.adopt(
+      new Pool({
+        connectionString: postgres.getConnectionUri(),
+      }),
+      (db) => db.end(),
+    );
+
+    const resources = stack.move();
 
     return Object.assign(Object.create(db), {
       async [Symbol.asyncDispose]() {
-        await db?.end().catch(() => {});
-        await postgres?.stop().catch(() => {});
-        await network.stop().catch(() => {});
+        await resources.disposeAsync();
       },
     });
   } catch (err) {
-    await db?.end().catch(() => {});
-    await postgres?.stop().catch(() => {});
-    await network.stop().catch(() => {});
+    await stack.disposeAsync().catch(() => {});
 
     throw err;
   }
