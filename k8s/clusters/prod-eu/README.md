@@ -26,9 +26,21 @@ Flux owns reconciliation from this path.
 
 ```text
 kustomization.yaml
-  platform.yaml
-  domains.yaml
+  platform/
+    event-bus.yaml
+    ingress.yaml
+    observability.yaml
+  domains/
+    identity-*.yaml
+    accounts-*.yaml
+    entitlements-*.yaml
+    documents-*.yaml
 ```
+
+The root Kustomize build applies `namespace: flux-system` to all leaf Flux
+`Kustomization` objects in one render. Do not add intermediate Flux objects for
+the `platform/` or `domains/` directories; leaf `dependsOn` relationships own
+the deployment ordering.
 
 ## Controllers
 

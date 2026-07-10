@@ -79,7 +79,7 @@ Default local domain is `tma.com`; override with `DOMAIN=example.test`.
 Prod starts at `clusters/prod-eu/kustomization.yaml`:
 
 ```text
-platform.yaml -> domains.yaml
+kustomization.yaml -> platform/* + domains/*
 ```
 
 Domain order:

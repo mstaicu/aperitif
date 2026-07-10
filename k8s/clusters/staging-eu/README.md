@@ -7,8 +7,6 @@ Before using it, add:
 
 ```text
 kustomization.yaml
-platform.yaml
-domains.yaml
 platform/*
 domains/*
 ```
