@@ -43,19 +43,14 @@ export const startNats = async () => {
     );
 
     const resources = stack.move();
-    const close = async () => {
-      await resources.disposeAsync();
-    };
+    const close = () => resources.disposeAsync();
 
     return {
       close,
       js: jetstream(nc),
       jsm: await jetstreamManager(nc),
       nc,
-
-      async [Symbol.asyncDispose]() {
-        await close();
-      },
+      [Symbol.asyncDispose]: close,
     };
   } catch (err) {
     await stack.disposeAsync().catch(() => {});

@@ -50,20 +50,19 @@ export const startPostgres = async () => {
 
     await flyway.stop().catch(() => {});
 
-    const db = stack.adopt(
+    const pool = stack.adopt(
       new Pool({
         connectionString: postgres.getConnectionUri(),
       }),
-      (db) => db.end(),
+      (pool) => pool.end(),
     );
 
     const resources = stack.move();
+    const disposablePool = /** @type {Pool & AsyncDisposable} */ (pool);
 
-    return Object.assign(Object.create(db), {
-      async [Symbol.asyncDispose]() {
-        await resources.disposeAsync();
-      },
-    });
+    disposablePool[Symbol.asyncDispose] = () => resources.disposeAsync();
+
+    return disposablePool;
   } catch (err) {
     await stack.disposeAsync().catch(() => {});
 
