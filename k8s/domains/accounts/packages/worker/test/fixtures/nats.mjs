@@ -8,7 +8,8 @@ import { GenericContainer, Wait } from "testcontainers";
  *   js: ReturnType<typeof jetstream>,
  *   jsm: Awaited<ReturnType<typeof jetstreamManager>>,
  *   nc: Awaited<ReturnType<typeof connect>>,
- * } & AsyncDisposable} NatsFixture
+ *   [Symbol.asyncDispose]: () => Promise<void>,
+ * }} NatsFixture
  */
 
 /**

@@ -11,16 +11,19 @@ export async function createNats() {
     servers: [process.env.NATS_URL],
   });
 
+  const close = async () => {
+    if (!nc.isClosed()) {
+      await nc.drain();
+      await nc.closed();
+    }
+  };
+
   return {
-    close: async () => {
-      if (!nc.isClosed()) {
-        await nc.drain();
-        await nc.closed();
-      }
-    },
+    close,
     js: jetstream(nc),
     jsm: await jetstreamManager(nc),
     nc,
+    [Symbol.asyncDispose]: close,
   };
 }
 

@@ -12,9 +12,9 @@ export const createPostgres = () => {
   pool.on("error", (err) => {
     console.error(
       JSON.stringify({
-        code: "code" in err ? err.code : undefined,
         event: "database_idle_client_error",
         level: "error",
+        message: err.message,
       }),
     );
   });

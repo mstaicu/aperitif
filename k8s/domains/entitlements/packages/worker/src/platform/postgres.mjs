@@ -12,15 +12,18 @@ export function createPostgres() {
   pool.on("error", (err) => {
     console.error(
       JSON.stringify({
-        code: "code" in err ? err.code : undefined,
         event: "database_idle_client_error",
         level: "error",
+        message: err.message,
       }),
     );
   });
 
+  const close = () => pool.end();
+
   return {
-    close: () => pool.end(),
+    close,
     db: pool,
+    [Symbol.asyncDispose]: close,
   };
 }
