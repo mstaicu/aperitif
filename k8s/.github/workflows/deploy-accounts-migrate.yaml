@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "domains/accounts/packages/database/Dockerfile"
+      - "domains/accounts/packages/database/.dockerignore"
       - "domains/accounts/packages/database/sql/**"
 
 permissions:
@@ -20,4 +21,6 @@ jobs:
       image: mdstaicu/accounts-migrate
       manifest: domains/accounts/infra/migrate/overlays/prod-eu
       unit: migrate
-    secrets: inherit
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

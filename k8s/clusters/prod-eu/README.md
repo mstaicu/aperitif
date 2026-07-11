@@ -58,6 +58,22 @@ Not installed for now:
 
 GitHub Actions owns image builds and digest updates.
 
+## Release Handoff
+
+GitHub Actions builds each changed unit from its exact triggering SHA and
+commits that unit's immutable image digest. Actions never applies Kubernetes
+resources or invokes Flux against the cluster.
+
+Flux detects each digest commit and reconciles the affected leaf
+`Kustomization`. Independent manifest commits and mixed-version rollouts are
+intentional: domain changes must follow expand/contract compatibility. For a
+schema expansion required by new code, allow the migration Kustomization to
+finish before releasing that code; contraction belongs in a later release.
+
+`dependsOn` and `wait` provide reconciliation ordering and health checks. They
+do not turn separate application deployments into an atomic runtime cutover.
+The Git history is desired state, while Flux status is deployment status.
+
 ## Manual Equivalent
 
 ```sh

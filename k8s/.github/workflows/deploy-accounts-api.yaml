@@ -19,4 +19,6 @@ jobs:
       image: mdstaicu/accounts-api
       manifest: domains/accounts/infra/api/overlays/prod-eu
       unit: api
-    secrets: inherit
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

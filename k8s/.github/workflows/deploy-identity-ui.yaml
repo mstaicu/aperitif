@@ -19,4 +19,6 @@ jobs:
       image: mdstaicu/identity-ui
       manifest: domains/identity/infra/ui/overlays/prod-eu
       unit: ui
-    secrets: inherit
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

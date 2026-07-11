@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "domains/identity/packages/database/Dockerfile"
+      - "domains/identity/packages/database/.dockerignore"
       - "domains/identity/packages/database/sql/**"
 
 permissions:
@@ -20,4 +21,6 @@ jobs:
       image: mdstaicu/identity-migrate
       manifest: domains/identity/infra/migrate/overlays/prod-eu
       unit: migrate
-    secrets: inherit
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

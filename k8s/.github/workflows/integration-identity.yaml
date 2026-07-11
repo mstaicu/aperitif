@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/integration.yaml
     with:
       domain: identity
-      make_target: integration-identity
-    secrets: inherit
+    secrets:
+      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}

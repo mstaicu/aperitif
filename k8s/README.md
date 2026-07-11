@@ -91,6 +91,41 @@ Domain order:
 GitHub deployment workflows build images, push them, update prod-eu image
 digests, and commit the manifest changes. Flux image automation is not used.
 
+## Releases
+
+Each deployable unit has one small path-filtered caller under
+`.github/workflows`. The shared `deployment.yaml` workflow:
+
+1. builds the exact Git SHA that triggered that unit;
+2. publishes the image and captures its immutable digest;
+3. lets the running release finish while coalescing multiple waiting revisions
+   of the same unit to the newest pending revision;
+4. queues up to 100 short Git promotion jobs across units;
+5. updates only that unit's prod-eu Kustomization; and
+6. commits the digest for Flux to reconcile.
+
+Builds for different units are independent. The shared queue serializes only
+Git desired-state writes, so teams can release their own APIs, workers,
+migrations, and UIs without overwriting another unit's manifest update. Actions
+does not deploy to Kubernetes; Flux is the only cluster writer.
+
+A Git conflict, failed build, timeout, or full promotion queue fails visibly and
+requires a rerun. The workflow never force-pushes or claims an unbounded queue.
+
+Releases rely on expand/contract compatibility. For a schema change required by
+new code, use separate releases:
+
+```text
+merge expansion migration
+  -> wait for its workflow and Flux migration Kustomization to succeed
+  -> merge compatible API/worker code
+  -> remove old schema only in a later contraction release
+```
+
+API, worker, UI, and event changes must tolerate old and new versions coexisting
+during rollout. If a change cannot do that, its domain needs an explicitly
+coordinated release rather than weakening this independent-unit contract.
+
 Bootstrap prod with:
 
 ```sh

@@ -3,9 +3,6 @@ name: integration / domain
 on:
   workflow_call:
     inputs:
-      make_target:
-        required: true
-        type: string
       domain:
         required: true
         type: string
@@ -22,11 +19,11 @@ jobs:
     timeout-minutes: 30
 
     concurrency:
-      group: integration-${{ inputs.domain }}-${{ github.event.pull_request.number || github.ref }}
+      group: integration-${{ inputs.domain }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
       cancel-in-progress: true
 
     env:
-      CLUSTER_NAME: integration-${{ inputs.domain }}-${{ github.event.pull_request.number }}
+      CLUSTER_NAME: integration-${{ inputs.domain }}-${{ github.run_id }}-${{ github.run_attempt }}
       DOMAIN: tma.com
       KSOPS_VERSION: 4.5.1
       MKCERT_VERSION: v1.4.4
@@ -88,7 +85,7 @@ jobs:
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
       - name: deploy domain
-        run: make "${{ inputs.make_target }}"
+        run: make "integration-${{ inputs.domain }}"
 
       - name: expose ingress
         run: |
