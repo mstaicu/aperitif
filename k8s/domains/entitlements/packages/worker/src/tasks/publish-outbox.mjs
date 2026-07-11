@@ -89,6 +89,7 @@ async function publishNextOutboxEvent(client, nats) {
     }
 
     const { event, id } = outboxEvent;
+
     await nats.js.publish(event.type, JSON.stringify(event), {
       expect: {
         streamName: ENTITLEMENTS_STREAM,

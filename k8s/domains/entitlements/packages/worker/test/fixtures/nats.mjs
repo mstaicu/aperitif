@@ -20,7 +20,7 @@ export const startNats = async () => {
 
   try {
     const container = stack.adopt(
-      await new GenericContainer("nats:2.14.2-alpine")
+      await new GenericContainer("nats:2.14.3-alpine3.22")
         .withCommand(["-js"])
         .withExposedPorts(4222)
         .withWaitStrategy(Wait.forListeningPorts())
