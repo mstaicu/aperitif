@@ -9,12 +9,18 @@ import { createPostgres } from "./platform/postgres.mjs";
 import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
+const streamMaxBytes = Number(process.env.NATS_STREAM_MAX_BYTES);
+if (!Number.isSafeInteger(streamMaxBytes) || streamMaxBytes <= 0) {
+  throw new Error("NATS_STREAM_MAX_BYTES must be a positive integer");
+}
+
 const controller = new AbortController();
 await using postgres = createPostgres();
 await using nats = await createNats();
 
 await ensureEntitlementsStream({
   nats,
+  streamMaxBytes,
   streamReplicas: Number(process.env.NATS_STREAM_REPLICAS),
 });
 await ensureAccountsConsumer({ nats });

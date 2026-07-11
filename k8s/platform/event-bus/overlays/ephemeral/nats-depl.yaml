@@ -31,6 +31,8 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        # Docker Desktop's explicit dynamic host-volume provisioner.
+        storageClassName: hostpath
         resources:
           requests:
             storage: 1Gi

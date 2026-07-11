@@ -26,5 +26,7 @@ spec:
               value: "postgres://postgres:postgres@postgres-srv:5432/entitlements"
             - name: NATS_URL
               value: nats://nats-srv.nats.svc.cluster.local:4222
+            - name: NATS_STREAM_MAX_BYTES
+              value: "419430400" # 400 MiB; product-owned stream capacity.
             - name: NATS_STREAM_REPLICAS
               value: "3"

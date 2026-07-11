@@ -34,7 +34,11 @@ test("publishes unpublished outbox events to NATS", async () => {
     type: "entitlements.account_entitlements.updated.v1",
   };
 
-  await ensureEntitlementsStream({ nats, streamReplicas: 1 });
+  await ensureEntitlementsStream({
+    nats,
+    streamMaxBytes: 419_430_400,
+    streamReplicas: 1,
+  });
 
   const subscription = nats.nc.subscribe(event.type, {
     max: 1,

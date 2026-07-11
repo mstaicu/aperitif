@@ -6,13 +6,6 @@ metadata:
 spec:
   template:
     spec:
-      topologySpreadConstraints:
-        - labelSelector:
-            matchLabels:
-              app: nats
-          maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -43,6 +36,8 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        # DigitalOcean CSI block storage, also used by the production ingress.
+        storageClassName: do-block-storage
         resources:
           requests:
             storage: 1Gi

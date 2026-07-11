@@ -11,13 +11,18 @@ export const ACCOUNTS_STREAM = "ACCOUNTS";
 /**
  * @param {{
  *   nats: import("../nats.mjs").NatsClient,
+ *   streamMaxBytes: number,
  *   streamReplicas: number,
  * }} args
  */
-export async function ensureAccountsStream({ nats, streamReplicas }) {
+export async function ensureAccountsStream({
+  nats,
+  streamMaxBytes,
+  streamReplicas,
+}) {
   const config = {
     discard: DiscardPolicy.New,
-    max_bytes: 1024 ** 3,
+    max_bytes: streamMaxBytes,
     name: ACCOUNTS_STREAM,
     num_replicas: streamReplicas,
     retention: RetentionPolicy.Limits,
