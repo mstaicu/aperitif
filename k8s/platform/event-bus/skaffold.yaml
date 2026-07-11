@@ -9,10 +9,6 @@ manifests:
     paths:
       - overlays/ephemeral
 
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
-
 deploy:
   kubectl: {}
 

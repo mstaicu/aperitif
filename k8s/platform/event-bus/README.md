@@ -56,6 +56,9 @@ the initial manifests alone only configures newly created resources.
 make deploy-event-bus
 ```
 
+For the mental model, health checks, NATS CLI queries, and step-by-step
+troubleshooting, see [DEBUG.md](DEBUG.md).
+
 ## Rule
 
 Critical authority events use:

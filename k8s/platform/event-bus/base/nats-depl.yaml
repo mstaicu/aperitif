@@ -16,18 +16,30 @@ spec:
         app: nats
     spec:
       automountServiceAccountToken: false
+      # The upstream NATS Alpine image has no non-root USER. Run it explicitly
+      # as UID/GID 1000 and give that group access to the mounted writable
+      # JetStream and PID volumes.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        # Use the container runtime's standard syscall restrictions.
+        seccompProfile:
+          type: RuntimeDefault
       terminationGracePeriodSeconds: 60
       containers:
         - name: nats
-          image: docker.io/nats:2.14.2-alpine
+          image: docker.io/nats:2.14.3-alpine3.22
 
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: SERVER_NAME
-              value: $(POD_NAME)
+          # NATS needs no Linux capabilities or writable image filesystem. Its
+          # intended writes go only to /data and /var/run/nats volume mounts.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
 
           ports:
             - containerPort: 4222
@@ -44,6 +56,9 @@ spec:
                   - nats-server
                   - -sl=ldm=/var/run/nats/nats.pid
 
+          # Confirms NATS is alive and JetStream remains enabled. Three
+          # consecutive failures restart the container:
+          # 3 failures * 30s period = roughly 90s of failed checks.
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -53,6 +68,10 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 5
+          # Controls Service traffic. js-server-only deliberately skips deep
+          # account, stream, and consumer checks so one bad asset does not
+          # remove the entire NATS server from the Service:
+          # 3 failures * 10s period = roughly 30s before removal.
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -62,6 +81,10 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
+          # Allows roughly 15 minutes for NATS and persisted JetStream state to
+          # recover. Kubernetes suppresses readiness and liveness until this
+          # succeeds, preventing restart loops during recovery:
+          # 10s initial delay + (90 failures * 10s period) = 910s (~15m10s).
           startupProbe:
             failureThreshold: 90
             httpGet:

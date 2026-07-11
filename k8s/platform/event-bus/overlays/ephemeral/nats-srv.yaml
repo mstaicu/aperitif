@@ -4,11 +4,8 @@ kind: Service
 metadata:
   name: nats-srv
 spec:
-  selector:
-    app: nats
   ports:
     - name: monitor
       protocol: TCP
-      appProtocol: HTTP
       port: 8222
       targetPort: 8222

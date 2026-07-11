@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+
+metadata:
+  name: nats
+spec:
+  # A three-server NATS cluster keeps its two-server quorum while Kubernetes
+  # performs voluntary disruptions such as node drains or cluster upgrades.
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nats

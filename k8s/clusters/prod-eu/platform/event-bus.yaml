@@ -11,4 +11,5 @@ spec:
     kind: GitRepository
     name: flux-system
   wait: true
-  timeout: 5m
+  # The NATS startup probe permits roughly 15 minutes of state recovery.
+  timeout: 20m
