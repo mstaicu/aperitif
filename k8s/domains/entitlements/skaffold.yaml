@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: entitlements-postgres-dev
+  name: entitlements-postgres
 
 manifests:
   kustomize:
@@ -17,7 +17,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: entitlements-migrate-dev
+  name: entitlements-migrate
 
 build:
   local:
@@ -45,7 +45,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: entitlements-api-dev
+  name: entitlements-api
 
 build:
   local:
@@ -79,7 +79,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: entitlements-worker-dev
+  name: entitlements-worker
 
 build:
   local:

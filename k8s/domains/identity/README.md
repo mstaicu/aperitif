@@ -36,9 +36,19 @@ No worker exists because identity publishes no domain events today.
 ## Operations
 
 ```sh
-make deploy-identity
 make -C domains/identity check
+make -C domains/identity migrate
+make -C domains/identity deploy
+make -C domains/identity dev
+make -C domains/identity integration
+make -C domains/identity smoke
 ```
+
+`migrate` ensures the disposable Identity database is ready and reruns its
+migration Job. `deploy` installs only Identity. `dev` and `integration` first
+install Identity's shared platform dependencies. The integration workflow
+exposes Traefik and invokes `smoke` after the environment has been assembled.
+Production is reconciled only by Flux.
 
 ## Rules
 

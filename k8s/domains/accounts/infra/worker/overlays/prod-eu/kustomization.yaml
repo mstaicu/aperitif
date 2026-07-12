@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: accounts
 
 resources:
-  - namespace.yaml
   - ../../base
 
 patches:

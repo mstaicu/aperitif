@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-postgres-dev
+  name: documents-postgres
 
 manifests:
   kustomize:
@@ -17,40 +17,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-ui-dev
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: mdstaicu/documents-ui
-      context: packages/ui
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: app/**/*
-            dest: /home/node/app
-          - src: server.ts
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - infra/ui/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta11
-kind: Config
-
-metadata:
-  name: documents-migrate-dev
+  name: documents-migrate
 
 build:
   local:
@@ -78,7 +45,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-api-dev
+  name: documents-api
 
 build:
   local:
@@ -112,7 +79,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-worker-dev
+  name: documents-worker
 
 build:
   local:
@@ -137,6 +104,39 @@ manifests:
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: documents-ui
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/documents-ui
+      context: packages/ui
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: app/**/*
+            dest: /home/node/app
+          - src: server.ts
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/ui/overlays/ephemeral
 
 deploy:
   kubectl: {}

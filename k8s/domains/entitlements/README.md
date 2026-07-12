@@ -72,9 +72,19 @@ entitlements.account_entitlements.updated.v1
 ## Operations
 
 ```sh
-make deploy-entitlements
 make -C domains/entitlements check
+make -C domains/entitlements migrate
+make -C domains/entitlements deploy
+make -C domains/entitlements dev
+make -C domains/entitlements integration
+make -C domains/entitlements smoke
 ```
+
+`migrate` deploys Entitlements' disposable PostgreSQL instance and applies its
+migrations. `deploy` then installs the API and worker. `dev` and `integration`
+first install the shared platform, Identity, and Accounts. The integration
+workflow exposes Traefik and invokes `smoke` after the environment has been
+assembled. Production is reconciled only by Flux.
 
 ## Rules
 

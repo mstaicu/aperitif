@@ -1,29 +1,23 @@
 .DEFAULT_GOAL := help
 
-DOMAIN ?= tma.com
 PORT ?= 443
-.PHONY: help check check-api check-infra check-manifests check-worker smoke pre-deploy post-deploy
+
+.PHONY: help check migrate deploy dev integration smoke
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: check-api check-worker check-infra ## Validate entitlements.
-
-check-api: ## Validate the entitlements API package.
+check: ## Validate Entitlements packages and manifests.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
 	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
 	cd packages/api && npm test
-
-check-worker: ## Validate the entitlements worker package.
+	cd packages/contracts && npm ci
+	cd packages/contracts && npm run build
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
 	cd packages/worker && npm exec -- tsc -p jsconfig.json --noEmit
 	cd packages/worker && npm test
-
-check-infra: check-manifests ## Validate entitlements manifests.
-
-check-manifests: ## Render entitlements manifests.
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
@@ -33,9 +27,27 @@ check-manifests: ## Render entitlements manifests.
 	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/worker/overlays/prod-eu >/dev/null
 
-smoke: ## Verify the deployed entitlements boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/entitlements/docs/json"
+migrate: ## Deploy the Entitlements database and run its migrations.
+	skaffold run -m entitlements-postgres
+	kubectl delete job -n entitlements migrate --ignore-not-found
+	skaffold run --force -m entitlements-migrate
+	kubectl wait -n entitlements --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n entitlements job/migrate --all-containers=true; exit 1; }
 
-pre-deploy: check
+deploy: migrate ## Deploy Entitlements to the current disposable cluster.
+	skaffold run -m entitlements-api,entitlements-worker
 
-post-deploy: smoke
+dev: ## Prepare dependencies and start the Entitlements development loop.
+	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../identity deploy
+	$(MAKE) -C ../accounts deploy
+	$(MAKE) migrate
+	exec skaffold dev -m entitlements-api,entitlements-worker
+
+integration: ## Deploy Entitlements and its integration dependencies.
+	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../identity deploy
+	$(MAKE) -C ../accounts deploy
+	$(MAKE) deploy
+
+smoke: ## Verify the deployed Entitlements boundary through Traefik.
+	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/entitlements/docs/json"

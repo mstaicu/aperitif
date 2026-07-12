@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-postgres-dev
+  name: accounts-postgres
 
 manifests:
   kustomize:
@@ -17,7 +17,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-migrate-dev
+  name: accounts-migrate
 
 build:
   local:
@@ -45,7 +45,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-api-dev
+  name: accounts-api
 
 build:
   local:
@@ -79,7 +79,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-worker-dev
+  name: accounts-worker
 
 build:
   local:

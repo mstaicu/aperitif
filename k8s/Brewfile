@@ -18,8 +18,6 @@ brew "skaffold" # Local Kubernetes dev/debug loop
 #
 # brew "k9s"
 #
-# brew "libpq" # PostgreSQL CLI tools such as psql
-#
 # tap "nats-io/nats-tools"
 # brew "nats-io/nats-tools/nats"
 # brew "nats-io/nats-tools/nsc"

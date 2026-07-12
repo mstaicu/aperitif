@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: identity-postgres-dev
+  name: identity-postgres
 
 manifests:
   kustomize:
@@ -17,22 +17,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: identity-cleanup-dev
-
-manifests:
-  kustomize:
-    paths:
-      - infra/cleanup/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta11
-kind: Config
-
-metadata:
-  name: identity-migrate-dev
+  name: identity-migrate
 
 build:
   local:
@@ -60,7 +45,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: identity-api-dev
+  name: identity-api
 
 build:
   local:
@@ -94,7 +79,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: identity-ui-dev
+  name: identity-ui
 
 build:
   local:
@@ -120,6 +105,21 @@ manifests:
   kustomize:
     paths:
       - infra/ui/overlays/ephemeral
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: identity-cleanup
+
+manifests:
+  kustomize:
+    paths:
+      - infra/cleanup/overlays/ephemeral
 
 deploy:
   kubectl: {}

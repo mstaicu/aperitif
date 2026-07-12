@@ -24,7 +24,6 @@ jobs:
 
     env:
       CLUSTER_NAME: integration-${{ inputs.domain }}-${{ github.run_id }}-${{ github.run_attempt }}
-      DOMAIN: tma.com
       KSOPS_VERSION: 4.5.1
       MKCERT_VERSION: v1.4.4
       SKAFFOLD_VERSION: v2.17.0
@@ -85,7 +84,7 @@ jobs:
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
       - name: deploy domain
-        run: make "integration-${{ inputs.domain }}"
+        run: make -C "domains/${{ inputs.domain }}" integration
 
       - name: expose ingress
         run: |
@@ -94,7 +93,7 @@ jobs:
           timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
 
       - name: smoke domain
-        run: make -C "domains/${{ inputs.domain }}" smoke DOMAIN="$DOMAIN" PORT=8443
+        run: make -C "domains/${{ inputs.domain }}" smoke PORT=8443
 
       - name: cleanup
         if: always()

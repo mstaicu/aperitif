@@ -1,32 +1,22 @@
 .DEFAULT_GOAL := help
 
-DOMAIN ?= tma.com
 PORT ?= 443
-.PHONY: help check check-api check-infra check-manifests check-ui check-worker smoke pre-deploy post-deploy
+
+.PHONY: help check migrate deploy integration smoke
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: check-api check-worker check-ui check-infra ## Validate documents.
-
-check-api: ## Validate the documents API package.
+check: ## Validate Documents packages and manifests.
 	cd packages/api && npm ci
 	cd packages/api && npm exec -- eslint .
 	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
-
-check-worker: ## Validate the documents worker package.
 	cd packages/worker && npm ci
 	cd packages/worker && npm exec -- eslint .
 	cd packages/worker && npm exec -- tsc -p jsconfig.json --noEmit
-
-check-ui: ## Validate the documents UI package.
 	cd packages/ui && npm ci
 	cd packages/ui && npm run typecheck
 	cd packages/ui && npm run build
-
-check-infra: check-manifests ## Validate documents manifests.
-
-check-manifests: ## Render documents manifests.
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
@@ -38,9 +28,21 @@ check-manifests: ## Render documents manifests.
 	kubectl kustomize infra/ui/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/ui/overlays/prod-eu >/dev/null
 
-smoke: ## Verify the deployed documents boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.$(DOMAIN):$(PORT):127.0.0.1" "https://api.$(DOMAIN):$(PORT)/v1/documents/docs/json"
+migrate: ## Deploy the Documents database and run its migrations.
+	skaffold run -m documents-postgres
+	kubectl delete job -n documents migrate --ignore-not-found
+	skaffold run --force -m documents-migrate
+	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
 
-pre-deploy: check
+deploy: migrate ## Deploy Documents to the current disposable cluster.
+	skaffold run -m documents-api,documents-worker,documents-ui
 
-post-deploy: smoke
+integration: ## Deploy Documents and its integration dependencies.
+	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../identity deploy
+	$(MAKE) -C ../accounts deploy
+	$(MAKE) -C ../entitlements deploy
+	$(MAKE) deploy
+
+smoke: ## Verify the deployed Documents boundary through Traefik.
+	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/documents/docs/json"

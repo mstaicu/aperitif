@@ -10,8 +10,7 @@ Treat this `k8s/` directory as the repo root. GitHub workflows live under
 clusters/               Flux cluster graphs
 platform/               ingress, event-bus, observability, inactive mesh
 domains/                identity, accounts, entitlements, documents
-Makefile                local orchestration
-skaffold.yaml           local dev graph
+Makefile                shared platform and Flux bootstrap
 .sops.yaml              encrypted Secret recipients
 AGENTS.md               non-obvious agent rules
 ```
@@ -31,7 +30,8 @@ job that runs it.
 - `identity`: users, passkeys, sessions, refresh tokens, operators, JWKS.
 - `accounts`: account resource boundary and initial owner membership.
 - `entitlements`: account entitlement grants and effective snapshots.
-- `documents`: product proof using account and entitlement projections.
+- `documents`: local-only product proof using account and entitlement
+  projections; it is not released by Actions or composed into prod-eu.
 
 Domains own their databases. Cross-domain reads use APIs or declared events,
 never another domain's database.
@@ -57,22 +57,42 @@ trigger that notifies `outbox_events`.
 
 ```sh
 brew bundle
-make deploy-core
-make dev
+make -C domains/accounts dev
 ```
 
-Useful deploy targets:
+Each domain owns its local lifecycle:
 
 ```sh
 make deploy-platform
-make deploy-identity
-make deploy-accounts
-make deploy-entitlements
-make deploy-documents
-make deploy-all
+make -C domains/identity check
+make -C domains/identity migrate
+make -C domains/identity deploy
+make -C domains/identity dev
+make -C domains/identity integration
+make -C domains/accounts check
+make -C domains/accounts migrate
+make -C domains/accounts deploy
+make -C domains/accounts dev
+make -C domains/accounts integration
+make -C domains/entitlements check
+make -C domains/entitlements migrate
+make -C domains/entitlements deploy
+make -C domains/entitlements dev
+make -C domains/entitlements integration
+make -C domains/documents check
+make -C domains/documents migrate
+make -C domains/documents deploy
+make -C domains/documents integration
 ```
 
-Default local domain is `tma.com`; override with `DOMAIN=example.test`.
+`migrate` ensures that domain's disposable database is ready and reruns its
+migration Job. `deploy` installs only that domain. `dev` and `integration`
+assemble the exact upstream dependency slice declared by each production
+domain. There is deliberately no repository-wide application composition or
+root development loop. Documents remains a local-only integration proof and
+does not expose `dev`.
+
+Local routing uses the fixed `tma.com` and `api.tma.com` hostnames.
 
 ## Flux
 
@@ -93,7 +113,7 @@ digests, and commit the manifest changes. Flux image automation is not used.
 
 ## Releases
 
-Each deployable unit has one small path-filtered caller under
+Each production core unit has one small path-filtered caller under
 `.github/workflows`. The shared `deployment.yaml` workflow:
 
 1. builds the exact Git SHA that triggered that unit;

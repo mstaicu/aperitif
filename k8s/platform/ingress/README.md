@@ -8,11 +8,11 @@ Domain API/UI units own their own `IngressRoute`s.
 
 ```sh
 make deploy-ingress
-make deploy-ingress DOMAIN=example.test
 ```
 
 The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, and
-deploys Traefik.
+deploys Traefik. Local routing uses the fixed `tma.com` and `api.tma.com`
+hostnames.
 
 For kind/CI:
 
