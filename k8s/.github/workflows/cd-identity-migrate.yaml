@@ -1,0 +1,24 @@
+name: CD / Identity / Migrate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/identity/packages/database/Dockerfile"
+      - "domains/identity/packages/database/.dockerignore"
+      - "domains/identity/packages/database/sql/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/identity/packages/database
+      domain: identity
+      image: ghcr.io/mstaicu/identity-migrate
+      overlay: domains/identity/infra/migrate/overlays/prod-eu
+      unit: migrate

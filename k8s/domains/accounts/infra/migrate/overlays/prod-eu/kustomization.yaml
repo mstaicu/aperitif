@@ -10,5 +10,5 @@ patches:
   - path: accounts-migrate-job.yaml
 
 images:
-  - name: mdstaicu/accounts-migrate
+  - name: ghcr.io/mstaicu/accounts-migrate
     newTag: latest

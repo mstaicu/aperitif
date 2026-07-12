@@ -1,4 +1,4 @@
-name: integration / domain
+name: CI / Domain
 
 on:
   workflow_call:
@@ -7,27 +7,27 @@ on:
         required: true
         type: string
     secrets:
-      SOPS_AGE_KEY:
+      EPHEMERAL_SOPS_AGE_KEY:
         required: true
 
 permissions:
   contents: read
 
 jobs:
-  integration:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     concurrency:
-      group: integration-${{ inputs.domain }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+      group: ci-${{ inputs.domain }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
 
     env:
-      CLUSTER_NAME: integration-${{ inputs.domain }}-${{ github.run_id }}-${{ github.run_attempt }}
+      CLUSTER_NAME: ${{ inputs.domain }}-${{ github.run_id }}-${{ github.run_attempt }}
       KSOPS_VERSION: 4.5.1
       MKCERT_VERSION: v1.4.4
       SKAFFOLD_VERSION: v2.17.0
-      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+      SOPS_AGE_KEY: ${{ secrets.EPHEMERAL_SOPS_AGE_KEY }}
       SOPS_VERSION: v3.12.2
 
     steps:
@@ -36,7 +36,7 @@ jobs:
       - uses: azure/setup-kubectl@v4.0.1
       - uses: imranismail/setup-kustomize@v2.1.0
 
-      - name: install tools
+      - name: install integration tools
         run: |
           sudo apt-get update
           sudo apt-get install -y libnss3-tools
@@ -57,13 +57,8 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
-      - name: configure sops age key
+      - name: configure ephemeral secrets
         run: |
-          if [ -z "$SOPS_AGE_KEY" ]; then
-            echo "::error::SOPS_AGE_KEY repository secret is required for encrypted ephemeral overlays."
-            exit 1
-          fi
-
           mkdir -p "$RUNNER_TEMP/sops-age"
           printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
           chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
@@ -72,7 +67,7 @@ jobs:
       - name: check domain
         run: make -C "domains/${{ inputs.domain }}" check
 
-      - name: create kind cluster
+      - name: create disposable cluster
         uses: helm/kind-action@v1.14.0
         with:
           cluster_name: ${{ env.CLUSTER_NAME }}
@@ -101,7 +96,4 @@ jobs:
           if [ -f /tmp/traefik-port-forward.pid ]; then
             kill "$(cat /tmp/traefik-port-forward.pid)" || true
           fi
-
-          if command -v kind >/dev/null 2>&1; then
-            kind delete cluster --name "$CLUSTER_NAME" || true
-          fi
+          kind delete cluster --name "$CLUSTER_NAME" || true

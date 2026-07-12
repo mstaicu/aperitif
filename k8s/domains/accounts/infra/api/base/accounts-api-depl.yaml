@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: accounts-api
-          image: mdstaicu/accounts-api
+          image: ghcr.io/mstaicu/accounts-api
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -24,7 +24,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/identity-migrate
+    - image: ghcr.io/mstaicu/identity-migrate
       context: packages/database
       docker:
         dockerfile: Dockerfile
@@ -52,7 +52,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/identity-api
+    - image: ghcr.io/mstaicu/identity-api
       context: packages/api
       docker:
         dockerfile: Dockerfile
@@ -86,7 +86,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/identity-ui
+    - image: ghcr.io/mstaicu/identity-ui
       context: packages/ui
       docker:
         dockerfile: Dockerfile

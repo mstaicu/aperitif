@@ -25,5 +25,5 @@ flyway_schema_history
 ## Build
 
 ```sh
-docker build --target prod -t mdstaicu/identity-migrate:<tag> domains/identity/packages/database
+docker build --target prod -t ghcr.io/mstaicu/identity-migrate:<tag> domains/identity/packages/database
 ```

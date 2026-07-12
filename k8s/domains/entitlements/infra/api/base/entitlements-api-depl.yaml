@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: entitlements-api
-          image: mdstaicu/entitlements-api
+          image: ghcr.io/mstaicu/entitlements-api
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

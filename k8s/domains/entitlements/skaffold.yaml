@@ -24,7 +24,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/entitlements-migrate
+    - image: ghcr.io/mstaicu/entitlements-migrate
       context: packages/database
       docker:
         dockerfile: Dockerfile
@@ -52,7 +52,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/entitlements-api
+    - image: ghcr.io/mstaicu/entitlements-api
       context: packages/api
       docker:
         dockerfile: Dockerfile
@@ -86,7 +86,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/entitlements-worker
+    - image: ghcr.io/mstaicu/entitlements-worker
       context: packages/worker
       docker:
         dockerfile: Dockerfile

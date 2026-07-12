@@ -1,0 +1,22 @@
+name: CD / Accounts / API
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/accounts/packages/api/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/accounts/packages/api
+      domain: accounts
+      image: ghcr.io/mstaicu/accounts-api
+      overlay: domains/accounts/infra/api/overlays/prod-eu
+      unit: api

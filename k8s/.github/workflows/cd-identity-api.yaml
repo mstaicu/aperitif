@@ -1,0 +1,22 @@
+name: CD / Identity / API
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/identity/packages/api/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/identity/packages/api
+      domain: identity
+      image: ghcr.io/mstaicu/identity-api
+      overlay: domains/identity/infra/api/overlays/prod-eu
+      unit: api

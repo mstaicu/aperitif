@@ -1,4 +1,4 @@
-name: integration / accounts
+name: CI / Accounts
 
 on:
   pull_request:
@@ -9,9 +9,9 @@ permissions:
   contents: read
 
 jobs:
-  integration:
-    uses: ./.github/workflows/integration.yaml
+  ci:
+    uses: ./.github/workflows/ci-domain.yaml
     with:
       domain: accounts
     secrets:
-      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+      EPHEMERAL_SOPS_AGE_KEY: ${{ secrets.EPHEMERAL_SOPS_AGE_KEY }}

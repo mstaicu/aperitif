@@ -16,7 +16,7 @@ spec:
 
       containers:
         - name: migrate
-          image: mdstaicu/entitlements-migrate
+          image: ghcr.io/mstaicu/entitlements-migrate
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

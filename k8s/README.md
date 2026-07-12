@@ -111,18 +111,18 @@ Domain order:
 <domain>-postgres -> <domain>-migrate -> <domain>-api/worker/ui
 ```
 
-GitHub deployment workflows build images, push them, update prod-eu image
+GitHub production workflows build images, push them, update prod-eu image
 digests, and commit the manifest changes. Flux image automation is not used.
 
 ## Releases
 
-Each production core unit has one small path-filtered caller under
-`.github/workflows`. The shared `deployment.yaml` workflow:
+Each production unit has one small path-filtered `cd-<domain>-<unit>.yaml`
+caller under `.github/workflows`. The shared `cd-unit.yaml` workflow:
 
 1. builds the exact Git SHA that triggered that unit;
-2. publishes the image and captures its immutable digest;
-3. lets the running release finish while coalescing multiple waiting revisions
-   of the same unit to the newest pending revision;
+2. publishes the image to GitHub Container Registry with the workflow's
+   `GITHUB_TOKEN` and captures its immutable digest;
+3. lets GitHub queue releases of the same unit;
 4. queues up to 100 short Git promotion jobs across units;
 5. updates only that unit's prod-eu Kustomization; and
 6. commits the digest for Flux to reconcile.
@@ -134,6 +134,21 @@ does not deploy to Kubernetes; Flux is the only cluster writer.
 
 A Git conflict, failed build, timeout, or full promotion queue fails visibly and
 requires a rerun. The workflow never force-pushes or claims an unbounded queue.
+
+Pull requests use one path-filtered `ci-<domain>.yaml` workflow per production
+domain. A changed domain calls the shared `ci-domain.yaml` workflow, which runs
+that domain's `check`, deploys its declared integration slice to a disposable
+Kind cluster, and runs its smoke test. Documents remains outside this production
+workflow set.
+
+New GitHub Container Registry packages are private by default. After each image
+is published for the first time, make its package public in GitHub so Kubernetes
+can pull it anonymously. Keeping packages private instead requires GHCR pull
+credentials in every production domain namespace.
+
+Each production unit also exposes GitHub's manual `workflow_dispatch` trigger.
+Use it once after this registry migration to publish the initial GHCR image;
+normal releases thereafter are triggered only by that unit's source paths.
 
 Releases rely on expand/contract compatibility. For a schema change required by
 new code, use separate releases:
@@ -166,6 +181,10 @@ export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 ```
 
 Keep encrypted Secret manifests encrypted. Do not commit local TLS material.
+
+GitHub CI workflows require the repository secret
+`EPHEMERAL_SOPS_AGE_KEY`. It must contain only the age identity for disposable
+integration overlays, never a production age identity.
 
 ## Contracts
 

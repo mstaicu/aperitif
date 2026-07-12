@@ -11,5 +11,5 @@ patches:
   - path: identity-ui-depl.yaml
 
 images:
-  - name: mdstaicu/identity-ui
+  - name: ghcr.io/mstaicu/identity-ui
     newTag: latest

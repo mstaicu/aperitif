@@ -10,5 +10,5 @@ patches:
   - path: identity-migrate-job.yaml
 
 images:
-  - name: mdstaicu/identity-migrate
+  - name: ghcr.io/mstaicu/identity-migrate
     newTag: latest

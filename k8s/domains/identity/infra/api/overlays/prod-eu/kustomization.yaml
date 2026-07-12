@@ -17,5 +17,5 @@ configMapGenerator:
       - ORIGIN=https://tma.com
 
 images:
-  - name: mdstaicu/identity-api
+  - name: ghcr.io/mstaicu/identity-api
     newTag: latest

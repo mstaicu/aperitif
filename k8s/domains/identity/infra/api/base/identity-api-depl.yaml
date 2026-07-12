@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: identity-api
-          image: mdstaicu/identity-api
+          image: ghcr.io/mstaicu/identity-api
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -1,0 +1,22 @@
+name: CD / Entitlements / API
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/entitlements/packages/api/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/entitlements/packages/api
+      domain: entitlements
+      image: ghcr.io/mstaicu/entitlements-api
+      overlay: domains/entitlements/infra/api/overlays/prod-eu
+      unit: api

@@ -10,5 +10,5 @@ patches:
   - path: entitlements-migrate-job.yaml
 
 images:
-  - name: mdstaicu/entitlements-migrate
+  - name: ghcr.io/mstaicu/entitlements-migrate
     newTag: latest

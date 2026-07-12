@@ -11,5 +11,5 @@ patches:
   - path: accounts-api-depl.yaml
 
 images:
-  - name: mdstaicu/accounts-api
+  - name: ghcr.io/mstaicu/accounts-api
     newTag: latest

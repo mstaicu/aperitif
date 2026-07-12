@@ -10,5 +10,5 @@ patches:
   - path: accounts-worker-depl.yaml
 
 images:
-  - name: mdstaicu/accounts-worker
+  - name: ghcr.io/mstaicu/accounts-worker
     newTag: latest

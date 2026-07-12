@@ -1,0 +1,22 @@
+name: CD / Accounts / Worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/accounts/packages/worker/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/accounts/packages/worker
+      domain: accounts
+      image: ghcr.io/mstaicu/accounts-worker
+      overlay: domains/accounts/infra/worker/overlays/prod-eu
+      unit: worker

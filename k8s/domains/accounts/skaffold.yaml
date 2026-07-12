@@ -24,7 +24,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/accounts-migrate
+    - image: ghcr.io/mstaicu/accounts-migrate
       context: packages/database
       docker:
         dockerfile: Dockerfile
@@ -52,7 +52,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/accounts-api
+    - image: ghcr.io/mstaicu/accounts-api
       context: packages/api
       docker:
         dockerfile: Dockerfile
@@ -86,7 +86,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/accounts-worker
+    - image: ghcr.io/mstaicu/accounts-worker
       context: packages/worker
       docker:
         dockerfile: Dockerfile

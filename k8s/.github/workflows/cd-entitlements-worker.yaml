@@ -1,0 +1,22 @@
+name: CD / Entitlements / Worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/entitlements/packages/worker/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd-unit.yaml
+    with:
+      build_context: domains/entitlements/packages/worker
+      domain: entitlements
+      image: ghcr.io/mstaicu/entitlements-worker
+      overlay: domains/entitlements/infra/worker/overlays/prod-eu
+      unit: worker

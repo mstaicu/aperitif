@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: entitlements-worker
-          image: mdstaicu/entitlements-worker
+          image: ghcr.io/mstaicu/entitlements-worker
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

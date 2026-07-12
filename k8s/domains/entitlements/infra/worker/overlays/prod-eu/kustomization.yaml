@@ -10,5 +10,5 @@ patches:
   - path: entitlements-worker-depl.yaml
 
 images:
-  - name: mdstaicu/entitlements-worker
+  - name: ghcr.io/mstaicu/entitlements-worker
     newTag: latest
