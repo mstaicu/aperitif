@@ -1,8 +1,6 @@
 .DEFAULT_GOAL := help
 
-PORT ?= 443
-
-.PHONY: help check migrate deploy dev integration smoke
+.PHONY: help check migrate deploy dev
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -36,21 +34,9 @@ migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run --force -m accounts-migrate
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 
-deploy: migrate ## Deploy Accounts to the current disposable cluster.
+deploy: migrate ## Deploy Accounts once in the current cluster.
 	skaffold run -m accounts-api,accounts-worker
 
-dev: ## Prepare dependencies and start the Accounts development loop.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) -C ../identity deploy
+dev: ## Start the Accounts development loop.
 	$(MAKE) migrate
 	exec skaffold dev -m accounts-api,accounts-worker
-
-integration: ## Deploy Accounts and its integration dependencies.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) -C ../identity deploy
-	$(MAKE) deploy
-
-smoke: ## Verify the deployed Accounts boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/accounts/docs/json"

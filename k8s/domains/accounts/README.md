@@ -50,17 +50,13 @@ make -C domains/accounts check
 make -C domains/accounts migrate
 make -C domains/accounts deploy
 make -C domains/accounts dev
-make -C domains/accounts integration
-make -C domains/accounts smoke
 ```
 
 `migrate` deploys the Accounts PostgreSQL instance and runs its migrations in
-the current disposable cluster. `deploy` runs `migrate`, then installs the API
-and worker. `dev` first installs the shared platform and Identity, runs
-`migrate`, then starts the Accounts API and worker development loop.
-`integration` installs the same dependencies and deploys Accounts. The
-integration workflow exposes Traefik and invokes `smoke` after the environment
-has been assembled. Production is reconciled only by Flux.
+the current disposable cluster. `deploy` applies Accounts once. `dev` runs
+`migrate`, then starts only the Accounts API and worker development loop. Shared
+platform units and Identity are started separately when the developer needs
+live event or authenticated flows. Production is reconciled only by Flux.
 
 ## Rules
 

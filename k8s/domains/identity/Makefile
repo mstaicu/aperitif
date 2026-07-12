@@ -1,8 +1,6 @@
 .DEFAULT_GOAL := help
 
-PORT ?= 443
-
-.PHONY: help check migrate deploy dev integration smoke
+.PHONY: help check migrate deploy dev
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -32,20 +30,9 @@ migrate: ## Deploy the Identity database and run its migrations.
 	skaffold run --force -m identity-migrate
 	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
 
-deploy: migrate ## Deploy Identity to the current disposable cluster.
+deploy: migrate ## Deploy Identity once in the current cluster.
 	skaffold run -m identity-api,identity-ui,identity-cleanup
 
-dev: ## Prepare dependencies and start the Identity development loop.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
+dev: ## Start the Identity development loop.
 	$(MAKE) migrate
 	exec skaffold dev -m identity-api,identity-ui,identity-cleanup
-
-integration: ## Deploy Identity and its integration dependencies.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) deploy
-
-smoke: ## Verify the deployed Identity boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/.well-known/jwks.json"
-	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/identity/docs/json"

@@ -47,16 +47,14 @@ Use the producer domains' `packages/contracts` as the source of event shape.
 make -C domains/documents check
 make -C domains/documents migrate
 make -C domains/documents deploy
-make -C domains/documents integration
-make -C domains/documents smoke
+make -C domains/documents dev
 ```
 
 `migrate` deploys the Documents Postgres instance and runs its migrations.
-`deploy` migrates the database, then installs the Documents applications into
-the current disposable cluster.
-`integration` first installs the shared platform and all three core domains,
-then installs Documents. Documents remains local-only and is never reconciled
-by production Flux.
+`deploy` migrates the database, then applies Documents once. `dev` runs
+`migrate`, then starts only the Documents API, worker, and UI development loop.
+Shared platform units and other domains are started separately when needed.
+Documents remains local-only and is never reconciled by production Flux.
 
 ## Rules
 

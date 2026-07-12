@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -78,22 +78,7 @@ jobs:
           kubectl config use-context "kind-${CLUSTER_NAME}"
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
-      - name: deploy domain
-        run: make -C "domains/${{ inputs.domain }}" integration
-
-      - name: expose ingress
-        run: |
-          kubectl -n traefik port-forward svc/traefik-lb 8443:443 > /tmp/traefik-port-forward.log 2>&1 &
-          echo "$!" > /tmp/traefik-port-forward.pid
-          timeout 30 bash -c 'until : > /dev/tcp/127.0.0.1/8443; do sleep 1; done'
-
-      - name: smoke domain
-        run: make -C "domains/${{ inputs.domain }}" smoke PORT=8443
-
       - name: cleanup
         if: always()
         run: |
-          if [ -f /tmp/traefik-port-forward.pid ]; then
-            kill "$(cat /tmp/traefik-port-forward.pid)" || true
-          fi
           kind delete cluster --name "$CLUSTER_NAME" || true

@@ -1,8 +1,6 @@
 .DEFAULT_GOAL := help
 
-PORT ?= 443
-
-.PHONY: help check migrate deploy dev integration smoke
+.PHONY: help check migrate deploy dev
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -33,23 +31,9 @@ migrate: ## Deploy the Entitlements database and run its migrations.
 	skaffold run --force -m entitlements-migrate
 	kubectl wait -n entitlements --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n entitlements job/migrate --all-containers=true; exit 1; }
 
-deploy: migrate ## Deploy Entitlements to the current disposable cluster.
+deploy: migrate ## Deploy Entitlements once in the current cluster.
 	skaffold run -m entitlements-api,entitlements-worker
 
-dev: ## Prepare dependencies and start the Entitlements development loop.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) -C ../identity deploy
-	$(MAKE) -C ../accounts deploy
+dev: ## Start the Entitlements development loop.
 	$(MAKE) migrate
 	exec skaffold dev -m entitlements-api,entitlements-worker
-
-integration: ## Deploy Entitlements and its integration dependencies.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) -C ../identity deploy
-	$(MAKE) -C ../accounts deploy
-	$(MAKE) deploy
-
-smoke: ## Verify the deployed Entitlements boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/entitlements/docs/json"

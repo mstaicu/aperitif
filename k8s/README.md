@@ -59,41 +59,51 @@ trigger that notifies `outbox_events`.
 
 ```sh
 brew bundle
-make -C domains/accounts dev
 ```
 
-Each domain owns its local lifecycle:
+Start only the shared platform units needed for the current work:
 
 ```sh
 make -C platform/ingress deploy
 make -C platform/event-bus deploy
+```
+
+Then start each domain being edited in its own terminal. A domain's `dev`
+target manages only that domain:
+
+```sh
+make -C domains/identity dev
+make -C domains/accounts dev
+make -C domains/entitlements dev
+```
+
+Each domain also exposes its lifecycle operations directly:
+
+```sh
 make -C domains/identity check
 make -C domains/identity migrate
 make -C domains/identity deploy
 make -C domains/identity dev
-make -C domains/identity integration
 make -C domains/accounts check
 make -C domains/accounts migrate
 make -C domains/accounts deploy
 make -C domains/accounts dev
-make -C domains/accounts integration
 make -C domains/entitlements check
 make -C domains/entitlements migrate
 make -C domains/entitlements deploy
 make -C domains/entitlements dev
-make -C domains/entitlements integration
 make -C domains/documents check
 make -C domains/documents migrate
 make -C domains/documents deploy
-make -C domains/documents integration
+make -C domains/documents dev
 ```
 
-`migrate` ensures that domain's disposable database is ready and reruns its
-migration Job. `deploy` installs only that domain. `dev` and `integration`
-assemble the exact upstream dependency slice declared by each production
-domain. There is deliberately no repository-wide application composition or
-root development loop. Documents remains a local-only integration proof and
-does not expose `dev`.
+For each production domain, `migrate` ensures its disposable database is ready
+and reruns its migration Job. `deploy` applies that domain once. `dev` runs
+`migrate` and starts only that domain's Skaffold loop; it never deploys shared
+platform units or another domain. There is deliberately no repository-wide
+application composition or root development loop. Documents remains local-only
+but exposes the same domain interface.
 
 Local routing uses the fixed `tma.com` and `api.tma.com` hostnames.
 
@@ -137,9 +147,8 @@ requires a rerun. The workflow never force-pushes or claims an unbounded queue.
 
 Pull requests use one path-filtered `ci-<domain>.yaml` workflow per production
 domain. A changed domain calls the shared `ci-domain.yaml` workflow, which runs
-that domain's `check`, deploys its declared integration slice to a disposable
-Kind cluster, and runs its smoke test. Documents remains outside this production
-workflow set.
+that domain's `check` and provisions a disposable Kind cluster for CI. Documents
+remains outside this production workflow set.
 
 New GitHub Container Registry packages are private by default. After each image
 is published for the first time, make its package public in GitHub so Kubernetes

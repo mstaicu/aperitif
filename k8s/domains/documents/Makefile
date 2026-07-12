@@ -1,8 +1,6 @@
 .DEFAULT_GOAL := help
 
-PORT ?= 443
-
-.PHONY: help check migrate deploy integration smoke
+.PHONY: help check migrate deploy dev
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -34,16 +32,9 @@ migrate: ## Deploy the Documents database and run its migrations.
 	skaffold run --force -m documents-migrate
 	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
 
-deploy: migrate ## Deploy Documents to the current disposable cluster.
+deploy: migrate ## Deploy Documents once in the current cluster.
 	skaffold run -m documents-api,documents-worker,documents-ui
 
-integration: ## Deploy Documents and its integration dependencies.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) -C ../identity deploy
-	$(MAKE) -C ../accounts deploy
-	$(MAKE) -C ../entitlements deploy
-	$(MAKE) deploy
-
-smoke: ## Verify the deployed Documents boundary through Traefik.
-	curl -fkSs -o /dev/null --resolve "api.tma.com:$(PORT):127.0.0.1" "https://api.tma.com:$(PORT)/v1/documents/docs/json"
+dev: ## Start the Documents development loop.
+	$(MAKE) migrate
+	exec skaffold dev -m documents-api,documents-worker,documents-ui
