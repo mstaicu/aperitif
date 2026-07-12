@@ -40,13 +40,15 @@ deploy: migrate ## Deploy Accounts to the current disposable cluster.
 	skaffold run -m accounts-api,accounts-worker
 
 dev: ## Prepare dependencies and start the Accounts development loop.
-	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) -C ../identity deploy
 	$(MAKE) migrate
 	exec skaffold dev -m accounts-api,accounts-worker
 
 integration: ## Deploy Accounts and its integration dependencies.
-	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) -C ../identity deploy
 	$(MAKE) deploy
 

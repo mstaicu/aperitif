@@ -7,7 +7,7 @@ Domain API/UI units own their own `IngressRoute`s.
 ## Local
 
 ```sh
-make deploy-ingress
+make -C platform/ingress deploy
 ```
 
 The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, and

@@ -37,14 +37,16 @@ deploy: migrate ## Deploy Entitlements to the current disposable cluster.
 	skaffold run -m entitlements-api,entitlements-worker
 
 dev: ## Prepare dependencies and start the Entitlements development loop.
-	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) -C ../identity deploy
 	$(MAKE) -C ../accounts deploy
 	$(MAKE) migrate
 	exec skaffold dev -m entitlements-api,entitlements-worker
 
 integration: ## Deploy Entitlements and its integration dependencies.
-	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) -C ../identity deploy
 	$(MAKE) -C ../accounts deploy
 	$(MAKE) deploy

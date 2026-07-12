@@ -53,7 +53,7 @@ the initial manifests alone only configures newly created resources.
 ## Operations
 
 ```sh
-make deploy-event-bus
+make -C platform/event-bus deploy
 ```
 
 For the mental model, health checks, NATS CLI queries, and step-by-step

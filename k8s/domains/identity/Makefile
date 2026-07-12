@@ -36,14 +36,14 @@ deploy: migrate ## Deploy Identity to the current disposable cluster.
 	skaffold run -m identity-api,identity-ui,identity-cleanup
 
 dev: ## Prepare dependencies and start the Identity development loop.
-	$(MAKE) -C ../.. deploy-observability
-	$(MAKE) -C ../.. deploy-ingress
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) migrate
 	exec skaffold dev -m identity-api,identity-ui,identity-cleanup
 
 integration: ## Deploy Identity and its integration dependencies.
-	$(MAKE) -C ../.. deploy-observability
-	$(MAKE) -C ../.. deploy-ingress
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) deploy
 
 smoke: ## Verify the deployed Identity boundary through Traefik.

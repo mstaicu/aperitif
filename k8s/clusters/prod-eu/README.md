@@ -13,7 +13,7 @@ export SOPS_AGE_KEY_FILE=/path/to/your/age.agekey
 printenv GITHUB_TOKEN
 printenv SOPS_AGE_KEY_FILE
 
-make flux-bootstrap-prod-eu
+make -C clusters/prod-eu bootstrap
 ```
 
 The target creates `Namespace/flux-system`, creates/updates `Secret/sops-age`,

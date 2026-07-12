@@ -14,7 +14,7 @@ Workloads emit telemetry only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
 ## Operations
 
 ```sh
-make deploy-observability
+make -C platform/observability deploy
 ```
 
 ## Checks

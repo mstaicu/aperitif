@@ -51,7 +51,7 @@ cluster.
 Deploy locally and wait for all three servers:
 
 ```sh
-make deploy-event-bus
+make -C platform/event-bus deploy
 kubectl rollout status -n nats statefulset/nats-depl --timeout=20m
 ```
 

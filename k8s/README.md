@@ -10,7 +10,9 @@ Treat this `k8s/` directory as the repo root. GitHub workflows live under
 clusters/               Flux cluster graphs
 platform/               ingress, event-bus, observability, inactive mesh
 domains/                identity, accounts, entitlements, documents
-Makefile                shared platform and Flux bootstrap
+platform/*/Makefile     unit-owned local platform lifecycle
+domains/*/Makefile      unit-owned domain lifecycle
+clusters/prod-eu/Makefile  Flux bootstrap
 .sops.yaml              encrypted Secret recipients
 AGENTS.md               non-obvious agent rules
 ```
@@ -63,7 +65,8 @@ make -C domains/accounts dev
 Each domain owns its local lifecycle:
 
 ```sh
-make deploy-platform
+make -C platform/ingress deploy
+make -C platform/event-bus deploy
 make -C domains/identity check
 make -C domains/identity migrate
 make -C domains/identity deploy
@@ -149,7 +152,7 @@ coordinated release rather than weakening this independent-unit contract.
 Bootstrap prod with:
 
 ```sh
-make flux-bootstrap-prod-eu
+make -C clusters/prod-eu bootstrap
 ```
 
 See `clusters/prod-eu/README.md`.

@@ -38,7 +38,8 @@ deploy: migrate ## Deploy Documents to the current disposable cluster.
 	skaffold run -m documents-api,documents-worker,documents-ui
 
 integration: ## Deploy Documents and its integration dependencies.
-	$(MAKE) -C ../.. deploy-platform
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
 	$(MAKE) -C ../identity deploy
 	$(MAKE) -C ../accounts deploy
 	$(MAKE) -C ../entitlements deploy
