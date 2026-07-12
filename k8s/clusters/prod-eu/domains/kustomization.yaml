@@ -15,8 +15,3 @@ resources:
   - entitlements-migrate.yaml
   - entitlements-api.yaml
   - entitlements-worker.yaml
-  - documents-postgres.yaml
-  - documents-migrate.yaml
-  - documents-api.yaml
-  - documents-worker.yaml
-  - documents-ui.yaml

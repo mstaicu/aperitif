@@ -34,8 +34,9 @@ kustomization.yaml
     identity-*.yaml
     accounts-*.yaml
     entitlements-*.yaml
-    documents-*.yaml
 ```
+
+Documents is a local-only proof domain and is not composed into prod-eu.
 
 The root Kustomize build applies `namespace: flux-system` to all leaf Flux
 `Kustomization` objects in one render. Do not add intermediate Flux objects for
