@@ -19,13 +19,6 @@ spec:
       containers:
         - name: documents-ui
           image: mdstaicu/documents-ui
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           env:
             - name: PORT
               value: "3000"

@@ -36,6 +36,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    concurrency:
+      group: production-${{ matrix.component }}
+      queue: max
     permissions:
       contents: read
       packages: write
@@ -70,71 +73,11 @@ jobs:
 
       - name: Build and publish image
         if: steps.image.outputs.name != ''
-        id: build
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.component }}
-          file: ${{ matrix.component }}/Dockerfile
           target: prod
           push: true
-          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
-
-      - name: Record result
-        env:
-          COMPONENT: ${{ matrix.component }}
-          DIGEST: ${{ steps.build.outputs.digest }}
-        run: |
-          mkdir release
-          printf '%s' "$COMPONENT" > release/component
-          printf '%s' "$DIGEST" > release/digest
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-${{ strategy.job-index }}
-          path: release
-          retention-days: 1
-
-  update:
-    name: Update production manifests
-    needs: publish
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: master
-          fetch-depth: 0
-
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: release-*
-          path: releases
-
-      - name: Update image digests
-        run: |
-          for release in releases/*; do
-            component="$(<"$release/component")"
-            digest="$(<"$release/digest")"
-
-            if [ -n "$digest" ]; then
-              manifest="$component/infra/overlays/prod-eu/kustomization.yaml"
-              DIGEST="$digest" yq -i \
-                '.images[0] |= (.digest = strenv(DIGEST) | del(.newTag))' \
-                "$manifest"
-            fi
-          done
-
-      - name: Commit production manifests
-        run: |
-          if git diff --quiet; then
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add domains/*/components/*/infra/overlays/prod-eu/kustomization.yaml
-          git commit -m "Release ${GITHUB_SHA::12}"
-          git pull --rebase origin master
-          git push origin HEAD:master
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:production

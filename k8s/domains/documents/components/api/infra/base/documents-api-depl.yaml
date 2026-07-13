@@ -19,13 +19,6 @@ spec:
       containers:
         - name: documents-api
           image: mdstaicu/documents-api
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           readinessProbe:
             httpGet:
               path: /readyz

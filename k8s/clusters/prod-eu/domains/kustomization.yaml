@@ -1,10 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: flux-system
+
 resources:
-  - identity-namespace.yaml
-  - accounts-namespace.yaml
-  - entitlements-namespace.yaml
   - identity-postgres.yaml
   - identity-migrate.yaml
   - identity-api.yaml
@@ -18,3 +17,12 @@ resources:
   - entitlements-migrate.yaml
   - entitlements-api.yaml
   - entitlements-worker.yaml
+  - identity-migrate-image.yaml
+  - identity-api-image.yaml
+  - identity-ui-image.yaml
+  - accounts-migrate-image.yaml
+  - accounts-api-image.yaml
+  - accounts-worker-image.yaml
+  - entitlements-migrate-image.yaml
+  - entitlements-api-image.yaml
+  - entitlements-worker-image.yaml

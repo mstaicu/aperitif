@@ -11,4 +11,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/entitlements-migrate
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:entitlements-migrate:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:entitlements-migrate:digest"}

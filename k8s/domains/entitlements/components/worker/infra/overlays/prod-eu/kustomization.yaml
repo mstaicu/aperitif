@@ -11,4 +11,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/entitlements-worker
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:entitlements-worker:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:entitlements-worker:digest"}

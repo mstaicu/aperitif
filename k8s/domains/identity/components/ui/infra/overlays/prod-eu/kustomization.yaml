@@ -12,4 +12,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/identity-ui
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:identity-ui:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:identity-ui:digest"}

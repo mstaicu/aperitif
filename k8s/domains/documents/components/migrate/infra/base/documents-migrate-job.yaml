@@ -17,13 +17,6 @@ spec:
       containers:
         - name: migrate
           image: mdstaicu/documents-migrate
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
 
           env:
             - name: FLYWAY_LOCATIONS

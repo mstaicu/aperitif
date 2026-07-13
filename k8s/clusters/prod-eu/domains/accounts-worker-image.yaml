@@ -1,0 +1,23 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: accounts-worker
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/accounts-worker
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: accounts-worker
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: accounts-worker
+  filterTags:
+    pattern: ^production$
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 1m

@@ -19,13 +19,6 @@ spec:
       containers:
         - name: entitlements-worker
           image: ghcr.io/mstaicu/entitlements-worker
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           ports:
             - name: health
               containerPort: 3000

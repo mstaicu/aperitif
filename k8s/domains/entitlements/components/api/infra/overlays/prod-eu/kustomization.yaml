@@ -12,4 +12,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/entitlements-api
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:entitlements-api:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:entitlements-api:digest"}

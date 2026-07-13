@@ -19,13 +19,6 @@ spec:
       containers:
         - name: identity-ui
           image: ghcr.io/mstaicu/identity-ui
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           env:
             - name: PORT
               value: "3000"

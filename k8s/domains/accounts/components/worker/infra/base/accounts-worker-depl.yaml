@@ -19,13 +19,6 @@ spec:
       containers:
         - name: accounts-worker
           image: ghcr.io/mstaicu/accounts-worker
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           ports:
             - name: health
               containerPort: 3000

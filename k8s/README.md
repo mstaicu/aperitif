@@ -122,8 +122,9 @@ Domain order:
 <domain>-postgres -> <domain>-migrate -> <domain>-api/worker/ui
 ```
 
-GitHub production workflows build images, push them, update prod-eu image
-digests, and commit the manifest changes. Flux image automation is not used.
+GitHub Actions builds and pushes production images. Flux image automation
+selects their production digests, commits the manifest changes, and reconciles
+them into the cluster.
 
 ## Releases
 
@@ -142,10 +143,14 @@ one image. Its `name` is the GHCR destination.
 
 After a merge, `release.yaml` builds changed production components in parallel
 with Docker's build action. Each job reads its image `name` from its own overlay
-and passes the resulting digest through a GitHub artifact. One final job writes
-the digests into the component overlays and commits them for Flux. Components
-without a production overlay are skipped. Actions never applies Kubernetes
-resources; Flux is the only cluster writer.
+and publishes both the triggering Git SHA and the moving `production` tag.
+Components without a production overlay are skipped.
+
+Each production image has a Flux `ImageRepository` and `ImagePolicy`. The policy
+tracks the digest behind `production`, and `ImageUpdateAutomation/domains`
+writes that digest into the marked component overlay. Actions never writes Git
+or Kubernetes resources; Flux owns desired-state updates and cluster
+reconciliation.
 
 New GitHub Container Registry packages are private by default. After each image
 is published for the first time, make its package public in GitHub so Kubernetes

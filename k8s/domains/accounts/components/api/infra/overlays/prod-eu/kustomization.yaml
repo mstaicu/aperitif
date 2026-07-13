@@ -12,4 +12,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/accounts-api
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:accounts-api:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:accounts-api:digest"}

@@ -18,4 +18,5 @@ configMapGenerator:
 
 images:
   - name: ghcr.io/mstaicu/identity-api
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:identity-api:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:identity-api:digest"}

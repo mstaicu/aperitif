@@ -3,14 +3,8 @@ kind: Kustomization
 
 resources:
   - platform
+  - domains/identity-namespace.yaml
+  - domains/accounts-namespace.yaml
+  - domains/entitlements-namespace.yaml
   - domains
-
-patches:
-  - target:
-      group: kustomize.toolkit.fluxcd.io
-      version: v1
-      kind: Kustomization
-    patch: |-
-      - op: add
-        path: /metadata/namespace
-        value: flux-system
+  - image-automation.yaml

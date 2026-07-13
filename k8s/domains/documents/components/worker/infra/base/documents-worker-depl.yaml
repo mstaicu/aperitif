@@ -19,13 +19,6 @@ spec:
       containers:
         - name: documents-worker
           image: mdstaicu/documents-worker
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           ports:
             - name: health
               containerPort: 3000

@@ -19,13 +19,6 @@ spec:
       containers:
         - name: entitlements-api
           image: ghcr.io/mstaicu/entitlements-api
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           readinessProbe:
             httpGet:
               path: /readyz

@@ -40,10 +40,11 @@ kustomization.yaml
 
 Documents is a local-only proof domain and is not composed into prod-eu.
 
-The root Kustomize build applies `namespace: flux-system` to all leaf Flux
-`Kustomization` objects in one render. Do not add intermediate Flux objects for
-the `platform/` or `domains/` directories; leaf `dependsOn` relationships own
-the deployment ordering.
+The root owns the three cluster-scoped domain `Namespace` resources directly.
+The `platform/` and `domains/` Kustomizations contain only namespaced Flux
+control resources and set `namespace: flux-system`. Do not add intermediate
+Flux objects for these directories; leaf `dependsOn` relationships own the
+deployment ordering.
 
 ## Controllers
 
@@ -59,26 +60,42 @@ Not installed for now:
 - `helm-controller`
 - `notification-controller`
 
-The image controllers are installed but remain inactive until
-`ImageRepository`, `ImagePolicy`, and `ImageUpdateAutomation` resources and
-image policy markers are added. GitHub Actions still owns digest updates until
-that configuration is committed.
+Nine `ImageRepository` and `ImagePolicy` pairs track the production domain
+images. `ImageUpdateAutomation/domains` writes selected digests into the marked
+component overlays under `k8s/domains`.
+
+The overlays retain their current `latest` tag and start with an empty digest,
+so this transition does not require `production` tags to exist immediately.
+Both fields are marked. After a component is next built, image automation
+changes that overlay to `production` and fills its observed digest together.
+
+The automation path is `./k8s/domains` while this directory is nested in the
+containing repository. Change it to `./domains` when `k8s/` becomes the Git
+repository root.
 
 ## Release Handoff
 
-GitHub Actions builds changed components from their exact triggering SHA and
-commits the successful release set's immutable image digests together. Actions
-never applies Kubernetes resources or invokes Flux against the cluster.
+GitHub Actions builds changed components and publishes both the triggering SHA
+and the `production` tag. It does not update manifests or invoke Flux against
+the cluster.
 
-Flux detects each digest commit and reconciles the affected leaf
-`Kustomization`. Independent manifest commits and mixed-version rollouts are
-intentional: domain changes must follow expand/contract compatibility. For a
-schema expansion required by new code, allow the migration Kustomization to
+The image reflector resolves the digest behind each `production` tag. Image
+automation commits changed digests, then the existing leaf `Kustomization`
+objects reconcile them. Independent manifest commits and mixed-version rollouts
+are intentional: domain changes must follow expand/contract compatibility. For
+a schema expansion required by new code, allow the migration Kustomization to
 finish before releasing that code; contraction belongs in a later release.
 
 `dependsOn` and `wait` provide reconciliation ordering and health checks. They
 do not turn separate application deployments into an atomic runtime cutover.
 The Git history is desired state, while Flux status is deployment status.
+
+Check image automation with:
+
+```sh
+flux get images all --all-namespaces
+flux reconcile image update domains --namespace=flux-system
+```
 
 ## Manual Equivalent
 

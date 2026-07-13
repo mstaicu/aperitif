@@ -11,4 +11,5 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/accounts-migrate
-    newTag: latest
+    newTag: latest # {"$imagepolicy": "flux-system:accounts-migrate:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:accounts-migrate:digest"}

@@ -1,0 +1,23 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: entitlements-worker
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/entitlements-worker
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: entitlements-worker
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: entitlements-worker
+  filterTags:
+    pattern: ^production$
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 1m
