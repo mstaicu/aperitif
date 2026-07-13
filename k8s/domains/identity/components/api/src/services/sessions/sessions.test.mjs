@@ -1,4 +1,4 @@
-import { createLocalJWKSet, jwtVerify } from "jose";
+import { createLocalJWKSet, generateSecret, jwtVerify } from "jose";
 import assert from "node:assert/strict";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import test from "node:test";
@@ -56,15 +56,15 @@ test("sessions issue access tokens", async () => {
   const { refreshToken, userId } = await insertSession(db);
 
   // Act
-  const { access_token: accessToken } = await sessions.createAccessToken({
-    refresh_token: refreshToken,
-  });
+  const { access_token: accessToken, refresh_token: rotatedRefreshToken } =
+    await sessions.createAccessToken({ refresh_token: refreshToken });
 
   // Assert
   const { payload } = await jwtVerify(accessToken, createLocalJWKSet(jwt.jwks));
 
   assert.equal(payload.sub, userId);
   assert.equal(payload.operator, undefined);
+  assert.notEqual(rotatedRefreshToken, refreshToken);
 });
 
 test("sessions include operator claims from database state", async () => {
@@ -96,7 +96,7 @@ test("sessions include operator claims from database state", async () => {
   assert.equal(operatorPayload.operator, true);
 });
 
-test("sessions rotate refresh tokens and reject reused tokens", async () => {
+test("sessions rotate refresh tokens while issuing access tokens", async () => {
   // Arrange
   await using db = await startPostgres();
   const jwt = await createJwtFixture();
@@ -109,24 +109,54 @@ test("sessions rotate refresh tokens and reject reused tokens", async () => {
 
   // Act
   const { refresh_token: rotatedRefreshToken } =
-    await sessions.rotateRefreshToken({
-      refresh_token: refreshToken,
-    });
+    await sessions.createAccessToken({ refresh_token: refreshToken });
 
   // Assert
   assert.notEqual(rotatedRefreshToken, refreshToken);
 
-  await sessions.createAccessToken({ refresh_token: rotatedRefreshToken });
+  const { refresh_token: currentRefreshToken } =
+    await sessions.createAccessToken({
+      refresh_token: rotatedRefreshToken,
+    });
 
   await assert.rejects(
-    sessions.rotateRefreshToken({ refresh_token: refreshToken }),
+    sessions.createAccessToken({ refresh_token: refreshToken }),
     /SESSION_NOT_FOUND/,
   );
 
   await assert.rejects(
-    sessions.createAccessToken({ refresh_token: rotatedRefreshToken }),
+    sessions.createAccessToken({ refresh_token: currentRefreshToken }),
     /SESSION_NOT_FOUND/,
   );
+});
+
+test("sessions roll back failed token exchanges", async () => {
+  // Arrange
+  await using db = await startPostgres();
+  const jwt = await createJwtFixture();
+  const { refreshToken } = await insertSession(db);
+  const sessionsWithInvalidSigningKey = createSessionsService({
+    db,
+    signingKey: {
+      kid: "test",
+      privateKey: /** @type {CryptoKey} */ (await generateSecret("HS256")),
+    },
+  });
+
+  // Act
+  await assert.rejects(
+    sessionsWithInvalidSigningKey.createAccessToken({
+      refresh_token: refreshToken,
+    }),
+  );
+
+  // Assert
+  const sessions = createSessionsService({
+    db,
+    signingKey: jwt.signingKey,
+  });
+
+  await sessions.createAccessToken({ refresh_token: refreshToken });
 });
 
 test("sessions revoke the session represented by a refresh token", async () => {

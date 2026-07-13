@@ -51,5 +51,7 @@ when needed. Production is reconciled only by Flux.
 ## Rules
 
 - Other domains verify tokens through JWKS and authorize from local state.
+- Every access-token exchange consumes the presented refresh token and returns
+  its replacement; clients must store the replacement.
 - Operator access is platform authority, not account membership authority.
 - Do not add account, entitlement, or product concepts here.

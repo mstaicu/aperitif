@@ -1,5 +1,4 @@
 import { createAccessToken } from "./access-token.create.mjs";
-import { rotateRefreshToken } from "./refresh-token.rotate.mjs";
 import { revokeSession } from "./session.revoke.mjs";
 
 /**
@@ -11,7 +10,6 @@ import { revokeSession } from "./session.revoke.mjs";
 export const createSessionsService = ({ db, signingKey }) => ({
   createAccessToken: createAccessToken({ db, signingKey }),
   revokeSession: revokeSession({ db }),
-  rotateRefreshToken: rotateRefreshToken({ db }),
 });
 
 /**

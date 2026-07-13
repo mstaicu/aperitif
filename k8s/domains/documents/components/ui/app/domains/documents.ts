@@ -16,11 +16,11 @@ export async function loadDocuments({ request }: RequestContext) {
     ?.slice("refresh_token=".length);
 
   if (!refreshToken) {
-    return { error: "missing refresh_token cookie" };
+    return { body: { error: "missing refresh_token cookie" } };
   }
 
   if (!accountId) {
-    return { error: "missing account_id query parameter" };
+    return { body: { error: "missing account_id query parameter" } };
   }
 
   const accessTokenResponse = await fetch(
@@ -34,11 +34,17 @@ export async function loadDocuments({ request }: RequestContext) {
   );
   const accessToken = await accessTokenResponse.json();
 
-  if (!accessTokenResponse.ok || typeof accessToken.access_token !== "string") {
+  if (
+    !accessTokenResponse.ok ||
+    typeof accessToken.access_token !== "string" ||
+    typeof accessToken.refresh_token !== "string"
+  ) {
     return {
-      identity: {
-        body: accessToken,
-        status: accessTokenResponse.status,
+      body: {
+        identity: {
+          body: accessToken,
+          status: accessTokenResponse.status,
+        },
       },
     };
   }
@@ -53,9 +59,12 @@ export async function loadDocuments({ request }: RequestContext) {
   );
 
   return {
-    documents: {
-      body: await documentsResponse.json(),
-      status: documentsResponse.status,
+    body: {
+      documents: {
+        body: await documentsResponse.json(),
+        status: documentsResponse.status,
+      },
     },
+    refreshToken: accessToken.refresh_token,
   };
 }

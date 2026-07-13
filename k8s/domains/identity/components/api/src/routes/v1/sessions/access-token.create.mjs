@@ -14,7 +14,7 @@ export function registerAccessTokenRoute(fastify, { prefix, sessions }) {
     {
       schema: {
         description:
-          "Create a short-lived access token from a refresh token supplied in the Authorization bearer header.",
+          "Create a short-lived access token and rotate the refresh token supplied in the Authorization bearer header.",
         operationId: "createSessionAccessToken",
         response: {
           200: AccessTokenResponse,

@@ -9,7 +9,6 @@ import { registerPasskeyCreateRoute } from "./passkeys/passkey.create.mjs";
 import { registerRegistrationChallengeRoute } from "./passkeys/register.challenge.mjs";
 import { registerRegistrationRoute } from "./passkeys/register.mjs";
 import { registerAccessTokenRoute } from "./sessions/access-token.create.mjs";
-import { registerRefreshTokenRoute } from "./sessions/refresh-token.rotate.mjs";
 import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
 
 /**
@@ -105,10 +104,6 @@ export const registerV1Routes = async (
     prefix: `${prefix}/operators`,
   });
   registerAccessTokenRoute(fastify, {
-    prefix: `${prefix}/sessions`,
-    sessions,
-  });
-  registerRefreshTokenRoute(fastify, {
     prefix: `${prefix}/sessions`,
     sessions,
   });

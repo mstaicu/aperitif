@@ -6,8 +6,10 @@ import { loadDocuments } from "../domains/documents.ts";
 
 export const documentsPage = {
   actions: {
-    index: async (args: RequestContext) =>
-      createHtmlResponse(
+    index: async (args: RequestContext) => {
+      const { body, refreshToken } = await loadDocuments(args);
+
+      return createHtmlResponse(
         html`<html lang="en">
           <head>
             <meta charset="utf-8" />
@@ -49,15 +51,21 @@ export const documentsPage = {
           <body>
             <main>
               <h1>Documents</h1>
-              <pre>${JSON.stringify(await loadDocuments(args), null, 2)}</pre>
+              <pre>${JSON.stringify(body, null, 2)}</pre>
             </main>
           </body>
         </html>`,
         {
           headers: {
             "Cache-Control": "no-store",
+            ...(refreshToken
+              ? {
+                  "Set-Cookie": `refresh_token=${encodeURIComponent(refreshToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000; Secure`,
+                }
+              : {}),
           },
         },
-      ),
+      );
+    },
   },
 };
