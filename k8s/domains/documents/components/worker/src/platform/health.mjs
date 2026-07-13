@@ -3,10 +3,10 @@ import http from "node:http";
 /**
  * @param {{
  *   db: import("pg").Pool,
- *   nats: import("./nats.mjs").NatsClient,
+ *   nc: import("./nats.mjs").NatsConnection,
  * }} args
  */
-export function createHealthServer({ db, nats }) {
+export function createHealthServer({ db, nc }) {
   return http.createServer(async (req, res) => {
     if (req.url === "/livez") {
       res.writeHead(200, { "content-type": "text/plain" });
@@ -17,7 +17,7 @@ export function createHealthServer({ db, nats }) {
     if (req.url === "/readyz") {
       try {
         await db.query("SELECT 1");
-        await nats.nc.flush();
+        await nc.flush();
 
         res.writeHead(200, { "content-type": "text/plain" });
         res.end("ok");

@@ -2,35 +2,28 @@ import { once } from "node:events";
 import process from "node:process";
 
 import { createHealthServer } from "./platform/health.mjs";
-import { ensureAccountsConsumer } from "./platform/messaging/accounts-consumer.mjs";
-import { ensureEntitlementsStream } from "./platform/messaging/entitlements-stream.mjs";
-import { createNats } from "./platform/nats.mjs";
+import { createEntitlementsStream } from "./platform/messaging/entitlements-stream.mjs";
+import { getNc } from "./platform/nats.mjs";
 import { createPostgres } from "./platform/postgres.mjs";
 import { runProjectAccounts } from "./tasks/project-accounts.mjs";
 import { runPublishOutbox } from "./tasks/publish-outbox.mjs";
 
-const streamMaxBytes = Number(process.env.NATS_STREAM_MAX_BYTES);
-if (!Number.isSafeInteger(streamMaxBytes) || streamMaxBytes <= 0) {
-  throw new Error("NATS_STREAM_MAX_BYTES must be a positive integer");
-}
-
 const controller = new AbortController();
 await using postgres = createPostgres();
-await using nats = await createNats();
+await using nc = await getNc(controller.signal);
 
-await ensureEntitlementsStream({
-  nats,
-  streamMaxBytes,
+await createEntitlementsStream({
+  nc,
+  streamMaxBytes: Number(process.env.NATS_STREAM_MAX_BYTES),
   streamReplicas: Number(process.env.NATS_STREAM_REPLICAS),
 });
-await ensureAccountsConsumer({ nats });
 
-await using health = createHealthServer({ db: postgres.db, nats });
+await using health = createHealthServer({ db: postgres.db, nc });
 health.listen(3000, "0.0.0.0");
 
 const tasks = [
-  runProjectAccounts({ db: postgres.db, nats }, controller.signal),
-  runPublishOutbox({ db: postgres.db, nats }, controller.signal),
+  runProjectAccounts({ db: postgres.db, nc }, controller.signal),
+  runPublishOutbox({ db: postgres.db, nc }, controller.signal),
 ];
 const shutdown = Promise.race(
   ["SIGINT", "SIGTERM", "SIGUSR2"].map((name) => once(process, name)),
@@ -44,9 +37,7 @@ console.log(
   }),
 );
 
-try {
-  await Promise.race([...tasks, shutdown]);
-} finally {
+await Promise.race([...tasks, shutdown]).finally(async () => {
   console.log(
     JSON.stringify({
       event: "worker_closing",
@@ -58,4 +49,4 @@ try {
   controller.abort();
 
   await Promise.allSettled(tasks);
-}
+});

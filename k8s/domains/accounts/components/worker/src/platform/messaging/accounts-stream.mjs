@@ -1,7 +1,6 @@
 import {
   DiscardPolicy,
-  JetStreamApiCodes,
-  JetStreamApiError,
+  jetstreamManager,
   RetentionPolicy,
   StorageType,
 } from "@nats-io/jetstream";
@@ -10,16 +9,18 @@ export const ACCOUNTS_STREAM = "ACCOUNTS";
 
 /**
  * @param {{
- *   nats: import("../nats.mjs").NatsClient,
+ *   nc: import("../nats.mjs").NatsConnection,
  *   streamMaxBytes: number,
  *   streamReplicas: number,
  * }} args
  */
-export async function ensureAccountsStream({
-  nats,
+export async function createAccountsStream({
+  nc,
   streamMaxBytes,
   streamReplicas,
 }) {
+  const jsm = await jetstreamManager(nc);
+
   const config = {
     discard: DiscardPolicy.New,
     max_bytes: streamMaxBytes,
@@ -30,18 +31,5 @@ export async function ensureAccountsStream({
     subjects: ["accounts.>"],
   };
 
-  try {
-    await nats.jsm.streams.info(ACCOUNTS_STREAM);
-  } catch (err) {
-    if (
-      !(
-        err instanceof JetStreamApiError &&
-        err.code === JetStreamApiCodes.StreamNotFound
-      )
-    ) {
-      throw err;
-    }
-
-    await nats.jsm.streams.add(config);
-  }
+  return jsm.streams.add(config);
 }

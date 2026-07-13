@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { startNats } from "../../test/fixtures/nats.mjs";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
-import { ensureAccountsStream } from "../platform/messaging/accounts-stream.mjs";
+import { createAccountsStream } from "../platform/messaging/accounts-stream.mjs";
 import { runPublishOutbox } from "./publish-outbox.mjs";
 
 test("publishes unpublished outbox events to NATS", async () => {
@@ -33,8 +33,8 @@ test("publishes unpublished outbox events to NATS", async () => {
     type: "accounts.account.opened.v1",
   };
 
-  await ensureAccountsStream({
-    nats,
+  await createAccountsStream({
+    nc: nats.nc,
     streamMaxBytes: 419_430_400,
     streamReplicas: 1,
   });
@@ -58,7 +58,7 @@ test("publishes unpublished outbox events to NATS", async () => {
       return message;
     }
   })();
-  const task = runPublishOutbox({ db, nats }, controller.signal);
+  const task = runPublishOutbox({ db, nc: nats.nc }, controller.signal);
   const message = await messageReceived;
   controller.abort();
   await task;
@@ -116,7 +116,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   );
 
   // Act
-  const publish = runPublishOutbox({ db, nats }, controller.signal);
+  const publish = runPublishOutbox({ db, nc: nats.nc }, controller.signal);
 
   // Assert
   await assert.rejects(publish);

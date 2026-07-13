@@ -4,25 +4,31 @@ import {
 } from "@mstaicu/entitlements-contracts";
 import { addAbortListener } from "node:events";
 
-import {
-  ENTITLEMENTS_CONSUMER,
-  ENTITLEMENTS_STREAM,
-} from "../platform/messaging/entitlements-consumer.mjs";
+import { getEntitlementsConsumer } from "../platform/messaging/entitlements-consumer.mjs";
 
 /**
  * @param {{
  *   db: import("pg").Pool,
- *   nats: import("../platform/nats.mjs").NatsClient,
+ *   nc: import("../platform/nats.mjs").NatsConnection,
  * }} resources
  * @param {AbortSignal} signal
  */
-export async function runProjectEntitlements({ db, nats }, signal) {
+export function runProjectEntitlements({ db, nc }, signal) {
+  return getEntitlementsConsumer({ nc }, signal).then((consumer) =>
+    projectEntitlements({ consumer, db }, signal),
+  );
+}
+
+/**
+ * @param {{
+ *   consumer: import("@nats-io/jetstream").Consumer,
+ *   db: import("pg").Pool,
+ * }} resources
+ * @param {AbortSignal} signal
+ */
+async function projectEntitlements({ consumer, db }, signal) {
   signal.throwIfAborted();
 
-  const consumer = await nats.js.consumers.get(
-    ENTITLEMENTS_STREAM,
-    ENTITLEMENTS_CONSUMER,
-  );
   const messages = await consumer.consume({ max_messages: 1 });
 
   try {

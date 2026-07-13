@@ -4,25 +4,31 @@ import {
 } from "@mstaicu/accounts-contracts";
 import { addAbortListener } from "node:events";
 
-import {
-  ACCOUNTS_CONSUMER,
-  ACCOUNTS_STREAM,
-} from "../platform/messaging/accounts-consumer.mjs";
+import { getAccountsConsumer } from "../platform/messaging/accounts-consumer.mjs";
 
 /**
  * @param {{
  *   db: import("pg").Pool,
- *   nats: import("../platform/nats.mjs").NatsClient,
+ *   nc: import("../platform/nats.mjs").NatsConnection,
  * }} resources
  * @param {AbortSignal} signal
  */
-export async function runProjectAccounts({ db, nats }, signal) {
+export function runProjectAccounts({ db, nc }, signal) {
+  return getAccountsConsumer({ nc }, signal).then((consumer) =>
+    projectAccounts({ consumer, db }, signal),
+  );
+}
+
+/**
+ * @param {{
+ *   consumer: import("@nats-io/jetstream").Consumer,
+ *   db: import("pg").Pool,
+ * }} resources
+ * @param {AbortSignal} signal
+ */
+async function projectAccounts({ consumer, db }, signal) {
   signal.throwIfAborted();
 
-  const consumer = await nats.js.consumers.get(
-    ACCOUNTS_STREAM,
-    ACCOUNTS_CONSUMER,
-  );
   const messages = await consumer.consume({ max_messages: 1 });
 
   try {

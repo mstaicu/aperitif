@@ -1,9 +1,12 @@
 import { AccountEntitlementsUpdatedV1Type } from "@mstaicu/entitlements-contracts";
 import {
   AckPolicy,
+  jetstream,
   JetStreamApiCodes,
   JetStreamApiError,
+  jetstreamManager,
 } from "@nats-io/jetstream";
+import { setTimeout } from "node:timers/promises";
 
 export const ENTITLEMENTS_STREAM = "ENTITLEMENTS";
 export const ENTITLEMENTS_CONSUMER = "documents-entitlements-projection";
@@ -11,45 +14,35 @@ export const ENTITLEMENTS_CONSUMER = "documents-entitlements-projection";
 const HANDLED_ENTITLEMENT_EVENT_TYPES = [AccountEntitlementsUpdatedV1Type];
 
 /**
- * @param {{ nats: import("../nats.mjs").NatsClient }} args
+ * @param {{ nc: import("../nats.mjs").NatsConnection }} args
+ * @param {AbortSignal} signal
  */
-export async function ensureEntitlementsConsumer({ nats }) {
+export async function getEntitlementsConsumer({ nc }, signal) {
+  const js = jetstream(nc);
+  const jsm = await jetstreamManager(nc);
+
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ENTITLEMENTS_CONSUMER,
     filter_subjects: HANDLED_ENTITLEMENT_EVENT_TYPES,
   };
 
-  try {
-    const existing = await nats.jsm.consumers.info(
-      ENTITLEMENTS_STREAM,
-      ENTITLEMENTS_CONSUMER,
-    );
-    const existingFilterSubjects =
-      existing.config.filter_subjects ??
-      (existing.config.filter_subject ? [existing.config.filter_subject] : []);
+  while (true) {
+    signal.throwIfAborted();
 
-    if (
-      existing.config.ack_policy !== config.ack_policy ||
-      existingFilterSubjects.join("\n") !==
-        HANDLED_ENTITLEMENT_EVENT_TYPES.join("\n")
-    ) {
-      await nats.jsm.consumers.delete(
-        ENTITLEMENTS_STREAM,
-        ENTITLEMENTS_CONSUMER,
-      );
-      await nats.jsm.consumers.add(ENTITLEMENTS_STREAM, config);
-    }
-  } catch (err) {
-    if (
-      !(
+    try {
+      await jsm.consumers.add(ENTITLEMENTS_STREAM, config);
+      return await js.consumers.get(ENTITLEMENTS_STREAM, ENTITLEMENTS_CONSUMER);
+    } catch (err) {
+      const streamIsMissing =
         err instanceof JetStreamApiError &&
-        err.code === JetStreamApiCodes.ConsumerNotFound
-      )
-    ) {
-      throw err;
-    }
+        err.code === JetStreamApiCodes.StreamNotFound;
 
-    await nats.jsm.consumers.add(ENTITLEMENTS_STREAM, config);
+      if (!streamIsMissing) {
+        throw err;
+      }
+
+      await setTimeout(1_000, undefined, { signal });
+    }
   }
 }

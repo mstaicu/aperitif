@@ -1,7 +1,6 @@
 import {
   DiscardPolicy,
-  JetStreamApiCodes,
-  JetStreamApiError,
+  jetstreamManager,
   RetentionPolicy,
   StorageType,
 } from "@nats-io/jetstream";
@@ -10,16 +9,18 @@ export const ENTITLEMENTS_STREAM = "ENTITLEMENTS";
 
 /**
  * @param {{
- *   nats: import("../nats.mjs").NatsClient,
+ *   nc: import("../nats.mjs").NatsConnection,
  *   streamMaxBytes: number,
  *   streamReplicas: number,
  * }} args
  */
-export async function ensureEntitlementsStream({
-  nats,
+export async function createEntitlementsStream({
+  nc,
   streamMaxBytes,
   streamReplicas,
 }) {
+  const jsm = await jetstreamManager(nc);
+
   const config = {
     discard: DiscardPolicy.New,
     max_bytes: streamMaxBytes,
@@ -30,18 +31,5 @@ export async function ensureEntitlementsStream({
     subjects: ["entitlements.>"],
   };
 
-  try {
-    await nats.jsm.streams.info(ENTITLEMENTS_STREAM);
-  } catch (err) {
-    if (
-      !(
-        err instanceof JetStreamApiError &&
-        err.code === JetStreamApiCodes.StreamNotFound
-      )
-    ) {
-      throw err;
-    }
-
-    await nats.jsm.streams.add(config);
-  }
+  return jsm.streams.add(config);
 }

@@ -11,4 +11,10 @@ for (const name of requiredEnv) {
   }
 }
 
+const streamMaxBytes = Number(process.env.NATS_STREAM_MAX_BYTES);
+
+if (!Number.isSafeInteger(streamMaxBytes) || streamMaxBytes <= 0) {
+  throw new Error("NATS_STREAM_MAX_BYTES must be a positive integer");
+}
+
 await import("./worker.mjs");

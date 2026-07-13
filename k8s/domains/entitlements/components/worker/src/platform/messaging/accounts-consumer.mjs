@@ -1,9 +1,12 @@
 import { AccountOpenedV1Type } from "@mstaicu/accounts-contracts";
 import {
   AckPolicy,
+  jetstream,
   JetStreamApiCodes,
   JetStreamApiError,
+  jetstreamManager,
 } from "@nats-io/jetstream";
+import { setTimeout } from "node:timers/promises";
 
 export const ACCOUNTS_STREAM = "ACCOUNTS";
 export const ACCOUNTS_CONSUMER = "entitlements-accounts-projection";
@@ -11,42 +14,35 @@ export const ACCOUNTS_CONSUMER = "entitlements-accounts-projection";
 const HANDLED_ACCOUNT_EVENT_TYPES = [AccountOpenedV1Type];
 
 /**
- * @param {{ nats: import("../nats.mjs").NatsClient }} args
+ * @param {{ nc: import("../nats.mjs").NatsConnection }} args
+ * @param {AbortSignal} signal
  */
-export async function ensureAccountsConsumer({ nats }) {
+export async function getAccountsConsumer({ nc }, signal) {
+  const js = jetstream(nc);
+  const jsm = await jetstreamManager(nc);
+
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ACCOUNTS_CONSUMER,
     filter_subjects: HANDLED_ACCOUNT_EVENT_TYPES,
   };
 
-  try {
-    const existing = await nats.jsm.consumers.info(
-      ACCOUNTS_STREAM,
-      ACCOUNTS_CONSUMER,
-    );
-    const existingFilterSubjects =
-      existing.config.filter_subjects ??
-      (existing.config.filter_subject ? [existing.config.filter_subject] : []);
+  while (true) {
+    signal.throwIfAborted();
 
-    if (
-      existing.config.ack_policy !== config.ack_policy ||
-      existingFilterSubjects.join("\n") !==
-        HANDLED_ACCOUNT_EVENT_TYPES.join("\n")
-    ) {
-      await nats.jsm.consumers.delete(ACCOUNTS_STREAM, ACCOUNTS_CONSUMER);
-      await nats.jsm.consumers.add(ACCOUNTS_STREAM, config);
-    }
-  } catch (err) {
-    if (
-      !(
+    try {
+      await jsm.consumers.add(ACCOUNTS_STREAM, config);
+      return await js.consumers.get(ACCOUNTS_STREAM, ACCOUNTS_CONSUMER);
+    } catch (err) {
+      const streamIsMissing =
         err instanceof JetStreamApiError &&
-        err.code === JetStreamApiCodes.ConsumerNotFound
-      )
-    ) {
-      throw err;
-    }
+        err.code === JetStreamApiCodes.StreamNotFound;
 
-    await nats.jsm.consumers.add(ACCOUNTS_STREAM, config);
+      if (!streamIsMissing) {
+        throw err;
+      }
+
+      await setTimeout(1_000, undefined, { signal });
+    }
   }
 }

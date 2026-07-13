@@ -1,3 +1,4 @@
+import { jetstream } from "@nats-io/jetstream";
 import { on } from "node:events";
 
 import { ENTITLEMENTS_STREAM } from "../platform/messaging/entitlements-stream.mjs";
@@ -9,13 +10,14 @@ const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
  *
  * @param {{
  *   db: import("pg").Pool,
- *   nats: import("../platform/nats.mjs").NatsClient,
+ *   nc: import("../platform/nats.mjs").NatsConnection,
  * }} resources
  * @param {AbortSignal} signal
  */
-export async function runPublishOutbox({ db, nats }, signal) {
+export async function runPublishOutbox({ db, nc }, signal) {
   signal.throwIfAborted();
 
+  const js = jetstream(nc);
   const client = await db.connect();
 
   try {
@@ -23,7 +25,7 @@ export async function runPublishOutbox({ db, nats }, signal) {
 
     // eslint-disable-next-line
     for await (const _ of outboxDrainRequests(client, signal)) {
-      while (await publishNextOutboxEvent(client, nats)) {
+      while (await publishNextOutboxEvent(client, js)) {
         signal.throwIfAborted();
       }
     }
@@ -62,10 +64,10 @@ async function* outboxDrainRequests(client, signal) {
 
 /**
  * @param {import("pg").PoolClient} client
- * @param {import("../platform/nats.mjs").NatsClient} nats
+ * @param {import("@nats-io/jetstream").JetStreamClient} js
  * @returns {Promise<boolean>}
  */
-async function publishNextOutboxEvent(client, nats) {
+async function publishNextOutboxEvent(client, js) {
   try {
     await client.query("BEGIN");
 
@@ -90,7 +92,7 @@ async function publishNextOutboxEvent(client, nats) {
 
     const { event, id } = outboxEvent;
 
-    await nats.js.publish(event.type, JSON.stringify(event), {
+    await js.publish(event.type, JSON.stringify(event), {
       expect: {
         streamName: ENTITLEMENTS_STREAM,
       },

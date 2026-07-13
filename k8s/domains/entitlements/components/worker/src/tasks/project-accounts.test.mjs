@@ -14,7 +14,7 @@ import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import {
   ACCOUNTS_CONSUMER,
   ACCOUNTS_STREAM,
-  ensureAccountsConsumer,
+  getAccountsConsumer,
 } from "../platform/messaging/accounts-consumer.mjs";
 import { runProjectAccounts } from "./project-accounts.mjs";
 
@@ -44,6 +44,10 @@ test("projects account opened events", async () => {
     type: AccountOpenedV1Type,
   };
 
+  const controller = new AbortController();
+  const task = runProjectAccounts({ db, nc: nats.nc }, controller.signal);
+
+  await setTimeout(100);
   await nats.jsm.streams.add({
     discard: DiscardPolicy.New,
     name: ACCOUNTS_STREAM,
@@ -52,12 +56,8 @@ test("projects account opened events", async () => {
     storage: StorageType.File,
     subjects: ["accounts.>"],
   });
-  await ensureAccountsConsumer({ nats });
 
   // Act
-  const controller = new AbortController();
-  const task = runProjectAccounts({ db, nats }, controller.signal);
-
   await nats.js.publish(event.type, JSON.stringify(event));
 
   let projectedAccount;
@@ -132,7 +132,8 @@ test("ignores stale account opened events", async () => {
     storage: StorageType.File,
     subjects: ["accounts.>"],
   });
-  await ensureAccountsConsumer({ nats });
+  const controller = new AbortController();
+  await getAccountsConsumer({ nc: nats.nc }, controller.signal);
 
   await db.query(
     `
@@ -147,8 +148,7 @@ test("ignores stale account opened events", async () => {
   );
 
   // Act
-  const controller = new AbortController();
-  const task = runProjectAccounts({ db, nats }, controller.signal);
+  const task = runProjectAccounts({ db, nc: nats.nc }, controller.signal);
 
   await nats.js.publish(staleEvent.type, JSON.stringify(staleEvent));
 
