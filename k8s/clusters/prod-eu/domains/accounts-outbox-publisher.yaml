@@ -1,0 +1,17 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: accounts-outbox-publisher
+spec:
+  interval: 10m
+  path: ./k8s/domains/accounts/components/outbox-publisher/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: event-bus
+    - name: accounts-migrate
+  wait: true
+  timeout: 5m

@@ -12,17 +12,19 @@ resources:
   - accounts-postgres.yaml
   - accounts-migrate.yaml
   - accounts-api.yaml
-  - accounts-worker.yaml
+  - accounts-outbox-publisher.yaml
   - entitlements-postgres.yaml
   - entitlements-migrate.yaml
   - entitlements-api.yaml
-  - entitlements-worker.yaml
+  - entitlements-outbox-publisher.yaml
+  - entitlements-accounts-projector.yaml
   - identity-migrate-image.yaml
   - identity-api-image.yaml
   - identity-ui-image.yaml
   - accounts-migrate-image.yaml
   - accounts-api-image.yaml
-  - accounts-worker-image.yaml
+  - accounts-outbox-publisher-image.yaml
   - entitlements-migrate-image.yaml
   - entitlements-api-image.yaml
-  - entitlements-worker-image.yaml
+  - entitlements-outbox-publisher-image.yaml
+  - entitlements-accounts-projector-image.yaml

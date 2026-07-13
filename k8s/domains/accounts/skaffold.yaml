@@ -79,15 +79,15 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: accounts-worker
+  name: accounts-outbox-publisher
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/accounts-worker
-      context: components/worker
+    - image: ghcr.io/mstaicu/accounts-outbox-publisher
+      context: components/outbox-publisher
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -100,7 +100,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/worker/infra/overlays/ephemeral
+      - components/outbox-publisher/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec

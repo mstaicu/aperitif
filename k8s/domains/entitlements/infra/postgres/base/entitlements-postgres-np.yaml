@@ -19,7 +19,10 @@ spec:
               app: entitlements-migrate
         - podSelector:
             matchLabels:
-              app: entitlements-worker
+              app: outbox-publisher
+        - podSelector:
+            matchLabels:
+              app: accounts-projector
       ports:
         - protocol: TCP
           port: 5432

@@ -19,7 +19,10 @@ spec:
               app: documents-migrate
         - podSelector:
             matchLabels:
-              app: documents-worker
+              app: accounts-projector
+        - podSelector:
+            matchLabels:
+              app: entitlements-projector
       ports:
         - protocol: TCP
           port: 5432

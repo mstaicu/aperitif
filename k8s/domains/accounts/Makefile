@@ -14,10 +14,10 @@ check: ## Validate Accounts components, packages, and manifests.
 	cd packages/contracts && npm ci
 	cd packages/contracts && npm run build
 
-	cd components/worker && npm ci
-	cd components/worker && npm exec -- eslint .
-	cd components/worker && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/worker && npm test
+	cd components/outbox-publisher && npm ci
+	cd components/outbox-publisher && npm exec -- eslint .
+	cd components/outbox-publisher && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/outbox-publisher && npm test
 
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
@@ -25,8 +25,8 @@ check: ## Validate Accounts components, packages, and manifests.
 	kubectl kustomize components/migrate/infra/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
 	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/worker/infra/overlays/ephemeral >/dev/null
-	kubectl kustomize components/worker/infra/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/outbox-publisher/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/outbox-publisher/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres
@@ -35,8 +35,8 @@ migrate: ## Deploy the Accounts database and run its migrations.
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Accounts once in the current cluster.
-	skaffold run -m accounts-api,accounts-worker
+	skaffold run -m accounts-api,accounts-outbox-publisher
 
 dev: ## Start the Accounts development loop.
 	$(MAKE) migrate
-	exec skaffold dev -m accounts-api,accounts-worker
+	exec skaffold dev -m accounts-api,accounts-outbox-publisher

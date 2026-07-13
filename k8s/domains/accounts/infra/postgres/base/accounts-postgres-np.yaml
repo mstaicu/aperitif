@@ -19,7 +19,7 @@ spec:
               app: accounts-migrate
         - podSelector:
             matchLabels:
-              app: accounts-worker
+              app: outbox-publisher
       ports:
         - protocol: TCP
           port: 5432

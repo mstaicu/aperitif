@@ -79,15 +79,15 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-worker
+  name: documents-accounts-projector
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-worker
-      context: components/worker
+    - image: mdstaicu/documents-accounts-projector
+      context: components/accounts-projector
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -100,7 +100,41 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/worker/infra/overlays/ephemeral
+      - components/accounts-projector/infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: documents-entitlements-projector
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: mdstaicu/documents-entitlements-projector
+      context: components/entitlements-projector
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - components/entitlements-projector/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec

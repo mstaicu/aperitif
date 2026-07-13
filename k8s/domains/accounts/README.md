@@ -17,14 +17,14 @@ resources.
 ## Components
 
 ```text
-postgres -> migrate -> api/worker
+postgres -> migrate -> api + outbox-publisher
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
 `components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
-The worker publishes outbox events.
+The outbox publisher publishes domain events from `outbox_events`.
 
 ## Public API
 
@@ -55,9 +55,9 @@ make -C domains/accounts dev
 
 `migrate` deploys the Accounts PostgreSQL instance and runs its migrations in
 the current disposable cluster. `deploy` applies Accounts once. `dev` runs
-`migrate`, then starts only the Accounts API and worker development loop. Shared
-platform units and Identity are started separately when the developer needs
-live event or authenticated flows. Production is reconciled only by Flux.
+`migrate`, then starts the Accounts API and outbox publisher development loops.
+Shared platform units and Identity are started separately when the developer
+needs live event or authenticated flows. Production is reconciled only by Flux.
 
 ## Rules
 

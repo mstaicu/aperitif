@@ -13,14 +13,15 @@ Documents does not own identity, account authority, or entitlement authority.
 ## Components
 
 ```text
-postgres -> migrate -> api/worker/ui
+postgres -> migrate -> api + accounts-projector + entitlements-projector + ui
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
 `components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
-The worker consumes account and entitlement events. It publishes no events today.
+The accounts and entitlements projectors independently consume their upstream
+domain events. Documents publishes no events today.
 
 ## Public API
 
@@ -53,9 +54,9 @@ make -C domains/documents dev
 
 `migrate` deploys the Documents Postgres instance and runs its migrations.
 `deploy` migrates the database, then applies Documents once. `dev` runs
-`migrate`, then starts only the Documents API, worker, and UI development loop.
-Shared platform units and other domains are started separately when needed.
-Documents remains local-only and is never reconciled by production Flux.
+`migrate`, then starts the Documents API, both projectors, and UI development
+loops. Shared platform units and other domains are started separately when
+needed. Documents remains local-only and is never reconciled by production Flux.
 Its components deliberately have no `prod-eu` overlays, so the release workflow
 does not publish them.
 

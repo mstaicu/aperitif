@@ -36,14 +36,15 @@ number_sum
 ## Components
 
 ```text
-postgres -> migrate -> api/worker
+postgres -> migrate -> api + outbox-publisher + accounts-projector
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
 `components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
-The worker projects accounts and publishes outbox events.
+The accounts projector consumes Accounts events. The outbox publisher publishes
+Entitlements events independently.
 
 ## Operator API
 
@@ -81,9 +82,9 @@ make -C domains/entitlements dev
 
 `migrate` deploys Entitlements' disposable PostgreSQL instance and applies its
 migrations. `deploy` applies Entitlements once. `dev` runs `migrate`, then
-starts only the Entitlements API and worker development loop. Shared platform
-units and other domains are started separately when live flows require them.
-Production is reconciled only by Flux.
+starts the Entitlements API, outbox publisher, and accounts projector development
+loops. Shared platform units and other domains are started separately when live
+flows require them. Production is reconciled only by Flux.
 
 ## Rules
 
