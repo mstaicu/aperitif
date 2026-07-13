@@ -1,0 +1,100 @@
+name: Pull Request
+
+on:
+  pull_request:
+    paths:
+      - "domains/**"
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Find changed domains
+    runs-on: ubuntu-24.04
+    outputs:
+      domains: ${{ steps.changed.outputs.all_changed_and_modified_files }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: changed
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: domains/**
+          dir_names: true
+          dir_names_max_depth: 2
+          matrix: true
+
+  check:
+    name: Check ${{ matrix.domain }}
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        domain: ${{ fromJSON(needs.changes.outputs.domains) }}
+
+    env:
+      CLUSTER_NAME: domain-${{ strategy.job-index }}-${{ github.run_id }}-${{ github.run_attempt }}
+      KSOPS_VERSION: 4.5.1
+      MKCERT_VERSION: v1.4.4
+      SKAFFOLD_VERSION: v2.17.0
+      SOPS_AGE_KEY: ${{ secrets.EPHEMERAL_SOPS_AGE_KEY }}
+      SOPS_VERSION: v3.12.2
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/setup-kubectl@v4.0.1
+      - uses: imranismail/setup-kustomize@v2.1.0
+
+      - name: Install integration tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3-tools
+
+          curl -fsSL -o skaffold "https://storage.googleapis.com/skaffold/releases/${SKAFFOLD_VERSION}/skaffold-linux-amd64"
+          chmod +x skaffold
+          sudo mv skaffold /usr/local/bin/skaffold
+
+          curl -fsSL -o mkcert "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
+          chmod +x mkcert
+          sudo mv mkcert /usr/local/bin/mkcert
+
+          curl -fsSL -o sops "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64"
+          chmod +x sops
+          sudo mv sops /usr/local/bin/sops
+
+          curl -fsSL -o ksops.tar.gz "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
+          tar -xzf ksops.tar.gz
+          sudo mv ksops /usr/local/bin/ksops
+
+      - name: Configure ephemeral secrets
+        run: |
+          mkdir -p "$RUNNER_TEMP/sops-age"
+          printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
+          chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
+          echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
+
+      - name: Check domain
+        run: make -C "${{ matrix.domain }}" check
+
+      - name: Create disposable cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          wait: 120s
+
+      - name: Configure Skaffold
+        run: |
+          kubectl config use-context "kind-${CLUSTER_NAME}"
+          skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
+
+      - name: Delete disposable cluster
+        if: always()
+        run: kind delete cluster --name "$CLUSTER_NAME" || true

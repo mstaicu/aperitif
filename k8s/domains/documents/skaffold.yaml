@@ -25,14 +25,14 @@ build:
 
   artifacts:
     - image: mdstaicu/documents-migrate
-      context: packages/database
+      context: components/migrate
       docker:
         dockerfile: Dockerfile
 
 manifests:
   kustomize:
     paths:
-      - infra/migrate/overlays/ephemeral
+      - components/migrate/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -53,7 +53,7 @@ build:
 
   artifacts:
     - image: mdstaicu/documents-api
-      context: packages/api
+      context: components/api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -66,7 +66,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/api/overlays/ephemeral
+      - components/api/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -87,7 +87,7 @@ build:
 
   artifacts:
     - image: mdstaicu/documents-worker
-      context: packages/worker
+      context: components/worker
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -100,7 +100,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/worker/overlays/ephemeral
+      - components/worker/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -121,7 +121,7 @@ build:
 
   artifacts:
     - image: mdstaicu/documents-ui
-      context: packages/ui
+      context: components/ui
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -136,7 +136,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/ui/overlays/ephemeral
+      - components/ui/infra/overlays/ephemeral
 
 deploy:
   kubectl: {}

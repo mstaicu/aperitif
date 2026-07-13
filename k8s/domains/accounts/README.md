@@ -14,14 +14,15 @@ New accounts create one `owner` member. Future member lifecycle belongs here.
 Accounts does not own identity records, entitlement grants, payments, or product
 resources.
 
-## Units
+## Components
 
 ```text
 postgres -> migrate -> api/worker
 ```
 
-Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
-job that runs it.
+Each deployable component owns its source, Dockerfile, and manifests under
+`components/<name>`. Database SQL and its Flyway Job live together in
+`components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
 The worker publishes outbox events.
 

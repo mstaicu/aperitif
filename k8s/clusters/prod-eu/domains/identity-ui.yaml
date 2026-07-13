@@ -5,7 +5,7 @@ metadata:
   name: identity-ui
 spec:
   interval: 10m
-  path: ./k8s/domains/identity/infra/ui/overlays/prod-eu
+  path: ./k8s/domains/identity/components/ui/infra/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

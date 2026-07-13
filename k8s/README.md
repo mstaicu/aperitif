@@ -10,22 +10,23 @@ Treat this `k8s/` directory as the repo root. GitHub workflows live under
 clusters/               Flux cluster graphs
 platform/               ingress, event-bus, observability, inactive mesh
 domains/                identity, accounts, entitlements, documents
-platform/*/Makefile     unit-owned local platform lifecycle
-domains/*/Makefile      unit-owned domain lifecycle
+platform/*/Makefile     platform-unit local lifecycle
+domains/*/Makefile      domain lifecycle
 clusters/prod-eu/Makefile  Flux bootstrap
 .sops.yaml              encrypted Secret recipients
 AGENTS.md               non-obvious agent rules
 ```
 
-Domain unit shape:
+Domain component shape:
 
 ```text
 postgres -> migrate -> api/worker/ui
 ```
 
-Units stay independently deployable. A domain only has the units it needs.
-Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
-job that runs it.
+Components stay independently deployable. Each component owns its source,
+Dockerfile, and Kubernetes manifests under `components/<name>/infra`. A domain
+only has the components it needs. Database SQL and its Flyway Job live together
+in `components/migrate`; shared domain infrastructure remains in `infra`.
 
 ## Domains
 
@@ -126,38 +127,30 @@ digests, and commit the manifest changes. Flux image automation is not used.
 
 ## Releases
 
-Each production unit has one small path-filtered `cd-<domain>-<unit>.yaml`
-caller under `.github/workflows`. The shared `cd-unit.yaml` workflow:
+GitHub Actions has two workflows:
 
-1. builds the exact Git SHA that triggered that unit;
-2. publishes the image to GitHub Container Registry with the workflow's
-   `GITHUB_TOKEN` and captures its immutable digest;
-3. lets GitHub queue releases of the same unit;
-4. queues up to 100 short Git promotion jobs across units;
-5. updates only that unit's prod-eu Kustomization; and
-6. commits the digest for Flux to reconcile.
+- `pull-request.yaml` discovers changed `domains/<domain>` directories and runs
+  each domain's `check` in an independent matrix job with its own disposable
+  Kind cluster.
+- `release.yaml` discovers changed
+  `domains/<domain>/components/<component>` directories after a merge to
+  `master`.
 
-Builds for different units are independent. The shared queue serializes only
-Git desired-state writes, so teams can release their own APIs, workers,
-migrations, and UIs without overwriting another unit's manifest update. Actions
-does not deploy to Kubernetes; Flux is the only cluster writer.
+A component is production-releasable only when it has
+`infra/overlays/prod-eu/kustomization.yaml`. That overlay must contain exactly
+one image. Its `name` is the GHCR destination.
 
-A Git conflict, failed build, timeout, or full promotion queue fails visibly and
-requires a rerun. The workflow never force-pushes or claims an unbounded queue.
-
-Pull requests use one path-filtered `ci-<domain>.yaml` workflow per production
-domain. A changed domain calls the shared `ci-domain.yaml` workflow, which runs
-that domain's `check` and provisions a disposable Kind cluster for CI. Documents
-remains outside this production workflow set.
+After a merge, `release.yaml` builds changed production components in parallel
+with Docker's build action. Each job reads its image `name` from its own overlay
+and passes the resulting digest through a GitHub artifact. One final job writes
+the digests into the component overlays and commits them for Flux. Components
+without a production overlay are skipped. Actions never applies Kubernetes
+resources; Flux is the only cluster writer.
 
 New GitHub Container Registry packages are private by default. After each image
 is published for the first time, make its package public in GitHub so Kubernetes
 can pull it anonymously. Keeping packages private instead requires GHCR pull
 credentials in every production domain namespace.
-
-Each production unit also exposes GitHub's manual `workflow_dispatch` trigger.
-Use it once after this registry migration to publish the initial GHCR image;
-normal releases thereafter are triggered only by that unit's source paths.
 
 Releases rely on expand/contract compatibility. For a schema change required by
 new code, use separate releases:
@@ -171,7 +164,7 @@ merge expansion migration
 
 API, worker, UI, and event changes must tolerate old and new versions coexisting
 during rollout. If a change cannot do that, its domain needs an explicitly
-coordinated release rather than weakening this independent-unit contract.
+coordinated release rather than weakening this independent-component contract.
 
 Bootstrap prod with:
 

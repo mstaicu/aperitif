@@ -5,26 +5,22 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate Documents packages and manifests.
-	cd packages/api && npm ci
-	cd packages/api && npm exec -- eslint .
-	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd packages/worker && npm ci
-	cd packages/worker && npm exec -- eslint .
-	cd packages/worker && npm exec -- tsc -p jsconfig.json --noEmit
-	cd packages/ui && npm ci
-	cd packages/ui && npm run typecheck
-	cd packages/ui && npm run build
+check: ## Validate Documents components and manifests.
+	cd components/api && npm ci
+	cd components/api && npm exec -- eslint .
+	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/worker && npm ci
+	cd components/worker && npm exec -- eslint .
+	cd components/worker && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/ui && npm ci
+	cd components/ui && npm run typecheck
+	cd components/ui && npm run build
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/migrate/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/api/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/worker/overlays/prod-eu >/dev/null
-	kubectl kustomize infra/ui/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/ui/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/migrate/infra/overlays/ephemeral >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/worker/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/ui/infra/overlays/ephemeral >/dev/null
 
 migrate: ## Deploy the Documents database and run its migrations.
 	skaffold run -m documents-postgres

@@ -10,14 +10,15 @@ Documents is the product proof domain.
 
 Documents does not own identity, account authority, or entitlement authority.
 
-## Units
+## Components
 
 ```text
 postgres -> migrate -> api/worker/ui
 ```
 
-Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
-job that runs it.
+Each deployable component owns its source, Dockerfile, and manifests under
+`components/<name>`. Database SQL and its Flyway Job live together in
+`components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
 The worker consumes account and entitlement events. It publishes no events today.
 
@@ -55,6 +56,8 @@ make -C domains/documents dev
 `migrate`, then starts only the Documents API, worker, and UI development loop.
 Shared platform units and other domains are started separately when needed.
 Documents remains local-only and is never reconciled by production Flux.
+Its components deliberately have no `prod-eu` overlays, so the release workflow
+does not publish them.
 
 ## Rules
 

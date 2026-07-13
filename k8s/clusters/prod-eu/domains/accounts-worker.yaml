@@ -5,7 +5,7 @@ metadata:
   name: accounts-worker
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/infra/worker/overlays/prod-eu
+  path: ./k8s/domains/accounts/components/worker/infra/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

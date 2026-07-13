@@ -17,7 +17,9 @@ make -C clusters/prod-eu bootstrap
 ```
 
 The target creates `Namespace/flux-system`, creates/updates `Secret/sops-age`,
-then runs `flux bootstrap github` for `k8s/clusters/prod-eu`.
+then runs `flux bootstrap github` for `k8s/clusters/prod-eu`. The GitHub token
+must be able to write repository contents so image automation can later commit
+selected image updates.
 
 Do not manually apply `clusters/prod-eu/kustomization.yaml` after bootstrap.
 Flux owns reconciliation from this path.
@@ -49,21 +51,24 @@ Installed:
 
 - `source-controller`
 - `kustomize-controller`
+- `image-reflector-controller`
+- `image-automation-controller`
 
 Not installed for now:
 
 - `helm-controller`
 - `notification-controller`
-- `image-reflector-controller`
-- `image-automation-controller`
 
-GitHub Actions owns image builds and digest updates.
+The image controllers are installed but remain inactive until
+`ImageRepository`, `ImagePolicy`, and `ImageUpdateAutomation` resources and
+image policy markers are added. GitHub Actions still owns digest updates until
+that configuration is committed.
 
 ## Release Handoff
 
-GitHub Actions builds each changed unit from its exact triggering SHA and
-commits that unit's immutable image digest. Actions never applies Kubernetes
-resources or invokes Flux against the cluster.
+GitHub Actions builds changed components from their exact triggering SHA and
+commits the successful release set's immutable image digests together. Actions
+never applies Kubernetes resources or invokes Flux against the cluster.
 
 Flux detects each digest commit and reconciles the affected leaf
 `Kustomization`. Independent manifest commits and mixed-version rollouts are
@@ -87,7 +92,8 @@ flux bootstrap github \
  --secret-name=flux-system \
  --personal \
  --token-auth \
- --components=source-controller,kustomize-controller
+ --components=source-controller,kustomize-controller \
+ --components-extra=image-reflector-controller,image-automation-controller
 ```
 
 The `sops-age` Secret key must be named `identity.agekey`.
@@ -103,3 +109,5 @@ The `sops-age` Secret key must be named `identity.agekey`.
 - `--personal`: repo belongs to a personal GitHub account.
 - `--token-auth`: use the GitHub token for HTTPS Git auth.
 - `--components`: install only the listed Flux controllers.
+- `--components-extra`: additionally install the two controllers required for
+  registry scanning and Git image updates.

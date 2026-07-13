@@ -33,14 +33,15 @@ number_max
 number_sum
 ```
 
-## Units
+## Components
 
 ```text
 postgres -> migrate -> api/worker
 ```
 
-Database SQL lives in `packages/database/sql`; `infra/migrate` is the Flyway
-job that runs it.
+Each deployable component owns its source, Dockerfile, and manifests under
+`components/<name>`. Database SQL and its Flyway Job live together in
+`components/migrate`. PostgreSQL remains domain-owned infrastructure.
 
 The worker projects accounts and publishes outbox events.
 

@@ -5,25 +5,25 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate Entitlements packages and manifests.
-	cd packages/api && npm ci
-	cd packages/api && npm exec -- eslint .
-	cd packages/api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd packages/api && npm test
+check: ## Validate Entitlements components, packages, and manifests.
+	cd components/api && npm ci
+	cd components/api && npm exec -- eslint .
+	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/api && npm test
 	cd packages/contracts && npm ci
 	cd packages/contracts && npm run build
-	cd packages/worker && npm ci
-	cd packages/worker && npm exec -- eslint .
-	cd packages/worker && npm exec -- tsc -p jsconfig.json --noEmit
-	cd packages/worker && npm test
+	cd components/worker && npm ci
+	cd components/worker && npm exec -- eslint .
+	cd components/worker && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/worker && npm test
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/migrate/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/migrate/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/api/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/api/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec infra/worker/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/worker/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/migrate/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/migrate/infra/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/worker/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/worker/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Entitlements database and run its migrations.
 	skaffold run -m entitlements-postgres

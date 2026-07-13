@@ -5,7 +5,7 @@ metadata:
   name: entitlements-migrate
 spec:
   interval: 10m
-  path: ./k8s/domains/entitlements/infra/migrate/overlays/prod-eu
+  path: ./k8s/domains/entitlements/components/migrate/infra/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
