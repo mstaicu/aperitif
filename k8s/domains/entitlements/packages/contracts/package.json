@@ -1,6 +1,6 @@
 {
   "name": "@mstaicu/entitlements-contracts",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "main": "src/index.mjs",
   "types": "types/index.d.mts",
@@ -17,10 +17,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.49"
+    "@sinclair/typebox": "^0.34.52"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
-    "typescript": "^6.0.3"
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
   }
 }
