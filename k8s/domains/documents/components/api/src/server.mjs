@@ -1,29 +1,35 @@
+import { createRemoteJWKSet } from "jose";
 import { once } from "node:events";
 import process from "node:process";
+import { Pool } from "pg";
 
 import { createApp } from "./app.mjs";
-import { createPostgres } from "./platform/postgres.mjs";
-import { createIdentityJwks } from "./platform/security/index.mjs";
 import { createTracing } from "./platform/tracing.mjs";
 import { createDocumentsService } from "./services/documents/index.mjs";
 
-const tracing = createTracing();
+await using tracing = createTracing();
 
 tracing.start();
 
-const postgres = createPostgres();
-const jwks = createIdentityJwks();
-const documents = createDocumentsService({ db: postgres.db });
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
-const app = await createApp({
-  db: postgres.db,
+db.on("error", (err) => console.error(err));
+
+const jwks = createRemoteJWKSet(
+  new URL(/** @type {string} */ (process.env.IDENTITY_JWKS_URL)),
+);
+const documents = createDocumentsService({ db });
+
+await using app = await createApp({
+  db,
   documents,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
 });
 
-app.addHook("onClose", () => tracing.close());
-app.addHook("onClose", () => postgres.close());
+app.addHook("onClose", () => db.end());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 
@@ -32,7 +38,3 @@ const [signal] = await Promise.race(
 );
 
 app.log.info({ signal }, "closing server");
-
-await app.close();
-
-app.log.info("shutdown complete");

@@ -25,7 +25,7 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 /**
  * @param {{
  *  db: import("pg").Pool,
- *  jwks: import("./platform/security/index.mjs").IdentityJwks,
+ *  jwks: import("jose").JWTVerifyGetKey,
  *  accountEntitlements: AccountEntitlementsService,
  *  entitlements: EntitlementsService,
  *  fastifyOtel?: FastifyOtelInstrumentation

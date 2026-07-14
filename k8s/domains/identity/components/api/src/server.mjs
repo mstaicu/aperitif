@@ -1,37 +1,38 @@
 import { once } from "node:events";
 import process from "node:process";
+import { Pool } from "pg";
 
 import { createApp } from "./app.mjs";
-import { createPostgres } from "./platform/postgres.mjs";
 import { createJwtKeys } from "./platform/security/index.mjs";
 import { createTracing } from "./platform/tracing.mjs";
 import { createOperatorsService } from "./services/operators/index.mjs";
 import { createPasskeysService } from "./services/passkeys/index.mjs";
 import { createSessionsService } from "./services/sessions/index.mjs";
 
-const tracing = createTracing();
+await using tracing = createTracing();
 
 tracing.start();
 
-const postgres = createPostgres();
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+db.on("error", (err) => console.error(err));
+
 const { jwks, signingKey } = await createJwtKeys();
 
-if (!process.env.ORIGIN) {
-  throw new Error("ORIGIN is required");
-}
-
-const operators = createOperatorsService({ db: postgres.db });
+const operators = createOperatorsService({ db });
 const passkeys = createPasskeysService({
-  db: postgres.db,
-  origin: process.env.ORIGIN,
+  db,
+  origin: /** @type {string} */ (process.env.ORIGIN),
 });
 const sessions = createSessionsService({
-  db: postgres.db,
+  db,
   signingKey,
 });
 
-const app = await createApp({
-  db: postgres.db,
+await using app = await createApp({
+  db,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
   operators,
@@ -39,8 +40,7 @@ const app = await createApp({
   sessions,
 });
 
-app.addHook("onClose", () => tracing.close());
-app.addHook("onClose", () => postgres.close());
+app.addHook("onClose", () => db.end());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 
@@ -49,7 +49,3 @@ const [signal] = await Promise.race(
 );
 
 app.log.info({ signal }, "closing server");
-
-await app.close();
-
-app.log.info("shutdown complete");

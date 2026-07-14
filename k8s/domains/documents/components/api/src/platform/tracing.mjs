@@ -4,14 +4,10 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 export const createTracing = () => {
   if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     return {
-      close: async () => {},
       fastifyOtel: undefined,
       start: () => {},
+      async [Symbol.asyncDispose]() {},
     };
-  }
-
-  if (!process.env.OTEL_SERVICE_NAME) {
-    throw new Error("OTEL_SERVICE_NAME is required");
   }
 
   const fastifyOtel = new FastifyOtelInstrumentation({
@@ -24,8 +20,8 @@ export const createTracing = () => {
   });
 
   return {
-    close: () => otel.shutdown(),
     fastifyOtel,
     start: () => otel.start(),
+    [Symbol.asyncDispose]: () => otel.shutdown(),
   };
 };

@@ -11,6 +11,10 @@ for (const name of requiredEnv) {
   }
 }
 
+if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT && !process.env.OTEL_SERVICE_NAME) {
+  throw new Error("OTEL_SERVICE_NAME is required");
+}
+
 try {
   new URL(/** @type {string} */ (process.env.ORIGIN));
 } catch {
