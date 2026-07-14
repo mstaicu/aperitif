@@ -4,8 +4,6 @@ import swaggerUI from "@fastify/swagger-ui";
 import { registerOperatorRoutes } from "./operators/operator.mjs";
 import { registerLoginChallengeRoute } from "./passkeys/login.challenge.mjs";
 import { registerLoginRoute } from "./passkeys/login.mjs";
-import { registerPasskeyChallengeRoute } from "./passkeys/passkey.challenge.mjs";
-import { registerPasskeyCreateRoute } from "./passkeys/passkey.create.mjs";
 import { registerRegistrationChallengeRoute } from "./passkeys/register.challenge.mjs";
 import { registerRegistrationRoute } from "./passkeys/register.mjs";
 import { registerAccessTokenRoute } from "./sessions/access-token.create.mjs";
@@ -60,8 +58,7 @@ export const registerV1Routes = async (
           name: "operators",
         },
         {
-          description:
-            "Passkey registration, authentication, and credential management",
+          description: "Passkey registration and authentication",
           name: "passkeys",
         },
         {
@@ -77,16 +74,6 @@ export const registerV1Routes = async (
     prefix: `${prefix}/passkeys`,
   });
   registerLoginRoute(fastify, {
-    passkeys,
-    prefix: `${prefix}/passkeys`,
-  });
-  registerPasskeyChallengeRoute(fastify, {
-    jwks,
-    passkeys,
-    prefix: `${prefix}/passkeys`,
-  });
-  registerPasskeyCreateRoute(fastify, {
-    jwks,
     passkeys,
     prefix: `${prefix}/passkeys`,
   });

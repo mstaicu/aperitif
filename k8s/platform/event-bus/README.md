@@ -2,7 +2,8 @@
 
 NATS JetStream infrastructure.
 
-Domains own streams, consumers, event contracts, outbox tables, and workers.
+Domains own streams, consumers, event contracts, outbox tables, publishers,
+and projectors.
 
 ## Capacity model
 
@@ -39,14 +40,16 @@ streams use `DiscardPolicy.New`, reaching `max_bytes` rejects new events.
 
 3. Set the product-owned `NATS_STREAM_MAX_BYTES` and
    `NATS_STREAM_REPLICAS` in
-   `domains/<domain>/components/worker/infra/overlays/<environment>/*-worker-depl.yaml`.
+   `domains/<domain>/components/outbox-publisher/infra/overlays/<environment>/outbox-publisher-depl.yaml`.
 4. For the current three-server/R3 design, add every stream's `max_bytes`.
    That total must remain below 80% of one NATS PVC.
 5. If it does not fit, calculate `required PVC = total max_bytes / 0.80`, then
-   increase the PVC in `platform/event-bus/overlays/<environment>/nats-depl.yaml`
+   increase the PVC in
+   `platform/event-bus/overlays/<environment>/nats-statefulset.yaml`
    and set `max_file_store` to 80% of it in the adjacent `nats.conf`.
 
-The NATS server count lives in `platform/event-bus/base/nats-depl.yaml`.
+The NATS server count lives in
+`platform/event-bus/base/nats-statefulset.yaml`.
 Changing an existing stream or PVC requires an explicit update/resize; changing
 the initial manifests alone only configures newly created resources.
 
@@ -64,10 +67,13 @@ troubleshooting, see [DEBUG.md](DEBUG.md).
 Critical authority events use:
 
 ```text
-domain DB transaction -> outbox_events -> domain worker -> JetStream
+domain DB transaction -> outbox_events -> outbox publisher -> JetStream
 ```
 
 Request handlers do not directly publish those events.
+
+The NATS NetworkPolicy explicitly lists the namespace and existing `app` label
+of every publisher and projector allowed to connect on port `4222`.
 
 ## Checks
 

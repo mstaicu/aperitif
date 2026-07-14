@@ -21,12 +21,10 @@ export const createAccessToken =
       .digest();
 
     let client;
-    let transactionOpen = false;
 
     try {
       client = await db.connect();
       await client.query("BEGIN");
-      transactionOpen = true;
 
       const {
         rows: [session],
@@ -67,7 +65,6 @@ export const createAccessToken =
         );
 
         await client.query("COMMIT");
-        transactionOpen = false;
 
         console.warn(
           JSON.stringify({
@@ -142,7 +139,6 @@ export const createAccessToken =
         .sign(signingKey.privateKey);
 
       await client.query("COMMIT");
-      transactionOpen = false;
 
       console.log(
         JSON.stringify({
@@ -157,9 +153,7 @@ export const createAccessToken =
         refresh_token: nextRefreshToken,
       };
     } catch (err) {
-      if (transactionOpen) {
-        await client?.query("ROLLBACK").catch(() => {});
-      }
+      await client?.query("ROLLBACK").catch(() => {});
 
       if (
         (err instanceof DatabaseError &&

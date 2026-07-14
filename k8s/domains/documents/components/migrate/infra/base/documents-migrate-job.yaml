@@ -16,7 +16,7 @@ spec:
 
       containers:
         - name: migrate
-          image: mdstaicu/documents-migrate
+          image: ghcr.io/mstaicu/documents-migrate
 
           env:
             - name: FLYWAY_LOCATIONS

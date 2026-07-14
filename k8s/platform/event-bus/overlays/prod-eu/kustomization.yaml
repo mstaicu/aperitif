@@ -14,4 +14,4 @@ configMapGenerator:
       - nats.conf=nats.conf
 
 patches:
-  - path: nats-depl.yaml
+  - path: nats-statefulset.yaml

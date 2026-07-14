@@ -22,5 +22,5 @@ flyway_schema_history
 ## Build
 
 ```sh
-docker build --target prod -t mdstaicu/documents-migrate:<tag> domains/documents/components/migrate
+docker build --target prod -t ghcr.io/mstaicu/documents-migrate:<tag> domains/documents/components/migrate
 ```

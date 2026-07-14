@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: documents-ui
-          image: mdstaicu/documents-ui
+          image: ghcr.io/mstaicu/documents-ui
           env:
             - name: PORT
               value: "3000"

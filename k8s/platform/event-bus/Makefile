@@ -7,4 +7,4 @@ help: ## Show available targets.
 
 deploy: ## Deploy NATS JetStream and wait for readiness.
 	skaffold run -m event-bus
-	kubectl rollout status -n nats statefulset/nats-depl --timeout=300s
+	kubectl rollout status -n nats statefulset/nats --timeout=300s

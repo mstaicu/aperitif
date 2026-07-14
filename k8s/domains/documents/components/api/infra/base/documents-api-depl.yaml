@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: documents-api
-          image: mdstaicu/documents-api
+          image: ghcr.io/mstaicu/documents-api
           readinessProbe:
             httpGet:
               path: /readyz

@@ -8,7 +8,7 @@ JetStream cluster. Capacity sizing is documented in [README.md](README.md).
 Debug NATS from the outside in:
 
 ```text
-Kubernetes -> NATS servers -> JetStream cluster -> streams -> consumers -> workers
+Kubernetes -> NATS servers -> JetStream cluster -> streams -> consumers -> components
 ```
 
 - Kubernetes starts three NATS server pods and mounts one PVC on each pod.
@@ -17,10 +17,11 @@ Kubernetes -> NATS servers -> JetStream cluster -> streams -> consumers -> worke
   server may fail; two server failures remove quorum.
 - A stream stores messages. Its replica count decides how many complete copies
   JetStream keeps across the available servers.
-- A consumer tracks which stream messages a worker has delivered and
+- A consumer tracks which stream messages a projector has delivered and
   acknowledged.
-- Domain workers create their streams and consumers and move events between
-  PostgreSQL outboxes and JetStream.
+- Outbox publishers create their domain streams and publish committed events.
+- Projectors create durable consumers and apply upstream events to their
+  domain projections.
 
 The server count and a stream's replica count are related but independent. The
 StatefulSet provides three storage servers; each stream chooses whether to use
@@ -52,7 +53,7 @@ Deploy locally and wait for all three servers:
 
 ```sh
 make -C platform/event-bus deploy
-kubectl rollout status -n nats statefulset/nats-depl --timeout=20m
+kubectl rollout status -n nats statefulset/nats --timeout=20m
 ```
 
 Production is reconciled by Flux. Check Flux first if the Git change has not
@@ -83,7 +84,7 @@ kubectl get statefulset,pod,pvc,service,poddisruptionbudget -n nats -o wide
 
 A healthy deployment has:
 
-- `nats-depl` at `3/3` Ready;
+- `nats` at `3/3` Ready;
 - three `1/1 Running` pods with no continuing restart count;
 - three `Bound` PVCs of the expected size and storage class;
 - `maxUnavailable: 1` and one allowed disruption in the PDB when all pods are
@@ -107,15 +108,15 @@ Events explain scheduling, PVC, mount, image, and probe failures:
 
 ```sh
 kubectl get events -n nats --sort-by=.lastTimestamp
-kubectl describe pod nats-depl-0 -n nats
-kubectl describe pvc nats-storage-nats-depl-0 -n nats
+kubectl describe pod nats-0 -n nats
+kubectl describe pvc nats-storage-nats-0 -n nats
 ```
 
 Read all current server logs, then the previous container log after a restart:
 
 ```sh
 kubectl logs -n nats -l app=nats --prefix --since=10m
-kubectl logs -n nats nats-depl-0 --previous
+kubectl logs -n nats nats-0 --previous
 ```
 
 During a clean parallel startup, brief DNS lookup failures, `Waiting for
@@ -130,16 +131,16 @@ First prove that the live configuration parses, then query a server from inside
 its pod:
 
 ```sh
-kubectl exec -n nats nats-depl-0 -- \
+kubectl exec -n nats nats-0 -- \
   nats-server -t -c /etc/nats-config/nats.conf
 
-kubectl exec -n nats nats-depl-0 -- \
+kubectl exec -n nats nats-0 -- \
   wget -qO- 'http://127.0.0.1:8222/healthz'
 
-kubectl exec -n nats nats-depl-0 -- \
+kubectl exec -n nats nats-0 -- \
   wget -qO- 'http://127.0.0.1:8222/healthz?js-server-only=true'
 
-kubectl exec -n nats nats-depl-0 -- \
+kubectl exec -n nats nats-0 -- \
   wget -qO- 'http://127.0.0.1:8222/healthz?js-enabled-only=true'
 ```
 
@@ -212,7 +213,7 @@ Do not memorize the route count: NATS route pooling creates multiple route
 connections. The important facts are that all three servers see each other,
 the cluster has quorum, and the logs are not continuously reconnecting.
 
-`No JetStream asset leader data reported` is normal before any product worker
+`No JetStream asset leader data reported` is normal before any outbox publisher
 has created a stream.
 
 ### 6. Check the `APP` account
@@ -232,9 +233,9 @@ nats --no-context stream report --leaders
 - `Stream Requires Max Bytes Set: true`;
 - the current stream, consumer, memory, and storage counts.
 
-`No Streams defined` is correct when the product workers are not deployed. If
-workers are running, it normally means stream creation failed; inspect the
-worker logs next.
+`No Streams defined` is correct when the outbox publishers are not deployed.
+If publishers are running, it normally means stream creation failed; inspect
+their logs next.
 
 ### 7. Inspect a stream
 
@@ -258,7 +259,7 @@ Check:
 one complete copy on each of three servers; do not multiply the stream's
 logical bytes when comparing it with one pod's PVC.
 
-Changing a worker environment variable does not update an already-created
+Changing a publisher environment variable does not update an already-created
 stream. Always query `stream info` to confirm the live configuration.
 
 ### 8. Inspect consumers
@@ -278,19 +279,19 @@ Check:
 - last delivery and acknowledgement times;
 - a current online leader for the durable consumer.
 
-A growing pending count means the consumer is absent or slower than the
+A growing pending count means the projector is absent or slower than the
 publisher. Growing acknowledgement-pending or redelivery counts usually mean
 the handler is failing, timing out, or not acknowledging messages. Inspect the
-owning worker logs and database next.
+owning projector logs and database next.
 
 ### 9. Check storage
 
 Check the filesystem independently on every server:
 
 ```sh
-kubectl exec -n nats nats-depl-0 -- df -h /data
-kubectl exec -n nats nats-depl-1 -- df -h /data
-kubectl exec -n nats nats-depl-2 -- df -h /data
+kubectl exec -n nats nats-0 -- df -h /data
+kubectl exec -n nats nats-1 -- df -h /data
+kubectl exec -n nats nats-2 -- df -h /data
 ```
 
 Then compare NATS' view:
@@ -319,11 +320,11 @@ manifest alone does not resize an existing stream.
 If NATS is healthy but events are not moving, follow the event in order:
 
 ```text
-domain transaction -> outbox_events -> publishing worker -> stream
-                   -> consumer -> projection database
+domain transaction -> outbox_events -> outbox publisher -> stream
+                   -> consumer -> projector -> projection database
 ```
 
-Check the relevant worker logs:
+Check the relevant publisher and projector logs:
 
 ```sh
 NATS_USER=sys NATS_PASSWORD=changeit \
@@ -332,9 +333,11 @@ NATS_USER=sys NATS_PASSWORD=changeit \
 NATS_USER=sys NATS_PASSWORD=changeit \
   nats --no-context server report connections
 
-kubectl logs -n accounts deploy/accounts-worker-depl --since=10m
-kubectl logs -n entitlements deploy/entitlements-worker-depl --since=10m
-kubectl logs -n documents deploy/documents-worker-depl --since=10m
+kubectl logs -n accounts deployment/outbox-publisher --since=10m
+kubectl logs -n entitlements deployment/outbox-publisher --since=10m
+kubectl logs -n entitlements deployment/accounts-projector --since=10m
+kubectl logs -n documents deployment/accounts-projector --since=10m
+kubectl logs -n documents deployment/entitlements-projector --since=10m
 ```
 
 Then check the NATS NetworkPolicy and the client Service endpoints:
@@ -345,10 +348,9 @@ kubectl get endpointslice -n nats \
   -l kubernetes.io/service-name=nats-srv -o wide
 ```
 
-The current NetworkPolicy explicitly allows the `accounts-worker`,
-`entitlements-worker`, and `documents-worker` pod selectors. A new product
-worker cannot connect until its namespace and pod selector are allowed or this
-policy is replaced with a generic opt-in label contract.
+The NATS NetworkPolicy explicitly allows the namespace and existing `app`
+selector of each current publisher and projector. When a component is added or
+renamed, its selector must be updated in the relevant event-bus overlay.
 
 If an outbox row remains unpublished, debug the publisher connection or
 publish error. If the stream contains the event but a consumer is pending,
@@ -361,16 +363,16 @@ After changing the image, security context, or storage class, verify the live
 process rather than trusting the rendered YAML:
 
 ```sh
-kubectl exec -n nats nats-depl-0 -- id
+kubectl exec -n nats nats-0 -- id
 
-kubectl exec -n nats nats-depl-0 -- sh -c \
+kubectl exec -n nats nats-0 -- sh -c \
   "grep -E '^(Uid|Gid|CapEff|NoNewPrivs|Seccomp):' /proc/1/status"
 
-kubectl exec -n nats nats-depl-0 -- sh -ec \
+kubectl exec -n nats nats-0 -- sh -ec \
   'touch /data/.write-check; rm /data/.write-check; \
    touch /var/run/nats/.write-check; rm /var/run/nats/.write-check'
 
-kubectl exec -n nats nats-depl-0 -- sh -c \
+kubectl exec -n nats nats-0 -- sh -c \
   'if touch /.write-check; then \
      rm /.write-check; echo "unexpectedly writable"; exit 1; \
    fi'
@@ -389,11 +391,11 @@ seccomp mode `2`, successful writes to the two mounted paths, and a
 | Pod is Running but not Ready           | The three `/healthz` forms                    | NATS or JetStream recovery             |
 | Fewer than three server ping replies   | Pods, routes, DNS, NetworkPolicy              | NATS cluster networking                |
 | No metadata leader                     | At least two healthy servers and their routes | JetStream quorum                       |
-| No streams                             | Product worker startup logs                   | Stream provisioning                    |
+| No streams                             | Outbox publisher startup logs                 | Stream provisioning                    |
 | Publish says `max_bytes` is required   | Product stream configuration                  | Missing explicit capacity              |
 | Publish is rejected at the limit       | `stream state`, PVC space, outbox backlog     | Stream capacity                        |
-| Consumer pending grows                 | Consumer and owning worker                    | Worker unavailable or slow             |
-| Redeliveries grow                      | Consumer info and worker errors               | Handler failure or missing ack         |
+| Consumer pending grows                 | Consumer and owning projector                 | Projector unavailable or slow          |
+| Redeliveries grow                      | Consumer info and projector errors            | Handler failure or missing ack         |
 | App cannot connect but NATS is healthy | Service endpoints and NetworkPolicy selectors | Kubernetes networking                  |
 | `/data` permission denied              | Pod UID/GID, `fsGroup`, PVC ownership         | Container/storage permissions          |
 

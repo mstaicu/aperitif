@@ -24,19 +24,31 @@ spec:
               kubernetes.io/metadata.name: accounts
           podSelector:
             matchLabels:
-              app: accounts-worker
+              app: outbox-publisher
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: entitlements
           podSelector:
             matchLabels:
-              app: entitlements-worker
+              app: outbox-publisher
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: entitlements
+          podSelector:
+            matchLabels:
+              app: accounts-projector
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: documents
           podSelector:
             matchLabels:
-              app: documents-worker
+              app: accounts-projector
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: documents
+          podSelector:
+            matchLabels:
+              app: entitlements-projector
       ports:
         - port: 4222
           protocol: TCP

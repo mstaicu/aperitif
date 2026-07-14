@@ -11,12 +11,6 @@ import { DatabaseError } from "pg";
  * @property {RegistrationResponseJSON} credential
  */
 
-/**
- * @typedef {Object} CreatePasskeyInput
- * @property {RegistrationResponseJSON} credential
- * @property {string} userId
- */
-
 const generateRefreshToken = () => {
   const token = randomBytes(32).toString("base64url");
   const hash = createHash("sha256").update(token).digest();
@@ -209,101 +203,6 @@ export const register =
       return {
         refresh_token: token,
       };
-    } catch (err) {
-      await client?.query("ROLLBACK").catch(() => {});
-
-      if (err instanceof DatabaseError && err.code === "23505") {
-        throw new Error("CREDENTIAL_ALREADY_EXISTS", {
-          cause: err,
-        });
-      }
-
-      if (
-        (err instanceof DatabaseError &&
-          (err.code?.startsWith("08") ||
-            err.code === "57P01" ||
-            err.code === "57P03" ||
-            err.code === "53300")) ||
-        (err instanceof Error &&
-          "code" in err &&
-          "syscall" in err &&
-          typeof err.code === "string")
-      ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-      }
-
-      throw err;
-    } finally {
-      client?.release();
-    }
-  };
-
-/**
- * @param {{ db: import("pg").Pool, origin: string }} resources
- * @returns {(input: CreatePasskeyInput) => Promise<void>}
- */
-export const createPasskey =
-  ({ db, origin }) =>
-  async ({ credential, userId }) => {
-    let client;
-
-    try {
-      const registration = await verifyPasskeyRegistration(
-        { db, origin },
-        credential,
-      );
-
-      if (registration.userId !== userId) {
-        throw new Error("FORBIDDEN");
-      }
-
-      client = await db.connect();
-      await client.query("BEGIN");
-
-      const {
-        rows: [user],
-      } = await client.query(
-        `
-          SELECT id
-          FROM users
-          WHERE id = $1
-          FOR UPDATE
-        `,
-        [userId],
-      );
-
-      if (!user) {
-        throw new Error("USER_NOT_FOUND");
-      }
-
-      await client.query(
-        `
-          INSERT INTO passkey_credentials
-          (
-            user_id,
-            credential_id,
-            public_key,
-            sign_count
-          )
-          VALUES ($1, $2, $3, $4)
-        `,
-        [
-          userId,
-          registration.credentialId,
-          registration.publicKey,
-          registration.signCount,
-        ],
-      );
-
-      await client.query("COMMIT");
-
-      console.log(
-        JSON.stringify({
-          event: "passkey_created",
-          level: "info",
-          user_id: userId,
-        }),
-      );
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
 

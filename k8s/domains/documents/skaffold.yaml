@@ -24,7 +24,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-migrate
+    - image: ghcr.io/mstaicu/documents-migrate
       context: components/migrate
       docker:
         dockerfile: Dockerfile
@@ -52,7 +52,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-api
+    - image: ghcr.io/mstaicu/documents-api
       context: components/api
       docker:
         dockerfile: Dockerfile
@@ -86,7 +86,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-accounts-projector
+    - image: ghcr.io/mstaicu/documents-accounts-projector
       context: components/accounts-projector
       docker:
         dockerfile: Dockerfile
@@ -120,7 +120,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-entitlements-projector
+    - image: ghcr.io/mstaicu/documents-entitlements-projector
       context: components/entitlements-projector
       docker:
         dockerfile: Dockerfile
@@ -154,7 +154,7 @@ build:
     push: false
 
   artifacts:
-    - image: mdstaicu/documents-ui
+    - image: ghcr.io/mstaicu/documents-ui
       context: components/ui
       docker:
         dockerfile: Dockerfile

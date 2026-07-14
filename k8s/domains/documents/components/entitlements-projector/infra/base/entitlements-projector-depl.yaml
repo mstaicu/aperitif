@@ -18,7 +18,7 @@ spec:
 
       containers:
         - name: entitlements-projector
-          image: mdstaicu/documents-entitlements-projector
+          image: ghcr.io/mstaicu/documents-entitlements-projector
           ports:
             - name: health
               containerPort: 3000
