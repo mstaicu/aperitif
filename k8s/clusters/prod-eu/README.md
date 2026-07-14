@@ -1,130 +1,78 @@
-# Prod EU Cluster
+# Production EU
 
-Flux root for prod-eu.
+This directory is the Flux entry point for the production cluster. Flux reads
+it from Git and reconciles the platform and production domains.
 
 ## Bootstrap
 
-Run with `kubectl` pointing at the prod cluster:
+Point `kubectl` at the intended production cluster, then provide GitHub and
+SOPS credentials:
 
 ```sh
-export GITHUB_TOKEN=<your-github-pat>
-export SOPS_AGE_KEY_FILE=/path/to/your/age.agekey
-
-printenv GITHUB_TOKEN
-printenv SOPS_AGE_KEY_FILE
-
+export GITHUB_TOKEN=<github-token>
+export SOPS_AGE_KEY_FILE=/path/to/production-age-key
 make -C clusters/prod-eu bootstrap
 ```
 
-The target creates `Namespace/flux-system`, creates/updates `Secret/sops-age`,
-then runs `flux bootstrap github` for `k8s/clusters/prod-eu`. The GitHub token
-must be able to write repository contents so image automation can later commit
-selected image updates.
+The target:
 
-Do not manually apply `clusters/prod-eu/kustomization.yaml` after bootstrap.
-Flux owns reconciliation from this path.
+1. creates `flux-system`;
+2. creates `Secret/flux-system/sops-age` from the local age key;
+3. installs the source, Kustomize, image reflector, and image automation
+   controllers;
+4. configures Flux to reconcile `k8s/clusters/prod-eu` on `master`.
 
-## Graph
+The GitHub token needs repository write access because image automation commits
+selected image digests. After bootstrap, do not manually apply this directory;
+Flux owns it.
+
+## Reconciliation graph
 
 ```text
-kustomization.yaml
-  platform/
-    event-bus.yaml
-    ingress.yaml
-    observability.yaml
-  domains/
-    identity-*.yaml
-    accounts-*.yaml
-    entitlements-*.yaml
+clusters/prod-eu
+  platform
+    ingress CRDs -> ingress
+    event bus
+    observability
+  domain namespaces
+  domains
+    postgres -> migrations -> api/publisher/projector/ui
+  image automation
 ```
 
-Documents is a local-only proof domain and is not composed into prod-eu.
+The root owns each production domain Namespace once. Leaf Flux
+`Kustomization`s own only resources inside those Namespaces, so pruning one
+component cannot delete a shared Namespace.
 
-The root owns the three cluster-scoped domain `Namespace` resources directly.
-The `platform/` and `domains/` Kustomizations contain only namespaced Flux
-control resources and set `namespace: flux-system`. Do not add intermediate
-Flux objects for these directories; leaf `dependsOn` relationships own the
-deployment ordering.
+The `platform` and `domains` assemblers place Flux objects in `flux-system`.
+They are plain Kustomize directories, not extra Flux reconciliation layers.
 
-## Controllers
+Documents is local-only and is not part of this graph.
 
-Installed:
+## Image releases
 
-- `source-controller`
-- `kustomize-controller`
-- `image-reflector-controller`
-- `image-automation-controller`
+GitHub Actions pushes a changed component's `production` tag. An
+`ImageRepository` and `ImagePolicy` resolve its digest. The `domains`
+`ImageUpdateAutomation` then commits that digest into the marked production
+overlay, after which the component's Flux `Kustomization` applies it.
 
-Not installed for now:
+The automation path is currently `./k8s/domains` because this project is nested
+inside its containing repository. Change it to `./domains` when this directory
+becomes the Git repository root.
 
-- `helm-controller`
-- `notification-controller`
+Flux ordering is not an atomic release transaction. Database and runtime
+changes must remain expand/contract compatible while versions overlap.
 
-Nine `ImageRepository` and `ImagePolicy` pairs track the production domain
-images. `ImageUpdateAutomation/domains` writes selected digests into the marked
-component overlays under `k8s/domains`.
-
-The overlays retain their current `latest` tag and start with an empty digest,
-so this transition does not require `production` tags to exist immediately.
-Both fields are marked. After a component is next built, image automation
-changes that overlay to `production` and fills its observed digest together.
-
-The automation path is `./k8s/domains` while this directory is nested in the
-containing repository. Change it to `./domains` when `k8s/` becomes the Git
-repository root.
-
-## Release Handoff
-
-GitHub Actions builds changed components and publishes both the triggering SHA
-and the `production` tag. It does not update manifests or invoke Flux against
-the cluster.
-
-The image reflector resolves the digest behind each `production` tag. Image
-automation commits changed digests, then the existing leaf `Kustomization`
-objects reconcile them. Independent manifest commits and mixed-version rollouts
-are intentional: domain changes must follow expand/contract compatibility. For
-a schema expansion required by new code, allow the migration Kustomization to
-finish before releasing that code; contraction belongs in a later release.
-
-`dependsOn` and `wait` provide reconciliation ordering and health checks. They
-do not turn separate application deployments into an atomic runtime cutover.
-The Git history is desired state, while Flux status is deployment status.
-
-Check image automation with:
+## Check the cluster
 
 ```sh
+flux get kustomizations --all-namespaces
 flux get images all --all-namespaces
 flux reconcile image update domains --namespace=flux-system
 ```
 
-## Manual Equivalent
+Render the root without contacting the cluster:
 
 ```sh
-flux bootstrap github \
- --owner=mstaicu \
- --repository=aperitif \
- --branch=master \
- --path=k8s/clusters/prod-eu \
- --namespace=flux-system \
- --secret-name=flux-system \
- --personal \
- --token-auth \
- --components=source-controller,kustomize-controller \
- --components-extra=image-reflector-controller,image-automation-controller
+kubectl kustomize clusters/prod-eu >/dev/null
 ```
-
-The `sops-age` Secret key must be named `identity.agekey`.
-
-## Arguments
-
-- `--owner`: GitHub owner.
-- `--repository`: GitHub repository.
-- `--branch`: branch Flux reconciles.
-- `--path`: cluster root inside the Git repo.
-- `--namespace`: namespace where Flux is installed.
-- `--secret-name`: Git auth Secret used by `GitRepository/flux-system`.
-- `--personal`: repo belongs to a personal GitHub account.
-- `--token-auth`: use the GitHub token for HTTPS Git auth.
-- `--components`: install only the listed Flux controllers.
-- `--components-extra`: additionally install the two controllers required for
-  registry scanning and Git image updates.

@@ -1,32 +1,17 @@
 # Identity UI
 
-Remix UI for passkey signup and login.
+This Remix server provides passkey signup and login. Refresh tokens remain in
+HttpOnly cookies; browser JavaScript never receives them.
 
-## Routes
-
-```text
-GET  /signup
-POST /signup/challenge
-POST /signup
-GET  /login
-POST /login/challenge
-POST /login
-GET  /identity/assets/*
-```
-
-Refresh tokens are stored in HttpOnly cookies.
-
-## Local
+Run it directly with:
 
 ```sh
 npm install
 npm run dev
 ```
 
-Required environment:
+Environment:
 
-```text
-API_INTERNAL_V1_URL
-COOKIE_SECURE
-PORT
-```
+- `API_INTERNAL_V1_URL`: Identity API base URL;
+- `COOKIE_SECURE`: whether the refresh cookie requires HTTPS;
+- `PORT`: HTTP port, default `3000`.

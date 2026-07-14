@@ -1,23 +1,32 @@
 # Entitlements Contracts
 
-Public event contracts emitted by the entitlements domain.
+`@mstaicu/entitlements-contracts` is the published event boundary owned by
+Entitlements.
 
-| CloudEvents type | Schema | Example |
-| --- | --- | --- |
-| `entitlements.account_entitlements.updated.v1` | `src/events/entitlements.account_entitlements.updated.v1.mjs` | `examples/events/entitlements.account_entitlements.updated.v1.json` |
+It currently exports the schema, validator, constants, and builder for:
 
-Events use the CloudEvents JSON shape:
+```text
+entitlements.account_entitlements.updated.v1
+```
 
-- `specversion` is `1.0`.
-- `source` identifies the producing domain.
-- `type` is the versioned event name.
-- `data` contains the domain fact.
-- `data.version` is the entitlement snapshot state version used by consumers to ignore stale messages.
+The source schema is
+`src/events/entitlements.account_entitlements.updated.v1.mjs`; its example
+payload is under `examples/events`.
 
-Producers should use the exported `buildAccountEntitlementsUpdatedV1Event` helper
-so the published event matches the contract.
+Events use CloudEvents `1.0`. The event `type` versions the payload contract,
+and `data.version` versions the effective entitlement snapshot. Additive
+changes may stay on the same event version only when old consumers remain
+valid; otherwise publish a new event type.
 
-Potential future tooling:
+## Build and publish
 
-- `cloudevents` can help create and parse CloudEvents if runtime bindings become useful.
-- AsyncAPI is the future event catalog/docs layer. Add it when event discovery, generated docs, or event API diffing becomes useful. TypeBox remains the active schema source.
+```sh
+npm ci
+npm run build
+npm pack --dry-run
+npm publish
+```
+
+`prepack` generates `types/`, and the package tarball includes it. Generated
+declarations are intentionally not committed. Bump the package version before
+every publication.

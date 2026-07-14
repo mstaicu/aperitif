@@ -1,50 +1,34 @@
-# Accounts Domain
+# Accounts
 
-Accounts owns the resource boundary that product data lives under.
-Each account has a required `type`: `personal` or `business`.
+Accounts owns the boundary under which product resources live. An account is
+`personal` or `business`, and a new account starts with its creator as an
+`owner` member.
 
-## Owns
+It does not own users, entitlement grants, or product data.
 
-- `accounts`
-- `account_members`
-- `outbox_events`
-
-New accounts create one `owner` member. Future member lifecycle belongs here.
-
-Accounts does not own identity records, entitlement grants, payments, or product
-resources.
-
-## Components
+## Runtime
 
 ```text
-postgres -> migrations -> api + outbox-publisher
+PostgreSQL -> migrations -> API
+                          -> outbox publisher -> ACCOUNTS stream
 ```
 
-Each deployable component owns its source, Dockerfile, and manifests under
-`components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrations`. PostgreSQL remains domain-owned infrastructure.
+| Part | Purpose |
+| --- | --- |
+| `components/api` | Create and list the caller's accounts |
+| `components/outbox-publisher` | Publish committed Accounts events |
+| `components/migrations` | Flyway SQL and its Job |
+| `packages/contracts` | Published Accounts event package |
+| `infra/postgres` | Disposable in-cluster database |
 
-The outbox publisher publishes domain events from `outbox_events`.
+The API exposes `GET/POST /v1/accounts` and OpenAPI at
+`/v1/accounts/docs`.
 
-## Public API
+Accounts publishes `accounts.account.opened.v1`. State and its outbox event are
+committed in one database transaction. `data.version` is the account state
+version used by projectors to reject stale events.
 
-```text
-GET  /v1/accounts
-POST /v1/accounts
-GET  /v1/accounts/docs
-```
-
-## Event Contracts
-
-Contracts: `packages/contracts`.
-
-Publishes:
-
-```text
-accounts.account.opened.v1
-```
-
-## Operations
+## Work here
 
 ```sh
 make -C domains/accounts check
@@ -53,14 +37,5 @@ make -C domains/accounts deploy
 make -C domains/accounts dev
 ```
 
-`migrate` deploys the Accounts PostgreSQL instance and runs its migrations in
-the current disposable cluster. `deploy` applies Accounts once. `dev` runs
-`migrate`, then starts the Accounts API and outbox publisher development loops.
-Shared platform units and Identity are started separately when the developer
-needs live event or authenticated flows. Production is reconciled only by Flux.
-
-## Rules
-
-- State changes and `outbox_events` rows belong in the same DB transaction.
-- Events use CloudEvents. `data.version` is the account state version.
-- Do not read identity or entitlement databases.
+Add schema changes as `components/migrations/sql/V###__description.sql`. Keep
+PostgreSQL notifications as wake-ups only; `outbox_events` remains durable.

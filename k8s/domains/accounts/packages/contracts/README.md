@@ -1,24 +1,32 @@
 # Accounts Contracts
 
-Public event contracts emitted by the accounts domain.
+`@mstaicu/accounts-contracts` is the published event boundary owned by
+Accounts.
 
-| CloudEvents type | Schema | Example |
-| --- | --- | --- |
-| `accounts.account.opened.v1` | `src/events/accounts.account.opened.v1.mjs` | `examples/events/accounts.account.opened.v1.json` |
+It currently exports the schema, validator, constants, and builder for:
 
-Events use the CloudEvents JSON shape:
+```text
+accounts.account.opened.v1
+```
 
-- `specversion` is `1.0`.
-- `source` identifies the producing domain.
-- `type` is the versioned event name.
-- `data` contains the domain fact.
-- `data.version` is the account state version used by consumers to ignore stale messages.
-- `data.account.type` is `personal` or `business`.
+The source schema is
+`src/events/accounts.account.opened.v1.mjs`; its example payload is under
+`examples/events`.
 
-Producers should use the exported `buildAccountOpenedV1Event` helper so the
-published event matches the contract.
+Events use CloudEvents `1.0`. The event `type` versions the payload contract,
+and `data.version` versions the producing account state. Additive changes may
+stay on the same event version only when old consumers remain valid; otherwise
+publish a new event type.
 
-Potential future tooling:
+## Build and publish
 
-- `cloudevents` can help create and parse CloudEvents if runtime bindings become useful.
-- AsyncAPI is the future event catalog/docs layer. Add it when event discovery, generated docs, or event API diffing becomes useful. TypeBox remains the active schema source.
+```sh
+npm ci
+npm run build
+npm pack --dry-run
+npm publish
+```
+
+`prepack` generates `types/`, and the package tarball includes it. Generated
+declarations are intentionally not committed. Bump the package version before
+every publication.

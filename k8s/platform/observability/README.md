@@ -1,25 +1,24 @@
 # Observability
 
-OpenTelemetry Collector infrastructure.
+This unit provides OpenTelemetry collection inside the cluster.
 
-## Owns
+- `otel-agent` collects node, pod, and container metrics from each node.
+- `otel-collector` receives OTLP traces, metrics, and explicitly emitted logs.
+- The current collector writes telemetry to its debug exporter only.
 
-- collector deployment and service
-- collector agent
-- telemetry network policy
-- environment-specific exporter configuration
+The agent does not scrape container log files. There is no durable telemetry
+backend yet. Applications emit OTLP only when `OTEL_EXPORTER_OTLP_ENDPOINT` is
+set.
 
-Workloads emit telemetry only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
-
-## Operations
+Deploy locally with:
 
 ```sh
 make -C platform/observability deploy
 ```
 
-## Checks
+Render manifests with:
 
 ```sh
-kubectl kustomize platform/observability/overlays/ephemeral
-kubectl kustomize platform/observability/overlays/prod-eu
+kubectl kustomize platform/observability/overlays/ephemeral >/dev/null
+kubectl kustomize platform/observability/overlays/prod-eu >/dev/null
 ```

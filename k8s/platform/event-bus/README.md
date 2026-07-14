@@ -1,83 +1,68 @@
 # Event Bus
 
-NATS JetStream infrastructure.
+This unit runs a three-server NATS JetStream cluster. It transports durable
+cross-domain events; domains own their streams, consumers, contracts,
+publishers, and projectors.
 
-Domains own streams, consumers, event contracts, outbox tables, publishers,
-and projectors.
-
-## Capacity model
-
-NATS pods are storage nodes. A stream replica is a full copy, not a shard:
-
-```text
-physical stream storage = max_bytes * stream replicas
-```
-
-The current three-node cluster gives each NATS pod its own 1 GiB PVC and lets
-JetStream use 80%:
-
-```text
-1,024 MiB * 0.80 = 819.2 MiB available per NATS pod
-
-Accounts       400 MiB * R3 = one 400 MiB copy on each pod
-Entitlements   400 MiB * R3 = one 400 MiB copy on each pod
-                              ----------------------------
-                              800 MiB used per pod
-```
-
-This fits below 819.2 MiB, reserves 20% of each PVC for storage overhead, and
-uses R3 so one NATS server can fail without losing stream quorum. Because the
-streams use `DiscardPolicy.New`, reaching `max_bytes` rejects new events.
-
-### Adding or resizing a product stream
-
-1. Measure the stream's daily growth from its `state.bytes` change.
-2. Choose the required replay window and calculate:
-
-   ```text
-   max_bytes = daily growth * retention days * safety margin
-   ```
-
-3. Set the product-owned `NATS_STREAM_MAX_BYTES` and
-   `NATS_STREAM_REPLICAS` in
-   `domains/<domain>/components/outbox-publisher/infra/overlays/<environment>/outbox-publisher-deployment.yaml`.
-4. For the current three-server/R3 design, add every stream's `max_bytes`.
-   That total must remain below 80% of one NATS PVC.
-5. If it does not fit, calculate `required PVC = total max_bytes / 0.80`, then
-   increase the PVC in
-   `platform/event-bus/overlays/<environment>/nats-statefulset.yaml`
-   and set `max_file_store` to 80% of it in the adjacent `nats.conf`.
-
-The NATS server count lives in
-`platform/event-bus/base/nats-statefulset.yaml`.
-Changing an existing stream or PVC requires an explicit update/resize; changing
-the initial manifests alone only configures newly created resources.
-
-## Operations
+Deploy it locally with:
 
 ```sh
 make -C platform/event-bus deploy
 ```
 
-For the mental model, health checks, NATS CLI queries, and step-by-step
-troubleshooting, see [DEBUG.md](DEBUG.md).
+Applications connect to `nats-client.nats.svc.cluster.local:4222`. The
+headless service and port `6222` are only for server clustering.
 
-## Rule
+## Storage model
 
-Critical authority events use:
+Each NATS pod has its own `1Gi` PVC. JetStream may use 80% of each PVC:
 
 ```text
-domain DB transaction -> outbox_events -> outbox publisher -> JetStream
+1,024 MiB * 0.80 = 819.2 MiB per pod
 ```
 
-Request handlers do not directly publish those events.
+A stream replica is a complete copy, not a shard. Both current streams use R3,
+so every pod stores one copy of each:
 
-The NATS NetworkPolicy explicitly lists the namespace and existing `app` label
-of every publisher and projector allowed to connect on port `4222`.
+```text
+ACCOUNTS       400 MiB
+ENTITLEMENTS   400 MiB
+               -------
+               800 MiB per pod
+```
 
-## Checks
+That fits below the `819.2 MiB` server ceiling. The remaining 20% of each PVC
+is outside JetStream's configured file-store budget.
+
+To size another stream:
+
+```text
+stream max_bytes = measured daily growth * retained days * safety factor
+required PVC      = sum of R3 stream limits / 0.80
+```
+
+Set a stream's `NATS_STREAM_MAX_BYTES` and `NATS_STREAM_REPLICAS` in its owning
+outbox-publisher overlay. Then keep `max_file_store` at 80% of the PVC. Existing
+streams and PVCs require an explicit update or resize; changing initial
+manifests does not mutate them automatically.
+
+Reaching a stream limit rejects new events because the streams use
+`DiscardNew`. Publishers then leave their outbox rows unpublished for retry.
+
+## Event rule
+
+```text
+domain DB transaction -> outbox row -> publisher -> JetStream
+```
+
+Request handlers do not directly publish authority events. The NATS
+NetworkPolicy must list every publisher and projector allowed to connect.
+
+Render both environments with:
 
 ```sh
-kubectl kustomize platform/event-bus/overlays/ephemeral
-kubectl kustomize platform/event-bus/overlays/prod-eu
+kubectl kustomize platform/event-bus/overlays/ephemeral >/dev/null
+kubectl kustomize platform/event-bus/overlays/prod-eu >/dev/null
 ```
+
+See [DEBUG.md](DEBUG.md) when the cluster or an event path is unhealthy.

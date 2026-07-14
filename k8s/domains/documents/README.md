@@ -1,49 +1,32 @@
-# Documents Domain
+# Documents
 
-Documents is the product proof domain.
+Documents is a local example product. It proves that a product can authorize
+requests from locally projected account membership and entitlement state
+without reading another domain's database.
 
-## Owns
+It is intentionally absent from production Flux and has no production
+overlays.
 
-- `documents`
-- `projected_account_members`
-- `projected_account_entitlements`
-
-Documents does not own identity, account authority, or entitlement authority.
-
-## Components
+## Runtime
 
 ```text
-postgres -> migrations -> api + accounts-projector + entitlements-projector + ui
+ACCOUNTS stream -------> accounts projector -----+
+ENTITLEMENTS stream ---> entitlements projector -+-> PostgreSQL -> API -> UI
 ```
 
-Each deployable component owns its source, Dockerfile, and manifests under
-`components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrations`. PostgreSQL remains domain-owned infrastructure.
+| Part | Purpose |
+| --- | --- |
+| `components/accounts-projector` | Project account membership |
+| `components/entitlements-projector` | Project `documents.enabled` |
+| `components/api` | Create and list documents after local authorization |
+| `components/ui` | Example product UI |
+| `components/migrations` | Flyway SQL and its Job |
+| `infra/postgres` | Disposable in-cluster database |
 
-The accounts and entitlements projectors independently consume their upstream
-domain events. Documents publishes no events today.
+Documents consumes `accounts.account.opened.v1` and
+`entitlements.account_entitlements.updated.v1`. It publishes no events.
 
-## Public API
-
-```text
-POST /v1/accounts/:account_id/documents
-GET  /v1/accounts/:account_id/documents
-GET  /v1/documents/docs
-```
-
-The API checks identity JWTs, projected account membership, and projected
-`documents.enabled` entitlement.
-
-## Event Inputs
-
-```text
-accounts.account.opened.v1
-entitlements.account_entitlements.updated.v1
-```
-
-Use the producer domains' `packages/contracts` as the source of event shape.
-
-## Operations
+## Work here
 
 ```sh
 make -C domains/documents check
@@ -52,15 +35,5 @@ make -C domains/documents deploy
 make -C domains/documents dev
 ```
 
-`migrate` deploys the Documents Postgres instance and runs its migrations.
-`deploy` migrates the database, then applies Documents once. `dev` runs
-`migrate`, then starts the Documents API, both projectors, and UI development
-loops. Shared platform units and other domains are started separately when
-needed. Documents remains local-only and is never reconciled by production Flux.
-Its components deliberately have no `prod-eu` overlays, so the release workflow
-does not publish them.
-
-## Rules
-
-- Do not call core domains synchronously for hot-path authorization.
-- Do not read other domains' databases.
+Add schema changes as `components/migrations/sql/V###__description.sql`.
+Projection writes must ignore equal or older source versions.

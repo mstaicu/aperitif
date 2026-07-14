@@ -1,40 +1,42 @@
-# Identity Domain
+# Identity
 
-Identity owns authentication.
+Identity authenticates users. It owns users, passkeys, WebAuthn challenges,
+sessions, refresh-token rotation, platform operators, and the JWKS used by
+other APIs.
 
-## Owns
+It does not own accounts, entitlements, or product resources.
 
-- users
-- operators
-- passkey credentials
-- registration/authentication challenges
-- sessions and refresh tokens
-- JWKS for identity-issued access tokens
-
-Identity does not own accounts, product authority, or business resources.
-
-## Components
+## Runtime
 
 ```text
-postgres -> migrations -> api -> ui -> cleanup
+PostgreSQL -> migrations -> API -> UI
+                          -> scheduled cleanup
 ```
 
-Each deployable component owns its source, Dockerfile, and manifests under
-`components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrations`. PostgreSQL and cleanup remain domain-owned infrastructure.
+| Part | Purpose |
+| --- | --- |
+| `components/api` | Passkey ceremonies, sessions, operators, JWKS, and OpenAPI |
+| `components/ui` | Passkey signup and login |
+| `components/migrations` | Flyway SQL and its Job |
+| `infra/postgres` | Disposable in-cluster database |
+| `infra/cleanup` | Removes expired challenges and old sessions |
 
-No worker exists because identity publishes no domain events today.
+Identity currently publishes no domain events, so it has no publisher.
 
-## Public API
+## Public surface
 
-- JWKS: `GET /.well-known/jwks.json`
-- Passkeys: `/v1/passkeys/*`
-- Sessions: `/v1/sessions/*`
-- Operators: `/v1/operators/*`
-- Docs: `GET /v1/identity/docs`
-- UI: `/signup`, `/login`, `/identity/assets/*`
+- `/.well-known/jwks.json`
+- `/v1/passkeys/*`
+- `/v1/sessions/*`
+- `/v1/operators/*`
+- `/v1/identity/docs`
+- `/signup` and `/login`
 
-## Operations
+Every successful access-token exchange rotates the presented refresh token.
+Clients must store the returned replacement. Other domains verify access tokens
+through JWKS and make authorization decisions from their own state.
+
+## Work here
 
 ```sh
 make -C domains/identity check
@@ -43,15 +45,5 @@ make -C domains/identity deploy
 make -C domains/identity dev
 ```
 
-`migrate` ensures the disposable Identity database is ready and reruns its
-migration Job. `deploy` applies Identity once. `dev` runs `migrate` and starts
-only Identity's Skaffold loop. Shared platform units are started separately
-when needed. Production is reconciled only by Flux.
-
-## Rules
-
-- Other domains verify tokens through JWKS and authorize from local state.
-- Every access-token exchange consumes the presented refresh token and returns
-  its replacement; clients must store the replacement.
-- Operator access is platform authority, not account membership authority.
-- Do not add account, entitlement, or product concepts here.
+Add schema changes as `components/migrations/sql/V###__description.sql` and use
+expand/contract for changes consumed by running code.

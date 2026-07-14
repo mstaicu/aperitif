@@ -1,77 +1,34 @@
-# Entitlements Domain
+# Entitlements
 
-Entitlements owns account-level product authority.
+Entitlements answers which product capabilities an account currently has. It
+combines account-level grants into a current effective snapshot.
 
-## Owns
+It does not own accounts, billing, catalogues, subscriptions, or product data.
 
-- `entitlements`
-- `account_entitlement_grants`
-- `projected_accounts`
-- `account_entitlements_version_seq`
-- `outbox_events`
-
-Effective entitlements are calculated from current grants when snapshot events
-are written.
-
-Entitlements does not own catalogues, checkout, subscriptions, account records,
-memberships, or product resources.
-
-## Model
-
-Value types:
+## Runtime
 
 ```text
-boolean
-number
+ACCOUNTS stream -> accounts projector -> PostgreSQL
+                                      -> API
+                                      -> outbox publisher -> ENTITLEMENTS stream
 ```
 
-Merge strategies:
+| Part | Purpose |
+| --- | --- |
+| `components/accounts-projector` | Maintain local account authority |
+| `components/api` | List definitions and grant or revoke capabilities |
+| `components/outbox-publisher` | Publish effective entitlement snapshots |
+| `components/migrations` | Flyway SQL, core definitions, and its Job |
+| `packages/contracts` | Published Entitlements event package |
+| `infra/postgres` | Disposable in-cluster database |
 
-```text
-boolean_or
-number_max
-number_sum
-```
+Entitlement values are booleans or numbers. Definitions select `boolean_or`,
+`number_max`, or `number_sum` to reduce multiple grants.
 
-## Components
+The domain consumes `accounts.account.opened.v1` and publishes
+`entitlements.account_entitlements.updated.v1`.
 
-```text
-postgres -> migrations -> api + outbox-publisher + accounts-projector
-```
-
-Each deployable component owns its source, Dockerfile, and manifests under
-`components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrations`. PostgreSQL remains domain-owned infrastructure.
-
-The accounts projector consumes Accounts events. The outbox publisher publishes
-Entitlements events independently.
-
-## Operator API
-
-```text
-GET  /v1/entitlements
-POST /v1/entitlements/grants
-POST /v1/entitlements/grants/revoke
-GET  /v1/entitlements/docs
-```
-
-## Event Contracts
-
-Contracts: `packages/contracts`.
-
-Consumes:
-
-```text
-accounts.account.opened.v1
-```
-
-Publishes:
-
-```text
-entitlements.account_entitlements.updated.v1
-```
-
-## Operations
+## Work here
 
 ```sh
 make -C domains/entitlements check
@@ -80,15 +37,6 @@ make -C domains/entitlements deploy
 make -C domains/entitlements dev
 ```
 
-`migrate` deploys Entitlements' disposable PostgreSQL instance and applies its
-migrations. `deploy` applies Entitlements once. `dev` runs `migrate`, then
-starts the Entitlements API, outbox publisher, and accounts projector development
-loops. Shared platform units and other domains are started separately when live
-flows require them. Production is reconciled only by Flux.
-
-## Rules
-
-- Do not add billing/catalogue concepts here.
-- Projection writes are idempotent by natural key plus `version`.
-- If a migration changes effective projected entitlements, insert fresh outbox
-  snapshot rows in the same migration.
+Add schema changes as `components/migrations/sql/V###__description.sql`. If a
+migration changes effective capability state, write fresh outbox snapshots for
+the affected accounts in that migration.

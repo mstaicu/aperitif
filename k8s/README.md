@@ -1,228 +1,144 @@
-# Aperitif Kubernetes
+# Aperitif Platform
 
-Treat this `k8s/` directory as the repo root. GitHub workflows live under
-`k8s/.github`.
+This repository runs a small domain platform on Kubernetes. Local development
+uses Skaffold. Production desired state is reconciled by Flux.
 
-## Shape
-
-```text
-.github/workflows/      integration and deployment workflows
-clusters/               Flux cluster graphs
-platform/               ingress, event-bus, observability, inactive mesh
-domains/                identity, accounts, entitlements, documents
-platform/*/Makefile     platform-unit local lifecycle
-domains/*/Makefile      domain lifecycle
-clusters/prod-eu/Makefile  Flux bootstrap
-.sops.yaml              encrypted Secret recipients
-AGENTS.md               non-obvious agent rules
-```
-
-Domain component shape:
+## Repository map
 
 ```text
-postgres -> migrations -> api/worker/ui
+.github/workflows/   checks and image releases
+clusters/prod-eu/    Flux entry point for production
+platform/            shared Kubernetes infrastructure
+domains/             independently developed business domains
 ```
 
-Components stay independently deployable. Each component owns its source,
-Dockerfile, and Kubernetes manifests under `components/<name>/infra`. A domain
-only has the components it needs. Database SQL and its Flyway Job live together
-in `components/migrations`; shared domain infrastructure remains in `infra`.
+The shared platform currently contains:
 
-## Domains
+- `ingress`: Traefik, its CRDs, and TLS routing;
+- `event-bus`: a three-node NATS JetStream cluster;
+- `observability`: OpenTelemetry collection;
+- `mesh`: inactive Linkerd manifests kept outside every environment.
 
-- `identity`: users, passkeys, sessions, refresh tokens, operators, JWKS.
-- `accounts`: account resource boundary and initial owner membership.
-- `entitlements`: account entitlement grants and effective snapshots.
-- `documents`: local-only product proof using account and entitlement
-  projections; it is not released by Actions or composed into prod-eu.
+The domains are:
 
-Domains own their databases. Cross-domain reads use APIs or declared events,
-never another domain's database.
+| Domain | Responsibility | Production |
+| --- | --- | --- |
+| `identity` | Users, passkeys, sessions, operators, and JWKS | Yes |
+| `accounts` | Account boundaries and membership | Yes |
+| `entitlements` | Account-level product capabilities | Yes |
+| `documents` | Local example product using projected authority | No |
 
-## Platform
+Each domain owns its database. A domain never reads another domain's database.
 
-- `ingress`: Traefik CRDs, Traefik, local TLS, routes.
-- `event-bus`: NATS JetStream.
-- `observability`: OpenTelemetry Collector.
-- `mesh`: Linkerd manifests, not currently composed.
+## Component shape
 
-Authority/state event path:
+A deployable component keeps its code, Dockerfile, and Kubernetes manifests
+together:
 
 ```text
-domain DB transaction -> outbox_events -> worker -> NATS JetStream
+domains/<domain>/components/<component>/
+  Dockerfile
+  src/
+  infra/
+    base/
+    overlays/ephemeral/
+    overlays/prod-eu/
 ```
 
-Postgres notifications only wake workers. The outbox is the durable source.
-Outbox tables use `id`, `event`, `created_at`, `published_at`, and an insert
-trigger that notifies `outbox_events`.
+An absent `prod-eu` overlay means the component is local-only. Shared domain
+infrastructure, such as PostgreSQL or scheduled cleanup, remains under
+`domains/<domain>/infra`.
 
-## Local
+## Local development
+
+Install the repository tools:
 
 ```sh
 brew bundle
 ```
 
-Start only the shared platform units needed for the current work:
+Start the shared units needed by the domains you are working on:
 
 ```sh
 make -C platform/ingress deploy
 make -C platform/event-bus deploy
+make -C platform/observability deploy
 ```
 
-Then start each domain being edited in its own terminal. A domain's `dev`
-target manages only that domain:
+Then run domains in separate terminals:
 
 ```sh
 make -C domains/identity dev
 make -C domains/accounts dev
 make -C domains/entitlements dev
-```
-
-Each domain also exposes its lifecycle operations directly:
-
-```sh
-make -C domains/identity check
-make -C domains/identity migrate
-make -C domains/identity deploy
-make -C domains/identity dev
-make -C domains/accounts check
-make -C domains/accounts migrate
-make -C domains/accounts deploy
-make -C domains/accounts dev
-make -C domains/entitlements check
-make -C domains/entitlements migrate
-make -C domains/entitlements deploy
-make -C domains/entitlements dev
-make -C domains/documents check
-make -C domains/documents migrate
-make -C domains/documents deploy
 make -C domains/documents dev
 ```
 
-For each production domain, `migrate` ensures its disposable database is ready
-and reruns its migration Job. `deploy` applies that domain once. `dev` runs
-`migrate` and starts only that domain's Skaffold loop; it never deploys shared
-platform units or another domain. There is deliberately no repository-wide
-application composition or root development loop. Documents remains local-only
-but exposes the same domain interface.
+A domain command controls only that domain. There is deliberately no root
+Makefile or repository-wide development loop.
 
-Local routing uses the fixed `tma.com` and `api.tma.com` hostnames.
+Every domain exposes the same interface:
 
-## Flux
+| Target | Purpose |
+| --- | --- |
+| `help` | List its commands |
+| `check` | Install dependencies, lint, typecheck, test, build, and render manifests |
+| `migrate` | Deploy the disposable local database and run Flyway |
+| `deploy` | Apply the domain once |
+| `dev` | Migrate, then start that domain's Skaffold loop |
 
-Prod starts at `clusters/prod-eu/kustomization.yaml`:
+Local routes use `tma.com` and `api.tma.com`.
 
-```text
-kustomization.yaml -> platform/* + domains/*
-```
+## Events
 
-Domain order:
-
-```text
-<domain>-postgres -> <domain>-migrations -> <domain>-api/worker/ui
-```
-
-GitHub Actions builds and pushes production images. Flux image automation
-selects their production digests, commits the manifest changes, and reconciles
-them into the cluster.
-
-## Releases
-
-GitHub Actions has two workflows:
-
-- `pull-request.yaml` discovers changed `domains/<domain>` directories and runs
-  each domain's `check` in an independent matrix job with its own disposable
-  Kind cluster.
-- `release.yaml` discovers changed
-  `domains/<domain>/components/<component>` directories after a merge to
-  `master`.
-
-A component is production-releasable only when it has
-`infra/overlays/prod-eu/kustomization.yaml`. That overlay must contain exactly
-one image. Its `name` is the GHCR destination.
-
-After a merge, `release.yaml` builds changed production components in parallel
-with Docker's build action. Each job reads its image `name` from its own overlay
-and publishes both the triggering Git SHA and the moving `production` tag.
-Components without a production overlay are skipped.
-
-Each production image has a Flux `ImageRepository` and `ImagePolicy`. The policy
-tracks the digest behind `production`, and `ImageUpdateAutomation/domains`
-writes that digest into the marked component overlay. Actions never writes Git
-or Kubernetes resources; Flux owns desired-state updates and cluster
-reconciliation.
-
-New GitHub Container Registry packages are private by default. After each image
-is published for the first time, make its package public in GitHub so Kubernetes
-can pull it anonymously. Keeping packages private instead requires GHCR pull
-credentials in every production domain namespace.
-
-Releases rely on expand/contract compatibility. For a schema change required by
-new code, use separate releases:
+Cross-domain state moves through versioned CloudEvents:
 
 ```text
-merge expansion migration
-  -> wait for its workflow and Flux migration Kustomization to succeed
-  -> merge compatible API/worker code
-  -> remove old schema only in a later contraction release
+domain transaction
+  -> domain state + outbox row
+  -> outbox publisher
+  -> NATS JetStream
+  -> durable consumer
+  -> projector transaction
 ```
 
-API, worker, UI, and event changes must tolerate old and new versions coexisting
-during rollout. If a change cannot do that, its domain needs an explicitly
-coordinated release rather than weakening this independent-component contract.
+`LISTEN/NOTIFY` only wakes an outbox publisher. The database outbox is the
+durable source. Projectors acknowledge an event only after committing the
+projection, and they use `data.version` to reject stale state.
 
-Bootstrap prod with:
+Current events:
 
-```sh
-make -C clusters/prod-eu bootstrap
-```
+| Event | Producer | Consumers |
+| --- | --- | --- |
+| `accounts.account.opened.v1` | Accounts | Entitlements, Documents |
+| `entitlements.account_entitlements.updated.v1` | Entitlements | Documents |
 
-See `clusters/prod-eu/README.md`.
+Contracts are published npm packages under each producing domain's
+`packages/contracts` directory.
+
+## Delivery
+
+Pull requests detect changed domains and run each domain's `make check` in its
+own matrix job.
+
+After a merge to `master`, the release workflow detects changed components.
+Components with a production overlay are built and pushed to GHCR with the Git
+SHA and `production` tags. Infrastructure-only changes are not image builds.
+
+Flux watches `clusters/prod-eu`. Its image policies resolve the digest behind
+each `production` tag, commit that digest into the component overlay, and
+reconcile the cluster. GitHub Actions publishes images; Flux owns GitOps and
+cluster writes.
+
+Schema changes use expand/contract releases: expand first, release compatible
+code second, and contract only after old code is gone.
+
+See [the production cluster guide](clusters/prod-eu/README.md) for bootstrap and
+reconciliation, and [TODO.md](TODO.md) for intentionally deferred production
+work.
 
 ## Secrets
 
-SOPS uses age recipients from `.sops.yaml`.
-
-```sh
-export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
-```
-
-Keep encrypted Secret manifests encrypted. Do not commit local TLS material.
-
-GitHub CI workflows require the repository secret
-`EPHEMERAL_SOPS_AGE_KEY`. It must contain only the age identity for disposable
-integration overlays, never a production age identity.
-
-## Contracts
-
-- HTTP APIs use Fastify + TypeBox and expose OpenAPI docs.
-- Event contracts live in the producing domain's `packages/contracts`.
-- Events use the CloudEvents JSON shape.
-- Cross-domain events are current-state facts, not replay deltas.
-- Event `type` is versioned, for example `accounts.account.opened.v1`.
-- `data.version` is producer state version for stale/out-of-order protection.
-
-Current event catalog:
-
-| Type | Producer | Consumers |
-| --- | --- | --- |
-| `accounts.account.opened.v1` | `accounts` | `entitlements`, `documents` |
-| `entitlements.account_entitlements.updated.v1` | `entitlements` | `documents` |
-
-## Checks
-
-Use the narrowest check that covers the change:
-
-```sh
-make -C domains/identity check
-make -C domains/accounts check
-make -C domains/entitlements check
-make -C domains/documents check
-git diff --check
-```
-
-Render changed KSOPS overlays with:
-
-```sh
-kustomize build --enable-alpha-plugins --enable-exec <overlay>
-```
+SOPS-encrypted Secret manifests stay encrypted in Git. Set
+`SOPS_AGE_KEY_FILE` when rendering an overlay that uses KSOPS. Local Traefik
+certificates are generated by the ingress Makefile and are never committed.

@@ -1,14 +1,8 @@
 # Mesh
 
-Linkerd manifests exist, but mesh is not currently composed into local or
-prod-eu.
+This directory contains inactive Linkerd manifests. No local or production
+Kustomization imports them, so the platform currently provides no mesh mTLS,
+service identity, or mesh policy.
 
-Do not assume mTLS, service identity, or mesh policy exists unless this platform
-unit is explicitly added to the environment.
-
-## Checks
-
-```sh
-kubectl kustomize platform/mesh/overlays/ephemeral
-kubectl kustomize platform/mesh/overlays/prod-eu
-```
+Do not deploy these manifests as a supported platform unit. Before using a
+mesh, either replace them with a current owned configuration or remove them.

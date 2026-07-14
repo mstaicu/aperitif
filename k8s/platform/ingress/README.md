@@ -1,38 +1,33 @@
 # Ingress
 
-Traefik CRDs, Traefik, local TLS, and dashboard routing.
+This unit runs Traefik and its CRDs. Domains own their API and UI
+`IngressRoute`s; the platform owns the controller and TLS entry points.
 
-Domain API/UI units own their own `IngressRoute`s.
-
-## Local
+Deploy locally with:
 
 ```sh
 make -C platform/ingress deploy
 ```
 
-The target installs CRDs, creates local mkcert TLS, updates `/etc/hosts`, and
-deploys Traefik. Local routing uses the fixed `tma.com` and `api.tma.com`
-hostnames.
+The command installs the CRDs, installs the local mkcert CA, adds `tma.com` and
+`api.tma.com` to `/etc/hosts`, creates a cluster-local TLS Secret, and deploys
+Traefik. It therefore changes both the workstation and the current Kubernetes
+cluster. Generated certificates are temporary and never committed.
 
-For kind/CI:
+CI can reach Traefik without changing DNS:
 
 ```sh
-kubectl -n traefik port-forward svc/traefik-public 8443:443
+kubectl -n traefik port-forward service/traefik-public 8443:443
 ```
 
-## Live
+Production uses Traefik ACME with Cloudflare DNS-01. Direct origin restriction,
+multiple ingress replicas, and hardened forwarded-header trust remain
+production work in [TODO.md](../../TODO.md).
 
-Live TLS is Traefik ACME with Cloudflare DNS-01. Do not commit local mkcert
-material.
-
-TODO: after direct load-balancer access is blocked to Cloudflare IP ranges, make
-the live `https` entrypoint trust Cloudflare forwarded headers. Do not apply
-that to the internal `http` entrypoint.
-
-## Checks
+Render manifests with:
 
 ```sh
-kubectl kustomize platform/ingress/crds
-kubectl kustomize platform/ingress/overlays/ephemeral
-kubectl kustomize platform/ingress/overlays/prod-eu
+kubectl kustomize platform/ingress/crds >/dev/null
+kubectl kustomize platform/ingress/overlays/ephemeral >/dev/null
+kubectl kustomize platform/ingress/overlays/prod-eu >/dev/null
 ```
