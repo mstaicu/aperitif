@@ -14,9 +14,19 @@ Do not change these in this workstream:
   workflow discovery and placement.
 - Do not productionize the in-cluster PostgreSQL Deployments. Managed database
   endpoints will replace them in a separate workstream.
-- Do not rotate or split SOPS, JWT, or Cloudflare keys in this repository yet.
-- Do not replace the host-wide refresh-cookie/BFF model.
+- Do not rotate or split SOPS or Cloudflare keys in this repository yet.
+- Use separate JWT signing key sets for development and production before
+  production traffic. Do not add `iss`, `aud`, or `typ` merely to duplicate the
+  isolation already provided by those separate trust stores.
+- Do not assume refresh credentials are confined to the current BFF; Identity
+  is the authentication boundary for web, mobile, CLI, and future M2M clients.
 - Do not add NATS authentication or per-workload subject ACLs yet.
+- Do not replace the accepted one-row locked outbox publisher with leases,
+  retry metadata, quarantine state, or a provisioning framework without an
+  observed failure that requires it and explicit owner approval.
+- Do not add NATS CPU or memory settings until usage has been measured.
+- Do not make durable production telemetry export part of the current testing
+  stage.
 - Never decrypt, print, or commit Secret payloads.
 
 The deferred choices must remain visible in
@@ -33,7 +43,10 @@ they are not current implementation work.
    `platform/` and `domains/` directories.
 2. Do not recreate intermediate Flux objects for those directories.
 3. Do not add `flux-system` to application/platform workload overlays.
-4. Keep all leaf `sourceRef` and `dependsOn` references same-namespace.
+4. Set `namespace: flux-system` in the `platform/` and `domains/` Kustomize
+   assemblers, and keep cluster-scoped domain Namespace resources in the root
+   resource list; do not use a blanket root namespace transformer.
+5. Keep all leaf `sourceRef` and `dependsOn` references same-namespace.
 
 ### Verification
 
@@ -42,7 +55,7 @@ Run:
 ```sh
 kubectl kustomize clusters/prod-eu >/dev/null
 kubectl kustomize clusters/prod-eu \
-  | yq ea -e '[.] | map(select(.kind == "Kustomization")) | length == 22' - >/dev/null
+  | yq ea -e '[.] | map(select(.kind == "Kustomization")) | length == 17' - >/dev/null
 kubectl kustomize clusters/prod-eu \
   | yq ea -e '[.] | map(select(.kind == "Kustomization")) | map(.metadata.namespace == "flux-system") | all' - >/dev/null
 ```
@@ -50,110 +63,89 @@ kubectl kustomize clusters/prod-eu \
 Also inspect the resulting names, paths, `sourceRef`, and `dependsOn` instead of
 relying only on process exit status.
 
-## Task 2: make the NATS StatefulSet valid
+## Task 2: establish the current NATS and event-publication baseline
 
-### Required changes
+**Status: completed; do not broaden this stage**
 
-1. Add `whenUnsatisfiable: DoNotSchedule` to the existing hostname topology
-   spread constraint in
-   `platform/event-bus/overlays/prod-eu/nats-depl.yaml`.
-2. Preserve the current required hostname anti-affinity.
-3. Do not add a zone constraint until the cluster IaC defines available zones
-   and node labels.
+The accepted baseline is:
+
+1. A three-server NATS JetStream StatefulSet with explicit 1 GiB PVCs,
+   server-wide storage ceilings, probes, graceful shutdown, a PDB, required
+   production hostname anti-affinity, and hardened containers.
+2. Product-owned streams with explicit `max_bytes` and replica counts.
+3. A transactional outbox written with domain state in one database
+   transaction.
+4. `LISTEN/NOTIFY` used only to wake the worker; the outbox table remains the
+   durable source of truth.
+5. One unpublished row locked with `FOR UPDATE SKIP LOCKED`, published to
+   JetStream, marked published only after PubAck, and committed before the
+   worker selects another row.
+6. The current durable, version-aware projection consumer acknowledges valid
+   events only after committing its projection.
+
+Do not add leases, attempt counters, next-attempt timestamps, quarantine
+tables, inbox frameworks, automatic stream provisioners, authentication,
+resource settings, or production telemetry in this stage. Reopen one of those
+choices only when its concrete failure mode occurs or a production requirement
+explicitly activates it.
 
 ### Verification
 
-1. Render `platform/event-bus/overlays/prod-eu`.
-2. Validate the rendered resources with a Kubernetes schema validator such as
-   `kubeconform`, including a pinned Kubernetes version.
-3. When a disposable cluster is available, perform a server-side dry run.
-4. Add the schema-validation command to the project check path; rendering to
-   `/dev/null` alone is not an adequate test.
+1. Render both event-bus overlays.
+2. Run the Accounts and Entitlements worker tests.
+3. When infrastructure changes, deploy the ephemeral overlay and verify three
+   ready NATS servers, JetStream quorum, bound PVCs, and the PDB before treating
+   the change as complete.
 
 ## Task 3: establish single ownership for domain Namespaces
 
-**Status: deferred by owner; do not add foundation directories in the current
-Flux correction.**
+**Status: implemented without a foundation directory or extra Flux layer**
 
-The duplicate Namespace ownership finding remains documented in `TODO.md` and
-`REQUIRED_PRODUCTION_REWRITES.md`. Reopen it only with an explicitly agreed
-minimal design.
+The root cluster reconciliation owns each production domain Namespace once.
+Production workload leaves retain their `namespace:` transformer but no longer
+render Namespace resources. Ephemeral overlays remain self-contained.
 
-## Task 4: add a baseline JWT profile without changing the refresh model
+## Task 4: preserve the current JWT trust model
 
-### Required changes
+**Status: additional token claims deferred by owner**
 
-1. Add required identity configuration for a canonical issuer and one shared
-   platform API audience.
-2. Issue access tokens with:
-   - `iss` set to the configured issuer;
-   - `aud` set to the configured audience;
-   - protected-header `typ: at+jwt`;
-   - existing `alg: ES256` and `kid` values.
-3. Make every resource API verify:
-   - issuer;
-   - audience;
-   - `typ`;
-   - explicit allowed algorithm `ES256`;
-   - expiry and subject.
-4. Extract the duplicated verifier into a small internal technical package or
-   keep a synchronized local implementation if package extraction would make
-   this patch too broad. Do not mix domain authorization into it.
-5. Preserve the current shared audience and `operator` behavior.
-6. Do not alter refresh-token cookies, rotation endpoints, or product BFFs.
+The accepted current model is:
 
-### Required tests
+1. Identity issues short-lived ES256 access tokens with a subject and expiry.
+2. Resource APIs verify the signature and expiry against Identity's JWKS and
+   require a string subject.
+3. Development and production use different signing key sets before production
+   traffic, and each environment trusts only its own JWKS.
+4. All current APIs intentionally share one platform trust zone.
 
-- valid user token;
-- valid operator token;
-- wrong issuer;
-- missing issuer;
-- wrong audience;
-- missing audience;
-- wrong/missing `typ`;
-- wrong algorithm;
-- expired token;
-- missing subject.
+Add `iss` when a verifier trusts multiple logical issuers, `aud` when tokens are
+targeted to different API boundaries, and `typ` when the same signer creates
+multiple JWT kinds. Add product audiences/scopes only when product isolation is
+required. Do not add those claims speculatively or change refresh-token cookies,
+product BFFs, or `operator` behavior in this stage.
 
-Update OpenAPI/authentication documentation so future product teams know that
-the shared audience is temporary and where resource-specific audiences can be
-introduced.
+## Task 5: keep component delivery exact and collision-safe
 
-## Task 5: replace per-unit deployment mutation with one release transaction
+**Status: implemented; containing-repository integration remains external**
 
-The containing repository will decide where the workflow file physically
-lives. Correct the reusable workflow design here so it can be integrated
-without changing its semantics.
+The accepted implementation has exactly two workflows:
 
-### Required design
+1. `pull-request.yaml` discovers changed domain directories and runs each
+   domain's `check` in an independent matrix job with a disposable Kind cluster.
+2. `release.yaml` discovers changed component directories after merge.
+3. A `prod-eu` component overlay is the production-enrollment marker and must
+   declare exactly one image. Its `name` is the GHCR destination.
+4. A matrix builds changed production components from the triggering commit and
+   publishes both the SHA and `production` tags with Docker's build action.
+5. Flux image repositories and policies resolve the `production` digests, and
+   one image automation commits them into the marked component overlays.
+6. Actions writes only to GHCR. Flux writes desired state to Git and reconciles
+   the cluster.
 
-1. Trigger one release workflow for a merge SHA.
-2. Determine changed deployable units from that exact SHA and its merge base.
-3. Build the exact SHA; never build moving `master` contents under an older SHA
-   label.
-4. Run unit, contract, migration, and production-image smoke checks before
-   publishing.
-5. Build changed images in a matrix and retain a machine-readable map of unit to
-   immutable digest.
-6. Use one release job to apply all digests to manifests.
-7. Create one Git commit or one GitOps PR for the complete release.
-8. Serialize only the final production mutation. Use a queue that retains all
-   pending releases and handle Git conflicts explicitly.
-9. Report which units, digests, migrations, and manifest commit constitute the
-   release.
-
-### Transitional containment
-
-If the full workflow cannot be introduced in one patch:
-
-1. stop checking out moving `master` for the build step;
-2. stop using a shared native Actions concurrency group that replaces pending
-   runs; either let every run reach the conflict-safe mutation step or place
-   that step behind a real FIFO/external queue;
-3. add retry/rebase handling to the manifest update;
-4. document clearly that independent manifest commits are still non-atomic.
-
-Do not present the transitional state as the completed solution.
+Do not restore per-domain or per-component caller workflows, hardcoded domain
+lists, image-name derivation, a component catalog, or a release-state file.
+Continue using expand/contract compatibility for independently rolling
+components.
 
 ## Final verification and handoff
 
@@ -171,6 +163,6 @@ kubectl kustomize platform/event-bus/overlays/prod-eu >/dev/null
 git diff --check
 ```
 
-In addition, run the new schema, duplicate-ownership, JWT negative, and release
-workflow tests introduced by these tasks. Report any check that could not run
+In addition, run the tests introduced by whichever tasks are activated. Do not
+create or require tests for deferred work. Report any check that could not run
 and why. Never claim production readiness based only on Kustomize rendering.

@@ -20,9 +20,14 @@ For every active workstream, an agent must:
 | --- | --- | --- |
 | Containing-repository GitHub workflow placement | External dependency | The parent repository will integrate workflow discovery and paths. |
 | Production PostgreSQL service | External dependency | Managed databases will replace in-cluster production PostgreSQL. |
-| Environment-specific SOPS and JWT keys | Deferred | Shared material is accepted temporarily; separation and rotation remain required before production trust. |
-| Host-wide refresh-token/BFF model | Accepted early-stage constraint | Do not redesign unless the owner reopens the decision. |
+| Environment-specific cryptographic keys | Partially planned | Development and production JWT signing key sets must be separate before production traffic; separation and rotation of other shared material remain deferred. |
+| JWT semantic claims | Deferred | Signature, expiry, and string-subject verification are accepted while one issuer creates one JWT kind for one shared API trust zone. Add claims when the trust model changes. |
+| Refresh-token lifecycle | Accepted current baseline | Every access-token exchange atomically rotates the session's refresh token. Each client session owns an independent token family. |
 | NATS authentication and subject ACLs | Deferred | Unauthenticated NATS is accepted temporarily; workload identity remains required before treating events as a hardened authority boundary. |
+| One-row locked outbox publisher | Accepted current baseline | Do not add leases, retry metadata, quarantine, or an inbox framework without a demonstrated failure mode and explicit owner approval. |
+| NATS CPU/memory settings | Deferred | Measure real usage before setting requests or limits. |
+| Durable production telemetry export | Deferred while testing | Activate when a production observability backend and operational ownership exist. |
+| Independent component delivery | Accepted current baseline | Keep directory-discovered PR checks, component-owned image names, matrix builds, SHA and production tags, Flux image-policy digest updates, Flux-only cluster writes, and expand/contract compatibility. |
 
 Deferred does not mean resolved. Each deferred item must have an owner,
 activation condition, and target milestone before real production data or
@@ -78,80 +83,105 @@ external product teams depend on it.
 
 ## 3. Session and resource-token boundary
 
-**Status: baseline JWT work active; refresh-model redesign deferred by owner**
+**Status: current refresh rotation and verification accepted; additional claims and client grants deferred**
 
-### Agent instructions
+### Accepted current baseline
 
-1. Implement the issuer/audience/type/algorithm baseline from `NOW.md`.
-2. Document that all APIs currently share one audience and trust zone.
-3. Add a future migration design for resource-specific audiences, scopes, and
-   clients without changing the current host-wide refresh cookie.
-4. When the owner reopens the session decision, place refresh credentials
-   behind an identity/session gateway and strip them before requests reach
-   product workloads.
+1. Verify access-token signatures and expiry against Identity's JWKS and require
+   a string subject.
+2. Give development and production different signing key sets before production
+   traffic; each environment trusts only its own JWKS.
+3. Keep the current APIs in one explicit platform trust zone.
+4. Keep one independent token family per client session and rotate its refresh
+   token in every successful access-token exchange.
 
-### Acceptance criteria
+### Future activation gates
 
-- Current tokens cannot be confused with tokens from another issuer or for
-  another audience.
-- Resource servers have one shared, tested verification implementation.
-- The accepted shared-cookie risk is visible in architecture and threat-model
-  documentation.
+- Add issuer validation when resource servers trust multiple logical issuers.
+- Add audience validation when tokens target different API boundaries.
+- Add token-type validation when one signer creates multiple JWT kinds.
+- Add product audiences/scopes when product isolation is required.
+
+### Current acceptance criteria
+
+- Development credentials cannot mint tokens accepted by production once the
+  environment key split is activated.
+- Tokens require a valid signature, expiry, and string subject.
+- Refresh credentials never reach product APIs.
 
 ## 4. Event-bus capacity, identity, and recovery
 
-**Status: scheduling fix active; authentication deferred**
+**Status: core baseline complete; advanced recovery and authentication deferred**
 
-### Agent instructions
+### Accepted current baseline
 
-1. Fix Kubernetes schema validity as described in `NOW.md`.
-2. Define retention and replay SLOs for every stream.
-3. Replace permanent `DiscardNew` saturation with an intentional retention or
-   archival policy.
-4. Size each NATS PVC for all replicated streams plus metadata, compaction,
-   operational headroom, and growth.
-5. Add capacity, consumer-lag, redelivery, quorum, and disk alerts.
-6. Add PDBs, resource requests, topology policy, snapshots, and restore drills.
-7. When authentication is activated, use per-workload identities and subject
-   ACLs plus a separate provisioning identity.
+1. Keep the current three-server StatefulSet, explicit 1 GiB PVCs, 80% server
+   storage ceiling, product-owned stream limits, probes, PDB, placement, and
+   hardened container configuration.
+2. Keep stream creation with the owning domain worker while products remain in
+   one trusted operational model.
+3. Keep authentication, measured resources, durable telemetry, archival,
+   snapshots, and restore exercises outside the current stage.
 
-### Acceptance criteria
+### Future activation gates
 
-- Filling a stream cannot silently freeze authority propagation indefinitely.
-- Replication is not treated as backup.
-- A compromised consumer cannot publish authority events once the deferred
-  identity work is activated.
-- Stream and consumer configuration is reconciled by a controlled provisioner,
-  not every runtime worker.
+- Define or change retention, archival, snapshots, and restore only when a
+  product supplies replay, RPO, and RTO requirements.
+- Add requests and limits only after measuring representative workloads.
+- Add capacity and quorum alerts when durable telemetry export is activated.
+- Add a separate stream provisioner only if independently operated products
+  make worker-owned creation conflict in practice.
+- Add workload identity and subject ACLs when untrusted workloads enter the
+  NATS network or event provenance becomes a hardened authority boundary.
+
+### Current acceptance criteria
+
+- Both platform overlays render.
+- Three NATS servers form JetStream quorum with bound per-pod storage.
+- Product streams have explicit size and replica settings.
+- Capacity calculations and operational checks are documented.
+- Deferred controls remain visible without being implemented speculatively.
 
 ## 5. Outbox, consumer, and projection reliability
 
-**Status: active production requirement**
+**Status: accepted simple baseline; advanced failure handling deferred**
 
-### Agent instructions
+### Accepted current pattern
 
-1. Add a partial index for unpublished outbox rows.
-2. Add attempt count, next-attempt time, lease owner/expiry, last error, and
-   quarantine state.
-3. Claim rows in a short database transaction, publish outside it, and finalize
-   each event independently.
-4. Add a durable consumer inbox keyed by event ID where side effects require
-   permanent idempotency.
-5. Configure bounded redelivery, exponential backoff, maximum deliveries, and a
-   quarantine stream.
-6. Never ACK-and-drop an invalid authority event without preserving it and
-   alerting.
-7. Persist projection event ID, source version, source time, applied time, and
-   freshness status.
-8. Implement replay, snapshot reconciliation, and projection rebuild runbooks.
+```text
+domain transaction writes state and outbox row
+LISTEN/NOTIFY wakes the worker
+worker locks one unpublished row with FOR UPDATE SKIP LOCKED
+worker publishes and waits for JetStream PubAck
+worker marks that row published and commits
+consumer commits its version-aware projection and then acknowledges
+```
 
-### Acceptance criteria
+Do not replace this with leases or publishing outside the transaction merely
+to shorten a transaction. Do not add attempt counters, retry scheduling,
+quarantine state, or an inbox framework in anticipation of failures that have
+not occurred.
 
-- A poison event does not restart-loop or block unrelated aggregates forever.
-- Duplicate and out-of-order events are harmless.
-- A failed revocation cannot leave permissive state without a detectable
-  freshness breach.
-- Outbox and inbox storage have explicit retention and cleanup policies.
+### Future activation gates
+
+- Add an unpublished-row index or cleanup after measured table growth warrants
+  it.
+- Add retry and quarantine state after a recurring poison event demonstrates
+  that restart-and-retry is insufficient.
+- Reconsider leases only after measured database lock or connection contention.
+- Add a durable inbox when a consumer performs non-idempotent durable side
+  effects that version-aware projection logic cannot make safe.
+- Add replay, reconciliation, and freshness controls when a product defines a
+  recovery or freshness objective.
+
+### Current acceptance criteria
+
+- Domain state and its outbox row commit atomically.
+- A failed publish leaves the row unpublished.
+- `published_at` is set only after JetStream PubAck.
+- Consumer projections remain idempotent and version-aware.
+- Accounts and Entitlements worker tests cover successful publication,
+  publication failure, and stale projection handling where applicable.
 
 ## 6. Account membership and authorization lifecycle
 
@@ -206,16 +236,12 @@ external product teams depend on it.
 
 ### Agent instructions
 
-1. Introduce one tested transaction helper that always rolls back and discards
-   broken clients where appropriate.
-2. Fix refresh-token rotation so lost responses and safe concurrent retries do
-   not incorrectly revoke legitimate sessions.
-3. Add an audited, one-time first-operator bootstrap and recovery process.
-4. Rate-limit anonymous WebAuthn challenge creation and bound outstanding
+1. Add an audited, one-time first-operator bootstrap and recovery process.
+2. Rate-limit anonymous WebAuthn challenge creation and bound outstanding
    challenges.
-5. Make challenge consumption atomic with successful ceremony completion or
+3. Make challenge consumption atomic with successful ceremony completion or
    explicitly retryable.
-6. Add key-rotation and compromised-session runbooks.
+4. Add key-rotation and compromised-session runbooks.
 
 ### Acceptance criteria
 
@@ -226,11 +252,12 @@ external product teams depend on it.
 
 ## 9. Kubernetes ownership, security, and availability baseline
 
-**Status: Namespace ownership active; broader controls active before production**
+**Status: Namespace ownership resolved; broader controls require activation before production**
 
-### Agent instructions
+### Agent instructions when activated
 
-1. Complete the foundation ownership work in `NOW.md`.
+1. Preserve the root-owned production Namespaces and workload-only leaf Flux
+   inventories.
 2. Add CPU/memory requests based on measured usage and defensible limits.
 3. Add PDBs, zone/hostname spread, PriorityClasses, ResourceQuota, and
    LimitRange appropriate to workload criticality.
@@ -274,7 +301,7 @@ external product teams depend on it.
 
 ## 11. Durable observability and operational response
 
-**Status: active production requirement**
+**Status: deferred while telemetry export is being tested**
 
 ### Agent instructions
 
@@ -298,11 +325,14 @@ external product teams depend on it.
 
 ## 12. Immutable delivery and software supply chain
 
-**Status: release logic active; containing-repository integration external**
+**Status: core release logic implemented; containing-repository integration external**
 
 ### Agent instructions
 
-1. Implement the exact-SHA, atomic digest release described in `NOW.md`.
+1. Preserve the independent component release contract from `NOW.md`:
+   directory discovery, component-owned image names, exact-SHA matrix builds,
+   SHA and production tags, Flux image-policy digest updates, and Flux-only Git
+   and cluster reconciliation.
 2. Pin production product and platform images by digest.
 3. Use an active LTS Node image and declare runtime/package-manager versions.
 4. Pin third-party actions and downloaded tools to verified immutable versions.
@@ -315,6 +345,12 @@ external product teams depend on it.
 
 - Git identifies the exact bytes running in every production container.
 - Rebuilding or rolling back does not resolve mutable tags.
+- Distinct teams may build different units independently; automated Git writers
+  serialize, and conflicts or queue overflow fail visibly instead of
+  force-pushing over another desired-state update.
+- Release practice ensures a required schema expansion is live before dependent
+  code is released, and contraction happens only after the compatibility
+  window.
 - A release cannot reach production if required tests, scans, signature, or
   provenance checks fail.
 
@@ -348,13 +384,15 @@ external product teams depend on it.
 ### Agent instructions
 
 1. Extract technical primitives such as transaction handling, JWT verification,
-   structured errors, telemetry, health, idempotency, outbox/inbox, and consumer
-   running into versioned internal packages.
+   structured errors, telemetry, health, idempotency, outbox, and consumer
+   running into versioned internal packages. Include an inbox primitive only if
+   the activation gate in Section 5 has been met.
 2. Keep all business vocabulary and policy in its owning domain.
-3. Define a product/component descriptor containing owner, unit type, image,
-   dependencies, contracts, environments, SLO tier, and data classification.
+3. Keep the directory contract and colocated manifests until repeated
+   onboarding work demonstrates that a descriptor would remove real
+   duplication. Adding one requires explicit owner activation.
 4. Generate or validate standard manifests, CI matrices, Flux entries, and
-   documentation from maintained templates.
+   documentation only if that descriptor work is activated.
 5. Automate contract build, compatibility checking, publication, provenance,
    and downstream consumer testing.
 6. Add a mandatory production-readiness checklist, ADRs, CODEOWNERS, SECURITY,

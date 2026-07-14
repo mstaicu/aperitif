@@ -10,7 +10,7 @@ import test from "node:test";
 
 import { startNats } from "../test/fixtures/nats.mjs";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
-import { publishOutbox } from "./publisher.mjs";
+import { publishEvents } from "./publish.mjs";
 
 test("publishes unpublished outbox events to NATS", async () => {
   // Arrange
@@ -70,7 +70,7 @@ test("publishes unpublished outbox events to NATS", async () => {
       return message;
     }
   })();
-  const task = publishOutbox({
+  const task = publishEvents({
     db,
     nc: nats.nc,
     signal: controller.signal,
@@ -132,7 +132,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   );
 
   // Act
-  const publish = publishOutbox({
+  const publish = publishEvents({
     db,
     nc: nats.nc,
     signal: controller.signal,

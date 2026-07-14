@@ -2,12 +2,7 @@ import { AccountEntitlementsUpdatedV1Type } from "@mstaicu/entitlements-contract
 
 import { projectAccountEntitlementsUpdatedV1 } from "./account-entitlements-updated-v1.mjs";
 
-/**
- * @type {Record<string, (args: {
- *   db: import("pg").Pool,
- *   event: unknown,
- * }) => Promise<void>>}
- */
+/** @type {Record<string, typeof projectAccountEntitlementsUpdatedV1>} */
 export const projections = {
   [AccountEntitlementsUpdatedV1Type]: projectAccountEntitlementsUpdatedV1,
 };

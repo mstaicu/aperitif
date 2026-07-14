@@ -1,8 +1,6 @@
 import { jetstream } from "@nats-io/jetstream";
 import { on } from "node:events";
 
-const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
-
 /**
  * LISTEN only wakes the publisher; outbox_events is the source of truth.
  *
@@ -12,18 +10,16 @@ const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
  *   signal: AbortSignal,
  * }} args
  */
-export async function publishOutbox({ db, nc, signal }) {
+export async function publishEvents({ db, nc, signal }) {
   signal.throwIfAborted();
 
   const js = jetstream(nc);
   const client = await db.connect();
 
   try {
-    await client.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
-
     // eslint-disable-next-line
-    for await (const _ of outboxDrainRequests({ client, signal })) {
-      while (await publishNextOutboxEvent({ client, js })) {
+    for await (const _ of drainTriggers({ client, signal })) {
+      while (await publishNextEvent({ client, js })) {
         signal.throwIfAborted();
       }
     }
@@ -34,8 +30,6 @@ export async function publishOutbox({ db, nc, signal }) {
 
     throw err;
   } finally {
-    await client.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {});
-
     client.release();
   }
 }
@@ -46,19 +40,27 @@ export async function publishOutbox({ db, nc, signal }) {
  *   signal: AbortSignal,
  * }} args
  */
-async function* outboxDrainRequests({ client, signal }) {
+async function* drainTriggers({ client, signal }) {
+  const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
+
   await using notifications = on(client, "notification", {
     close: ["end"],
     signal,
   });
 
-  // Drain rows that existed before the publisher started listening.
-  yield;
+  try {
+    await client.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
 
-  for await (const [notification] of notifications) {
-    if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
-      yield;
+    // Drain rows that existed before the publisher started listening.
+    yield;
+
+    for await (const [notification] of notifications) {
+      if (notification.channel === OUTBOX_NOTIFY_CHANNEL) {
+        yield;
+      }
     }
+  } finally {
+    await client.query(`UNLISTEN ${OUTBOX_NOTIFY_CHANNEL}`).catch(() => {});
   }
 }
 
@@ -69,7 +71,7 @@ async function* outboxDrainRequests({ client, signal }) {
  * }} args
  * @returns {Promise<boolean>}
  */
-async function publishNextOutboxEvent({ client, js }) {
+async function publishNextEvent({ client, js }) {
   try {
     await client.query("BEGIN");
 

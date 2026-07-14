@@ -8,24 +8,13 @@ import { AccountOpenedV1EventCheck } from "@mstaicu/accounts-contracts";
  */
 export async function projectAccountOpenedV1({ db, event }) {
   if (!AccountOpenedV1EventCheck.Check(event)) {
-    console.warn(
-      JSON.stringify({
-        event: "invalid_account_opened_event_ignored",
-        level: "warn",
-        service: "entitlements-accounts-projector",
-      }),
-    );
+    console.warn("Invalid account opened event ignored");
     return;
   }
 
-  const { data } = /** @type {{
-    data: {
-      account: { id: string, type: "personal" | "business" },
-      version: number,
-    },
-  }} */ (event);
+  const { data } = event;
 
-  const result = await db.query(
+  await db.query(
     `
       INSERT INTO projected_accounts (
         account_id,
@@ -40,16 +29,4 @@ export async function projectAccountOpenedV1({ db, event }) {
     `,
     [data.account.id, data.account.type, data.version],
   );
-
-  if ((result.rowCount ?? 0) > 0) {
-    console.log(
-      JSON.stringify({
-        account_id: data.account.id,
-        event: "account_projection_updated",
-        level: "info",
-        service: "entitlements-accounts-projector",
-        version: data.version,
-      }),
-    );
-  }
 }

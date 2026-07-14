@@ -28,9 +28,13 @@ Do not silently reopen these decisions while executing the plan.
 | --- | --- | --- |
 | GitHub Actions are outside the effective repository workflow directory | The containing repository will handle workflow placement and paths. Do not move them from this project without explicit instruction. | Assign a containing-repository owner and integration ticket before Phase 6; test the integrated workflow there before enabling production deployment. |
 | In-cluster production PostgreSQL is disposable | Do not invest in making these PostgreSQL Deployments production-grade. They will be replaced by managed databases. | Managed databases, backups, roles, TLS, and restore tests must exist before storing production data. |
-| Ephemeral and production cryptographic trust is shared | Accepted temporarily. Do not rotate or split keys in the current correction pass. | Split and rotate before production is treated as a separate trust zone or production credentials/data are introduced. |
+| Ephemeral and production cryptographic trust is shared | JWT signing keys will be separated before production traffic; other key separation remains deferred. | Ensure each environment trusts only its own JWT key set, then split remaining cryptographic material before production is treated as a separate trust zone. |
+| JWT semantic claims | Signature, expiry, and string-subject verification are accepted in the current single-issuer, single-token-kind, shared-API trust zone. | Add issuer, audience, type, and product scopes when multiple issuers, token kinds, API trust boundaries, or product isolation require them. |
 | Product backends receive the host-wide refresh credential | Accepted as an early product assumption. Do not redesign the refresh-cookie/BFF flow unless the owner reopens it. | Reassess before untrusted product teams, independently operated products, privileged administration through product backends, or a compliance boundary. |
 | NATS has no client authentication or subject ACLs | Accepted temporarily. Do not add NATS authentication in the current correction pass. | Add workload identity, ACLs, and transport security before untrusted workloads join or NATS event provenance is treated as a hardened authority boundary. |
+| Outbox publication uses one locked row and one PubAck per transaction | Accepted current baseline. Do not replace it with leases, retry metadata, quarantine, or an inbox framework speculatively. | Reopen only after measured lock contention, a recurring poison event, non-idempotent durable consumer side effects, or an explicit production recovery requirement. |
+| NATS resources and durable telemetry | Deferred while usage and observability are still being tested. | Add measured resources and durable export when a production workload and backend exist. |
+| Deployment workflow | Directory-discovered component delivery with component-owned GHCR names, exact-SHA matrix builds, SHA and production tags, and Flux image-policy digest updates is accepted. | Revisit the mutable production-tag policy or introduce domain-level coordination when observed release requirements demand it. |
 | Artifact and repository ownership uses personal identities | Requires a separate owner decision and external coordination. Do not migrate ownership incidentally. | Decide and execute an organizational ownership model before multiple independent teams depend on publishing or deployment. |
 
 “Accepted temporarily” means that the risk is visible and gated; it does not
@@ -83,8 +87,9 @@ activation like any other backlog task.
 3. Pin the Kubernetes/Kustomize/Flux schema versions used by validation so the
    result is reproducible.
 4. Add an architecture decision record for the intentional early-stage trust
-   model: shared JWT audience, shared refresh credential, unauthenticated NATS,
-   shared environment keys, and managed-database migration intent.
+   model: one shared API trust zone, shared refresh credential, unauthenticated
+   NATS, planned environment-specific JWT keys, deferred separation of other
+   keys, and managed-database migration intent.
 5. Define the release-blocking labels or status values used for each phase.
 6. Define the minimum production cluster contract needed by later work:
    Kubernetes version, at least three schedulable nodes, zone layout, CNI and
@@ -122,93 +127,81 @@ be safely reconciled until they are corrected.
 
 ### 1.2 Fix the NATS StatefulSet schema
 
-1. Add `whenUnsatisfiable: DoNotSchedule` to the existing hostname topology
-   spread constraint.
-2. Validate the rendered StatefulSet against the chosen Kubernetes API schema.
-3. Confirm the production cluster contract will provide at least three
-   schedulable nodes before adding stricter zone constraints.
+**Status: completed**
 
-This only makes the StatefulSet valid. Capacity, recovery, and authentication
-are separate workstreams.
+The invalid topology-spread patch was removed. The production overlay now uses
+required hostname anti-affinity, which expresses the intended one-server-per-
+node placement without the incomplete topology-spread constraint. Both
+event-bus overlays render, and the ephemeral three-server deployment has been
+checked for readiness, JetStream quorum, bound PVCs, and disruption protection.
+
+Do not add zone placement until the production cluster contract defines its
+available zones and labels. Advanced capacity, recovery, and authentication
+remain separately gated workstreams.
 
 ### 1.3 Give every Namespace one Flux owner
 
-**Status: deferred by owner; not part of the current Flux simplification**
+**Status: complete**
 
-1. Introduce one foundation Kustomization per domain to own only its Namespace
-   and any labels already present on that Namespace.
-2. Remove duplicate Namespace resources from API, worker, migration, database,
-   cleanup, and UI leaves.
-3. Make workload leaves depend on the domain foundation.
-4. Protect Namespaces and durable resources from accidental prune where their
-   lifecycle must outlive one workload definition.
-5. Test deletion of a leaf from the rendered inventory and prove it cannot
-   delete the domain Namespace.
+The root cluster reconciliation owns the Identity, Accounts, and Entitlements
+Namespaces exactly once. Production workload leaves retain their Kustomize
+namespace transformers but do not render Namespace resources. Ephemeral
+overlays remain self-contained. No foundation directory or extra Flux layer was
+added.
 
-Policy, quota, and RBAC may use this foundation later, but adding those controls
-is Phase 5 work and is not part of the currently authorized ownership patch.
+### Current and future pull-request slices
 
-### Recommended pull-request slices
+1. Preserve the completed Flux namespace repair.
+2. Preserve the completed NATS StatefulSet repair.
+3. Add a reusable validation harness only when that work is activated.
+4. Preserve the completed single-owner Namespace design.
 
-1. Validation harness and failing fixtures.
-2. Flux namespace repair.
-3. NATS required-field repair.
-4. Namespace ownership only after the owner reopens its design.
-
-### Exit gate
+### Current exit gate
 
 - All active manifests render and pass schema validation.
 - All leaf Flux resources are explicitly in `flux-system`.
+- Flux dependency ordering still converges from an empty cluster.
+
+### Production ownership gate
+
 - Removing one workload leaf cannot prune a Namespace or unrelated domain
   resources.
-- Flux dependency ordering still converges from an empty cluster.
 
 ## Phase 2: establish identity and authorization correctness
 
-This phase addresses audit item 6 while preserving the owner's refresh-token
-decision.
-
-Section 2.1 is active in `NOW.md`. Section 2.2 is production-backlog work and
-requires an explicit owner activation before implementation.
+This phase preserves the owner's current token and refresh-model decisions.
+Both sections are production-backlog work and require explicit activation.
 
 ### 2.1 Define one baseline access-token profile
 
-1. Add configured and validated `iss` and shared platform `aud` claims.
-2. Require the access-token type `at+jwt` and the explicitly allowed `ES256`
-   signing algorithm.
-3. Centralize token verification so every resource server enforces issuer,
-   audience, type, algorithm, expiry, signature, and required claims in the
-   same way.
-4. Add negative tests for wrong/missing issuer, wrong/missing audience, wrong
-   token type, algorithm substitution, expired tokens, malformed claims, and
-   unknown key IDs.
-5. Document that the shared audience is a baseline against token confusion, not
-   product-level resource isolation.
+**Status: additional claims deferred by owner**
 
-Do not change refresh cookies, rotation endpoints, product BFFs, or the current
-`operator` behavior in this task.
+The current baseline verifies signature and expiry against Identity's JWKS and
+requires a string subject. Development and production must use separate signing
+key sets before production traffic, and each environment must trust only its own
+JWKS.
+
+Add and verify `iss` when multiple logical issuers are trusted, `aud` when tokens
+target different API boundaries, and `typ` when one signer creates multiple JWT
+kinds. Add product audiences/scopes only when product isolation is required.
+Do not change refresh cookies, product BFFs, or `operator` behavior merely to
+prepare for those future boundaries.
 
 ### 2.2 Repair identity operational failure paths
 
-1. Introduce one transaction helper that always rolls back failed operations
-   and never returns a broken client to the pool.
-2. Make refresh-token rotation safe under a lost response and permitted
-   concurrent retry without incorrectly revoking a legitimate session.
-3. Add an audited, one-time initial-operator bootstrap and recovery process.
-4. Bound and rate-limit anonymous WebAuthn challenges and make challenge
+1. Add an audited, one-time initial-operator bootstrap and recovery process.
+2. Bound and rate-limit anonymous WebAuthn challenges and make challenge
    consumption atomic or explicitly retryable.
-5. Write and exercise identity key-rotation and compromised-session response
+3. Write and exercise identity key-rotation and compromised-session response
    runbooks. Actual environment-key separation remains Phase 5.
 
-### Exit gate
+### Future exit gate when activated
 
-- Every API uses the same tested token-verification contract.
-- A token minted by another issuer, for another audience, or with another token
-  type is rejected.
-- The shared audience and shared refresh-cookie trust zone are explicitly
-  stated in the threat model.
-- Transaction, refresh retry, operator bootstrap, and WebAuthn failure paths
-  have automated tests.
+- Development and production trust different JWT key sets.
+- Any activated issuer, audience, token-type, or scope boundary has negative
+  verification tests.
+- The shared refresh-cookie trust zone is explicitly stated in the threat model.
+- Activated operator bootstrap and WebAuthn failure paths have automated tests.
 
 ## Phase 3: make event-driven authority recoverable
 
@@ -218,7 +211,13 @@ Without it, authorization state can silently diverge across products.
 Phase 3 and subsequent backlog phases require explicit owner activation unless
 a task is separately named in `NOW.md`.
 
+**Current status:** the simple NATS, outbox, and projection baseline is accepted
+and complete for this stage. Everything below is future, trigger-based work;
+none of it is authorized merely because it appears in this roadmap.
+
 ### 3.0 Establish minimum reliability telemetry
+
+**Status: deferred while telemetry export is being tested**
 
 1. Install or select a durable metrics and alerting path before defining an SLO
    that depends on it. The full HA observability platform remains Phase 5.
@@ -226,41 +225,51 @@ a task is separately named in `NOW.md`.
    and projections with latency, error, saturation, lag, retry, and freshness
    signals appropriate to each dependency.
 3. Create owned alerts for NATS capacity/quorum, outbox age, consumer lag,
-   quarantine growth, projection freshness, and failed revocation propagation.
+   projection freshness, failed revocation propagation, and quarantine growth
+   only if quarantine handling has been introduced.
 4. Prove the alert path independently of application logs.
 
 ### 3.1 Define NATS capacity and recovery
 
-1. Define retention, replay, recovery-point, and recovery-time objectives for
-   every stream.
-2. Replace the current permanent `DiscardNew` saturation behavior with an
-   intentional retention or archival policy.
-3. Size every NATS volume for the sum of replicated streams, metadata,
-   compaction, failure recovery, growth, and operational headroom.
-4. Add requests, limits, a PDB, topology policy, capacity/quorum alerts,
-   snapshots, and a tested restore procedure.
-5. Move stream/consumer administration to a controlled provisioner so runtime
-   workers do not reconcile broker administration independently.
+**Status: current baseline complete; advanced recovery deferred**
+
+The current three-server cluster, explicit PVCs, 80% server storage ceiling,
+product stream limits, probes, PDB, placement, and operational documentation
+are accepted for this stage.
+
+Reopen retention changes, archival, snapshots, restore exercises, measured
+resources, or capacity alerts when a product defines a replay/RPO/RTO
+requirement. Consider a separate stream provisioner only if independently
+operated products make worker-owned stream creation conflict in practice.
 
 NATS client authentication remains deferred in this phase unless its activation
 gate has already been reached.
 
 ### 3.2 Make the outbox and consumers failure-safe
 
-1. Add an unpublished-row index, attempts, next-attempt time, lease metadata,
-   last error, and quarantine state to each outbox.
-2. Claim rows in a short transaction, publish outside it, and finalize each
-   event independently.
-3. Add durable inbox idempotency where consumers perform durable side effects.
-4. Configure bounded redelivery, exponential backoff, maximum delivery count,
-   and quarantine handling.
-5. Preserve and alert on invalid authority events; never ACK and discard them
-   without evidence.
-6. Define and automate retention and cleanup for outbox rows, inbox records,
-   quarantine events, and replay metadata without deleting required audit
-   evidence.
+**Status: accepted simple baseline; advanced failure machinery deferred**
+
+The current pattern is intentionally boring:
+
+```text
+domain transaction writes state and outbox row
+LISTEN/NOTIFY wakes the worker
+worker locks one unpublished row
+worker publishes and waits for JetStream PubAck
+worker marks that row published and commits
+consumer commits its projection and then acknowledges
+```
+
+Do not add lease columns or publish outside the row-locking transaction merely
+to shorten a transaction. Add an unpublished-row index or cleanup only after
+table growth is measured. Add retry/quarantine state only after a recurring
+poison event exists. Add a durable inbox only when a consumer performs a
+non-idempotent durable side effect that version-aware projection logic cannot
+make safe.
 
 ### 3.3 Make projections measurable and rebuildable
+
+**Status: deferred until a product defines a recovery or freshness objective**
 
 1. Persist event ID, source aggregate version, source timestamp, applied
    timestamp, and freshness state.
@@ -269,7 +278,7 @@ gate has already been reached.
 4. Define how high-risk requests behave when their authorization projection is
    stale.
 
-### Exit gate
+### Future production exit gate
 
 - Broker saturation cannot silently freeze authority propagation.
 - Poison, duplicate, and out-of-order events cannot corrupt or indefinitely
@@ -379,7 +388,8 @@ network access must remain limited to one trusted workload zone.
 5. Protect Namespaces, CRDs, PVCs, and PVs from unintended prune.
 6. Validate all policy against the selected CNI and Kubernetes version.
 7. Add baseline policy, quota, LimitRange, and domain-level RBAC to the
-   foundation Kustomizations introduced in Phase 1.
+   Namespace ownership structure selected when Phase 1.3 is activated; do not
+   assume a `foundation/` directory.
 
 ### 5.5 Remove ingress and observability single points of failure
 
@@ -433,24 +443,23 @@ network access must remain limited to one trusted workload zone.
 The parent repository owns workflow discovery. This project owns the release
 contract that those workflows must execute.
 
-### 6.1 Replace unit-at-a-time deployment with one release transaction
+### 6.1 Make independent component delivery exact and collision-safe
 
-1. Detect all changed components from the exact triggering commit.
-2. Build and test changed units in parallel from that exact commit, including
-   the production image target rather than only the development target.
-3. Produce immutable image digests and attestations once.
-4. Run unit, contract, migration, production-image smoke, scan, and signature
-   checks before manifest mutation.
-5. Create one reviewed GitOps change containing every component digest and
-   required migration ordering for the release.
-6. Use a real queue that retains every release; do not rely on the default
-   GitHub concurrency model's single pending slot.
-7. Report Flux reconciliation, smoke verification, and rollback metadata.
-8. Add a root validation lane for platform, cluster graph, shared configuration,
-   workflow, and contract changes so path filters cannot bypass system tests.
-9. Integrate through the containing-repository owner/ticket and run an
-   end-to-end test proving workflow discovery, path handling, release queueing,
-   desired-state mutation, and reconciliation reporting.
+**Status: implemented here; containing-repository integration external**
+
+1. Keep exactly `pull-request.yaml` and `release.yaml`.
+2. Discover changed domains and components from the stable directory layout;
+   do not hardcode a catalog.
+3. Treat a component's `prod-eu` overlay as its production-enrollment marker and
+   require exactly one image declaration. Its `name` is the GHCR destination.
+4. Build changed production components from the triggering SHA in a matrix and
+   publish both their SHA and `production` tags.
+5. Let Flux image policies resolve the production digests and image automation
+   commit them into the marked component overlays.
+6. Actions writes only to GHCR. Let Flux alone write desired state to Git and
+   apply it to the cluster.
+7. Require expand/contract compatibility and verify containing-repository path
+   integration before activating the workflows.
 
 This resolves audit item 10 without requiring this repository to decide where
 the containing repository stores its Actions workflows.
@@ -482,17 +491,20 @@ the containing repository stores its Actions workflows.
 ### Exit gate
 
 - Git identifies the exact bytes running in every production workload.
-- A multi-component release has one atomic desired-state commit with no
-  silently dropped component, followed by dependency-ordered Flux rollout,
-  verification, and a defined rollback path. The live rollout is not described
-  as transactional.
+- Every component image is built from the SHA recorded for that workflow run and is
+  promoted by immutable digest.
+- Every production image policy resolves a digest and updates its marked
+  component overlay.
+- The initial mutable `production` tagging policy remains explicitly
+  replaceable without changing the image automation architecture.
+- Independent Flux rollout is safe under the documented expand/contract rules;
+  no atomic runtime cutover is claimed.
 - Production runs the exact artifact that passed staging.
 - Failed policy, test, scan, signature, or provenance checks prevent promotion.
 - Recovery-point and recovery-time claims have been demonstrated, not merely
   documented.
-- The containing repository has discovered and executed the integrated
-  workflow, including a test proving that its queue retains consecutive
-  releases.
+- The containing repository has discovered and executed both integrated
+  workflows, including multi-domain PR and multi-component release tests.
 
 ## Phase 7: productize the platform's golden path
 
@@ -500,12 +512,14 @@ Do this after the primitives are correct; otherwise templates will multiply the
 current failure modes.
 
 1. Extract versioned technical primitives for transactions, token validation,
-   structured errors, telemetry, health, idempotency, outbox/inbox, and consumer
-   execution. Keep business policy in its owning domain.
-2. Define a component descriptor containing owner, type, source, image,
-   dependencies, contracts, environments, SLO tier, and data classification.
-3. Generate or validate standard manifests, CI matrices, Flux entries, and
-   documentation from maintained templates.
+   structured errors, telemetry, health, idempotency, outbox, and consumer
+   execution. Include an inbox primitive only if its activation gate in Phase
+   3.2 has been met. Keep business policy in its owning domain.
+2. Keep the directory contract and colocated manifests until repeated
+   onboarding work proves a descriptor or generator would remove real
+   duplication. Introducing one requires a separate owner decision.
+3. If activated, generate or validate standard manifests, CI matrices, Flux
+   entries, and documentation from maintained templates.
 4. Add conformance policy for immutable images, resources, probes, non-root
    security, Namespace ownership, telemetry, and recovery metadata.
 5. Add ADRs, CODEOWNERS, SECURITY, on-call ownership, production-readiness
@@ -546,21 +560,14 @@ designed migration, not an incidental middleware change.
 
 ## Immediate execution recommendation
 
-For the next implementation scope, authorize any Phase 0 additions not already
-covered by `NOW.md`, then execute the Phase 1 corrections first. The first batch
-should:
+The Flux simplification, single-owner Namespace design, and current
+NATS/event-publication stage are complete. Do not reopen them speculatively.
+Preserve the current implementations.
 
-1. add the local schema/graph validation harness;
-2. preserve the completed leaf Flux namespace fix and its regression check;
-3. add the missing NATS scheduling field;
-4. leave Namespace ownership unchanged until its design is explicitly reopened.
+The independent unit-delivery correction in Phase 6.1 is the current authorized
+scope and is implemented in this project. Its containing-repository placement
+and execution remain external integration work.
 
-After that batch passes its exit gate, execute only the shared JWT profile in
-Phase 2.1, which is already in `NOW.md`. Do not automatically proceed to Phase
-2.2 or later backlog work; activate it explicitly and update `NOW.md` first.
-
-The atomic desired-state release design already authorized by `NOW.md` may be
-developed after Phase 1, but it cannot pass the Phase 6 exit gate until the
-containing repository integrates and tests it. Do not begin by templating the
-current platform or adding more product services; stabilize the underlying
-contracts first.
+JWT semantic claims, Phase 2.2, advanced event reliability, descriptors, and
+later backlog work remain deferred. Do not activate them automatically or begin
+templating the platform without a demonstrated need and explicit owner scope.

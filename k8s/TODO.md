@@ -1,8 +1,36 @@
 # Architecture TODOs Requiring Explanation or Decision
 
-This file records the five audit findings that require explanation or an owner
-decision. It is intentionally separate from `NOW.md`: this file explains the
-failure mode and desired end state, while `NOW.md` is the implementation brief.
+This file records audit findings and deferred decisions. It is intentionally
+separate from `NOW.md`: this file explains the failure mode and desired end
+state, while `NOW.md` is the implementation brief.
+
+## Deferred: split ephemeral and production SOPS trust
+
+**Status: deferred by owner; required before production traffic**
+
+### What happens now
+
+The encrypted ephemeral and prod-eu manifests use the same age recipient. The
+private key supplied to CI for disposable Kind deployments can therefore also
+decrypt production material. In addition, `.sops.yaml` matches
+`overlays/dev` and `overlays/live`, while the actual directories are
+`overlays/ephemeral` and `overlays/prod-eu`.
+
+### Required correction
+
+1. Generate separate ephemeral and production age key pairs.
+2. Correct the `.sops.yaml` creation-rule paths to match `ephemeral` and
+   `prod-eu`.
+3. Re-encrypt ephemeral files only for the ephemeral recipient and production
+   files only for the production recipient.
+4. Store only the ephemeral private key in GitHub Actions for disposable Kind
+   integration tests.
+5. Store only the production private key in the prod-eu `flux-system/sops-age`
+   Secret.
+6. Verify that neither key can decrypt the other environment's files.
+
+GitHub Actions must never receive the production private key. Production
+decryption remains Flux's responsibility.
 
 ## Audit item 2: preserve the `flux-system` namespace in the nested Flux graph
 
@@ -35,17 +63,22 @@ The root Kustomize file now directly includes the existing directories:
 - `clusters/prod-eu/domains`
 
 The intermediate `platform.yaml` and `domains.yaml` Flux objects were deleted.
-All leaf Flux objects are now produced in the root build, so the existing root
-`namespace: flux-system` transformer applies directly.
+All leaf Flux objects are now produced in the root build. The `platform/` and
+`domains/` Kustomize assemblers place their namespaced control resources in
+`flux-system`; the root composes the cluster-scoped domain `Namespace` objects
+directly so the namespace transformer cannot rename them.
 
 ### Done when
 
-- The root render contains exactly 22 Flux `Kustomization` objects.
+- The root render contains exactly the 17 composed Flux `Kustomization`
+  objects.
 - Every leaf renders with `metadata.namespace: flux-system`.
 - Every `sourceRef` and `dependsOn` resolves within `flux-system`.
 - No intermediate Flux object is required to place or gate the leaves.
 
 ## Audit item 6: define what an identity access token is and which API may accept it
+
+**Status: current trust model accepted; additional claims deferred by owner**
 
 ### What happens now
 
@@ -75,36 +108,34 @@ entitlements, documents, or a future product. If a signing key is reused across
 environments, a token issued in one environment can also pass signature checks
 in another.
 
-### Minimal correction that preserves early-product assumptions
+### Owner decision
 
-Keep one platform-wide audience for now, but introduce configurable, validated
-claims:
+Development and production will use different signing key sets before
+production traffic, and each environment will trust only its own JWKS. Within
+one environment, Identity creates one JWT kind for one shared platform API trust
+zone. Signature, expiry, and string-subject verification are accepted for that
+model.
 
-- issuer, for example `https://api.tma.com/v1/identity`;
-- audience, for example `aperitif-api`;
-- protected-header type `at+jwt`;
-- explicit verification algorithm `ES256`.
+Add `iss` when a verifier trusts multiple logical issuers, `aud` when tokens are
+targeted to different API boundaries, and `typ` when one signer creates multiple
+JWT kinds. Add product audiences/scopes when cryptographic product isolation is
+actually required. The host-wide refresh-cookie design remains unchanged.
 
-All current APIs may temporarily accept the same audience. Later, the audience
-can be split into `accounts-api`, `entitlements-api`, and product-specific
-values without redesigning the token format.
+### Current completion gate
 
-Do not change the host-wide refresh-cookie design as part of this task; the
-owner has explicitly accepted that early-stage tradeoff.
-
-### Done when
-
-- Identity always sets `iss`, `aud`, and `typ` when issuing an access token.
-- Every API rejects a token with the wrong issuer, audience, type, algorithm,
-  expiry, or missing subject.
-- Tests cover wrong/missing claims and a valid token.
-- Issuer and audience values are environment configuration rather than hidden
-  constants.
+- Development and production trust different JWT key sets before production
+  traffic.
+- APIs continue to reject invalid signatures, expired tokens, and tokens without
+  a string subject.
+- Future issuer, audience, type, or scope boundaries receive negative tests when
+  activated.
 - Existing user and operator behavior remains unchanged.
 
 ## Audit item 8: complete the NATS topology spread constraint
 
-### What happens now
+**Status: resolved by removing the incomplete spread constraint**
+
+### Original failure mode
 
 The production NATS StatefulSet specifies:
 
@@ -123,59 +154,38 @@ Kustomize only combines YAML. It does not apply the Kubernetes API validation
 that rejects an empty scheduling action, which is why the current render check
 passes.
 
-The manifest already has hard pod anti-affinity on hostname, so the least
-surprising correction is:
+### Implemented correction
 
-```yaml
-whenUnsatisfiable: DoNotSchedule
-```
-
-That preserves the existing intent of one NATS replica per node. A separate
-zone-level spread rule should be added only after the production node and zone
-contract is defined.
+The incomplete topology-spread patch was removed. Production retains required
+hostname pod anti-affinity, which directly expresses the current intent of one
+NATS server per node. Do not add zone placement until the production node and
+zone contract exists.
 
 ### Done when
 
-- The production StatefulSet declares an explicit scheduling action.
-- Kubernetes schema validation accepts the rendered StatefulSet.
+- The production StatefulSet has no incomplete topology-spread constraint.
+- Required hostname anti-affinity remains present.
 - Three replicas remain schedulable on the intended production node topology.
-- CI contains schema validation; a plain `kustomize build` is not considered
-  sufficient.
+- Both event-bus overlays render and the ephemeral deployment forms quorum.
 
 ## Audit item 9: give each Namespace exactly one Flux owner
 
-### What happens now
+**Status: resolved**
 
-Each domain unit includes its domain Namespace in its own overlay. For example,
-the accounts Postgres, migration, API, and worker overlays all include a
-`Namespace/accounts` manifest. Four separate Flux Kustomizations reconcile
-those paths, and all four use `prune: true`.
+### Implemented correction
 
-Flux keeps an inventory per Kustomization. Sharing one object across inventories
-creates competing ownership. If one unit stops rendering the Namespace or its
-Flux Kustomization is removed, that inventory may prune the Namespace. Deleting
-a Namespace cascades to every Deployment, Job, Secret, Service, and PVC inside
-it, including resources owned by the other three units.
+The root cluster reconciliation now owns `Namespace/identity`,
+`Namespace/accounts`, and `Namespace/entitlements` exactly once through
+`clusters/prod-eu/domains/*-namespace.yaml`.
 
-This is not a concern when repeatedly applying the same object manually with
-`kubectl`; it is specifically an inventory and garbage-collection concern.
+All 13 production workload overlays retain their Kustomize `namespace:`
+transformer but no longer render a Namespace resource. Their Flux inventories
+therefore own only the workloads inside the domain and cannot prune the shared
+Namespace.
 
-### Desired correction
-
-Create one foundation unit per domain that owns:
-
-- the Namespace;
-- Pod Security labels;
-- baseline NetworkPolicies;
-- quota and limit defaults when introduced;
-- domain-scoped service accounts and RBAC when introduced.
-
-API, worker, migration, database, cleanup, and UI overlays must target the
-Namespace but must not create it. Every leaf Flux Kustomization must depend on
-its domain foundation.
-
-Protect Namespaces from accidental garbage collection. Namespace deletion must
-be an explicit, separately reviewed operation.
+Ephemeral overlays still render their Namespace resources so local modules can
+start independently in a disposable cluster. No foundation directory or extra
+Flux reconciliation layer was introduced.
 
 ### Done when
 
@@ -184,12 +194,13 @@ be an explicit, separately reviewed operation.
   delete the Namespace.
 - Local ephemeral deployment still creates each Namespace once before its
   units.
-- A repository check fails if a Namespace is rendered by more than one Flux
-  path.
+- The root and all 13 production workload overlays render successfully.
 
-## Audit item 10: make a multi-component deployment one release
+## Audit item 10: make component deployment exact and collision-safe
 
-### What happens now
+**Status: resolved here; containing-repository integration remains external**
+
+### Original failure mode
 
 Each deploy caller starts an independent job, but all jobs use the same
 `deployment-master` concurrency group. GitHub concurrency normally allows one
@@ -209,24 +220,17 @@ The workflow also checks out the current `master` branch while labelling the
 image with the triggering `github.sha`. A queued run can therefore build newer
 branch contents under an older SHA label.
 
-Finally, every surviving job commits one manifest separately. There is no
-single desired-state change representing the complete domain release.
+### Implemented correction
 
-### Desired correction
+The repository now has one PR workflow and one release workflow. Changed domains
+and components are discovered from their directory depth without a hardcoded
+catalog. A matrix reads each changed component's image `name` from its colocated
+`prod-eu` overlay and builds and pushes its SHA and `production` tags with
+Docker's build action. Flux image policies resolve the production digests and
+one image automation commits them into the marked component overlays.
 
-Use one release workflow:
-
-1. Detect changed deployable units for the triggering merge SHA.
-2. Build and test those exact sources in parallel.
-3. Collect the resulting immutable image digests.
-4. Update every affected manifest together.
-5. Create one release commit or reviewed GitOps PR.
-6. Let Flux apply the migration/runtime dependency graph from that one desired
-   state.
-
-If the independent workflows must remain temporarily, enable a real queue so
-pending deployments are not replaced. That is only a containment fix; it does
-not provide atomic releases or deterministic build provenance.
+Components without a `prod-eu` overlay are local-only. Actions writes only to
+GHCR; Flux writes desired state to Git and remains the only cluster writer.
 
 The physical placement of GitHub workflows is outside this project because the
 owner will integrate them from the containing repository. The workflow logic
@@ -235,7 +239,8 @@ inside this project still needs to be correct before that integration.
 ### Done when
 
 - Every image is built from the exact triggering commit.
-- No changed unit can be silently canceled because another unit was queued.
-- One release updates all affected image digests atomically.
-- Migration and runtime changes cannot be partially represented in Git.
-- Concurrent releases use conflict-safe queuing and Git updates.
+- Every production image has a ready repository and policy in `flux-system`.
+- Image automation writes the selected digest into the correct marked overlay.
+- Actions writes only to GHCR; Flux alone writes Git and the cluster.
+- Required migration ordering remains an explicit expand/contract merge and
+  release discipline; the independent workflows do not infer it.

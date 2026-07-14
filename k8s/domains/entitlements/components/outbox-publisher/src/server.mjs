@@ -9,7 +9,7 @@ import process from "node:process";
 import { Pool } from "pg";
 
 import { createHealthServer } from "./platform/health.mjs";
-import { publishOutbox } from "./publisher.mjs";
+import { publishEvents } from "./publish.mjs";
 
 const controller = new AbortController();
 
@@ -21,15 +21,7 @@ const db = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-db.on("error", (err) => {
-  console.error(
-    JSON.stringify({
-      event: "database_idle_client_error",
-      level: "error",
-      message: err.message,
-    }),
-  );
-});
+db.on("error", (err) => console.error(err));
 
 await using nc = await connect({
   name: "entitlements-outbox-publisher",
@@ -54,7 +46,7 @@ await using health = createHealthServer({ db, nc });
 
 health.listen(3000, "0.0.0.0");
 
-await publishOutbox({
+await publishEvents({
   db,
   nc,
   signal: controller.signal,
