@@ -1,4 +1,3 @@
-import { AccountEntitlementsUpdatedV1Type } from "@mstaicu/entitlements-contracts";
 import {
   AckPolicy,
   jetstream,
@@ -11,20 +10,21 @@ import { setTimeout } from "node:timers/promises";
 export const ENTITLEMENTS_STREAM = "ENTITLEMENTS";
 export const ENTITLEMENTS_CONSUMER = "documents-entitlements-projection";
 
-const HANDLED_ENTITLEMENT_EVENT_TYPES = [AccountEntitlementsUpdatedV1Type];
-
 /**
- * @param {{ nc: import("@nats-io/transport-node").NatsConnection }} args
- * @param {AbortSignal} signal
+ * @param {{
+ *   nc: import("@nats-io/transport-node").NatsConnection,
+ *   signal: AbortSignal,
+ *   subjects: string[],
+ * }} args
  */
-export async function getEntitlementsConsumer({ nc }, signal) {
+export async function getConsumer({ nc, signal, subjects }) {
   const js = jetstream(nc);
   const jsm = await jetstreamManager(nc);
 
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ENTITLEMENTS_CONSUMER,
-    filter_subjects: HANDLED_ENTITLEMENT_EVENT_TYPES,
+    filter_subjects: subjects,
   };
 
   while (true) {

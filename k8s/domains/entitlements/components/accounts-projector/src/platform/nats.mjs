@@ -1,4 +1,3 @@
-import { AccountOpenedV1Type } from "@mstaicu/accounts-contracts";
 import {
   AckPolicy,
   jetstream,
@@ -11,20 +10,21 @@ import { setTimeout } from "node:timers/promises";
 export const ACCOUNTS_STREAM = "ACCOUNTS";
 export const ACCOUNTS_CONSUMER = "entitlements-accounts-projection";
 
-const HANDLED_ACCOUNT_EVENT_TYPES = [AccountOpenedV1Type];
-
 /**
- * @param {{ nc: import("@nats-io/transport-node").NatsConnection }} args
- * @param {AbortSignal} signal
+ * @param {{
+ *   nc: import("@nats-io/transport-node").NatsConnection,
+ *   signal: AbortSignal,
+ *   subjects: string[],
+ * }} args
  */
-export async function getAccountsConsumer({ nc }, signal) {
+export async function getConsumer({ nc, signal, subjects }) {
   const js = jetstream(nc);
   const jsm = await jetstreamManager(nc);
 
   const config = {
     ack_policy: AckPolicy.Explicit,
     durable_name: ACCOUNTS_CONSUMER,
-    filter_subjects: HANDLED_ACCOUNT_EVENT_TYPES,
+    filter_subjects: subjects,
   };
 
   while (true) {

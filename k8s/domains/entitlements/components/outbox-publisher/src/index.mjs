@@ -17,4 +17,4 @@ if (!Number.isSafeInteger(streamMaxBytes) || streamMaxBytes <= 0) {
   throw new Error("NATS_STREAM_MAX_BYTES must be a positive integer");
 }
 
-await import("./worker.mjs");
+await import("./server.mjs");

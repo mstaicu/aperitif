@@ -1,20 +1,18 @@
 import { jetstream } from "@nats-io/jetstream";
 import { on } from "node:events";
 
-import { ACCOUNTS_STREAM } from "../platform/messaging/accounts-stream.mjs";
-
 const OUTBOX_NOTIFY_CHANNEL = "outbox_events";
 
 /**
- * LISTEN only wakes the worker; outbox_events is the source of truth.
+ * LISTEN only wakes the publisher; outbox_events is the source of truth.
  *
  * @param {{
  *   db: import("pg").Pool,
  *   nc: import("@nats-io/transport-node").NatsConnection,
- * }} resources
- * @param {AbortSignal} signal
+ *   signal: AbortSignal,
+ * }} args
  */
-export async function runPublishOutbox({ db, nc }, signal) {
+export async function publishOutbox({ db, nc, signal }) {
   signal.throwIfAborted();
 
   const js = jetstream(nc);
@@ -24,8 +22,8 @@ export async function runPublishOutbox({ db, nc }, signal) {
     await client.query(`LISTEN ${OUTBOX_NOTIFY_CHANNEL}`);
 
     // eslint-disable-next-line
-    for await (const _ of outboxDrainRequests(client, signal)) {
-      while (await publishNextOutboxEvent(client, js)) {
+    for await (const _ of outboxDrainRequests({ client, signal })) {
+      while (await publishNextOutboxEvent({ client, js })) {
         signal.throwIfAborted();
       }
     }
@@ -43,16 +41,18 @@ export async function runPublishOutbox({ db, nc }, signal) {
 }
 
 /**
- * @param {import("pg").PoolClient} client
- * @param {AbortSignal} signal
+ * @param {{
+ *   client: import("pg").PoolClient,
+ *   signal: AbortSignal,
+ * }} args
  */
-async function* outboxDrainRequests(client, signal) {
+async function* outboxDrainRequests({ client, signal }) {
   await using notifications = on(client, "notification", {
     close: ["end"],
     signal,
   });
 
-  // Drain rows that existed before the worker started listening.
+  // Drain rows that existed before the publisher started listening.
   yield;
 
   for await (const [notification] of notifications) {
@@ -63,11 +63,13 @@ async function* outboxDrainRequests(client, signal) {
 }
 
 /**
- * @param {import("pg").PoolClient} client
- * @param {import("@nats-io/jetstream").JetStreamClient} js
+ * @param {{
+ *   client: import("pg").PoolClient,
+ *   js: import("@nats-io/jetstream").JetStreamClient,
+ * }} args
  * @returns {Promise<boolean>}
  */
-async function publishNextOutboxEvent(client, js) {
+async function publishNextOutboxEvent({ client, js }) {
   try {
     await client.query("BEGIN");
 
@@ -92,12 +94,7 @@ async function publishNextOutboxEvent(client, js) {
 
     const { event, id } = outboxEvent;
 
-    await js.publish(event.type, JSON.stringify(event), {
-      expect: {
-        streamName: ACCOUNTS_STREAM,
-      },
-      msgID: id,
-    });
+    await js.publish(event.type, JSON.stringify(event), { msgID: id });
 
     await client.query(
       `

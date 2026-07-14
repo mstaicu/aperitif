@@ -1,17 +1,23 @@
+import {
+  DiscardPolicy,
+  jetstreamManager,
+  RetentionPolicy,
+  StorageType,
+} from "@nats-io/jetstream";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { startNats } from "../../test/fixtures/nats.mjs";
-import { startPostgres } from "../../test/fixtures/postgres.mjs";
-import { createEntitlementsStream } from "../platform/messaging/entitlements-stream.mjs";
-import { runPublishOutbox } from "./publish-outbox.mjs";
+import { startNats } from "../test/fixtures/nats.mjs";
+import { startPostgres } from "../test/fixtures/postgres.mjs";
+import { publishOutbox } from "./publisher.mjs";
 
 test("publishes unpublished outbox events to NATS", async () => {
   // Arrange
   await using db = await startPostgres();
   await using nats = await startNats();
   const controller = new AbortController();
+  const streamName = "ENTITLEMENTS";
   const accountId = randomUUID();
   const event = {
     data: {
@@ -34,10 +40,16 @@ test("publishes unpublished outbox events to NATS", async () => {
     type: "entitlements.account_entitlements.updated.v1",
   };
 
-  await createEntitlementsStream({
-    nc: nats.nc,
-    streamMaxBytes: 419_430_400,
-    streamReplicas: 1,
+  const jsm = await jetstreamManager(nats.nc);
+
+  await jsm.streams.add({
+    discard: DiscardPolicy.New,
+    max_bytes: 419_430_400,
+    name: streamName,
+    num_replicas: 1,
+    retention: RetentionPolicy.Limits,
+    storage: StorageType.File,
+    subjects: ["entitlements.>"],
   });
 
   const subscription = nats.nc.subscribe(event.type, {
@@ -59,7 +71,11 @@ test("publishes unpublished outbox events to NATS", async () => {
       return message;
     }
   })();
-  const task = runPublishOutbox({ db, nc: nats.nc }, controller.signal);
+  const task = publishOutbox({
+    db,
+    nc: nats.nc,
+    signal: controller.signal,
+  });
   const message = await messageReceived;
   controller.abort();
   await task;
@@ -118,7 +134,11 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   );
 
   // Act
-  const publish = runPublishOutbox({ db, nc: nats.nc }, controller.signal);
+  const publish = publishOutbox({
+    db,
+    nc: nats.nc,
+    signal: controller.signal,
+  });
 
   // Assert
   await assert.rejects(publish);

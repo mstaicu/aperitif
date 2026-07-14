@@ -11,14 +11,15 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { setTimeout } from "node:timers/promises";
 
-import { startNats } from "../../test/fixtures/nats.mjs";
-import { startPostgres } from "../../test/fixtures/postgres.mjs";
+import { startNats } from "../test/fixtures/nats.mjs";
+import { startPostgres } from "../test/fixtures/postgres.mjs";
 import {
   ACCOUNTS_CONSUMER,
   ACCOUNTS_STREAM,
-  getAccountsConsumer,
-} from "../platform/messaging/accounts-consumer.mjs";
-import { projectAccounts } from "./project-accounts.mjs";
+  getConsumer,
+} from "./platform/nats.mjs";
+import { projections } from "./projections/index.mjs";
+import { project } from "./projector.mjs";
 
 test("projects account opened events", async () => {
   // Arrange
@@ -49,9 +50,12 @@ test("projects account opened events", async () => {
   };
 
   const controller = new AbortController();
-  const task = getAccountsConsumer({ nc: nats.nc }, controller.signal).then(
-    (consumer) => projectAccounts({ consumer, db }, controller.signal),
-  );
+  const task = project({
+    db,
+    nc: nats.nc,
+    projections,
+    signal: controller.signal,
+  });
 
   await setTimeout(100);
   await jsm.streams.add({
@@ -91,11 +95,7 @@ test("projects account opened events", async () => {
   }
 
   controller.abort();
-  await task.catch((err) => {
-    if (err?.name !== "AbortError") {
-      throw err;
-    }
-  });
+  await task;
 
   // Assert
   assert.deepEqual(projectedAccount, {
@@ -141,10 +141,12 @@ test("ignores stale account opened events", async () => {
     subjects: ["accounts.>"],
   });
   const controller = new AbortController();
-  const consumer = await getAccountsConsumer(
-    { nc: nats.nc },
-    controller.signal,
-  );
+
+  await getConsumer({
+    nc: nats.nc,
+    signal: controller.signal,
+    subjects: Object.keys(projections),
+  });
 
   await db.query(
     `
@@ -159,7 +161,12 @@ test("ignores stale account opened events", async () => {
   );
 
   // Act
-  const task = projectAccounts({ consumer, db }, controller.signal);
+  const task = project({
+    db,
+    nc: nats.nc,
+    projections,
+    signal: controller.signal,
+  });
 
   await js.publish(staleEvent.type, JSON.stringify(staleEvent));
 
@@ -190,11 +197,7 @@ test("ignores stale account opened events", async () => {
   );
 
   controller.abort();
-  await task.catch((err) => {
-    if (err?.name !== "AbortError") {
-      throw err;
-    }
-  });
+  await task;
 
   // Assert
   assert.deepEqual(projectedAccount, {

@@ -6,4 +6,4 @@ for (const name of requiredEnv) {
   }
 }
 
-await import("./worker.mjs");
+await import("./server.mjs");
