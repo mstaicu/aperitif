@@ -19,7 +19,7 @@ spec:
               app: identity-cleanup
         - podSelector:
             matchLabels:
-              app: identity-migrate
+              app: identity-migrations
       ports:
         - protocol: TCP
           port: 5432

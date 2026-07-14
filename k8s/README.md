@@ -20,13 +20,13 @@ AGENTS.md               non-obvious agent rules
 Domain component shape:
 
 ```text
-postgres -> migrate -> api/worker/ui
+postgres -> migrations -> api/worker/ui
 ```
 
 Components stay independently deployable. Each component owns its source,
 Dockerfile, and Kubernetes manifests under `components/<name>/infra`. A domain
 only has the components it needs. Database SQL and its Flyway Job live together
-in `components/migrate`; shared domain infrastructure remains in `infra`.
+in `components/migrations`; shared domain infrastructure remains in `infra`.
 
 ## Domains
 
@@ -119,7 +119,7 @@ kustomization.yaml -> platform/* + domains/*
 Domain order:
 
 ```text
-<domain>-postgres -> <domain>-migrate -> <domain>-api/worker/ui
+<domain>-postgres -> <domain>-migrations -> <domain>-api/worker/ui
 ```
 
 GitHub Actions builds and pushes production images. Flux image automation

@@ -16,7 +16,7 @@ spec:
               app: accounts-api
         - podSelector:
             matchLabels:
-              app: accounts-migrate
+              app: accounts-migrations
         - podSelector:
             matchLabels:
               app: outbox-publisher

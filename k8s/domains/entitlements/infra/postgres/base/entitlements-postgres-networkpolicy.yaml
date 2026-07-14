@@ -16,7 +16,7 @@ spec:
               app: entitlements-api
         - podSelector:
             matchLabels:
-              app: entitlements-migrate
+              app: entitlements-migrations
         - podSelector:
             matchLabels:
               app: outbox-publisher

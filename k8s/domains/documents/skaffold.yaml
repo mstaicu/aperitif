@@ -17,22 +17,22 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: documents-migrate
+  name: documents-migrations
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/documents-migrate
-      context: components/migrate
+    - image: ghcr.io/mstaicu/documents-migrations
+      context: components/migrations
       docker:
         dockerfile: Dockerfile
 
 manifests:
   kustomize:
     paths:
-      - components/migrate/infra/overlays/ephemeral
+      - components/migrations/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec

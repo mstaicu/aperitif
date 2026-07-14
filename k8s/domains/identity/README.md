@@ -16,12 +16,12 @@ Identity does not own accounts, product authority, or business resources.
 ## Components
 
 ```text
-postgres -> migrate -> api -> ui -> cleanup
+postgres -> migrations -> api -> ui -> cleanup
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrate`. PostgreSQL and cleanup remain domain-owned infrastructure.
+`components/migrations`. PostgreSQL and cleanup remain domain-owned infrastructure.
 
 No worker exists because identity publishes no domain events today.
 

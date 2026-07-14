@@ -12,6 +12,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: event-bus
-    - name: entitlements-migrate
+    - name: entitlements-migrations
   wait: true
   timeout: 5m

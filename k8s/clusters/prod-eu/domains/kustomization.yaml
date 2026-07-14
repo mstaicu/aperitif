@@ -5,26 +5,26 @@ namespace: flux-system
 
 resources:
   - identity-postgres.yaml
-  - identity-migrate.yaml
+  - identity-migrations.yaml
   - identity-api.yaml
   - identity-cleanup.yaml
   - identity-ui.yaml
   - accounts-postgres.yaml
-  - accounts-migrate.yaml
+  - accounts-migrations.yaml
   - accounts-api.yaml
   - accounts-outbox-publisher.yaml
   - entitlements-postgres.yaml
-  - entitlements-migrate.yaml
+  - entitlements-migrations.yaml
   - entitlements-api.yaml
   - entitlements-outbox-publisher.yaml
   - entitlements-accounts-projector.yaml
-  - identity-migrate-image.yaml
+  - identity-migrations-image.yaml
   - identity-api-image.yaml
   - identity-ui-image.yaml
-  - accounts-migrate-image.yaml
+  - accounts-migrations-image.yaml
   - accounts-api-image.yaml
   - accounts-outbox-publisher-image.yaml
-  - entitlements-migrate-image.yaml
+  - entitlements-migrations-image.yaml
   - entitlements-api-image.yaml
   - entitlements-outbox-publisher-image.yaml
   - entitlements-accounts-projector-image.yaml

@@ -14,6 +14,6 @@ spec:
     - name: ingress
     - name: observability
     - name: identity-api
-    - name: accounts-migrate
+    - name: accounts-migrations
   wait: true
   timeout: 5m

@@ -12,6 +12,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: event-bus
-    - name: accounts-migrate
+    - name: accounts-migrations
   wait: true
   timeout: 5m

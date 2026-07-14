@@ -21,8 +21,8 @@ check: ## Validate Accounts components, packages, and manifests.
 
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/migrate/infra/overlays/ephemeral >/dev/null
-	kubectl kustomize components/migrate/infra/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/migrations/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
 	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/outbox-publisher/infra/overlays/ephemeral >/dev/null
@@ -30,9 +30,9 @@ check: ## Validate Accounts components, packages, and manifests.
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres
-	kubectl delete job -n accounts migrate --ignore-not-found
-	skaffold run --force -m accounts-migrate
-	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n accounts job/migrate --all-containers=true; exit 1; }
+	kubectl delete job -n accounts migrations --ignore-not-found
+	skaffold run --force -m accounts-migrations
+	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n accounts job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Accounts once in the current cluster.
 	skaffold run -m accounts-api,accounts-outbox-publisher

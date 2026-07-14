@@ -1,0 +1,17 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-migrations
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/components/migrations/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: entitlements-postgres
+  force: true
+  wait: true
+  timeout: 5m

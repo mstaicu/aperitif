@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { GenericContainer, Network, Wait } from "testcontainers";
 
 const fixtureDir = dirname(fileURLToPath(import.meta.url));
-const sqlPath = resolve(fixtureDir, "../../../migrate/sql");
+const sqlPath = resolve(fixtureDir, "../../../migrations/sql");
 
 /**
  * @returns {Promise<Pool & AsyncDisposable>}

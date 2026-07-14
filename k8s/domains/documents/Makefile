@@ -19,8 +19,7 @@ check: ## Validate Documents components and manifests.
 	cd components/ui && npm run typecheck
 	cd components/ui && npm run build
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
-	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/migrate/infra/overlays/ephemeral >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/migrations/infra/overlays/ephemeral >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/accounts-projector/infra/overlays/ephemeral >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/entitlements-projector/infra/overlays/ephemeral >/dev/null
@@ -28,9 +27,9 @@ check: ## Validate Documents components and manifests.
 
 migrate: ## Deploy the Documents database and run its migrations.
 	skaffold run -m documents-postgres
-	kubectl delete job -n documents migrate --ignore-not-found
-	skaffold run --force -m documents-migrate
-	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n documents job/migrate --all-containers=true; exit 1; }
+	kubectl delete job -n documents migrations --ignore-not-found
+	skaffold run --force -m documents-migrations
+	kubectl wait -n documents --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n documents job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Documents once in the current cluster.
 	skaffold run -m documents-api,documents-accounts-projector,documents-entitlements-projector,documents-ui

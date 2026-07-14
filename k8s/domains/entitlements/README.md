@@ -36,12 +36,12 @@ number_sum
 ## Components
 
 ```text
-postgres -> migrate -> api + outbox-publisher + accounts-projector
+postgres -> migrations -> api + outbox-publisher + accounts-projector
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrate`. PostgreSQL remains domain-owned infrastructure.
+`components/migrations`. PostgreSQL remains domain-owned infrastructure.
 
 The accounts projector consumes Accounts events. The outbox publisher publishes
 Entitlements events independently.

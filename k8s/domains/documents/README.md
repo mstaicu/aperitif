@@ -13,12 +13,12 @@ Documents does not own identity, account authority, or entitlement authority.
 ## Components
 
 ```text
-postgres -> migrate -> api + accounts-projector + entitlements-projector + ui
+postgres -> migrations -> api + accounts-projector + entitlements-projector + ui
 ```
 
 Each deployable component owns its source, Dockerfile, and manifests under
 `components/<name>`. Database SQL and its Flyway Job live together in
-`components/migrate`. PostgreSQL remains domain-owned infrastructure.
+`components/migrations`. PostgreSQL remains domain-owned infrastructure.
 
 The accounts and entitlements projectors independently consume their upstream
 domain events. Documents publishes no events today.

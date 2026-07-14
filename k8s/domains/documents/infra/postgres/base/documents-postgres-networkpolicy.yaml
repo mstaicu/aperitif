@@ -16,7 +16,7 @@ spec:
               app: documents-api
         - podSelector:
             matchLabels:
-              app: documents-migrate
+              app: documents-migrations
         - podSelector:
             matchLabels:
               app: accounts-projector

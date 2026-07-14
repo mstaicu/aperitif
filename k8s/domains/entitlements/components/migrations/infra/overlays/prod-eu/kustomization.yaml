@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: entitlements
+
+resources:
+  - ../../base
+
+patches:
+  - path: entitlements-migrations-job.yaml
+
+images:
+  - name: ghcr.io/mstaicu/entitlements-migrations
+    newTag: latest # {"$imagepolicy": "flux-system:entitlements-migrations:tag"}
+    digest: "" # {"$imagepolicy": "flux-system:entitlements-migrations:digest"}

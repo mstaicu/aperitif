@@ -15,8 +15,8 @@ check: ## Validate Identity components, packages, and manifests.
 	cd components/ui && npm run build
 	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/migrate/infra/overlays/ephemeral >/dev/null
-	kubectl kustomize components/migrate/infra/overlays/prod-eu >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec components/migrations/infra/overlays/ephemeral >/dev/null
+	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize infra/cleanup/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/cleanup/overlays/prod-eu >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
@@ -26,9 +26,9 @@ check: ## Validate Identity components, packages, and manifests.
 
 migrate: ## Deploy the Identity database and run its migrations.
 	skaffold run -m identity-postgres
-	kubectl delete job -n identity migrate --ignore-not-found
-	skaffold run --force -m identity-migrate
-	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrate || { kubectl logs -n identity job/migrate --all-containers=true; exit 1; }
+	kubectl delete job -n identity migrations --ignore-not-found
+	skaffold run --force -m identity-migrations
+	kubectl wait -n identity --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n identity job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Identity once in the current cluster.
 	skaffold run -m identity-api,identity-ui,identity-cleanup

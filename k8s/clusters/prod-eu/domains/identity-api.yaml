@@ -17,6 +17,6 @@ spec:
   dependsOn:
     - name: ingress
     - name: observability
-    - name: identity-migrate
+    - name: identity-migrations
   wait: true
   timeout: 5m
