@@ -6,7 +6,7 @@ namespace: entitlements
 resources:
   - namespace.yaml
   - ../../base
-  - entitlements-api-ingress.yaml
+  - entitlements-api-public-ingressroute.yaml
 
 patches:
-  - path: entitlements-api-depl.yaml
+  - path: entitlements-api-deployment.yaml

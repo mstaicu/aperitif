@@ -5,11 +5,13 @@ namespace: identity
 
 resources:
   - ../../base
-  - identity-api-jwt.yaml
-  - identity-api-ingress.yaml
+  - identity-api-jwt-secret.yaml
+  - identity-api-public-ingressroute.yaml
+  - identity-api-public-docs-ingressroute.yaml
+  - identity-api-public-jwks-ingressroute.yaml
 
 patches:
-  - path: identity-api-depl.yaml
+  - path: identity-api-deployment.yaml
 
 configMapGenerator:
   - name: identity-api-cm

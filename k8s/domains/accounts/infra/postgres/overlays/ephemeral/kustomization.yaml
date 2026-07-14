@@ -8,4 +8,4 @@ resources:
   - ../../base
 
 patches:
-  - path: accounts-postgres-depl.yaml
+  - path: accounts-postgres-deployment.yaml

@@ -3,5 +3,6 @@ kind: Kustomization
 
 resources:
   - nats-statefulset.yaml
-  - nats-pdb.yaml
-  - nats-srv.yaml
+  - nats-poddisruptionbudget.yaml
+  - nats-headless-service.yaml
+  - nats-client-service.yaml

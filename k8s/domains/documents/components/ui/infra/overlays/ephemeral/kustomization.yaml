@@ -6,7 +6,7 @@ namespace: documents
 resources:
   - namespace.yaml
   - ../../base
-  - documents-ui-ingress.yaml
+  - documents-ui-public-ingressroute.yaml
 
 patches:
-  - path: documents-ui-depl.yaml
+  - path: documents-ui-deployment.yaml

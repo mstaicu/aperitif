@@ -10,4 +10,4 @@ spec:
         - name: migrate
           env:
             - name: FLYWAY_URL
-              value: "jdbc:postgresql://postgres-srv:5432/identity?user=postgres&password=postgres"
+              value: "jdbc:postgresql://identity-postgres:5432/identity?user=postgres&password=postgres"

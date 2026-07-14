@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: identity-ui
+spec:
+  template:
+    spec:
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: identity-ui
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: API_INTERNAL_V1_URL
+              value: http://traefik-internal.traefik.svc.cluster.local/v1
+            - name: NODE_OPTIONS
+              value: "--experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./dist/otel.js"
+            - name: OTEL_SERVICE_NAME
+              value: identity-ui
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.otel.svc.cluster.local:4318
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: none

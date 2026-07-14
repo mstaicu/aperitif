@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: documents-api-internal
+spec:
+  entryPoints:
+    - http
+
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/v1/documents/docs`) || PathRegexp(`^/v1/accounts/[^/]+/documents$`)
+      services:
+        - name: documents-api
+          port: 3000

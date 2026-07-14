@@ -7,4 +7,4 @@ resources:
   - ../../base
 
 patches:
-  - path: entitlements-postgres-depl.yaml
+  - path: entitlements-postgres-deployment.yaml

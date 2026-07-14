@@ -17,7 +17,7 @@ hostnames.
 For kind/CI:
 
 ```sh
-kubectl -n traefik port-forward svc/traefik-lb 8443:443
+kubectl -n traefik port-forward svc/traefik-public 8443:443
 ```
 
 ## Live

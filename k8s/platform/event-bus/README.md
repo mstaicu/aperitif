@@ -40,7 +40,7 @@ streams use `DiscardPolicy.New`, reaching `max_bytes` rejects new events.
 
 3. Set the product-owned `NATS_STREAM_MAX_BYTES` and
    `NATS_STREAM_REPLICAS` in
-   `domains/<domain>/components/outbox-publisher/infra/overlays/<environment>/outbox-publisher-depl.yaml`.
+   `domains/<domain>/components/outbox-publisher/infra/overlays/<environment>/outbox-publisher-deployment.yaml`.
 4. For the current three-server/R3 design, add every stream's `max_bytes`.
    That total must remain below 80% of one NATS PVC.
 5. If it does not fit, calculate `required PVC = total max_bytes / 0.80`, then

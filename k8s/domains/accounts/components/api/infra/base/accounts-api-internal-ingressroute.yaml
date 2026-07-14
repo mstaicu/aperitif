@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: accounts-api-internal
+spec:
+  entryPoints:
+    - http
+
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/v1/accounts`)
+      services:
+        - name: accounts-api
+          port: 3000

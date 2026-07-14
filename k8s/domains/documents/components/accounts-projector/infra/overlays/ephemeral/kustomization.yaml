@@ -8,4 +8,4 @@ resources:
   - ../../base
 
 patches:
-  - path: accounts-projector-depl.yaml
+  - path: accounts-projector-deployment.yaml

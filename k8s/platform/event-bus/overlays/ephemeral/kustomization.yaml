@@ -5,8 +5,8 @@ namespace: nats
 
 resources:
   - ../../base
-  - nats-np.yaml
-  - nats-ns.yaml
+  - nats-networkpolicy.yaml
+  - namespace.yaml
 
 configMapGenerator:
   - name: nats-config
@@ -15,4 +15,4 @@ configMapGenerator:
 
 patches:
   - path: nats-statefulset.yaml
-  - path: nats-srv.yaml
+  - path: nats-client-service.yaml

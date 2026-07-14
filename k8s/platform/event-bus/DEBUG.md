@@ -33,7 +33,7 @@ one or three of them.
 | `6222` | NATS servers only               | Routes between cluster members                      |
 | `8222` | Kubernetes probes and operators | HTTP health and monitoring                          |
 
-Applications connect to `nats-srv.nats.svc.cluster.local:4222`. They do not
+Applications connect to `nats-client.nats.svc.cluster.local:4222`. They do not
 connect to the headless service or port `6222`.
 
 ## Deploy
@@ -96,7 +96,7 @@ The client Service also needs one ready endpoint per pod:
 
 ```sh
 kubectl get endpointslice -n nats \
-  -l kubernetes.io/service-name=nats-srv -o wide
+  -l kubernetes.io/service-name=nats-client -o wide
 ```
 
 No endpoints means the pods are not Ready or the Service selector no longer
@@ -158,7 +158,7 @@ Repeat the commands for pods `1` and `2` when diagnosing one unhealthy member.
 Port-forward the client Service in one terminal:
 
 ```sh
-kubectl port-forward -n nats service/nats-srv 4222:4222
+kubectl port-forward -n nats service/nats-client 4222:4222
 ```
 
 In another terminal, point the CLI at that connection:
@@ -345,7 +345,7 @@ Then check the NATS NetworkPolicy and the client Service endpoints:
 ```sh
 kubectl describe networkpolicy nats -n nats
 kubectl get endpointslice -n nats \
-  -l kubernetes.io/service-name=nats-srv -o wide
+  -l kubernetes.io/service-name=nats-client -o wide
 ```
 
 The NATS NetworkPolicy explicitly allows the namespace and existing `app`

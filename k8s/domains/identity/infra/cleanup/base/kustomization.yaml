@@ -3,4 +3,4 @@ kind: Kustomization
 
 resources:
   - identity-cleanup-cronjob.yaml
-  - identity-cleanup-np.yaml
+  - identity-cleanup-networkpolicy.yaml

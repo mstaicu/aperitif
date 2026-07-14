@@ -2,7 +2,7 @@ import type { RequestContext } from "remix/fetch-router";
 
 const apiInternalV1Url = (
   process.env.API_INTERNAL_V1_URL ??
-  "http://traefik-srv.traefik.svc.cluster.local/v1"
+  "http://traefik-internal.traefik.svc.cluster.local/v1"
 ).replace(/\/+$/, "");
 
 export async function loadDocuments({ request }: RequestContext) {

@@ -30,4 +30,4 @@ deploy: deploy-crds ## Deploy local Traefik TLS, hosts entries, and Traefik.
 		--dry-run=client -o yaml | kubectl apply -f -
 
 	skaffold run -m ingress
-	kubectl rollout status -n traefik deploy/traefik-depl --timeout=300s
+	kubectl rollout status -n traefik deploy/traefik --timeout=300s

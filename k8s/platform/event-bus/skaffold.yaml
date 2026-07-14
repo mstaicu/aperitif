@@ -14,13 +14,13 @@ deploy:
 
 portForward:
   - resourceType: service
-    resourceName: nats-srv
+    resourceName: nats-client
     namespace: nats
     port: 4222
     localPort: 4222
 
   - resourceType: service
-    resourceName: nats-srv
+    resourceName: nats-client
     namespace: nats
     port: 8222
     localPort: 8222

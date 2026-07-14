@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: entitlements-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entitlements-postgres
+  template:
+    metadata:
+      labels:
+        app: entitlements-postgres
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: entitlements-postgres
+          image: docker.io/postgres:18
+          env:
+            - name: POSTGRES_DB
+              value: entitlements
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d entitlements
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d entitlements
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

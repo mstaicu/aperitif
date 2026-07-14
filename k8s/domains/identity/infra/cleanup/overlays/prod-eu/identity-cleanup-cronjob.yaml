@@ -12,4 +12,4 @@ spec:
             - name: cleanup
               env:
                 - name: DATABASE_URL
-                  value: "postgres://postgres:postgres@postgres-srv:5432/identity"
+                  value: "postgres://postgres:postgres@identity-postgres:5432/identity"

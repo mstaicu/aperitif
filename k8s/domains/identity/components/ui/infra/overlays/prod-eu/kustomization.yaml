@@ -5,10 +5,10 @@ namespace: identity
 
 resources:
   - ../../base
-  - identity-ui-ingress.yaml
+  - identity-ui-public-ingressroute.yaml
 
 patches:
-  - path: identity-ui-depl.yaml
+  - path: identity-ui-deployment.yaml
 
 images:
   - name: ghcr.io/mstaicu/identity-ui

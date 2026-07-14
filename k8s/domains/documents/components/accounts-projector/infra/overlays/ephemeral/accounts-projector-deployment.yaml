@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: accounts-projector
+spec:
+  template:
+    spec:
+      containers:
+        - name: accounts-projector
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@documents-postgres:5432/documents"
+            - name: NATS_URL
+              value: nats://nats-client.nats.svc.cluster.local:4222

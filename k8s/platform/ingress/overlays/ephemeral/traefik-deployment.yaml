@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: traefik
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: traefik
+          args:
+            - --entrypoints.http.address=:80 # Local plain HTTP for internal routes and probes.
+            - --entrypoints.https.address=:443 # Local TLS listener for public routes.
+
+            - --entrypoints.http.forwardedHeaders.insecure=true # Local only; trust dev proxy headers.
+            - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow request reads at the shared edge.
+            - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle keep-alives across local domains.
+            - --entrypoints.http.http.maxheaderbytes=16384 # Match live header bounds in local dev.
+
+            - --entrypoints.https.forwardedHeaders.insecure=true # Local only; same trust model on TLS.
+            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow TLS request reads.
+            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public TLS sockets.
+            - --entrypoints.https.http.maxheaderbytes=16384 # Match live header bounds in local dev.
+
+            - --providers.kubernetescrd=true # Domains publish Traefik IngressRoutes.
+
+            - --log.level=DEBUG # Extra edge visibility while composing local SCSs.
+            - --accesslog=true # Per-request edge log across all local domains.
+
+            - --ping=true # Kubernetes probes ingress health through Traefik itself.
+            - --ping.entryPoint=http # Health lives on the plain listener.
+
+            - --api=true # Enable local admin API for route debugging.
+            - --api.dashboard=true # Expose the local-only Traefik dashboard.
+
+            - --metrics.otlp=true # Export ingress metrics to the platform collector.
+            - --metrics.otlp.serviceName=traefik # Stable producer name for shared edge telemetry.
+            - --metrics.otlp.grpc=true # Use OTLP gRPC to the in-cluster collector.
+            - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
+            - --metrics.otlp.grpc.insecure=true # Local collector runs without TLS.
+            - --metrics.otlp.addEntryPointsLabels=true # Keep public vs internal latency split.
+            - --metrics.otlp.addRoutersLabels=false # Avoid per-route cardinality across domains.
+            - --metrics.otlp.addServicesLabels=false # Avoid per-backend cardinality across domains.
+
+            - --tracing.otlp=true # Emit spans from the shared edge first.
+            - --tracing.serviceName=traefik # Stable trace service name for ingress.
+            - --tracing.otlp.grpc=true # Use OTLP gRPC to the in-cluster collector.
+            - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
+            - --tracing.otlp.grpc.insecure=true # Local collector runs without TLS.
+            - --tracing.sampleRate=1.0 # Keep full traces while shaping the baseline.
+
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: otel-collector.otel.svc.cluster.local:4317 # Platform collector service for local ingress telemetry.
