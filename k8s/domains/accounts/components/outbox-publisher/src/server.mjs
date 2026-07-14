@@ -1,6 +1,6 @@
 import {
   DiscardPolicy,
-  jetstreamManager,
+  jetstream,
   RetentionPolicy,
   StorageType,
 } from "@nats-io/jetstream";
@@ -29,13 +29,13 @@ await using nc = await connect({
   timeout: 2_000,
 });
 
-const streamName = "ACCOUNTS";
-const jsm = await jetstreamManager(nc);
+const js = jetstream(nc);
+const jsm = await js.jetstreamManager();
 
 await jsm.streams.add({
   discard: DiscardPolicy.New,
   max_bytes: Number(process.env.NATS_STREAM_MAX_BYTES),
-  name: streamName,
+  name: "ACCOUNTS",
   num_replicas: Number(process.env.NATS_STREAM_REPLICAS),
   retention: RetentionPolicy.Limits,
   storage: StorageType.File,
@@ -48,7 +48,7 @@ health.listen(3000, "0.0.0.0");
 
 await publishEvents({
   db,
-  nc,
+  js,
   signal: controller.signal,
 });
 

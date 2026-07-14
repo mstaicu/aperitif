@@ -12,9 +12,11 @@ check: ## Validate Documents components and manifests.
 	cd components/accounts-projector && npm ci
 	cd components/accounts-projector && npm exec -- eslint .
 	cd components/accounts-projector && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/accounts-projector && npm test
 	cd components/entitlements-projector && npm ci
 	cd components/entitlements-projector && npm exec -- eslint .
 	cd components/entitlements-projector && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/entitlements-projector && npm test
 	cd components/ui && npm ci
 	cd components/ui && npm run typecheck
 	cd components/ui && npm run build

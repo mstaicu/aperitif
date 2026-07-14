@@ -10,19 +10,6 @@ data:
         endpoint: 0.0.0.0:13133
 
     receivers:
-      filelog:
-        include:
-          - /var/log/containers/*.log
-        exclude:
-          - /var/log/containers/otel-agent*_otel_*.log
-          - /var/log/containers/otel-collector*_otel_*.log
-        include_file_path: true
-        include_file_name: false
-        exclude_older_than: 10m
-        start_at: end
-        operators:
-          - type: container
-
       kubeletstats:
         auth_type: serviceAccount
         collection_interval: 30s
@@ -63,15 +50,6 @@ data:
         - health_check
 
       pipelines:
-        logs:
-          receivers:
-            - filelog
-          processors:
-            - k8s_attributes
-            - batch
-          exporters:
-            - otlp_grpc
-
         metrics:
           receivers:
             - kubeletstats

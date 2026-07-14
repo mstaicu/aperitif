@@ -1,59 +1,47 @@
 import {
   DiscardPolicy,
-  jetstreamManager,
+  jetstream,
   RetentionPolicy,
   StorageType,
 } from "@nats-io/jetstream";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { setTimeout } from "node:timers/promises";
 
 import { startNats } from "../test/fixtures/nats.mjs";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
 import { publishEvents } from "./publish.mjs";
 
-test("publishes unpublished outbox events to NATS", async () => {
+test("publishes queued and newly inserted outbox events", async () => {
   // Arrange
   await using db = await startPostgres();
   await using nats = await startNats();
   const controller = new AbortController();
-  const streamName = "ENTITLEMENTS";
-  const accountId = randomUUID();
-  const event = {
-    data: {
-      account: {
-        id: accountId,
-      },
-      entitlements: [
-        {
-          id: "members.max",
-          value: 10,
-        },
-      ],
-      version: 1,
-    },
-    datacontenttype: "application/json",
+  const queuedEvent = {
     id: randomUUID(),
-    source: "/domains/entitlements",
-    specversion: "1.0",
-    time: new Date().toISOString(),
-    type: "entitlements.account_entitlements.updated.v1",
+    type: "entitlements.test.queued",
+  };
+  const notifiedEvent = {
+    id: randomUUID(),
+    type: "entitlements.test.notified",
   };
 
-  const jsm = await jetstreamManager(nats.nc);
+  const js = jetstream(nats.nc);
+  const jsm = await js.jetstreamManager();
 
   await jsm.streams.add({
     discard: DiscardPolicy.New,
     max_bytes: 419_430_400,
-    name: streamName,
+    name: "ENTITLEMENTS",
     num_replicas: 1,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
     subjects: ["entitlements.>"],
   });
 
-  const subscription = nats.nc.subscribe(event.type, {
-    max: 1,
+  const subscription = nats.nc.subscribe("entitlements.test.*", {
+    max: 2,
     timeout: 5000,
   });
 
@@ -62,40 +50,55 @@ test("publishes unpublished outbox events to NATS", async () => {
       INSERT INTO outbox_events (id, event)
       VALUES ($1, $2::jsonb)
     `,
-    [event.id, JSON.stringify(event)],
+    [queuedEvent.id, JSON.stringify(queuedEvent)],
   );
 
   // Act
-  const messageReceived = (async () => {
-    for await (const message of subscription) {
-      return message;
-    }
-  })();
+  const messages = subscription[Symbol.asyncIterator]();
   const task = publishEvents({
     db,
-    nc: nats.nc,
+    js,
     signal: controller.signal,
   });
-  const message = await messageReceived;
+  const { value: queuedMessage } = await messages.next();
+
+  // Let the publisher return to LISTEN after draining the queued event.
+  await setTimeout(250);
+  await db.query(
+    `
+      INSERT INTO outbox_events (id, event)
+      VALUES ($1, $2::jsonb)
+    `,
+    [notifiedEvent.id, JSON.stringify(notifiedEvent)],
+  );
+
+  const { value: notifiedMessage } = await messages.next();
   controller.abort();
   await task;
 
   // Assert
-  assert.ok(message);
-  assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+  for (const [message, event] of [
+    [queuedMessage, queuedEvent],
+    [notifiedMessage, notifiedEvent],
+  ]) {
+    assert.ok(message);
+    assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+    assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
+  }
 
   const {
-    rows: [outbox],
+    rows: [{ count }],
   } = await db.query(
     `
-      SELECT published_at
+      SELECT count(*)::integer AS count
       FROM outbox_events
-      WHERE id = $1
+      WHERE id = ANY($1::uuid[])
+        AND published_at IS NOT NULL
     `,
-    [event.id],
+    [[queuedEvent.id, notifiedEvent.id]],
   );
 
-  assert.ok(outbox.published_at);
+  assert.equal(count, 2);
 });
 
 test("keeps outbox events unpublished when NATS publish fails", async () => {
@@ -103,26 +106,10 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   await using db = await startPostgres();
   await using nats = await startNats();
   const controller = new AbortController();
-  const accountId = randomUUID();
+  const js = jetstream(nats.nc);
   const event = {
-    data: {
-      account: {
-        id: accountId,
-      },
-      entitlements: [
-        {
-          id: "members.max",
-          value: 10,
-        },
-      ],
-      version: 1,
-    },
-    datacontenttype: "application/json",
     id: randomUUID(),
-    source: "/domains/entitlements",
-    specversion: "1.0",
-    time: new Date().toISOString(),
-    type: "entitlements.account_entitlements.updated.v1",
+    type: "entitlements.test",
   };
 
   await db.query(
@@ -136,7 +123,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   // Act
   const publish = publishEvents({
     db,
-    nc: nats.nc,
+    js,
     signal: controller.signal,
   });
 

@@ -6,9 +6,10 @@ import test from "node:test";
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import { projectAccountOpenedV1 } from "./account-opened-v1.mjs";
 
-test("projects account state without allowing stale events to overwrite it", async () => {
+test("projects account members without allowing stale events to overwrite them", async () => {
   await using db = await startPostgres();
   const accountId = randomUUID();
+  const userId = randomUUID();
 
   await projectAccountOpenedV1({
     db,
@@ -16,11 +17,11 @@ test("projects account state without allowing stale events to overwrite it", asy
       {
         account: {
           id: accountId,
-          type: "business",
+          type: "personal",
         },
         member: {
           role: "owner",
-          user_id: randomUUID(),
+          user_id: userId,
         },
       },
       2,
@@ -36,8 +37,8 @@ test("projects account state without allowing stale events to overwrite it", asy
           type: "personal",
         },
         member: {
-          role: "owner",
-          user_id: randomUUID(),
+          role: "member",
+          user_id: userId,
         },
       },
       1,
@@ -45,21 +46,24 @@ test("projects account state without allowing stale events to overwrite it", asy
   });
 
   const {
-    rows: [projectedAccount],
+    rows: [projectedMember],
   } = await db.query(
     `
       SELECT account_id,
-        type,
+        user_id,
+        role,
         version
-      FROM projected_accounts
+      FROM projected_account_members
       WHERE account_id = $1
+        AND user_id = $2
     `,
-    [accountId],
+    [accountId, userId],
   );
 
-  assert.deepEqual(projectedAccount, {
+  assert.deepEqual(projectedMember, {
     account_id: accountId,
-    type: "business",
+    role: "owner",
+    user_id: userId,
     version: "2",
   });
 });

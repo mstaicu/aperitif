@@ -1,4 +1,3 @@
-import { jetstream } from "@nats-io/jetstream";
 import { on } from "node:events";
 
 /**
@@ -6,14 +5,13 @@ import { on } from "node:events";
  *
  * @param {{
  *   db: import("pg").Pool,
- *   nc: import("@nats-io/transport-node").NatsConnection,
+ *   js: import("@nats-io/jetstream").JetStreamClient,
  *   signal: AbortSignal,
  * }} args
  */
-export async function publishEvents({ db, nc, signal }) {
+export async function publishEvents({ db, js, signal }) {
   signal.throwIfAborted();
 
-  const js = jetstream(nc);
   const client = await db.connect();
 
   try {
