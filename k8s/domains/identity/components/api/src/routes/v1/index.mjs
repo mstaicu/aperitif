@@ -62,7 +62,7 @@ export const registerV1Routes = async (
           name: "passkeys",
         },
         {
-          description: "Session access-token and refresh-token lifecycle",
+          description: "Session and access-token lifecycle",
           name: "sessions",
         },
       ],

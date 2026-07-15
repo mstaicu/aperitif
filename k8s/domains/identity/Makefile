@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help check migrate deploy dev
+.PHONY: help check migrate deploy dev test
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -36,3 +36,9 @@ deploy: migrate ## Deploy Identity once in the current cluster.
 dev: ## Start the Identity development loop.
 	$(MAKE) migrate
 	exec skaffold dev -m identity-api,identity-ui,identity-cleanup
+
+test: ## Deploy Identity and its platform dependencies in a disposable cluster.
+	$(MAKE) -C ../../platform/ingress deploy
+	$(MAKE) -C ../../platform/event-bus deploy
+	$(MAKE) deploy
+	@: # Add domain integration tests here.

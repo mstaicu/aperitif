@@ -52,8 +52,8 @@ kept here.
   does not deploy workloads into it. Either add a real smoke deployment or
   remove the unused cluster step.
 - Integrate `.github/workflows` with the containing repository while `k8s/` is
-  nested. When `k8s/` becomes the repository root, change Flux image automation
-  from `./k8s/domains` to `./domains`.
+  nested, then update repository-relative paths when `k8s/` becomes the
+  repository root.
 - Pin downloaded tools and third-party Actions immutably, scan built images,
   produce SBOMs and provenance, sign releases, and verify them before admission.
 - Add explicit Kubernetes-context protection to local mutating commands.

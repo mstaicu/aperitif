@@ -11,7 +11,7 @@ import { DatabaseError } from "pg";
  * @property {RegistrationResponseJSON} credential
  */
 
-const generateRefreshToken = () => {
+const generateSessionToken = () => {
   const token = randomBytes(32).toString("base64url");
   const hash = createHash("sha256").update(token).digest();
 
@@ -161,7 +161,7 @@ export const register =
         ],
       );
 
-      const { hash, token } = generateRefreshToken();
+      const { hash, token } = generateSessionToken();
 
       const {
         rows: [session],
@@ -170,23 +170,13 @@ export const register =
           INSERT INTO sessions 
           (
             user_id,
+            token_hash,
             expires_at
           )
-          VALUES ($1, NOW() + INTERVAL '30 days')
+          VALUES ($1, $2, NOW() + INTERVAL '30 days')
           RETURNING id
         `,
-        [registration.userId],
-      );
-
-      await client.query(
-        `
-          INSERT INTO session_refresh_tokens (
-            session_id,
-            token_hash
-          )
-          VALUES ($1, $2)
-        `,
-        [session.id, hash],
+        [registration.userId, hash],
       );
 
       await client.query("COMMIT");

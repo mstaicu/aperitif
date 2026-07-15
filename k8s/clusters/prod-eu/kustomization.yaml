@@ -7,4 +7,3 @@ resources:
   - domains/accounts-namespace.yaml
   - domains/entitlements-namespace.yaml
   - domains
-  - image-automation.yaml

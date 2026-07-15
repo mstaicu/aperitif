@@ -47,20 +47,12 @@ CREATE TABLE sessions (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
+    token_hash BYTEA NOT NULL UNIQUE,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     expires_at TIMESTAMPTZ NOT NULL,
 
     revoked_at TIMESTAMPTZ
-);
-
-CREATE TABLE session_refresh_tokens (
-    token_hash BYTEA PRIMARY KEY,
-
-    session_id UUID NOT NULL
-        REFERENCES sessions(id)
-        ON DELETE CASCADE,
-
-    consumed_at TIMESTAMPTZ
 );

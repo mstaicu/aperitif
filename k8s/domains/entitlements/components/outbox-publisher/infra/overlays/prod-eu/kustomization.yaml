@@ -11,5 +11,4 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/entitlements-outbox-publisher
-    newTag: latest # {"$imagepolicy": "flux-system:entitlements-outbox-publisher:tag"}
-    digest: "" # {"$imagepolicy": "flux-system:entitlements-outbox-publisher:digest"}
+    newTag: latest

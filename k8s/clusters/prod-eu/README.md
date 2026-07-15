@@ -18,13 +18,12 @@ The target:
 
 1. creates `flux-system`;
 2. creates `Secret/flux-system/sops-age` from the local age key;
-3. installs the source, Kustomize, image reflector, and image automation
-   controllers;
+3. installs the source and Kustomize controllers;
 4. configures Flux to reconcile `k8s/clusters/prod-eu` on `master`.
 
-The GitHub token needs repository write access because image automation commits
-selected image digests. After bootstrap, do not manually apply this directory;
-Flux owns it.
+The GitHub token must allow `flux bootstrap` to write its generated manifests
+to the repository. After bootstrap, do not manually apply this directory; Flux
+owns it.
 
 ## Reconciliation graph
 
@@ -37,7 +36,6 @@ clusters/prod-eu
   domain namespaces
   domains
     postgres -> migrations -> api/publisher/projector/ui
-  image automation
 ```
 
 The root owns each production domain Namespace once. Leaf Flux
@@ -51,14 +49,11 @@ Documents is local-only and is not part of this graph.
 
 ## Image releases
 
-GitHub Actions pushes a changed component's `production` tag. An
-`ImageRepository` and `ImagePolicy` resolve its digest. The `domains`
-`ImageUpdateAutomation` then commits that digest into the marked production
-overlay, after which the component's Flux `Kustomization` applies it.
-
-The automation path is currently `./k8s/domains` because this project is nested
-inside its containing repository. Change it to `./domains` when this directory
-becomes the Git repository root.
+GitHub Actions pushes a changed component using its Git SHA and the mutable
+`production` tag. Flux image automation is not installed. Publishing an image
+therefore does not change the cluster. To select a release deterministically,
+set the component production overlay's `newTag` to the published Git SHA and
+commit it; ordinary Flux reconciliation then applies that Git change.
 
 Flux ordering is not an atomic release transaction. Database and runtime
 changes must remain expand/contract compatible while versions overlap.
@@ -67,8 +62,6 @@ changes must remain expand/contract compatible while versions overlap.
 
 ```sh
 flux get kustomizations --all-namespaces
-flux get images all --all-namespaces
-flux reconcile image update domains --namespace=flux-system
 ```
 
 Render the root without contacting the cluster:

@@ -11,5 +11,4 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/entitlements-accounts-projector
-    newTag: latest # {"$imagepolicy": "flux-system:entitlements-accounts-projector:tag"}
-    digest: "" # {"$imagepolicy": "flux-system:entitlements-accounts-projector:digest"}
+    newTag: latest

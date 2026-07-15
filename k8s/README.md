@@ -125,10 +125,10 @@ After a merge to `master`, the release workflow detects changed components.
 Components with a production overlay are built and pushed to GHCR with the Git
 SHA and `production` tags. Infrastructure-only changes are not image builds.
 
-Flux watches `clusters/prod-eu`. Its image policies resolve the digest behind
-each `production` tag, commit that digest into the component overlay, and
-reconcile the cluster. GitHub Actions publishes images; Flux owns GitOps and
-cluster writes.
+Flux watches `clusters/prod-eu` and reconciles exactly what is committed to Git.
+Publishing an image does not deploy it. Until an image-release strategy is
+chosen, production overlays reference the `production` tag; select a specific
+release by committing its Git SHA tag to the component's production overlay.
 
 Schema changes use expand/contract releases: expand first, release compatible
 code second, and contract only after old code is gone.

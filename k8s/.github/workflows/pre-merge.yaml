@@ -1,16 +1,24 @@
-name: Pull Request
+name: pre-merge
 
 on:
+  # run whenever a pull request is opened or updated.
   pull_request:
-    paths:
-      - "domains/**"
+
+  # when merge queue is enabled, run again after "merge when ready" is clicked.
+  # github tests its temporary combined commit before changing master.
+  merge_group:
+    types: [checks_requested]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   changes:
-    name: Find changed domains
+    name: find changed domains
     runs-on: ubuntu-24.04
     outputs:
       domains: ${{ steps.changed.outputs.all_changed_and_modified_files }}
@@ -29,7 +37,7 @@ jobs:
           matrix: true
 
   check:
-    name: Check ${{ matrix.domain }}
+    name: check ${{ matrix.domain }}
     needs: changes
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -40,7 +48,7 @@ jobs:
         domain: ${{ fromJSON(needs.changes.outputs.domains) }}
 
     env:
-      CLUSTER_NAME: domain-${{ strategy.job-index }}-${{ github.run_id }}-${{ github.run_attempt }}
+      CLUSTER_NAME: test
       KSOPS_VERSION: 4.5.1
       MKCERT_VERSION: v1.4.4
       SKAFFOLD_VERSION: v2.17.0
@@ -53,7 +61,7 @@ jobs:
       - uses: azure/setup-kubectl@v4.0.1
       - uses: imranismail/setup-kustomize@v2.1.0
 
-      - name: Install integration tools
+      - name: install integration tools
         run: |
           sudo apt-get update
           sudo apt-get install -y libnss3-tools
@@ -74,27 +82,30 @@ jobs:
           tar -xzf ksops.tar.gz
           sudo mv ksops /usr/local/bin/ksops
 
-      - name: Configure ephemeral secrets
+      - name: configure ephemeral secrets
         run: |
           mkdir -p "$RUNNER_TEMP/sops-age"
           printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
           chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
           echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
 
-      - name: Check domain
+      - name: check domain
         run: make -C "${{ matrix.domain }}" check
 
-      - name: Create disposable cluster
+      - name: create disposable cluster
         uses: helm/kind-action@v1.14.0
         with:
           cluster_name: ${{ env.CLUSTER_NAME }}
           wait: 120s
 
-      - name: Configure Skaffold
+      - name: configure skaffold
         run: |
           kubectl config use-context "kind-${CLUSTER_NAME}"
           skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
 
-      - name: Delete disposable cluster
+      - name: test domain in disposable cluster
+        run: make -C "${{ matrix.domain }}" test
+
+      - name: delete disposable cluster
         if: always()
         run: kind delete cluster --name "$CLUSTER_NAME" || true

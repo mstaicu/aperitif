@@ -26,5 +26,4 @@ bootstrap: ## Bootstrap Flux and create its required cluster-local secrets.
 		--secret-name=flux-system \
 		--personal \
 		--token-auth \
-		--components=source-controller,kustomize-controller \
-		--components-extra=image-reflector-controller,image-automation-controller
+		--components=source-controller,kustomize-controller

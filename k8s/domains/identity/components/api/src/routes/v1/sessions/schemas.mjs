@@ -6,15 +6,14 @@ export const AccessTokenResponse = Type.Object(
       description: "Short-lived JWT access token.",
       minLength: 1,
     }),
-    refresh_token: Type.String({
-      description:
-        "Rotated opaque refresh token representing the current identity session.",
-      minLength: 1,
+    expires_in: Type.Literal(300, {
+      description: "Access-token lifetime in seconds.",
     }),
+    token_type: Type.Literal("Bearer"),
   },
   {
     additionalProperties: false,
     description:
-      "Access token and rotated refresh token returned after validating the current refresh token.",
+      "Access token returned after validating the current session refresh token.",
   },
 );

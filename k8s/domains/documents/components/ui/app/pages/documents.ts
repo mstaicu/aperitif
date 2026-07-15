@@ -7,7 +7,7 @@ import { loadDocuments } from "../domains/documents.ts";
 export const documentsPage = {
   actions: {
     index: async (args: RequestContext) => {
-      const { body, refreshToken } = await loadDocuments(args);
+      const { body } = await loadDocuments(args);
 
       return createHtmlResponse(
         html`<html lang="en">
@@ -58,11 +58,6 @@ export const documentsPage = {
         {
           headers: {
             "Cache-Control": "no-store",
-            ...(refreshToken
-              ? {
-                  "Set-Cookie": `refresh_token=${encodeURIComponent(refreshToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000; Secure`,
-                }
-              : {}),
           },
         },
       );

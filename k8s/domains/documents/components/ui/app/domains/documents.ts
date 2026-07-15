@@ -36,8 +36,7 @@ export async function loadDocuments({ request }: RequestContext) {
 
   if (
     !accessTokenResponse.ok ||
-    typeof accessToken.access_token !== "string" ||
-    typeof accessToken.refresh_token !== "string"
+    typeof accessToken.access_token !== "string"
   ) {
     return {
       body: {
@@ -65,6 +64,5 @@ export async function loadDocuments({ request }: RequestContext) {
         status: documentsResponse.status,
       },
     },
-    refreshToken: accessToken.refresh_token,
   };
 }

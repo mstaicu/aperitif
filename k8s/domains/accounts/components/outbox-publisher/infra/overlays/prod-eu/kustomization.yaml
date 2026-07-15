@@ -11,5 +11,4 @@ patches:
 
 images:
   - name: ghcr.io/mstaicu/accounts-outbox-publisher
-    newTag: latest # {"$imagepolicy": "flux-system:accounts-outbox-publisher:tag"}
-    digest: "" # {"$imagepolicy": "flux-system:accounts-outbox-publisher:digest"}
+    newTag: latest
