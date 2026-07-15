@@ -1,7 +1,0 @@
-import { get, route } from "remix/fetch-router/routes";
-
-export const routes = route("/", {
-  documents: route("documents", {
-    index: get("/"),
-  }),
-});

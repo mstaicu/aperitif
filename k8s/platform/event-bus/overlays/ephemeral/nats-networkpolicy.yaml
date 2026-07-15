@@ -37,18 +37,6 @@ spec:
           podSelector:
             matchLabels:
               app: accounts-projector
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: documents
-          podSelector:
-            matchLabels:
-              app: accounts-projector
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: documents
-          podSelector:
-            matchLabels:
-              app: entitlements-projector
       ports:
         - port: 4222
           protocol: TCP

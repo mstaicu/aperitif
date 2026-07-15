@@ -112,8 +112,6 @@ domain transaction -> outbox_events -> publisher -> stream
 kubectl logs -n accounts deployment/outbox-publisher --since=10m
 kubectl logs -n entitlements deployment/outbox-publisher --since=10m
 kubectl logs -n entitlements deployment/accounts-projector --since=10m
-kubectl logs -n documents deployment/accounts-projector --since=10m
-kubectl logs -n documents deployment/entitlements-projector --since=10m
 ```
 
 An unpublished outbox row points to the publisher or NATS connection. A stream

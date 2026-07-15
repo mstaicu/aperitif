@@ -26,7 +26,6 @@ The domains are:
 | `identity` | Users, passkeys, sessions, operators, and JWKS | Yes |
 | `accounts` | Account boundaries and membership | Yes |
 | `entitlements` | Account-level product capabilities | Yes |
-| `documents` | Local example product using projected authority | No |
 
 Each domain owns its database. A domain never reads another domain's database.
 
@@ -71,7 +70,6 @@ Then run domains in separate terminals:
 make -C domains/identity dev
 make -C domains/accounts dev
 make -C domains/entitlements dev
-make -C domains/documents dev
 ```
 
 A domain command controls only that domain. There is deliberately no root
@@ -110,8 +108,8 @@ Current events:
 
 | Event | Producer | Consumers |
 | --- | --- | --- |
-| `accounts.account.opened.v1` | Accounts | Entitlements, Documents |
-| `entitlements.account_entitlements.updated.v1` | Entitlements | Documents |
+| `accounts.account.opened.v1` | Accounts | Entitlements |
+| `entitlements.account_entitlements.updated.v1` | Entitlements | — |
 
 Contracts are published npm packages under each producing domain's
 `packages/contracts` directory.

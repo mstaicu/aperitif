@@ -45,8 +45,6 @@ component cannot delete a shared Namespace.
 The `platform` and `domains` assemblers place Flux objects in `flux-system`.
 They are plain Kustomize directories, not extra Flux reconciliation layers.
 
-Documents is local-only and is not part of this graph.
-
 ## Image releases
 
 GitHub Actions pushes a changed component using its Git SHA and the mutable

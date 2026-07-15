@@ -35,18 +35,6 @@ spec:
           podSelector:
             matchLabels:
               app: entitlements-api
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: documents
-          podSelector:
-            matchLabels:
-              app: documents-api
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: documents
-          podSelector:
-            matchLabels:
-              app: documents-ui
       ports:
         - protocol: TCP
           port: 4318
