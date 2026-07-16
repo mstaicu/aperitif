@@ -8,7 +8,7 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && PathPrefix(`/v1/entitlements`)
+      match: Host(`api.tma.com`) && (PathPrefix(`/v1/entitlements/docs`) || PathRegexp(`^/v1/accounts/[^/]+/grants(/.*)?$`))
       services:
         - name: entitlements-api
           port: 3000

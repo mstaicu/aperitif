@@ -15,13 +15,12 @@ import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
  *   jwks: import("../../platform/security/index.mjs").JwtKeys["jwks"],
  *   operators: import("../../services/operators/index.mjs").OperatorsService,
  *   passkeys: import("../../services/passkeys/index.mjs").PasskeysService,
- *   prefix: string,
  *   sessions: import("../../services/sessions/index.mjs").SessionsService,
  * }} opts
  */
 export const registerV1Routes = async (
   fastify,
-  { jwks, operators, passkeys, prefix, sessions },
+  { jwks, operators, passkeys, sessions },
 ) => {
   await fastify.register(swagger, {
     openapi: {
@@ -71,36 +70,29 @@ export const registerV1Routes = async (
 
   registerLoginChallengeRoute(fastify, {
     passkeys,
-    prefix: `${prefix}/passkeys`,
   });
   registerLoginRoute(fastify, {
     passkeys,
-    prefix: `${prefix}/passkeys`,
   });
   registerRegistrationChallengeRoute(fastify, {
     passkeys,
-    prefix: `${prefix}/passkeys`,
   });
   registerRegistrationRoute(fastify, {
     passkeys,
-    prefix: `${prefix}/passkeys`,
   });
   registerOperatorRoutes(fastify, {
     jwks,
     operators,
-    prefix: `${prefix}/operators`,
   });
   registerAccessTokenRoute(fastify, {
-    prefix: `${prefix}/sessions`,
     sessions,
   });
   registerRevokeSessionRoute(fastify, {
-    prefix: `${prefix}/sessions`,
     sessions,
   });
 
   await fastify.register(swaggerUI, {
-    indexPrefix: prefix,
-    routePrefix: `${prefix}/identity/docs`,
+    indexPrefix: "/v1",
+    routePrefix: "/v1/identity/docs",
   });
 };

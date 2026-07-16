@@ -5,12 +5,11 @@ import { AccessTokenResponse } from "./schemas.mjs";
  * @param {import("../../../app.mjs").FastifyInstance} fastify
  * @param {{
  *   sessions: import("../../../services/sessions/index.mjs").SessionsService,
- *   prefix: string,
  * }} opts
  */
-export function registerAccessTokenRoute(fastify, { prefix, sessions }) {
+export function registerAccessTokenRoute(fastify, { sessions }) {
   fastify.post(
-    `${prefix}/access-token`,
+    "/v1/sessions/access-token",
     {
       schema: {
         description:

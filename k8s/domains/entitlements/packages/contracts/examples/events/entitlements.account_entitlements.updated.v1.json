@@ -6,8 +6,8 @@
     },
     "entitlements": [
       {
-        "id": "members.max",
-        "value": 10
+        "id": "example.enabled",
+        "value": true
       }
     ],
     "version": 1

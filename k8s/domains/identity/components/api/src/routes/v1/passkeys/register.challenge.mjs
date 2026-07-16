@@ -5,15 +5,11 @@ import { RegistrationChallengeResponse } from "./passkey.schemas.mjs";
  * @param {import("../../../app.mjs").FastifyInstance} fastify
  * @param {{
  *   passkeys: import("../../../services/passkeys/index.mjs").PasskeysService,
- *   prefix: string,
  * }} opts
  */
-export function registerRegistrationChallengeRoute(
-  fastify,
-  { passkeys, prefix },
-) {
+export function registerRegistrationChallengeRoute(fastify, { passkeys }) {
   fastify.post(
-    `${prefix}/register/challenge`,
+    "/v1/passkeys/register/challenge",
     {
       schema: {
         description:

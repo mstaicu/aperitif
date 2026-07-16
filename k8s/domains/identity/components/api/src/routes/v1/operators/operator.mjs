@@ -7,12 +7,11 @@ import { OperatorParams, OperatorResponse } from "./schemas.mjs";
  * @param {{
  *   jwks: import("../../../platform/security/index.mjs").JwtKeys["jwks"],
  *   operators: import("../../../services/operators/index.mjs").OperatorsService,
- *   prefix: string,
  * }} opts
  */
-export function registerOperatorRoutes(fastify, { jwks, operators, prefix }) {
+export function registerOperatorRoutes(fastify, { jwks, operators }) {
   fastify.put(
-    `${prefix}/:user_id`,
+    "/v1/operators/:user_id",
     {
       schema: {
         description: "Assign platform operator access to a user.",
@@ -47,7 +46,7 @@ export function registerOperatorRoutes(fastify, { jwks, operators, prefix }) {
   );
 
   fastify.delete(
-    `${prefix}/:user_id`,
+    "/v1/operators/:user_id",
     {
       schema: {
         description: "Remove platform operator access from a user.",

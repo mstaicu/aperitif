@@ -7,15 +7,11 @@ import { CreateAccountBody, CreateAccountResponse } from "./schemas.mjs";
  * @param {{
  *   accounts: import("../../../services/accounts/index.mjs").AccountsService,
  *   jwks: import("jose").JWTVerifyGetKey,
- *   prefix: string,
  * }} opts
  */
-export function registerCreateAccountRoute(
-  fastify,
-  { accounts, jwks, prefix },
-) {
+export function registerCreateAccountRoute(fastify, { accounts, jwks }) {
   fastify.post(
-    prefix,
+    "/v1/accounts",
     {
       schema: {
         body: CreateAccountBody,

@@ -1,7 +1,15 @@
 # Entitlements
 
-Entitlements answers which product capabilities an account currently has. It
-combines account-level grants into a current effective snapshot.
+Entitlements resolves the product capabilities currently available to an
+account.
+
+```text
+capabilities -> grants -> entitlements
+```
+
+A capability defines something a product can enable or limit. A grant assigns
+capability values to an account. Entitlements are the resolved values published
+to products after all grants for the account are combined.
 
 It does not own accounts, billing, catalogues, subscriptions, or product data.
 
@@ -13,17 +21,33 @@ ACCOUNTS stream -> accounts projector -> PostgreSQL
                                       -> outbox publisher -> ENTITLEMENTS stream
 ```
 
-| Part | Purpose |
-| --- | --- |
-| `components/accounts-projector` | Maintain local account authority |
-| `components/api` | List definitions and grant or revoke capabilities |
-| `components/outbox-publisher` | Publish effective entitlement snapshots |
-| `components/migrations` | Flyway SQL, core definitions, and its Job |
-| `packages/contracts` | Published Entitlements event package |
-| `infra/postgres` | Disposable in-cluster database |
+| Part                            | Purpose                                 |
+| ------------------------------- | --------------------------------------- |
+| `components/accounts-projector` | Remember known accounts                 |
+| `components/api`                | Store grants and resolve entitlements    |
+| `components/outbox-publisher`   | Publish effective entitlement snapshots |
+| `components/migrations`         | Flyway SQL and its Job                  |
+| `packages/contracts`            | Published Entitlements event package    |
+| `infra/postgres`                | Disposable in-cluster database          |
 
-Entitlement values are booleans or numbers. Definitions select `boolean_or`,
-`number_max`, or `number_sum` to reduce multiple grants.
+Capability values are booleans or numbers. Each capability selects
+`boolean_or`, `number_max`, or `number_sum` to combine multiple grants.
+
+A grant is one complete set of capability values. Setting the same grant ID
+again replaces its previous values. Capabilities are added through migrations.
+
+`services/grants/grants.set.mjs` stores the grant inside the account
+transaction. `services/entitlements/entitlements.resolve.mjs` reads every grant
+for that account and returns the effective entitlements used by the outbox
+snapshot.
+
+The operator API has one route:
+
+```text
+PUT /v1/accounts/:account_id/grants/:grant_id
+```
+
+Products consume the published snapshot.
 
 The domain consumes `accounts.account.opened.v1` and publishes
 `entitlements.account_entitlements.updated.v1`.

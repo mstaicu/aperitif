@@ -9,7 +9,7 @@ spec:
 
   routes:
     - kind: Rule
-      match: PathPrefix(`/v1/entitlements`)
+      match: PathPrefix(`/v1/entitlements/docs`) || PathRegexp(`^/v1/accounts/[^/]+/grants(/.*)?$`)
       services:
         - name: entitlements-api
           port: 3000

@@ -5,12 +5,11 @@ import { LoginBody, LoginSuccessResponse } from "./passkey.schemas.mjs";
  * @param {import("../../../app.mjs").FastifyInstance} fastify
  * @param {{
  *   passkeys: import("../../../services/passkeys/index.mjs").PasskeysService,
- *   prefix: string,
  * }} opts
  */
-export function registerLoginRoute(fastify, { passkeys, prefix }) {
+export function registerLoginRoute(fastify, { passkeys }) {
   fastify.post(
-    `${prefix}/login`,
+    "/v1/passkeys/login",
     {
       schema: {
         body: LoginBody,

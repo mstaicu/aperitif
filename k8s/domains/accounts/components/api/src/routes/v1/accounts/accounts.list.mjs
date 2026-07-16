@@ -7,12 +7,11 @@ import { AccountsResponse } from "./schemas.mjs";
  * @param {{
  *   accounts: import("../../../services/accounts/index.mjs").AccountsService,
  *   jwks: import("jose").JWTVerifyGetKey,
- *   prefix: string,
  * }} opts
  */
-export function registerListAccountsRoute(fastify, { accounts, jwks, prefix }) {
+export function registerListAccountsRoute(fastify, { accounts, jwks }) {
   fastify.get(
-    prefix,
+    "/v1/accounts",
     {
       schema: {
         description:

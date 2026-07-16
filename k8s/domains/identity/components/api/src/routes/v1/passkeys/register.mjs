@@ -8,12 +8,11 @@ import {
  * @param {import("../../../app.mjs").FastifyInstance} fastify
  * @param {{
  *   passkeys: import("../../../services/passkeys/index.mjs").PasskeysService,
- *   prefix: string,
  * }} opts
  */
-export function registerRegistrationRoute(fastify, { passkeys, prefix }) {
+export function registerRegistrationRoute(fastify, { passkeys }) {
   fastify.post(
-    `${prefix}/register`,
+    "/v1/passkeys/register",
     {
       schema: {
         body: PasskeyRegistrationBody,

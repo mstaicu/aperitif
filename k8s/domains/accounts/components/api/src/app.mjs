@@ -46,7 +46,6 @@ export const createApp = async ({ accounts, db, fastifyOtel, jwks }) => {
   await registerV1Routes(app, {
     accounts,
     jwks,
-    prefix: "/v1",
   });
 
   return app;

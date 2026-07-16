@@ -8,7 +8,7 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && PathPrefix(`/v1/accounts`)
+      match: Host(`api.tma.com`) && Path(`/v1/accounts`)
       services:
         - name: accounts-api
           port: 3000

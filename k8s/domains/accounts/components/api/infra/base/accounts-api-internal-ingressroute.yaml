@@ -9,7 +9,7 @@ spec:
 
   routes:
     - kind: Rule
-      match: PathPrefix(`/v1/accounts`)
+      match: Path(`/v1/accounts`) || PathPrefix(`/v1/accounts/docs`)
       services:
         - name: accounts-api
           port: 3000

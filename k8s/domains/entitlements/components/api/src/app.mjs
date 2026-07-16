@@ -8,8 +8,7 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 /**
  * @typedef {import("fastify")} Fastify
  * @typedef {import("@fastify/otel").FastifyOtelInstrumentation} FastifyOtelInstrumentation
- * @typedef {import('./services/entitlements/index.mjs').EntitlementsService} EntitlementsService
- * @typedef {import('./services/account-entitlements/index.mjs').AccountEntitlementsService} AccountEntitlementsService
+ * @typedef {import('./services/grants/index.mjs').GrantsService} GrantsService
  */
 
 /**
@@ -25,20 +24,13 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 /**
  * @param {{
  *  db: import("pg").Pool,
+ *  fastifyOtel?: FastifyOtelInstrumentation,
+ *  grants: GrantsService,
  *  jwks: import("jose").JWTVerifyGetKey,
- *  accountEntitlements: AccountEntitlementsService,
- *  entitlements: EntitlementsService,
- *  fastifyOtel?: FastifyOtelInstrumentation
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({
-  accountEntitlements,
-  db,
-  entitlements,
-  fastifyOtel,
-  jwks,
-}) => {
+export const createApp = async ({ db, fastifyOtel, grants, jwks }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -52,10 +44,8 @@ export const createApp = async ({
   }
   await app.register(probes, { db });
   await registerV1Routes(app, {
-    accountEntitlements,
-    entitlements,
+    grants,
     jwks,
-    prefix: "/v1",
   });
 
   return app;

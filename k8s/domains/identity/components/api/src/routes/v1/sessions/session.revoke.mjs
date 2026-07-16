@@ -4,12 +4,11 @@ import { ProblemResponse } from "../../problem-details.mjs";
  * @param {import("../../../app.mjs").FastifyInstance} fastify
  * @param {{
  *   sessions: import("../../../services/sessions/index.mjs").SessionsService,
- *   prefix: string,
  * }} opts
  */
-export function registerRevokeSessionRoute(fastify, { prefix, sessions }) {
+export function registerRevokeSessionRoute(fastify, { sessions }) {
   fastify.delete(
-    prefix,
+    "/v1/sessions",
     {
       schema: {
         description:

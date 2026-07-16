@@ -53,15 +53,20 @@ const PROBLEMS = {
     title: "Account not found",
     type: "/problems/account-not-found",
   },
+  CAPABILITY_NOT_FOUND: {
+    status: 404,
+    title: "Capability not found",
+    type: "/problems/capability-not-found",
+  },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  ENTITLEMENT_NOT_FOUND: {
-    status: 404,
-    title: "Entitlement not found",
-    type: "/problems/entitlement-not-found",
+  DUPLICATE_CAPABILITY: {
+    status: 400,
+    title: "Duplicate capability",
+    type: "/problems/duplicate-capability",
   },
   FORBIDDEN: {
     status: 403,
@@ -73,10 +78,10 @@ const PROBLEMS = {
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
   },
-  INVALID_ENTITLEMENT_VALUE: {
+  INVALID_CAPABILITY_VALUE: {
     status: 400,
-    title: "Invalid entitlement value",
-    type: "/problems/invalid-entitlement-value",
+    title: "Invalid capability value",
+    type: "/problems/invalid-capability-value",
   },
 };
 

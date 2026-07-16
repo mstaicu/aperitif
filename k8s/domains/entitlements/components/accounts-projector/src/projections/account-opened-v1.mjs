@@ -18,15 +18,13 @@ export async function projectAccountOpenedV1({ db, event }) {
     `
       INSERT INTO projected_accounts (
         account_id,
-        type,
         version
       )
-      VALUES ($1, $2, $3)
+      VALUES ($1, $2)
       ON CONFLICT (account_id) DO UPDATE
-      SET type = EXCLUDED.type,
-        version = EXCLUDED.version
+      SET version = EXCLUDED.version
       WHERE projected_accounts.version <= EXCLUDED.version
     `,
-    [data.account.id, data.account.type, data.version],
+    [data.account.id, data.version],
   );
 }

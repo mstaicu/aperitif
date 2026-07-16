@@ -49,7 +49,6 @@ test("projects account state without allowing stale events to overwrite it", asy
   } = await db.query(
     `
       SELECT account_id,
-        type,
         version
       FROM projected_accounts
       WHERE account_id = $1
@@ -59,7 +58,6 @@ test("projects account state without allowing stale events to overwrite it", asy
 
   assert.deepEqual(projectedAccount, {
     account_id: accountId,
-    type: "business",
     version: "2",
   });
 });

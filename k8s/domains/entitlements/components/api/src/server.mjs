@@ -5,8 +5,7 @@ import { Pool } from "pg";
 
 import { createApp } from "./app.mjs";
 import { createTracing } from "./platform/tracing.mjs";
-import { createAccountEntitlementsService } from "./services/account-entitlements/index.mjs";
-import { createEntitlementsService } from "./services/entitlements/index.mjs";
+import { getGrantsService } from "./services/grants/index.mjs";
 
 await using tracing = createTracing();
 
@@ -21,16 +20,12 @@ db.on("error", (err) => console.error(err));
 const jwks = createRemoteJWKSet(
   new URL(/** @type {string} */ (process.env.IDENTITY_JWKS_URL)),
 );
-const accountEntitlements = createAccountEntitlementsService({
-  db,
-});
-const entitlements = createEntitlementsService({ db });
+const grants = getGrantsService({ db });
 
 await using app = await createApp({
-  accountEntitlements,
   db,
-  entitlements,
   fastifyOtel: tracing.fastifyOtel,
+  grants,
   jwks,
 });
 

@@ -60,7 +60,6 @@ export const createApp = async ({
     jwks,
     operators,
     passkeys,
-    prefix: "/v1",
     sessions,
   });
 

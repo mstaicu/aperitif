@@ -1,47 +1,44 @@
-CREATE TABLE entitlements (
+CREATE TABLE capabilities (
     id TEXT PRIMARY KEY,
 
-    name TEXT NOT NULL,
-
-    value_type TEXT NOT NULL CHECK (
-        value_type IN ('boolean', 'number')
+    type TEXT NOT NULL CHECK (
+        type IN ('boolean', 'number')
     ),
 
-    merge_strategy TEXT NOT NULL CHECK (
-        merge_strategy IN ('boolean_or', 'number_max', 'number_sum')
+    strategy TEXT NOT NULL CHECK (
+        strategy IN ('boolean_or', 'number_max', 'number_sum')
     ),
 
     CHECK (
-        (value_type = 'boolean' AND merge_strategy = 'boolean_or')
+        (type = 'boolean' AND strategy = 'boolean_or')
         OR
-        (value_type = 'number' AND merge_strategy IN ('number_max', 'number_sum'))
+        (type = 'number' AND strategy IN ('number_max', 'number_sum'))
     )
 );
-
-CREATE TABLE account_entitlement_grants (
-    account_id UUID NOT NULL,
-
-    grant_id UUID NOT NULL,
-
-    entitlement_id TEXT NOT NULL
-        REFERENCES entitlements(id),
-
-    value JSONB NOT NULL,
-
-    PRIMARY KEY (account_id, grant_id, entitlement_id)
-);
-
-CREATE SEQUENCE account_entitlements_version_seq AS BIGINT;
 
 CREATE TABLE projected_accounts (
     account_id UUID PRIMARY KEY,
 
-    type TEXT NOT NULL CHECK (
-        type IN ('personal', 'business')
+    version BIGINT NOT NULL CHECK (version > 0)
+);
+
+CREATE TABLE grants (
+    account_id UUID NOT NULL
+        REFERENCES projected_accounts(account_id),
+
+    grant_id UUID NOT NULL,
+
+    capability_id TEXT NOT NULL
+        REFERENCES capabilities(id),
+
+    value JSONB NOT NULL CHECK (
+        jsonb_typeof(value) IN ('boolean', 'number')
     ),
 
-    version BIGINT NOT NULL
+    PRIMARY KEY (account_id, grant_id, capability_id)
 );
+
+CREATE SEQUENCE account_entitlements_version_seq AS BIGINT;
 
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,

@@ -9,10 +9,9 @@ import { registerListAccountsRoute } from "./accounts/accounts.list.mjs";
  * @param {{
  *   accounts: import("../../services/accounts/index.mjs").AccountsService,
  *   jwks: import("jose").JWTVerifyGetKey,
- *   prefix: string,
  * }} opts
  */
-export const registerV1Routes = async (fastify, { accounts, jwks, prefix }) => {
+export const registerV1Routes = async (fastify, { accounts, jwks }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -48,16 +47,14 @@ export const registerV1Routes = async (fastify, { accounts, jwks, prefix }) => {
   registerListAccountsRoute(fastify, {
     accounts,
     jwks,
-    prefix: `${prefix}/accounts`,
   });
   registerCreateAccountRoute(fastify, {
     accounts,
     jwks,
-    prefix: `${prefix}/accounts`,
   });
 
   await fastify.register(swaggerUI, {
-    indexPrefix: prefix,
-    routePrefix: `${prefix}/accounts/docs`,
+    indexPrefix: "/v1",
+    routePrefix: "/v1/accounts/docs",
   });
 };
