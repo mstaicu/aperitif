@@ -20,7 +20,7 @@
     "@sinclair/typebox": "^0.34.52"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "typescript": "^7.0.2"
   }
 }
