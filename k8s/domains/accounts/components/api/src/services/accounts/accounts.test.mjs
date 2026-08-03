@@ -1,6 +1,6 @@
 import {
-  AccountOpenedV1EventCheck,
-  AccountOpenedV1Type,
+  AccountCreatedV1EventCheck,
+  AccountCreatedV1Type,
 } from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -63,7 +63,7 @@ test("accounts list only accounts for the current user", async () => {
   });
 });
 
-test("accounts write account opened events to the outbox", async () => {
+test("accounts write account created events to the outbox", async () => {
   // Arrange
   await using db = await startPostgres();
   const accounts = createAccountsService({ db });
@@ -86,15 +86,16 @@ test("accounts write account opened events to the outbox", async () => {
       WHERE event->>'type' = $1
         AND event #>> '{data,account,id}' = $2
     `,
-    [AccountOpenedV1Type, created.account.id],
+    [AccountCreatedV1Type, created.account.id],
   );
 
   assert.ok(outbox);
-  assert.equal(AccountOpenedV1EventCheck.Check(outbox.event), true);
-  assert.equal(outbox.event.type, AccountOpenedV1Type);
+  assert.equal(AccountCreatedV1EventCheck.Check(outbox.event), true);
+  assert.equal(outbox.event.type, AccountCreatedV1Type);
   assert.equal(outbox.event.data.version, 1);
   assert.deepEqual(outbox.event.data.account, {
     id: created.account.id,
+    name: "Acme",
     type: "business",
   });
   assert.deepEqual(outbox.event.data.member, {

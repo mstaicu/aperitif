@@ -7,9 +7,11 @@ CREATE TABLE accounts (
         type IN ('personal', 'business')
     ),
 
-    name TEXT NOT NULL,
+    name TEXT NOT NULL CHECK (
+        char_length(name) BETWEEN 1 AND 160
+    ),
 
-    version BIGINT NOT NULL DEFAULT 1
+    version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0)
 );
 
 CREATE TABLE account_members (
@@ -19,7 +21,9 @@ CREATE TABLE account_members (
 
     user_id UUID NOT NULL,
 
-    role TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (
+        role IN ('owner', 'admin', 'member')
+    ),
 
     PRIMARY KEY (account_id, user_id)
 );

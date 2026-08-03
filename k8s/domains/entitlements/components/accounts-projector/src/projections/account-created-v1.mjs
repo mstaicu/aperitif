@@ -1,4 +1,4 @@
-import { AccountOpenedV1EventCheck } from "@mstaicu/accounts-contracts";
+import { AccountCreatedV1EventCheck } from "@mstaicu/accounts-contracts";
 
 /**
  * @param {{
@@ -6,9 +6,9 @@ import { AccountOpenedV1EventCheck } from "@mstaicu/accounts-contracts";
  *   event: unknown,
  * }} args
  */
-export async function projectAccountOpenedV1({ db, event }) {
-  if (!AccountOpenedV1EventCheck.Check(event)) {
-    console.warn("Invalid account opened event ignored");
+export async function projectAccountCreatedV1({ db, event }) {
+  if (!AccountCreatedV1EventCheck.Check(event)) {
+    console.warn("Invalid account created event ignored");
     return;
   }
 

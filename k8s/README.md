@@ -108,7 +108,7 @@ Current events:
 
 | Event | Producer | Consumers |
 | --- | --- | --- |
-| `accounts.account.opened.v1` | Accounts | Entitlements |
+| `accounts.account.created.v1` | Accounts | Entitlements |
 | `entitlements.account_entitlements.updated.v1` | Entitlements | — |
 
 Contracts are published npm packages under each producing domain's

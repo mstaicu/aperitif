@@ -1,21 +1,22 @@
-import { buildAccountOpenedV1Event } from "@mstaicu/accounts-contracts";
+import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
-import { projectAccountOpenedV1 } from "./account-opened-v1.mjs";
+import { projectAccountCreatedV1 } from "./account-created-v1.mjs";
 
 test("projects account state without allowing stale events to overwrite it", async () => {
   await using db = await startPostgres();
   const accountId = randomUUID();
 
-  await projectAccountOpenedV1({
+  await projectAccountCreatedV1({
     db,
-    event: buildAccountOpenedV1Event(
+    event: buildAccountCreatedV1Event(
       {
         account: {
           id: accountId,
+          name: "Acme",
           type: "business",
         },
         member: {
@@ -27,12 +28,13 @@ test("projects account state without allowing stale events to overwrite it", asy
     ),
   });
 
-  await projectAccountOpenedV1({
+  await projectAccountCreatedV1({
     db,
-    event: buildAccountOpenedV1Event(
+    event: buildAccountCreatedV1Event(
       {
         account: {
           id: accountId,
+          name: "Personal",
           type: "personal",
         },
         member: {

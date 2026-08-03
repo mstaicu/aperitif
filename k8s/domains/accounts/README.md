@@ -6,6 +6,9 @@ Accounts owns the boundary under which product resources live. An account is
 
 It does not own users, entitlement grants, or product data.
 
+Membership roles are limited to `owner`, `admin`, and `member`. They govern the
+account itself; product-specific roles remain inside product domains.
+
 ## Runtime
 
 ```text
@@ -24,7 +27,7 @@ PostgreSQL -> migrations -> API
 The API exposes `GET/POST /v1/accounts` and OpenAPI at
 `/v1/accounts/docs`.
 
-Accounts publishes `accounts.account.opened.v1`. State and its outbox event are
+Accounts publishes `accounts.account.created.v1`. State and its outbox event are
 committed in one database transaction. `data.version` is the account state
 version used by projectors to reject stale events.
 

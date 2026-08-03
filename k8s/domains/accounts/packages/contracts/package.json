@@ -1,6 +1,6 @@
 {
   "name": "@mstaicu/accounts-contracts",
-  "version": "0.4.2",
+  "version": "0.6.0",
   "type": "module",
   "main": "src/index.mjs",
   "types": "types/index.d.mts",

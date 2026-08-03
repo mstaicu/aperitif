@@ -1,1 +1,1 @@
-export * from "./accounts.account.opened.v1.mjs";
+export * from "./accounts.account.created.v1.mjs";

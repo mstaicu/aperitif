@@ -49,7 +49,7 @@ PUT /v1/accounts/:account_id/grants/:grant_id
 
 Products consume the published snapshot.
 
-The domain consumes `accounts.account.opened.v1` and publishes
+The domain consumes `accounts.account.created.v1` and publishes
 `entitlements.account_entitlements.updated.v1`.
 
 ## Work here

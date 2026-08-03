@@ -1,4 +1,4 @@
-import { buildAccountOpenedV1Event } from "@mstaicu/accounts-contracts";
+import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
 import { DatabaseError } from "pg";
 
 /**
@@ -47,10 +47,11 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountOpenedEvent = buildAccountOpenedV1Event(
+      const accountCreatedEvent = buildAccountCreatedV1Event(
         {
           account: {
             id: account.id,
+            name: account.name,
             type: account.type,
           },
           member: {
@@ -69,7 +70,7 @@ export const createAccount =
           )
           VALUES ($1, $2::jsonb)
         `,
-        [accountOpenedEvent.id, JSON.stringify(accountOpenedEvent)],
+        [accountCreatedEvent.id, JSON.stringify(accountCreatedEvent)],
       );
 
       await client.query("COMMIT");

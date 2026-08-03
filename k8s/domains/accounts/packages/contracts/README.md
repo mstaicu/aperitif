@@ -6,11 +6,11 @@ Accounts.
 It currently exports the schema, validator, constants, and builder for:
 
 ```text
-accounts.account.opened.v1
+accounts.account.created.v1
 ```
 
 The source schema is
-`src/events/accounts.account.opened.v1.mjs`; its example payload is under
+`src/events/accounts.account.created.v1.mjs`; its example payload is under
 `examples/events`.
 
 Events use CloudEvents `1.0`. The event `type` versions the payload contract,
