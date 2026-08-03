@@ -14,10 +14,6 @@ import { createPasskeysService } from "./services/passkeys/index.mjs";
 import { createSessionsService } from "./services/sessions/index.mjs";
 
 /**
- * @typedef {import("fastify")} Fastify
- */
-
-/**
  * @typedef {Fastify.FastifyInstance<
  *   Fastify.RawServerDefault,
  *   Fastify.RawRequestDefaultExpression,

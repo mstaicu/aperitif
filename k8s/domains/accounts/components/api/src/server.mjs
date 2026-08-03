@@ -11,10 +11,6 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 import { createAccountsService } from "./services/accounts/index.mjs";
 
 /**
- * @typedef {import("fastify")} Fastify
- */
-
-/**
  * @typedef {Fastify.FastifyInstance<
  *   Fastify.RawServerDefault,
  *   Fastify.RawRequestDefaultExpression,
