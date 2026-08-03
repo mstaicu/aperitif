@@ -2,6 +2,8 @@ import { generateRegistrationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 import { DatabaseError } from "pg";
 
+import { createError } from "../../platform/problem-details.mjs";
+
 /**
  * @typedef {import("@simplewebauthn/server").PublicKeyCredentialCreationOptionsJSON} PublicKeyCredentialCreationOptionsJSON
  */
@@ -62,7 +64,7 @@ export const createRegisterChallenge =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        throw createError("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

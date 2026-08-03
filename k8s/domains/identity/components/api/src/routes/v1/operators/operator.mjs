@@ -1,5 +1,5 @@
+import { ProblemResponse } from "../../../platform/problem-details.mjs";
 import { authenticateOperator } from "../../../platform/security/jwt.mjs";
-import { ProblemResponse } from "../../problem-details.mjs";
 import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**

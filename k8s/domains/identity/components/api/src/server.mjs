@@ -4,10 +4,10 @@ import { once } from "node:events";
 import process from "node:process";
 import { Pool } from "pg";
 
+import problemDetails from "./platform/problem-details.mjs";
 import { createJwtKeys } from "./platform/security/index.mjs";
 import jwksRoutes from "./routes/jwks.mjs";
 import probes from "./routes/probes.mjs";
-import problemDetails from "./routes/problem-details.mjs";
 import { registerV1Routes } from "./routes/v1/index.mjs";
 import { createOperatorsService } from "./services/operators/index.mjs";
 import { createPasskeysService } from "./services/passkeys/index.mjs";

@@ -5,7 +5,7 @@ const PROBLEM_CONTENT_TYPE = "application/problem+json";
 
 /** @typedef {import("fastify").FastifyError & { validation?: unknown }} ProblemError */
 
-export const ErrorResponse = Type.Object(
+const ProblemDetails = Type.Object(
   {
     status: Type.Integer({ maximum: 599, minimum: 400 }),
     title: Type.String({ minLength: 1 }),
@@ -17,10 +17,18 @@ export const ErrorResponse = Type.Object(
 export const ProblemResponse = {
   content: {
     [PROBLEM_CONTENT_TYPE]: {
-      schema: ErrorResponse,
+      schema: ProblemDetails,
     },
   },
 };
+
+/**
+ * @param {string} code
+ * @param {ErrorOptions} [options]
+ */
+export function createError(code, options) {
+  return Object.assign(new Error(code, options), { code });
+}
 
 const ROUTE_NOT_FOUND = {
   status: 404,
@@ -48,25 +56,20 @@ const INTERNAL_SERVER_ERROR = {
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
-  ACCOUNT_NOT_FOUND: {
-    status: 404,
-    title: "Account not found",
-    type: "/problems/account-not-found",
+  AUTHENTICATION_FAILED: {
+    status: 401,
+    title: "Authentication failed",
+    type: "/problems/authentication-failed",
   },
-  CAPABILITY_NOT_FOUND: {
-    status: 404,
-    title: "Capability not found",
-    type: "/problems/capability-not-found",
+  CREDENTIAL_ALREADY_EXISTS: {
+    status: 409,
+    title: "Passkey already exists",
+    type: "/problems/credential-already-exists",
   },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",
     type: "/problems/database-unavailable",
-  },
-  DUPLICATE_CAPABILITY: {
-    status: 400,
-    title: "Duplicate capability",
-    type: "/problems/duplicate-capability",
   },
   FORBIDDEN: {
     status: 403,
@@ -78,10 +81,45 @@ const PROBLEMS = {
     title: "Invalid access token",
     type: "/problems/invalid-access-token",
   },
-  INVALID_CAPABILITY_VALUE: {
+  INVALID_AUTHENTICATION_RESPONSE: {
     status: 400,
-    title: "Invalid capability value",
-    type: "/problems/invalid-capability-value",
+    title: "Invalid authentication response",
+    type: "/problems/invalid-authentication-response",
+  },
+  INVALID_AUTHORIZATION_HEADER: {
+    status: 401,
+    title: "Invalid authorization header",
+    type: "/problems/invalid-authorization-header",
+  },
+  INVALID_REFRESH_TOKEN: {
+    status: 401,
+    title: "Invalid refresh token",
+    type: "/problems/invalid-refresh-token",
+  },
+  INVALID_REGISTRATION_RESPONSE: {
+    status: 400,
+    title: "Invalid registration response",
+    type: "/problems/invalid-registration-response",
+  },
+  REGISTRATION_VERIFICATION_FAILED: {
+    status: 401,
+    title: "Registration verification failed",
+    type: "/problems/registration-verification-failed",
+  },
+  SESSION_NOT_FOUND: {
+    status: 401,
+    title: "Invalid refresh token",
+    type: "/problems/invalid-refresh-token",
+  },
+  USER_ALREADY_REGISTERED: {
+    status: 409,
+    title: "User already registered",
+    type: "/problems/user-already-registered",
+  },
+  USER_NOT_FOUND: {
+    status: 404,
+    title: "User not found",
+    type: "/problems/user-not-found",
   },
 };
 
@@ -93,7 +131,7 @@ export default fp(async function (app) {
       .send(ROUTE_NOT_FOUND),
   );
 
-  app.setErrorHandler((err, _, reply) => {
+  app.setErrorHandler((err, request, reply) => {
     const error = /** @type {ProblemError} */ (err);
 
     if (error.validation) {
@@ -103,9 +141,21 @@ export default fp(async function (app) {
         .send(INVALID_REQUEST);
     }
 
-    const problem = PROBLEMS[error.code || error.message];
+    const code =
+      Error.isError(error) && "code" in error && typeof error.code === "string"
+        ? error.code
+        : undefined;
+    const problem = code ? PROBLEMS[code] : undefined;
 
     if (problem) {
+      if (problem.status >= 500) {
+        request.log.error({ err: error }, "request failed");
+      }
+
+      if (code === "INVALID_ACCESS_TOKEN") {
+        reply.header("www-authenticate", "Bearer");
+      }
+
       return reply
         .type(PROBLEM_CONTENT_TYPE)
         .code(problem.status)
@@ -123,6 +173,8 @@ export default fp(async function (app) {
           status,
         });
     }
+
+    request.log.error({ err: error }, "request failed");
 
     return reply
       .type(PROBLEM_CONTENT_TYPE)

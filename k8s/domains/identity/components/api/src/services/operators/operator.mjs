@@ -1,5 +1,7 @@
 import { DatabaseError } from "pg";
 
+import { createError } from "../../platform/problem-details.mjs";
+
 /**
  * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
@@ -20,7 +22,7 @@ export const assignOperator =
       );
 
       if (!user) {
-        throw new Error("USER_NOT_FOUND");
+        throw createError("USER_NOT_FOUND");
       }
 
       await pool.query(
@@ -55,7 +57,7 @@ export const assignOperator =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        throw createError("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;
@@ -88,7 +90,7 @@ export const revokeOperator =
         operators.some((operator) => operator.user_id === userId);
 
       if (removesLastOperator) {
-        throw new Error("FORBIDDEN");
+        throw createError("FORBIDDEN");
       }
 
       await client.query(
@@ -126,7 +128,7 @@ export const revokeOperator =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        throw createError("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

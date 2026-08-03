@@ -2,6 +2,8 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { createHash, randomBytes } from "node:crypto";
 import { DatabaseError } from "pg";
 
+import { createError } from "../../platform/problem-details.mjs";
+
 /**
  * @typedef {import("@simplewebauthn/server").RegistrationResponseJSON} RegistrationResponseJSON
  */
@@ -24,7 +26,7 @@ const generateSessionToken = () => {
  */
 const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
   if (credential.id !== credential.rawId) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw createError("INVALID_REGISTRATION_RESPONSE");
   }
 
   let clientDataJSON;
@@ -36,7 +38,7 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
       ),
     );
   } catch {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw createError("INVALID_REGISTRATION_RESPONSE");
   }
 
   if (
@@ -44,7 +46,7 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
     typeof clientDataJSON !== "object" ||
     typeof clientDataJSON.challenge !== "string"
   ) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw createError("INVALID_REGISTRATION_RESPONSE");
   }
 
   const {
@@ -60,7 +62,7 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
   );
 
   if (!challengeRow?.user_id || !challengeRow?.challenge) {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw createError("REGISTRATION_VERIFICATION_FAILED");
   }
 
   const { hostname, origin: expectedOrigin } = new URL(origin);
@@ -79,11 +81,11 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
       },
     });
   } catch {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw createError("REGISTRATION_VERIFICATION_FAILED");
   }
 
   if (!verification?.verified || !verification.registrationInfo?.credential) {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw createError("REGISTRATION_VERIFICATION_FAILED");
   }
 
   const registrationCredential = verification.registrationInfo.credential;
@@ -92,11 +94,11 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
     typeof registrationCredential.id !== "string" ||
     !registrationCredential.publicKey
   ) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw createError("INVALID_REGISTRATION_RESPONSE");
   }
 
   if (credential.id !== registrationCredential.id) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw createError("INVALID_REGISTRATION_RESPONSE");
   }
 
   return {
@@ -139,7 +141,7 @@ export const register =
       );
 
       if (!user) {
-        throw new Error("USER_ALREADY_REGISTERED");
+        throw createError("USER_ALREADY_REGISTERED");
       }
 
       await client.query(
@@ -197,7 +199,7 @@ export const register =
       await client?.query("ROLLBACK").catch(() => {});
 
       if (err instanceof DatabaseError && err.code === "23505") {
-        throw new Error("CREDENTIAL_ALREADY_EXISTS", {
+        throw createError("CREDENTIAL_ALREADY_EXISTS", {
           cause: err,
         });
       }
@@ -213,7 +215,7 @@ export const register =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
+        throw createError("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

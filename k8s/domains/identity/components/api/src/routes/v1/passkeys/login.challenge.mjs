@@ -1,4 +1,4 @@
-import { ProblemResponse } from "../../problem-details.mjs";
+import { ProblemResponse } from "../../../platform/problem-details.mjs";
 import { AuthenticationChallengeResponse } from "./passkey.schemas.mjs";
 
 /**
