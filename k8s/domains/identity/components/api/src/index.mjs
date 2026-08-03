@@ -1,3 +1,6 @@
+import { FastifyOtelInstrumentation } from "@fastify/otel";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+
 const requiredEnv = [
   "DATABASE_URL",
   "JWT_PRIVATE_KEY_PATH",
@@ -21,4 +24,20 @@ try {
   throw new Error(`Invalid ORIGIN: ${process.env.ORIGIN}`);
 }
 
+const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+  ? new NodeSDK({
+      instrumentations: [
+        new FastifyOtelInstrumentation({
+          ignorePaths: ({ url }) => url === "/healthz" || url === "/readyz",
+          registerOnInitialization: true,
+        }),
+      ],
+      serviceName: process.env.OTEL_SERVICE_NAME,
+    })
+  : undefined;
+
+otel?.start();
+
 await import("./server.mjs");
+
+await otel?.shutdown();

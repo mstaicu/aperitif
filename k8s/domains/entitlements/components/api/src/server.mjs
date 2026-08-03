@@ -1,15 +1,29 @@
+import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
+import Fastify from "fastify";
 import { createRemoteJWKSet } from "jose";
 import { once } from "node:events";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { createApp } from "./app.mjs";
-import { createTracing } from "./platform/tracing.mjs";
+import probes from "./routes/probes.mjs";
+import problemDetails from "./routes/problem-details.mjs";
+import { registerV1Routes } from "./routes/v1/index.mjs";
 import { getGrantsService } from "./services/grants/index.mjs";
 
-await using tracing = createTracing();
+/**
+ * @typedef {import("fastify")} Fastify
+ * @typedef {import('./services/grants/index.mjs').GrantsService} GrantsService
+ */
 
-tracing.start();
+/**
+ * @typedef {Fastify.FastifyInstance<
+ *   Fastify.RawServerDefault,
+ *   Fastify.RawRequestDefaultExpression,
+ *   Fastify.RawReplyDefaultExpression,
+ *   Fastify.FastifyBaseLogger,
+ *   import("@fastify/type-provider-typebox").TypeBoxTypeProvider
+ * >} FastifyInstance
+ */
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -22,14 +36,19 @@ const jwks = createRemoteJWKSet(
 );
 const grants = getGrantsService({ pool });
 
-await using app = await createApp({
-  fastifyOtel: tracing.fastifyOtel,
-  grants,
-  jwks,
-  pool,
-});
+/** @type {FastifyInstance} */
+await using app = Fastify()
+  .setValidatorCompiler(TypeBoxValidatorCompiler)
+  .withTypeProvider();
 
 app.addHook("onClose", () => pool.end());
+
+await app.register(problemDetails);
+await app.register(probes, { pool });
+await registerV1Routes(app, {
+  grants,
+  jwks,
+});
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

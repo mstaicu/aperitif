@@ -1,17 +1,34 @@
+import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
+import Fastify from "fastify";
 import { once } from "node:events";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { createApp } from "./app.mjs";
 import { createJwtKeys } from "./platform/security/index.mjs";
-import { createTracing } from "./platform/tracing.mjs";
+import jwksRoutes from "./routes/jwks.mjs";
+import probes from "./routes/probes.mjs";
+import problemDetails from "./routes/problem-details.mjs";
+import { registerV1Routes } from "./routes/v1/index.mjs";
 import { createOperatorsService } from "./services/operators/index.mjs";
 import { createPasskeysService } from "./services/passkeys/index.mjs";
 import { createSessionsService } from "./services/sessions/index.mjs";
 
-await using tracing = createTracing();
+/**
+ * @typedef {import("fastify")} Fastify
+ * @typedef {import('./services/operators/index.mjs').OperatorsService} OperatorsService
+ * @typedef {import('./services/passkeys/index.mjs').PasskeysService} PasskeysService
+ * @typedef {import('./services/sessions/index.mjs').SessionsService} SessionsService
+ */
 
-tracing.start();
+/**
+ * @typedef {Fastify.FastifyInstance<
+ *   Fastify.RawServerDefault,
+ *   Fastify.RawRequestDefaultExpression,
+ *   Fastify.RawReplyDefaultExpression,
+ *   Fastify.FastifyBaseLogger,
+ *   import("@fastify/type-provider-typebox").TypeBoxTypeProvider
+ * >} FastifyInstance
+ */
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -31,16 +48,22 @@ const sessions = createSessionsService({
   signingKey,
 });
 
-await using app = await createApp({
-  fastifyOtel: tracing.fastifyOtel,
+/** @type {FastifyInstance} */
+await using app = Fastify()
+  .setValidatorCompiler(TypeBoxValidatorCompiler)
+  .withTypeProvider();
+
+app.addHook("onClose", () => pool.end());
+
+await app.register(problemDetails);
+await app.register(probes, { pool });
+await app.register(jwksRoutes, { jwks });
+await registerV1Routes(app, {
   jwks,
   operators,
   passkeys,
-  pool,
   sessions,
 });
-
-app.addHook("onClose", () => pool.end());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

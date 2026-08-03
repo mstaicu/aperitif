@@ -3,7 +3,7 @@ import { ProblemResponse } from "../../problem-details.mjs";
 import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**
- * @param {import("../../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   jwks: import("../../../platform/security/index.mjs").JwtKeys["jwks"],
  *   operators: import("../../../services/operators/index.mjs").OperatorsService,

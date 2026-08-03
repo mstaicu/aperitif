@@ -1,7 +1,7 @@
 import { ProblemResponse } from "../../problem-details.mjs";
 
 /**
- * @param {import("../../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   sessions: import("../../../services/sessions/index.mjs").SessionsService,
  * }} opts

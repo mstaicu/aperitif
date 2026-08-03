@@ -4,7 +4,7 @@ import swaggerUI from "@fastify/swagger-ui";
 import { registerSetGrantRoute } from "./accounts/grants.set.mjs";
 
 /**
- * @param {import("../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   grants: import("../../services/grants/index.mjs").GrantsService,
  *   jwks: import("jose").JWTVerifyGetKey,

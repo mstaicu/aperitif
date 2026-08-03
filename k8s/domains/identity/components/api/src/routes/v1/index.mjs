@@ -10,7 +10,7 @@ import { registerAccessTokenRoute } from "./sessions/access-token.create.mjs";
 import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
 
 /**
- * @param {import("../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   jwks: import("../../platform/security/index.mjs").JwtKeys["jwks"],
  *   operators: import("../../services/operators/index.mjs").OperatorsService,

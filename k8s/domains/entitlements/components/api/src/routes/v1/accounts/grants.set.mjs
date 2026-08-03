@@ -3,7 +3,7 @@ import { ProblemResponse } from "../../problem-details.mjs";
 import { GrantBody, GrantParams, GrantResponse } from "./grants.schemas.mjs";
 
 /**
- * @param {import("../../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   grants: import("../../../services/grants/index.mjs").GrantsService,
  *   jwks: import("jose").JWTVerifyGetKey,

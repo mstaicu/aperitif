@@ -2,7 +2,7 @@ import { ProblemResponse } from "../../problem-details.mjs";
 import { LoginBody, LoginSuccessResponse } from "./passkey.schemas.mjs";
 
 /**
- * @param {import("../../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   passkeys: import("../../../services/passkeys/index.mjs").PasskeysService,
  * }} opts

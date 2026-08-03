@@ -5,7 +5,7 @@ import { registerCreateAccountRoute } from "./accounts/accounts.create.mjs";
 import { registerListAccountsRoute } from "./accounts/accounts.list.mjs";
 
 /**
- * @param {import("../../app.mjs").FastifyInstance} fastify
+ * @param {import("../../server.mjs").FastifyInstance} fastify
  * @param {{
  *   accounts: import("../../services/accounts/index.mjs").AccountsService,
  *   jwks: import("jose").JWTVerifyGetKey,
