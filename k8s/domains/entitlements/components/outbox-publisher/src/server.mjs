@@ -17,11 +17,11 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
   process.once(signal, () => controller.abort());
 }
 
-const db = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-db.on("error", (err) => console.error(err));
+pool.on("error", (err) => console.error(err));
 
 await using nc = await connect({
   name: "entitlements-outbox-publisher",
@@ -42,14 +42,14 @@ await jsm.streams.add({
   subjects: ["entitlements.>"],
 });
 
-await using health = createHealthServer({ db, nc });
+await using health = createHealthServer({ nc, pool });
 
 health.listen(3000, "0.0.0.0");
 
 await publishEvents({
-  db,
   js,
+  pool,
   signal: controller.signal,
 });
 
-await db.end();
+await pool.end();

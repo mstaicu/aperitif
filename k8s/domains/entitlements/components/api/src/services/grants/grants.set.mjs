@@ -16,7 +16,7 @@ import { resolveEntitlements } from "../entitlements/entitlements.resolve.mjs";
  */
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: {
  *   accountId: string,
  *   capabilities: Capability[],
@@ -30,12 +30,12 @@ import { resolveEntitlements } from "../entitlements/entitlements.resolve.mjs";
  * }>}
  */
 export const set =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ accountId, capabilities, grantId }) => {
     let client;
 
     try {
-      client = await db.connect();
+      client = await pool.connect();
       await client.query("BEGIN");
 
       const {
@@ -137,7 +137,7 @@ export const set =
           },
           entitlements: await resolveEntitlements({
             accountId,
-            db: client,
+            client,
           }),
         },
         Number(version),
@@ -172,7 +172,7 @@ export const set =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

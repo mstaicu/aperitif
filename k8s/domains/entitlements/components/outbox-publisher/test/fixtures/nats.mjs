@@ -2,41 +2,27 @@ import { connect } from "@nats-io/transport-node";
 import { GenericContainer, Wait } from "testcontainers";
 
 export const startNats = async () => {
-  const stack = new AsyncDisposableStack();
+  await using stack = new AsyncDisposableStack();
 
-  try {
-    const container = stack.adopt(
-      await new GenericContainer("nats:2.14.3-alpine3.22")
-        .withCommand(["-js"])
-        .withExposedPorts(4222)
-        .withWaitStrategy(Wait.forListeningPorts())
-        .start(),
-      async (container) => {
-        await container.stop();
-      },
-    );
+  const container = stack.use(
+    await new GenericContainer("nats:2.14.3-alpine3.22")
+      .withCommand(["-js"])
+      .withExposedPorts(4222)
+      .withWaitStrategy(Wait.forListeningPorts())
+      .start(),
+  );
 
-    const nc = stack.adopt(
-      await connect({
-        name: "entitlements-outbox-publisher-test",
-        servers: [`nats://localhost:${container.getMappedPort(4222)}`],
-      }),
-      async (nc) => {
-        if (!nc.isClosed()) {
-          await nc.drain();
-          await nc.closed();
-        }
-      },
-    );
+  const nc = stack.use(
+    await connect({
+      name: "entitlements-outbox-publisher-test",
+      servers: [`nats://localhost:${container.getMappedPort(4222)}`],
+    }),
+  );
 
-    const resources = stack.move();
+  const resources = stack.move();
 
-    return {
-      nc,
-      [Symbol.asyncDispose]: () => resources.disposeAsync(),
-    };
-  } catch (err) {
-    await stack.disposeAsync().catch(() => {});
-    throw err;
-  }
+  return {
+    nc,
+    [Symbol.asyncDispose]: () => resources.disposeAsync(),
+  };
 };

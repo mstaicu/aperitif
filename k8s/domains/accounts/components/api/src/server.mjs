@@ -11,25 +11,25 @@ await using tracing = createTracing();
 
 tracing.start();
 
-const db = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-db.on("error", (err) => console.error(err));
+pool.on("error", (err) => console.error(err));
 
 const jwks = createRemoteJWKSet(
   new URL(/** @type {string} */ (process.env.IDENTITY_JWKS_URL)),
 );
-const accounts = createAccountsService({ db });
+const accounts = createAccountsService({ pool });
 
 await using app = await createApp({
   accounts,
-  db,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
+  pool,
 });
 
-app.addHook("onClose", () => db.end());
+app.addHook("onClose", () => pool.end());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

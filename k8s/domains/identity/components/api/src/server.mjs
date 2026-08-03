@@ -13,34 +13,34 @@ await using tracing = createTracing();
 
 tracing.start();
 
-const db = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-db.on("error", (err) => console.error(err));
+pool.on("error", (err) => console.error(err));
 
 const { jwks, signingKey } = await createJwtKeys();
 
-const operators = createOperatorsService({ db });
+const operators = createOperatorsService({ pool });
 const passkeys = createPasskeysService({
-  db,
   origin: /** @type {string} */ (process.env.ORIGIN),
+  pool,
 });
 const sessions = createSessionsService({
-  db,
+  pool,
   signingKey,
 });
 
 await using app = await createApp({
-  db,
   fastifyOtel: tracing.fastifyOtel,
   jwks,
   operators,
   passkeys,
+  pool,
   sessions,
 });
 
-app.addHook("onClose", () => db.end());
+app.addHook("onClose", () => pool.end());
 
 await app.listen({ host: "0.0.0.0", port: 3000 });
 

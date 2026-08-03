@@ -2,7 +2,7 @@ import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
 import { DatabaseError } from "pg";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: {
  *   currentUserId: string,
  *   name: string,
@@ -16,12 +16,12 @@ import { DatabaseError } from "pg";
  * }>}
  */
 export const createAccount =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ currentUserId, name, type }) => {
     let client;
 
     try {
-      client = await db.connect();
+      client = await pool.connect();
       await client.query("BEGIN");
 
       const {
@@ -100,7 +100,7 @@ export const createAccount =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

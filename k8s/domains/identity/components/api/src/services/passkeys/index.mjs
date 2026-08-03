@@ -4,13 +4,13 @@ import { createRegisterChallenge } from "./register.challenge.mjs";
 import { register } from "./register.mjs";
 
 /**
- * @param {{ db: import("pg").Pool, origin: string }} resources
+ * @param {{ origin: string, pool: import("pg").Pool }} resources
  */
-export const createPasskeysService = ({ db, origin }) => ({
-  createLoginChallenge: createLoginChallenge({ db, origin }),
-  createRegisterChallenge: createRegisterChallenge({ db, origin }),
-  login: login({ db, origin }),
-  register: register({ db, origin }),
+export const createPasskeysService = ({ origin, pool }) => ({
+  createLoginChallenge: createLoginChallenge({ origin, pool }),
+  createRegisterChallenge: createRegisterChallenge({ origin, pool }),
+  login: login({ origin, pool }),
+  register: register({ origin, pool }),
 });
 
 /**

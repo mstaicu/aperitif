@@ -6,11 +6,11 @@ import { Pool } from "pg";
 import { createHealthServer } from "./platform/health.mjs";
 import { projections } from "./projections/index.mjs";
 
-const db = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-db.on("error", (err) => console.error(err));
+pool.on("error", (err) => console.error(err));
 
 await using nc = await connect({
   name: "entitlements-accounts-projector",
@@ -30,7 +30,7 @@ const info = await jsm.consumers.add("ACCOUNTS", {
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
 
-await using health = createHealthServer({ db, nc });
+await using health = createHealthServer({ nc, pool });
 
 health.listen(3000, "0.0.0.0");
 
@@ -42,7 +42,7 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
 
 try {
   for await (const message of messages) {
-    await projections[message.subject]({ db, event: message.json() });
+    await projections[message.subject]({ event: message.json(), pool });
 
     message.ack();
   }
@@ -50,4 +50,4 @@ try {
   messages.stop();
 }
 
-await db.end();
+await pool.end();

@@ -15,7 +15,8 @@ import { publishEvents } from "./publish.mjs";
 
 test("publishes queued and newly inserted outbox events", async () => {
   // Arrange
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
   await using nats = await startNats();
   const controller = new AbortController();
   const queuedEvent = {
@@ -45,7 +46,7 @@ test("publishes queued and newly inserted outbox events", async () => {
     timeout: 5000,
   });
 
-  await db.query(
+  await pool.query(
     `
       INSERT INTO outbox_events (id, event)
       VALUES ($1, $2::jsonb)
@@ -56,15 +57,15 @@ test("publishes queued and newly inserted outbox events", async () => {
   // Act
   const messages = subscription[Symbol.asyncIterator]();
   const task = publishEvents({
-    db,
     js,
+    pool,
     signal: controller.signal,
   });
   const { value: queuedMessage } = await messages.next();
 
   // Let the publisher return to LISTEN after draining the queued event.
   await setTimeout(250);
-  await db.query(
+  await pool.query(
     `
       INSERT INTO outbox_events (id, event)
       VALUES ($1, $2::jsonb)
@@ -88,7 +89,7 @@ test("publishes queued and newly inserted outbox events", async () => {
 
   const {
     rows: [{ count }],
-  } = await db.query(
+  } = await pool.query(
     `
       SELECT count(*)::integer AS count
       FROM outbox_events
@@ -103,7 +104,8 @@ test("publishes queued and newly inserted outbox events", async () => {
 
 test("keeps outbox events unpublished when NATS publish fails", async () => {
   // Arrange
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
   await using nats = await startNats();
   const controller = new AbortController();
   const js = jetstream(nats.nc);
@@ -112,7 +114,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
     type: "entitlements.test",
   };
 
-  await db.query(
+  await pool.query(
     `
       INSERT INTO outbox_events (id, event)
       VALUES ($1, $2::jsonb)
@@ -122,8 +124,8 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
 
   // Act
   const publish = publishEvents({
-    db,
     js,
+    pool,
     signal: controller.signal,
   });
 
@@ -132,7 +134,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
 
   const {
     rows: [outbox],
-  } = await db.query(
+  } = await pool.query(
     `
       SELECT published_at
       FROM outbox_events

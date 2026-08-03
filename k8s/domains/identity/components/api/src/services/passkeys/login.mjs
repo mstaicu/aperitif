@@ -19,11 +19,11 @@ const generateSessionToken = () => {
 };
 
 /**
- * @param {{ db: import("pg").Pool, origin: string }} resources
+ * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @returns {(input: LoginInput) => Promise<{refresh_token: string}>}
  */
 export const login =
-  ({ db, origin }) =>
+  ({ origin, pool }) =>
   async ({ authentication }) => {
     if (authentication.id !== authentication.rawId) {
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
@@ -55,7 +55,7 @@ export const login =
     try {
       const {
         rows: [challengeRow],
-      } = await db.query(
+      } = await pool.query(
         `
           DELETE FROM authentication_challenges
           WHERE challenge = $1
@@ -69,7 +69,7 @@ export const login =
         throw new Error("AUTHENTICATION_FAILED");
       }
 
-      client = await db.connect();
+      client = await pool.connect();
       await client.query("BEGIN");
 
       const {
@@ -190,7 +190,7 @@ export const login =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

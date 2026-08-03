@@ -1,11 +1,11 @@
 import { assignOperator, revokeOperator } from "./operator.mjs";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  */
-export const createOperatorsService = ({ db }) => ({
-  assignOperator: assignOperator({ db }),
-  revokeOperator: revokeOperator({ db }),
+export const createOperatorsService = ({ pool }) => ({
+  assignOperator: assignOperator({ pool }),
+  revokeOperator: revokeOperator({ pool }),
 });
 
 /**

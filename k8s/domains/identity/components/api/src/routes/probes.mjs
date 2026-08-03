@@ -1,16 +1,16 @@
 /**
- * @typedef { import("pg").Pool } Db
+ * @typedef {import("pg").Pool} Pool
  */
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
- * @param {{db: Db}} opts
+ * @param {{ pool: Pool }} opts
  */
-export default async (fastify, { db }) => {
+export default async (fastify, { pool }) => {
   fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {
-      await db.query("SELECT 1");
+      await pool.query("SELECT 1");
 
       return { ok: true };
     } catch {

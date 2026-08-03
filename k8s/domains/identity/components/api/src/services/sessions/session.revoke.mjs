@@ -2,11 +2,11 @@ import { createHash } from "node:crypto";
 import { DatabaseError } from "pg";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { refresh_token: string }) => Promise<void>}
  */
 export const revokeSession =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -17,7 +17,7 @@ export const revokeSession =
     try {
       const {
         rows: [session],
-      } = await db.query(
+      } = await pool.query(
         `
           UPDATE sessions
           SET revoked_at = NOW()
@@ -48,7 +48,7 @@ export const revokeSession =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

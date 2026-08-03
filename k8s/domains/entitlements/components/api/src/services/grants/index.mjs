@@ -1,10 +1,10 @@
 import { set } from "./grants.set.mjs";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  */
-export const getGrantsService = ({ db }) => ({
-  set: set({ db }),
+export const getGrantsService = ({ pool }) => ({
+  set: set({ pool }),
 });
 
 /**

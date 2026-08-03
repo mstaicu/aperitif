@@ -2,11 +2,11 @@ import { AccountCreatedV1EventCheck } from "@mstaicu/accounts-contracts";
 
 /**
  * @param {{
- *   db: import("pg").Pool,
  *   event: unknown,
+ *   pool: import("pg").Pool,
  * }} args
  */
-export async function projectAccountCreatedV1({ db, event }) {
+export async function projectAccountCreatedV1({ event, pool }) {
   if (!AccountCreatedV1EventCheck.Check(event)) {
     console.warn("Invalid account created event ignored");
     return;
@@ -14,7 +14,7 @@ export async function projectAccountCreatedV1({ db, event }) {
 
   const { data } = event;
 
-  await db.query(
+  await pool.query(
     `
       INSERT INTO projected_accounts (
         account_id,

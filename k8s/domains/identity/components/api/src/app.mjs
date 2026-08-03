@@ -26,7 +26,7 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 
 /**
  * @param {{
- *  db: import("pg").Pool,
+ *  pool: import("pg").Pool,
  *  jwks: import("./platform/security/index.mjs").JwtKeys["jwks"],
  *  operators: OperatorsService,
  *  passkeys: PasskeysService,
@@ -36,11 +36,11 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
  * @returns {Promise<FastifyInstance>}
  */
 export const createApp = async ({
-  db,
   fastifyOtel,
   jwks,
   operators,
   passkeys,
+  pool,
   sessions,
 }) => {
   /**
@@ -54,7 +54,7 @@ export const createApp = async ({
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db });
+  await app.register(probes, { pool });
   await app.register(jwksRoutes, { jwks });
   await registerV1Routes(app, {
     jwks,

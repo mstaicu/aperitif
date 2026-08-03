@@ -19,10 +19,10 @@ const generateSessionToken = () => {
 };
 
 /**
- * @param {{ db: import("pg").Pool, origin: string }} resources
+ * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @param {RegistrationResponseJSON} credential
  */
-const verifyPasskeyRegistration = async ({ db, origin }, credential) => {
+const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
   if (credential.id !== credential.rawId) {
     throw new Error("INVALID_REGISTRATION_RESPONSE");
   }
@@ -49,7 +49,7 @@ const verifyPasskeyRegistration = async ({ db, origin }, credential) => {
 
   const {
     rows: [challengeRow],
-  } = await db.query(
+  } = await pool.query(
     `
       DELETE FROM registration_challenges
       WHERE challenge = $1
@@ -108,21 +108,21 @@ const verifyPasskeyRegistration = async ({ db, origin }, credential) => {
 };
 
 /**
- * @param {{ db: import("pg").Pool, origin: string }} resources
+ * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @returns {(input: RegisterInput) => Promise<{refresh_token: string}>}
  */
 export const register =
-  ({ db, origin }) =>
+  ({ origin, pool }) =>
   async ({ credential }) => {
     let client;
 
     try {
       const registration = await verifyPasskeyRegistration(
-        { db, origin },
+        { origin, pool },
         credential,
       );
 
-      client = await db.connect();
+      client = await pool.connect();
 
       await client.query("BEGIN");
 
@@ -208,7 +208,7 @@ export const register =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

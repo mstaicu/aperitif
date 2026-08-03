@@ -7,18 +7,18 @@ import { DatabaseError } from "pg";
  */
 
 /**
- * @param {{ db: import("pg").Pool, origin: string }} resources
+ * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @returns {() => Promise<PublicKeyCredentialCreationOptionsJSON>}
  */
 export const createRegisterChallenge =
-  ({ db, origin }) =>
+  ({ origin, pool }) =>
   async () => {
     try {
       const challenge = randomBytes(32);
 
       const {
         rows: [registrationChallenge],
-      } = await db.query(
+      } = await pool.query(
         `
           INSERT INTO registration_challenges (
             challenge,
@@ -57,7 +57,7 @@ export const createRegisterChallenge =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

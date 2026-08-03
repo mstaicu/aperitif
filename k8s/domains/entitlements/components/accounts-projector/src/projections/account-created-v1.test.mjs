@@ -7,11 +7,11 @@ import { startPostgres } from "../../test/fixtures/postgres.mjs";
 import { projectAccountCreatedV1 } from "./account-created-v1.mjs";
 
 test("projects account state without allowing stale events to overwrite it", async () => {
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
   const accountId = randomUUID();
 
   await projectAccountCreatedV1({
-    db,
     event: buildAccountCreatedV1Event(
       {
         account: {
@@ -26,10 +26,10 @@ test("projects account state without allowing stale events to overwrite it", asy
       },
       2,
     ),
+    pool,
   });
 
   await projectAccountCreatedV1({
-    db,
     event: buildAccountCreatedV1Event(
       {
         account: {
@@ -44,11 +44,12 @@ test("projects account state without allowing stale events to overwrite it", asy
       },
       1,
     ),
+    pool,
   });
 
   const {
     rows: [projectedAccount],
-  } = await db.query(
+  } = await pool.query(
     `
       SELECT account_id,
         version

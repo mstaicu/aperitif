@@ -4,15 +4,15 @@ import { on } from "node:events";
  * LISTEN only wakes the publisher; outbox_events is the source of truth.
  *
  * @param {{
- *   db: import("pg").Pool,
+ *   pool: import("pg").Pool,
  *   js: import("@nats-io/jetstream").JetStreamClient,
  *   signal: AbortSignal,
  * }} args
  */
-export async function publishEvents({ db, js, signal }) {
+export async function publishEvents({ js, pool, signal }) {
   signal.throwIfAborted();
 
-  const client = await db.connect();
+  const client = await pool.connect();
 
   try {
     // eslint-disable-next-line

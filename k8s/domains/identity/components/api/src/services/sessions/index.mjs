@@ -3,13 +3,13 @@ import { revokeSession } from "./session.revoke.mjs";
 
 /**
  * @param {{
- *   db: import("pg").Pool,
+ *   pool: import("pg").Pool,
  *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
  * }} resources
  */
-export const createSessionsService = ({ db, signingKey }) => ({
-  createAccessToken: createAccessToken({ db, signingKey }),
-  revokeSession: revokeSession({ db }),
+export const createSessionsService = ({ pool, signingKey }) => ({
+  createAccessToken: createAccessToken({ pool, signingKey }),
+  revokeSession: revokeSession({ pool }),
 });
 
 /**

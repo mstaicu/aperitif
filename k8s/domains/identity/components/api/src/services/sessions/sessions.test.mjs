@@ -8,15 +8,19 @@ import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createSessionsService } from "./index.mjs";
 
 test("sessions remain independent for every login", async () => {
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
   const jwt = await createJwtFixture();
-  const sessions = createSessionsService({ db, signingKey: jwt.signingKey });
+  const sessions = createSessionsService({
+    pool,
+    signingKey: jwt.signingKey,
+  });
   const userId = randomUUID();
   const laptop = randomBytes(32).toString("base64url");
   const phone = randomBytes(32).toString("base64url");
 
-  await db.query("INSERT INTO users (id) VALUES ($1)", [userId]);
-  await db.query(
+  await pool.query("INSERT INTO users (id) VALUES ($1)", [userId]);
+  await pool.query(
     `
       INSERT INTO sessions (user_id, token_hash, expires_at)
       VALUES
@@ -29,7 +33,7 @@ test("sessions remain independent for every login", async () => {
       createHash("sha256").update(phone).digest(),
     ],
   );
-  await db.query("INSERT INTO operators (user_id) VALUES ($1)", [userId]);
+  await pool.query("INSERT INTO operators (user_id) VALUES ($1)", [userId]);
 
   const [laptopAccess] = await Promise.all([
     sessions.createAccessToken({ refresh_token: laptop }),

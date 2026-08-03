@@ -23,14 +23,14 @@ import { registerV1Routes } from "./routes/v1/index.mjs";
 
 /**
  * @param {{
- *  db: import("pg").Pool,
+ *  pool: import("pg").Pool,
  *  fastifyOtel?: FastifyOtelInstrumentation,
  *  grants: GrantsService,
  *  jwks: import("jose").JWTVerifyGetKey,
  * }} args
  * @returns {Promise<FastifyInstance>}
  */
-export const createApp = async ({ db, fastifyOtel, grants, jwks }) => {
+export const createApp = async ({ fastifyOtel, grants, jwks, pool }) => {
   /**
    * @type {FastifyInstance}
    */
@@ -42,7 +42,7 @@ export const createApp = async ({ db, fastifyOtel, grants, jwks }) => {
   if (fastifyOtel) {
     await app.register(fastifyOtel.plugin());
   }
-  await app.register(probes, { db });
+  await app.register(probes, { pool });
   await registerV1Routes(app, {
     grants,
     jwks,

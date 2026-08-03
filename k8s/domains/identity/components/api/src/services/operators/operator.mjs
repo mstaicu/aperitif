@@ -1,16 +1,16 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const assignOperator =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ userId }) => {
     try {
       const {
         rows: [user],
-      } = await db.query(
+      } = await pool.query(
         `
           SELECT 1
           FROM users
@@ -23,7 +23,7 @@ export const assignOperator =
         throw new Error("USER_NOT_FOUND");
       }
 
-      await db.query(
+      await pool.query(
         `
           INSERT INTO operators (user_id)
           VALUES ($1)
@@ -50,7 +50,7 @@ export const assignOperator =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")
@@ -63,16 +63,16 @@ export const assignOperator =
   };
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
  */
 export const revokeOperator =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ userId }) => {
     let client;
 
     try {
-      client = await db.connect();
+      client = await pool.connect();
       await client.query("BEGIN");
 
       const { rows: operators } = await client.query(
@@ -121,7 +121,7 @@ export const revokeOperator =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

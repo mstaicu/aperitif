@@ -1,7 +1,7 @@
 import { DatabaseError } from "pg";
 
 /**
- * @param {{ db: import("pg").Pool }} resources
+ * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { currentUserId: string }) => Promise<{
  *   accounts: {
  *     id: string,
@@ -11,12 +11,12 @@ import { DatabaseError } from "pg";
  * }>}
  */
 export const listAccounts =
-  ({ db }) =>
+  ({ pool }) =>
   async ({ currentUserId }) => {
     let rows;
 
     try {
-      ({ rows } = await db.query(
+      ({ rows } = await pool.query(
         `
           SELECT a.id,
             a.name,
@@ -35,7 +35,7 @@ export const listAccounts =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

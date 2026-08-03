@@ -10,14 +10,15 @@ import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { getGrantsService } from "./index.mjs";
 
 test("sets grants and resolves account entitlements", async () => {
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
 
   const accountId = randomUUID();
   const firstGrantId = randomUUID();
   const secondGrantId = randomUUID();
-  const grants = getGrantsService({ db });
+  const grants = getGrantsService({ pool });
 
-  await db.query(
+  await pool.query(
     `
       INSERT INTO capabilities (id, type, strategy)
       VALUES
@@ -27,7 +28,7 @@ test("sets grants and resolves account entitlements", async () => {
     `,
   );
 
-  await db.query(
+  await pool.query(
     `
       INSERT INTO projected_accounts (account_id, version)
       VALUES ($1, 1)
@@ -77,7 +78,7 @@ test("sets grants and resolves account entitlements", async () => {
 
   const {
     rows: [{ event }],
-  } = await db.query(
+  } = await pool.query(
     `
       SELECT event
       FROM outbox_events

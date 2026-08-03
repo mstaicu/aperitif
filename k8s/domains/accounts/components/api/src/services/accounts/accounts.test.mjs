@@ -11,8 +11,9 @@ import { createAccountsService } from "./index.mjs";
 
 test("accounts create accounts owned by the current user", async () => {
   // Arrange
-  await using db = await startPostgres();
-  const accounts = createAccountsService({ db });
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  const accounts = createAccountsService({ pool });
   const currentUserId = randomUUID();
 
   // Act
@@ -34,8 +35,9 @@ test("accounts create accounts owned by the current user", async () => {
 
 test("accounts list only accounts for the current user", async () => {
   // Arrange
-  await using db = await startPostgres();
-  const accounts = createAccountsService({ db });
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  const accounts = createAccountsService({ pool });
   const currentUserId = randomUUID();
 
   const alpha = await accounts.createAccount({
@@ -65,8 +67,9 @@ test("accounts list only accounts for the current user", async () => {
 
 test("accounts write account created events to the outbox", async () => {
   // Arrange
-  await using db = await startPostgres();
-  const accounts = createAccountsService({ db });
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  const accounts = createAccountsService({ pool });
   const currentUserId = randomUUID();
 
   // Act
@@ -79,7 +82,7 @@ test("accounts write account created events to the outbox", async () => {
   // Assert
   const {
     rows: [outbox],
-  } = await db.query(
+  } = await pool.query(
     `
       SELECT event
       FROM outbox_events

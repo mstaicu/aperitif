@@ -14,13 +14,13 @@
 /**
  * @param {{
  *   accountId: string,
- *   db: import("pg").Pool | import("pg").PoolClient,
+ *   client: import("pg").PoolClient,
  * }} args
  * @returns {Promise<Entitlement[]>}
  */
-export async function resolveEntitlements({ accountId, db }) {
+export async function resolveEntitlements({ accountId, client }) {
   /** @type {{ rows: StoredGrant[] }} */
-  const { rows: grants } = await db.query(
+  const { rows: grants } = await client.query(
     `
       SELECT g.capability_id AS id,
         g.value,

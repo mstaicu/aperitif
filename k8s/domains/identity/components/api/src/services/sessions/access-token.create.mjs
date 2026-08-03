@@ -4,7 +4,7 @@ import { DatabaseError } from "pg";
 
 /**
  * @param {{
- *   db: import("pg").Pool,
+ *   pool: import("pg").Pool,
  *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
  * }} resources
  * @returns {(args: { refresh_token: string }) => Promise<{
@@ -14,7 +14,7 @@ import { DatabaseError } from "pg";
  * }>}
  */
 export const createAccessToken =
-  ({ db, signingKey }) =>
+  ({ pool, signingKey }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
       throw new Error("INVALID_REFRESH_TOKEN");
@@ -25,7 +25,7 @@ export const createAccessToken =
     try {
       const {
         rows: [session],
-      } = await db.query(
+      } = await pool.query(
         `
           UPDATE sessions s
           SET last_used_at = NOW()
@@ -83,7 +83,7 @@ export const createAccessToken =
             err.code === "57P01" ||
             err.code === "57P03" ||
             err.code === "53300")) ||
-        (err instanceof Error &&
+        (Error.isError(err) &&
           "code" in err &&
           "syscall" in err &&
           typeof err.code === "string")

@@ -5,10 +5,11 @@ import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createPasskeysService } from "./index.mjs";
 
 test("passkeys require the configured origin and user verification", async () => {
-  await using db = await startPostgres();
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
   const passkeys = createPasskeysService({
-    db,
     origin: "https://identity.test",
+    pool,
   });
   const [registration, login] = await Promise.all([
     passkeys.createRegisterChallenge(),
@@ -16,7 +17,7 @@ test("passkeys require the configured origin and user verification", async () =>
   ]);
   const {
     rows: [challenges],
-  } = await db.query(`
+  } = await pool.query(`
     SELECT
       (SELECT COUNT(*)::int FROM registration_challenges) AS registrations,
       (SELECT COUNT(*)::int FROM authentication_challenges) AS authentications

@@ -2,11 +2,11 @@ import http from "node:http";
 
 /**
  * @param {{
- *   db: import("pg").Pool,
+ *   pool: import("pg").Pool,
  *   nc: import("@nats-io/transport-node").NatsConnection,
  * }} args
  */
-export function createHealthServer({ db, nc }) {
+export function createHealthServer({ nc, pool }) {
   return http.createServer(async (req, res) => {
     if (req.url === "/livez") {
       res.writeHead(200, { "content-type": "text/plain" });
@@ -16,7 +16,7 @@ export function createHealthServer({ db, nc }) {
 
     if (req.url === "/readyz") {
       try {
-        await db.query("SELECT 1");
+        await pool.query("SELECT 1");
         await nc.flush();
 
         res.writeHead(200, { "content-type": "text/plain" });
