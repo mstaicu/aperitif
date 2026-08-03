@@ -1,9 +1,10 @@
 import type { RequestContext } from "remix/fetch-router";
 
-const apiInternalV1Url = (
-  process.env.API_INTERNAL_V1_URL ??
-  "http://traefik-internal.traefik.svc.cluster.local/v1"
-).replace(/\/+$/, "");
+if (!process.env.API_INTERNAL_V1_URL) {
+  throw new Error("API_INTERNAL_V1_URL is required");
+}
+
+const apiInternalV1Url = process.env.API_INTERNAL_V1_URL.replace(/\/+$/, "");
 
 export async function createRegistrationChallenge() {
   const response = await fetch(

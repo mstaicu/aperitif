@@ -1,6 +1,5 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { createHash, randomBytes } from "node:crypto";
-import { DatabaseError } from "pg";
 
 /**
  * @typedef {import("@simplewebauthn/server").AuthenticationResponseJSON} AuthenticationResponseJSON
@@ -183,21 +182,6 @@ export const login =
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
-
-      if (
-        (err instanceof DatabaseError &&
-          (err.code?.startsWith("08") ||
-            err.code === "57P01" ||
-            err.code === "57P03" ||
-            err.code === "53300")) ||
-        (Error.isError(err) &&
-          "code" in err &&
-          "syscall" in err &&
-          typeof err.code === "string")
-      ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-      }
-
       throw err;
     } finally {
       client?.release();

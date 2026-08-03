@@ -41,8 +41,7 @@ kept here.
   read-your-writes semantics where product flows require them.
 - Define projection freshness and rebuild behavior before projected authority
   protects high-risk actions.
-- Add an audited first-operator bootstrap, WebAuthn abuse limits, key rotation,
-  and compromised-session runbooks.
+- Add WebAuthn abuse limits, key rotation, and compromised-session runbooks.
 - Automate contract compatibility checks, publication provenance, and known
   consumer checks when contract releases become frequent.
 

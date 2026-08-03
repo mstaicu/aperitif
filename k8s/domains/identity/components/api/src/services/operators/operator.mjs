@@ -1,5 +1,3 @@
-import { DatabaseError } from "pg";
-
 /**
  * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { userId: string }) => Promise<{ user_id: string }>}
@@ -7,59 +5,41 @@ import { DatabaseError } from "pg";
 export const assignOperator =
   ({ pool }) =>
   async ({ userId }) => {
-    try {
-      const {
-        rows: [user],
-      } = await pool.query(
-        `
-          SELECT 1
-          FROM users
-          WHERE id = $1
-        `,
-        [userId],
-      );
+    const {
+      rows: [user],
+    } = await pool.query(
+      `
+        SELECT 1
+        FROM users
+        WHERE id = $1
+      `,
+      [userId],
+    );
 
-      if (!user) {
-        throw new Error("USER_NOT_FOUND");
-      }
-
-      await pool.query(
-        `
-          INSERT INTO operators (user_id)
-          VALUES ($1)
-          ON CONFLICT DO NOTHING
-        `,
-        [userId],
-      );
-
-      console.log(
-        JSON.stringify({
-          event: "operator_assigned",
-          level: "info",
-          user_id: userId,
-        }),
-      );
-
-      return {
-        user_id: userId,
-      };
-    } catch (err) {
-      if (
-        (err instanceof DatabaseError &&
-          (err.code?.startsWith("08") ||
-            err.code === "57P01" ||
-            err.code === "57P03" ||
-            err.code === "53300")) ||
-        (Error.isError(err) &&
-          "code" in err &&
-          "syscall" in err &&
-          typeof err.code === "string")
-      ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-      }
-
-      throw err;
+    if (!user) {
+      throw new Error("USER_NOT_FOUND");
     }
+
+    await pool.query(
+      `
+        INSERT INTO operators (user_id)
+        VALUES ($1)
+        ON CONFLICT DO NOTHING
+      `,
+      [userId],
+    );
+
+    console.log(
+      JSON.stringify({
+        event: "operator_assigned",
+        level: "info",
+        user_id: userId,
+      }),
+    );
+
+    return {
+      user_id: userId,
+    };
   };
 
 /**
@@ -114,21 +94,6 @@ export const revokeOperator =
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
-
-      if (
-        (err instanceof DatabaseError &&
-          (err.code?.startsWith("08") ||
-            err.code === "57P01" ||
-            err.code === "57P03" ||
-            err.code === "53300")) ||
-        (Error.isError(err) &&
-          "code" in err &&
-          "syscall" in err &&
-          typeof err.code === "string")
-      ) {
-        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
-      }
-
       throw err;
     } finally {
       client?.release();

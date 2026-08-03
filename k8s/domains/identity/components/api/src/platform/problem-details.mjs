@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import fp from "fastify-plugin";
+import { DatabaseError } from "pg";
 
 const PROBLEM_CONTENT_TYPE = "application/problem+json";
 
@@ -133,7 +134,22 @@ export default fp(async function (app) {
         .send(INVALID_REQUEST);
     }
 
-    const problem = Error.isError(error) ? PROBLEMS[error.message] : undefined;
+    const databaseUnavailable =
+      (error instanceof DatabaseError &&
+        (error.code?.startsWith("08") ||
+          error.code === "57P01" ||
+          error.code === "57P03" ||
+          error.code === "53300")) ||
+      (Error.isError(error) &&
+        "code" in error &&
+        "syscall" in error &&
+        typeof error.code === "string");
+
+    const problem = databaseUnavailable
+      ? PROBLEMS.DATABASE_UNAVAILABLE
+      : Error.isError(error)
+        ? PROBLEMS[error.message]
+        : undefined;
 
     if (problem) {
       if (problem.status >= 500) {

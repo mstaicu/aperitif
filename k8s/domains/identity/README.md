@@ -1,8 +1,7 @@
 # Identity
 
 Identity authenticates users. It owns users, passkeys, WebAuthn challenges,
-sessions, refresh-token rotation, platform operators, and the JWKS used by
-other APIs.
+sessions, platform operators, and the JWKS used by other APIs.
 
 It does not own accounts, entitlements, or product resources.
 
@@ -32,9 +31,30 @@ Identity currently publishes no domain events, so it has no publisher.
 - `/v1/identity/docs`
 - `/signup` and `/login`
 
-Every successful access-token exchange rotates the presented refresh token.
-Clients must store the returned replacement. Other domains verify access tokens
-through JWKS and make authorization decisions from their own state.
+Every successful passkey registration or login creates an independent 30-day
+session with its own refresh token. Exchanging that token updates the session's
+last-used time and returns a five-minute access token; it does not replace the
+refresh token. Revoking a refresh token revokes only that session. Other domains
+verify access tokens through JWKS and make authorization decisions from their
+own state.
+
+## First operator
+
+A new Identity database has no platform operators. Bootstrap exactly one after
+that user registers:
+
+1. Exchange the user's refresh token for an access token and read its `sub`
+   claim.
+2. Using a controlled administrative connection to the Identity database, run:
+
+   ```sql
+   INSERT INTO operators (user_id) VALUES ('<sub>');
+   ```
+
+3. Exchange the same refresh token again. The new access token now contains
+   `operator: true` and can manage later operators through `/v1/operators/*`.
+
+There is deliberately no unauthenticated operator-bootstrap endpoint.
 
 ## Work here
 

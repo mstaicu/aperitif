@@ -37,7 +37,7 @@ const jwks = createRemoteJWKSet(
 const accounts = createAccountsService({ pool });
 
 /** @type {FastifyInstance} */
-await using app = Fastify()
+await using app = Fastify({ logger: true })
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
 

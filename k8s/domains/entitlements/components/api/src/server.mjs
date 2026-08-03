@@ -37,7 +37,7 @@ const jwks = createRemoteJWKSet(
 const grants = getGrantsService({ pool });
 
 /** @type {FastifyInstance} */
-await using app = Fastify()
+await using app = Fastify({ logger: true })
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
 

@@ -49,7 +49,7 @@ const sessions = createSessionsService({
 });
 
 /** @type {FastifyInstance} */
-await using app = Fastify()
+await using app = Fastify({ logger: true })
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
 
