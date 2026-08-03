@@ -22,14 +22,6 @@ export const ProblemResponse = {
   },
 };
 
-/**
- * @param {string} code
- * @param {ErrorOptions} [options]
- */
-export function createError(code, options) {
-  return Object.assign(new Error(code, options), { code });
-}
-
 const ROUTE_NOT_FOUND = {
   status: 404,
   title: "Route not found",
@@ -141,18 +133,14 @@ export default fp(async function (app) {
         .send(INVALID_REQUEST);
     }
 
-    const code =
-      Error.isError(error) && "code" in error && typeof error.code === "string"
-        ? error.code
-        : undefined;
-    const problem = code ? PROBLEMS[code] : undefined;
+    const problem = Error.isError(error) ? PROBLEMS[error.message] : undefined;
 
     if (problem) {
       if (problem.status >= 500) {
         request.log.error({ err: error }, "request failed");
       }
 
-      if (code === "INVALID_ACCESS_TOKEN") {
+      if (error.message === "INVALID_ACCESS_TOKEN") {
         reply.header("www-authenticate", "Bearer");
       }
 

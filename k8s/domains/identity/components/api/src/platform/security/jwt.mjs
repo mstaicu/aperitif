@@ -1,7 +1,5 @@
 import { createLocalJWKSet, jwtVerify } from "jose";
 
-import { createError } from "../problem-details.mjs";
-
 /**
  * @param {{
  *   authorization?: string,
@@ -16,14 +14,14 @@ export const verifyAccessToken = async ({ authorization, jwks }) => {
   const [type, token] = (authorization || "").split(" ");
 
   if (type !== "Bearer" || !token) {
-    throw createError("INVALID_ACCESS_TOKEN");
+    throw new Error("INVALID_ACCESS_TOKEN");
   }
 
   try {
     const { payload } = await jwtVerify(token, createLocalJWKSet(jwks));
 
     if (typeof payload.sub !== "string") {
-      throw createError("INVALID_ACCESS_TOKEN");
+      throw new Error("INVALID_ACCESS_TOKEN");
     }
 
     return {
@@ -31,7 +29,7 @@ export const verifyAccessToken = async ({ authorization, jwks }) => {
       sub: payload.sub,
     };
   } catch {
-    throw createError("INVALID_ACCESS_TOKEN");
+    throw new Error("INVALID_ACCESS_TOKEN");
   }
 };
 
@@ -48,7 +46,7 @@ export const authenticateOperator = async ({ authorization, jwks }) => {
   });
 
   if (payload.operator !== true) {
-    throw createError("FORBIDDEN");
+    throw new Error("FORBIDDEN");
   }
 
   return payload.sub;

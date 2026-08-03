@@ -1,7 +1,5 @@
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
-
 /**
  * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: { currentUserId: string }) => Promise<{
@@ -42,7 +40,7 @@ export const listAccounts =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

@@ -2,8 +2,6 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
-
 /**
  * @typedef {import("@simplewebauthn/server").PublicKeyCredentialRequestOptionsJSON} PublicKeyCredentialRequestOptionsJSON
  */
@@ -43,7 +41,7 @@ export const createLoginChallenge =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

@@ -2,8 +2,6 @@ import { SignJWT } from "jose";
 import { createHash } from "node:crypto";
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
-
 /**
  * @param {{
  *   pool: import("pg").Pool,
@@ -19,7 +17,7 @@ export const createAccessToken =
   ({ pool, signingKey }) =>
   async ({ refresh_token }) => {
     if (!refresh_token || typeof refresh_token !== "string") {
-      throw createError("INVALID_REFRESH_TOKEN");
+      throw new Error("INVALID_REFRESH_TOKEN");
     }
 
     const tokenHash = createHash("sha256").update(refresh_token).digest();
@@ -47,7 +45,7 @@ export const createAccessToken =
       );
 
       if (!session) {
-        throw createError("SESSION_NOT_FOUND");
+        throw new Error("SESSION_NOT_FOUND");
       }
 
       /** @type {{ operator?: true, sub: string }} */
@@ -90,7 +88,7 @@ export const createAccessToken =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

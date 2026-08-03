@@ -1,7 +1,6 @@
 import { buildAccountEntitlementsUpdatedV1Event } from "@mstaicu/entitlements-contracts";
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
 import { resolveEntitlements } from "../entitlements/entitlements.resolve.mjs";
 
 /**
@@ -52,14 +51,14 @@ export const set =
       );
 
       if (!account) {
-        throw createError("ACCOUNT_NOT_FOUND");
+        throw new Error("ACCOUNT_NOT_FOUND");
       }
 
       if (
         new Set(capabilities.map((capability) => capability.id)).size !==
         capabilities.length
       ) {
-        throw createError("DUPLICATE_CAPABILITY");
+        throw new Error("DUPLICATE_CAPABILITY");
       }
 
       /** @type {{ rows: CapabilityDefinition[] }} */
@@ -80,14 +79,14 @@ export const set =
         const definition = definitionsById.get(capability.id);
 
         if (!definition) {
-          throw createError("CAPABILITY_NOT_FOUND");
+          throw new Error("CAPABILITY_NOT_FOUND");
         }
 
         if (
           definition.type === "boolean" &&
           typeof capability.value !== "boolean"
         ) {
-          throw createError("INVALID_CAPABILITY_VALUE");
+          throw new Error("INVALID_CAPABILITY_VALUE");
         }
 
         if (
@@ -95,7 +94,7 @@ export const set =
           (typeof capability.value !== "number" ||
             !Number.isFinite(capability.value))
         ) {
-          throw createError("INVALID_CAPABILITY_VALUE");
+          throw new Error("INVALID_CAPABILITY_VALUE");
         }
       }
 
@@ -178,7 +177,7 @@ export const set =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

@@ -1,8 +1,6 @@
 import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
-
 /**
  * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: {
@@ -107,7 +105,7 @@ export const createAccount =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

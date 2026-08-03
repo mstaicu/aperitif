@@ -2,8 +2,6 @@ import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { createHash, randomBytes } from "node:crypto";
 import { DatabaseError } from "pg";
 
-import { createError } from "../../platform/problem-details.mjs";
-
 /**
  * @typedef {import("@simplewebauthn/server").AuthenticationResponseJSON} AuthenticationResponseJSON
  */
@@ -28,7 +26,7 @@ export const login =
   ({ origin, pool }) =>
   async ({ authentication }) => {
     if (authentication.id !== authentication.rawId) {
-      throw createError("INVALID_AUTHENTICATION_RESPONSE");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     let clientDataJSON;
@@ -41,7 +39,7 @@ export const login =
         ).toString("utf8"),
       );
     } catch {
-      throw createError("INVALID_AUTHENTICATION_RESPONSE");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     if (
@@ -49,7 +47,7 @@ export const login =
       typeof clientDataJSON !== "object" ||
       typeof clientDataJSON.challenge !== "string"
     ) {
-      throw createError("INVALID_AUTHENTICATION_RESPONSE");
+      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
     let client;
@@ -68,7 +66,7 @@ export const login =
       );
 
       if (!challengeRow) {
-        throw createError("AUTHENTICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       client = await pool.connect();
@@ -87,7 +85,7 @@ export const login =
       );
 
       if (!credential) {
-        throw createError("AUTHENTICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       if (authentication.response.userHandle) {
@@ -102,7 +100,7 @@ export const login =
         );
 
         if (!userHandle.equals(expectedHandle)) {
-          throw createError("AUTHENTICATION_FAILED");
+          throw new Error("AUTHENTICATION_FAILED");
         }
       }
 
@@ -124,18 +122,18 @@ export const login =
           response: authentication,
         });
       } catch {
-        throw createError("AUTHENTICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       if (!verification.verified) {
-        throw createError("AUTHENTICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       const newCounter = verification.authenticationInfo.newCounter;
       const oldCounter = Number(credential.sign_count);
 
       if (newCounter > 0 && newCounter <= oldCounter) {
-        throw createError("AUTHENTICATION_FAILED");
+        throw new Error("AUTHENTICATION_FAILED");
       }
 
       await client.query(
@@ -197,7 +195,7 @@ export const login =
           "syscall" in err &&
           typeof err.code === "string")
       ) {
-        throw createError("DATABASE_UNAVAILABLE", { cause: err });
+        throw new Error("DATABASE_UNAVAILABLE", { cause: err });
       }
 
       throw err;

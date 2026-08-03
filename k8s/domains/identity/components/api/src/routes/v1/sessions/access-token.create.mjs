@@ -1,7 +1,4 @@
-import {
-  createError,
-  ProblemResponse,
-} from "../../../platform/problem-details.mjs";
+import { ProblemResponse } from "../../../platform/problem-details.mjs";
 import { AccessTokenResponse } from "./schemas.mjs";
 
 /**
@@ -33,7 +30,7 @@ export function registerAccessTokenRoute(fastify, { sessions }) {
       const [type, token] = (req.headers.authorization || "").split(" ");
 
       if (type !== "Bearer" || !token) {
-        throw createError("INVALID_AUTHORIZATION_HEADER");
+        throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
       reply.header("Cache-Control", "no-store");

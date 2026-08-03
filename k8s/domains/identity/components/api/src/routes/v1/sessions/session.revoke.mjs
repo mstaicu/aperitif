@@ -1,7 +1,4 @@
-import {
-  createError,
-  ProblemResponse,
-} from "../../../platform/problem-details.mjs";
+import { ProblemResponse } from "../../../platform/problem-details.mjs";
 
 /**
  * @param {import("../../../server.mjs").FastifyInstance} fastify
@@ -34,7 +31,7 @@ export function registerRevokeSessionRoute(fastify, { sessions }) {
       const [type, token] = (req.headers.authorization || "").split(" ");
 
       if (type !== "Bearer" || !token) {
-        throw createError("INVALID_AUTHORIZATION_HEADER");
+        throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
       await sessions.revokeSession({ refresh_token: token });
