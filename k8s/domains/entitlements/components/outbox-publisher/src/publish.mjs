@@ -67,7 +67,6 @@ async function* drainTriggers({ client, signal }) {
  *   client: import("pg").PoolClient,
  *   js: import("@nats-io/jetstream").JetStreamClient,
  * }} args
- * @returns {Promise<boolean>}
  */
 async function publishNextEvent({ client, js }) {
   try {

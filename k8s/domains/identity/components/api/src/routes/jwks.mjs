@@ -1,10 +1,6 @@
 /**
- * @typedef {{ keys: import("jose").JWK[] }} Jwks
- */
-
-/**
  * @param {import("fastify").FastifyInstance} fastify
- * @param {{jwks: Jwks}} opts
+ * @param {{ jwks: { keys: import("jose").JWK[] } }} opts
  */
 export default (fastify, { jwks }) => {
   fastify.get("/.well-known/jwks.json", async (_, reply) => {

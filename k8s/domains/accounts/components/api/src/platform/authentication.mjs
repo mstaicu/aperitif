@@ -5,7 +5,6 @@ import { jwtVerify } from "jose";
  *   authorization?: string,
  *   jwks: import("jose").JWTVerifyGetKey,
  * }} args
- * @returns {Promise<string>}
  */
 export async function authenticate({ authorization, jwks }) {
   const [type, token] = (authorization ?? "").split(" ");

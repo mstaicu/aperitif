@@ -1,15 +1,6 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { createHash, randomBytes } from "node:crypto";
 
-/**
- * @typedef {import("@simplewebauthn/server").AuthenticationResponseJSON} AuthenticationResponseJSON
- */
-
-/**
- * @typedef {Object} LoginInput
- * @property {AuthenticationResponseJSON} authentication
- */
-
 const generateSessionToken = () => {
   const token = randomBytes(32).toString("base64url");
   const hash = createHash("sha256").update(token).digest();
@@ -19,7 +10,9 @@ const generateSessionToken = () => {
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {(input: LoginInput) => Promise<{refresh_token: string}>}
+ * @returns {(input: {
+ *   authentication: import("@simplewebauthn/server").AuthenticationResponseJSON,
+ * }) => Promise<{ refresh_token: string }>}
  */
 export const login =
   ({ origin, pool }) =>

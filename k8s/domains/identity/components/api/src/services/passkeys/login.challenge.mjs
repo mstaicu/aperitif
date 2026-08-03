@@ -2,12 +2,7 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 
 /**
- * @typedef {import("@simplewebauthn/server").PublicKeyCredentialRequestOptionsJSON} PublicKeyCredentialRequestOptionsJSON
- */
-
-/**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {() => Promise<PublicKeyCredentialRequestOptionsJSON>}
  */
 export const createLoginChallenge =
   ({ origin, pool }) =>

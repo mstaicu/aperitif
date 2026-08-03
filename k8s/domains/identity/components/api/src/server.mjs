@@ -15,9 +15,6 @@ import { createSessionsService } from "./services/sessions/index.mjs";
 
 /**
  * @typedef {import("fastify")} Fastify
- * @typedef {import('./services/operators/index.mjs').OperatorsService} OperatorsService
- * @typedef {import('./services/passkeys/index.mjs').PasskeysService} PasskeysService
- * @typedef {import('./services/sessions/index.mjs').SessionsService} SessionsService
  */
 
 /**

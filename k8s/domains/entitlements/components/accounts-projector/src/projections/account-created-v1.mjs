@@ -8,8 +8,7 @@ import { AccountCreatedV1EventCheck } from "@mstaicu/accounts-contracts";
  */
 export async function projectAccountCreatedV1({ event, pool }) {
   if (!AccountCreatedV1EventCheck.Check(event)) {
-    console.warn("Invalid account created event ignored");
-    return;
+    throw new Error("INVALID_ACCOUNT_CREATED_EVENT");
   }
 
   const { data } = event;
@@ -23,7 +22,7 @@ export async function projectAccountCreatedV1({ event, pool }) {
       VALUES ($1, $2)
       ON CONFLICT (account_id) DO UPDATE
       SET version = EXCLUDED.version
-      WHERE projected_accounts.version <= EXCLUDED.version
+      WHERE projected_accounts.version < EXCLUDED.version
     `,
     [data.account.id, data.version],
   );

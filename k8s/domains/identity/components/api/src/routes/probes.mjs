@@ -1,10 +1,6 @@
 /**
- * @typedef {import("pg").Pool} Pool
- */
-
-/**
  * @param {import("fastify").FastifyInstance} fastify
- * @param {{ pool: Pool }} opts
+ * @param {{ pool: import("pg").Pool }} opts
  */
 export default async (fastify, { pool }) => {
   fastify.get("/livez", { logLevel: "silent" }, () => ({ ok: true }));

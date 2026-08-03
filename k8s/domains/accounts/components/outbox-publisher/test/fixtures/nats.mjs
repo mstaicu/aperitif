@@ -1,16 +1,6 @@
 import { connect } from "@nats-io/transport-node";
 import { GenericContainer, Wait } from "testcontainers";
 
-/**
- * @typedef {{
- *   nc: Awaited<ReturnType<typeof connect>>,
- *   [Symbol.asyncDispose]: () => Promise<void>,
- * }} NatsFixture
- */
-
-/**
- * @returns {Promise<NatsFixture>}
- */
 export const startNats = async () => {
   await using stack = new AsyncDisposableStack();
 

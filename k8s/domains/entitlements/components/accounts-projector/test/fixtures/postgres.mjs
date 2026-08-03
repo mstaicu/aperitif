@@ -7,12 +7,6 @@ import { GenericContainer, Network, Wait } from "testcontainers";
 const fixtureDir = dirname(fileURLToPath(import.meta.url));
 const sqlPath = resolve(fixtureDir, "../../../migrations/sql");
 
-/**
- * @returns {Promise<{
- *   pool: Pool,
- *   [Symbol.asyncDispose]: () => Promise<void>,
- * }>}
- */
 export const startPostgres = async () => {
   await using stack = new AsyncDisposableStack();
 

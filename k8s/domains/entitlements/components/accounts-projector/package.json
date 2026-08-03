@@ -12,7 +12,6 @@
     "@mstaicu/accounts-contracts": "^0.6.0",
     "@nats-io/jetstream": "^3.4.0",
     "@nats-io/transport-node": "^3.4.0",
-    "@sinclair/typebox": "^0.34.52",
     "pg": "^8.22.0"
   },
   "devDependencies": {

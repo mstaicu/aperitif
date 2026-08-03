@@ -2,15 +2,6 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { createHash, randomBytes } from "node:crypto";
 import { DatabaseError } from "pg";
 
-/**
- * @typedef {import("@simplewebauthn/server").RegistrationResponseJSON} RegistrationResponseJSON
- */
-
-/**
- * @typedef {Object} RegisterInput
- * @property {RegistrationResponseJSON} credential
- */
-
 const generateSessionToken = () => {
   const token = randomBytes(32).toString("base64url");
   const hash = createHash("sha256").update(token).digest();
@@ -20,7 +11,7 @@ const generateSessionToken = () => {
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @param {RegistrationResponseJSON} credential
+ * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
  */
 const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
   if (credential.id !== credential.rawId) {
@@ -109,7 +100,9 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {(input: RegisterInput) => Promise<{refresh_token: string}>}
+ * @returns {(input: {
+ *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
+ * }) => Promise<{ refresh_token: string }>}
  */
 export const register =
   ({ origin, pool }) =>

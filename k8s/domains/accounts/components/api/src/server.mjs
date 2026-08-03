@@ -12,7 +12,6 @@ import { createAccountsService } from "./services/accounts/index.mjs";
 
 /**
  * @typedef {import("fastify")} Fastify
- * @typedef {import('./services/accounts/index.mjs').AccountsService} AccountsService
  */
 
 /**

@@ -12,7 +12,6 @@ import { getGrantsService } from "./services/grants/index.mjs";
 
 /**
  * @typedef {import("fastify")} Fastify
- * @typedef {import('./services/grants/index.mjs').GrantsService} GrantsService
  */
 
 /**
