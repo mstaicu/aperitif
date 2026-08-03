@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 /**
  * @param {{
  *   pool: import("pg").Pool,
- *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
+ *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
  * }} resources
  * @returns {(args: { refresh_token: string }) => Promise<{
  *   access_token: string,

@@ -17,6 +17,7 @@ export function registerRevokeSessionRoute(fastify, { sessions }) {
         response: {
           204: {
             description: "Session revoked.",
+            type: "null",
           },
           401: ProblemResponse,
           500: ProblemResponse,
@@ -36,7 +37,7 @@ export function registerRevokeSessionRoute(fastify, { sessions }) {
 
       await sessions.revokeSession({ refresh_token: token });
 
-      return reply.code(204).send();
+      return reply.code(204).send(null);
     },
   );
 }

@@ -1,11 +1,11 @@
+import { authenticateOperator } from "../../../platform/authentication.mjs";
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { authenticateOperator } from "../../../platform/security/jwt.mjs";
 import { OperatorParams, OperatorResponse } from "./schemas.mjs";
 
 /**
  * @param {import("../../../server.mjs").FastifyInstance} fastify
  * @param {{
- *   jwks: import("../../../platform/security/index.mjs").JwtKeys["jwks"],
+ *   jwks: import("../../../platform/jwt-keys.mjs").JwtKeys["jwks"],
  *   operators: import("../../../services/operators/index.mjs").OperatorsService,
  * }} opts
  */

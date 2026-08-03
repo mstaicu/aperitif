@@ -1,7 +1,7 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "@fastify/type-provider-typebox";
 
 const AccountId = Type.String({
-  description: "Stable identifier for a account resource.",
+  description: "Stable identifier for an account resource.",
   format: "uuid",
 });
 const AccountName = Type.String({
@@ -13,7 +13,7 @@ const AccountType = Type.Union(
   [Type.Literal("personal"), Type.Literal("business")],
   {
     description:
-      "Kind of account boundary being opened. Personal accounts represent an individual context. Business accounts represent an organization context.",
+      "Kind of account boundary being created. Personal accounts represent an individual context. Business accounts represent an organization context.",
   },
 );
 
@@ -24,7 +24,7 @@ export const CreateAccountBody = Type.Object(
   },
   {
     additionalProperties: false,
-    description: "Payload for creating a account owned by the caller.",
+    description: "Payload for creating an account owned by the caller.",
   },
 );
 

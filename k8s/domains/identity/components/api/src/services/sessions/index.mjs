@@ -4,7 +4,7 @@ import { revokeSession } from "./session.revoke.mjs";
 /**
  * @param {{
  *   pool: import("pg").Pool,
- *   signingKey: import("../../platform/security/index.mjs").JwtKeys["signingKey"],
+ *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
  * }} resources
  */
 export const createSessionsService = ({ pool, signingKey }) => ({

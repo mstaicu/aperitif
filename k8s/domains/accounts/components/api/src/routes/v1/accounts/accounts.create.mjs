@@ -1,5 +1,5 @@
+import { authenticate } from "../../../platform/authentication.mjs";
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { authenticate } from "../../../platform/security/jwt.mjs";
 import { CreateAccountBody, CreateAccountResponse } from "./schemas.mjs";
 
 /**
@@ -16,7 +16,7 @@ export function registerCreateAccountRoute(fastify, { accounts, jwks }) {
       schema: {
         body: CreateAccountBody,
         description:
-          "Create a account as the authority root for account-scoped access.",
+          "Create an account as the authority root for account-scoped access.",
         operationId: "createAccount",
         response: {
           201: CreateAccountResponse,

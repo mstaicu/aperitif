@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "@fastify/type-provider-typebox";
 
 const AccountId = Type.String({
   description: "Stable account identifier.",

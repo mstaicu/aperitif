@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "@fastify/type-provider-typebox";
 import fp from "fastify-plugin";
 import { DatabaseError } from "pg";
 
@@ -21,6 +21,7 @@ export const ProblemResponse = {
       schema: ProblemDetails,
     },
   },
+  description: "Problem details response.",
 };
 
 const ROUTE_NOT_FOUND = {

@@ -12,7 +12,7 @@ import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
 /**
  * @param {import("../../server.mjs").FastifyInstance} fastify
  * @param {{
- *   jwks: import("../../platform/security/index.mjs").JwtKeys["jwks"],
+ *   jwks: import("../../platform/jwt-keys.mjs").JwtKeys["jwks"],
  *   operators: import("../../services/operators/index.mjs").OperatorsService,
  *   passkeys: import("../../services/passkeys/index.mjs").PasskeysService,
  *   sessions: import("../../services/sessions/index.mjs").SessionsService,

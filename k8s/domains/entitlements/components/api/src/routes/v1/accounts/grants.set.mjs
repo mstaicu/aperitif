@@ -1,5 +1,5 @@
+import { authenticateOperator } from "../../../platform/authentication.mjs";
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { authenticateOperator } from "../../../platform/security/jwt.mjs";
 import { GrantBody, GrantParams, GrantResponse } from "./grants.schemas.mjs";
 
 /**

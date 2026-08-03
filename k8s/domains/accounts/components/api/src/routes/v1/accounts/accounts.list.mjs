@@ -1,5 +1,5 @@
+import { authenticate } from "../../../platform/authentication.mjs";
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { authenticate } from "../../../platform/security/jwt.mjs";
 import { AccountsResponse } from "./schemas.mjs";
 
 /**
