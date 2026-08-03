@@ -8,7 +8,7 @@ import { connect } from "@nats-io/transport-node";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { createHealthServer } from "./platform/health.mjs";
+import { createProbeServer } from "./platform/probes.mjs";
 import { publishEvents } from "./publish.mjs";
 
 const controller = new AbortController();
@@ -42,9 +42,9 @@ await jsm.streams.add({
   subjects: ["accounts.>"],
 });
 
-await using health = createHealthServer({ nc, pool });
+await using probeServer = createProbeServer({ nc, pool });
 
-health.listen(3000, "0.0.0.0");
+probeServer.listen(3000, "0.0.0.0");
 
 await publishEvents({
   js,

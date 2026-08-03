@@ -17,7 +17,7 @@ const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
   ? new NodeSDK({
       instrumentations: [
         new FastifyOtelInstrumentation({
-          ignorePaths: ({ url }) => url === "/healthz" || url === "/readyz",
+          ignorePaths: ({ url }) => url === "/livez" || url === "/readyz",
           registerOnInitialization: true,
         }),
       ],

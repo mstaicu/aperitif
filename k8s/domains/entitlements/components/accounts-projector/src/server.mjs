@@ -3,7 +3,7 @@ import { connect } from "@nats-io/transport-node";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { createHealthServer } from "./platform/health.mjs";
+import { createProbeServer } from "./platform/probes.mjs";
 import { projections } from "./projections/index.mjs";
 
 const pool = new Pool({
@@ -29,12 +29,11 @@ const info = await jsm.consumers.add("ACCOUNTS", {
   filter_subjects: Object.keys(projections),
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
-
-await using health = createHealthServer({ nc, pool });
-
-health.listen(3000, "0.0.0.0");
-
 const messages = await consumer.consume({ max_messages: 1 });
+
+await using probeServer = createProbeServer({ nc, pool });
+
+probeServer.listen(3000, "0.0.0.0");
 
 for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
   process.once(signal, () => messages.stop());

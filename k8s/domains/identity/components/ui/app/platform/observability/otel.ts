@@ -2,7 +2,7 @@ import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { UndiciInstrumentation } from "@opentelemetry/instrumentation-undici";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-const ignoredPaths = new Set(["/healthz", "/readyz"]);
+const ignoredPaths = new Set(["/livez", "/readyz"]);
 
 let otel: NodeSDK | undefined;
 

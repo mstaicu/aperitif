@@ -7,7 +7,7 @@
  * @param {{ pool: Pool }} opts
  */
 export default async (fastify, { pool }) => {
-  fastify.get("/healthz", { logLevel: "silent" }, () => ({ ok: true }));
+  fastify.get("/livez", { logLevel: "silent" }, () => ({ ok: true }));
   fastify.get("/readyz", { logLevel: "silent" }, async (_, reply) => {
     try {
       await pool.query("SELECT 1");

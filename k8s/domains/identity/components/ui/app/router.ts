@@ -16,7 +16,7 @@ export const router = createRouter({
   ],
 });
 
-router.get("/healthz", () => new Response("ok"));
+router.get("/livez", () => new Response("ok"));
 router.get("/readyz", () => new Response("ok"));
 router.get(routes.home, () => homePage());
 router.map(routes.signup, signupPage);

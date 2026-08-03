@@ -6,7 +6,7 @@ import http from "node:http";
  *   nc: import("@nats-io/transport-node").NatsConnection,
  * }} args
  */
-export function createHealthServer({ nc, pool }) {
+export function createProbeServer({ nc, pool }) {
   return http.createServer(async (req, res) => {
     if (req.url === "/livez") {
       res.writeHead(200, { "content-type": "text/plain" });
