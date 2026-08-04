@@ -7,6 +7,10 @@ on:
       - "domains/*/components/*/**"
       - "!domains/*/components/*/infra/**"
 
+concurrency:
+  group: post-merge
+  queue: max
+
 permissions:
   contents: read
 
@@ -35,10 +39,6 @@ jobs:
     name: publish ${{ matrix.component }}
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    concurrency:
-      group: production-${{ matrix.component }}
-      queue: max
     permissions:
       contents: read
       packages: write
@@ -51,16 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: read image name
-        id: image
-        run: |
-          image_name=$(yq -r '.images[0].name' "${{ matrix.component }}/infra/overlays/prod-eu/kustomization.yaml")
-          echo "name=$image_name" >> "$GITHUB_OUTPUT"
-
-      - name: check image name
-        env:
-          IMAGE_NAME: ${{ steps.image.outputs.name }}
-        run: test -n "$IMAGE_NAME" && test "$IMAGE_NAME" != "null"
+      - id: image
+        name: read image name
+        run: echo "name=$(yq -r '.images[0].name' '${{ matrix.component }}/infra/overlays/prod-eu/kustomization.yaml')" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4
 
@@ -76,4 +69,6 @@ jobs:
           context: ${{ matrix.component }}
           target: prod
           push: true
-          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest

@@ -1,11 +1,15 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help deploy-crds deploy
+.PHONY: help check deploy-crds deploy
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-deploy-crds: ## Deploy Traefik CRDs.
+check: ## Validate the production Ingress manifests.
+	kubectl kustomize crds >/dev/null
+	kubectl kustomize overlays/prod-eu >/dev/null
+
+deploy-crds:
 	skaffold run -m ingress-crds
 	kubectl wait --for=condition=Established --timeout=60s crd/ingressroutes.traefik.io
 	kubectl wait --for=condition=Established --timeout=60s crd/tlsstores.traefik.io

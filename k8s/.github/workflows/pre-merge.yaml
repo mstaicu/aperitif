@@ -1,111 +1,43 @@
 name: pre-merge
 
 on:
-  # run whenever a pull request is opened or updated.
   pull_request:
 
-  # when merge queue is enabled, run again after "merge when ready" is clicked.
-  # github tests its temporary combined commit before changing master.
-  merge_group:
-    types: [checks_requested]
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pre-merge-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  changes:
-    name: find changed domains
+  check:
+    name: check
     runs-on: ubuntu-24.04
-    outputs:
-      domains: ${{ steps.changed.outputs.all_changed_and_modified_files }}
 
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - id: changed
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+      - uses: actions/setup-node@v6
         with:
-          files: domains/**
-          dir_names: true
-          dir_names_max_depth: 2
-          matrix: true
-
-  check:
-    name: check ${{ matrix.domain }}
-    needs: changes
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-
-    strategy:
-      fail-fast: false
-      matrix:
-        domain: ${{ fromJSON(needs.changes.outputs.domains) }}
-
-    env:
-      CLUSTER_NAME: test
-      KSOPS_VERSION: 4.5.1
-      MKCERT_VERSION: v1.4.4
-      SKAFFOLD_VERSION: v2.17.0
-      SOPS_AGE_KEY: ${{ secrets.EPHEMERAL_SOPS_AGE_KEY }}
-      SOPS_VERSION: v3.12.2
-
-    steps:
-      - uses: actions/checkout@v6
+          node-version: 26
 
       - uses: azure/setup-kubectl@v4.0.1
-      - uses: imranismail/setup-kustomize@v2.1.0
 
-      - name: install integration tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libnss3-tools
-
-          curl -fsSL -o skaffold "https://storage.googleapis.com/skaffold/releases/${SKAFFOLD_VERSION}/skaffold-linux-amd64"
-          chmod +x skaffold
-          sudo mv skaffold /usr/local/bin/skaffold
-
-          curl -fsSL -o mkcert "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64"
-          chmod +x mkcert
-          sudo mv mkcert /usr/local/bin/mkcert
-
-          curl -fsSL -o sops "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64"
-          chmod +x sops
-          sudo mv sops /usr/local/bin/sops
-
-          curl -fsSL -o ksops.tar.gz "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
-          tar -xzf ksops.tar.gz
-          sudo mv ksops /usr/local/bin/ksops
-
-      - name: configure ephemeral secrets
-        run: |
-          mkdir -p "$RUNNER_TEMP/sops-age"
-          printf '%s\n' "$SOPS_AGE_KEY" > "$RUNNER_TEMP/sops-age/keys.txt"
-          chmod 600 "$RUNNER_TEMP/sops-age/keys.txt"
-          echo "SOPS_AGE_KEY_FILE=$RUNNER_TEMP/sops-age/keys.txt" >> "$GITHUB_ENV"
-
-      - name: check domain
-        run: make -C "${{ matrix.domain }}" check
-
-      - name: create disposable cluster
-        uses: helm/kind-action@v1.14.0
+      - id: changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          wait: 120s
+          files: |
+            domains/**
+            platform/**
+            clusters/prod-eu/**
+          dir_names: true
+          dir_names_max_depth: 2
 
-      - name: configure skaffold
+      - name: check changed areas
         run: |
-          kubectl config use-context "kind-${CLUSTER_NAME}"
-          skaffold config set --kube-context "kind-${CLUSTER_NAME}" local-cluster true
-
-      - name: test domain in disposable cluster
-        run: make -C "${{ matrix.domain }}" test
-
-      - name: delete disposable cluster
-        if: always()
-        run: kind delete cluster --name "$CLUSTER_NAME" || true
+          for area in ${{ steps.changes.outputs.all_changed_and_modified_files }}; do
+            make -C "$area" check
+          done

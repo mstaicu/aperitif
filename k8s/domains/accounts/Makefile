@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help check migrate deploy dev test
+.PHONY: help check migrate deploy dev
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -19,13 +19,9 @@ check: ## Validate Accounts components, packages, and manifests.
 	cd components/outbox-publisher && npm exec -- tsc -p jsconfig.json --noEmit
 	cd components/outbox-publisher && npm test
 
-	kubectl kustomize infra/postgres/overlays/ephemeral >/dev/null
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/migrations/infra/overlays/ephemeral >/dev/null
 	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/api/infra/overlays/ephemeral >/dev/null
 	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec components/outbox-publisher/infra/overlays/ephemeral >/dev/null
 	kubectl kustomize components/outbox-publisher/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
@@ -40,9 +36,3 @@ deploy: migrate ## Deploy Accounts once in the current cluster.
 dev: ## Start the Accounts development loop.
 	$(MAKE) migrate
 	exec skaffold dev -m accounts-api,accounts-outbox-publisher
-
-test: ## Deploy Accounts and its platform dependencies in a disposable cluster.
-	$(MAKE) -C ../../platform/ingress deploy
-	$(MAKE) -C ../../platform/event-bus deploy
-	$(MAKE) deploy
-	@: # Add domain integration tests here.

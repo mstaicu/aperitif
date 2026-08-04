@@ -9,10 +9,9 @@ kept here.
 - Replace the in-cluster PostgreSQL Deployments with managed databases. Define
   TLS, runtime and migration roles, connection budgets, backups, restore tests,
   and recovery objectives for every domain.
-- Split ephemeral and production cryptographic trust. Fix `.sops.yaml` to match
-  the actual `ephemeral` and `prod-eu` paths, use different age recipients, and
-  give GitHub Actions only the ephemeral private key. Use separate JWT signing
-  keys in each environment.
+- Split ephemeral and production cryptographic trust. Use different age
+  recipients and give GitHub Actions only the ephemeral private key. Use
+  separate JWT signing keys in each environment.
 - Add a real staging cluster and prove database restore, Flux bootstrap, NATS
   recovery, and full cluster recreation before production launch.
 - Replace the OpenTelemetry debug exporter with an owned durable backend. Add

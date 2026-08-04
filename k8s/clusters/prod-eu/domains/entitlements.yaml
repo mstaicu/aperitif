@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: entitlements
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-postgres
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/infra/postgres/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-migrations
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/components/migrations/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: entitlements-postgres
+  force: true
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-api
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/components/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: ingress-crds
+    - name: entitlements-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-outbox-publisher
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/components/outbox-publisher/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: event-bus
+    - name: entitlements-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: entitlements-accounts-projector
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/entitlements/components/accounts-projector/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: event-bus
+    - name: entitlements-migrations
+  wait: true
+  timeout: 5m

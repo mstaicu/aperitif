@@ -2,8 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - platform
-  - domains/identity-namespace.yaml
-  - domains/accounts-namespace.yaml
-  - domains/entitlements-namespace.yaml
-  - domains
+  - platform.yaml
+  - domains/identity.yaml
+  - domains/accounts.yaml
+  - domains/entitlements.yaml
