@@ -12,3 +12,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/entitlements-migrations
     newTag: latest
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:entitlements-migrations:digest"}

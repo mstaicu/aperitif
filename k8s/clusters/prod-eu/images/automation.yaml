@@ -1,0 +1,25 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+
+metadata:
+  name: prod-eu
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: master
+    commit:
+      author:
+        name: flux
+        email: flux@users.noreply.github.com
+      messageTemplate: update production image digests
+    push:
+      branch: master
+  update:
+    path: ./k8s/domains
+    strategy: Setters

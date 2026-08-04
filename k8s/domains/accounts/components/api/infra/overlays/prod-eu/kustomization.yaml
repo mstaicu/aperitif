@@ -14,3 +14,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/accounts-api
     newTag: latest
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:accounts-api:digest"}

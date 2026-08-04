@@ -13,3 +13,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/identity-ui
     newTag: latest
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:identity-ui:digest"}

@@ -32,7 +32,6 @@ jobs:
           files: |
             domains/**
             platform/**
-            clusters/prod-eu/**
           dir_names: true
           dir_names_max_depth: 2
 

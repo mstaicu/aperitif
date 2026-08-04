@@ -3,6 +3,10 @@ kind: Kustomization
 
 resources:
   - platform.yaml
+  - images/automation.yaml
+  - images/identity.yaml
+  - images/accounts.yaml
+  - images/entitlements.yaml
   - domains/identity.yaml
   - domains/accounts.yaml
   - domains/entitlements.yaml
