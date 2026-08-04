@@ -101,8 +101,4 @@ test("accounts write account created events to the outbox", async () => {
     name: "Acme",
     type: "business",
   });
-  assert.deepEqual(outbox.event.data.member, {
-    role: "owner",
-    user_id: currentUserId,
-  });
 });

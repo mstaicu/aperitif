@@ -28,6 +28,5 @@ migrate: ## Deploy the Identity database and run its migrations.
 deploy: migrate ## Deploy Identity once in the current cluster.
 	skaffold run -m identity-api,identity-ui,identity-cleanup
 
-dev: ## Start the Identity development loop.
-	$(MAKE) migrate
-	exec skaffold dev -m identity-api,identity-ui,identity-cleanup
+dev: migrate ## Start the Identity development loop.
+	skaffold dev -m identity-api,identity-ui,identity-cleanup

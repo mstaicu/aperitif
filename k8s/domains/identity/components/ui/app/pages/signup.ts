@@ -4,7 +4,7 @@ import { createHtmlResponse } from "remix/response/html";
 import {
   createRegistrationChallenge,
   finishRegistration,
-} from "../domains/passkeys.ts";
+} from "../passkeys.ts";
 import { routes } from "../routes.ts";
 
 export const signupPage = {

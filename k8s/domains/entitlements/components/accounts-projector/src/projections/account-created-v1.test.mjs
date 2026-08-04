@@ -19,10 +19,6 @@ test("projects account state without allowing stale events to overwrite it", asy
           name: "Acme",
           type: "business",
         },
-        member: {
-          role: "owner",
-          user_id: randomUUID(),
-        },
       },
       2,
     ),
@@ -36,10 +32,6 @@ test("projects account state without allowing stale events to overwrite it", asy
           id: accountId,
           name: "Personal",
           type: "personal",
-        },
-        member: {
-          role: "owner",
-          user_id: randomUUID(),
         },
       },
       1,

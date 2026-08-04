@@ -53,10 +53,6 @@ export const createAccount =
             name: account.name,
             type: account.type,
           },
-          member: {
-            role: "owner",
-            user_id: currentUserId,
-          },
         },
         Number(account.version),
       );

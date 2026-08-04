@@ -36,8 +36,8 @@ jobs:
           dir_names: true
           dir_names_max_depth: 2
 
-      - name: check changed areas
+      - name: check changed domains
         run: |
-          for area in ${{ steps.changes.outputs.all_changed_and_modified_files }}; do
-            make -C "$area" check
+          for domain in ${{ steps.changes.outputs.all_changed_and_modified_files }}; do
+            make -C "$domain" check
           done

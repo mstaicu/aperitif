@@ -17,13 +17,6 @@ export const AccountCreatedV1DataSchema = Type.Object(
       },
       { additionalProperties: false },
     ),
-    member: Type.Object(
-      {
-        role: Type.Literal("owner"),
-        user_id: UuidSchema,
-      },
-      { additionalProperties: false },
-    ),
     version: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
@@ -44,12 +37,6 @@ export const AccountCreatedV1EventSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountCreatedV1DataSchema
- * >} AccountCreatedV1Data
- */
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
  *   typeof AccountCreatedV1EventSchema
  * >} AccountCreatedV1Event
  */
@@ -59,7 +46,7 @@ export const AccountCreatedV1EventCheck = TypeCompiler.Compile(
 );
 
 /**
- * @param {Omit<AccountCreatedV1Data, "version">} data
+ * @param {Omit<AccountCreatedV1Event["data"], "version">} data
  * @param {number} version
  * @returns {AccountCreatedV1Event}
  */

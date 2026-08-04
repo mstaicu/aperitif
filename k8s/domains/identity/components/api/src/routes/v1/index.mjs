@@ -1,7 +1,6 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import { registerOperatorRoutes } from "./operators/operator.mjs";
 import { registerLoginChallengeRoute } from "./passkeys/login.challenge.mjs";
 import { registerLoginRoute } from "./passkeys/login.mjs";
 import { registerRegistrationChallengeRoute } from "./passkeys/register.challenge.mjs";
@@ -12,25 +11,15 @@ import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
 /**
  * @param {import("../../server.mjs").FastifyInstance} fastify
  * @param {{
- *   jwks: import("../../platform/jwt-keys.mjs").JwtKeys["jwks"],
- *   operators: import("../../services/operators/index.mjs").OperatorsService,
  *   passkeys: import("../../services/passkeys/index.mjs").PasskeysService,
  *   sessions: import("../../services/sessions/index.mjs").SessionsService,
  * }} opts
  */
-export const registerV1Routes = async (
-  fastify,
-  { jwks, operators, passkeys, sessions },
-) => {
+export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
   await fastify.register(swagger, {
     openapi: {
       components: {
         securitySchemes: {
-          bearerAuth: {
-            bearerFormat: "JWT",
-            scheme: "bearer",
-            type: "http",
-          },
           refreshTokenAuth: {
             bearerFormat: "RefreshToken",
             description:
@@ -52,10 +41,6 @@ export const registerV1Routes = async (
         },
       ],
       tags: [
-        {
-          description: "Platform operator assignment",
-          name: "operators",
-        },
         {
           description: "Passkey registration and authentication",
           name: "passkeys",
@@ -79,10 +64,6 @@ export const registerV1Routes = async (
   });
   registerRegistrationRoute(fastify, {
     passkeys,
-  });
-  registerOperatorRoutes(fastify, {
-    jwks,
-    operators,
   });
   registerAccessTokenRoute(fastify, {
     sessions,

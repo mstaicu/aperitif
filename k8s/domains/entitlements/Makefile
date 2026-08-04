@@ -35,6 +35,5 @@ migrate: ## Deploy the Entitlements database and run its migrations.
 deploy: migrate ## Deploy Entitlements once in the current cluster.
 	skaffold run -m entitlements-api,entitlements-outbox-publisher,entitlements-accounts-projector
 
-dev: ## Start the Entitlements development loop.
-	$(MAKE) migrate
-	exec skaffold dev -m entitlements-api,entitlements-outbox-publisher,entitlements-accounts-projector
+dev: migrate ## Start the Entitlements development loop.
+	skaffold dev -m entitlements-api,entitlements-outbox-publisher,entitlements-accounts-projector

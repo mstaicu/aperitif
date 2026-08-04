@@ -14,7 +14,7 @@ PostgreSQL -> migrations -> API -> UI
 
 | Part | Purpose |
 | --- | --- |
-| `components/api` | Passkey ceremonies, sessions, operators, JWKS, and OpenAPI |
+| `components/api` | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
 | `components/ui` | Passkey signup and login |
 | `components/migrations` | Flyway SQL and its Job |
 | `infra/postgres` | Disposable in-cluster database |
@@ -27,7 +27,6 @@ Identity currently publishes no domain events, so it has no publisher.
 - `/.well-known/jwks.json`
 - `/v1/passkeys/*`
 - `/v1/sessions/*`
-- `/v1/operators/*`
 - `/v1/identity/docs`
 - `/signup` and `/login`
 
@@ -52,9 +51,11 @@ that user registers:
    ```
 
 3. Exchange the same refresh token again. The new access token now contains
-   `operator: true` and can manage later operators through `/v1/operators/*`.
+   `operator: true`.
 
-There is deliberately no unauthenticated operator-bootstrap endpoint.
+There is no operator-management HTTP API. Manage the small operator set through
+a controlled administrative database connection until that API is actually
+needed.
 
 ## Work here
 

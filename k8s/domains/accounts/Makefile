@@ -33,6 +33,5 @@ migrate: ## Deploy the Accounts database and run its migrations.
 deploy: migrate ## Deploy Accounts once in the current cluster.
 	skaffold run -m accounts-api,accounts-outbox-publisher
 
-dev: ## Start the Accounts development loop.
-	$(MAKE) migrate
-	exec skaffold dev -m accounts-api,accounts-outbox-publisher
+dev: migrate ## Start the Accounts development loop.
+	skaffold dev -m accounts-api,accounts-outbox-publisher

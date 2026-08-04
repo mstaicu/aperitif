@@ -45,12 +45,6 @@ export const AccountEntitlementsUpdatedV1EventSchema = Type.Object(
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountEntitlementsUpdatedV1DataSchema
- * >} AccountEntitlementsUpdatedV1Data
- */
-
-/**
- * @typedef {import("@sinclair/typebox").Static<
  *   typeof AccountEntitlementsUpdatedV1EventSchema
  * >} AccountEntitlementsUpdatedV1Event
  */
@@ -60,7 +54,7 @@ export const AccountEntitlementsUpdatedV1EventCheck = TypeCompiler.Compile(
 );
 
 /**
- * @param {Omit<AccountEntitlementsUpdatedV1Data, "version">} data
+ * @param {Omit<AccountEntitlementsUpdatedV1Event["data"], "version">} data
  * @param {number} version
  * @returns {AccountEntitlementsUpdatedV1Event}
  */

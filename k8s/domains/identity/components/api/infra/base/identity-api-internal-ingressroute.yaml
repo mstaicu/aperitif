@@ -9,7 +9,7 @@ spec:
 
   routes:
     - kind: Rule
-      match: PathPrefix(`/v1/identity/docs`) || PathPrefix(`/v1/operators`) || PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`)
+      match: PathPrefix(`/v1/identity/docs`) || PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`)
       services:
         - name: identity-api
           port: 3000

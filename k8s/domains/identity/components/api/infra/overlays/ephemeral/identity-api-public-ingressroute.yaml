@@ -8,7 +8,7 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && (PathPrefix(`/v1/operators`) || PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`))
+      match: Host(`api.tma.com`) && (PathPrefix(`/v1/passkeys`) || PathPrefix(`/v1/sessions`))
       services:
         - name: identity-api
           port: 3000

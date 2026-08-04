@@ -65,16 +65,6 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  FORBIDDEN: {
-    status: 403,
-    title: "Forbidden",
-    type: "/problems/forbidden",
-  },
-  INVALID_ACCESS_TOKEN: {
-    status: 401,
-    title: "Invalid access token",
-    type: "/problems/invalid-access-token",
-  },
   INVALID_AUTHENTICATION_RESPONSE: {
     status: 400,
     title: "Invalid authentication response",
@@ -109,11 +99,6 @@ const PROBLEMS = {
     status: 409,
     title: "User already registered",
     type: "/problems/user-already-registered",
-  },
-  USER_NOT_FOUND: {
-    status: 404,
-    title: "User not found",
-    type: "/problems/user-not-found",
   },
 };
 
@@ -155,10 +140,6 @@ export default fp(async function (app) {
     if (problem) {
       if (problem.status >= 500) {
         request.log.error({ err: error }, "request failed");
-      }
-
-      if (error.message === "INVALID_ACCESS_TOKEN") {
-        reply.header("www-authenticate", "Bearer");
       }
 
       return reply

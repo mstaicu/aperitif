@@ -9,7 +9,6 @@ import problemDetails from "./platform/problem-details.mjs";
 import jwksRoutes from "./routes/jwks.mjs";
 import probes from "./routes/probes.mjs";
 import { registerV1Routes } from "./routes/v1/index.mjs";
-import { createOperatorsService } from "./services/operators/index.mjs";
 import { createPasskeysService } from "./services/passkeys/index.mjs";
 import { createSessionsService } from "./services/sessions/index.mjs";
 
@@ -31,7 +30,6 @@ pool.on("error", (err) => console.error(err));
 
 const { jwks, signingKey } = await createJwtKeys();
 
-const operators = createOperatorsService({ pool });
 const passkeys = createPasskeysService({
   origin: /** @type {string} */ (process.env.ORIGIN),
   pool,
@@ -52,8 +50,6 @@ await app.register(problemDetails);
 await app.register(probes, { pool });
 await app.register(jwksRoutes, { jwks });
 await registerV1Routes(app, {
-  jwks,
-  operators,
   passkeys,
   sessions,
 });

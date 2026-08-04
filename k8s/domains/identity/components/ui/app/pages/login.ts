@@ -1,7 +1,7 @@
 import { html } from "remix/html-template";
 import { createHtmlResponse } from "remix/response/html";
 
-import { createLoginChallenge, finishLogin } from "../domains/passkeys.ts";
+import { createLoginChallenge, finishLogin } from "../passkeys.ts";
 import { routes } from "../routes.ts";
 
 export const loginPage = {
