@@ -4,13 +4,10 @@ kind: Kustomization
 namespace: linkerd
 
 resources:
-  - ../../base
+  - linkerd-control-plane.yaml
   - linkerd-identity-trust-roots.yaml
-  - linkerd-ns.yaml
-  - linkerd-webhook-trust-roots.yaml
-
-patches:
-  - path: linkerd-webhook-ca-bundle-patches.yaml
-
-generators:
-  - linkerd-ksops-generator.yaml
+  - linkerd-identity-issuer.yaml
+  - linkerd-namespace.yaml
+  - linkerd-policy-validator-k8s-tls.yaml
+  - linkerd-proxy-injector-k8s-tls.yaml
+  - linkerd-sp-validator-k8s-tls.yaml

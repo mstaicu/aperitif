@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help check bootstrap
+.PHONY: help bootstrap
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
