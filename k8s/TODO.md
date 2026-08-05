@@ -55,5 +55,3 @@ kept here.
 - Pin downloaded tools and third-party Actions immutably, scan built images,
   produce SBOMs and provenance, sign releases, and verify them before admission.
 - Add explicit Kubernetes-context protection to local mutating commands.
-- Remove the inactive Linkerd manifests or replace them with a current,
-  deliberately operated mesh before claiming service identity or mTLS.

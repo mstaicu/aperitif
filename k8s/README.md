@@ -16,8 +16,7 @@ The shared platform currently contains:
 
 - `ingress`: Traefik, its CRDs, and TLS routing;
 - `event-bus`: a three-node NATS JetStream cluster;
-- `observability`: OpenTelemetry collection;
-- `mesh`: inactive Linkerd manifests kept outside every environment.
+- `observability`: OpenTelemetry collection.
 
 The domains are:
 

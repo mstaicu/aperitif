@@ -22,6 +22,4 @@ brew "skaffold" # Local Kubernetes dev/debug loop
 # brew "nats-io/nats-tools/nats"
 # brew "nats-io/nats-tools/nsc"
 #
-# brew "linkerd"
-#
 # brew "kubectl-slice"
