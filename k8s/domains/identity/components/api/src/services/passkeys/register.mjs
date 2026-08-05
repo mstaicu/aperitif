@@ -71,7 +71,7 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @returns {(input: {
  *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
- * }) => Promise<{ refresh_token: string }>}
+ * }) => Promise<{ expires_in: number, refresh_token: string }>}
  */
 export const register =
   ({ origin, pool }) =>
@@ -131,6 +131,7 @@ export const register =
       await client.query("COMMIT");
 
       return {
+        expires_in: session.expiresIn,
         refresh_token: session.refreshToken,
       };
     } catch (err) {

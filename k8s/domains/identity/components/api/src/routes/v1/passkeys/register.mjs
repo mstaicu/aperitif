@@ -1,7 +1,7 @@
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
 import {
   PasskeyRegistrationBody,
-  RegistrationSuccessResponse,
+  RefreshTokenResponse,
 } from "./passkey.schemas.mjs";
 
 /**
@@ -20,7 +20,7 @@ export function registerRegistrationRoute(fastify, { passkeys }) {
           "Verifies the WebAuthn registration response, stores the first passkey, and issues the first refresh token.",
         operationId: "registerPasskey",
         response: {
-          201: RegistrationSuccessResponse,
+          201: RefreshTokenResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           409: ProblemResponse,

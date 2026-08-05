@@ -31,32 +31,20 @@ export const LoginBody = Type.Object(
   },
 );
 
-export const RegistrationSuccessResponse = Type.Object(
+export const RefreshTokenResponse = Type.Object(
   {
+    expires_in: Type.Integer({
+      description: "Refresh-token lifetime in seconds.",
+      minimum: 1,
+    }),
     refresh_token: Type.String({
-      description:
-        "Opaque refresh token issued for the newly created identity session.",
+      description: "Opaque credential for the newly created identity session.",
       minLength: 1,
     }),
   },
   {
     additionalProperties: false,
     description:
-      "Successful registration result containing the first refresh token for the new identity.",
-  },
-);
-
-export const LoginSuccessResponse = Type.Object(
-  {
-    refresh_token: Type.String({
-      description:
-        "Opaque refresh token issued for the authenticated identity session.",
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Successful authentication result containing a refresh token for the existing identity.",
+      "Refresh token and lifetime for the newly created identity session.",
   },
 );

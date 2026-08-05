@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { LoginBody, LoginSuccessResponse } from "./passkey.schemas.mjs";
+import { LoginBody, RefreshTokenResponse } from "./passkey.schemas.mjs";
 
 /**
  * @param {import("../../../server.mjs").FastifyInstance} fastify
@@ -17,7 +17,7 @@ export function registerLoginRoute(fastify, { passkeys }) {
           "Verifies the WebAuthn authentication response for an existing identity and issues a refresh token if successful.",
         operationId: "loginWithPasskey",
         response: {
-          200: LoginSuccessResponse,
+          200: RefreshTokenResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           500: ProblemResponse,

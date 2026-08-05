@@ -29,7 +29,12 @@ export async function finishRegistration({ request }: RequestContext) {
 
   const payload = await response.json();
 
-  if (!response.ok || typeof payload.refresh_token !== "string") {
+  if (
+    !response.ok ||
+    typeof payload.refresh_token !== "string" ||
+    !Number.isInteger(payload.expires_in) ||
+    payload.expires_in <= 0
+  ) {
     return Response.json(payload, {
       headers: { "Cache-Control": "no-store" },
       status: response.status,
@@ -41,7 +46,7 @@ export async function finishRegistration({ request }: RequestContext) {
     {
       headers: {
         "Cache-Control": "no-store",
-        "Set-Cookie": `refresh_token=${encodeURIComponent(payload.refresh_token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000; Secure`,
+        "Set-Cookie": `refresh_token=${encodeURIComponent(payload.refresh_token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${payload.expires_in}; Secure`,
       },
       status: response.status,
     },
@@ -68,7 +73,12 @@ export async function finishLogin({ request }: RequestContext) {
 
   const payload = await response.json();
 
-  if (!response.ok || typeof payload.refresh_token !== "string") {
+  if (
+    !response.ok ||
+    typeof payload.refresh_token !== "string" ||
+    !Number.isInteger(payload.expires_in) ||
+    payload.expires_in <= 0
+  ) {
     return Response.json(payload, {
       headers: { "Cache-Control": "no-store" },
       status: response.status,
@@ -80,7 +90,7 @@ export async function finishLogin({ request }: RequestContext) {
     {
       headers: {
         "Cache-Control": "no-store",
-        "Set-Cookie": `refresh_token=${encodeURIComponent(payload.refresh_token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000; Secure`,
+        "Set-Cookie": `refresh_token=${encodeURIComponent(payload.refresh_token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${payload.expires_in}; Secure`,
       },
       status: response.status,
     },

@@ -39,8 +39,8 @@ test("sessions issue access tokens and revoke independently", async () => {
 
     assert.equal(payload.sub, userId);
     assert.equal(payload.operator, true);
+    assert.equal(laptop.expiresIn, 2_592_000);
     assert.equal(laptopAccess.expires_in, 300);
-    assert.equal(laptopAccess.token_type, "Bearer");
 
     await sessions.revokeSession({ refresh_token: phone.refreshToken });
     await sessions.createAccessToken({ refresh_token: laptop.refreshToken });

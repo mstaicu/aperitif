@@ -7,7 +7,9 @@ export async function createSession({ client, userId }) {
   const refreshToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(refreshToken).digest();
 
-  await client.query(
+  const {
+    rows: [session],
+  } = await client.query(
     `
       INSERT INTO sessions (
         user_id,
@@ -15,11 +17,13 @@ export async function createSession({ client, userId }) {
         expires_at
       )
       VALUES ($1, $2, NOW() + INTERVAL '30 days')
+      RETURNING EXTRACT(EPOCH FROM (expires_at - created_at))::int AS expires_in
     `,
     [userId, tokenHash],
   );
 
   return {
+    expiresIn: session.expires_in,
     refreshToken,
   };
 }

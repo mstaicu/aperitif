@@ -9,7 +9,6 @@ import { createHash } from "node:crypto";
  * @returns {(args: { refresh_token: string }) => Promise<{
  *   access_token: string,
  *   expires_in: 300,
- *   token_type: "Bearer",
  * }>}
  */
 export const createAccessToken =
@@ -62,6 +61,5 @@ export const createAccessToken =
     return {
       access_token,
       expires_in: 300,
-      token_type: "Bearer",
     };
   };

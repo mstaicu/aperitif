@@ -7,7 +7,7 @@ import { createSession } from "../sessions/session.create.mjs";
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @returns {(input: {
  *   authentication: import("@simplewebauthn/server").AuthenticationResponseJSON,
- * }) => Promise<{ refresh_token: string }>}
+ * }) => Promise<{ expires_in: number, refresh_token: string }>}
  */
 export const login =
   ({ origin, pool }) =>
@@ -124,6 +124,7 @@ export const login =
       await client.query("COMMIT");
 
       return {
+        expires_in: session.expiresIn,
         refresh_token: session.refreshToken,
       };
     } catch (err) {
