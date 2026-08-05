@@ -50,8 +50,6 @@ CREATE TABLE sessions (
     token_hash BYTEA NOT NULL UNIQUE,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
     expires_at TIMESTAMPTZ NOT NULL,
 
     revoked_at TIMESTAMPTZ

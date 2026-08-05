@@ -30,13 +30,4 @@ export const revokeSession =
     if (!session) {
       throw new Error("SESSION_NOT_FOUND");
     }
-
-    console.log(
-      JSON.stringify({
-        event: "session_revoked",
-        level: "info",
-        reason: "logout",
-        session_id: session.id,
-      }),
-    );
   };

@@ -1,12 +1,7 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
-import { createHash, randomBytes } from "node:crypto";
+import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 
-const generateSessionToken = () => {
-  const token = randomBytes(32).toString("base64url");
-  const hash = createHash("sha256").update(token).digest();
-
-  return { hash, token };
-};
+import { createSession } from "../sessions/session.create.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
@@ -17,28 +12,17 @@ const generateSessionToken = () => {
 export const login =
   ({ origin, pool }) =>
   async ({ authentication }) => {
-    if (authentication.id !== authentication.rawId) {
-      throw new Error("INVALID_AUTHENTICATION_RESPONSE");
-    }
-
-    let clientDataJSON;
+    let challenge;
 
     try {
-      clientDataJSON = JSON.parse(
-        Buffer.from(
-          authentication.response.clientDataJSON,
-          "base64url",
-        ).toString("utf8"),
-      );
+      ({ challenge } = decodeClientDataJSON(
+        authentication.response.clientDataJSON,
+      ));
     } catch {
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
-    if (
-      !clientDataJSON ||
-      typeof clientDataJSON !== "object" ||
-      typeof clientDataJSON.challenge !== "string"
-    ) {
+    if (typeof challenge !== "string") {
       throw new Error("INVALID_AUTHENTICATION_RESPONSE");
     }
 
@@ -54,7 +38,7 @@ export const login =
             AND expires_at > NOW()
           RETURNING challenge
         `,
-        [Buffer.from(clientDataJSON.challenge, "base64url")],
+        [Buffer.from(challenge, "base64url")],
       );
 
       if (!challengeRow) {
@@ -122,56 +106,25 @@ export const login =
       }
 
       const newCounter = verification.authenticationInfo.newCounter;
-      const oldCounter = Number(credential.sign_count);
-
-      if (newCounter > 0 && newCounter <= oldCounter) {
-        throw new Error("AUTHENTICATION_FAILED");
-      }
 
       await client.query(
         `
           UPDATE passkey_credentials
-          SET sign_count =
-            CASE
-              WHEN $2 > sign_count THEN $2
-              ELSE sign_count
-            END
+          SET sign_count = $2
           WHERE credential_id = $1
         `,
         [credential.credential_id, newCounter],
       );
 
-      const { hash, token } = generateSessionToken();
-
-      const {
-        rows: [session],
-      } = await client.query(
-        `
-          INSERT INTO sessions 
-          (
-            user_id,
-            token_hash,
-            expires_at
-          )
-          VALUES ($1, $2, NOW() + INTERVAL '30 days')
-          RETURNING id
-        `,
-        [credential.user_id, hash],
-      );
+      const session = await createSession({
+        client,
+        userId: credential.user_id,
+      });
 
       await client.query("COMMIT");
 
-      console.log(
-        JSON.stringify({
-          event: "session_created",
-          level: "info",
-          session_id: session.id,
-          user_id: credential.user_id,
-        }),
-      );
-
       return {
-        refresh_token: token,
+        refresh_token: session.refreshToken,
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});

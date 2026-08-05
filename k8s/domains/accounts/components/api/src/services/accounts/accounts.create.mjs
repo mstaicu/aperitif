@@ -70,15 +70,6 @@ export const createAccount =
 
       await client.query("COMMIT");
 
-      console.log(
-        JSON.stringify({
-          account_id: account.id,
-          event: "account_created",
-          level: "info",
-          version: Number(account.version),
-        }),
-      );
-
       return {
         account: {
           id: account.id,

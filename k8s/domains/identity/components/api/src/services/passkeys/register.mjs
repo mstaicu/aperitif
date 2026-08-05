@@ -1,40 +1,23 @@
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
-import { createHash, randomBytes } from "node:crypto";
+import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 import { DatabaseError } from "pg";
 
-const generateSessionToken = () => {
-  const token = randomBytes(32).toString("base64url");
-  const hash = createHash("sha256").update(token).digest();
-
-  return { hash, token };
-};
+import { createSession } from "../sessions/session.create.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
  */
 const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
-  if (credential.id !== credential.rawId) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
-  }
-
-  let clientDataJSON;
+  let challenge;
 
   try {
-    clientDataJSON = JSON.parse(
-      Buffer.from(credential.response.clientDataJSON, "base64url").toString(
-        "utf8",
-      ),
-    );
+    ({ challenge } = decodeClientDataJSON(credential.response.clientDataJSON));
   } catch {
     throw new Error("INVALID_REGISTRATION_RESPONSE");
   }
 
-  if (
-    !clientDataJSON ||
-    typeof clientDataJSON !== "object" ||
-    typeof clientDataJSON.challenge !== "string"
-  ) {
+  if (typeof challenge !== "string") {
     throw new Error("INVALID_REGISTRATION_RESPONSE");
   }
 
@@ -47,7 +30,7 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
         AND expires_at > NOW()
       RETURNING user_id, challenge
     `,
-    [Buffer.from(clientDataJSON.challenge, "base64url")],
+    [Buffer.from(challenge, "base64url")],
   );
 
   if (!challengeRow?.user_id || !challengeRow?.challenge) {
@@ -64,31 +47,17 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
       expectedOrigin,
       expectedRPID: hostname,
       requireUserVerification: true,
-      response: {
-        ...credential,
-        clientExtensionResults: credential.clientExtensionResults ?? {},
-      },
+      response: credential,
     });
   } catch {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
-  if (!verification?.verified || !verification.registrationInfo?.credential) {
+  if (!verification.verified || !verification.registrationInfo) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
   const registrationCredential = verification.registrationInfo.credential;
-
-  if (
-    typeof registrationCredential.id !== "string" ||
-    !registrationCredential.publicKey
-  ) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
-  }
-
-  if (credential.id !== registrationCredential.id) {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
-  }
 
   return {
     credentialId: Buffer.from(registrationCredential.id, "base64url"),
@@ -154,37 +123,15 @@ export const register =
         ],
       );
 
-      const { hash, token } = generateSessionToken();
-
-      const {
-        rows: [session],
-      } = await client.query(
-        `
-          INSERT INTO sessions 
-          (
-            user_id,
-            token_hash,
-            expires_at
-          )
-          VALUES ($1, $2, NOW() + INTERVAL '30 days')
-          RETURNING id
-        `,
-        [registration.userId, hash],
-      );
+      const session = await createSession({
+        client,
+        userId: registration.userId,
+      });
 
       await client.query("COMMIT");
 
-      console.log(
-        JSON.stringify({
-          event: "passkey_registered",
-          level: "info",
-          session_id: session.id,
-          user_id: registration.userId,
-        }),
-      );
-
       return {
-        refresh_token: token,
+        refresh_token: session.refreshToken,
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});

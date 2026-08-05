@@ -31,11 +31,11 @@ Identity currently publishes no domain events, so it has no publisher.
 - `/signup` and `/login`
 
 Every successful passkey registration or login creates an independent 30-day
-session with its own refresh token. Exchanging that token updates the session's
-last-used time and returns a five-minute access token; it does not replace the
-refresh token. Revoking a refresh token revokes only that session. Other domains
-verify access tokens through JWKS and make authorization decisions from their
-own state.
+session with its own refresh token. Exchanging that token validates the session
+and returns a five-minute access token; it does not replace the refresh token or
+extend the session. Revoking a refresh token revokes only that session. Other
+domains verify access tokens through JWKS and make authorization decisions from
+their own state.
 
 ## First operator
 

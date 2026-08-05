@@ -25,19 +25,17 @@ export const createAccessToken =
       rows: [session],
     } = await pool.query(
       `
-        UPDATE sessions s
-        SET last_used_at = NOW()
-        WHERE s.token_hash = $1
-          AND s.revoked_at IS NULL
-          AND s.expires_at > NOW()
-        RETURNING
-          s.id,
+        SELECT
           s.user_id,
           EXISTS (
             SELECT 1
             FROM operators o
             WHERE o.user_id = s.user_id
           ) AS operator
+        FROM sessions s
+        WHERE s.token_hash = $1
+          AND s.revoked_at IS NULL
+          AND s.expires_at > NOW()
       `,
       [tokenHash],
     );
@@ -60,14 +58,6 @@ export const createAccessToken =
       .setIssuedAt()
       .setExpirationTime("5m")
       .sign(signingKey.privateKey);
-
-    console.log(
-      JSON.stringify({
-        event: "session_used",
-        level: "info",
-        session_id: session.id,
-      }),
-    );
 
     return {
       access_token,
