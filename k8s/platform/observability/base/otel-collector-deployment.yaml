@@ -13,7 +13,8 @@ spec:
       labels:
         app: otel-collector
     spec:
-      automountServiceAccountToken: false
+      serviceAccountName: otel-collector
+      automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true
         seccompProfile:

@@ -10,6 +10,12 @@ receivers:
       grpc:
         endpoint: ${env:MY_POD_IP}:4317
 
+  # Runs in the single collector Deployment and reports desired workload state
+  # and container restarts from the Kubernetes API.
+  k8s_cluster:
+    auth_type: serviceAccount
+    collection_interval: 30s
+
 processors:
   memory_limiter:
     check_interval: 5s
@@ -44,6 +50,7 @@ service:
     metrics:
       receivers:
         - otlp
+        - k8s_cluster
       processors:
         - memory_limiter
         - batch

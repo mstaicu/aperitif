@@ -6,6 +6,9 @@ resources:
   - otel-agent-clusterrole.yaml
   - otel-agent-clusterrolebinding.yaml
   - otel-agent-daemonset.yaml
+  - otel-collector-serviceaccount.yaml
+  - otel-collector-clusterrole.yaml
+  - otel-collector-clusterrolebinding.yaml
   - otel-collector-deployment.yaml
   - otel-collector-service.yaml
   - otel-collector-networkpolicy.yaml

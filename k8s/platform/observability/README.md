@@ -5,14 +5,19 @@ This platform unit is the product-agnostic OpenTelemetry boundary.
 ```text
 applications --OTLP--> otel-collector --OTLP later--> telemetry backend
 nodes --metrics/logs--> otel-agent ----OTLP---------> otel-collector
+Kubernetes API --workload state/restarts-----------> otel-collector
 ```
 
 - `otel-collector` is one cluster gateway for OTLP traces, metrics, and
-  explicitly emitted logs.
+  explicitly emitted logs. It also reports desired and available workload
+  replicas and container restarts from the Kubernetes API. Keep it at one
+  replica while it owns this cluster-wide receiver.
 - `otel-agent` is one DaemonSet pod per node. Every 30 seconds it collects
   CPU, memory, filesystem, and network metrics for that node's pods and
   containers, plus volume capacity and usage, from the kubelet. It also reads
-  container stdout and stderr once from the node's pod log directory.
+  container stdout and stderr once from the node's pod log directory. Pod
+  memory-limit utilization is emitted only when every container in that pod
+  declares a memory limit.
 - Both use the official Kubernetes Collector distribution, pinned by version
   and digest.
 - Memory limits, the Collector memory limiter, health probes, non-root

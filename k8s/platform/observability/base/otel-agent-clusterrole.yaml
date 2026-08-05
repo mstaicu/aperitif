@@ -8,7 +8,7 @@ rules:
       - ""
     resources:
       - nodes/stats
+      # Required to read container limits for request/limit utilization metrics.
+      - nodes/pods
     verbs:
       - get
-      - list
-      - watch

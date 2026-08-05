@@ -13,6 +13,11 @@ receivers:
       - pod
       - container
       - volume
+    metrics:
+      # Pod working memory divided by the sum of its container memory limits.
+      # This is emitted only when every container in the pod has a memory limit.
+      k8s.pod.memory_limit_utilization:
+        enabled: true
 
   filelog:
     include:
