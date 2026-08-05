@@ -1,5 +1,11 @@
+# ❯ age-keygen \
+#   -y "$HOME/.config/sops/age/prod-eu.agekey"
+
 creation_rules:
-  # Split this rule when ephemeral and prod-eu receive different age keys.
-  - path_regex: ^(domains|platform)/.+/overlays/(ephemeral|prod-eu)/.+\.ya?ml$
+  - path_regex: ^(domains|platform)/.+/overlays/prod-eu/.+\.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
+    age: age1j2qashtf39jk0dxytcx66e5v24ze2vmmj3ah84aewj57mumy2pgqhreu86
+
+  - path_regex: ^(domains|platform)/.+/overlays/ephemeral/.+\.ya?ml$
     encrypted_regex: "^(data|stringData)$"
     age: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0

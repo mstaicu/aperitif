@@ -1,4 +1,4 @@
-FROM node:26.5.0-alpine AS base
+FROM docker.io/library/node:26.5.0-alpine3.24@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66 AS base
 
 RUN apk add --no-cache tini
 

@@ -1,4 +1,4 @@
-FROM flyway/flyway:12.8.1 AS prod
+FROM docker.io/flyway/flyway:13.0.0@sha256:db6195c21e90872063ff257ec38edcb8d3c77259b25a7a8fee67189511079511 AS prod
 
 COPY sql /db/sql
 
