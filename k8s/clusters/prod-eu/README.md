@@ -133,11 +133,15 @@ plans-postgres ──> plans-migrations ──┬──> plans-api
                                       └──> plans-accounts-projector
 event-bus ──┬──> plans-outbox-publisher
            └──> plans-accounts-projector
+
+observability
+  └──> receives optional telemetry without blocking domain reconciliation
 ```
 
 - `dependsOn` controls reconciliation order, not runtime availability.
 - `ingress-crds` uses `prune: false`.
 - NATS permits a `20m` reconciliation timeout.
+- Observability reconciles independently because telemetry is not a runtime dependency.
 - Other reconciliations use `5m`.
 
 ## Operate

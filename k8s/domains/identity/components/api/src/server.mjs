@@ -1,5 +1,5 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
-import Fastify from "fastify";
+import Fastify, { LogController } from "fastify";
 import { once } from "node:events";
 import process from "node:process";
 import { Pool } from "pg";
@@ -40,7 +40,10 @@ const sessions = createSessionsService({
 });
 
 /** @type {FastifyInstance} */
-await using app = Fastify({ logger: true })
+await using app = Fastify({
+  logger: true,
+  logController: new LogController({ disableRequestLogging: true }),
+})
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
 

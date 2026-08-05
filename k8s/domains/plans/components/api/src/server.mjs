@@ -1,5 +1,5 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
-import Fastify from "fastify";
+import Fastify, { LogController } from "fastify";
 import { createRemoteJWKSet } from "jose";
 import { once } from "node:events";
 import process from "node:process";
@@ -32,7 +32,10 @@ const jwks = createRemoteJWKSet(
 const plans = getPlansService({ pool });
 
 /** @type {FastifyInstance} */
-await using app = Fastify({ logger: true })
+await using app = Fastify({
+  logger: true,
+  logController: new LogController({ disableRequestLogging: true }),
+})
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
 

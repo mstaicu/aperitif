@@ -20,7 +20,7 @@ spec:
             - name: OTEL_SERVICE_NAME
               value: identity-api
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://signoz-ingester.signoz.svc.cluster.local:4318
+              value: http://otel-collector.otel.svc.cluster.local:4318
             - name: OTEL_TRACES_EXPORTER
               value: otlp
             - name: OTEL_METRICS_EXPORTER

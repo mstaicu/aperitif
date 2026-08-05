@@ -1,0 +1,61 @@
+extensions:
+  health_check:
+    endpoint: ${env:MY_POD_IP}:13133
+
+receivers:
+  kubeletstats:
+    auth_type: serviceAccount
+    collection_interval: 30s
+    endpoint: https://${env:K8S_NODE_NAME}:10250
+    insecure_skip_verify: true
+    metric_groups:
+      - node
+      - pod
+      - container
+      - volume
+
+  filelog:
+    include:
+      - /var/log/pods/*/*/*.log
+    exclude:
+      - /var/log/pods/*/otel-agent/*.log
+      - /var/log/pods/*/otel-collector/*.log
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+      - type: container
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  batch:
+
+exporters:
+  otlp_grpc:
+    endpoint: otel-collector.otel.svc.cluster.local:4317
+    tls:
+      insecure: true
+
+service:
+  extensions:
+    - health_check
+  pipelines:
+    metrics:
+      receivers:
+        - kubeletstats
+      processors:
+        - memory_limiter
+        - batch
+      exporters:
+        - otlp_grpc
+    logs:
+      receivers:
+        - filelog
+      processors:
+        - memory_limiter
+        - batch
+      exporters:
+        - otlp_grpc

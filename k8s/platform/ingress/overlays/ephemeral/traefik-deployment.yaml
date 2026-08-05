@@ -41,7 +41,7 @@ spec:
             - --metrics.otlp.grpc.insecure=true # Local collector runs without TLS.
             - --metrics.otlp.addEntryPointsLabels=true # Keep public vs internal latency split.
             - --metrics.otlp.addRoutersLabels=false # Avoid per-route cardinality across domains.
-            - --metrics.otlp.addServicesLabels=false # Avoid per-backend cardinality across domains.
+            - --metrics.otlp.addServicesLabels=true # Split the bounded edge baseline by backend service.
 
             - --tracing.otlp=true # Emit spans from the shared edge first.
             - --tracing.serviceName=traefik # Stable trace service name for ingress.
@@ -52,4 +52,4 @@ spec:
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: signoz-ingester.signoz.svc.cluster.local:4317 # SigNoz OTLP gRPC endpoint for local ingress telemetry.
+              value: otel-collector.otel.svc.cluster.local:4317 # In-cluster OpenTelemetry Collector for local ingress telemetry.
