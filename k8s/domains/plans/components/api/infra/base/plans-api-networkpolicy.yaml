@@ -51,10 +51,10 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: otel
+              kubernetes.io/metadata.name: signoz
           podSelector:
             matchLabels:
-              app: otel-collector
+              app.kubernetes.io/name: signoz-ingester
       ports:
         - protocol: TCP
           port: 4318

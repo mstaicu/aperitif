@@ -10,7 +10,7 @@ check: ## Validate the production Ingress manifests.
 	kubectl kustomize overlays/prod-eu >/dev/null
 
 deploy-crds:
-	skaffold run -m ingress-crds
+	kubectl apply -k crds
 	kubectl wait --for=condition=Established --timeout=60s crd/ingressroutes.traefik.io
 	kubectl wait --for=condition=Established --timeout=60s crd/tlsstores.traefik.io
 
@@ -33,5 +33,5 @@ deploy: deploy-crds ## Deploy local Traefik TLS, hosts entries, and Traefik.
 		--key=/tmp/traefik-tls.key \
 		--dry-run=client -o yaml | kubectl apply -f -
 
-	skaffold run -m ingress
+	kubectl apply -k overlays/ephemeral
 	kubectl rollout status -n traefik deploy/traefik --timeout=300s

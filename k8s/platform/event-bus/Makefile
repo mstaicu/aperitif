@@ -9,5 +9,5 @@ check: ## Validate the production Event Bus manifests.
 	kubectl kustomize overlays/prod-eu >/dev/null
 
 deploy: ## Deploy NATS JetStream and wait for readiness.
-	skaffold run -m event-bus
+	kubectl apply -k overlays/ephemeral
 	kubectl rollout status -n nats statefulset/nats --timeout=300s

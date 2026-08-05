@@ -59,7 +59,7 @@ spec:
                   key: CF_DNS_API_TOKEN # Cloudflare credentials for ACME DNS-01.
 
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: otel-collector.otel.svc.cluster.local:4317 # Platform collector service for ingress telemetry.
+              value: signoz-ingester.signoz.svc.cluster.local:4317 # SigNoz OTLP gRPC endpoint for ingress telemetry.
 
           volumeMounts:
             - name: traefik-acme-volume

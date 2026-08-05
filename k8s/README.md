@@ -16,7 +16,7 @@ The shared platform currently contains:
 
 - `ingress`: Traefik, its CRDs, and TLS routing;
 - `event-bus`: a three-node NATS JetStream cluster;
-- `observability`: OpenTelemetry collection.
+- `signoz`: the self-hosted observability stack.
 
 The domains are:
 
@@ -60,7 +60,7 @@ Start the shared units needed by the domains you are working on:
 ```sh
 make -C platform/ingress deploy
 make -C platform/event-bus deploy
-make -C platform/observability deploy
+make -C platform/signoz deploy
 ```
 
 Then run domains in separate terminals:

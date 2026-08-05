@@ -52,4 +52,4 @@ spec:
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: otel-collector.otel.svc.cluster.local:4317 # Platform collector service for local ingress telemetry.
+              value: signoz-ingester.signoz.svc.cluster.local:4317 # SigNoz OTLP gRPC endpoint for local ingress telemetry.

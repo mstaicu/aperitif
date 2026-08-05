@@ -133,8 +133,6 @@ plans-postgres ──> plans-migrations ──┬──> plans-api
                                       └──> plans-accounts-projector
 event-bus ──┬──> plans-outbox-publisher
            └──> plans-accounts-projector
-
-observability
 ```
 
 - `dependsOn` controls reconciliation order, not runtime availability.
