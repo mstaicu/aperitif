@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: migrations
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: plans-migrations
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+
+      containers:
+        - name: migrations
+          image: ghcr.io/mstaicu/plans-migrations
+
+          env:
+            - name: FLYWAY_LOCATIONS
+              value: filesystem:/db/sql
+            - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS
+              value: "true"

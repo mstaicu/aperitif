@@ -47,12 +47,12 @@ clusters/prod-eu/
 ├── domains/
 │   ├── identity.yaml         Identity reconciliation graph
 │   ├── accounts.yaml         Accounts reconciliation graph
-│   └── entitlements.yaml     Entitlements reconciliation graph
+│   └── plans.yaml            Plans reconciliation graph
 ├── images/
 │   ├── automation.yaml       one Git digest writer
 │   ├── identity.yaml         Identity repositories and policies
 │   ├── accounts.yaml         Accounts repositories and policies
-│   └── entitlements.yaml     Entitlements repositories and policies
+│   └── plans.yaml            Plans repositories and policies
 ├── platform.yaml             platform reconciliation graph
 └── kustomization.yaml        complete cluster inventory
 ```
@@ -119,7 +119,7 @@ ingress-crds ──┬──> ingress
                ├──> identity-api
                ├──> identity-ui
                ├──> accounts-api
-               └──> entitlements-api
+               └──> plans-api
 
 identity-postgres ──> identity-migrations ──┬──> identity-api
                                            └──> identity-cleanup
@@ -128,11 +128,11 @@ accounts-postgres ──> accounts-migrations ──┬──> accounts-api
                                             └──> accounts-outbox-publisher
 event-bus ──> accounts-outbox-publisher
 
-entitlements-postgres ──> entitlements-migrations ──┬──> entitlements-api
-                                                    ├──> entitlements-outbox-publisher
-                                                    └──> entitlements-accounts-projector
-event-bus ──┬──> entitlements-outbox-publisher
-           └──> entitlements-accounts-projector
+plans-postgres ──> plans-migrations ──┬──> plans-api
+                                      ├──> plans-outbox-publisher
+                                      └──> plans-accounts-projector
+event-bus ──┬──> plans-outbox-publisher
+           └──> plans-accounts-projector
 
 observability
 ```

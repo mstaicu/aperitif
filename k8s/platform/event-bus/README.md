@@ -26,7 +26,7 @@ so every pod stores one copy of each:
 
 ```text
 ACCOUNTS       400 MiB
-ENTITLEMENTS   400 MiB
+PLANS          400 MiB
                -------
                800 MiB per pod
 ```

@@ -1,0 +1,143 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: plans-postgres
+
+manifests:
+  kustomize:
+    paths:
+      - infra/postgres/overlays/ephemeral
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: plans-migrations
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/plans-migrations
+      context: components/migrations
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - components/migrations/infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: plans-api
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/plans-api
+      context: components/api
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - components/api/infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: plans-outbox-publisher
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/plans-outbox-publisher
+      context: components/outbox-publisher
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - components/outbox-publisher/infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}
+
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+
+metadata:
+  name: plans-accounts-projector
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/plans-accounts-projector
+      context: components/accounts-projector
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - components/accounts-projector/infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

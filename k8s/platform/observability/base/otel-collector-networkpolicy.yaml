@@ -31,10 +31,10 @@ spec:
               app: accounts-api
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: entitlements
+              kubernetes.io/metadata.name: plans
           podSelector:
             matchLabels:
-              app: entitlements-api
+              app: plans-api
       ports:
         - protocol: TCP
           port: 4318

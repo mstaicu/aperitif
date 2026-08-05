@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-plans-components-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: plans-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: plans-api
+        - podSelector:
+            matchLabels:
+              app: plans-migrations
+        - podSelector:
+            matchLabels:
+              app: outbox-publisher
+        - podSelector:
+            matchLabels:
+              app: accounts-projector
+      ports:
+        - protocol: TCP
+          port: 5432

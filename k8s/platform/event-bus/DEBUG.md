@@ -90,7 +90,7 @@ For a consumer, inspect its durable name:
 
 ```sh
 nats --no-context consumer info \
-  ACCOUNTS entitlements-accounts-projection
+  ACCOUNTS plans-accounts-projection
 ```
 
 - Growing pending messages means the projector is absent or slow.
@@ -110,8 +110,8 @@ domain transaction -> outbox_events -> publisher -> stream
 
 ```sh
 kubectl logs -n accounts deployment/outbox-publisher --since=10m
-kubectl logs -n entitlements deployment/outbox-publisher --since=10m
-kubectl logs -n entitlements deployment/accounts-projector --since=10m
+kubectl logs -n plans deployment/outbox-publisher --since=10m
+kubectl logs -n plans deployment/accounts-projector --since=10m
 ```
 
 An unpublished outbox row points to the publisher or NATS connection. A stream

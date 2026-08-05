@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - plans-api-internal-ingressroute.yaml
+  - plans-api-networkpolicy.yaml
+  - plans-api-deployment.yaml
+  - plans-api-service.yaml

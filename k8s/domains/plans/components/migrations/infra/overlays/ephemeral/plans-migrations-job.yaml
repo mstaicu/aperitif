@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: migrations
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrations
+          env:
+            - name: FLYWAY_URL
+              value: "jdbc:postgresql://plans-postgres:5432/plans?user=postgres&password=postgres"

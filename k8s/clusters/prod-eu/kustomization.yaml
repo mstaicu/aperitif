@@ -6,7 +6,7 @@ resources:
   - images/automation.yaml
   - images/identity.yaml
   - images/accounts.yaml
-  - images/entitlements.yaml
+  - images/plans.yaml
   - domains/identity.yaml
   - domains/accounts.yaml
-  - domains/entitlements.yaml
+  - domains/plans.yaml

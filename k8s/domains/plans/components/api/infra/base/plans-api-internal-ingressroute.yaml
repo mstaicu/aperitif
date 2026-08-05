@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: plans-api-internal
+spec:
+  entryPoints:
+    - http
+
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/v1/plans/docs`) || PathRegexp(`^/v1/accounts/[^/]+/plan$`)
+      services:
+        - name: plans-api
+          port: 3000

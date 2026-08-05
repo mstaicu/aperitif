@@ -22,7 +22,7 @@ CREATE TABLE account_members (
     user_id UUID NOT NULL,
 
     role TEXT NOT NULL CHECK (
-        role IN ('owner', 'admin', 'member')
+        role IN ('owner', 'member')
     ),
 
     PRIMARY KEY (account_id, user_id)

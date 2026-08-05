@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: plans
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-postgres
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/plans/infra/postgres/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-migrations
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/plans/components/migrations/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: plans-postgres
+  force: true
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/plans/components/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: ingress-crds
+    - name: plans-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-outbox-publisher
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/plans/components/outbox-publisher/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: event-bus
+    - name: plans-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-accounts-projector
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/plans/components/accounts-projector/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: event-bus
+    - name: plans-migrations
+  wait: true
+  timeout: 5m

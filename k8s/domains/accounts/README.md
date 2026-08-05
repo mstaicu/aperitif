@@ -4,10 +4,10 @@ Accounts owns the boundary under which product resources live. An account is
 `personal` or `business`, and a new account starts with its creator as an
 `owner` member.
 
-It does not own users, entitlement grants, or product data.
+It does not own users, plans, or product data.
 
-Membership roles are limited to `owner`, `admin`, and `member`. They govern the
-account itself; product-specific roles remain inside product domains.
+Membership roles are limited to `owner` and `member`. They govern the account
+itself; product-specific roles remain inside product domains.
 
 ## Runtime
 

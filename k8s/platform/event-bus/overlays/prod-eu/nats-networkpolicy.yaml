@@ -27,13 +27,13 @@ spec:
               app: outbox-publisher
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: entitlements
+              kubernetes.io/metadata.name: plans
           podSelector:
             matchLabels:
               app: outbox-publisher
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: entitlements
+              kubernetes.io/metadata.name: plans
           podSelector:
             matchLabels:
               app: accounts-projector

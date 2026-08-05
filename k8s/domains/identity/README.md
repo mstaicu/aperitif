@@ -3,7 +3,7 @@
 Identity authenticates users. It owns users, passkeys, WebAuthn challenges,
 sessions, platform operators, and the JWKS used by other APIs.
 
-It does not own accounts, entitlements, or product resources.
+It does not own accounts, plans, or product resources.
 
 ## Runtime
 

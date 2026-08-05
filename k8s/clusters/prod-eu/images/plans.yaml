@@ -1,0 +1,110 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/plans-api
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: plans-api
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-migrations
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/plans-migrations
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-migrations
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: plans-migrations
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-outbox-publisher
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/plans-outbox-publisher
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-outbox-publisher
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: plans-outbox-publisher
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-accounts-projector
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/plans-accounts-projector
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-accounts-projector
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: plans-accounts-projector
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
