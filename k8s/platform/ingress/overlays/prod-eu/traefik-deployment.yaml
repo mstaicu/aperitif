@@ -31,6 +31,7 @@ spec:
 
             - --log.level=INFO # Keep shared edge logs production-readable.
             - --accesslog=true # Retain request trail at the platform edge.
+            - --accesslog.format=json # Keep access logs machine-readable like application logs.
 
             - --ping=true # Kubernetes probes ingress availability through Traefik itself.
             - --ping.entryPoint=http # Health stays on the internal-only listener.

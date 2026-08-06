@@ -6,3 +6,6 @@ namespace: otel
 resources:
   - namespace.yaml
   - ../../base
+
+patches:
+  - path: otel-agent-daemonset.yaml

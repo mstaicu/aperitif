@@ -19,7 +19,7 @@ receivers:
       k8s.pod.memory_limit_utilization:
         enabled: true
 
-  filelog:
+  file_log:
     include:
       - /var/log/pods/*/*/*.log
     exclude:
@@ -30,12 +30,50 @@ receivers:
     include_file_name: false
     operators:
       - type: container
+      # Parse one-line JSON logs while retaining the original JSON body.
+      - type: json_parser
+        if: 'body matches "^\\{"'
+        parse_ints: true
+        parse_to: attributes
 
 processors:
   memory_limiter:
     check_interval: 5s
     limit_percentage: 80
     spike_limit_percentage: 25
+  k8sattributes:
+    auth_type: serviceAccount
+    filter:
+      # Each agent watches only pods running on its own node.
+      node_from_env_var: K8S_NODE_NAME
+    passthrough: false
+    pod_association:
+      # Preserve the original workload when telemetry is forwarded by an agent.
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+      # Direct telemetry can fall back to the producer's network connection.
+      - sources:
+          - from: connection
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+        - k8s.node.name
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        - k8s.daemonset.name
+        - k8s.statefulset.name
+        - k8s.job.name
+        - k8s.cronjob.name
+        - k8s.container.name
+        - container.image.name
+        - container.image.tags
   batch:
 
 exporters:
@@ -53,14 +91,16 @@ service:
         - kubeletstats
       processors:
         - memory_limiter
+        - k8sattributes
         - batch
       exporters:
         - otlp_grpc
     logs:
       receivers:
-        - filelog
+        - file_log
       processors:
         - memory_limiter
+        - k8sattributes
         - batch
       exporters:
         - otlp_grpc

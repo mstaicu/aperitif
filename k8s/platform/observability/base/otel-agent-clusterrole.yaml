@@ -12,3 +12,21 @@ rules:
       - nodes/pods
     verbs:
       - get
+  # The Kubernetes attributes processor watches pod identity and ownership.
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch

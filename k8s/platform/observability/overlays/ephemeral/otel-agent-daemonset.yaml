@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: DaemonSet
+
+metadata:
+  name: otel-agent
+spec:
+  template:
+    spec:
+      # Docker Desktop stores pod logs behind root-group-owned symlinks.
+      securityContext:
+        supplementalGroups:
+          - 0
+      containers:
+        - name: otel-agent
+          volumeMounts:
+            - name: docker-container-logs
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+      volumes:
+        - name: docker-container-logs
+          hostPath:
+            path: /var/lib/docker/containers
+            type: Directory

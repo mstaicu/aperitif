@@ -24,13 +24,17 @@ Kubernetes API --workload state/restarts-----------> otel-collector
   execution, and least-privilege kubelet access are explicit.
 - Generated ConfigMap names change with the configuration, causing Kubernetes
   to roll the affected pods instead of leaving stale configuration mounted.
+- Both Collectors attach namespace, pod, node, workload, container, and image
+  identity. Agent telemetry keeps the identity of the original workload when
+  it is forwarded through the gateway.
 - The internal OTLP ports accept telemetry from every cluster namespace, so
   adding a product does not require changing this platform unit.
 
 Traefik owns the HTTP access trail. Fastify keeps its logger for startup,
 shutdown, and explicit problem-details failures without automatically logging
-every request. The agent excludes both Collector containers from file logging
-to prevent a telemetry feedback loop.
+every request. Owned JSON logs are parsed by the agent without sending logs
+directly from applications. The agent excludes both Collector containers from
+file logging to prevent a telemetry feedback loop.
 
 The current exporter is `debug`, so logs are collected but not retained. Add a
 durable backend by replacing the gateway exporter; applications continue

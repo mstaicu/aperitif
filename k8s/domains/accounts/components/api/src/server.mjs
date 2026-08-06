@@ -33,8 +33,8 @@ const accounts = createAccountsService({ pool });
 
 /** @type {FastifyInstance} */
 await using app = Fastify({
-  logger: true,
   logController: new LogController({ disableRequestLogging: true }),
+  logger: true,
 })
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider();
