@@ -1,6 +1,9 @@
 extensions:
   health_check:
     endpoint: ${env:MY_POD_IP}:13133
+  file_storage:
+    create_directory: true
+    directory: /var/lib/otelcol/file-storage
 
 receivers:
   kubeletstats:
@@ -20,13 +23,13 @@ receivers:
         enabled: true
 
   file_log:
+    storage: file_storage
     include:
       - /var/log/pods/*/*/*.log
     exclude:
       - /var/log/pods/*/otel-agent/*.log
       - /var/log/pods/*/otel-collector/*.log
-      - /var/log/pods/*/openobserve/*.log
-    start_at: end
+    start_at: beginning
     include_file_path: true
     include_file_name: false
     operators:
@@ -86,6 +89,7 @@ exporters:
 service:
   extensions:
     - health_check
+    - file_storage
   pipelines:
     metrics:
       receivers:

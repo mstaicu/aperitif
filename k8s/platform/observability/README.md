@@ -11,7 +11,8 @@ Kubernetes API --workload state/restarts-----------> otel-collector
 - `otel-collector` is one cluster gateway for OTLP traces, metrics, and
   explicitly emitted logs. It also reports desired and available workload
   replicas and container restarts from the Kubernetes API. Keep it at one
-  replica while it owns this cluster-wide receiver.
+  replica while it owns this cluster-wide receiver. Each environment overlay
+  owns its complete Collector configuration and selected backend.
 - `otel-agent` is one DaemonSet pod per node. Every 30 seconds it collects
   CPU, memory, filesystem, and network metrics for that node's pods and
   containers, plus volume capacity and usage, from the kubelet. It also reads
@@ -29,9 +30,10 @@ Kubernetes API --workload state/restarts-----------> otel-collector
   it is forwarded through the gateway.
 - The internal OTLP ports accept telemetry from every cluster namespace, so
   adding a product does not require changing this platform unit.
-- `openobserve` is the single shared backend for logs, metrics, and traces. It
-  runs as one StatefulSet with an explicit 10 GiB PVC and seven-day retention.
-  This deliberately small local-mode deployment is not highly available.
+- Both current overlays select `openobserve` as the backend. Its complete
+  manifests live in each overlay rather than the reusable OpenTelemetry base.
+  The production instance uses a 10 GiB PVC and seven-day retention. This
+  deliberately small local-mode deployment is not highly available.
 
 Traefik owns the HTTP access trail. Fastify keeps its logger for startup,
 shutdown, and explicit problem-details failures without automatically logging
@@ -39,10 +41,11 @@ every request. Owned JSON logs are parsed by the agent without sending logs
 directly from applications. The agent excludes both Collector containers from
 file logging and excludes OpenObserve from collecting its own output.
 
-The Collector exports every signal to OpenObserve over OTLP/HTTP. Credentials
-live in the environment overlays as SOPS-encrypted Secrets. Applications know
-only `otel-collector.otel.svc.cluster.local`, so the backend remains
-replaceable.
+The Collector exports every signal through the overlay's `otlphttp/backend`
+exporter. Endpoint and credentials live in that environment overlay, with
+credentials in a SOPS-encrypted Secret. Applications know only
+`otel-collector.otel.svc.cluster.local`, so one environment can replace its
+backend without changing any producer.
 
 Deploy locally with:
 

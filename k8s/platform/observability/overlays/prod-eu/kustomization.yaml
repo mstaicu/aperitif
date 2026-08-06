@@ -5,7 +5,15 @@ namespace: otel
 
 resources:
   - ../../base
+  - openobserve-statefulset.yaml
+  - openobserve-service.yaml
+  - openobserve-networkpolicy.yaml
   - openobserve-secret.yaml
 
+configMapGenerator:
+  - name: otel-collector
+    files:
+      - otel-config.yaml=otel-collector-config.yaml
+
 patches:
-  - path: openobserve-statefulset.yaml
+  - path: otel-collector-deployment.yaml

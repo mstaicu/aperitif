@@ -14,7 +14,7 @@ spec:
     spec:
       serviceAccountName: otel-agent
       securityContext:
-        runAsNonRoot: true
+        runAsUser: 0
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -76,6 +76,8 @@ spec:
             - name: pod-logs
               mountPath: /var/log/pods
               readOnly: true
+            - name: checkpoints
+              mountPath: /var/lib/otelcol
 
       volumes:
         - name: config
@@ -85,3 +87,7 @@ spec:
           hostPath:
             path: /var/log/pods
             type: Directory
+        - name: checkpoints
+          hostPath:
+            path: /var/lib/otelcol
+            type: DirectoryOrCreate

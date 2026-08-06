@@ -1,0 +1,93 @@
+extensions:
+  health_check:
+    endpoint: ${env:MY_POD_IP}:13133
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: ${env:MY_POD_IP}:4318
+      grpc:
+        endpoint: ${env:MY_POD_IP}:4317
+
+  # Runs in the single collector Deployment and reports desired workload state
+  # and container restarts from the Kubernetes API.
+  k8s_cluster:
+    auth_type: serviceAccount
+    collection_interval: 30s
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    pod_association:
+      # Agent telemetry already carries the original pod identity.
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+      # Applications sending directly to this gateway use their connection.
+      - sources:
+          - from: connection
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+        - k8s.node.name
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        - k8s.daemonset.name
+        - k8s.statefulset.name
+        - k8s.job.name
+        - k8s.cronjob.name
+        - k8s.container.name
+        - container.image.name
+        - container.image.tags
+  batch:
+
+exporters:
+  otlphttp/backend:
+    endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT}
+    headers:
+      Authorization: "Basic ${env:OTEL_EXPORTER_OTLP_AUTHORIZATION}"
+
+service:
+  extensions:
+    - health_check
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - batch
+      exporters:
+        - otlphttp/backend
+    logs:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - batch
+      exporters:
+        - otlphttp/backend
+    metrics:
+      receivers:
+        - otlp
+        - k8s_cluster
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - batch
+      exporters:
+        - otlphttp/backend

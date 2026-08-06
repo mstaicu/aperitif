@@ -12,14 +12,8 @@ resources:
   - otel-collector-deployment.yaml
   - otel-collector-service.yaml
   - otel-collector-networkpolicy.yaml
-  - openobserve-statefulset.yaml
-  - openobserve-service.yaml
-  - openobserve-networkpolicy.yaml
 
 configMapGenerator:
   - name: otel-agent
     files:
       - otel-config.yaml=otel-agent-config.yaml
-  - name: otel-collector
-    files:
-      - otel-config.yaml=otel-collector-config.yaml

@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: otel-collector
+spec:
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://openobserve.otel.svc.cluster.local:5080/api/default
+            - name: OTEL_EXPORTER_OTLP_AUTHORIZATION
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve
+                  key: OPENOBSERVE_TOKEN
