@@ -54,8 +54,10 @@ processors:
   batch:
 
 exporters:
-  debug:
-    verbosity: basic
+  otlphttp/openobserve:
+    endpoint: http://openobserve.otel.svc.cluster.local:5080/api/default
+    headers:
+      Authorization: "Basic ${env:OPENOBSERVE_TOKEN}"
 
 service:
   extensions:
@@ -69,7 +71,7 @@ service:
         - k8sattributes
         - batch
       exporters:
-        - debug
+        - otlphttp/openobserve
     logs:
       receivers:
         - otlp
@@ -78,7 +80,7 @@ service:
         - k8sattributes
         - batch
       exporters:
-        - debug
+        - otlphttp/openobserve
     metrics:
       receivers:
         - otlp
@@ -88,4 +90,4 @@ service:
         - k8sattributes
         - batch
       exporters:
-        - debug
+        - otlphttp/openobserve

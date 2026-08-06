@@ -19,6 +19,7 @@ deploy: deploy-crds ## Deploy local Traefik TLS, hosts entries, and Traefik.
 
 	grep -q "127.0.0.1 tma.com" /etc/hosts || echo "127.0.0.1 tma.com" | sudo tee -a /etc/hosts
 	grep -q "127.0.0.1 api.tma.com" /etc/hosts || echo "127.0.0.1 api.tma.com" | sudo tee -a /etc/hosts
+	grep -q "127.0.0.1 observe.tma.com" /etc/hosts || echo "127.0.0.1 observe.tma.com" | sudo tee -a /etc/hosts
 
 	mkcert \
 		-cert-file /tmp/traefik-tls.crt \

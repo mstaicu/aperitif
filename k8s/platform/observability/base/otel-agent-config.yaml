@@ -25,6 +25,7 @@ receivers:
     exclude:
       - /var/log/pods/*/otel-agent/*.log
       - /var/log/pods/*/otel-collector/*.log
+      - /var/log/pods/*/openobserve/*.log
     start_at: end
     include_file_path: true
     include_file_name: false

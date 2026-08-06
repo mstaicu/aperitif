@@ -6,6 +6,12 @@ namespace: otel
 resources:
   - namespace.yaml
   - ../../base
+  - openobserve-ingressroute.yaml
+  - openobserve-traefik-networkpolicy.yaml
+
+generators:
+  - openobserve-ksops-generator.yaml
 
 patches:
   - path: otel-agent-daemonset.yaml
+  - path: openobserve-statefulset.yaml

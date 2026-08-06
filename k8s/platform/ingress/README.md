@@ -9,10 +9,11 @@ Deploy locally with:
 make -C platform/ingress deploy
 ```
 
-The command installs the CRDs, installs the local mkcert CA, adds `tma.com` and
-`api.tma.com` to `/etc/hosts`, creates a cluster-local TLS Secret, and deploys
-Traefik. It therefore changes both the workstation and the current Kubernetes
-cluster. Generated certificates are temporary and never committed.
+The command installs the CRDs, installs the local mkcert CA, adds `tma.com`,
+`api.tma.com`, and `observe.tma.com` to `/etc/hosts`, creates a cluster-local
+TLS Secret, and deploys Traefik. It therefore changes both the workstation and
+the current Kubernetes cluster. Generated certificates are temporary and never
+committed.
 
 CI can reach Traefik without changing DNS:
 

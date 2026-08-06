@@ -32,6 +32,11 @@ spec:
                   fieldPath: status.podIP
             - name: GOMEMLIMIT
               value: 200MiB
+            - name: OPENOBSERVE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve
+                  key: OPENOBSERVE_TOKEN
 
           ports:
             - name: otlp-http

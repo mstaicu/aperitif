@@ -5,3 +5,7 @@ namespace: otel
 
 resources:
   - ../../base
+  - openobserve-secret.yaml
+
+patches:
+  - path: openobserve-statefulset.yaml

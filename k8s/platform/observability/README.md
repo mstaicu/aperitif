@@ -3,7 +3,7 @@
 This platform unit is the product-agnostic OpenTelemetry boundary.
 
 ```text
-applications --OTLP--> otel-collector --OTLP later--> telemetry backend
+applications --OTLP--> otel-collector --OTLP--> OpenObserve
 nodes --metrics/logs--> otel-agent ----OTLP---------> otel-collector
 Kubernetes API --workload state/restarts-----------> otel-collector
 ```
@@ -29,16 +29,20 @@ Kubernetes API --workload state/restarts-----------> otel-collector
   it is forwarded through the gateway.
 - The internal OTLP ports accept telemetry from every cluster namespace, so
   adding a product does not require changing this platform unit.
+- `openobserve` is the single shared backend for logs, metrics, and traces. It
+  runs as one StatefulSet with an explicit 10 GiB PVC and seven-day retention.
+  This deliberately small local-mode deployment is not highly available.
 
 Traefik owns the HTTP access trail. Fastify keeps its logger for startup,
 shutdown, and explicit problem-details failures without automatically logging
 every request. Owned JSON logs are parsed by the agent without sending logs
 directly from applications. The agent excludes both Collector containers from
-file logging to prevent a telemetry feedback loop.
+file logging and excludes OpenObserve from collecting its own output.
 
-The current exporter is `debug`, so logs are collected but not retained. Add a
-durable backend by replacing the gateway exporter; applications continue
-sending to `otel-collector.otel.svc.cluster.local`.
+The Collector exports every signal to OpenObserve over OTLP/HTTP. Credentials
+live in the environment overlays as SOPS-encrypted Secrets. Applications know
+only `otel-collector.otel.svc.cluster.local`, so the backend remains
+replaceable.
 
 Deploy locally with:
 
@@ -46,10 +50,14 @@ Deploy locally with:
 make -C platform/observability deploy
 ```
 
+Open the local UI at `https://observe.tma.com` after deploying ingress and this
+unit.
+
 Render both environments with:
 
 ```sh
-kubectl kustomize platform/observability/overlays/ephemeral >/dev/null
+kustomize build --enable-alpha-plugins --enable-exec \
+  platform/observability/overlays/ephemeral >/dev/null
 kubectl kustomize platform/observability/overlays/prod-eu >/dev/null
 ```
 

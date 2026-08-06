@@ -8,7 +8,8 @@ help: ## Show available targets.
 check: ## Validate the production Observability manifests.
 	kubectl kustomize overlays/prod-eu >/dev/null
 
-deploy: ## Deploy OpenTelemetry collection and wait for readiness.
-	kubectl apply -k overlays/ephemeral
+deploy: ## Deploy observability and wait for readiness.
+	kustomize build --enable-alpha-plugins --enable-exec overlays/ephemeral | kubectl apply -f -
+	kubectl rollout status -n otel statefulset/openobserve --timeout=300s
 	kubectl rollout status -n otel deploy/otel-collector --timeout=300s
 	kubectl rollout status -n otel daemonset/otel-agent --timeout=300s
