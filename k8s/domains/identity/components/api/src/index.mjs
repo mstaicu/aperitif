@@ -1,4 +1,5 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
 const requiredEnv = [
@@ -27,8 +28,13 @@ try {
 const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
   ? new NodeSDK({
       instrumentations: [
+        new HttpInstrumentation({
+          ignoreIncomingRequestHook: (request) =>
+            request.url === "/livez" || request.url === "/readyz",
+        }),
         new FastifyOtelInstrumentation({
           ignorePaths: ({ url }) => url === "/livez" || url === "/readyz",
+          instrumentHooks: false,
           registerOnInitialization: true,
         }),
       ],
