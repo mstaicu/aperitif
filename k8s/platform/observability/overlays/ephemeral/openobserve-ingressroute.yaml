@@ -9,6 +9,10 @@ spec:
   routes:
     - kind: Rule
       match: Host(`observe.tma.com`)
+      observability:
+        accessLogs: false
+        metrics: false
+        tracing: false
       services:
         - name: openobserve
           port: 5080

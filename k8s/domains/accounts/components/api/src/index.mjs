@@ -1,5 +1,6 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { PinoInstrumentation } from "@opentelemetry/instrumentation-pino";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
@@ -27,6 +28,7 @@ const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
           instrumentHooks: false,
           registerOnInitialization: true,
         }),
+        new PgInstrumentation(),
         new PinoInstrumentation({
           disableLogSending: true,
         }),

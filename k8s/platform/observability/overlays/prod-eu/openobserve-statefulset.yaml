@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: openobserve
-          image: public.ecr.aws/zinclabs/openobserve:v0.90.3@sha256:f77856199bff2097e0355d66e59d5792064ff8ff831ea5f580b3650fa5457136
+          image: public.ecr.aws/zinclabs/openobserve:v0.91.5@sha256:012c9701b4b7a2f7070f9264a85eb7ed6d4998e4763628341924f06cdc810e6f
           env:
             - name: ZO_ROOT_USER_EMAIL
               valueFrom:

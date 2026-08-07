@@ -9,7 +9,7 @@
   "tabs": [
     {
       "tabId": "default",
-      "name": "http",
+      "name": "red",
       "panels": [
         {
           "id": "Panel_ID1000003",
@@ -398,7 +398,7 @@
     },
     {
       "tabId": "47319",
-      "name": "resources",
+      "name": "capacity",
       "panels": [
         {
           "id": "Panel_ID2000003",

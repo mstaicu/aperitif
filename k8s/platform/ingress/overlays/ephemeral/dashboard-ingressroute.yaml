@@ -10,6 +10,10 @@ spec:
   routes:
     - kind: Rule
       match: Host(`traefik.tma.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      observability:
+        accessLogs: false
+        metrics: false
+        tracing: false
       services:
         - kind: TraefikService
           name: api@internal
