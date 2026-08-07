@@ -1,24 +1,26 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 
 metadata:
-  name: otel-agent
+  name: collector
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: otel-agent
+      app: collector
   template:
     metadata:
       labels:
-        app: otel-agent
+        app: collector
     spec:
-      serviceAccountName: otel-agent
+      serviceAccountName: collector
+      automountServiceAccountToken: true
       securityContext:
-        runAsUser: 0
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: otel-agent
+        - name: collector
           image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s:0.157.0@sha256:37309aafd87d97b8966cf0f458ca909363be0e619adbac484c587507020a11f5
           args:
             - --config=/conf/otel-config.yaml
@@ -28,14 +30,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: K8S_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
             - name: GOMEMLIMIT
-              value: 100MiB
+              value: 200MiB
 
           ports:
+            - name: otlp-http
+              containerPort: 4318
+            - name: otlp-grpc
+              containerPort: 4317
             - name: health
               containerPort: 13133
 
@@ -57,10 +59,10 @@ spec:
 
           resources:
             requests:
-              cpu: 25m
-              memory: 64Mi
-            limits:
+              cpu: 50m
               memory: 128Mi
+            limits:
+              memory: 256Mi
 
           securityContext:
             allowPrivilegeEscalation: false
@@ -73,21 +75,8 @@ spec:
             - name: config
               mountPath: /conf
               readOnly: true
-            - name: pod-logs
-              mountPath: /var/log/pods
-              readOnly: true
-            - name: checkpoints
-              mountPath: /var/lib/otelcol
 
       volumes:
         - name: config
           configMap:
-            name: otel-agent
-        - name: pod-logs
-          hostPath:
-            path: /var/log/pods
-            type: Directory
-        - name: checkpoints
-          hostPath:
-            path: /var/lib/otelcol
-            type: DirectoryOrCreate
+            name: collector

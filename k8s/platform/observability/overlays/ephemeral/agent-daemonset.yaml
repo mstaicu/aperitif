@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 
 metadata:
-  name: otel-agent
+  name: agent
 spec:
   template:
     spec:
@@ -11,7 +11,7 @@ spec:
         supplementalGroups:
           - 0
       containers:
-        - name: otel-agent
+        - name: agent
           volumeMounts:
             - name: docker-container-logs
               mountPath: /var/lib/docker/containers

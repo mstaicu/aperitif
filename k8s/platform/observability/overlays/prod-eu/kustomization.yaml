@@ -11,9 +11,9 @@ resources:
   - openobserve-secret.yaml
 
 configMapGenerator:
-  - name: otel-collector
+  - name: collector
     files:
-      - otel-config.yaml=otel-collector-config.yaml
+      - otel-config.yaml=collector-config.yaml
 
 patches:
-  - path: otel-collector-deployment.yaml
+  - path: collector-deployment.yaml

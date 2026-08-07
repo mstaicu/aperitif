@@ -59,7 +59,6 @@ export const registerV1Routes = async (fastify, { jwks, plans }) => {
   });
 
   await fastify.register(swaggerUI, {
-    indexPrefix: "/v1",
     routePrefix: "/v1/plans/docs",
   });
 };

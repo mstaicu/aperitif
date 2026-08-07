@@ -13,7 +13,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: otel-collector
+              app: collector
       ports:
         - protocol: TCP
           port: 5080

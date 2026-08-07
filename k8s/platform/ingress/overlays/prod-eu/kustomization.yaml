@@ -7,8 +7,8 @@ resources:
   - namespace.yaml
   - ../../base
   - cloudflare-dns-secret.yaml
-  - traefik-acme-persistentvolumeclaim.yaml
+  - acme-persistentvolumeclaim.yaml
 
 patches:
-  - path: traefik-deployment.yaml
-  - path: traefik-public-service.yaml
+  - path: deployment.yaml
+  - path: public-service.yaml

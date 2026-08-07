@@ -73,7 +73,6 @@ export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
   });
 
   await fastify.register(swaggerUI, {
-    indexPrefix: "/v1",
     routePrefix: "/v1/auth/docs",
   });
 };

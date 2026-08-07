@@ -13,13 +13,13 @@ resources:
   - openobserve-traefik-networkpolicy.yaml
 
 configMapGenerator:
-  - name: otel-collector
+  - name: collector
     files:
-      - otel-config.yaml=otel-collector-config.yaml
+      - otel-config.yaml=collector-config.yaml
 
 generators:
   - openobserve-ksops-generator.yaml
 
 patches:
-  - path: otel-agent-daemonset.yaml
-  - path: otel-collector-deployment.yaml
+  - path: agent-daemonset.yaml
+  - path: collector-deployment.yaml

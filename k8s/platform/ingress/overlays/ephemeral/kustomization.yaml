@@ -6,9 +6,9 @@ namespace: traefik
 resources:
   - namespace.yaml
   - ../../base
-  - traefik-dashboard-ingressroute.yaml
-  - traefik-tlsstore.yaml
+  - dashboard-ingressroute.yaml
+  - tlsstore.yaml
 
 patches:
-  - path: traefik-deployment.yaml
-  - path: traefik-public-service.yaml
+  - path: deployment.yaml
+  - path: public-service.yaml

@@ -11,5 +11,5 @@ check: ## Validate the production Observability manifests.
 deploy: ## Deploy observability and wait for readiness.
 	kustomize build --enable-alpha-plugins --enable-exec overlays/ephemeral | kubectl apply -f -
 	kubectl rollout status -n otel statefulset/openobserve --timeout=300s
-	kubectl rollout status -n otel deploy/otel-collector --timeout=300s
-	kubectl rollout status -n otel daemonset/otel-agent --timeout=300s
+	kubectl rollout status -n otel deploy/collector --timeout=300s
+	kubectl rollout status -n otel daemonset/agent --timeout=300s

@@ -54,7 +54,7 @@ spec:
               kubernetes.io/metadata.name: otel
           podSelector:
             matchLabels:
-              app: otel-collector
+              app: collector
       ports:
         - protocol: TCP
           port: 4318

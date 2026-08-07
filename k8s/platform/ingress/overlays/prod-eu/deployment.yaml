@@ -65,10 +65,10 @@ spec:
               value: otel-collector.otel.svc.cluster.local:4317 # In-cluster OpenTelemetry Collector for ingress telemetry.
 
           volumeMounts:
-            - name: traefik-acme-volume
+            - name: acme
               mountPath: /data # Persistent ACME state shared across Traefik restarts.
 
       volumes:
-        - name: traefik-acme-volume
+        - name: acme
           persistentVolumeClaim:
-            claimName: traefik-acme
+            claimName: acme
