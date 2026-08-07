@@ -1,6 +1,8 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
+import { registerDeleteOverrideRoute } from "./accounts/override.delete.mjs";
+import { registerSetOverrideRoute } from "./accounts/override.set.mjs";
 import { registerSetPlanRoute } from "./accounts/plan.set.mjs";
 
 /**
@@ -25,7 +27,7 @@ export const registerV1Routes = async (fastify, { jwks, plans }) => {
         },
       },
       info: {
-        description: "Plans API for account plan assignment.",
+        description: "Plans API for account plans and feature overrides.",
         title: "Plans",
         version: "v1",
       },
@@ -44,6 +46,14 @@ export const registerV1Routes = async (fastify, { jwks, plans }) => {
   });
 
   registerSetPlanRoute(fastify, {
+    jwks,
+    plans,
+  });
+  registerSetOverrideRoute(fastify, {
+    jwks,
+    plans,
+  });
+  registerDeleteOverrideRoute(fastify, {
     jwks,
     plans,
   });

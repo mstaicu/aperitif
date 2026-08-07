@@ -46,6 +46,21 @@ CREATE TABLE account_plans (
     version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0)
 );
 
+CREATE TABLE account_feature_overrides (
+    account_id UUID NOT NULL
+        REFERENCES account_plans(account_id)
+        ON DELETE CASCADE,
+
+    feature_id TEXT NOT NULL
+        REFERENCES features(id),
+
+    value JSONB NOT NULL CHECK (
+        jsonb_typeof(value) IN ('boolean', 'number', 'string')
+    ),
+
+    PRIMARY KEY (account_id, feature_id)
+);
+
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
 

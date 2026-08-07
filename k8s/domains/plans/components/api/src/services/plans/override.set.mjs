@@ -4,17 +4,15 @@ import { buildAccountFeaturesUpdatedV1Event } from "@mstaicu/plans-contracts";
  * @param {{ pool: import("pg").Pool }} resources
  * @returns {(args: {
  *   accountId: string,
- *   planId: string,
+ *   featureId: string,
+ *   value: boolean | number | string,
  * }) => Promise<{
- *   plan: {
- *     features: Record<string, boolean | number | string>,
- *     id: string,
- *   },
+ *   features: Record<string, boolean | number | string>,
  * }>}
  */
-export const set =
+export const setOverride =
   ({ pool }) =>
-  async ({ accountId, planId }) => {
+  async ({ accountId, featureId, value }) => {
     let client;
 
     try {
@@ -38,19 +36,50 @@ export const set =
       }
 
       const {
-        rows: [plan],
+        rows: [accountPlan],
       } = await client.query(
         `
-          SELECT id
-          FROM plans
-          WHERE id = $1
+          SELECT plan_id
+          FROM account_plans
+          WHERE account_id = $1
         `,
-        [planId],
+        [accountId],
       );
 
-      if (!plan) {
-        throw new Error("PLAN_NOT_FOUND");
+      if (!accountPlan) {
+        throw new Error("ACCOUNT_PLAN_NOT_FOUND");
       }
+
+      const {
+        rows: [feature],
+      } = await client.query(
+        `
+          SELECT 1
+          FROM features
+          WHERE id = $1
+        `,
+        [featureId],
+      );
+
+      if (!feature) {
+        throw new Error("FEATURE_NOT_FOUND");
+      }
+
+      const { rowCount } = await client.query(
+        `
+          INSERT INTO account_feature_overrides (
+            account_id,
+            feature_id,
+            value
+          )
+          VALUES ($1, $2, $3::jsonb)
+          ON CONFLICT (account_id, feature_id) DO UPDATE
+          SET value = EXCLUDED.value
+          WHERE account_feature_overrides.value IS DISTINCT FROM EXCLUDED.value
+          RETURNING 1
+        `,
+        [accountId, featureId, JSON.stringify(value)],
+      );
 
       const { rows: planFeatures } = await client.query(
         `
@@ -58,7 +87,7 @@ export const set =
           FROM plan_features
           WHERE plan_id = $1
         `,
-        [planId],
+        [accountPlan.plan_id],
       );
 
       const { rows: overrides } = await client.query(
@@ -77,33 +106,17 @@ export const set =
         ]),
       );
 
-      const {
-        rows: [currentPlan],
-      } = await client.query(
-        `
-          SELECT plan_id, version
-          FROM account_plans
-          WHERE account_id = $1
-        `,
-        [accountId],
-      );
-
-      if (currentPlan?.plan_id !== planId) {
+      if (rowCount === 1) {
         const {
-          rows: [accountPlan],
+          rows: [{ version }],
         } = await client.query(
           `
-            INSERT INTO account_plans (
-              account_id,
-              plan_id
-            )
-            VALUES ($1, $2)
-            ON CONFLICT (account_id) DO UPDATE
-            SET plan_id = EXCLUDED.plan_id,
-              version = account_plans.version + 1
-            RETURNING plan_id, version
+            UPDATE account_plans
+            SET version = version + 1
+            WHERE account_id = $1
+            RETURNING version
           `,
-          [accountId, planId],
+          [accountId],
         );
 
         const event = buildAccountFeaturesUpdatedV1Event(
@@ -113,7 +126,7 @@ export const set =
             },
             features,
           },
-          Number(accountPlan.version),
+          Number(version),
         );
 
         await client.query(
@@ -130,12 +143,7 @@ export const set =
 
       await client.query("COMMIT");
 
-      return {
-        plan: {
-          features,
-          id: planId,
-        },
-      };
+      return { features };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});
       throw err;

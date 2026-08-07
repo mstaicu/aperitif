@@ -10,7 +10,7 @@ spec:
         - name: outbox
           env:
             - name: DATABASE_URL
-              value: "postgres://postgres:postgres@accounts-postgres:5432/accounts"
+              value: "postgres://postgres:postgres@postgres:5432/accounts"
             - name: NATS_URL
               value: nats://nats-client.nats.svc.cluster.local:4222
             - name: NATS_STREAM_MAX_BYTES

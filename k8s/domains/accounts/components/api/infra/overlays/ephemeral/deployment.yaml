@@ -2,16 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: accounts-api
+  name: api
 spec:
   replicas: 1
   template:
     spec:
       containers:
-        - name: accounts-api
+        - name: api
           env:
             - name: DATABASE_URL
-              value: "postgres://postgres:postgres@accounts-postgres:5432/accounts"
+              value: "postgres://postgres:postgres@postgres:5432/accounts"
             - name: AUTH_JWKS_URL
               value: http://traefik-internal.traefik.svc.cluster.local/.well-known/jwks.json
             - name: OTEL_SERVICE_NAME

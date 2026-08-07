@@ -2,7 +2,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 
 metadata:
-  name: accounts-api-public
+  name: api-public
 spec:
   entryPoints:
     - https
@@ -10,7 +10,7 @@ spec:
     - kind: Rule
       match: Host(`api.tma.com`) && Path(`/v1/accounts`)
       services:
-        - name: accounts-api
+        - name: api
           port: 3000
   tls:
     certResolver: le

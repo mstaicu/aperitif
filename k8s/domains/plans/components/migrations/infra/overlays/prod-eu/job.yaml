@@ -16,4 +16,4 @@ spec:
               mountPath: /tmp
           env:
             - name: FLYWAY_URL
-              value: "jdbc:postgresql://plans-postgres:5432/plans?user=postgres&password=postgres"
+              value: "jdbc:postgresql://postgres:5432/plans?user=postgres&password=postgres"

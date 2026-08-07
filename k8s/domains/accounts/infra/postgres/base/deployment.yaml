@@ -2,20 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: accounts-postgres
+  name: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: accounts-postgres
+      app: postgres
   template:
     metadata:
       labels:
-        app: accounts-postgres
+        app: postgres
     spec:
       automountServiceAccountToken: false
       containers:
-        - name: accounts-postgres
+        - name: postgres
           image: docker.io/postgres:18
           env:
             - name: POSTGRES_DB

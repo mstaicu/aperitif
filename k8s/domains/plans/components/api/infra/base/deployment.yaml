@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: plans-api
+  name: api
 spec:
   selector:
     matchLabels:
-      app: plans-api
+      app: api
   replicas: 3
   template:
     metadata:
       labels:
-        app: plans-api
+        app: api
     spec:
       terminationGracePeriodSeconds: 15
       automountServiceAccountToken: false
 
       containers:
-        - name: plans-api
+        - name: api
           image: ghcr.io/mstaicu/plans-api
           readinessProbe:
             httpGet:

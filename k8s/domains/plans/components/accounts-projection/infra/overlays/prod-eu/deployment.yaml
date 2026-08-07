@@ -16,6 +16,6 @@ spec:
               mountPath: /tmp
           env:
             - name: DATABASE_URL
-              value: "postgres://postgres:postgres@plans-postgres:5432/plans"
+              value: "postgres://postgres:postgres@postgres:5432/plans"
             - name: NATS_URL
               value: nats://nats-client.nats.svc.cluster.local:4222

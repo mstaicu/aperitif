@@ -2,11 +2,11 @@ apiVersion: v1
 kind: Service
 
 metadata:
-  name: plans-api
+  name: api
 spec:
   selector:
-    app: plans-api
+    app: api
   ports:
-    - name: plans-api
+    - name: api
       port: 3000
       targetPort: 3000

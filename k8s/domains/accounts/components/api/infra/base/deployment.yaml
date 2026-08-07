@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: accounts-api
+  name: api
 spec:
   selector:
     matchLabels:
-      app: accounts-api
+      app: api
   replicas: 3
   template:
     metadata:
       labels:
-        app: accounts-api
+        app: api
     spec:
       terminationGracePeriodSeconds: 15
       automountServiceAccountToken: false
 
       containers:
-        - name: accounts-api
+        - name: api
           image: ghcr.io/mstaicu/accounts-api
           readinessProbe:
             httpGet:

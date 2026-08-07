@@ -23,7 +23,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app: accounts-postgres
+              app: postgres
       ports:
         - protocol: TCP
           port: 5432

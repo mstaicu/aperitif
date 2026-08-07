@@ -2,7 +2,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 
 metadata:
-  name: accounts-api-internal
+  name: api-internal
 spec:
   entryPoints:
     - http
@@ -11,5 +11,5 @@ spec:
     - kind: Rule
       match: Path(`/v1/accounts`) || PathPrefix(`/v1/accounts/docs`)
       services:
-        - name: accounts-api
+        - name: api
           port: 3000

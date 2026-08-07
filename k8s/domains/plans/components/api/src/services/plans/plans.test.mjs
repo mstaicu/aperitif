@@ -9,7 +9,7 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { getPlansService } from "./index.mjs";
 
-test("sets an account plan and publishes its feature values", async () => {
+test("resolves plan features and account overrides into snapshots", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
 
@@ -69,6 +69,53 @@ test("sets an account plan and publishes its feature values", async () => {
     },
   });
 
+  const overridden = await plans.setOverride({
+    accountId,
+    featureId: "test.limit",
+    value: 250,
+  });
+
+  assert.deepEqual(overridden, {
+    features: {
+      "test.enabled": true,
+      "test.level": "expanded",
+      "test.limit": 250,
+    },
+  });
+
+  assert.deepEqual(
+    await plans.setOverride({
+      accountId,
+      featureId: "test.limit",
+      value: 250,
+    }),
+    overridden,
+  );
+
+  assert.deepEqual(await plans.set({ accountId, planId: "pro" }), {
+    plan: {
+      features: overridden.features,
+      id: "pro",
+    },
+  });
+
+  const restored = await plans.deleteOverride({
+    accountId,
+    featureId: "test.limit",
+  });
+
+  assert.deepEqual(restored, {
+    features: result.plan.features,
+  });
+
+  assert.deepEqual(
+    await plans.deleteOverride({
+      accountId,
+      featureId: "test.limit",
+    }),
+    restored,
+  );
+
   const {
     rows: [{ event }],
   } = await pool.query(
@@ -91,7 +138,7 @@ test("sets an account plan and publishes its feature values", async () => {
       "test.level": "expanded",
       "test.limit": 100,
     },
-    version: 2,
+    version: 4,
   });
 
   assert.deepEqual(
@@ -115,7 +162,7 @@ test("sets an account plan and publishes its feature values", async () => {
   );
 
   assert.deepEqual(state, {
-    event_count: 2,
-    version: 2,
+    event_count: 4,
+    version: 4,
   });
 });

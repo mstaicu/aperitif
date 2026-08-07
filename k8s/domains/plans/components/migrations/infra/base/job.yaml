@@ -9,7 +9,7 @@ spec:
   template:
     metadata:
       labels:
-        app: plans-migrations
+        app: migrations
     spec:
       automountServiceAccountToken: false
       restartPolicy: Never
