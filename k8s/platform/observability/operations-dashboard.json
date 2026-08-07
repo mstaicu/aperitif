@@ -398,13 +398,13 @@
     },
     {
       "tabId": "47319",
-      "name": "capacity",
+      "name": "resources",
       "panels": [
         {
-          "id": "Panel_ID2000001",
+          "id": "Panel_ID2000003",
           "type": "line",
-          "title": "how busy are the nodes? (CPU cores)",
-          "description": "Capacity diagnosis starts here. CPU remains in cores because this collector does not yet expose a portable node-capacity denominator.",
+          "title": "CPU usage by deployment",
+          "description": "After RED identifies a component, check whether its CPU changed at the same time. Rising with traffic may be normal; rising while traffic is flat suggests expensive work.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -489,11 +489,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (k8s_node_name) (k8s_node_cpu_usage)",
+              "query": "sum by (k8s_namespace_name, k8s_deployment_name) (k8s_pod_cpu_usage{k8s_deployment_name!=\"\",k8s_namespace_name!~\"kube-system|otel\"})",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "k8s_node_cpu_usage",
+                "stream": "k8s_pod_cpu_usage",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -506,7 +506,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{k8s_node_name}",
+                "promql_legend": "{k8s_namespace_name}-{k8s_deployment_name}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -529,265 +529,10 @@
           "customChartContent": " // To know more about ECharts , \n// visit: https://echarts.apache.org/examples/en/index.html \n// Example: https://echarts.apache.org/examples/en/editor.html?c=line-simple \n// Define your ECharts 'option' here. \n// 'data' variable is available for use and contains the response data from the search result and it is an array.\noption = {  \n \n};\n  "
         },
         {
-          "id": "Panel_ID2000002",
-          "type": "line",
-          "title": "is node memory filling up? (%)",
-          "description": "Sustained high usage means the node is approaching memory pressure. Inspect the largest pods below.",
-          "config": {
-            "show_legends": true,
-            "legends_position": null,
-            "decimals": 1,
-            "unit": "percent",
-            "line_thickness": 1.5,
-            "step_value": "0",
-            "top_results_others": false,
-            "axis_border_show": false,
-            "label_option": {
-              "rotate": 0
-            },
-            "axis_label_rotate": 0,
-            "show_symbol": false,
-            "line_interpolation": "smooth",
-            "legend_width": {
-              "unit": "px"
-            },
-            "legend_height": {
-              "unit": "px"
-            },
-            "base_map": {
-              "type": "osm"
-            },
-            "map_type": {
-              "type": "world"
-            },
-            "map_view": {
-              "zoom": 1,
-              "lat": 0,
-              "lng": 0
-            },
-            "map_symbol_style": {
-              "size": "by Value",
-              "size_by_value": {
-                "min": 1,
-                "max": 100
-              },
-              "size_fixed": 2
-            },
-            "drilldown": [],
-            "mark_line": [],
-            "override_config": [],
-            "connect_nulls": false,
-            "no_value_replacement": "",
-            "wrap_table_cells": false,
-            "table_transpose": false,
-            "table_dynamic_columns": false,
-            "mappings": [],
-            "color": {
-              "mode": "palette-classic-by-series",
-              "fixedColor": ["#53ca53"],
-              "seriesBy": "last",
-              "colorBySeries": []
-            },
-            "trellis": {
-              "layout": null,
-              "num_of_columns": 1,
-              "group_by_y_axis": false
-            },
-            "show_gridlines": true,
-            "aggregation": "last",
-            "lat_label": "latitude",
-            "lon_label": "longitude",
-            "weight_label": "weight",
-            "name_label": "name",
-            "table_aggregations": ["last"],
-            "promql_table_mode": "single",
-            "visible_columns": [],
-            "hidden_columns": [],
-            "sticky_columns": [],
-            "sticky_first_column": false,
-            "column_order": [],
-            "table_pagination": false,
-            "table_pivot_show_row_totals": false,
-            "table_pivot_show_col_totals": false,
-            "table_pivot_sticky_row_totals": false,
-            "table_pivot_sticky_col_totals": false,
-            "panel_time_enabled": false
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "100 * sum by (k8s_node_name) (k8s_node_memory_working_set) / (sum by (k8s_node_name) (k8s_node_memory_working_set) + sum by (k8s_node_name) (k8s_node_memory_available))",
-              "vrlFunctionQuery": "",
-              "customQuery": true,
-              "fields": {
-                "stream": "k8s_node_memory_working_set",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "{k8s_node_name}",
-                "layer_type": "scatter",
-                "weight_fixed": 1,
-                "limit": 0,
-                "min": 0,
-                "max": 100,
-                "time_shift": []
-              },
-              "joins": []
-            }
-          ],
-          "layout": {
-            "x": 96,
-            "y": 0,
-            "w": 96,
-            "h": 18,
-            "i": 2
-          },
-          "htmlContent": "",
-          "markdownContent": "",
-          "customChartContent": " // To know more about ECharts , \n// visit: https://echarts.apache.org/examples/en/index.html \n// Example: https://echarts.apache.org/examples/en/editor.html?c=line-simple \n// Define your ECharts 'option' here. \n// 'data' variable is available for use and contains the response data from the search result and it is an array.\noption = {  \n \n};\n  "
-        },
-        {
-          "id": "Panel_ID2000003",
-          "type": "line",
-          "title": "which pods use the most CPU? (cores)",
-          "description": "Use this after node CPU rises to identify the pods responsible for the pressure.",
-          "config": {
-            "show_legends": true,
-            "legends_position": null,
-            "decimals": 3,
-            "unit": "custom",
-            "unit_custom": " cores",
-            "line_thickness": 1.5,
-            "step_value": "0",
-            "top_results_others": false,
-            "axis_border_show": false,
-            "label_option": {
-              "rotate": 0
-            },
-            "axis_label_rotate": 0,
-            "show_symbol": false,
-            "line_interpolation": "smooth",
-            "legend_width": {
-              "unit": "px"
-            },
-            "legend_height": {
-              "unit": "px"
-            },
-            "base_map": {
-              "type": "osm"
-            },
-            "map_type": {
-              "type": "world"
-            },
-            "map_view": {
-              "zoom": 1,
-              "lat": 0,
-              "lng": 0
-            },
-            "map_symbol_style": {
-              "size": "by Value",
-              "size_by_value": {
-                "min": 1,
-                "max": 100
-              },
-              "size_fixed": 2
-            },
-            "drilldown": [],
-            "mark_line": [],
-            "override_config": [],
-            "connect_nulls": false,
-            "no_value_replacement": "",
-            "wrap_table_cells": false,
-            "table_transpose": false,
-            "table_dynamic_columns": false,
-            "mappings": [],
-            "color": {
-              "mode": "palette-classic-by-series",
-              "fixedColor": ["#53ca53"],
-              "seriesBy": "last",
-              "colorBySeries": []
-            },
-            "trellis": {
-              "layout": null,
-              "num_of_columns": 1,
-              "group_by_y_axis": false
-            },
-            "show_gridlines": true,
-            "aggregation": "last",
-            "lat_label": "latitude",
-            "lon_label": "longitude",
-            "weight_label": "weight",
-            "name_label": "name",
-            "table_aggregations": ["last"],
-            "promql_table_mode": "single",
-            "visible_columns": [],
-            "hidden_columns": [],
-            "sticky_columns": [],
-            "sticky_first_column": false,
-            "column_order": [],
-            "table_pagination": false,
-            "table_pivot_show_row_totals": false,
-            "table_pivot_show_col_totals": false,
-            "table_pivot_sticky_row_totals": false,
-            "table_pivot_sticky_col_totals": false,
-            "panel_time_enabled": false
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "topk(10, sum by (k8s_namespace_name, k8s_pod_name) (k8s_pod_cpu_usage))",
-              "vrlFunctionQuery": "",
-              "customQuery": true,
-              "fields": {
-                "stream": "k8s_pod_cpu_usage",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "{k8s_namespace_name}/{k8s_pod_name}",
-                "layer_type": "scatter",
-                "weight_fixed": 1,
-                "limit": 0,
-                "min": 0,
-                "max": 100,
-                "time_shift": []
-              },
-              "joins": []
-            }
-          ],
-          "layout": {
-            "x": 0,
-            "y": 20,
-            "w": 96,
-            "h": 18,
-            "i": 3
-          },
-          "htmlContent": "",
-          "markdownContent": "",
-          "customChartContent": " // To know more about ECharts , \n// visit: https://echarts.apache.org/examples/en/index.html \n// Example: https://echarts.apache.org/examples/en/editor.html?c=line-simple \n// Define your ECharts 'option' here. \n// 'data' variable is available for use and contains the response data from the search result and it is an array.\noption = {  \n \n};\n  "
-        },
-        {
           "id": "Panel_ID2000004",
           "type": "line",
-          "title": "which pods use the most memory? (MiB)",
-          "description": "Use this after node memory rises to identify the pods responsible for the pressure.",
+          "title": "memory usage by deployment",
+          "description": "After RED identifies a component, check whether its memory changed at the same time. A stable plateau is normal; continuous growth warrants investigation.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -872,7 +617,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(10, sum by (k8s_namespace_name, k8s_pod_name) (k8s_pod_memory_working_set) / 1024 / 1024)",
+              "query": "sum by (k8s_namespace_name, k8s_deployment_name) (k8s_pod_memory_working_set{k8s_deployment_name!=\"\",k8s_namespace_name!~\"kube-system|otel\"}) / 1024 / 1024",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -889,7 +634,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{k8s_namespace_name}/{k8s_pod_name}",
+                "promql_legend": "{k8s_namespace_name}-{k8s_deployment_name}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -902,10 +647,10 @@
           ],
           "layout": {
             "x": 96,
-            "y": 20,
+            "y": 0,
             "w": 96,
             "h": 18,
-            "i": 4
+            "i": 2
           },
           "htmlContent": "",
           "markdownContent": "",
