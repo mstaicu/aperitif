@@ -9,12 +9,12 @@
   "tabs": [
     {
       "tabId": "default",
-      "name": "health",
+      "name": "http",
       "panels": [
         {
           "id": "Panel_ID1000003",
           "type": "line",
-          "title": "how much traffic is arriving?",
+          "title": "request rate",
           "description": "If workloads are healthy, confirm traffic reaches each component. Use observed peaks as evidence when choosing rate limits.",
           "config": {
             "show_legends": true,
@@ -100,7 +100,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (component) (label_replace(rate(traefik_service_requests_total{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\"}[5m]), \"component\", \"$1\", \"service\", \"^[^-]+-(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\"))",
+              "query": "sum by (component) (label_replace(rate(traefik_service_requests_total{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\"}[5m]), \"component\", \"$1\", \"service\", \"^(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\"))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -142,7 +142,7 @@
         {
           "id": "Panel_ID1000004",
           "type": "line",
-          "title": "requests failing?",
+          "title": "error responses",
           "description": "4xx means clients were rejected. 5xx means the platform failed. Investigate sustained 5xx responses first.",
           "config": {
             "show_legends": true,
@@ -228,7 +228,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (component, status_class) (label_replace(label_replace(rate(traefik_service_requests_total{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\",code=~\"4..|5..\"}[5m]), \"component\", \"$1\", \"service\", \"^[^-]+-(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\"), \"status_class\", \"$1xx\", \"code\", \"^([45])..$\"))",
+              "query": "sum by (component, status_class) (label_replace(label_replace(rate(traefik_service_requests_total{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\",code=~\"4..|5..\"}[5m]), \"component\", \"$1\", \"service\", \"^(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\"), \"status_class\", \"$1xx\", \"code\", \"^([45])..$\"))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -270,7 +270,7 @@
         {
           "id": "Panel_ID1000005",
           "type": "line",
-          "title": "responses slowing down?",
+          "title": "p95 latency",
           "description": "If availability and errors look healthy, use p95 latency to detect degraded service before examining individual traces.",
           "config": {
             "show_legends": true,
@@ -355,7 +355,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "histogram_quantile(0.95, sum by (le, component) (label_replace(rate(traefik_service_request_duration_seconds_bucket{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\"}[5m]), \"component\", \"$1\", \"service\", \"^[^-]+-(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\")))",
+              "query": "histogram_quantile(0.95, sum by (le, component) (label_replace(rate(traefik_service_request_duration_seconds_bucket{service=~\".+-(internal|public)(-.+)?-[0-9a-f]+@kubernetescrd\"}[5m]), \"component\", \"$1\", \"service\", \"^(.+)-(internal|public)(-.*)?-[0-9a-f]+@kubernetescrd$\")))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
