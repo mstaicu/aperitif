@@ -3,7 +3,7 @@
 Debug from the infrastructure inward:
 
 ```text
-Kubernetes -> NATS servers -> streams -> consumers -> publishers/projectors
+Kubernetes -> NATS servers -> streams -> consumers -> outboxes/projections
 ```
 
 The cluster has three servers. JetStream metadata and R3 streams need two
@@ -93,10 +93,10 @@ nats --no-context consumer info \
   ACCOUNTS plans-accounts-projection
 ```
 
-- Growing pending messages means the projector is absent or slow.
+- Growing pending messages means the projection component is absent or slow.
 - Growing acknowledgement-pending or redeliveries means its handler is
   failing or not acknowledging.
-- Missing streams usually means the owning outbox publisher has not started or
+- Missing streams usually means the owning outbox component has not started or
   failed during stream creation.
 
 Stop the port-forward with `Ctrl-C` and run `unset NATS_URL` when finished.
@@ -104,19 +104,20 @@ Stop the port-forward with `Ctrl-C` and run `unset NATS_URL` when finished.
 ## 4. Follow one event
 
 ```text
-domain transaction -> outbox_events -> publisher -> stream
-                   -> consumer -> projector -> projection table
+domain transaction -> outbox_events -> outbox -> stream
+                   -> consumer -> projection -> projection table
 ```
 
 ```sh
-kubectl logs -n accounts deployment/outbox-publisher --since=10m
-kubectl logs -n plans deployment/outbox-publisher --since=10m
-kubectl logs -n plans deployment/accounts-projector --since=10m
+kubectl logs -n accounts deployment/outbox --since=10m
+kubectl logs -n plans deployment/outbox --since=10m
+kubectl logs -n plans deployment/accounts-projection --since=10m
 ```
 
-An unpublished outbox row points to the publisher or NATS connection. A stream
-message with consumer backlog points to the projector. An acknowledged message
-with wrong projected state points to the projection transaction.
+An unpublished outbox row points to the outbox component or NATS connection. A
+stream message with consumer backlog points to the projection component. An
+acknowledged message with wrong projected state points to the projection
+transaction.
 
 ## 5. Check capacity
 
@@ -140,7 +141,7 @@ a hostPath PVC; locally, `max_file_store` is the effective ceiling.
 | Running but not Ready | `/healthz`, routes, and quorum |
 | Fewer than three ping replies | Pods, DNS, routes, and NetworkPolicy |
 | Publish rejected | Stream `max_bytes`, PVC space, and outbox backlog |
-| Consumer pending grows | Owning projector |
+| Consumer pending grows | Owning projection |
 | Application cannot connect | Client endpoints and NetworkPolicy selectors |
 
 Do not purge or delete streams, consumers, PVCs, or the `nats` Namespace while

@@ -18,19 +18,19 @@ Plans does not own accounts, payments, compliance decisions, or product data.
 ## Runtime
 
 ```text
-ACCOUNTS stream -> accounts projector -> PostgreSQL
-                                      -> API
-                                      -> outbox publisher -> PLANS stream
+ACCOUNTS stream -> accounts projection -> PostgreSQL
+                                       -> API
+                                       -> outbox -> PLANS stream
 ```
 
-| Part                            | Purpose                              |
-| ------------------------------- | ------------------------------------ |
-| `components/accounts-projector` | Remember known accounts              |
-| `components/api`                | Assign plans and resolve features    |
-| `components/outbox-publisher`   | Publish account feature snapshots    |
-| `components/migrations`         | Flyway SQL and its Job               |
-| `packages/contracts`            | Published Plans event package        |
-| `infra/postgres`                | Disposable in-cluster database       |
+| Part | Purpose |
+| --- | --- |
+| `components/accounts-projection` | Remember known accounts |
+| `components/api` | Assign plans and resolve features |
+| `components/outbox` | Publish account feature snapshots |
+| `components/migrations` | Flyway SQL and its Job |
+| `packages/contracts` | Published Plans event package |
+| `infra/postgres` | Disposable in-cluster database |
 
 Plans and their feature values are product configuration added through
 migrations. The operator API has one route:

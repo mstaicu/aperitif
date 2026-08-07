@@ -1,0 +1,82 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/auth-api
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: auth-api
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: auth-ui
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/auth-ui
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: auth-ui
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: auth-ui
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: auth-migrations
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/auth-migrations
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: auth-migrations
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: auth-migrations
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m

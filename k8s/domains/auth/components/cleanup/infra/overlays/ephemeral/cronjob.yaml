@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: cleanup
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              env:
+                - name: DATABASE_URL
+                  value: "postgres://postgres:postgres@postgres:5432/auth"

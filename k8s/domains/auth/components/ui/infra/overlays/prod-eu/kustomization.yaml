@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth
+
+resources:
+  - ../../base
+  - public-ingressroute.yaml
+
+patches:
+  - path: deployment.yaml
+
+images:
+  - name: ghcr.io/mstaicu/auth-ui
+    newTag: latest
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:auth-ui:digest"}

@@ -26,6 +26,7 @@ spec:
             - --providers.kubernetescrd=true # Domains publish Traefik IngressRoutes.
 
             - --log.level=DEBUG # Extra edge visibility while composing local SCSs.
+            - --log.format=json # Keep Traefik's own operational logs machine-readable.
             - --accesslog=true # Per-request edge log across all local domains.
             - --accesslog.format=json # Keep access logs machine-readable like application logs.
             - --accesslog.fields.queryparameters.defaultmode=drop # Keep query values out of edge logs.

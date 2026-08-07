@@ -4,9 +4,9 @@ kind: Kustomization
 resources:
   - platform.yaml
   - images/automation.yaml
-  - images/identity.yaml
+  - images/auth.yaml
   - images/accounts.yaml
   - images/plans.yaml
-  - domains/identity.yaml
+  - domains/auth.yaml
   - domains/accounts.yaml
   - domains/plans.yaml

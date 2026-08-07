@@ -12,19 +12,19 @@ check: ## Validate Plans components, packages, and manifests.
 	cd components/api && npm test
 	cd packages/contracts && npm ci
 	cd packages/contracts && npm run build
-	cd components/outbox-publisher && npm ci
-	cd components/outbox-publisher && npm exec -- eslint .
-	cd components/outbox-publisher && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/outbox-publisher && npm test
-	cd components/accounts-projector && npm ci
-	cd components/accounts-projector && npm exec -- eslint .
-	cd components/accounts-projector && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/accounts-projector && npm test
+	cd components/outbox && npm ci
+	cd components/outbox && npm exec -- eslint .
+	cd components/outbox && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/outbox && npm test
+	cd components/accounts-projection && npm ci
+	cd components/accounts-projection && npm exec -- eslint .
+	cd components/accounts-projection && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/accounts-projection && npm test
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/outbox-publisher/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/accounts-projector/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize components/outbox/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize components/accounts-projection/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Plans database and run its migrations.
 	skaffold run -m plans-postgres
@@ -33,7 +33,7 @@ migrate: ## Deploy the Plans database and run its migrations.
 	kubectl wait -n plans --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n plans job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Plans once in the current cluster.
-	skaffold run -m plans-api,plans-outbox-publisher,plans-accounts-projector
+	skaffold run -m plans-api,plans-outbox,plans-accounts-projection
 
 dev: migrate ## Start the Plans development loop.
-	skaffold dev -m plans-api,plans-outbox-publisher,plans-accounts-projector
+	skaffold dev -m plans-api,plans-outbox,plans-accounts-projection

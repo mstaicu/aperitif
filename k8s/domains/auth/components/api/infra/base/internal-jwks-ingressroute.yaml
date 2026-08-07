@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: api-internal-jwks
+spec:
+  entryPoints:
+    - http
+
+  routes:
+    - kind: Rule
+      match: Path(`/.well-known/jwks.json`)
+      services:
+        - name: api
+          port: 3000

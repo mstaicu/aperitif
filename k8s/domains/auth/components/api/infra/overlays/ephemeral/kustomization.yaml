@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - public-ingressroute.yaml
+  - public-docs-ingressroute.yaml
+  - public-jwks-ingressroute.yaml
+
+generators:
+  - ksops-generator.yaml
+
+patches:
+  - path: deployment.yaml
+
+configMapGenerator:
+  - name: api-config
+    literals:
+      - ORIGIN=https://tma.com
+
+generatorOptions:
+  disableNameSuffixHash: true

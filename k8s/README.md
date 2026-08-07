@@ -21,7 +21,7 @@ The domains are:
 
 | Domain | Responsibility | Production |
 | --- | --- | --- |
-| `identity` | Users, passkeys, sessions, operators, and JWKS | Yes |
+| `auth` | Users, passkeys, sessions, operators, and JWKS | Yes |
 | `accounts` | Account boundaries and membership | Yes |
 | `plans` | Account plans and their resolved product features | Yes |
 
@@ -64,7 +64,7 @@ make -C platform/event-bus deploy
 Then run domains in separate terminals:
 
 ```sh
-make -C domains/identity dev
+make -C domains/auth dev
 make -C domains/accounts dev
 make -C domains/plans dev
 ```
@@ -91,15 +91,15 @@ Cross-domain state moves through versioned CloudEvents:
 ```text
 domain transaction
   -> domain state + outbox row
-  -> outbox publisher
+  -> outbox
   -> NATS JetStream
   -> durable consumer
-  -> projector transaction
+  -> projection transaction
 ```
 
-`LISTEN/NOTIFY` only wakes an outbox publisher. The database outbox is the
-durable source. Projectors acknowledge an event only after committing the
-projection, and they use `data.version` to reject stale state.
+`LISTEN/NOTIFY` only wakes the outbox component. The database outbox is the
+durable source. Projection components acknowledge an event only after
+committing the projection, and they use `data.version` to reject stale state.
 
 Current events:
 

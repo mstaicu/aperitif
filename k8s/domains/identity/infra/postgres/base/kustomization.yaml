@@ -1,7 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - identity-postgres-deployment.yaml
-  - identity-postgres-service.yaml
-  - identity-postgres-networkpolicy.yaml

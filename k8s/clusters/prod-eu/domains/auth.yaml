@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: auth
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-postgres
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/infra/postgres/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-migrations
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/components/migrations/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: auth-postgres
+  force: true
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/components/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: ingress-crds
+    - name: auth-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-cleanup
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/components/cleanup/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: auth-migrations
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-ui
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/auth/components/ui/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: ingress-crds
+  wait: true
+  timeout: 5m

@@ -30,6 +30,7 @@ spec:
             - --providers.kubernetescrd=true # Domains attach Traefik IngressRoutes.
 
             - --log.level=INFO # Keep shared edge logs production-readable.
+            - --log.format=json # Keep Traefik's own operational logs machine-readable.
             - --accesslog=true # Retain request trail at the platform edge.
             - --accesslog.format=json # Keep access logs machine-readable like application logs.
             - --accesslog.fields.queryparameters.defaultmode=drop # Keep query values out of edge logs.
@@ -51,7 +52,7 @@ spec:
             - --tracing.otlp.grpc=true # Use OTLP gRPC for the collector hop.
             - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Shared collector service.
             - --tracing.otlp.grpc.insecure=true # In-cluster collector runs without TLS.
-            - --tracing.sampleRate=0.1 # Keep tail visibility without full-trace overhead in live.
+            - --tracing.sampleRate=1.0 # Keep every trace until measured traffic justifies sampling.
 
           env:
             - name: CF_DNS_API_TOKEN

@@ -13,13 +13,13 @@ itself; product-specific roles remain inside product domains.
 
 ```text
 PostgreSQL -> migrations -> API
-                          -> outbox publisher -> ACCOUNTS stream
+                          -> outbox -> ACCOUNTS stream
 ```
 
 | Part | Purpose |
 | --- | --- |
 | `components/api` | Create and list the caller's accounts |
-| `components/outbox-publisher` | Publish committed Accounts events |
+| `components/outbox` | Publish committed Accounts events |
 | `components/migrations` | Flyway SQL and its Job |
 | `packages/contracts` | Published Accounts event package |
 | `infra/postgres` | Disposable in-cluster database |
@@ -29,7 +29,7 @@ The API exposes `GET/POST /v1/accounts` and OpenAPI at
 
 Accounts publishes `accounts.account.created.v1`. State and its outbox event are
 committed in one database transaction. `data.version` is the account state
-version used by projectors to reject stale events.
+version used by projections to reject stale events.
 
 ## Work here
 

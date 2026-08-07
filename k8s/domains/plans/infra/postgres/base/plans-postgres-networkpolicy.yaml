@@ -19,10 +19,10 @@ spec:
               app: plans-migrations
         - podSelector:
             matchLabels:
-              app: outbox-publisher
+              app: outbox
         - podSelector:
             matchLabels:
-              app: accounts-projector
+              app: accounts-projection
       ports:
         - protocol: TCP
           port: 5432

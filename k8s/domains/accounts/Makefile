@@ -14,15 +14,15 @@ check: ## Validate Accounts components, packages, and manifests.
 	cd packages/contracts && npm ci
 	cd packages/contracts && npm run build
 
-	cd components/outbox-publisher && npm ci
-	cd components/outbox-publisher && npm exec -- eslint .
-	cd components/outbox-publisher && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/outbox-publisher && npm test
+	cd components/outbox && npm ci
+	cd components/outbox && npm exec -- eslint .
+	cd components/outbox && npm exec -- tsc -p jsconfig.json --noEmit
+	cd components/outbox && npm test
 
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/outbox-publisher/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize components/outbox/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres
@@ -31,7 +31,7 @@ migrate: ## Deploy the Accounts database and run its migrations.
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n accounts job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Accounts once in the current cluster.
-	skaffold run -m accounts-api,accounts-outbox-publisher
+	skaffold run -m accounts-api,accounts-outbox
 
 dev: migrate ## Start the Accounts development loop.
-	skaffold dev -m accounts-api,accounts-outbox-publisher
+	skaffold dev -m accounts-api,accounts-outbox

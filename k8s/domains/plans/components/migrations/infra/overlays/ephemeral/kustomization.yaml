@@ -8,4 +8,4 @@ resources:
   - ../../base
 
 patches:
-  - path: plans-migrations-job.yaml
+  - path: job.yaml

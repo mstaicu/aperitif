@@ -1,8 +1,9 @@
 import { FastifyOtelInstrumentation } from "@fastify/otel";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { PinoInstrumentation } from "@opentelemetry/instrumentation-pino";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-const requiredEnv = ["DATABASE_URL", "IDENTITY_JWKS_URL"];
+const requiredEnv = ["DATABASE_URL", "AUTH_JWKS_URL"];
 
 for (const name of requiredEnv) {
   if (!process.env[name]) {
@@ -25,6 +26,9 @@ const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
           ignorePaths: ({ url }) => url === "/livez" || url === "/readyz",
           instrumentHooks: false,
           registerOnInitialization: true,
+        }),
+        new PinoInstrumentation({
+          disableLogSending: true,
         }),
       ],
       serviceName: process.env.OTEL_SERVICE_NAME,

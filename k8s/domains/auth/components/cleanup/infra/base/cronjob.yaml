@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: cleanup
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app: cleanup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+
+          containers:
+            - name: cleanup
+              image: docker.io/postgres:18
+              env:
+              command:
+                - sh
+                - -c
+                - |
+                  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+                  DELETE FROM registration_challenges
+                  WHERE expires_at < NOW() - INTERVAL '10 minutes';
+
+                  DELETE FROM authentication_challenges
+                  WHERE expires_at < NOW() - INTERVAL '10 minutes';
+
+                  DELETE FROM sessions
+                  WHERE expires_at < NOW() - INTERVAL '30 days'
+                     OR revoked_at < NOW() - INTERVAL '30 days';
+                  SQL

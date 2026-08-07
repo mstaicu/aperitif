@@ -58,10 +58,10 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 
 metadata:
-  name: plans-outbox-publisher
+  name: plans-outbox
   namespace: flux-system
 spec:
-  image: ghcr.io/mstaicu/plans-outbox-publisher
+  image: ghcr.io/mstaicu/plans-outbox
   interval: 5m
 
 ---
@@ -69,11 +69,11 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 
 metadata:
-  name: plans-outbox-publisher
+  name: plans-outbox
   namespace: flux-system
 spec:
   imageRepositoryRef:
-    name: plans-outbox-publisher
+    name: plans-outbox
   filterTags:
     pattern: "^latest$"
   policy:
@@ -86,10 +86,10 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 
 metadata:
-  name: plans-accounts-projector
+  name: plans-accounts-projection
   namespace: flux-system
 spec:
-  image: ghcr.io/mstaicu/plans-accounts-projector
+  image: ghcr.io/mstaicu/plans-accounts-projection
   interval: 5m
 
 ---
@@ -97,11 +97,11 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 
 metadata:
-  name: plans-accounts-projector
+  name: plans-accounts-projection
   namespace: flux-system
 spec:
   imageRepositoryRef:
-    name: plans-accounts-projector
+    name: plans-accounts-projection
   filterTags:
     pattern: "^latest$"
   policy:

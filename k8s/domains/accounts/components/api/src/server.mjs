@@ -27,7 +27,7 @@ const pool = new Pool({
 pool.on("error", (err) => console.error(err));
 
 const jwks = createRemoteJWKSet(
-  new URL(/** @type {string} */ (process.env.IDENTITY_JWKS_URL)),
+  new URL(/** @type {string} */ (process.env.AUTH_JWKS_URL)),
 );
 const accounts = createAccountsService({ pool });
 

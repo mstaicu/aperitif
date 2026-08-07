@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: ui-public
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`tma.com`) && (PathPrefix(`/login`) || PathPrefix(`/signup`) || PathPrefix(`/auth/assets`))
+      services:
+        - name: ui
+          port: 3000
+  tls: {}

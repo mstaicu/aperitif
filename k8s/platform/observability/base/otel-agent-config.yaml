@@ -6,7 +6,7 @@ extensions:
     directory: /var/lib/otelcol/file-storage
 
 receivers:
-  kubeletstats:
+  kubelet_stats:
     auth_type: serviceAccount
     collection_interval: 30s
     endpoint: https://${env:K8S_NODE_NAME}:10250
@@ -27,8 +27,10 @@ receivers:
     include:
       - /var/log/pods/*/*/*.log
     exclude:
-      - /var/log/pods/*/otel-agent/*.log
-      - /var/log/pods/*/otel-collector/*.log
+      # Never send observability components' own logs back into their backend.
+      - /var/log/pods/otel_*/*/*.log
+      # Keep Kubernetes control-plane noise out of the application log stream.
+      - /var/log/pods/kube-system_*/*/*.log
     start_at: beginning
     include_file_path: true
     include_file_name: false
@@ -39,13 +41,45 @@ receivers:
         if: 'body matches "^\\{"'
         parse_ints: true
         parse_to: attributes
+      - id: pino_trace
+        type: trace_parser
+        if: >-
+          attributes.trace_id != nil and
+          attributes.span_id != nil and
+          attributes.trace_flags != nil
+        trace_id:
+          parse_from: attributes.trace_id
+        span_id:
+          parse_from: attributes.span_id
+        trace_flags:
+          parse_from: attributes.trace_flags
+      - id: traefik_trace
+        type: trace_parser
+        if: >-
+          attributes.TraceId != nil and
+          attributes.SpanId != nil
+        trace_id:
+          parse_from: attributes.TraceId
+        span_id:
+          parse_from: attributes.SpanId
+      - type: severity_parser
+        if: attributes.level != nil
+        parse_from: attributes.level
+        overwrite_text: true
+        mapping:
+          trace: 10
+          debug: 20
+          info: 30
+          warn: 40
+          error: 50
+          fatal: 60
 
 processors:
   memory_limiter:
     check_interval: 5s
     limit_percentage: 80
     spike_limit_percentage: 25
-  k8sattributes:
+  k8s_attributes:
     auth_type: serviceAccount
     filter:
       # Each agent watches only pods running on its own node.
@@ -67,10 +101,8 @@ processors:
         - k8s.namespace.name
         - k8s.pod.name
         - k8s.pod.uid
-        - k8s.pod.start_time
         - k8s.node.name
         - k8s.deployment.name
-        - k8s.replicaset.name
         - k8s.daemonset.name
         - k8s.statefulset.name
         - k8s.job.name
@@ -93,10 +125,10 @@ service:
   pipelines:
     metrics:
       receivers:
-        - kubeletstats
+        - kubelet_stats
       processors:
         - memory_limiter
-        - k8sattributes
+        - k8s_attributes
         - batch
       exporters:
         - otlp_grpc
@@ -105,7 +137,7 @@ service:
         - file_log
       processors:
         - memory_limiter
-        - k8sattributes
+        - k8s_attributes
         - batch
       exporters:
         - otlp_grpc

@@ -38,8 +38,9 @@ Kubernetes API --workload state/restarts-----------> otel-collector
 Traefik owns the HTTP access trail. Fastify keeps its logger for startup,
 shutdown, and explicit problem-details failures without automatically logging
 every request. Owned JSON logs are parsed by the agent without sending logs
-directly from applications. The agent excludes both Collector containers from
-file logging and excludes OpenObserve from collecting its own output.
+directly from applications. The agent excludes the complete `otel` namespace
+from file logging, preventing the selected backend from ingesting its own
+ingestion access logs.
 
 The Collector exports every signal through the overlay's `otlphttp/backend`
 exporter. Endpoint and credentials live in that environment overlay, with

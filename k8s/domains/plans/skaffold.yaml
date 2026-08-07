@@ -79,15 +79,15 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: plans-outbox-publisher
+  name: plans-outbox
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/plans-outbox-publisher
-      context: components/outbox-publisher
+    - image: ghcr.io/mstaicu/plans-outbox
+      context: components/outbox
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -100,7 +100,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/outbox-publisher/infra/overlays/ephemeral
+      - components/outbox/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -113,15 +113,15 @@ apiVersion: skaffold/v4beta11
 kind: Config
 
 metadata:
-  name: plans-accounts-projector
+  name: plans-accounts-projection
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/plans-accounts-projector
-      context: components/accounts-projector
+    - image: ghcr.io/mstaicu/plans-accounts-projection
+      context: components/accounts-projection
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -134,7 +134,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/accounts-projector/infra/overlays/ephemeral
+      - components/accounts-projection/infra/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
