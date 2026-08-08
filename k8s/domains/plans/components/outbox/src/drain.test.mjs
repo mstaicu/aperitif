@@ -11,7 +11,7 @@ import { setTimeout } from "node:timers/promises";
 
 import { startNats } from "../test/fixtures/nats.mjs";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
-import { publishEvents } from "./publish.mjs";
+import { drain } from "./drain.mjs";
 
 test("publishes queued and newly inserted outbox events", async () => {
   // Arrange
@@ -21,11 +21,11 @@ test("publishes queued and newly inserted outbox events", async () => {
   const controller = new AbortController();
   const queuedEvent = {
     id: randomUUID(),
-    type: "accounts.test.queued",
+    type: "plans.test.queued",
   };
   const notifiedEvent = {
     id: randomUUID(),
-    type: "accounts.test.notified",
+    type: "plans.test.notified",
   };
 
   const js = jetstream(nats.nc);
@@ -34,14 +34,14 @@ test("publishes queued and newly inserted outbox events", async () => {
   await jsm.streams.add({
     discard: DiscardPolicy.New,
     max_bytes: 419_430_400,
-    name: "ACCOUNTS",
+    name: "PLANS",
     num_replicas: 1,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
-    subjects: ["accounts.>"],
+    subjects: ["plans.>"],
   });
 
-  const subscription = nats.nc.subscribe("accounts.test.*", {
+  const subscription = nats.nc.subscribe("plans.test.*", {
     max: 2,
     timeout: 5000,
   });
@@ -56,7 +56,7 @@ test("publishes queued and newly inserted outbox events", async () => {
 
   // Act
   const messages = subscription[Symbol.asyncIterator]();
-  const task = publishEvents({
+  const task = drain({
     js,
     pool,
     signal: controller.signal,
@@ -110,7 +110,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   const js = jetstream(nats.nc);
   const event = {
     id: randomUUID(),
-    type: "accounts.test",
+    type: "plans.test",
   };
 
   await pool.query(
@@ -122,7 +122,7 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
   );
 
   // Act
-  const publish = publishEvents({
+  const publish = drain({
     js,
     pool,
     signal: controller.signal,

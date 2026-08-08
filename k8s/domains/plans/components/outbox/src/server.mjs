@@ -8,8 +8,8 @@ import { connect } from "@nats-io/transport-node";
 import process from "node:process";
 import { Pool } from "pg";
 
+import { drain } from "./drain.mjs";
 import { createProbeServer } from "./platform/probes.mjs";
-import { publishEvents } from "./publish.mjs";
 
 const controller = new AbortController();
 
@@ -46,10 +46,12 @@ await using probeServer = createProbeServer({ nc, pool });
 
 probeServer.listen(3000, "0.0.0.0");
 
-await publishEvents({
-  js,
-  pool,
-  signal: controller.signal,
-});
-
-await pool.end();
+try {
+  await drain({
+    js,
+    pool,
+    signal: controller.signal,
+  });
+} finally {
+  await pool.end();
+}

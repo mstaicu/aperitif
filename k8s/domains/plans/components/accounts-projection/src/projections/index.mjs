@@ -7,3 +7,5 @@ import { projectAccountCreatedV1 } from "./account-created-v1.mjs";
 export const projections = {
   [AccountCreatedV1Type]: projectAccountCreatedV1,
 };
+
+export const subjects = Object.keys(projections);
