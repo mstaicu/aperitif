@@ -20,13 +20,13 @@ test("accounts create accounts owned by the current user", async () => {
   const created = await accounts.createAccount({
     currentUserId,
     name: "Acme",
-    type: "business",
+    type: "organization",
   });
   const listed = await accounts.listAccounts({ currentUserId });
 
   // Assert
   assert.equal(created.account.name, "Acme");
-  assert.equal(created.account.type, "business");
+  assert.equal(created.account.type, "organization");
   assert.equal(typeof created.account.id, "string");
   assert.deepEqual(listed, {
     accounts: [created.account],
@@ -48,7 +48,7 @@ test("accounts list only accounts for the current user", async () => {
   const zulu = await accounts.createAccount({
     currentUserId,
     name: "Zulu",
-    type: "business",
+    type: "organization",
   });
   await accounts.createAccount({
     currentUserId: randomUUID(),
@@ -76,7 +76,7 @@ test("accounts write account created events to the outbox", async () => {
   const created = await accounts.createAccount({
     currentUserId,
     name: "Acme",
-    type: "business",
+    type: "organization",
   });
 
   // Assert
@@ -99,6 +99,6 @@ test("accounts write account created events to the outbox", async () => {
   assert.deepEqual(outbox.event.data.account, {
     id: created.account.id,
     name: "Acme",
-    type: "business",
+    type: "organization",
   });
 });

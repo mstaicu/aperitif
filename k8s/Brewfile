@@ -1,6 +1,6 @@
-brew "age" # SOPS age key generation and encryption
+# brew "age" # SOPS age key generation and encryption
 brew "ksops" # Kustomize plugin for decrypting SOPS secrets
-brew "sops" # Encrypt Kubernetes Secret manifests
+# brew "sops" # Encrypt Kubernetes Secret manifests
 
 brew "mkcert" # Local trusted TLS certificates for Traefik dev
 

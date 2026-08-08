@@ -4,7 +4,7 @@ CREATE TABLE accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     type TEXT NOT NULL CHECK (
-        type IN ('personal', 'business')
+        type IN ('personal', 'organization')
     ),
 
     name TEXT NOT NULL CHECK (

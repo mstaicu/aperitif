@@ -17,7 +17,7 @@ test("projects account state without allowing stale events to overwrite it", asy
         account: {
           id: accountId,
           name: "Acme",
-          type: "business",
+          type: "organization",
         },
       },
       2,

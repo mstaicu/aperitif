@@ -4,7 +4,7 @@
  *   accounts: {
  *     id: string,
  *     name: string,
- *     type: "personal" | "business",
+ *     type: "personal" | "organization",
  *   }[],
  * }>}
  */
