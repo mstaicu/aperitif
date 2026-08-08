@@ -24,6 +24,7 @@ const pool = new Pool({
 pool.on("error", (err) => console.error(err));
 
 await using nc = await connect({
+  maxReconnectAttempts: -1, // An established worker waits through any broker outage.
   name: "accounts-outbox",
   servers: [/** @type {string} */ (process.env.NATS_URL)],
   timeout: 2_000,
