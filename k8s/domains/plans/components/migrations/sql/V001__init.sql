@@ -64,14 +64,24 @@ CREATE TABLE account_feature_overrides (
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
 
-    event JSONB NOT NULL,
+    event JSONB NOT NULL CHECK (
+        jsonb_typeof(event) = 'object'
+        AND COALESCE(event->>'id', '') = id::text
+        AND COALESCE(event->>'type', '') <> ''
+    ),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    traceparent TEXT,
 
-    published_at TIMESTAMPTZ
+    tracestate TEXT,
+
+    queued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CHECK (
+        tracestate IS NULL OR traceparent IS NOT NULL
+    )
 );
 
--- Notification only; outbox_events remains durable.
+-- Notification only; the row remains durable until JetStream acknowledges it.
 CREATE FUNCTION notify_outbox_event()
 RETURNS TRIGGER AS $$
 BEGIN

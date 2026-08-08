@@ -94,12 +94,11 @@ test("publishes queued and newly inserted outbox events", async () => {
       SELECT count(*)::integer AS count
       FROM outbox_events
       WHERE id = ANY($1::uuid[])
-        AND published_at IS NOT NULL
     `,
     [[queuedEvent.id, notifiedEvent.id]],
   );
 
-  assert.equal(count, 2);
+  assert.equal(count, 0);
 });
 
 test("keeps outbox events unpublished when NATS publish fails", async () => {
@@ -136,12 +135,12 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
     rows: [outbox],
   } = await pool.query(
     `
-      SELECT published_at
+      SELECT id
       FROM outbox_events
       WHERE id = $1
     `,
     [event.id],
   );
 
-  assert.equal(outbox.published_at, null);
+  assert.equal(outbox.id, event.id);
 });

@@ -1,4 +1,5 @@
 import { buildAccountFeaturesUpdatedV1Event } from "@mstaicu/plans-contracts";
+import { context, propagation } from "@opentelemetry/api";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
@@ -121,16 +122,26 @@ export const deleteOverride =
           },
           Number(version),
         );
+        const traceContext = /** @type {Record<string, string>} */ ({});
+
+        propagation.inject(context.active(), traceContext);
 
         await client.query(
           `
             INSERT INTO outbox_events (
               id,
-              event
+              event,
+              traceparent,
+              tracestate
             )
-            VALUES ($1, $2::jsonb)
+            VALUES ($1, $2::jsonb, $3, $4)
           `,
-          [event.id, JSON.stringify(event)],
+          [
+            event.id,
+            JSON.stringify(event),
+            traceContext.traceparent,
+            traceContext.tracestate,
+          ],
         );
       }
 

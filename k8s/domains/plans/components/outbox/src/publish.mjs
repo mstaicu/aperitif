@@ -1,4 +1,14 @@
+import { headers } from "@nats-io/transport-node";
+import {
+  context,
+  propagation,
+  SpanKind,
+  SpanStatusCode,
+  trace,
+} from "@opentelemetry/api";
 import { on } from "node:events";
+
+const tracer = trace.getTracer("outbox");
 
 /**
  * LISTEN only wakes the outbox process; outbox_events is the source of truth.
@@ -77,10 +87,11 @@ async function publishNextEvent({ client, js }) {
     } = await client.query(
       `
         SELECT id,
-          event
+          event,
+          traceparent,
+          tracestate
         FROM outbox_events
-        WHERE published_at IS NULL
-        ORDER BY created_at, id
+        ORDER BY queued_at, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
@@ -91,14 +102,53 @@ async function publishNextEvent({ client, js }) {
       return false;
     }
 
-    const { event, id } = outboxEvent;
+    const { event, id, traceparent, tracestate } = outboxEvent;
+    const parentContext = propagation.extract(context.active(), {
+      traceparent,
+      tracestate,
+    });
 
-    await js.publish(event.type, JSON.stringify(event), { msgID: id });
+    await tracer.startActiveSpan(
+      `${event.type} publish`,
+      {
+        attributes: {
+          "messaging.destination.name": event.type,
+          "messaging.message.id": id,
+          "messaging.operation.type": "publish",
+          "messaging.system": "nats",
+        },
+        kind: SpanKind.PRODUCER,
+      },
+      parentContext,
+      async (span) => {
+        try {
+          const messageHeaders = headers();
+
+          propagation.inject(context.active(), messageHeaders, {
+            set: (carrier, key, value) => carrier.set(key, value),
+          });
+
+          await js.publish(event.type, JSON.stringify(event), {
+            headers: messageHeaders,
+            msgID: id,
+          });
+        } catch (err) {
+          span.setStatus({ code: SpanStatusCode.ERROR });
+
+          if (Error.isError(err)) {
+            span.recordException(err);
+          }
+
+          throw err;
+        } finally {
+          span.end();
+        }
+      },
+    );
 
     await client.query(
       `
-        UPDATE outbox_events
-        SET published_at = now()
+        DELETE FROM outbox_events
         WHERE id = $1
       `,
       [id],

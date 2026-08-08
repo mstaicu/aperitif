@@ -17,3 +17,13 @@ spec:
               value: "419430400" # 400 MiB; product-owned stream capacity.
             - name: NATS_STREAM_REPLICAS
               value: "3"
+            - name: OTEL_SERVICE_NAME
+              value: plans-outbox
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.otel.svc.cluster.local:4318
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: none

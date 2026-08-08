@@ -28,7 +28,7 @@ const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
           instrumentHooks: false,
           registerOnInitialization: true,
         }),
-        new PgInstrumentation(),
+        new PgInstrumentation({ requireParentSpan: true }),
         new PinoInstrumentation({
           disableLogSending: true,
         }),

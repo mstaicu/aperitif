@@ -1,4 +1,5 @@
 import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
+import { context, propagation } from "@opentelemetry/api";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
@@ -56,16 +57,26 @@ export const createAccount =
         },
         Number(account.version),
       );
+      const traceContext = /** @type {Record<string, string>} */ ({});
+
+      propagation.inject(context.active(), traceContext);
 
       await client.query(
         `
           INSERT INTO outbox_events (
             id,
-            event
+            event,
+            traceparent,
+            tracestate
           )
-          VALUES ($1, $2::jsonb)
+          VALUES ($1, $2::jsonb, $3, $4)
         `,
-        [accountCreatedEvent.id, JSON.stringify(accountCreatedEvent)],
+        [
+          accountCreatedEvent.id,
+          JSON.stringify(accountCreatedEvent),
+          traceContext.traceparent,
+          traceContext.tracestate,
+        ],
       );
 
       await client.query("COMMIT");

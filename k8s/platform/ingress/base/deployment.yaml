@@ -19,16 +19,6 @@ spec:
         - name: traefik
           image: docker.io/library/traefik:v3.7.10@sha256:9c3b91d5fb7770853ca5c1124a23c34bf2d9b47ffaebeab2614cbaf410dcb2ac
 
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-
           ports:
             - containerPort: 80
               name: http
