@@ -1,151 +1,86 @@
-# Aperitif Platform
+# Aperitif
 
-This repository runs a small domain platform on Kubernetes. Local development
-uses Skaffold. Production desired state is reconciled by Flux.
-
-## Repository map
+A small Kubernetes platform for independently developed domains.
 
 ```text
-.github/workflows/   checks and image releases
-clusters/prod-eu/    Flux entry point for production
-platform/            shared Kubernetes infrastructure
-domains/             independently developed business domains
+domains/             business domains and their deployable components
+platform/            ingress, event bus, and observability
+clusters/prod-eu/    production Flux inventory
+.github/workflows/   checks and image publication
 ```
 
-The shared platform currently contains:
+## Domains
 
-- `ingress`: Traefik, its CRDs, and TLS routing;
-- `event-bus`: a three-node NATS JetStream cluster.
+| Domain     | Owns                                                 |
+| ---------- | ---------------------------------------------------- |
+| `auth`     | Users, passkeys, sessions, operator status, and JWKS |
+| `accounts` | Accounts and membership                              |
+| `plans`    | Plans and resolved account features                  |
 
-The domains are:
+Each domain owns its database. Domains exchange versioned events through an
+outbox and NATS JetStream; they never read each other's databases.
 
-| Domain | Responsibility | Production |
-| --- | --- | --- |
-| `auth` | Users, passkeys, sessions, operators, and JWKS | Yes |
-| `accounts` | Account boundaries and membership | Yes |
-| `plans` | Account plans and their resolved product features | Yes |
+Each deployable component keeps its implementation, Dockerfile, and Kubernetes
+manifests under `domains/<domain>/components/<component>`.
 
-Each domain owns its database. A domain never reads another domain's database.
+## Work locally
 
-## Component shape
-
-A deployable component keeps its code, Dockerfile, and Kubernetes manifests
-together:
-
-```text
-domains/<domain>/components/<component>/
-  Dockerfile
-  src/
-  infra/
-    base/
-    overlays/ephemeral/
-    overlays/prod-eu/
-```
-
-An absent `prod-eu` overlay means the component is local-only. Shared domain
-infrastructure, such as PostgreSQL or scheduled cleanup, remains under
-`domains/<domain>/infra`.
-
-## Local development
-
-Install the repository tools:
+Install tools:
 
 ```sh
 brew bundle
 ```
 
-Start the shared units needed by the domains you are working on:
+Deploy the shared units you need:
 
 ```sh
 make -C platform/ingress deploy
 make -C platform/event-bus deploy
+make -C platform/observability deploy  # optional
 ```
 
-Then run domains in separate terminals:
+Every domain exposes the same commands:
 
 ```sh
-make -C domains/auth dev
-make -C domains/accounts dev
-make -C domains/plans dev
+make -C domains/<domain> help
+make -C domains/<domain> check
+make -C domains/<domain> migrate
+make -C domains/<domain> deploy
+make -C domains/<domain> dev
 ```
 
-A domain command controls only that domain. There is deliberately no root
-Makefile or repository-wide development loop.
+There is no root Makefile or repository-wide development loop.
 
-Every domain exposes the same interface:
+## Deliver changes
 
-| Target | Purpose |
-| --- | --- |
-| `help` | List its commands |
-| `check` | Install dependencies, lint, typecheck, test, build, and render manifests |
-| `migrate` | Deploy the disposable local database and run Flyway |
-| `deploy` | Apply the domain once |
-| `dev` | Migrate, then start that domain's Skaffold loop |
-
-Local routes use `tma.com` and `api.tma.com`.
-
-## Events
-
-Cross-domain state moves through versioned CloudEvents:
+When this directory becomes the repository root:
 
 ```text
-domain transaction
-  -> domain state + outbox row
-  -> outbox
-  -> NATS JetStream
-  -> durable consumer
-  -> projection transaction
+pull request
+  -> check changed domains and platform units
+
+merge to master
+  -> build changed component images
+  -> scan the immutable image digest
+  -> move :latest to that digest
+  -> Flux commits the digest into the production overlay
+  -> Flux reconciles the cluster
 ```
 
-`LISTEN/NOTIFY` only wakes the outbox component. The database outbox is the
-durable source. Projection components acknowledge an event only after
-committing the projection, and they use `data.version` to reject stale state.
+Infrastructure changes are reconciled directly from Git. Database changes use
+expand/contract, and migration Jobs complete before dependent workloads.
 
-Current events:
+See [clusters/prod-eu/README.md](clusters/prod-eu/README.md) for production
+bootstrap and operation.
 
-| Event | Producer | Consumers |
-| --- | --- | --- |
-| `accounts.account.created.v1` | Accounts | Plans |
-| `plans.account.features.updated.v1` | Plans | — |
+## Secrets and telemetry
 
-Contracts are published npm packages under each producing domain's
-`packages/contracts` directory.
+Secrets remain SOPS-encrypted in their environment overlays. Ephemeral and
+production use different Age keys. KSOPS decrypts locally; Flux decrypts
+production with `Secret/flux-system/sops-age`.
 
-## Delivery
+Applications and Traefik send OpenTelemetry to the cluster Collector. The node
+agent collects container logs and Kubernetes metrics. Environment overlays
+choose the backend; both currently use OpenObserve.
 
-Pull requests detect changed domains, platform units, and the production
-cluster inventory. One required job runs `make check` for each changed area.
-
-After a merge to `master`, the release workflow detects changed components.
-Components with a production overlay are built and pushed to GHCR with the Git
-SHA and `latest` tags. Release workflows are queued, so concurrent merges
-cannot move `latest` backwards. Infrastructure-only changes are not image
-builds.
-
-Flux watches `clusters/prod-eu` and reconciles exactly what is committed to Git.
-Publishing an image does not deploy it. Production overlays use `latest` only
-as a placeholder until Flux image automation is enabled. Future image
-automation will track the changing digest behind `latest` and commit that exact
-digest to the component's production overlay.
-
-Schema changes use expand/contract releases: expand first, release compatible
-code second, and contract only after old code is gone.
-
-See [the production cluster guide](clusters/prod-eu/README.md) for bootstrap and
-reconciliation, and [TODO.md](TODO.md) for intentionally deferred production
-work.
-
-## Secrets
-
-Secret manifests live in environment overlays and stay SOPS-encrypted in Git.
-The repository's `.sops.yaml` encrypts only `data` and `stringData`; Secret
-names and metadata remain readable.
-
-Set `SOPS_AGE_KEY_FILE` to the private age key, then create or edit a Secret
-with `sops edit <path>`. After changing a recipient in `.sops.yaml`, run
-`sops updatekeys <path>` for each affected Secret. Never commit the private
-key.
-
-Local overlays decrypt through KSOPS. Flux decrypts production Secrets with
-`Secret/flux-system/sops-age`. Local Traefik certificates are generated by the
-ingress Makefile and are never committed.
+See [TODO.md](TODO.md) for unfinished production work.

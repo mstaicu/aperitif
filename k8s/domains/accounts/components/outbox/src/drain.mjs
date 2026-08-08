@@ -28,6 +28,8 @@ export async function drain({ js, pool, signal }) {
       return;
     }
 
+    console.error(err);
+
     throw err;
   } finally {
     client.release();

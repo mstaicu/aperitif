@@ -22,6 +22,8 @@ const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
 
 otel?.start();
 
-await import("./server.mjs");
-
-await otel?.shutdown();
+try {
+  await import("./server.mjs");
+} finally {
+  await otel?.shutdown();
+}
