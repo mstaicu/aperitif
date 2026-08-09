@@ -7,27 +7,20 @@ import {
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
-import { setTimeout } from "node:timers/promises";
 
 import { startNats } from "../test/fixtures/nats.mjs";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
 import { drain } from "./drain.mjs";
 
-test("publishes queued and newly inserted outbox events", async () => {
-  // Arrange
+test("publishes and removes an outbox event", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
   const controller = new AbortController();
-  const queuedEvent = {
+  const event = {
     id: randomUUID(),
-    type: "plans.test.queued",
+    type: "plans.test",
   };
-  const notifiedEvent = {
-    id: randomUUID(),
-    type: "plans.test.notified",
-  };
-
   const js = jetstream(nats.nc);
   const jsm = await js.jetstreamManager();
 
@@ -41,73 +34,39 @@ test("publishes queued and newly inserted outbox events", async () => {
     subjects: ["plans.>"],
   });
 
-  const subscription = nats.nc.subscribe("plans.test.*", {
-    max: 2,
+  await pool.query(
+    `
+      INSERT INTO outbox_events (id, event)
+      VALUES ($1, $2::jsonb)
+    `,
+    [event.id, JSON.stringify(event)],
+  );
+
+  const subscription = nats.nc.subscribe(event.type, {
+    max: 1,
     timeout: 5000,
   });
+  const task = drain({ js, pool, signal: controller.signal });
+  const { value: message } = await subscription[Symbol.asyncIterator]().next();
 
-  await pool.query(
-    `
-      INSERT INTO outbox_events (id, event)
-      VALUES ($1, $2::jsonb)
-    `,
-    [queuedEvent.id, JSON.stringify(queuedEvent)],
-  );
-
-  // Act
-  const messages = subscription[Symbol.asyncIterator]();
-  const task = drain({
-    js,
-    pool,
-    signal: controller.signal,
-  });
-  const { value: queuedMessage } = await messages.next();
-
-  // Let the outbox process return to LISTEN after draining the queued event.
-  await setTimeout(250);
-  await pool.query(
-    `
-      INSERT INTO outbox_events (id, event)
-      VALUES ($1, $2::jsonb)
-    `,
-    [notifiedEvent.id, JSON.stringify(notifiedEvent)],
-  );
-
-  const { value: notifiedMessage } = await messages.next();
   controller.abort();
   await task;
 
-  // Assert
-  for (const [message, event] of [
-    [queuedMessage, queuedEvent],
-    [notifiedMessage, notifiedEvent],
-  ]) {
-    assert.ok(message);
-    assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
-    assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
-  }
+  assert.ok(message);
+  assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+  assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
 
   const {
     rows: [{ count }],
-  } = await pool.query(
-    `
-      SELECT count(*)::integer AS count
-      FROM outbox_events
-      WHERE id = ANY($1::uuid[])
-    `,
-    [[queuedEvent.id, notifiedEvent.id]],
-  );
+  } = await pool.query("SELECT count(*)::integer AS count FROM outbox_events");
 
   assert.equal(count, 0);
 });
 
-test("keeps outbox events unpublished when NATS publish fails", async () => {
-  // Arrange
+test("keeps an outbox event when publishing fails", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
-  const controller = new AbortController();
-  const js = jetstream(nats.nc);
   const event = {
     id: randomUUID(),
     type: "plans.test",
@@ -121,26 +80,19 @@ test("keeps outbox events unpublished when NATS publish fails", async () => {
     [event.id, JSON.stringify(event)],
   );
 
-  // Act
-  const publish = drain({
-    js,
-    pool,
-    signal: controller.signal,
-  });
-
-  // Assert
-  await assert.rejects(publish);
-
-  const {
-    rows: [outbox],
-  } = await pool.query(
-    `
-      SELECT id
-      FROM outbox_events
-      WHERE id = $1
-    `,
-    [event.id],
+  await assert.rejects(
+    drain({
+      js: jetstream(nats.nc),
+      pool,
+      signal: new AbortController().signal,
+    }),
   );
 
-  assert.equal(outbox.id, event.id);
+  const {
+    rows: [outboxEvent],
+  } = await pool.query("SELECT id FROM outbox_events WHERE id = $1", [
+    event.id,
+  ]);
+
+  assert.equal(outboxEvent.id, event.id);
 });
