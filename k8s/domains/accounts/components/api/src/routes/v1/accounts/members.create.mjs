@@ -15,7 +15,7 @@ export function registerCreateMemberRoute(fastify, { accounts, jwks }) {
     {
       schema: {
         body: CreateMemberBody,
-        description: "Add an existing user to an account.",
+        description: "Add a user identifier to an account.",
         operationId: "createAccountMember",
         params: AccountParams,
         response: {

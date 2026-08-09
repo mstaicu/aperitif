@@ -8,7 +8,9 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && Path(`/.well-known/jwks.json`)
+      match: >-
+        Host(`api.tma.com`) &&
+        Path(`/.well-known/jwks.json`)
       services:
         - name: api
           port: 3000

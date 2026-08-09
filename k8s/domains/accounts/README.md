@@ -30,8 +30,9 @@ under `/v1/accounts/:account_id/members`. OpenAPI is available at
 
 Accounts publishes account creation and membership creation, update, and
 deletion events. State and its outbox events are committed in one database
-transaction. `data.version` is the account state version used by projections to
-reject stale events.
+transaction. `data.version` is a monotonic account revision. Consumers compare
+it independently for each projected account or membership resource to reject
+stale snapshots.
 
 ## Work here
 

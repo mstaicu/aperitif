@@ -23,7 +23,6 @@
 
 ## Product work
 
-- Complete account membership lifecycle commands and events.
 - Add authenticated passkey enrollment, recovery, and abuse controls.
 - Add outbox-age and consumer-lag measurements when event delivery becomes an
   operational concern.

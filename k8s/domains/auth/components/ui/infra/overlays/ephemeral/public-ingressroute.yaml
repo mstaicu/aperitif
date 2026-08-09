@@ -8,7 +8,11 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`tma.com`) && (PathPrefix(`/login`) || PathPrefix(`/signup`) || PathPrefix(`/auth/assets`))
+      match: >-
+        Host(`tma.com`) &&
+        (PathPrefix(`/login`) ||
+        PathPrefix(`/signup`) ||
+        PathPrefix(`/auth/assets`))
       services:
         - name: ui
           port: 3000

@@ -91,7 +91,7 @@ export const CreateMemberBody = Type.Object(
   },
   {
     additionalProperties: false,
-    description: "Existing user to add to the account.",
+    description: "User identifier and account-level role to add.",
   },
 );
 

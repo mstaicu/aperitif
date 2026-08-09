@@ -9,7 +9,10 @@ spec:
 
   routes:
     - kind: Rule
-      match: Host(`traefik.tma.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      match: >-
+        Host(`traefik.tma.com`) &&
+        (PathPrefix(`/api`) ||
+        PathPrefix(`/dashboard`))
       observability:
         accessLogs: false
         metrics: false

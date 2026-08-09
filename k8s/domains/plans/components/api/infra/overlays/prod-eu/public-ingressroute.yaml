@@ -8,7 +8,11 @@ spec:
     - https
   routes:
     - kind: Rule
-      match: Host(`api.tma.com`) && (PathPrefix(`/v1/plans/docs`) || PathRegexp(`^/v1/accounts/[^/]+/plan$`) || PathRegexp(`^/v1/accounts/[^/]+/overrides/[^/]+$`))
+      match: >-
+        Host(`api.tma.com`) &&
+        (PathPrefix(`/v1/plans/docs`) ||
+        PathRegexp(`^/v1/accounts/[^/]+/plan$`) ||
+        PathRegexp(`^/v1/accounts/[^/]+/overrides/[^/]+$`))
       services:
         - name: api
           port: 3000
