@@ -3,14 +3,16 @@
 `@mstaicu/accounts-contracts` is the published event boundary owned by
 Accounts.
 
-It currently exports the schema, validator, constants, and builder for:
+It exports schemas, validators, constants, and builders for:
 
 ```text
 accounts.account.created.v1
+accounts.member.created.v1
+accounts.member.updated.v1
+accounts.member.deleted.v1
 ```
 
-The source schema is
-`src/events/accounts.account.created.v1.mjs`; its example payload is under
+Source schemas are under `src/events`; example payloads are under
 `examples/events`.
 
 Events use CloudEvents `1.0`. The event `type` versions the payload contract,

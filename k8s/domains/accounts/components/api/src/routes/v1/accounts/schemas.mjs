@@ -16,6 +16,29 @@ const AccountType = Type.Union(
       "Kind of account boundary being created. Personal accounts represent an individual context. Organization accounts represent a shared organizational context.",
   },
 );
+const MemberRole = Type.Union([Type.Literal("owner"), Type.Literal("member")], {
+  description:
+    "Account-level authority. Product-specific roles belong to product domains.",
+});
+const UserId = Type.String({
+  description: "Stable identifier for an authenticated user.",
+  format: "uuid",
+});
+
+export const AccountParams = Type.Object(
+  {
+    account_id: AccountId,
+  },
+  { additionalProperties: false },
+);
+
+export const AccountMemberParams = Type.Object(
+  {
+    account_id: AccountId,
+    user_id: UserId,
+  },
+  { additionalProperties: false },
+);
 
 export const CreateAccountBody = Type.Object(
   {
@@ -58,5 +81,57 @@ export const CreateAccountResponse = Type.Object(
   {
     additionalProperties: false,
     description: "Created account.",
+  },
+);
+
+export const CreateMemberBody = Type.Object(
+  {
+    role: MemberRole,
+    user_id: UserId,
+  },
+  {
+    additionalProperties: false,
+    description: "Existing user to add to the account.",
+  },
+);
+
+export const UpdateMemberBody = Type.Object(
+  {
+    role: MemberRole,
+  },
+  {
+    additionalProperties: false,
+    description: "New account-level role for an existing member.",
+  },
+);
+
+export const Member = Type.Object(
+  {
+    role: MemberRole,
+    user_id: UserId,
+  },
+  {
+    additionalProperties: false,
+    description: "A user's membership in an account.",
+  },
+);
+
+export const MemberResponse = Type.Object(
+  {
+    member: Member,
+  },
+  {
+    additionalProperties: false,
+    description: "Account membership.",
+  },
+);
+
+export const MembersResponse = Type.Object(
+  {
+    members: Type.Array(Member),
+  },
+  {
+    additionalProperties: false,
+    description: "Members of an account.",
   },
 );

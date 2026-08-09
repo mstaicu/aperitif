@@ -50,6 +50,26 @@ const INTERNAL_SERVER_ERROR = {
 
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
+  ACCOUNT_LAST_OWNER: {
+    status: 409,
+    title: "Account must retain an owner",
+    type: "/problems/account-last-owner",
+  },
+  ACCOUNT_MEMBER_EXISTS: {
+    status: 409,
+    title: "Account member already exists",
+    type: "/problems/account-member-exists",
+  },
+  ACCOUNT_MEMBER_NOT_FOUND: {
+    status: 404,
+    title: "Account member not found",
+    type: "/problems/account-member-not-found",
+  },
+  ACCOUNT_OWNER_REQUIRED: {
+    status: 403,
+    title: "Account owner authority required",
+    type: "/problems/account-owner-required",
+  },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",

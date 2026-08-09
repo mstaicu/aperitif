@@ -1,0 +1,16 @@
+{
+  "datacontenttype": "application/json",
+  "data": {
+    "account_id": "22222222-2222-4222-8222-222222222222",
+    "member": {
+      "role": "owner",
+      "user_id": "33333333-3333-4333-8333-333333333333"
+    },
+    "version": 2
+  },
+  "id": "11111111-1111-4111-8111-111111111111",
+  "source": "/domains/accounts",
+  "specversion": "1.0",
+  "time": "2026-08-09T00:00:00.000Z",
+  "type": "accounts.member.created.v1"
+}

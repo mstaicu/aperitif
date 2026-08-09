@@ -55,7 +55,6 @@ async function drainNextEvent({ client, js }) {
           traceparent,
           tracestate
         FROM outbox_events
-        ORDER BY queued_at, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `,
