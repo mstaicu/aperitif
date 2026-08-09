@@ -11,8 +11,8 @@ number, or string value. An account has one current plan and can override
 individual feature values. Products consume the resolved feature values and
 never branch on a plan name.
 
-An account without an assigned plan has no plan-derived features. No default
-plan is implied.
+Every projected account starts on the seeded `free` plan. Plans publishes its
+initial feature snapshot at version `1`.
 
 Plans does not own accounts, payments, compliance decisions, or product data.
 
@@ -26,7 +26,7 @@ ACCOUNTS stream -> accounts projection -> PostgreSQL
 
 | Part | Purpose |
 | --- | --- |
-| `components/accounts-projection` | Remember known accounts |
+| `components/accounts-projection` | Remember known accounts and assign their initial plan |
 | `components/api` | Assign plans and resolve features |
 | `components/outbox` | Publish account feature snapshots |
 | `components/migrations` | Flyway SQL and its Job |
@@ -70,6 +70,20 @@ make -C domains/plans deploy
 make -C domains/plans dev
 ```
 
-Add schema changes as `components/migrations/sql/V###__description.sql`. If a
-migration changes a plan used by existing accounts, write fresh feature
-snapshots for those accounts in that migration.
+Add schema and configuration changes as
+`components/migrations/sql/V###__description.sql`.
+
+If a migration changes an account's effective features, it must also increment
+that account's plan version and insert a complete feature snapshot into the
+outbox. The matrix update, versions, and outbox rows belong in one transaction.
+
+| Change | Publish snapshots? |
+| --- | --- |
+| Add or rename a plan | No |
+| Add or rename a feature definition | No |
+| Change a plan with no assigned accounts | No |
+| Add, change, or remove a feature from a plan with assigned accounts | Yes |
+| Assign an account to a plan through the API | Handled by the API |
+
+The rule is simple: publish a new snapshot whenever an existing account's
+effective feature map changes.
