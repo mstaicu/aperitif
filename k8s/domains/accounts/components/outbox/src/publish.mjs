@@ -25,12 +25,13 @@ export async function publish({ event, id, js, traceparent, tracestate }) {
   });
 
   await tracer.startActiveSpan(
-    `${event.type} publish`,
+    `publish ${event.type}`,
     {
       attributes: {
         "messaging.destination.name": event.type,
         "messaging.message.id": id,
-        "messaging.operation.type": "publish",
+        "messaging.operation.name": "publish",
+        "messaging.operation.type": "send",
         "messaging.system": "nats",
       },
       kind: SpanKind.PRODUCER,

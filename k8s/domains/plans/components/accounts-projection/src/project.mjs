@@ -23,11 +23,12 @@ export async function project({ message, pool }) {
   });
 
   await tracer.startActiveSpan(
-    `${message.subject} process`,
+    `process ${message.subject}`,
     {
       attributes: {
         "messaging.consumer.group.name": "plans-accounts-projection",
         "messaging.destination.name": message.subject,
+        "messaging.operation.name": "process",
         "messaging.operation.type": "process",
         "messaging.system": "nats",
       },
