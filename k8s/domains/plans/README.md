@@ -7,9 +7,8 @@ features -> plans -> account plan -> feature snapshot
 ```
 
 A feature has a stable ID. A plan assigns each included feature a boolean,
-number, or string value. An account has one current plan and can override
-individual feature values. Products consume the resolved feature values and
-never branch on a plan name.
+number, or string value. An account has one current plan. Products consume the
+resolved feature values and never branch on a plan name.
 
 Every projected account starts on the seeded `free` plan. Plans publishes its
 initial feature snapshot at version `1`.
@@ -34,12 +33,10 @@ ACCOUNTS stream -> accounts projection -> PostgreSQL
 | `infra/postgres` | Disposable in-cluster database |
 
 Plans and their feature values are product configuration added through
-migrations. The operator API exposes:
+migrations. The operator API exposes one command:
 
 ```text
 PUT /v1/accounts/:account_id/plan
-PUT /v1/accounts/:account_id/overrides/:feature_id
-DELETE /v1/accounts/:account_id/overrides/:feature_id
 ```
 
 ```json
@@ -47,16 +44,6 @@ DELETE /v1/accounts/:account_id/overrides/:feature_id
   "plan_id": "pro"
 }
 ```
-
-```json
-{
-  "value": 200
-}
-```
-
-An override replaces the plan value for that feature and can also add a
-feature absent from the plan. Deleting it restores the plan value or removes
-the feature. An account must have a plan before it can have overrides.
 
 The domain consumes `accounts.account.created.v1` and publishes
 `plans.account.features.updated.v1`.

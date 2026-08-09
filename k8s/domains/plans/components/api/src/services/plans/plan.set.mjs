@@ -13,7 +13,7 @@ import { context, propagation } from "@opentelemetry/api";
  *   },
  * }>}
  */
-export const set =
+export const setPlan =
   ({ pool }) =>
   async ({ accountId, planId }) => {
     let client;
@@ -23,18 +23,18 @@ export const set =
       await client.query("BEGIN");
 
       const {
-        rows: [account],
+        rows: [currentPlan],
       } = await client.query(
         `
-          SELECT 1
-          FROM projected_accounts
+          SELECT plan_id
+          FROM account_plans
           WHERE account_id = $1
           FOR UPDATE
         `,
         [accountId],
       );
 
-      if (!account) {
+      if (!currentPlan) {
         throw new Error("ACCOUNT_NOT_FOUND");
       }
 
@@ -62,47 +62,20 @@ export const set =
         [planId],
       );
 
-      const { rows: overrides } = await client.query(
-        `
-          SELECT feature_id, value
-          FROM account_feature_overrides
-          WHERE account_id = $1
-        `,
-        [accountId],
-      );
-
       const features = Object.fromEntries(
-        [...planFeatures, ...overrides].map((row) => [
-          row.feature_id,
-          row.value,
-        ]),
+        planFeatures.map((row) => [row.feature_id, row.value]),
       );
 
-      const {
-        rows: [currentPlan],
-      } = await client.query(
-        `
-          SELECT plan_id, version
-          FROM account_plans
-          WHERE account_id = $1
-        `,
-        [accountId],
-      );
-
-      if (currentPlan?.plan_id !== planId) {
+      if (currentPlan.plan_id !== planId) {
         const {
-          rows: [accountPlan],
+          rows: [{ version }],
         } = await client.query(
           `
-            INSERT INTO account_plans (
-              account_id,
-              plan_id
-            )
-            VALUES ($1, $2)
-            ON CONFLICT (account_id) DO UPDATE
-            SET plan_id = EXCLUDED.plan_id,
-              version = account_plans.version + 1
-            RETURNING plan_id, version
+            UPDATE account_plans
+            SET plan_id = $2,
+              version = version + 1
+            WHERE account_id = $1
+            RETURNING version
           `,
           [accountId, planId],
         );
@@ -114,7 +87,7 @@ export const set =
             },
             features,
           },
-          Number(accountPlan.version),
+          Number(version),
         );
         const traceContext = /** @type {Record<string, string>} */ ({});
 

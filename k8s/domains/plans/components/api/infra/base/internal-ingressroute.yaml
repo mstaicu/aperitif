@@ -11,8 +11,7 @@ spec:
     - kind: Rule
       match: >-
         PathPrefix(`/v1/plans/docs`) ||
-        PathRegexp(`^/v1/accounts/[^/]+/plan$`) ||
-        PathRegexp(`^/v1/accounts/[^/]+/overrides/[^/]+$`)
+        PathRegexp(`^/v1/accounts/[^/]+/plan$`)
       services:
         - name: api
           port: 3000

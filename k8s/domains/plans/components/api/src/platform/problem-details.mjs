@@ -55,20 +55,10 @@ const PROBLEMS = {
     title: "Account not found",
     type: "/problems/account-not-found",
   },
-  ACCOUNT_PLAN_NOT_FOUND: {
-    status: 409,
-    title: "Account has no plan",
-    type: "/problems/account-plan-not-found",
-  },
   DATABASE_UNAVAILABLE: {
     status: 503,
     title: "Database unavailable",
     type: "/problems/database-unavailable",
-  },
-  FEATURE_NOT_FOUND: {
-    status: 404,
-    title: "Feature not found",
-    type: "/problems/feature-not-found",
   },
   FORBIDDEN: {
     status: 403,

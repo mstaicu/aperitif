@@ -93,31 +93,17 @@ export const createAccount =
             traceparent,
             tracestate
           )
-          VALUES ($1, $2::jsonb, $3, $4)
+          VALUES
+            ($1, $2::jsonb, $3, $4),
+            ($5, $6::jsonb, $3, $4)
         `,
         [
           accountCreatedEvent.id,
           JSON.stringify(accountCreatedEvent),
           traceContext.traceparent,
           traceContext.tracestate,
-        ],
-      );
-
-      await client.query(
-        `
-          INSERT INTO outbox_events (
-            id,
-            event,
-            traceparent,
-            tracestate
-          )
-          VALUES ($1, $2::jsonb, $3, $4)
-        `,
-        [
           memberCreatedEvent.id,
           JSON.stringify(memberCreatedEvent),
-          traceContext.traceparent,
-          traceContext.tracestate,
         ],
       );
 

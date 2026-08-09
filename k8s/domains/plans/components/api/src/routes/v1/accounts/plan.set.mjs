@@ -39,7 +39,7 @@ export function registerSetPlanRoute(fastify, { jwks, plans }) {
       });
 
       return reply.send(
-        await plans.set({
+        await plans.setPlan({
           accountId: req.params.account_id,
           planId: req.body.plan_id,
         }),

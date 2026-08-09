@@ -23,7 +23,6 @@ spec:
           containers:
             - name: cleanup
               image: docker.io/postgres:18
-              env:
               command:
                 - sh
                 - -c

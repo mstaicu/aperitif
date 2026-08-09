@@ -40,14 +40,12 @@ test("assigns the free plan and publishes its features once", async () => {
     rows: [state],
   } = await pool.query(
     `
-      SELECT pa.version::integer AS account_version,
-        ap.plan_id,
-        ap.version::integer AS plan_version,
+      SELECT plan_id,
+        version::integer,
         (SELECT count(*)::integer FROM outbox_events) AS event_count,
         (SELECT event FROM outbox_events LIMIT 1) AS snapshot
-      FROM projected_accounts pa
-      JOIN account_plans ap USING (account_id)
-      WHERE pa.account_id = $1
+      FROM account_plans
+      WHERE account_id = $1
     `,
     [accountId],
   );
@@ -59,15 +57,14 @@ test("assigns the free plan and publishes its features once", async () => {
       snapshot: state.snapshot.data,
     },
     {
-      account_version: 1,
       event_count: 1,
       plan_id: "free",
-      plan_version: 1,
       snapshot: {
         account: { id: accountId },
         features: { "test.limit": 10 },
         version: 1,
       },
+      version: 1,
     },
   );
 });

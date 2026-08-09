@@ -4,13 +4,13 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { getPlansService } from "./index.mjs";
+import { createPlansService } from "./index.mjs";
 
-test("resolves plans and overrides into versioned feature snapshots", async () => {
+test("sets a plan and publishes one versioned feature snapshot", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
-  const plans = getPlansService({ pool });
+  const plans = createPlansService({ pool });
 
   await pool.query(
     `
@@ -29,84 +29,46 @@ test("resolves plans and overrides into versioned feature snapshots", async () =
 
   await pool.query(
     `
-      INSERT INTO projected_accounts (account_id, version)
-      VALUES ($1, 1)
-    `,
-    [accountId],
-  );
-
-  await pool.query(
-    `
       INSERT INTO account_plans (account_id, plan_id)
       VALUES ($1, 'free')
     `,
     [accountId],
   );
 
-  assert.deepEqual(await plans.set({ accountId, planId: "pro" }), {
+  assert.deepEqual(await plans.setPlan({ accountId, planId: "pro" }), {
     plan: {
       features: { "test.limit": 100 },
       id: "pro",
     },
   });
-  await plans.set({ accountId, planId: "pro" });
+  await plans.setPlan({ accountId, planId: "pro" });
 
-  assert.deepEqual(
-    await plans.setOverride({
-      accountId,
-      featureId: "test.limit",
-      value: 250,
-    }),
-    { features: { "test.limit": 250 } },
-  );
-  await plans.setOverride({
-    accountId,
-    featureId: "test.limit",
-    value: 250,
-  });
-
-  assert.deepEqual(
-    await plans.deleteOverride({
-      accountId,
-      featureId: "test.limit",
-    }),
-    { features: { "test.limit": 100 } },
-  );
-  await plans.deleteOverride({
-    accountId,
-    featureId: "test.limit",
-  });
-
-  const { rows } = await pool.query(
+  const {
+    rows: [state],
+  } = await pool.query(
     `
-      SELECT event
-      FROM outbox_events
-      ORDER BY (event #>> '{data,version}')::bigint
+      SELECT plan_id,
+        version::integer,
+        (SELECT count(*)::integer FROM outbox_events) AS event_count,
+        (SELECT event FROM outbox_events LIMIT 1) AS snapshot
+      FROM account_plans
+      WHERE account_id = $1
     `,
+    [accountId],
   );
 
-  assert.equal(
-    rows.every(({ event }) => AccountFeaturesUpdatedV1EventCheck.Check(event)),
-    true,
-  );
+  assert.equal(AccountFeaturesUpdatedV1EventCheck.Check(state.snapshot), true);
   assert.deepEqual(
-    rows.map(({ event }) => event.data),
-    [
-      {
+    { ...state, snapshot: state.snapshot.data },
+    {
+      event_count: 1,
+      plan_id: "pro",
+      snapshot: {
         account: { id: accountId },
         features: { "test.limit": 100 },
         version: 2,
       },
-      {
-        account: { id: accountId },
-        features: { "test.limit": 250 },
-        version: 3,
-      },
-      {
-        account: { id: accountId },
-        features: { "test.limit": 100 },
-        version: 4,
-      },
-    ],
+      version: 2,
+    },
   );
 });

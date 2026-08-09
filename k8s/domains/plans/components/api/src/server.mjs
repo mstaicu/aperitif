@@ -8,7 +8,7 @@ import { Pool } from "pg";
 import problemDetails from "./platform/problem-details.mjs";
 import probes from "./routes/probes.mjs";
 import { registerV1Routes } from "./routes/v1/index.mjs";
-import { getPlansService } from "./services/plans/index.mjs";
+import { createPlansService } from "./services/plans/index.mjs";
 
 /**
  * @typedef {Fastify.FastifyInstance<
@@ -29,7 +29,7 @@ pool.on("error", (err) => console.error(err));
 const jwks = createRemoteJWKSet(
   new URL(/** @type {string} */ (process.env.AUTH_JWKS_URL)),
 );
-const plans = getPlansService({ pool });
+const plans = createPlansService({ pool });
 
 /** @type {FastifyInstance} */
 await using app = Fastify({
