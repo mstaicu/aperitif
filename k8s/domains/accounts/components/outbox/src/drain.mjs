@@ -6,8 +6,8 @@ import { publish } from "./publish.mjs";
  * LISTEN only wakes the outbox process; outbox_events is the source of truth.
  *
  * @param {{
- *   pool: import("pg").Pool,
  *   js: import("@nats-io/jetstream").JetStreamClient,
+ *   pool: import("pg").Pool,
  *   signal: AbortSignal,
  * }} args
  */
@@ -66,11 +66,8 @@ async function drainNextEvent({ client, js }) {
     }
 
     await publish({
-      event: outboxEvent.event,
-      id: outboxEvent.id,
       js,
-      traceparent: outboxEvent.traceparent,
-      tracestate: outboxEvent.tracestate,
+      outboxEvent,
     });
 
     await client.query(

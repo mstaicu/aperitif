@@ -11,14 +11,19 @@ const tracer = trace.getTracer("outbox");
 
 /**
  * @param {{
- *   event: { type: string },
- *   id: string,
  *   js: import("@nats-io/jetstream").JetStreamClient,
- *   traceparent?: string,
- *   tracestate?: string,
+ *   outboxEvent: {
+ *     event: { type: string },
+ *     id: string,
+ *     traceparent: string | null,
+ *     tracestate: string | null,
+ *   },
  * }} args
  */
-export async function publish({ event, id, js, traceparent, tracestate }) {
+export async function publish({
+  js,
+  outboxEvent: { event, id, traceparent, tracestate },
+}) {
   const parentContext = propagation.extract(context.active(), {
     traceparent,
     tracestate,

@@ -66,11 +66,8 @@ async function drainNextEvent({ client, js }) {
     }
 
     await publish({
-      event: outboxEvent.event,
-      id: outboxEvent.id,
       js,
-      traceparent: outboxEvent.traceparent,
-      tracestate: outboxEvent.tracestate,
+      outboxEvent,
     });
 
     await client.query(
