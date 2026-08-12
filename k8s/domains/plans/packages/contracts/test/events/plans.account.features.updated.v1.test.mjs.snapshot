@@ -1,0 +1,87 @@
+exports[`plans.account.features.updated.v1 remains compatible 1`] = `
+{
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "datacontenttype",
+    "data",
+    "id",
+    "source",
+    "specversion",
+    "time",
+    "type"
+  ],
+  "properties": {
+    "datacontenttype": {
+      "const": "application/json",
+      "type": "string"
+    },
+    "data": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "account",
+        "features",
+        "version"
+      ],
+      "properties": {
+        "account": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+              "type": "string"
+            }
+          }
+        },
+        "features": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "id": {
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "type": "string"
+    },
+    "source": {
+      "const": "/domains/plans",
+      "type": "string"
+    },
+    "specversion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "time": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "type": {
+      "const": "plans.account.features.updated.v1",
+      "type": "string"
+    }
+  }
+}
+`;

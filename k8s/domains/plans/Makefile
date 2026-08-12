@@ -11,6 +11,7 @@ check: ## Validate Plans components, packages, and manifests.
 	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
 	cd components/api && npm test
 	cd packages/contracts && npm ci
+	cd packages/contracts && npm test
 	cd packages/contracts && npm run build
 	cd components/outbox && npm ci
 	cd components/outbox && npm exec -- eslint .

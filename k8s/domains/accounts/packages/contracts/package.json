@@ -6,7 +6,8 @@
   "types": "types/index.d.mts",
   "scripts": {
     "build": "rm -rf types && tsc -p tsconfig.json",
-    "prepack": "npm run build"
+    "prepack": "npm test && npm run build",
+    "test": "node --test"
   },
   "files": [
     "src",

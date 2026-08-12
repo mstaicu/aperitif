@@ -12,6 +12,7 @@ check: ## Validate Accounts components, packages, and manifests.
 	cd components/api && npm test
 
 	cd packages/contracts && npm ci
+	cd packages/contracts && npm test
 	cd packages/contracts && npm run build
 
 	cd components/outbox && npm ci
