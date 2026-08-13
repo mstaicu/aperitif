@@ -34,13 +34,14 @@ const js = jetstream(nc);
 const jsm = await js.jetstreamManager();
 
 await jsm.streams.add({
-  discard: DiscardPolicy.New,
-  max_bytes: Number(process.env.NATS_STREAM_MAX_BYTES),
-  name: "PLANS",
-  num_replicas: Number(process.env.NATS_STREAM_REPLICAS),
-  retention: RetentionPolicy.Limits,
-  storage: StorageType.File,
-  subjects: ["plans.>"],
+  discard: DiscardPolicy.New, // Reject overflow; preserve retained history.
+  max_age: Number(process.env.NATS_STREAM_MAX_AGE_NANOS), // 7-day replay window.
+  max_bytes: Number(process.env.NATS_STREAM_MAX_BYTES), // Half the 800 MiB budget.
+  name: "PLANS", // Stable Plans stream identity.
+  num_replicas: Number(process.env.NATS_STREAM_REPLICAS), // One copy per NATS pod.
+  retention: RetentionPolicy.Limits, // Expire by age; cap by bytes.
+  storage: StorageType.File, // Persist each copy on its pod PVC.
+  subjects: ["plans.>"], // Capture Plans-owned events only.
 });
 
 await using probeServer = createProbeServer({ nc, pool });

@@ -6,3 +6,5 @@
 - Validate a domain with `make -C domains/<domain> check`; its tests require a
   working Docker-compatible runtime.
 - Passing outbox failure tests intentionally print `JetStreamNotEnabled`.
+- Follow the event processing contract in `README.md` when adding or changing
+  events, publishers, or projections.

@@ -22,16 +22,14 @@ await using nc = await connect({
 const js = jetstream(nc);
 const jsm = await js.jetstreamManager();
 const info = await jsm.consumers.add("ACCOUNTS", {
-  ack_policy: AckPolicy.Explicit,
-  // A durable name preserves this consumer and its acknowledgement state
-  // across worker restarts; without it, the consumer is ephemeral.
-  durable_name: "plans-accounts-projection",
-  // Omitting deliver_subject makes this a pull consumer; setting it would
-  // make NATS push messages to that subject.
-  filter_subjects: subjects,
+  ack_policy: AckPolicy.Explicit, // Advance only after projection succeeds.
+  durable_name: "plans-accounts-projection", // Share one saved cursor across replicas.
+  filter_subjects: subjects, // Pull registered event types; no push subject.
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
-const messages = await consumer.consume({ max_messages: 1 });
+const messages = await consumer.consume({
+  max_messages: 1, // Process one message at a time per replica.
+});
 
 await using probeServer = createProbeServer({ nc, pool });
 

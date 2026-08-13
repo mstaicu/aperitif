@@ -23,6 +23,23 @@ outbox and NATS JetStream; they never read each other's databases.
 Each deployable component keeps its implementation, Dockerfile, and Kubernetes
 manifests under `domains/<domain>/components/<component>`.
 
+### Event processing
+
+Every event-driven component follows the same contract:
+
+- Commit the business mutation and outbox event in one database transaction.
+- Treat every published event version as immutable and snapshot-test its
+  contract.
+- Include a unique event ID, source, timestamp, and monotonic resource version.
+- Carry the complete current resource state or an explicit deletion.
+- Publish with the event ID as the JetStream message ID.
+- Wait for PubAck before removing the outbox row.
+- Validate events before projecting them.
+- Apply only newer resource versions in one database transaction.
+- Acknowledge the message only after that transaction commits.
+- Preserve deletions as versioned tombstones so older events cannot restore
+  them.
+
 ## Work locally
 
 Install tools:
