@@ -16,4 +16,3 @@ spec:
       services:
         - name: ui
           port: 3000
-  tls: {}

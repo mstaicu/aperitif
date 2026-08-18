@@ -6,8 +6,6 @@ namespace: accounts
 resources:
   - namespace.yaml
   - ../../base
-  - public-ingressroute.yaml
-  - public-docs-ingressroute.yaml
 
 patches:
   - path: deployment.yaml

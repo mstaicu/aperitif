@@ -3,6 +3,8 @@ kind: Kustomization
 
 resources:
   - internal-ingressroute.yaml
+  - public-docs-ingressroute.yaml
+  - public-ingressroute.yaml
   - networkpolicy.yaml
   - deployment.yaml
   - service.yaml

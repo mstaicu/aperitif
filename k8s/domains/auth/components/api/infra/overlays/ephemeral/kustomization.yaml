@@ -6,9 +6,6 @@ namespace: auth
 resources:
   - namespace.yaml
   - ../../base
-  - public-ingressroute.yaml
-  - public-docs-ingressroute.yaml
-  - public-jwks-ingressroute.yaml
 
 generators:
   - ksops-generator.yaml

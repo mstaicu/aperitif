@@ -16,4 +16,3 @@ spec:
       services:
         - name: openobserve
           port: 5080
-  tls: {}

@@ -6,7 +6,6 @@ namespace: plans
 resources:
   - namespace.yaml
   - ../../base
-  - public-ingressroute.yaml
 
 patches:
   - path: deployment.yaml

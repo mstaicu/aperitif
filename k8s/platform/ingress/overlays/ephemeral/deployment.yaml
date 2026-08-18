@@ -12,6 +12,7 @@ spec:
           args:
             - --entrypoints.http.address=:80 # Local plain HTTP for internal routes and probes.
             - --entrypoints.https.address=:443 # Local TLS listener for public routes.
+            - --entrypoints.https.http.tls=true # Terminate every local public route with the default development certificate.
 
             - --entrypoints.http.forwardedHeaders.insecure=true # Local only; trust dev proxy headers.
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow request reads at the shared edge.

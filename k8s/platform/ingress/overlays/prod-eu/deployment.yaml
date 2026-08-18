@@ -12,6 +12,8 @@ spec:
           args:
             - --entrypoints.http.address=:80 # Internal cluster listener for SSR and service calls.
             - --entrypoints.https.address=:443 # Public listener behind Cloudflare.
+            - --entrypoints.https.http.tls=true # Terminate TLS for every public route.
+            - --entrypoints.https.http.tls.certResolver=le # Obtain certificates from each route's Host rule.
 
             - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow internal request reads.
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle internal keep-alives.
