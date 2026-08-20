@@ -11,7 +11,6 @@ spec:
     - kind: Rule
       match: >-
         Path(`/v1/accounts`) ||
-        PathPrefix(`/v1/accounts/docs`) ||
         PathRegexp(`^/v1/accounts/[^/]+/members(/[^/]+)?$`)
       services:
         - name: api

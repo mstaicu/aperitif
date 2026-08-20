@@ -35,16 +35,12 @@ if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
   otel.start();
 }
 
-async function shutdownOtel() {
-  if (otel) {
-    await otel.shutdown();
-  }
-}
-
 ["SIGINT", "SIGTERM"].forEach((signal) =>
   process.once(signal, () => {
-    void shutdownOtel().catch(() => {
-      process.exitCode = 1;
-    });
+    if (otel) {
+      otel.shutdown().catch(() => {
+        process.exitCode = 1;
+      });
+    }
   }),
 );

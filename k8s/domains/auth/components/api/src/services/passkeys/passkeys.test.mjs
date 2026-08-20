@@ -12,8 +12,8 @@ test("passkeys require the configured origin and user verification", async () =>
     pool,
   });
   const [registration, login] = await Promise.all([
-    passkeys.createRegisterChallenge(),
-    passkeys.createLoginChallenge(),
+    passkeys.createRegistrationOptions(),
+    passkeys.createAuthenticationOptions(),
   ]);
   const {
     rows: [challenges],

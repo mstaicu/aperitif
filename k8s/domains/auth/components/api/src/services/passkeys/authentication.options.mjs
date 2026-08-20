@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  */
-export const createLoginChallenge =
+export const createAuthenticationOptions =
   ({ origin, pool }) =>
   async () => {
     const challenge = randomBytes(32);

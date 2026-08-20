@@ -9,10 +9,13 @@ export const AccessTokenResponse = Type.Object(
     expires_in: Type.Literal(300, {
       description: "Access-token lifetime in seconds.",
     }),
+    token_type: Type.Literal("Bearer", {
+      description: "Authorization scheme used with the access token.",
+    }),
   },
   {
     additionalProperties: false,
     description:
-      "Access token returned after validating the current session refresh token. Supply it to APIs as Authorization: Bearer <access_token>.",
+      "Access token created for the authenticated session. Supply it to APIs as Authorization: Bearer <access_token>.",
   },
 );

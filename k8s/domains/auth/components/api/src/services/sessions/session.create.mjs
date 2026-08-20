@@ -4,8 +4,8 @@ import { createHash, randomBytes } from "node:crypto";
  * @param {{ client: import("pg").PoolClient, userId: string }} resources
  */
 export async function createSession({ client, userId }) {
-  const refreshToken = randomBytes(32).toString("base64url");
-  const tokenHash = createHash("sha256").update(refreshToken).digest();
+  const sessionToken = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(sessionToken).digest();
 
   const {
     rows: [session],
@@ -24,6 +24,6 @@ export async function createSession({ client, userId }) {
 
   return {
     expiresIn: session.expires_in,
-    refreshToken,
+    sessionToken,
   };
 }

@@ -2,16 +2,16 @@ import { createHash } from "node:crypto";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @returns {(args: { refresh_token: string }) => Promise<void>}
+ * @returns {(args: { session_token: string }) => Promise<void>}
  */
 export const revokeSession =
   ({ pool }) =>
-  async ({ refresh_token }) => {
-    if (!refresh_token || typeof refresh_token !== "string") {
-      throw new Error("INVALID_REFRESH_TOKEN");
+  async ({ session_token }) => {
+    if (!session_token || typeof session_token !== "string") {
+      throw new Error("INVALID_SESSION_TOKEN");
     }
 
-    const tokenHash = createHash("sha256").update(refresh_token).digest();
+    const tokenHash = createHash("sha256").update(session_token).digest();
 
     const {
       rows: [session],

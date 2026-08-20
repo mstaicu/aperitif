@@ -5,13 +5,14 @@ import { createSession } from "../sessions/session.create.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {(input: {
- *   authentication: import("@simplewebauthn/server").AuthenticationResponseJSON,
- * }) => Promise<{ expires_in: number, refresh_token: string }>}
+ * @returns {(authentication: import("@simplewebauthn/server").AuthenticationResponseJSON) => Promise<{
+ *   expires_in: number,
+ *   session_token: string,
+ * }>}
  */
-export const login =
+export const authenticate =
   ({ origin, pool }) =>
-  async ({ authentication }) => {
+  async (authentication) => {
     let challenge;
 
     try {
@@ -125,7 +126,7 @@ export const login =
 
       return {
         expires_in: session.expiresIn,
-        refresh_token: session.refreshToken,
+        session_token: session.sessionToken,
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});

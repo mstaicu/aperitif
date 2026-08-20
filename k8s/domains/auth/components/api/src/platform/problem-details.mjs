@@ -75,15 +75,15 @@ const PROBLEMS = {
     title: "Invalid authorization header",
     type: "/problems/invalid-authorization-header",
   },
-  INVALID_REFRESH_TOKEN: {
-    status: 401,
-    title: "Invalid refresh token",
-    type: "/problems/invalid-refresh-token",
-  },
   INVALID_REGISTRATION_RESPONSE: {
     status: 400,
     title: "Invalid registration response",
     type: "/problems/invalid-registration-response",
+  },
+  INVALID_SESSION_TOKEN: {
+    status: 401,
+    title: "Invalid session token",
+    type: "/problems/invalid-session-token",
   },
   REGISTRATION_VERIFICATION_FAILED: {
     status: 401,
@@ -92,8 +92,8 @@ const PROBLEMS = {
   },
   SESSION_NOT_FOUND: {
     status: 401,
-    title: "Invalid refresh token",
-    type: "/problems/invalid-refresh-token",
+    title: "Invalid session token",
+    type: "/problems/invalid-session-token",
   },
   USER_ALREADY_REGISTERED: {
     status: 409,

@@ -1,15 +1,15 @@
-import { createLoginChallenge } from "./login.challenge.mjs";
-import { login } from "./login.mjs";
-import { createRegisterChallenge } from "./register.challenge.mjs";
-import { register } from "./register.mjs";
+import { authenticate } from "./authentication.mjs";
+import { createAuthenticationOptions } from "./authentication.options.mjs";
+import { register } from "./registration.mjs";
+import { createRegistrationOptions } from "./registration.options.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  */
 export const createPasskeysService = ({ origin, pool }) => ({
-  createLoginChallenge: createLoginChallenge({ origin, pool }),
-  createRegisterChallenge: createRegisterChallenge({ origin, pool }),
-  login: login({ origin, pool }),
+  authenticate: authenticate({ origin, pool }),
+  createAuthenticationOptions: createAuthenticationOptions({ origin, pool }),
+  createRegistrationOptions: createRegistrationOptions({ origin, pool }),
   register: register({ origin, pool }),
 });
 

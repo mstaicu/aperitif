@@ -1,5 +1,5 @@
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { AuthenticationChallengeResponse } from "./passkey.schemas.mjs";
+import { AuthenticationOptionsResponse } from "./passkey.schemas.mjs";
 
 /**
  * @param {import("../../../server.mjs").FastifyInstance} fastify
@@ -7,20 +7,20 @@ import { AuthenticationChallengeResponse } from "./passkey.schemas.mjs";
  *   passkeys: import("../../../services/passkeys/index.mjs").PasskeysService,
  * }} opts
  */
-export function registerLoginChallengeRoute(fastify, { passkeys }) {
+export function registerAuthenticationOptionsRoute(fastify, { passkeys }) {
   fastify.post(
-    "/v1/passkeys/login/challenge",
+    "/v1/passkeys/authentication/options",
     {
       schema: {
         description:
-          "Generates and persists a one-time WebAuthn authentication challenge for passkey login.",
-        operationId: "createPasskeyLoginChallenge",
+          "Creates the WebAuthn options required to authenticate with a passkey.",
+        operationId: "createPasskeyAuthenticationOptions",
         response: {
-          200: AuthenticationChallengeResponse,
+          200: AuthenticationOptionsResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        summary: "Create passkey login challenge",
+        summary: "Create passkey authentication options",
         tags: ["passkeys"],
       },
     },
@@ -28,9 +28,7 @@ export function registerLoginChallengeRoute(fastify, { passkeys }) {
       reply.header("Cache-Control", "no-store");
       reply.header("Pragma", "no-cache");
 
-      return reply.send({
-        publicKey: await passkeys.createLoginChallenge(),
-      });
+      return reply.send(await passkeys.createAuthenticationOptions());
     },
   );
 }

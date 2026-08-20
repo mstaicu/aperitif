@@ -11,8 +11,7 @@ spec:
     - kind: Rule
       match: >-
         PathPrefix(`/v1/passkeys`) ||
-        PathPrefix(`/v1/sessions`) ||
-        PathPrefix(`/v1/auth/docs`)
+        PathPrefix(`/v1/session`)
       services:
         - name: api
           port: 3000

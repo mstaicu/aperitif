@@ -1,2 +1,3 @@
-dist
-public/auth/assets/*
+node_modules/
+tmp/
+.DS_Store

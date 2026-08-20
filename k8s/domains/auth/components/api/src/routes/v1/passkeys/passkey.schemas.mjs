@@ -1,49 +1,31 @@
 import { Type } from "@fastify/type-provider-typebox";
 
 import {
-  AuthenticationChallengeResponse,
+  AuthenticationOptionsResponse,
   AuthenticationResponseJSON,
-  RegistrationChallengeResponse,
+  RegistrationOptionsResponse,
   RegistrationResponseJSON,
 } from "./webauthn.schemas.mjs";
 
-export { AuthenticationChallengeResponse, RegistrationChallengeResponse };
+export { AuthenticationOptionsResponse, RegistrationOptionsResponse };
 
-export const PasskeyRegistrationBody = Type.Object(
-  {
-    credential: RegistrationResponseJSON,
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Passkey registration payload received from the browser after the WebAuthn registration ceremony.",
-  },
-);
+export const RegistrationBody = RegistrationResponseJSON;
 
-export const LoginBody = Type.Object(
-  {
-    authentication: AuthenticationResponseJSON,
-  },
-  {
-    additionalProperties: false,
-    description:
-      "Passkey authentication payload received from the browser after the WebAuthn login ceremony.",
-  },
-);
+export const AuthenticationBody = AuthenticationResponseJSON;
 
-export const RefreshTokenResponse = Type.Object(
+export const SessionResponse = Type.Object(
   {
     expires_in: Type.Integer({
-      description: "Refresh-token lifetime in seconds.",
+      description: "Session lifetime in seconds.",
       minimum: 1,
     }),
-    refresh_token: Type.String({
-      description: "Opaque credential for the newly created session.",
+    session_token: Type.String({
+      description: "Opaque bearer credential for the newly created session.",
       minLength: 1,
     }),
   },
   {
     additionalProperties: false,
-    description: "Refresh token and lifetime for the newly created session.",
+    description: "Credential and lifetime for the newly created session.",
   },
 );

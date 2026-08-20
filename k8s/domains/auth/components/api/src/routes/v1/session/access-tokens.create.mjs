@@ -9,19 +9,19 @@ import { AccessTokenResponse } from "./schemas.mjs";
  */
 export function registerAccessTokenRoute(fastify, { sessions }) {
   fastify.post(
-    "/v1/sessions/access-token",
+    "/v1/session/access-tokens",
     {
       schema: {
         description:
-          "Create a short-lived access token from the session refresh token supplied in the Authorization bearer header.",
-        operationId: "createSessionAccessToken",
+          "Creates a short-lived access token for the session represented by the bearer credential.",
+        operationId: "createAccessToken",
         response: {
           200: AccessTokenResponse,
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ refreshTokenAuth: [] }],
+        security: [{ sessionTokenAuth: [] }],
         summary: "Create access token",
         tags: ["sessions"],
       },
@@ -36,7 +36,7 @@ export function registerAccessTokenRoute(fastify, { sessions }) {
       reply.header("Cache-Control", "no-store");
 
       return reply.send(
-        await sessions.createAccessToken({ refresh_token: token }),
+        await sessions.createAccessToken({ session_token: token }),
       );
     },
   );

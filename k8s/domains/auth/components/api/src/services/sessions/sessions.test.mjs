@@ -28,9 +28,9 @@ test("sessions issue access tokens and revoke independently", async () => {
     const phone = await createSession({ client, userId });
 
     const [laptopAccess] = await Promise.all([
-      sessions.createAccessToken({ refresh_token: laptop.refreshToken }),
-      sessions.createAccessToken({ refresh_token: laptop.refreshToken }),
-      sessions.createAccessToken({ refresh_token: phone.refreshToken }),
+      sessions.createAccessToken({ session_token: laptop.sessionToken }),
+      sessions.createAccessToken({ session_token: laptop.sessionToken }),
+      sessions.createAccessToken({ session_token: phone.sessionToken }),
     ]);
     const { payload } = await jwtVerify(
       laptopAccess.access_token,
@@ -41,11 +41,12 @@ test("sessions issue access tokens and revoke independently", async () => {
     assert.equal(payload.operator, true);
     assert.equal(laptop.expiresIn, 2_592_000);
     assert.equal(laptopAccess.expires_in, 300);
+    assert.equal(laptopAccess.token_type, "Bearer");
 
-    await sessions.revokeSession({ refresh_token: phone.refreshToken });
-    await sessions.createAccessToken({ refresh_token: laptop.refreshToken });
+    await sessions.revokeSession({ session_token: phone.sessionToken });
+    await sessions.createAccessToken({ session_token: laptop.sessionToken });
     await assert.rejects(
-      sessions.createAccessToken({ refresh_token: phone.refreshToken }),
+      sessions.createAccessToken({ session_token: phone.sessionToken }),
       /SESSION_NOT_FOUND/,
     );
   } finally {

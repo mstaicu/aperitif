@@ -8,12 +8,12 @@ import { ProblemResponse } from "../../../platform/problem-details.mjs";
  */
 export function registerRevokeSessionRoute(fastify, { sessions }) {
   fastify.delete(
-    "/v1/sessions",
+    "/v1/session",
     {
       schema: {
         description:
-          "Revoke the session represented by the refresh token supplied in the Authorization bearer header.",
-        operationId: "revokeSession",
+          "Revokes the session represented by the bearer credential.",
+        operationId: "deleteSession",
         response: {
           204: {
             description: "Session revoked.",
@@ -23,8 +23,8 @@ export function registerRevokeSessionRoute(fastify, { sessions }) {
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ refreshTokenAuth: [] }],
-        summary: "Revoke session",
+        security: [{ sessionTokenAuth: [] }],
+        summary: "Delete session",
         tags: ["sessions"],
       },
     },
@@ -35,7 +35,7 @@ export function registerRevokeSessionRoute(fastify, { sessions }) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
-      await sessions.revokeSession({ refresh_token: token });
+      await sessions.revokeSession({ session_token: token });
 
       return reply.code(204).send(null);
     },

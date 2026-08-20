@@ -69,13 +69,14 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {(input: {
- *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
- * }) => Promise<{ expires_in: number, refresh_token: string }>}
+ * @returns {(credential: import("@simplewebauthn/server").RegistrationResponseJSON) => Promise<{
+ *   expires_in: number,
+ *   session_token: string,
+ * }>}
  */
 export const register =
   ({ origin, pool }) =>
-  async ({ credential }) => {
+  async (credential) => {
     let client;
 
     try {
@@ -132,7 +133,7 @@ export const register =
 
       return {
         expires_in: session.expiresIn,
-        refresh_token: session.refreshToken,
+        session_token: session.sessionToken,
       };
     } catch (err) {
       await client?.query("ROLLBACK").catch(() => {});

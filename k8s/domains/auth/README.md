@@ -12,28 +12,32 @@ PostgreSQL -> migrations -> API -> UI
                           -> scheduled cleanup
 ```
 
-| Part | Purpose |
-| --- | --- |
-| `components/api` | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
-| `components/ui` | Passkey signup and login |
-| `components/migrations` | Flyway SQL and its Job |
-| `infra/postgres` | Disposable in-cluster database |
-| `components/cleanup` | Removes expired challenges and old sessions |
+| Part                    | Purpose                                                          |
+| ----------------------- | ---------------------------------------------------------------- |
+| `components/api`        | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
+| `components/ui`         | Passkey signup and login                                         |
+| `components/migrations` | Flyway SQL and its Job                                           |
+| `infra/postgres`        | Disposable in-cluster database                                   |
+| `components/cleanup`    | Removes expired challenges and old sessions                      |
 
 Auth currently publishes no domain events, so it has no outbox component.
 
 ## Public surface
 
-- `/.well-known/jwks.json`
-- `/v1/passkeys/*`
-- `/v1/sessions/*`
+- `POST /v1/passkeys/registration/options`
+- `POST /v1/passkeys/registration`
+- `POST /v1/passkeys/authentication/options`
+- `POST /v1/passkeys/authentication`
+- `POST /v1/session/access-tokens`
+- `DELETE /v1/session`
+- `GET /.well-known/jwks.json`
 - `/v1/auth/docs`
 - `/signup` and `/login`
 
 Every successful passkey registration or login creates an independent 30-day
-session with its own refresh token. Exchanging that token validates the session
-and returns a five-minute access token; it does not replace the refresh token or
-extend the session. Revoking a refresh token revokes only that session. Other
+session with its own session token. The session can mint five-minute access
+tokens without replacing its session token or extending its lifetime. Deleting
+the session revokes only that session. Other
 domains verify access tokens through JWKS and make authorization decisions from
 their own state.
 
@@ -42,7 +46,7 @@ their own state.
 A new Auth database has no platform operators. Bootstrap exactly one after
 that user registers:
 
-1. Exchange the user's refresh token for an access token and read its `sub`
+1. Exchange the user's session token for an access token and read its `sub`
    claim.
 2. Using a controlled administrative connection to the Auth database, run:
 
@@ -50,7 +54,7 @@ that user registers:
    INSERT INTO operators (user_id) VALUES ('<sub>');
    ```
 
-3. Exchange the same refresh token again. The new access token now contains
+3. Exchange the same session token again. The new access token now contains
    `operator: true`.
 
 There is no operator-management HTTP API. Manage the small operator set through

@@ -18,7 +18,7 @@ spec:
             - name: API_INTERNAL_V1_URL
               value: http://traefik-internal.traefik.svc.cluster.local/v1
             - name: NODE_OPTIONS
-              value: "--experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./dist/otel.js"
+              value: "--experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./src/otel.ts"
             - name: OTEL_SERVICE_NAME
               value: auth-ui
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

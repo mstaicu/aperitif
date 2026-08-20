@@ -1,8 +1,5 @@
 import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import {
-  PasskeyRegistrationBody,
-  RefreshTokenResponse,
-} from "./passkey.schemas.mjs";
+import { RegistrationBody, SessionResponse } from "./passkey.schemas.mjs";
 
 /**
  * @param {import("../../../server.mjs").FastifyInstance} fastify
@@ -12,22 +9,22 @@ import {
  */
 export function registerRegistrationRoute(fastify, { passkeys }) {
   fastify.post(
-    "/v1/passkeys/register",
+    "/v1/passkeys/registration",
     {
       schema: {
-        body: PasskeyRegistrationBody,
+        body: RegistrationBody,
         description:
-          "Verifies the WebAuthn registration response, stores the first passkey, and issues the first refresh token.",
-        operationId: "registerPasskey",
+          "Verifies a WebAuthn registration response, creates the user and passkey, and creates the first session.",
+        operationId: "registerWithPasskey",
         response: {
-          201: RefreshTokenResponse,
+          201: SessionResponse,
           400: ProblemResponse,
           401: ProblemResponse,
           409: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        summary: "Finalize passkey registration",
+        summary: "Register with a passkey",
         tags: ["passkeys"],
       },
     },

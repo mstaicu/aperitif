@@ -11,8 +11,7 @@ check: ## Validate Auth components, packages, and manifests.
 	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
 	cd components/api && npm test
 	cd components/ui && npm ci
-	cd components/ui && npm run typecheck
-	cd components/ui && npm run build
+	cd components/ui && npm run check
 	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize components/cleanup/infra/overlays/prod-eu >/dev/null

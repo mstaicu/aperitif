@@ -94,11 +94,7 @@ build:
 
       sync:
         manual:
-          - src: app/**/*
-            dest: /home/node/app
-          - src: public/**/*
-            dest: /home/node/app
-          - src: server.ts
+          - src: src/**/*
             dest: /home/node/app
 
 manifests:

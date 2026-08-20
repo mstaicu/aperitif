@@ -6,19 +6,20 @@ import { createHash } from "node:crypto";
  *   pool: import("pg").Pool,
  *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
  * }} resources
- * @returns {(args: { refresh_token: string }) => Promise<{
+ * @returns {(args: { session_token: string }) => Promise<{
  *   access_token: string,
  *   expires_in: 300,
+ *   token_type: "Bearer",
  * }>}
  */
 export const createAccessToken =
   ({ pool, signingKey }) =>
-  async ({ refresh_token }) => {
-    if (!refresh_token || typeof refresh_token !== "string") {
-      throw new Error("INVALID_REFRESH_TOKEN");
+  async ({ session_token }) => {
+    if (!session_token || typeof session_token !== "string") {
+      throw new Error("INVALID_SESSION_TOKEN");
     }
 
-    const tokenHash = createHash("sha256").update(refresh_token).digest();
+    const tokenHash = createHash("sha256").update(session_token).digest();
 
     const {
       rows: [session],
@@ -61,5 +62,6 @@ export const createAccessToken =
     return {
       access_token,
       expires_in: 300,
+      token_type: /** @type {const} */ ("Bearer"),
     };
   };

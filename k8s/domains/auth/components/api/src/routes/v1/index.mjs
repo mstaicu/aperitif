@@ -1,12 +1,12 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import { registerLoginChallengeRoute } from "./passkeys/login.challenge.mjs";
-import { registerLoginRoute } from "./passkeys/login.mjs";
-import { registerRegistrationChallengeRoute } from "./passkeys/register.challenge.mjs";
-import { registerRegistrationRoute } from "./passkeys/register.mjs";
-import { registerAccessTokenRoute } from "./sessions/access-token.create.mjs";
-import { registerRevokeSessionRoute } from "./sessions/session.revoke.mjs";
+import { registerAuthenticationRoute } from "./passkeys/authentication.mjs";
+import { registerAuthenticationOptionsRoute } from "./passkeys/authentication.options.mjs";
+import { registerRegistrationRoute } from "./passkeys/registration.mjs";
+import { registerRegistrationOptionsRoute } from "./passkeys/registration.options.mjs";
+import { registerAccessTokenRoute } from "./session/access-tokens.create.mjs";
+import { registerRevokeSessionRoute } from "./session/session.delete.mjs";
 
 /**
  * @param {import("../../server.mjs").FastifyInstance} fastify
@@ -20,10 +20,10 @@ export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
     openapi: {
       components: {
         securitySchemes: {
-          refreshTokenAuth: {
-            bearerFormat: "RefreshToken",
+          sessionTokenAuth: {
+            bearerFormat: "SessionToken",
             description:
-              "Refresh token carried in the Authorization header as Bearer <token>.",
+              "Session token carried in the Authorization header as Bearer <token>.",
             scheme: "bearer",
             type: "http",
           },
@@ -53,13 +53,13 @@ export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
     },
   });
 
-  registerLoginChallengeRoute(fastify, {
+  registerAuthenticationOptionsRoute(fastify, {
     passkeys,
   });
-  registerLoginRoute(fastify, {
+  registerAuthenticationRoute(fastify, {
     passkeys,
   });
-  registerRegistrationChallengeRoute(fastify, {
+  registerRegistrationOptionsRoute(fastify, {
     passkeys,
   });
   registerRegistrationRoute(fastify, {
