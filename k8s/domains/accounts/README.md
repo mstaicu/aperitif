@@ -1,7 +1,7 @@
 # Accounts
 
 Accounts owns the boundary under which product resources live. An account is
-`personal` or `organization`, and a new account starts with its creator as an
+`individual` or `organization`, and a new account starts with its creator as an
 `owner` member.
 
 It does not own users, plans, or product data.

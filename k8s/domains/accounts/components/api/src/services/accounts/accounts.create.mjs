@@ -9,12 +9,12 @@ import { context, propagation } from "@opentelemetry/api";
  * @returns {(args: {
  *   currentUserId: string,
  *   name: string,
- *   type: "personal" | "organization",
+ *   type: "individual" | "organization",
  * }) => Promise<{
  *   account: {
  *     id: string,
  *     name: string,
- *     type: "personal" | "organization",
+ *     type: "individual" | "organization",
  *   },
  * }>}
  */

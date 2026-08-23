@@ -20,7 +20,7 @@ test("creates account ownership and lists only the caller's accounts", async () 
   const alpha = await accounts.createAccount({
     currentUserId: userId,
     name: "Alpha",
-    type: "personal",
+    type: "individual",
   });
   const zulu = await accounts.createAccount({
     currentUserId: userId,
@@ -30,7 +30,7 @@ test("creates account ownership and lists only the caller's accounts", async () 
   await accounts.createAccount({
     currentUserId: randomUUID(),
     name: "Other",
-    type: "personal",
+    type: "individual",
   });
 
   assert.deepEqual(await accounts.listAccounts({ currentUserId: userId }), {

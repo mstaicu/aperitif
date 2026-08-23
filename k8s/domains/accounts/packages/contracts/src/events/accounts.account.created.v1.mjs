@@ -14,7 +14,7 @@ export const AccountCreatedV1DataSchema = Type.Object(
         id: UuidSchema,
         name: Type.String({ maxLength: 160, minLength: 1 }),
         type: Type.Union([
-          Type.Literal("personal"),
+          Type.Literal("individual"),
           Type.Literal("organization"),
         ]),
       },

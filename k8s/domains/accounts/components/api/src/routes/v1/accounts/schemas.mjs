@@ -10,10 +10,10 @@ const AccountName = Type.String({
   minLength: 1,
 });
 const AccountType = Type.Union(
-  [Type.Literal("personal"), Type.Literal("organization")],
+  [Type.Literal("individual"), Type.Literal("organization")],
   {
     description:
-      "Kind of account boundary being created. Personal accounts represent an individual context. Organization accounts represent a shared organizational context.",
+      "Kind of account boundary being created. Individual accounts represent one person. Organization accounts represent a shared organization.",
   },
 );
 const MemberRole = Type.Union([Type.Literal("owner"), Type.Literal("member")], {

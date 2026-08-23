@@ -45,7 +45,7 @@ exports[`accounts.account.created.v1 remains compatible 1`] = `
             "type": {
               "anyOf": [
                 {
-                  "const": "personal",
+                  "const": "individual",
                   "type": "string"
                 },
                 {

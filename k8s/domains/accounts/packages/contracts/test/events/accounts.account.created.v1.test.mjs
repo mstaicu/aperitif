@@ -20,7 +20,7 @@ test("accounts.account.created.v1 remains compatible", (t) => {
           account: {
             id: "22222222-2222-4222-8222-222222222222",
             name: "Acme",
-            type: "organization",
+            type: "individual",
           },
         },
         1,
