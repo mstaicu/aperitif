@@ -5,7 +5,7 @@ export const startNats = async () => {
   await using stack = new AsyncDisposableStack();
 
   const container = stack.use(
-    await new GenericContainer("nats:2.14.3-alpine3.22")
+    await new GenericContainer("nats:2.14.5-alpine3.22")
       .withCommand(["-js"])
       .withExposedPorts(4222)
       .withWaitStrategy(Wait.forListeningPorts())

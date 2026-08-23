@@ -30,7 +30,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: nats
-          image: docker.io/library/nats:2.14.3-alpine3.22@sha256:c11af972c99ae542de8925e6a7d9c533aa1eb039660420d2074beed6089b3bf0
+          image: docker.io/library/nats:2.14.5-alpine3.22@sha256:d4ac35882ac65aff236cd65b9d3fa4d24332c681e1a85f94eedccd3cdd65b1da
 
           # NATS needs no Linux capabilities or writable image filesystem. Its
           # intended writes go only to /data and /var/run/nats volume mounts.

@@ -17,6 +17,9 @@ clusters/prod-eu/    production Flux inventory
 | `accounts` | Accounts and membership                              |
 | `plans`    | Plans and resolved account features                  |
 
+See [ACCESS.md](ACCESS.md) for the first-principles access model and its
+progression from passkeys to personal access tokens, OAuth, and OpenID Connect.
+
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
 
