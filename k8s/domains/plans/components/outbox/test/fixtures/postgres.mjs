@@ -19,7 +19,7 @@ export const startPostgres = async () => {
       .start(),
   );
 
-  const flyway = await new GenericContainer("flyway/flyway:13.0.0")
+  const flyway = await new GenericContainer("flyway/flyway:13.3.0")
     .withNetwork(network)
     .withBindMounts([{ source: sqlPath, target: "/flyway/sql" }])
     .withCommand([

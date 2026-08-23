@@ -1,4 +1,4 @@
-apiVersion: skaffold/v4beta11
+apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
@@ -13,7 +13,7 @@ deploy:
   kubectl: {}
 
 ---
-apiVersion: skaffold/v4beta11
+apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
@@ -33,15 +33,12 @@ manifests:
   kustomize:
     paths:
       - components/migrations/infra/overlays/ephemeral
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
 
 deploy:
   kubectl: {}
 
 ---
-apiVersion: skaffold/v4beta11
+apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
@@ -67,15 +64,12 @@ manifests:
   kustomize:
     paths:
       - components/api/infra/overlays/ephemeral
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
 
 deploy:
   kubectl: {}
 
 ---
-apiVersion: skaffold/v4beta11
+apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
@@ -101,15 +95,12 @@ manifests:
   kustomize:
     paths:
       - components/outbox/infra/overlays/ephemeral
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
 
 deploy:
   kubectl: {}
 
 ---
-apiVersion: skaffold/v4beta11
+apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
@@ -135,9 +126,6 @@ manifests:
   kustomize:
     paths:
       - components/accounts-projection/infra/overlays/ephemeral
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
 
 deploy:
   kubectl: {}

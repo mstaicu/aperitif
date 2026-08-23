@@ -19,7 +19,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: agent
-          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s:0.157.0@sha256:37309aafd87d97b8966cf0f458ca909363be0e619adbac484c587507020a11f5
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s:0.159.0@sha256:3a8f46e1ff33546d36ddd94ef8721c5807718e25825f3e3f6eb5d552fd24e422
           args:
             - --config=/conf/otel-config.yaml
 

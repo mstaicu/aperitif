@@ -5,3 +5,16 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  - package-ecosystem: npm
+    directories:
+      - /domains/*/components/*
+      - /domains/*/packages/*
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directories:
+      - /domains/*/components/*
+    schedule:
+      interval: weekly

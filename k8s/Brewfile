@@ -1,6 +1,6 @@
-# brew "age" # SOPS age key generation and encryption
+brew "age" # SOPS age key generation and encryption
 brew "ksops" # Kustomize plugin for decrypting SOPS secrets
-# brew "sops" # Encrypt Kubernetes Secret manifests
+brew "sops" # Encrypt Kubernetes Secret manifests
 
 brew "mkcert" # Local trusted TLS certificates for Traefik dev
 
@@ -8,13 +8,11 @@ brew "kubernetes-cli" # Installs kubectl
 brew "kustomize" # Render Kubernetes overlays
 brew "skaffold" # Local Kubernetes dev/debug loop
 
+# tap "fluxcd/tap"
+# brew "fluxcd/tap/flux" # Bootstrap and inspect Flux reconciliation
+
 #
 # Optional
-#
-# tap "fluxcd/tap"
-# brew "fluxcd/tap/flux"
-#
-# brew "helm"
 #
 # brew "k9s"
 #
