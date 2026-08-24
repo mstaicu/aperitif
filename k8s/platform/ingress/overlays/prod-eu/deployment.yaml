@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   name: traefik
 spec:
-  replicas: 1
   template:
     spec:
       containers:
@@ -62,10 +61,6 @@ spec:
                 secretKeyRef:
                   name: cloudflare-dns
                   key: CF_DNS_API_TOKEN # Cloudflare credentials for ACME DNS-01.
-
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: otel-collector.otel.svc.cluster.local:4317 # In-cluster OpenTelemetry Collector for ingress telemetry.
-
           volumeMounts:
             - name: acme
               mountPath: /data # Persistent ACME state shared across Traefik restarts.
