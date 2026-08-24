@@ -6,6 +6,7 @@ A small Kubernetes platform for independently developed domains.
 domains/             business domains and their deployable components
 platform/            ingress, event bus, and observability
 clusters/prod-eu/    production Flux inventory
+docs/                platform features and business recipes
 .github/workflows/   checks and image publication
 ```
 
@@ -17,8 +18,8 @@ clusters/prod-eu/    production Flux inventory
 | `accounts` | Accounts and membership                              |
 | `plans`    | Plans and resolved account features                  |
 
-See [ACCESS.md](ACCESS.md) for the first-principles access model and its
-progression from passkeys to personal access tokens, OAuth, and OpenID Connect.
+See [docs/README.md](docs/README.md) for the platform model, proposed features,
+and business recipes.
 
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
