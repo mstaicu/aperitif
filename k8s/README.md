@@ -6,7 +6,7 @@ A small Kubernetes platform for independently developed domains.
 domains/             business domains and their deployable components
 platform/            ingress, event bus, and observability
 clusters/prod-eu/    production Flux inventory
-docs/                platform features and business recipes
+docs/                platform capabilities and business recipes
 .github/workflows/   checks and image publication
 ```
 
@@ -18,8 +18,8 @@ docs/                platform features and business recipes
 | `accounts` | Accounts and membership                              |
 | `plans`    | Plans and resolved account features                  |
 
-See [docs/README.md](docs/README.md) for the platform model, proposed features,
-and business recipes.
+See [docs/README.md](docs/README.md) for the platform model, proposed
+capabilities, and business recipes.
 
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.

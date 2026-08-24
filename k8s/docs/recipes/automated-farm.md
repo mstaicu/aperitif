@@ -1,6 +1,6 @@
 # Automated farm
 
-Status: Recipe
+Status: Illustrative — no Farm implementation exists.
 
 ## Outcome
 
@@ -8,14 +8,13 @@ Build one Farm product domain for an organization that operates fields,
 vehicles, missions, and observations. The cloud assigns and records work; an
 onboard controller remains responsible for physical control and safety.
 
-## Required platform features
+## Assembles
 
-| Need                                                 | Platform source                                         | Status      |
-| ---------------------------------------------------- | ------------------------------------------------------- | ----------- |
-| Human authentication                                 | [Auth](../../domains/auth/README.md)                    | Implemented |
-| Organization ownership and human membership          | [Accounts](../../domains/accounts/README.md)            | Implemented |
-| Machine identity, credential, and account membership | [Machine identities](../features/machine-identities.md) | Proposed    |
-| Versioned internal events                            | [Event contract](../../README.md#event-processing)      | Implemented |
+| Kind       | Building block                                              | Used for                                     | Status      |
+| ---------- | ----------------------------------------------------------- | -------------------------------------------- | ----------- |
+| Domain     | [Auth](../../domains/auth/README.md)                        | Human authentication                         | Implemented |
+| Domain     | [Accounts](../../domains/accounts/README.md)                | Organization ownership and human membership  | Implemented |
+| Capability | [Machine identities](../capabilities/machine-identities.md) | Machine identity, credential, and membership | Proposed    |
 
 This first product does not require plans, compliance, payments, operators, or
 personal access tokens.
@@ -32,9 +31,15 @@ farm
 └── observations
 ```
 
+Farm events follow the [platform event contract](../../README.md#event-processing).
+
 A machine identity is the authenticated actor. A vehicle is a Farm resource.
 They may be linked, but are not the same record. Farm decides whether the
 machine may act on a mission.
+
+A human request requires membership in the account. A machine request requires
+machine membership in the account. Farm owns every further product permission,
+assignment, and resource rule.
 
 ```text
 POST  /v1/accounts/{account_id}/fields
@@ -76,7 +81,7 @@ NATS is internal to platform components; the machine calls the Farm API.
 
 ## Build
 
-1. Implement [machine identities](../features/machine-identities.md).
+1. Implement [machine identities](../capabilities/machine-identities.md).
 2. Build Farm with fields, vehicles, missions, and observations.
 3. Prove the workflow with a simulated machine and duplicate/retried requests.
 4. Add object storage and hardware integration.

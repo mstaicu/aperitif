@@ -3,7 +3,7 @@
 ## Platform model
 
 ```text
-identity    durable record for a human or machine
+identity    durable Auth record
 principal   identity to which a request is attributed
 credential  long-lived proof of an identity
 account     ownership and authorization boundary
@@ -19,20 +19,47 @@ resource facts, and business rules.
 
 ## Documents
 
-- [features](features/) — reusable platform capabilities. They may change core
-  domains but never own product resources or business workflows.
+- [capabilities](capabilities/) — reusable platform building blocks. They may
+  change one or more domains but never own product resources or workflows.
 - [recipes](recipes/) — product blueprints. They define product domains and
-  assemble the platform features they require.
+  assemble the platform domains and capabilities they require.
+
+Read a domain README to learn the implemented boundary. Read a capability to
+learn the reusable outcome it provides and its hard prerequisites. Read a recipe
+to see which domains and capabilities a product assembles.
+
+Capabilities compose in one direction: each provides one reusable outcome and
+lists its hard prerequisites. A capability extends a prerequisite; it does not
+copy or redefine the prerequisite's tables, API, or events.
+
+An illustrative recipe may show intended routes and events. Once its product
+exists, its domain README, OpenAPI document, and contract package are the
+current interface. The recipe keeps the outcome, assembled blocks, workflow,
+and non-goals.
+
+## Keeping documents current
+
+Update a capability in the same change when its outcome, prerequisites, public
+API, or events change. Update a recipe in the same change when its assembled
+blocks, workflow, or non-goals change.
 
 ## Index
 
-### Features
+### Platform domains
 
-- [Personal access tokens](features/personal-access-tokens.md) — unattended
+- [Auth](../domains/auth/README.md) — foundational identity and credentials.
+- [Accounts](../domains/accounts/README.md) — foundational account and generic
+  membership boundary.
+- [Plans](../domains/plans/README.md) — optional account-level commercial
+  feature snapshots.
+
+### Capabilities
+
+- [Personal access tokens](capabilities/personal-access-tokens.md) — unattended
   human automation; proposed.
-- [Machine identities](features/machine-identities.md) — autonomous machine
+- [Machine identities](capabilities/machine-identities.md) — autonomous machine
   access; proposed.
-- [Operators](features/operators.md) — platform-wide human authority;
+- [Operators](capabilities/operators.md) — platform-wide human authority;
   implemented.
 
 ### Recipes

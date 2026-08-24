@@ -8,6 +8,17 @@ A personal access token (PAT) lets a user's unattended automation obtain the
 same short-lived access token as that user. It proves identity; domain APIs
 still decide authority from current domain facts.
 
+Owner: Auth.
+
+## Provides
+
+- A revocable personal credential that exchanges for the owner's existing
+  short-lived access token.
+
+## Requires
+
+- [Auth](../../domains/auth/README.md) for users, sessions, and access tokens.
+
 ## First version
 
 Auth stores only a hash of each PAT:
@@ -30,19 +41,20 @@ ON personal_access_tokens (user_id);
 
 The random secret is returned once and stored only as a hash.
 
-| Operation     | Interface                                          | Authentication |
-| ------------- | -------------------------------------------------- | -------------- |
-| Create        | POST /v1/personal-access-tokens                    | Session token  |
-| List metadata | GET /v1/personal-access-tokens                     | Session token  |
-| Revoke        | DELETE /v1/personal-access-tokens/{id}             | Session token  |
-| Exchange      | POST /v1/personal-access-tokens/{id}/access-tokens | PAT            |
+| Operation     | Interface                                          | Authentication       |
+| ------------- | -------------------------------------------------- | -------------------- |
+| Create        | POST /v1/personal-access-tokens                    | Bearer session token |
+| List metadata | GET /v1/personal-access-tokens                     | Bearer session token |
+| Revoke        | DELETE /v1/personal-access-tokens/{id}             | Bearer session token |
+| Exchange      | POST /v1/personal-access-tokens/{id}/access-tokens | Bearer PAT           |
 
 Creation accepts name and expires_at; its response returns id, name, token, and
 expires_at. List responses never contain token or secret_hash.
 
-The exchange uses Authorization: Bearer <PAT>, has no body, and returns the
-existing five-minute access-token response. Its JWT has the PAT owner's ID as
-sub and never has operator.
+PAT management uses the same bearer session token as
+`POST /v1/session/access-tokens`. The exchange uses `Authorization: Bearer
+<PAT>`, has no body, and returns the existing five-minute access-token response.
+Its JWT has the PAT owner's ID as sub and never has operator.
 
 - PAT management requires an existing session.
 - A PAT cannot manage other PATs.

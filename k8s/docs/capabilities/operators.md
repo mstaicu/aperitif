@@ -7,6 +7,16 @@ Status: Implemented
 An operator is a named human principal trusted for platform-wide administrative
 actions. It is not an account role, a product role, or product authority.
 
+Owner: Auth.
+
+## Provides
+
+- An `operator: true` claim in a human's short-lived access token.
+
+## Requires
+
+- [Auth](../../domains/auth/README.md) for users, sessions, and access tokens.
+
 ## First version
 
 Auth owns the operator set:

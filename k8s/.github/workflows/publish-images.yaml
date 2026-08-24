@@ -1,4 +1,4 @@
-name: post-merge
+name: publish images
 
 on:
   push:
@@ -8,14 +8,14 @@ on:
       - "!domains/*/components/*/infra/**"
 
 concurrency:
-  group: post-merge
+  group: publish-images
   queue: max
 
 permissions:
   contents: read
 
 jobs:
-  changes:
+  components:
     name: find changed components
     runs-on: ubuntu-24.04
     outputs:
@@ -37,7 +37,7 @@ jobs:
 
   publish:
     name: publish ${{ matrix.component }}
-    needs: changes
+    needs: components
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        component: ${{ fromJSON(needs.changes.outputs.components) }}
+        component: ${{ fromJSON(needs.components.outputs.components) }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
