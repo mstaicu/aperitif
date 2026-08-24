@@ -5,7 +5,6 @@ namespace: nats
 
 resources:
   - ../../base
-  - networkpolicy.yaml
   - namespace.yaml
 
 patches:

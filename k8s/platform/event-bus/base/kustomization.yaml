@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - statefulset.yaml
+  - networkpolicy.yaml
   - poddisruptionbudget.yaml
   - headless-service.yaml
   - client-service.yaml

@@ -3,6 +3,4 @@ kind: Kustomization
 
 resources:
   - job.yaml
-
-generatorOptions:
-  disableNameSuffixHash: true
+  - networkpolicy.yaml
