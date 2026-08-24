@@ -63,7 +63,7 @@ All namespaced Flux Toolkit resources explicitly use `metadata.namespace: flux-s
 
 ```text
 merge to master
-  -> post-merge detects changed components
+  -> publish images finds changed components
   -> build each changed production image
   -> push :<git-sha> and :latest
   -> ImagePolicy observes the digest behind :latest
@@ -73,7 +73,7 @@ merge to master
 
 - Code changes build only changed components.
 - Infrastructure-only changes are applied directly by Flux.
-- Post-merge runs are serialized and retained.
+- Image publishing runs are serialized and retained.
 - One image repository and policy exists per production component.
 - One image update automation writes all domain digests.
 - Flux digest commits do not trigger another image build.
@@ -93,7 +93,7 @@ child Flux Kustomization
 └── resources rendered independently from spec.path
 ```
 
-- Root: owns each shared production Namespace.
+- Root: owns each shared production workload Namespace.
 - Namespace: carries `kustomize.toolkit.fluxcd.io/prune: disabled`.
 - Production overlay: sets `namespace` but never declares the Namespace.
 - Ephemeral overlay: owns its disposable Namespace.

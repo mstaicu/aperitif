@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: traefik
 
 resources:
-  - namespace.yaml
   - ../../base
   - cloudflare-dns-secret.yaml
   - acme-persistentvolumeclaim.yaml

@@ -1,3 +1,30 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: traefik
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: nats
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: otel
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
@@ -54,15 +81,6 @@ spec:
   wait: true
   # The NATS startup probe permits roughly 15 minutes of state recovery.
   timeout: 20m
-
----
-apiVersion: v1
-kind: Namespace
-
-metadata:
-  name: otel
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
 
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1

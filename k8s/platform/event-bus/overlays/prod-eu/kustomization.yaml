@@ -6,7 +6,6 @@ namespace: nats
 resources:
   - ../../base
   - networkpolicy.yaml
-  - namespace.yaml
 
 configMapGenerator:
   - name: nats-config
