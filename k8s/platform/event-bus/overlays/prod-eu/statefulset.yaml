@@ -16,19 +16,9 @@ spec:
 
       containers:
         - name: nats
-          args:
-            - --config
-            - /etc/nats-config/nats.conf
           volumeMounts:
-            - name: config
-              mountPath: /etc/nats-config
             - name: nats-storage
               mountPath: /data
-
-      volumes:
-        - name: config
-          configMap:
-            name: nats-config
 
   volumeClaimTemplates:
     - metadata:

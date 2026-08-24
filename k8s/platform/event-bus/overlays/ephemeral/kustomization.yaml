@@ -8,11 +8,6 @@ resources:
   - networkpolicy.yaml
   - namespace.yaml
 
-configMapGenerator:
-  - name: nats-config
-    files:
-      - nats.conf=nats.conf
-
 patches:
   - path: statefulset.yaml
   - path: client-service.yaml
