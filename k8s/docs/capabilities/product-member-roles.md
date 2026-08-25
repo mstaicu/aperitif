@@ -51,16 +51,14 @@ DELETE /v1/accounts/{account_id}/members/{user_id}/roles/{role_id}
 
 An active Account owner manages any member's roles. An active member reads only
 their own roles. `PUT` and `DELETE` each manage one role, return `204 No
-Content`, and are idempotent. A member may hold several roles.
+Content`, and are idempotent. A member may hold several roles. Routes reject a
+`role_id` the Product does not define.
 
 Each Product needs its own API host or unique gateway root: two Products cannot
-claim the same public path.
-
-Role routes and Account-member projections lock the same
-`projected_account_members` rows. A route involving two members locks them in
-`(account_id, user_id)` order, then changes `account_member_roles`. This makes
-a concurrent member deletion either remove the role after the route commits or
-prevent the route from adding it.
+claim the same public path. Role routes lock the target projected member before
+changing roles. The membership projector locks that same row before marking it
+deleted and removing roles, so a concurrent removal cannot leave an active role
+behind.
 
 ## Projection rule
 
@@ -71,7 +69,7 @@ snapshot only when `data.version > account_version`.
 A deletion records `deleted_at` and removes that member's Product roles in the
 same transaction. A later member snapshot can restore membership but never
 restores removed Product roles. Role routes require an active projected member.
-Keep the deletion row while older Accounts events may be replayed.
+Keep the tombstone while older Accounts events may be replayed.
 
 A Product using [Product-role invitations](product-role-invitations.md) also
 applies the `member` snapshot in `accounts.invitation.updated.v1` by the same

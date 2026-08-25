@@ -2,22 +2,18 @@
 
 Status: Implemented
 
-## Purpose
+## Outcome
 
 An operator is a named human principal trusted for platform-wide administrative
 actions. It is not an account role, a product role, or product authority.
 
 Owner: Auth.
 
-## Provides
-
-- An `operator: true` claim in a human's short-lived access token.
-
 ## Requires
 
 - [Auth](../../domains/auth/README.md) for users, sessions, and access tokens.
 
-## First version
+## State
 
 Auth owns the operator set:
 
@@ -29,12 +25,12 @@ CREATE TABLE operators (
 
 Bootstrap the first operator through the controlled procedure in the
 [Auth README](../../domains/auth/README.md#first-operator). When that user
-exchanges a session for a short-lived access token, Auth adds operator: true.
+exchanges a session for a short-lived access token, Auth adds `operator: true`.
 
 An operator-only endpoint requires that claim plus its own action-specific
 checks. There is no operator-management HTTP API.
 
-## Later
+## Later, if needed
 
 If controlled database access ceases to be adequate, add operator listing,
 granting, revocation, expiry, and durable audit. Add finer permissions only if

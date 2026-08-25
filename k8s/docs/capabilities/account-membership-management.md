@@ -4,21 +4,21 @@ Status: Proposed
 
 ## Outcome
 
-After Accounts admits a human, an Account owner can view, change, and remove
-that Account's members. It works for both `individual` and `organization`
+After a human joins an Account, an owner can list, change, and remove that
+Account's generic members. It works for `individual` and `organization`
 Accounts.
 
 Owner: Accounts.
 
 ## Requires
 
-- [Account membership invitations](account-membership-invitations.md) to admit
-  a new human.
+- [Accounts](../../domains/accounts/README.md) for the Account and membership
+  boundary.
 
 ## State
 
-This capability uses the Accounts-owned `account_members` table. It adds no
-table and no new Account role:
+This uses the existing Accounts `account_members` table. It adds neither a
+table nor a role:
 
 ```text
 account_id  Account boundary
@@ -26,12 +26,12 @@ user_id     Auth user
 role        owner | member
 ```
 
-An Account must always retain at least one `owner`. Product-specific roles are
-separate; see [Product member roles](product-member-roles.md).
+An Account always retains one `owner`. Product roles remain Product state; see
+[Product member roles](product-member-roles.md).
 
 ## API
 
-These routes belong to Accounts and require an owner bearer token:
+These Accounts routes require an owner access token:
 
 ```text
 GET    /v1/accounts/{account_id}/members
@@ -39,49 +39,23 @@ PATCH  /v1/accounts/{account_id}/members/{user_id}
 DELETE /v1/accounts/{account_id}/members/{user_id}
 ```
 
-`GET` returns the Account's current generic members:
+`GET` returns the current members. `PATCH` accepts `{ "role": "owner" }` or
+`{ "role": "member" }`, returns the member, and is a successful no-op when
+the role is unchanged. `DELETE` returns `204 No Content`. Both reject removing
+or demoting the last owner.
 
-```json
-{
-  "members": [
-    { "user_id": "user-123", "role": "owner" },
-    { "user_id": "user-456", "role": "member" }
-  ]
-}
-```
+There is no `POST /members`: [Account invitations](account-invitations.md) are
+the human-admission mechanism.
 
-`PATCH` sets one existing member's generic role:
+## Processing and events
 
-```http
-PATCH /v1/accounts/account-456/members/user-456
-
-{ "role": "owner" }
-```
-
-It returns `200 OK` with the current member. Setting the current role is a
-successful no-op. `DELETE` removes one existing member and returns `204 No
-Content`. Both operations reject removing or demoting the last owner.
-
-There is deliberately no `POST /members`. An invitation acceptance is the only
-human-admission operation.
-
-## Processing
-
-Every membership mutation locks the Account row first. That serializes all
-membership changes for that Account and makes the last-owner rule reliable:
+Every mutation locks the Account row first, verifies the caller is an owner,
+changes the member, increments `accounts.version`, and records the matching
+outbox event in one transaction. A no-op update emits nothing.
 
 ```sql
 SELECT id, version FROM accounts WHERE id = $1 FOR UPDATE;
 ```
-
-While the lock is held, Accounts verifies that the caller is an owner, changes
-the member, increments `accounts.version`, and records the corresponding event
-with the mutation. A no-op `PATCH` does not increment the version or publish an
-event.
-
-## Events
-
-The existing published contracts are the complete member snapshots:
 
 ```text
 accounts.member.created.v1
@@ -89,7 +63,7 @@ accounts.member.updated.v1
 accounts.member.deleted.v1
 ```
 
-Each has this data shape:
+Each event has this immutable data shape:
 
 ```json
 {
@@ -99,7 +73,6 @@ Each has this data shape:
 }
 ```
 
-The current single-owner baseline emits `accounts.member.created.v1` for the
-initial owner. This capability later enables the update and deletion events.
-All three contracts remain immutable: a meaning or shape change requires a new
-event version.
+The current single-owner baseline already emits `accounts.member.created.v1`.
+This capability adds the update and deletion operations; a changed event shape
+or meaning requires a new version.
