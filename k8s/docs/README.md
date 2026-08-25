@@ -55,6 +55,14 @@ blocks, workflow, or non-goals change.
 
 ### Capabilities
 
+- [Account membership invitations](capabilities/account-membership-invitations.md)
+  — generic account admission through a one-time secret; proposed.
+- [Account membership management](capabilities/account-membership-management.md)
+  — owner-managed generic members after admission; proposed.
+- [Product member roles](capabilities/product-member-roles.md) — product-owned
+  roles for account members; proposed.
+- [Product-role invitations](capabilities/product-role-invitations.md) —
+  optional product-role activation after account admission; proposed.
 - [Personal access tokens](capabilities/personal-access-tokens.md) — unattended
   human automation; proposed.
 - [Machine identities](capabilities/machine-identities.md) — autonomous machine
