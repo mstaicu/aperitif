@@ -3,10 +3,6 @@ import swaggerUI from "@fastify/swagger-ui";
 
 import { registerCreateAccountRoute } from "./accounts/accounts.create.mjs";
 import { registerListAccountsRoute } from "./accounts/accounts.list.mjs";
-import { registerCreateMemberRoute } from "./accounts/members.create.mjs";
-import { registerDeleteMemberRoute } from "./accounts/members.delete.mjs";
-import { registerListMembersRoute } from "./accounts/members.list.mjs";
-import { registerUpdateMemberRoute } from "./accounts/members.update.mjs";
 
 /**
  * @param {import("../../server.mjs").FastifyInstance} fastify
@@ -44,10 +40,6 @@ export const registerV1Routes = async (fastify, { accounts, jwks }) => {
           description: "Account authority",
           name: "accounts",
         },
-        {
-          description: "Generic account membership",
-          name: "members",
-        },
       ],
     },
   });
@@ -57,22 +49,6 @@ export const registerV1Routes = async (fastify, { accounts, jwks }) => {
     jwks,
   });
   registerCreateAccountRoute(fastify, {
-    accounts,
-    jwks,
-  });
-  registerListMembersRoute(fastify, {
-    accounts,
-    jwks,
-  });
-  registerCreateMemberRoute(fastify, {
-    accounts,
-    jwks,
-  });
-  registerUpdateMemberRoute(fastify, {
-    accounts,
-    jwks,
-  });
-  registerDeleteMemberRoute(fastify, {
     accounts,
     jwks,
   });

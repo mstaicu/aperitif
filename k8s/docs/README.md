@@ -48,8 +48,8 @@ blocks, workflow, or non-goals change.
 ### Platform domains
 
 - [Auth](../domains/auth/README.md) — foundational identity and credentials.
-- [Accounts](../domains/accounts/README.md) — foundational account and generic
-  membership boundary.
+- [Accounts](../domains/accounts/README.md) — foundational account boundary and
+  initial ownership.
 - [Plans](../domains/plans/README.md) — optional account-level commercial
   feature snapshots.
 

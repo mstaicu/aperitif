@@ -10,8 +10,7 @@ spec:
   routes:
     - kind: Rule
       match: >-
-        Path(`/v1/accounts`) ||
-        PathRegexp(`^/v1/accounts/[^/]+/members(/[^/]+)?$`)
+        Path(`/v1/accounts`)
       services:
         - name: api
           port: 3000

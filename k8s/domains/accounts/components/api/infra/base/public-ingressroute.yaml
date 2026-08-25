@@ -9,9 +9,7 @@ spec:
   routes:
     - kind: Rule
       match: >-
-        Host(`api.tma.com`) &&
-        (Path(`/v1/accounts`) ||
-        PathRegexp(`^/v1/accounts/[^/]+/members(/[^/]+)?$`))
+        Host(`api.tma.com`) && Path(`/v1/accounts`)
       services:
         - name: api
           port: 3000

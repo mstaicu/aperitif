@@ -18,21 +18,19 @@ PostgreSQL -> migrations -> API
 
 | Part | Purpose |
 | --- | --- |
-| `components/api` | Manage accounts and generic memberships |
+| `components/api` | Create and list accounts |
 | `components/outbox` | Publish committed Accounts events |
 | `components/migrations` | Flyway SQL and its Job |
 | `packages/contracts` | Published Accounts event package |
 | `infra/postgres` | Disposable in-cluster database |
 
-The API exposes `GET/POST /v1/accounts` and owner-managed membership operations
-under `/v1/accounts/:account_id/members`. OpenAPI is available at
+The API exposes `GET/POST /v1/accounts`. OpenAPI is available at
 `/v1/accounts/docs`.
 
-Accounts publishes account creation and membership creation, update, and
-deletion events. State and its outbox events are committed in one database
-transaction. `data.version` is a monotonic account revision. Consumers compare
-it independently for each projected account or membership resource to reject
-stale snapshots.
+Accounts publishes account creation and initial-owner membership events. State
+and its outbox events are committed in one database transaction.
+`data.version` is a monotonic account revision. Member management and
+invitations are proposed capabilities under [`docs/capabilities`](../../docs/capabilities/).
 
 ## Work here
 
