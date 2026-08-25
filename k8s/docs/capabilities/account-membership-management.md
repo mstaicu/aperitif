@@ -76,3 +76,11 @@ Each event has this immutable data shape:
 The current single-owner baseline already emits `accounts.member.created.v1`.
 This capability adds the update and deletion operations; a changed event shape
 or meaning requires a new version.
+
+## Evolution
+
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | `owner` and `member`, last-owner protection, and versioned membership events. | A controlled first product. |
+| Controlled | Notify affected members and retain durable evidence of membership changes. | Account access is operationally important. |
+| High assurance | Require fresh WebAuthn authentication for sensitive owner changes; add product or Account policy for approval, separation of duties, and periodic access review. | Unauthorized membership changes have material consequences. |

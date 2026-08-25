@@ -58,11 +58,13 @@ exchange for an access token; an already issued access token expires normally.
 Hash comparisons do not disclose which check failed. PATs and hashes never
 enter events, logs, or traces.
 
-## Later, if needed
+## Evolution
 
-Constrained claims can be added only if a real use case needs them. OAuth is a
-separate addition for third-party delegated applications. Ownership, expiry,
-revocation, and the exchange boundary remain unchanged.
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | Named, expiring, revocable secret that exchanges for the owner's normal access token. | A user needs unattended automation. |
+| Controlled | Store constrained claims with the PAT; require fresh authentication to create or revoke it; notify the owner and retain durable audit evidence. | A lost PAT could reach more data or actions than intended. |
+| High assurance | Bind token use to proof of possession, such as DPoP or mTLS; add policy-based network or device restrictions and anomalous-use detection. | A PAT is used in a hostile environment or protects material assets. |
 
 ## Not included
 

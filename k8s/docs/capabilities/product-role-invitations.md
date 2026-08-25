@@ -85,3 +85,11 @@ A retired Product role is discarded rather than making a valid Accounts event
 fail. Replayed or stale invitation and member snapshots are ignored according
 to the root event-processing contract; keep deletion rows while older Accounts
 events may be replayed.
+
+## Evolution
+
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | Pending Product roles activate only after Accounts admits the member. | A Product needs role-aware invitations. |
+| Controlled | Use the delivery, notification, and audit upgrades from [Account invitations](account-invitations.md); record Product role assignment and activation evidence. | Invitations affect real operations. |
+| High assurance | Require fresh authentication and Product policy approval for sensitive role assignments; gate activation on any required Product compliance decision. | The assigned role can perform high-impact or regulated work. |

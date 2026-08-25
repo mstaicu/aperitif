@@ -77,3 +77,11 @@ version rule.
 
 Product authorization follows its local projection. An Accounts membership
 change takes effect in a Product after that Product commits the event.
+
+## Evolution
+
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | Product-defined roles, local membership projection, and idempotent role assignment. | The Product needs roles beyond Account owner/member. |
+| Controlled | Keep an auditable role-change history and add Product-managed role definitions only when roles must be configured at runtime. | Role changes affect real operations or administrators need configuration. |
+| High assurance | Add Product-specific separation-of-duties rules, approval for sensitive roles, just-in-time access, and periodic access review. | Product roles control high-impact or regulated actions. |

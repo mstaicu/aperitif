@@ -91,3 +91,11 @@ Removing membership takes effect after each Product commits the deletion event.
 
 - Machine or credential lifecycle.
 - Product resources, assignments, roles, or authorization rules.
+
+## Evolution
+
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | An owner attaches an Auth-issued ID; Products follow versioned membership events. | A controlled first product. |
+| Controlled | Require a machine to use a stronger proof from [Machines](machines.md) before it performs important work; notify the Account when membership changes. | Machines operate beyond a controlled environment. |
+| High assurance | Replace one-sided attachment with an explicit enrollment approval between the Account and machine manager. For operations where eventual projection removal is insufficient, enforce immediate Product-local denial in addition to the event. | A misattached or recently removed machine could cause material harm. |

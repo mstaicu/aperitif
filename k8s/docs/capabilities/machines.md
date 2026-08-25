@@ -105,17 +105,17 @@ Machines are private Auth state in the first version. Auth does not publish
 machine lifecycle events and therefore does not need an outbox for this
 capability. Products receive Account machine-membership events instead.
 
-## Hardening path
+## Evolution
 
 Each stage keeps the same machine and Client Credentials exchange. It changes
 only the proof presented to Auth.
 
-| Stage                       | Proof                   | Auth stores                        | Machine stores                                 | Use when                                                             |
-| --------------------------- | ----------------------- | ---------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------- |
-| First version               | 32-byte shared secret   | SHA-256 hash                       | Secret                                         | You control deployment and can protect device configuration.         |
-| Strong remote device        | `private_key_jwt`       | Public JWK                         | Private key                                    | You can enroll device public keys and do not want a reusable secret. |
-| Managed fleet               | mTLS client certificate | Trusted CA and certificate mapping | Private key and certificate                    | You operate certificate issuance and renewal.                        |
-| Physical-capture resistance | Hardware-backed key     | Public JWK or certificate          | Non-exportable TPM, secure-element, or HSM key | Credential extraction is a realistic threat.                         |
+| Stage | Proof | Auth stores | Machine stores | Add when |
+| --- | --- | --- | --- | --- |
+| Baseline | 32-byte shared secret | SHA-256 hash | Secret | You control deployment and can protect device configuration. |
+| Strong remote device | `private_key_jwt` | Public JWK | Private key | You can enroll device public keys and do not want a reusable secret. |
+| Managed fleet | mTLS client certificate | Trusted CA and certificate mapping | Private key and certificate | You operate certificate issuance and renewal. |
+| High assurance | Hardware-backed key | Public JWK or certificate | Non-exportable TPM, secure-element, or HSM key | Credential extraction is a realistic threat. |
 
 `private_key_jwt` signs a short-lived assertion with the machine private key;
 Auth verifies it with the stored public JWK. mTLS proves private-key possession

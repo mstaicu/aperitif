@@ -149,3 +149,11 @@ The acceptance update also carries the active member:
 
 Repeating the member in the update lets Products activate pending roles even
 when the member-created and invitation-update events arrive in either order.
+
+## Evolution
+
+| Stage          | Strengthen                                                                                                                                                                                                           | Add when                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Baseline       | One-time bearer secret with expiry and generic acceptance failures.                                                                                                                                                  | A controlled first product.                                              |
+| Controlled     | Deliver the same ID and secret through a verified channel; rate-limit acceptance; notify owners of creation, acceptance, expiry, and revocation.                                                                     | Invite delivery and account access become operationally important.       |
+| High assurance | Bind an invitation to a verified recipient identity; require fresh WebAuthn authentication for sensitive invitation changes; record durable audit evidence and require approval where the Account policy demands it. | A stolen invitation or unauthorized admission has material consequences. |

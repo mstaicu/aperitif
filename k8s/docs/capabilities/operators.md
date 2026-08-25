@@ -30,11 +30,13 @@ exchanges a session for a short-lived access token, Auth adds `operator: true`.
 An operator-only endpoint requires that claim plus its own action-specific
 checks. There is no operator-management HTTP API.
 
-## Later, if needed
+## Evolution
 
-If controlled database access ceases to be adequate, add operator listing,
-granting, revocation, expiry, and durable audit. Add finer permissions only if
-different operator groups need different platform authority.
+| Stage | Strengthen | Add when |
+| --- | --- | --- |
+| Baseline | Bootstrap one named operator through the controlled database procedure. | A small trusted team operates the platform. |
+| Controlled | Manage named grants and revocations through a fresh-authenticated administrative operation with notifications and durable audit. | Manual database changes no longer provide enough control or evidence. |
+| High assurance | Use just-in-time operator grants, two-person approval for sensitive actions, isolated break-glass access, and periodic access review. | Platform administration is a material security or regulatory boundary. |
 
 ## Not included
 

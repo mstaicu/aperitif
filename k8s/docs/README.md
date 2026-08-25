@@ -36,6 +36,10 @@ Capabilities compose one way: a capability lists its prerequisites and extends
 them without copying their tables, API, or events. Once a Product exists, its
 README, OpenAPI, and contracts replace the recipe's proposed interface.
 
+Each capability's `Evolution` section strengthens the same boundary in stages.
+Start with the baseline and stop until a concrete threat, customer, or
+regulatory requirement justifies the next stage.
+
 ## Rules
 
 - Update a capability with the same change as its outcome, prerequisites,
