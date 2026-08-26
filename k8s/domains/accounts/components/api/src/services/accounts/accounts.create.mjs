@@ -1,7 +1,4 @@
-import {
-  buildAccountCreatedV1Event,
-  buildAccountMemberCreatedV1Event,
-} from "@mstaicu/accounts-contracts";
+import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
 /**
@@ -54,32 +51,17 @@ export const createAccount =
         {
           account: {
             id: account.id,
+            members: [
+              {
+                role: "owner",
+                user_id: currentUserId,
+              },
+            ],
             name: account.name,
             type: account.type,
           },
         },
         Number(account.version),
-      );
-      const {
-        rows: [versionedAccount],
-      } = await client.query(
-        `
-          UPDATE accounts
-          SET version = version + 1
-          WHERE id = $1
-          RETURNING version
-        `,
-        [account.id],
-      );
-      const memberCreatedEvent = buildAccountMemberCreatedV1Event(
-        {
-          account_id: account.id,
-          member: {
-            role: "owner",
-            user_id: currentUserId,
-          },
-        },
-        Number(versionedAccount.version),
       );
       const traceContext = /** @type {Record<string, string>} */ ({});
 
@@ -93,17 +75,13 @@ export const createAccount =
             traceparent,
             tracestate
           )
-          VALUES
-            ($1, $2::jsonb, $3, $4),
-            ($5, $6::jsonb, $3, $4)
+          VALUES ($1, $2::jsonb, $3, $4)
         `,
         [
           accountCreatedEvent.id,
           JSON.stringify(accountCreatedEvent),
           traceContext.traceparent,
           traceContext.tracestate,
-          memberCreatedEvent.id,
-          JSON.stringify(memberCreatedEvent),
         ],
       );
 

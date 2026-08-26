@@ -7,19 +7,17 @@ It exports schemas, validators, constants, and builders for:
 
 ```text
 accounts.account.created.v1
-accounts.member.created.v1
-accounts.member.updated.v1
-accounts.member.deleted.v1
 ```
 
 Source schemas are under `src/events`; example payloads are under
 `examples/events`.
 
 Events use CloudEvents `1.0`. The event `type` versions the payload contract.
-`data.version` is a monotonic account revision that consumers compare per
-projected account or membership resource. Additive changes may stay on the same
-event version only when old consumers remain valid; otherwise publish a new
-event type.
+`data.account` carries the complete current Account state, including its basic
+`owner` and `member` roles. `data.version` is the monotonic Account revision
+that consumers compare per projected Account. Additive changes may stay on the
+same event version only when old consumers remain valid; otherwise publish a
+new event type.
 
 ## Build and publish
 

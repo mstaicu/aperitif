@@ -1,7 +1,4 @@
-import {
-  AccountCreatedV1Type,
-  AccountMemberCreatedV1Type,
-} from "@mstaicu/accounts-contracts";
+import { AccountCreatedV1Type } from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -40,7 +37,6 @@ test("creates account ownership and lists only the caller's accounts", async () 
       SELECT event
       FROM outbox_events
       WHERE event #>> '{data,account,id}' = $1
-        OR event #>> '{data,account_id}' = $1
       ORDER BY (event #>> '{data,version}')::bigint
     `,
     [alpha.account.id],
@@ -50,19 +46,15 @@ test("creates account ownership and lists only the caller's accounts", async () 
     outbox.map(({ event }) => [
       event.type,
       event.data.version,
-      event.data.account ?? {
-        account_id: event.data.account_id,
-        member: event.data.member,
-      },
+      event.data.account,
     ]),
     [
-      [AccountCreatedV1Type, 1, alpha.account],
       [
-        AccountMemberCreatedV1Type,
-        2,
+        AccountCreatedV1Type,
+        1,
         {
-          account_id: alpha.account.id,
-          member: { role: "owner", user_id: userId },
+          ...alpha.account,
+          members: [{ role: "owner", user_id: userId }],
         },
       ],
     ],

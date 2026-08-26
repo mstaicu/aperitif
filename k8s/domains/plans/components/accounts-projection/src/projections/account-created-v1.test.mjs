@@ -26,6 +26,12 @@ test("assigns the free plan and publishes its features once", async () => {
     {
       account: {
         id: accountId,
+        members: [
+          {
+            role: "owner",
+            user_id: randomUUID(),
+          },
+        ],
         name: "Acme",
         type: "organization",
       },

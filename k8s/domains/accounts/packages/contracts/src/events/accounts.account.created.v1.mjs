@@ -2,7 +2,7 @@ import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { randomUUID } from "node:crypto";
 
-import { UuidSchema } from "../schemas.mjs";
+import { AccountMemberSchema, UuidSchema } from "../schemas.mjs";
 
 export const AccountCreatedV1Source = "/domains/accounts";
 export const AccountCreatedV1Type = "accounts.account.created.v1";
@@ -12,6 +12,7 @@ export const AccountCreatedV1DataSchema = Type.Object(
     account: Type.Object(
       {
         id: UuidSchema,
+        members: Type.Array(AccountMemberSchema, { minItems: 1 }),
         name: Type.String({ maxLength: 160, minLength: 1 }),
         type: Type.Union([
           Type.Literal("individual"),
