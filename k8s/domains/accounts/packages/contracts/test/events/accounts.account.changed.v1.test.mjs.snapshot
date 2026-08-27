@@ -1,0 +1,130 @@
+exports[`accounts.account.changed.v1 remains compatible 1`] = `
+{
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "datacontenttype",
+    "data",
+    "id",
+    "source",
+    "specversion",
+    "subject",
+    "time",
+    "type"
+  ],
+  "properties": {
+    "datacontenttype": {
+      "const": "application/json",
+      "type": "string"
+    },
+    "data": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "account",
+        "version"
+      ],
+      "properties": {
+        "account": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "id",
+                "members",
+                "name",
+                "type"
+              ],
+              "properties": {
+                "id": {
+                  "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+                  "type": "string"
+                },
+                "members": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "role",
+                      "user_id"
+                    ],
+                    "properties": {
+                      "role": {
+                        "anyOf": [
+                          {
+                            "const": "owner",
+                            "type": "string"
+                          },
+                          {
+                            "const": "member",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "user_id": {
+                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "name": {
+                  "maxLength": 160,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": {
+                  "anyOf": [
+                    {
+                      "const": "individual",
+                      "type": "string"
+                    },
+                    {
+                      "const": "organization",
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "id": {
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "type": "string"
+    },
+    "source": {
+      "const": "/domains/accounts",
+      "type": "string"
+    },
+    "specversion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "subject": {
+      "pattern": "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "type": "string"
+    },
+    "time": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "type": {
+      "const": "accounts.account.changed.v1",
+      "type": "string"
+    }
+  }
+}
+`;

@@ -12,3 +12,16 @@ export const AccountMemberSchema = Type.Object(
   },
   { additionalProperties: false },
 );
+
+export const AccountSchema = Type.Object(
+  {
+    id: UuidSchema,
+    members: Type.Array(AccountMemberSchema, { minItems: 1 }),
+    name: Type.String({ maxLength: 160, minLength: 1 }),
+    type: Type.Union([
+      Type.Literal("individual"),
+      Type.Literal("organization"),
+    ]),
+  },
+  { additionalProperties: false },
+);
