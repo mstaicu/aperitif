@@ -4,8 +4,9 @@ on:
   push:
     branches: [master]
     paths:
-      - "domains/*/components/*/**"
-      - "!domains/*/components/*/infra/**"
+      - "domains/*/*/**"
+      - "!domains/*/contracts/**"
+      - "!domains/*/deploy/**"
 
 concurrency:
   group: publish-images
@@ -15,11 +16,11 @@ permissions:
   contents: read
 
 jobs:
-  components:
-    name: find changed components
+  workloads:
+    name: find changed workloads
     runs-on: ubuntu-24.04
     outputs:
-      components: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      workloads: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -29,15 +30,17 @@ jobs:
       - id: changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: domains/*/components/*/**
-          files_ignore: domains/*/components/*/infra/**
+          files: domains/*/*/**
+          files_ignore: |
+            domains/*/contracts/**
+            domains/*/deploy/**
           dir_names: true
-          dir_names_max_depth: 4
+          dir_names_max_depth: 3
           matrix: true
 
   publish:
-    name: publish ${{ matrix.component }}
-    needs: components
+    name: publish ${{ matrix.workload }}
+    needs: workloads
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -46,14 +49,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        component: ${{ fromJSON(needs.components.outputs.components) }}
+        workload: ${{ fromJSON(needs.workloads.outputs.workloads) }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - id: image
         name: read image name
-        run: echo "name=$(yq -r '.images[0].name' '${{ matrix.component }}/infra/overlays/prod-eu/kustomization.yaml')" >> "$GITHUB_OUTPUT"
+        run: |
+          source="${{ matrix.workload }}"
+          domain="${source%/*}"
+          workload="${source##*/}"
+          echo "name=$(yq -r '.images[0].name' "$domain/deploy/$workload/overlays/prod-eu/kustomization.yaml")" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
@@ -67,7 +74,7 @@ jobs:
         name: build and publish image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          context: ${{ matrix.component }}
+          context: ${{ matrix.workload }}
           target: prod
           push: true
           provenance: mode=max

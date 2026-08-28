@@ -51,7 +51,7 @@ backend without changing any producer.
 Deploy locally with:
 
 ```sh
-make -C platform/observability deploy
+make -C platform/cluster/observability deploy
 ```
 
 Open the local UI at `https://observe.tma.com` after deploying ingress and this
@@ -61,12 +61,12 @@ Render both environments with:
 
 ```sh
 kustomize build --enable-alpha-plugins --enable-exec \
-  platform/observability/overlays/ephemeral >/dev/null
-kubectl kustomize platform/observability/overlays/prod-eu >/dev/null
+  platform/cluster/observability/overlays/ephemeral >/dev/null
+kubectl kustomize platform/cluster/observability/overlays/prod-eu >/dev/null
 ```
 
 Validate the production manifests with:
 
 ```sh
-make -C platform/observability check
+make -C platform/cluster/observability check
 ```

@@ -7,7 +7,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - infra/postgres/overlays/ephemeral
+      - deploy/postgres/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -25,14 +25,14 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/auth-migrations
-      context: components/migrations
+      context: migrations
       docker:
         dockerfile: Dockerfile
 
 manifests:
   kustomize:
     paths:
-      - components/migrations/infra/overlays/ephemeral
+      - deploy/migrations/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/auth-api
-      context: components/api
+      context: api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -63,7 +63,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/api/infra/overlays/ephemeral
+      - deploy/api/overlays/ephemeral
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
@@ -84,7 +84,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/auth-ui
-      context: components/ui
+      context: ui
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -97,7 +97,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/ui/infra/overlays/ephemeral
+      - deploy/ui/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -112,7 +112,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - components/cleanup/infra/overlays/ephemeral
+      - deploy/cleanup/overlays/ephemeral
 
 deploy:
   kubectl: {}

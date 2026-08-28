@@ -5,25 +5,25 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate Accounts components, packages, and manifests.
-	cd components/api && npm ci
-	cd components/api && npm exec -- eslint .
-	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/api && npm test
+check: ## Validate Accounts workloads, contracts, and manifests.
+	cd api && npm ci
+	cd api && npm exec -- eslint .
+	cd api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd api && npm test
 
-	cd packages/contracts && npm ci
-	cd packages/contracts && npm test
-	cd packages/contracts && npm run build
+	cd contracts && npm ci
+	cd contracts && npm test
+	cd contracts && npm run build
 
-	cd components/outbox && npm ci
-	cd components/outbox && npm exec -- eslint .
-	cd components/outbox && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/outbox && npm test
+	cd outbox && npm ci
+	cd outbox && npm exec -- eslint .
+	cd outbox && npm exec -- tsc -p jsconfig.json --noEmit
+	cd outbox && npm test
 
-	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/outbox/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/outbox/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres

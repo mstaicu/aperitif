@@ -33,7 +33,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/platform/ingress/crds
+  path: ./k8s/platform/cluster/ingress/crds
   prune: false
   sourceRef:
     kind: GitRepository
@@ -50,7 +50,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/platform/ingress/overlays/prod-eu
+  path: ./k8s/platform/cluster/ingress/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
@@ -73,7 +73,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/platform/event-bus/overlays/prod-eu
+  path: ./k8s/platform/cluster/event-bus/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
@@ -91,7 +91,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/platform/observability/overlays/prod-eu
+  path: ./k8s/platform/cluster/observability/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

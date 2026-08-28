@@ -25,12 +25,12 @@ ACCOUNTS stream -> accounts projection -> PostgreSQL
 
 | Part | Purpose |
 | --- | --- |
-| `components/accounts-projection` | Remember known accounts and assign their initial plan |
-| `components/api` | Assign plans and resolve features |
-| `components/outbox` | Publish account feature snapshots |
-| `components/migrations` | Flyway SQL and its Job |
-| `packages/contracts` | Published Plans event package |
-| `infra/postgres` | Disposable in-cluster database |
+| `accounts-projection` | Remember known accounts and assign their initial plan |
+| `api` | Assign plans and resolve features |
+| `outbox` | Publish account feature snapshots |
+| `migrations` | Flyway SQL |
+| `contracts` | Published Plans event package |
+| `deploy` | Kubernetes workloads, including the database and migration Job |
 
 Plans and their feature values are product configuration added through
 migrations. The operator API exposes one command:
@@ -65,7 +65,7 @@ make -C domains/plans dev
 ```
 
 Add schema and configuration changes as
-`components/migrations/sql/V###__description.sql`.
+`migrations/sql/V###__description.sql`.
 
 If a migration changes an account's effective features, it must also increment
 that account's plan version, replace any still-pending snapshot for that

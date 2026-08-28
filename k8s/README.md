@@ -3,8 +3,8 @@
 A small Kubernetes platform for independently developed domains.
 
 ```text
-domains/             business domains and their deployable components
-platform/            ingress, event bus, and observability
+domains/             business domains, workload source, and deployment configuration
+platform/cluster/    cluster capabilities
 clusters/prod-eu/    production Flux inventory
 docs/                platform capabilities and business recipes
 .github/workflows/   checks and image publication
@@ -24,8 +24,9 @@ capabilities, and business recipes.
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
 
-Each deployable component keeps its implementation, Dockerfile, and Kubernetes
-manifests under `domains/<domain>/components/<component>`.
+Each domain keeps a workload's source and Dockerfile under
+`domains/<domain>/<workload>`. Its Kubernetes configuration lives separately
+under `domains/<domain>/deploy/<workload>`.
 
 ### Event processing
 
@@ -99,9 +100,9 @@ brew bundle
 Deploy the shared units you need:
 
 ```sh
-make -C platform/ingress deploy
-make -C platform/event-bus deploy
-make -C platform/observability deploy  # optional
+make -C platform/cluster/ingress deploy
+make -C platform/cluster/event-bus deploy
+make -C platform/cluster/observability deploy  # optional
 ```
 
 Every domain exposes the same commands:
@@ -125,7 +126,7 @@ pull request
   -> check changed domains and platform units
 
 merge to master
-  -> build changed component images
+  -> build changed workload images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay

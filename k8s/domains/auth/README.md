@@ -14,11 +14,11 @@ PostgreSQL -> migrations -> API -> UI
 
 | Part                    | Purpose                                                          |
 | ----------------------- | ---------------------------------------------------------------- |
-| `components/api`        | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
-| `components/ui`         | Passkey signup and login                                         |
-| `components/migrations` | Flyway SQL and its Job                                           |
-| `infra/postgres`        | Disposable in-cluster database                                   |
-| `components/cleanup`    | Removes expired challenges and old sessions                      |
+| `api`                   | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
+| `ui`                    | Passkey signup and login                                         |
+| `migrations`            | Flyway SQL                                                       |
+| `deploy`                | Kubernetes workloads, including the database and migration Job   |
+| `deploy/cleanup`        | Removes expired challenges and old sessions                      |
 
 Auth currently publishes no domain events, so it has no outbox component.
 
@@ -70,5 +70,5 @@ make -C domains/auth deploy
 make -C domains/auth dev
 ```
 
-Add schema changes as `components/migrations/sql/V###__description.sql` and use
+Add schema changes as `migrations/sql/V###__description.sql` and use
 expand/contract for changes consumed by running code.

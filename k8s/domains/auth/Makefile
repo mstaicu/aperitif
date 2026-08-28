@@ -5,18 +5,18 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate Auth components, packages, and manifests.
-	cd components/api && npm ci
-	cd components/api && npm exec -- eslint .
-	cd components/api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd components/api && npm test
-	cd components/ui && npm ci
-	cd components/ui && npm run check
-	kubectl kustomize infra/postgres/overlays/prod-eu >/dev/null
-	kubectl kustomize components/migrations/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/cleanup/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/api/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize components/ui/infra/overlays/prod-eu >/dev/null
+check: ## Validate Auth workloads and manifests.
+	cd api && npm ci
+	cd api && npm exec -- eslint .
+	cd api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd api && npm test
+	cd ui && npm ci
+	cd ui && npm run check
+	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/cleanup/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/ui/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Auth database and run its migrations.
 	skaffold run -m auth-postgres

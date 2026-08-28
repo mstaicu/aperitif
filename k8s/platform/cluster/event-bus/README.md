@@ -7,7 +7,7 @@ outboxes, and projections.
 Deploy it locally with:
 
 ```sh
-make -C platform/event-bus deploy
+make -C platform/cluster/event-bus deploy
 ```
 
 Applications connect to `nats-client.nats.svc.cluster.local:4222`. The
@@ -67,8 +67,8 @@ connect.
 Render both environments with:
 
 ```sh
-kubectl kustomize platform/event-bus/overlays/ephemeral >/dev/null
-kubectl kustomize platform/event-bus/overlays/prod-eu >/dev/null
+kubectl kustomize platform/cluster/event-bus/overlays/ephemeral >/dev/null
+kubectl kustomize platform/cluster/event-bus/overlays/prod-eu >/dev/null
 ```
 
 See [DEBUG.md](DEBUG.md) when the cluster or an event path is unhealthy.

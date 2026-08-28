@@ -7,7 +7,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - infra/postgres/overlays/ephemeral
+      - deploy/postgres/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -25,14 +25,14 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-migrations
-      context: components/migrations
+      context: migrations
       docker:
         dockerfile: Dockerfile
 
 manifests:
   kustomize:
     paths:
-      - components/migrations/infra/overlays/ephemeral
+      - deploy/migrations/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-api
-      context: components/api
+      context: api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -63,7 +63,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/api/infra/overlays/ephemeral
+      - deploy/api/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -81,7 +81,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-outbox
-      context: components/outbox
+      context: outbox
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -94,7 +94,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/outbox/infra/overlays/ephemeral
+      - deploy/outbox/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -112,7 +112,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-accounts-projection
-      context: components/accounts-projection
+      context: accounts-projection
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -125,7 +125,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - components/accounts-projection/infra/overlays/ephemeral
+      - deploy/accounts-projection/overlays/ephemeral
 
 deploy:
   kubectl: {}

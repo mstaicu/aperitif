@@ -15,7 +15,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/infra/postgres/overlays/prod-eu
+  path: ./k8s/domains/accounts/deploy/postgres/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
@@ -32,7 +32,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/components/migrations/infra/overlays/prod-eu
+  path: ./k8s/domains/accounts/deploy/migrations/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
@@ -52,7 +52,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/components/api/infra/overlays/prod-eu
+  path: ./k8s/domains/accounts/deploy/api/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository
@@ -72,7 +72,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/domains/accounts/components/outbox/infra/overlays/prod-eu
+  path: ./k8s/domains/accounts/deploy/outbox/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

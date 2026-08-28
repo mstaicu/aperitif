@@ -18,11 +18,11 @@ PostgreSQL -> migrations -> API
 
 | Part | Purpose |
 | --- | --- |
-| `components/api` | Create and list accounts |
-| `components/outbox` | Publish committed Accounts events |
-| `components/migrations` | Flyway SQL and its Job |
-| `packages/contracts` | Published Accounts event package |
-| `infra/postgres` | Disposable in-cluster database |
+| `api` | Create and list accounts |
+| `outbox` | Publish committed Accounts events |
+| `migrations` | Flyway SQL |
+| `contracts` | Published Accounts event package |
+| `deploy` | Kubernetes workloads, including the database and migration Job |
 
 The API exposes `GET/POST /v1/accounts`. OpenAPI is available at
 `/v1/accounts/docs`.
@@ -44,5 +44,5 @@ make -C domains/accounts deploy
 make -C domains/accounts dev
 ```
 
-Add schema changes as `components/migrations/sql/V###__description.sql`. Keep
+Add schema changes as `migrations/sql/V###__description.sql`. Keep
 PostgreSQL notifications as wake-ups only; `outbox_events` remains durable.
