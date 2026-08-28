@@ -53,33 +53,6 @@ spec:
   digestReflectionPolicy: Always
   interval: 5m
 
----
-apiVersion: image.toolkit.fluxcd.io/v1
-kind: ImageRepository
-
-metadata:
-  name: plans-outbox
-  namespace: flux-system
-spec:
-  image: ghcr.io/mstaicu/plans-outbox
-  interval: 5m
-
----
-apiVersion: image.toolkit.fluxcd.io/v1
-kind: ImagePolicy
-
-metadata:
-  name: plans-outbox
-  namespace: flux-system
-spec:
-  imageRepositoryRef:
-    name: plans-outbox
-  filterTags:
-    pattern: "^latest$"
-  policy:
-    alphabetical: {}
-  digestReflectionPolicy: Always
-  interval: 5m
 
 ---
 apiVersion: image.toolkit.fluxcd.io/v1

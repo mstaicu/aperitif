@@ -52,31 +52,3 @@ spec:
     alphabetical: {}
   digestReflectionPolicy: Always
   interval: 5m
-
----
-apiVersion: image.toolkit.fluxcd.io/v1
-kind: ImageRepository
-
-metadata:
-  name: accounts-outbox
-  namespace: flux-system
-spec:
-  image: ghcr.io/mstaicu/accounts-outbox
-  interval: 5m
-
----
-apiVersion: image.toolkit.fluxcd.io/v1
-kind: ImagePolicy
-
-metadata:
-  name: accounts-outbox
-  namespace: flux-system
-spec:
-  imageRepositoryRef:
-    name: accounts-outbox
-  filterTags:
-    pattern: "^latest$"
-  policy:
-    alphabetical: {}
-  digestReflectionPolicy: Always
-  interval: 5m

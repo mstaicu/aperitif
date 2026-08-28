@@ -19,7 +19,7 @@ spec:
               app: migrations
         - podSelector:
             matchLabels:
-              app: outbox
+              app: relay
       ports:
         - protocol: TCP
           port: 5432

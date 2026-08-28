@@ -20,7 +20,8 @@ PostgreSQL -> migrations -> API -> UI
 | `deploy`                | Kubernetes workloads, including the database and migration Job   |
 | `deploy/cleanup`        | Removes expired challenges and old sessions                      |
 
-Auth currently publishes no domain events, so it has no outbox component.
+Auth currently publishes no domain events, so it has no outbox table or Relay
+deployment.
 
 ## Public surface
 

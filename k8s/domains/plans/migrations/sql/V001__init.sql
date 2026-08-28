@@ -60,16 +60,5 @@ CREATE TABLE outbox_events (
     )
 );
 
--- Notification only; the row remains durable until JetStream acknowledges it.
-CREATE FUNCTION notify_outbox_event()
-RETURNS TRIGGER AS $$
-BEGIN
-    PERFORM pg_notify('outbox_events', '');
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER outbox_events_notify_insert
-AFTER INSERT ON outbox_events
-FOR EACH STATEMENT
-EXECUTE FUNCTION notify_outbox_event();
+CREATE INDEX outbox_events_queued_at_id
+ON outbox_events (queued_at, id);

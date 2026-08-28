@@ -3,7 +3,7 @@
 Debug from the infrastructure inward:
 
 ```text
-Kubernetes -> NATS servers -> streams -> consumers -> outboxes/projections
+Kubernetes -> NATS servers -> streams -> consumers -> Relays/projections
 ```
 
 The cluster has three servers. JetStream metadata and R3 streams need two
@@ -95,7 +95,7 @@ nats --no-context consumer ls ACCOUNTS
 - Growing pending messages means the projection component is absent or slow.
 - Growing acknowledgement-pending or redeliveries means its handler is
   failing or not acknowledging.
-- Missing streams usually means the owning outbox component has not started or
+- Missing streams usually means the owning Relay has not started or
   failed during stream creation.
 
 Stop the port-forward with `Ctrl-C` and run `unset NATS_URL` when finished.
@@ -103,17 +103,17 @@ Stop the port-forward with `Ctrl-C` and run `unset NATS_URL` when finished.
 ## 4. Follow one event
 
 ```text
-domain transaction -> outbox_events -> outbox -> stream
+domain transaction -> outbox_events -> Relay -> stream
                    -> consumer -> projection -> projection table
 ```
 
 ```sh
-kubectl logs -n accounts deployment/outbox --since=10m
-kubectl logs -n plans deployment/outbox --since=10m
+kubectl logs -n accounts deployment/relay --since=10m
+kubectl logs -n plans deployment/relay --since=10m
 kubectl logs -n plans deployment/accounts-projection --since=10m
 ```
 
-An unpublished outbox row points to the outbox component or NATS connection. A
+An unpublished outbox row points to the Relay or NATS connection. A
 stream message with consumer backlog points to the projection component. An
 acknowledged message with wrong projected state points to the projection
 transaction.

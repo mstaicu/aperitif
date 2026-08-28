@@ -1,0 +1,14 @@
+[
+  {
+    "discard": "new",
+    "discard_new_per_subject": false,
+    "max_age": 0,
+    "max_bytes": 419430400,
+    "max_msgs_per_subject": 1,
+    "name": "ACCOUNTS",
+    "num_replicas": 3,
+    "retention": "limits",
+    "storage": "file",
+    "subjects": ["accounts.account.*.*"]
+  }
+]

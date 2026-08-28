@@ -18,9 +18,9 @@ the payload schema version. `data.revision` is the monotonic Account feature
 revision; it is unrelated to CloudEvents `specversion` and the JetStream
 sequence.
 
-The builder creates the structured CloudEvents JSON body. The Plans outbox owns
-NATS transport details, including the `Content-Type: application/cloudevents`
-header and JetStream message ID.
+The builder creates the structured CloudEvents JSON body. Relay owns NATS
+transport details, including the `Content-Type: application/cloudevents` header
+and JetStream message ID.
 
 ## NATS subject
 

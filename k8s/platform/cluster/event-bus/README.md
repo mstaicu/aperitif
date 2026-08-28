@@ -2,7 +2,7 @@
 
 This unit runs a three-server NATS JetStream cluster. It transports durable
 cross-domain events; domains own their streams, consumers, contracts,
-outboxes, and projections.
+outbox tables, and projections.
 
 Deploy it locally with:
 
@@ -47,8 +47,8 @@ For a compacted resource-projection stream:
 stream max_bytes = retained resource count * average representation size * safety factor
 ```
 
-Set a stream's `NATS_STREAM_MAX_BYTES` and `NATS_STREAM_REPLICAS` in its owning
-outbox overlay. Then keep `max_file_store` at 80% of the PVC. Existing
+Set a stream's limits in its owning `deploy/relay/base/streams.json`. Then
+keep `max_file_store` at 80% of the PVC. Existing
 streams and PVCs require an explicit update or resize; changing initial
 manifests does not mutate them automatically.
 
@@ -57,11 +57,11 @@ At a stream limit, a rejected publication remains in the outbox for retry.
 ## Event rule
 
 ```text
-domain DB transaction -> outbox row -> outbox -> JetStream
+domain DB transaction -> outbox row -> Relay -> JetStream
 ```
 
 Request handlers do not directly publish authority events. The NATS
-NetworkPolicy must list every outbox and projection component allowed to
+NetworkPolicy must list every Relay and projection component allowed to
 connect.
 
 Render both environments with:

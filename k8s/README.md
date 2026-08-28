@@ -5,6 +5,7 @@ A small Kubernetes platform for independently developed domains.
 ```text
 domains/             business domains, workload source, and deployment configuration
 platform/cluster/    cluster capabilities
+platform/runtime/    shared runtime executables
 clusters/prod-eu/    production Flux inventory
 docs/                platform capabilities and business recipes
 .github/workflows/   checks and image publication
@@ -24,9 +25,10 @@ capabilities, and business recipes.
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
 
-Each domain keeps a workload's source and Dockerfile under
-`domains/<domain>/<workload>`. Its Kubernetes configuration lives separately
-under `domains/<domain>/deploy/<workload>`.
+Domain workload source and Dockerfiles live under
+`domains/<domain>/<workload>`. Shared runtime source lives under
+`platform/runtime/<runtime>`. A domain still owns every workload deployment and
+stream configuration under `domains/<domain>/deploy/<workload>`.
 
 ### Event processing
 

@@ -73,15 +73,15 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: accounts-outbox
+  name: accounts-relay
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/accounts-outbox
-      context: outbox
+    - image: ghcr.io/mstaicu/relay
+      context: ../../platform/runtime/relay
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -94,7 +94,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - deploy/outbox/overlays/ephemeral
+      - deploy/relay/overlays/ephemeral
 
 deploy:
   kubectl: {}

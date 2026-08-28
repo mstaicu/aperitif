@@ -15,15 +15,12 @@ check: ## Validate Accounts workloads, contracts, and manifests.
 	cd contracts && npm test
 	cd contracts && npm run build
 
-	cd outbox && npm ci
-	cd outbox && npm exec -- eslint .
-	cd outbox && npm exec -- tsc -p jsconfig.json --noEmit
-	cd outbox && npm test
+	$(MAKE) -C ../../platform/runtime/relay check
 
 	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/outbox/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/relay/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres
@@ -32,7 +29,7 @@ migrate: ## Deploy the Accounts database and run its migrations.
 	kubectl wait -n accounts --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n accounts job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Accounts once in the current cluster.
-	skaffold run -m accounts-api,accounts-outbox
+	skaffold run -m accounts-api,accounts-relay
 
 dev: migrate ## Start the Accounts development loop.
-	skaffold dev -m accounts-api,accounts-outbox
+	skaffold dev -m accounts-api,accounts-relay

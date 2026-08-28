@@ -13,13 +13,13 @@ itself; product-specific roles remain inside product domains.
 
 ```text
 PostgreSQL -> migrations -> API
-                          -> outbox -> ACCOUNTS stream
+                          -> outbox -> Relay -> ACCOUNTS stream
 ```
 
 | Part | Purpose |
 | --- | --- |
 | `api` | Create and list accounts |
-| `outbox` | Publish committed Accounts events |
+| `relay` | Publish committed Accounts events |
 | `migrations` | Flyway SQL |
 | `contracts` | Published Accounts event package |
 | `deploy` | Kubernetes workloads, including the database and migration Job |
@@ -45,4 +45,4 @@ make -C domains/accounts dev
 ```
 
 Add schema changes as `migrations/sql/V###__description.sql`. Keep
-PostgreSQL notifications as wake-ups only; `outbox_events` remains durable.
+`outbox_events` remains durable until Relay receives JetStream PubAck.

@@ -124,15 +124,11 @@ ingress-crds ──┬──> ingress
 auth-postgres ──> auth-migrations ──┬──> auth-api
                                            └──> auth-cleanup
 
-accounts-postgres ──> accounts-migrations ──┬──> accounts-api
-                                            └──> accounts-outbox
-event-bus ──> accounts-outbox
+accounts-postgres ──> accounts-migrations ──> accounts-api
 
 plans-postgres ──> plans-migrations ──┬──> plans-api
-                                      ├──> plans-outbox
                                       └──> plans-accounts-projection
-event-bus ──┬──> plans-outbox
-           └──> plans-accounts-projection
+event-bus ──> plans-accounts-projection
 
 observability
   └──> receives optional telemetry without blocking domain reconciliation
