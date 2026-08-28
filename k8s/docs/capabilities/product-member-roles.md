@@ -21,7 +21,7 @@ stores its own role assignments.
 ```sql
 CREATE TABLE projected_accounts (
   account_id UUID PRIMARY KEY,
-  version BIGINT NOT NULL
+  revision BIGINT NOT NULL
 );
 
 CREATE TABLE projected_account_members (
@@ -67,8 +67,9 @@ leave an active role behind.
 
 Consume the complete `accounts.account.changed.v1` representation from
 `accounts.account.v1.<account-id>`. In one transaction, lock the Account guard,
-ignore a snapshot whose version is not newer, synchronize the current members,
-remove Product roles for members no longer present, and store the new version.
+ignore a snapshot whose `data.revision` is not newer, synchronize the current
+members, remove Product roles for members no longer present, and store the new
+revision.
 
 Role routes require a current projected member. Re-adding a member does not
 restore previously removed Product roles. The root event-processing contract

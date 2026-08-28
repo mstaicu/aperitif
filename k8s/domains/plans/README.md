@@ -10,8 +10,8 @@ A feature has a stable ID. A plan assigns each included feature a boolean,
 number, or string value. An account has one current plan. Products consume the
 resolved feature values and never branch on a plan name.
 
-Every current account starts on the seeded `free` plan. Plans publishes its
-initial Account feature snapshot at version `1`.
+When Plans first projects an Account, it assigns the seeded `free` plan and
+publishes the complete Account feature representation at revision `1`.
 
 Plans does not own accounts, payments, compliance decisions, or product data.
 
@@ -25,7 +25,7 @@ ACCOUNTS stream -> accounts projection -> PostgreSQL
 
 | Part | Purpose |
 | --- | --- |
-| `accounts-projection` | Remember known accounts and assign their initial plan |
+| `accounts-projection` | Assign the initial plan when it sees an Account state |
 | `api` | Assign plans and resolve features |
 | `relay` | Publish account feature snapshots |
 | `migrations` | Flyway SQL |

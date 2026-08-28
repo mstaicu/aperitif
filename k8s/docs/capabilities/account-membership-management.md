@@ -63,7 +63,7 @@ The published resource representation remains the existing Account state feed:
 ```text
 subject: accounts.account.v1.<account-id>
 type:    accounts.account.changed.v1
-data:    complete Account, including all current members, and its version
+data:    complete Account, including all current members, and its revision
 ```
 
 There are no `accounts.member.created`, `.updated`, or `.deleted` projection
@@ -76,6 +76,6 @@ Account feed under the root event-processing contract.
 
 | Stage | Strengthen | Add when |
 | --- | --- | --- |
-| Baseline | `owner` and `member`, last-owner protection, and a complete versioned Account state feed. | A controlled first product. |
+| Baseline | `owner` and `member`, last-owner protection, and a complete Account state feed with a monotonic revision. | A controlled first product. |
 | Controlled | Notify affected members and retain durable evidence of membership changes. | Account access is operationally important. |
 | High assurance | Require fresh WebAuthn authentication for sensitive owner changes; add product or Account policy for approval, separation of duties, and periodic access review. | Unauthorized membership changes have material consequences. |

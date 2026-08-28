@@ -48,9 +48,9 @@ stream max_bytes = retained resource count * average representation size * safet
 ```
 
 Set a stream's limits in its owning `deploy/relay/base/streams.json`. Then
-keep `max_file_store` at 80% of the PVC. Existing
-streams and PVCs require an explicit update or resize; changing initial
-manifests does not mutate them automatically.
+keep `max_file_store` at 80% of the PVC. Restarting the owning Relay applies
+the stream configuration; resizing an existing PVC remains an explicit
+operation. NATS requires every APP stream to declare `max_bytes`.
 
 At a stream limit, a rejected publication remains in the outbox for retry.
 

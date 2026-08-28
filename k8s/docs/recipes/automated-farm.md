@@ -32,7 +32,10 @@ farm
 └── observations
 ```
 
-Farm events follow the [platform event contract](../../README.md#event-processing).
+Farm follows the [platform event contract](../../README.md#event-processing).
+It publishes a complete current-resource feed only when another domain needs
+that resource's current state. It publishes an append-only fact only when a
+consumer needs the historical occurrence.
 
 A machine is the authenticated actor. A vehicle is a Farm resource. They may
 be linked, but are not the same record. Farm decides whether the machine may
@@ -61,11 +64,11 @@ revision. Observation creation uses an `Idempotency-Key`, so a retried upload
 returns the first result instead of creating a duplicate observation.
 
 ```text
-farm.field.created.v1
-farm.vehicle.created.v1
-farm.mission.created.v1
-farm.mission.updated.v1
-farm.observation.created.v1
+farm.field.created.v1        # historical fact, if needed
+farm.vehicle.created.v1      # historical fact, if needed
+farm.mission.created.v1      # historical fact, if needed
+farm.mission.updated.v1      # historical fact, if needed
+farm.observation.created.v1  # historical fact, if needed
 ```
 
 Store image and video bytes in object storage. Farm stores their metadata,

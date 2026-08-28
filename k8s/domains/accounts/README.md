@@ -44,5 +44,5 @@ make -C domains/accounts deploy
 make -C domains/accounts dev
 ```
 
-Add schema changes as `migrations/sql/V###__description.sql`. Keep
-`outbox_events` remains durable until Relay receives JetStream PubAck.
+Add schema changes as `migrations/sql/V###__description.sql`. Outbox rows stay
+durable until Relay receives JetStream PubAck.

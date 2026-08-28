@@ -6,9 +6,14 @@ Only unresolved, product-agnostic platform work belongs here.
 
 - Replace in-cluster PostgreSQL with managed databases and test backup and
   restoration.
+- Establish Relay's production delivery boundary. It is deployed locally by
+  Accounts and Plans, but CI, image automation, and Flux do not yet publish or
+  reconcile it in production.
 - Verify the 400 MiB current-resource stream limits against measured retained
   resource count and representation size before production.
 - Choose a certificate flow that supports redundant production ingress.
+- Harden ingress with redundant replicas, direct-origin restriction, and
+  explicit forwarded-header trust.
 - Measure workloads, then set replicas, resources, disruption budgets, and
   topology placement.
 - Give the telemetry backend suitable storage, recovery, retention, and alerts.

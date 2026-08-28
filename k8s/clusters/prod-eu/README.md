@@ -2,14 +2,24 @@
 
 Flux reconciles `master` from `k8s/clusters/prod-eu`.
 
+## Current status
+
+The current production inventory deliberately does not reconcile the Accounts
+or Plans Relay, and it has no Relay image policy. Those state feeds therefore
+cannot publish in production yet. Local development deploys Relay with each
+emitting domain; production delivery must be established before this cluster is
+used for event-driven domains.
+
 ## Before bootstrap
 
 - Select the production Kubernetes context.
 - Set `GITHUB_TOKEN` to a token that can administer `mstaicu/aperitif`.
 - Set `SOPS_AGE_KEY_FILE` to the production Age private key.
-- Publish every production image to `ghcr.io/mstaicu`.
+- Publish every image referenced by the current production inventory to
+  `ghcr.io/mstaicu`.
 - Make the images public or configure GHCR pull credentials.
-- Replace every all-zero production digest with the real digest behind `latest`.
+- Replace every all-zero digest in a reconciled production overlay with the
+  real digest behind `latest`.
 
 ## Bootstrap
 
@@ -71,10 +81,11 @@ merge to master
   -> normal Flux reconciliation deploys it
 ```
 
-- Code changes build only changed components.
+- Code changes build only the listed domain workload images. Shared runtime
+  images are not yet in this release path.
 - Infrastructure-only changes are applied directly by Flux.
 - Image publishing runs are serialized and retained.
-- One image repository and policy exists per production component.
+- One image repository and policy exists per listed production workload image.
 - One image update automation writes all domain digests.
 - Flux digest commits do not trigger another image build.
 - Releases use expand/contract; Flux does not make multiple components atomic.

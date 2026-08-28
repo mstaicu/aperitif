@@ -92,6 +92,9 @@ List the active consumers on a stream:
 nats --no-context consumer ls ACCOUNTS
 ```
 
+- An unnamed state-projector consumer exists only while its projector runs. On
+  restart it receives the latest record per subject again, so it has no
+  persistent consumer backlog while stopped.
 - Growing pending messages means the projection component is absent or slow.
 - Growing acknowledgement-pending or redeliveries means its handler is
   failing or not acknowledging.

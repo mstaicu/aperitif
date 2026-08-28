@@ -91,6 +91,14 @@ Historical facts are append-only occurrences. They may use bounded retention;
 they are not resource projection feeds and do not require a complete resource
 representation.
 
+### Relay
+
+[`platform/runtime/relay`](platform/runtime/relay/README.md) is the shared
+runtime that drains a domain's durable outbox table to NATS. It is transport
+only: it does not define a domain's event data, revisions, subjects, streams,
+or projections. The emitting domain owns those decisions, its Relay deployment,
+and its stream configuration.
+
 ## Work locally
 
 Install tools:
@@ -121,14 +129,25 @@ There is no root Makefile or repository-wide development loop.
 
 ## Deliver changes
 
-When this directory becomes the repository root:
+Today, pull requests check changed domains. Merges build, scan, and publish
+changed domain workload images; Flux then commits and reconciles their digests.
+Contracts and deployment configuration are checked with their owning domain but
+do not produce images.
+
+`platform/runtime/relay` is deliberately outside that production path for now:
+it has local development deployments, but no image publication or Flux
+reconciliation. Do not treat Accounts or Plans state publication as
+production-ready until that delivery boundary is established.
+
+When this directory becomes the repository root, change the workflow and Flux
+paths together:
 
 ```text
 pull request
-  -> check changed domains and platform units
+  -> check changed domains
 
 merge to master
-  -> build changed workload images
+  -> build changed domain workload images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay
