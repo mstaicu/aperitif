@@ -2,27 +2,25 @@ import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { randomUUID } from "node:crypto";
 
-import { UuidSchema } from "../schemas.mjs";
-
 export const AccountFeaturesChangedV1Source = "/domains/plans";
 export const AccountFeaturesChangedV1Type = "plans.account-features.changed.v1";
 export const AccountFeaturesV1SubjectPrefix = "plans.account-features.v1";
+
+const UuidSchema = Type.String({
+  pattern:
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+});
 
 const UuidCheck = TypeCompiler.Compile(UuidSchema);
 
 export const AccountFeaturesChangedV1DataSchema = Type.Object(
   {
-    account: Type.Object(
-      {
-        id: UuidSchema,
-      },
-      { additionalProperties: false },
-    ),
+    account_id: UuidSchema,
     features: Type.Record(
       Type.String({ minLength: 1 }),
       Type.Union([Type.Boolean(), Type.Number(), Type.String()]),
     ),
-    version: Type.Integer({ minimum: 1 }),
+    revision: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
 );
@@ -63,7 +61,7 @@ export const AccountFeaturesChangedV1EventCheck = {
       return false;
     }
 
-    return event.subject === `account/${event.data.account.id}`;
+    return event.subject === `account/${event.data.account_id}`;
   },
 };
 
@@ -79,30 +77,28 @@ export function buildAccountFeaturesV1Subject(accountId) {
 }
 
 /**
- * @param {Omit<AccountFeaturesChangedV1Event["data"], "version">} data
- * @param {number} version
+ * @param {Omit<AccountFeaturesChangedV1Event["data"], "revision">} data
+ * @param {number} revision
  * @returns {AccountFeaturesChangedV1Event}
  */
-export function buildAccountFeaturesChangedV1Event(data, version) {
-  if (!UuidCheck.Check(data.account.id)) {
-    throw new Error("INVALID_ACCOUNT_ID");
-  }
-
-  if (!Number.isInteger(version) || version < 1) {
-    throw new Error("INVALID_EVENT_VERSION");
-  }
-
-  return {
+export function buildAccountFeaturesChangedV1Event(data, revision) {
+  const event = {
     data: {
       ...data,
-      version,
+      revision,
     },
     datacontenttype: "application/json",
     id: randomUUID(),
     source: AccountFeaturesChangedV1Source,
     specversion: "1.0",
-    subject: `account/${data.account.id}`,
+    subject: `account/${data.account_id}`,
     time: new Date().toISOString(),
     type: AccountFeaturesChangedV1Type,
   };
+
+  if (!AccountFeaturesChangedV1EventCheck.Check(event)) {
+    throw new Error("INVALID_ACCOUNT_FEATURES_CHANGED_EVENT");
+  }
+
+  return event;
 }

@@ -24,7 +24,7 @@ const jsm = await js.jetstreamManager();
 const info = await jsm.consumers.add("ACCOUNTS", {
   ack_policy: AckPolicy.Explicit, // Advance only after projection succeeds.
   deliver_policy: DeliverPolicy.LastPerSubject,
-  filter_subject: `${AccountV1SubjectPrefix}.>`,
+  filter_subject: `${AccountV1SubjectPrefix}.*`,
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
 const messages = await consumer.consume({

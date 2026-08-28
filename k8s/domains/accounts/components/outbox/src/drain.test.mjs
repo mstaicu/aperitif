@@ -1,7 +1,4 @@
-import {
-  AccountV1SubjectPrefix,
-  buildAccountV1Subject,
-} from "@mstaicu/accounts-contracts";
+import { buildAccountV1Subject } from "@mstaicu/accounts-contracts";
 import {
   AckPolicy,
   DeliverPolicy,
@@ -29,7 +26,7 @@ const accountsStream = {
   num_replicas: 1,
   retention: RetentionPolicy.Limits,
   storage: StorageType.File,
-  subjects: [`${AccountV1SubjectPrefix}.>`],
+  subjects: ["accounts.account.*.*"],
 };
 
 test("publishes queued and newly inserted outbox events", async () => {
@@ -97,6 +94,10 @@ test("publishes queued and newly inserted outbox events", async () => {
   ]) {
     assert.ok(message);
     assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+    assert.equal(
+      message.headers?.get("Content-Type"),
+      "application/cloudevents",
+    );
     assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
     assert.equal(message.subject, subject);
   }
@@ -177,14 +178,14 @@ test("retains one current Account representation per subject", async () => {
 
   assert.equal(info.config.max_age, 0);
   assert.equal(info.config.max_msgs_per_subject, 1);
-  assert.deepEqual(info.config.subjects, ["accounts.account.v1.>"]);
+  assert.deepEqual(info.config.subjects, ["accounts.account.*.*"]);
   assert.equal(info.config.discard, DiscardPolicy.New);
   assert.equal(info.state.messages, 2);
 
   const consumerInfo = await jsm.consumers.add("ACCOUNTS", {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.LastPerSubject,
-    filter_subject: "accounts.account.v1.>",
+    filter_subject: "accounts.account.v1.*",
   });
 
   const consumer = js.consumers.getConsumerFromInfo(consumerInfo);

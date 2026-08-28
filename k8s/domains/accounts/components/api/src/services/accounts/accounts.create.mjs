@@ -52,18 +52,15 @@ export const createAccount =
 
       const accountChangedEvent = buildAccountChangedV1Event(
         {
-          account: {
-            id: account.id,
-            members: [
-              {
-                role: "owner",
-                user_id: currentUserId,
-              },
-            ],
-            name: account.name,
-            type: account.type,
-          },
-          accountId: account.id,
+          id: account.id,
+          members: [
+            {
+              role: "owner",
+              user_id: currentUserId,
+            },
+          ],
+          name: account.name,
+          type: account.type,
         },
         Number(account.version),
       );

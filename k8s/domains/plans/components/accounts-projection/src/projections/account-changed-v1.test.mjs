@@ -27,18 +27,15 @@ test("assigns the free plan and publishes its features once", async () => {
 
   const accountChanged = buildAccountChangedV1Event(
     {
-      account: {
-        id: accountId,
-        members: [
-          {
-            role: "owner",
-            user_id: randomUUID(),
-          },
-        ],
-        name: "Acme",
-        type: "organization",
-      },
-      accountId,
+      id: accountId,
+      members: [
+        {
+          role: "owner",
+          user_id: randomUUID(),
+        },
+      ],
+      name: "Acme",
+      type: "organization",
     },
     1,
   );
@@ -71,9 +68,9 @@ test("assigns the free plan and publishes its features once", async () => {
       event_count: 1,
       plan_id: "free",
       snapshot: {
-        account: { id: accountId },
+        account_id: accountId,
         features: { "test.limit": 10 },
-        version: 1,
+        revision: 1,
       },
       subject: buildAccountFeaturesV1Subject(accountId),
       version: 1,

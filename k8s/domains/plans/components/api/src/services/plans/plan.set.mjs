@@ -86,9 +86,7 @@ export const setPlan =
         const subject = buildAccountFeaturesV1Subject(accountId);
         const event = buildAccountFeaturesChangedV1Event(
           {
-            account: {
-              id: accountId,
-            },
+            account_id: accountId,
             features,
           },
           Number(version),

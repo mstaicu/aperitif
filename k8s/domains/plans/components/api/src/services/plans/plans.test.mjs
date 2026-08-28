@@ -42,7 +42,7 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
   const subject = buildAccountFeaturesV1Subject(accountId);
   const freeSnapshot = buildAccountFeaturesChangedV1Event(
     {
-      account: { id: accountId },
+      account_id: accountId,
       features: { "test.limit": 10 },
     },
     1,
@@ -86,9 +86,9 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
       event_count: 1,
       plan_id: "pro",
       snapshot: {
-        account: { id: accountId },
+        account_id: accountId,
         features: { "test.limit": 100 },
-        version: 2,
+        revision: 2,
       },
       subject,
       version: 2,

@@ -11,20 +11,23 @@ Owner: the Product domain.
 
 ## Requires
 
-- [Accounts](../../domains/accounts/README.md) membership events.
+- [Accounts](../../domains/accounts/README.md) Account state feed.
 
 ## State
 
-Each Product projects the membership facts required for local authorization and
+Each Product projects the Account members required for local authorization and
 stores its own role assignments.
 
 ```sql
+CREATE TABLE projected_accounts (
+  account_id UUID PRIMARY KEY,
+  version BIGINT NOT NULL
+);
+
 CREATE TABLE projected_account_members (
   account_id UUID NOT NULL,
   user_id UUID NOT NULL,
   role TEXT NOT NULL,
-  account_version BIGINT NOT NULL,
-  deleted_at TIMESTAMPTZ,
   PRIMARY KEY (account_id, user_id)
 );
 
@@ -55,25 +58,21 @@ Content`, and are idempotent. A member may hold several roles. Routes reject a
 `role_id` the Product does not define.
 
 Each Product needs its own API host or unique gateway root: two Products cannot
-claim the same public path. Role routes lock the target projected member before
-changing roles. The membership projector locks that same row before marking it
-deleted and removing roles, so a concurrent removal cannot leave an active role
-behind.
+claim the same public path. Role routes lock the Account projection guard before
+checking the target projected member and changing roles. The projector locks
+that same guard before reconciling members, so a concurrent removal cannot
+leave an active role behind.
 
 ## Projection rule
 
-Consume `accounts.member.created.v1`, `accounts.member.updated.v1`, and
-`accounts.member.deleted.v1`. For one `(account_id, user_id)`, apply a
-snapshot only when `data.version > account_version`.
+Consume the complete `accounts.account.changed.v1` representation from
+`accounts.account.v1.<account-id>`. In one transaction, lock the Account guard,
+ignore a snapshot whose version is not newer, synchronize the current members,
+remove Product roles for members no longer present, and store the new version.
 
-A deletion records `deleted_at` and removes that member's Product roles in the
-same transaction. A later member snapshot can restore membership but never
-restores removed Product roles. Role routes require an active projected member.
-Keep the tombstone while older Accounts events may be replayed.
-
-A Product using [Product-role invitations](product-role-invitations.md) also
-applies the `member` snapshot in `accounts.invitation.updated.v1` by the same
-version rule.
+Role routes require a current projected member. Re-adding a member does not
+restore previously removed Product roles. The root event-processing contract
+makes replay and out-of-order delivery safe without membership tombstones.
 
 Product authorization follows its local projection. An Accounts membership
 change takes effect in a Product after that Product commits the event.

@@ -20,13 +20,7 @@ export async function projectAccountChangedV1({ event, pool }) {
     /** @type {import("@mstaicu/accounts-contracts").AccountChangedV1Event} */ (
       event
     );
-  const { account } = accountChanged.data;
-
-  if (account === null) {
-    return;
-  }
-
-  const accountId = account.id;
+  const accountId = accountChanged.data.id;
   const client = await pool.connect();
 
   try {
@@ -63,7 +57,7 @@ export async function projectAccountChangedV1({ event, pool }) {
 
       const accountFeaturesChanged = buildAccountFeaturesChangedV1Event(
         {
-          account: { id: accountId },
+          account_id: accountId,
           features,
         },
         Number(accountPlan.version),

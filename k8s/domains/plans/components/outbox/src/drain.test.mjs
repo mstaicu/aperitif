@@ -1,7 +1,4 @@
-import {
-  AccountFeaturesV1SubjectPrefix,
-  buildAccountFeaturesV1Subject,
-} from "@mstaicu/plans-contracts";
+import { buildAccountFeaturesV1Subject } from "@mstaicu/plans-contracts";
 import {
   DiscardPolicy,
   jetstream,
@@ -39,7 +36,7 @@ test("publishes and removes an outbox event", async () => {
     num_replicas: 1,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
-    subjects: [`${AccountFeaturesV1SubjectPrefix}.>`],
+    subjects: ["plans.account-features.*.*"],
   });
 
   await pool.query(
@@ -62,6 +59,7 @@ test("publishes and removes an outbox event", async () => {
 
   assert.ok(message);
   assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+  assert.equal(message.headers?.get("Content-Type"), "application/cloudevents");
   assert.equal(message.subject, subject);
   assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
 

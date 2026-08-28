@@ -21,33 +21,21 @@ test("accounts.account.changed.v1 remains compatible", (t) => {
     AccountChangedV1EventCheck.Check(
       buildAccountChangedV1Event(
         {
-          account: {
-            id: accountId,
-            members: [
-              {
-                role: "owner",
-                user_id: "33333333-3333-4333-8333-333333333333",
-              },
-            ],
-            name: "Acme",
-            type: "individual",
-          },
-          accountId,
+          id: accountId,
+          members: [
+            {
+              role: "owner",
+              user_id: "33333333-3333-4333-8333-333333333333",
+            },
+          ],
+          name: "Acme",
+          type: "individual",
         },
         1,
       ),
     ),
     true,
   );
-});
-
-test("accounts.account.changed.v1 represents deletion with a tombstone", () => {
-  const event = buildAccountChangedV1Event({ account: null, accountId }, 2);
-
-  assert.equal(event.subject, `account/${accountId}`);
-  assert.equal(event.data.account, null);
-  assert.equal(event.data.version, 2);
-  assert.equal(AccountChangedV1EventCheck.Check(event), true);
 });
 
 test("accounts.account.changed.v1 keeps its Account identity consistent", () => {
@@ -57,6 +45,22 @@ test("accounts.account.changed.v1 keeps its Account identity consistent", () => 
       subject: "account/44444444-4444-4444-8444-444444444444",
     }),
     false,
+  );
+});
+
+test("accounts.account.changed.v1 builder rejects an invalid representation", () => {
+  assert.throws(
+    () =>
+      buildAccountChangedV1Event(
+        {
+          id: accountId,
+          members: [],
+          name: "Acme",
+          type: "organization",
+        },
+        1,
+      ),
+    { message: "INVALID_ACCOUNT_CHANGED_EVENT" },
   );
 });
 

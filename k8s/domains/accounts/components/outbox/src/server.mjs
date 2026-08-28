@@ -1,4 +1,3 @@
-import { AccountV1SubjectPrefix } from "@mstaicu/accounts-contracts";
 import {
   DiscardPolicy,
   jetstream,
@@ -46,7 +45,7 @@ const accountsStream = {
   num_replicas: Number(process.env.NATS_STREAM_REPLICAS),
   retention: RetentionPolicy.Limits,
   storage: StorageType.File,
-  subjects: [`${AccountV1SubjectPrefix}.>`],
+  subjects: ["accounts.account.*.*"],
 };
 
 try {

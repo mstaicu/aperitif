@@ -5,7 +5,7 @@
     "test": "node --test --test-concurrency=1 \"src/**/*.test.mjs\""
   },
   "dependencies": {
-    "@mstaicu/plans-contracts": "^0.2.0",
+    "@mstaicu/plans-contracts": "^0.3.0",
     "@nats-io/jetstream": "^3.4.0",
     "@nats-io/transport-node": "^3.4.0",
     "@opentelemetry/api": "^1.9.1",

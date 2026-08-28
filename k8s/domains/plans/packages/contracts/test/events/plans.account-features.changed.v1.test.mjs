@@ -21,7 +21,7 @@ test("plans.account-features.changed.v1 remains compatible", (t) => {
     AccountFeaturesChangedV1EventCheck.Check(
       buildAccountFeaturesChangedV1Event(
         {
-          account: { id: accountId },
+          account_id: accountId,
           features: {
             "example.enabled": true,
             "example.level": "expanded",
@@ -42,6 +42,21 @@ test("plans.account-features.changed.v1 keeps its Account identity consistent", 
       subject: "account/44444444-4444-4444-8444-444444444444",
     }),
     false,
+  );
+});
+
+test("plans.account-features.changed.v1 builder rejects an invalid representation", () => {
+  assert.throws(
+    () =>
+      buildAccountFeaturesChangedV1Event(
+        {
+          account_id: accountId,
+          features: {},
+          unexpected: true,
+        },
+        1,
+      ),
+    { message: "INVALID_ACCOUNT_FEATURES_CHANGED_EVENT" },
   );
 });
 

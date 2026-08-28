@@ -13,7 +13,7 @@ Owner: Accounts.
 ## Requires
 
 - [Auth](../../domains/auth/README.md) for the recipient's access token.
-- [Accounts](../../domains/accounts/README.md) for membership and events.
+- [Accounts](../../domains/accounts/README.md) for the membership boundary.
 
 ## State
 
@@ -86,11 +86,12 @@ looks up an invitation by both `account_id` and `invitation_id`.
 There is no public `POST /members`: invitations are human admission. Existing
 members use [Account membership management](account-membership-management.md).
 
-## Processing and events
+## Processing and Account state
 
-Every write locks the Account row first. While the lock is held, every
-event-bearing change increments `accounts.version` and writes its outbox event
-in the same transaction.
+Acceptance is the only invitation operation that changes Account membership.
+It locks the Account row, creates the member, increments `accounts.version`,
+reads the complete Account with its current members, and replaces the
+still-pending Account snapshot in the same transaction.
 
 ```sql
 SELECT id, version FROM accounts WHERE id = $1 FOR UPDATE;
@@ -98,57 +99,20 @@ SELECT id, version FROM accounts WHERE id = $1 FOR UPDATE;
 
 ```text
 valid pending invitation + caller is not a member
-  -> create member and accounts.member.created.v1
-  -> record invitation.user_id and accounts.invitation.updated.v1
+  -> create member, record acceptance, and publish one newer Account state
 
 accepted by the same member
   -> return the existing membership
 
 revoke or expire pending invitation
-  -> accounts.invitation.deleted.v1
+  -> change only Accounts-private invitation state
 ```
 
-Acceptance uses two consecutive Account versions: one for the member-created
-event and one for the invitation update. Expiry uses the same deletion path as
-owner revocation.
-
-```text
-accounts.invitation.created.v1
-accounts.invitation.updated.v1
-accounts.invitation.deleted.v1
-```
-
-Creation and deletion carry this data:
-
-```json
-{
-  "account_id": "account-456",
-  "invitation": {
-    "id": "invite-123",
-    "expires_at": "2026-09-01T12:00:00.000Z",
-    "user_id": null
-  },
-  "version": 5
-}
-```
-
-The acceptance update also carries the active member:
-
-```json
-{
-  "account_id": "account-456",
-  "invitation": {
-    "id": "invite-123",
-    "expires_at": "2026-09-01T12:00:00.000Z",
-    "user_id": "user-789"
-  },
-  "member": { "user_id": "user-789", "role": "member" },
-  "version": 7
-}
-```
-
-Repeating the member in the update lets Products activate pending roles even
-when the member-created and invitation-update events arrive in either order.
+The Account state feed does not expose invitations, so creation, revocation,
+expiry, and acceptance need no invitation projection event. If a real Product
+later needs current invitation state, define an independently stateful
+invitation resource with its own identifier, complete representation, revision,
+and lifecycle then. Do not begin with a sequence of invitation deltas.
 
 ## Evolution
 

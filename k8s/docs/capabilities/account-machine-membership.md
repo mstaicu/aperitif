@@ -12,8 +12,7 @@ Owner: Accounts.
 ## Requires
 
 - [Machines](machines.md) for Auth-issued machine IDs.
-- [Accounts](../../domains/accounts/README.md) for the Account boundary and
-  event stream.
+- [Accounts](../../domains/accounts/README.md) for the Account boundary.
 
 ## State
 
@@ -57,35 +56,19 @@ only its Auth manager can rotate or revoke them.
 ## Processing
 
 Accounts locks the Account row, verifies the human owner, changes the canonical
-membership row, increments `accounts.version`, and records the matching outbox
-event in the same transaction.
+membership row, and commits it in one transaction.
 
-## Events
+## Cross-domain state
 
-Accounts publishes relationship events:
+The current Account resource does not represent machine memberships. This
+proposal defines no Account machine-membership event yet.
 
-```text
-accounts.machine-membership.created.v1
-accounts.machine-membership.deleted.v1
-```
-
-```json
-{
-  "account_id": "account-456",
-  "machine_id": "machine-789",
-  "version": 8
-}
-```
-
-Each event is the complete state of one membership relationship, not a snapshot
-of every machine in the Account.
-
-Products persist `version` and `deleted_at` for each
-`(account_id, machine_id)` projection row. They apply only a newer event for
-that pair. They must not use one Account-level projection version to discard a
-membership event: two different machine memberships can arrive out of order.
-
-Removing membership takes effect after each Product commits the deletion event.
+If a Product needs a local, current machine-membership projection, the actual
+requirement should define a separately stateful relationship resource. It needs
+a stable relationship identifier, a complete current representation, a
+monotonic revision, and an explicit removal lifecycle. It must not start with
+`created` and `deleted` deltas or overload the Account revision. Until that
+consumer exists, machine membership remains Accounts-private state.
 
 ## Not included
 
@@ -96,6 +79,6 @@ Removing membership takes effect after each Product commits the deletion event.
 
 | Stage | Strengthen | Add when |
 | --- | --- | --- |
-| Baseline | An owner attaches an Auth-issued ID; Products follow versioned membership events. | A controlled first product. |
+| Baseline | An owner attaches an Auth-issued ID. | A controlled first product. |
 | Controlled | Require a machine to use a stronger proof from [Machines](machines.md) before it performs important work; notify the Account when membership changes. | Machines operate beyond a controlled environment. |
 | High assurance | Replace one-sided attachment with an explicit enrollment approval between the Account and machine manager. For operations where eventual projection removal is insufficient, enforce immediate Product-local denial in addition to the event. | A misattached or recently removed machine could cause material harm. |

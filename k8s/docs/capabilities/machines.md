@@ -103,7 +103,8 @@ prove the replacement works without downtime.
 
 Machines are private Auth state in the first version. Auth does not publish
 machine lifecycle events and therefore does not need an outbox for this
-capability. Products receive Account machine-membership events instead.
+capability. No Account machine-membership projection feed exists yet; add one
+only when a Product has a concrete cross-domain need for current membership.
 
 ## Evolution
 

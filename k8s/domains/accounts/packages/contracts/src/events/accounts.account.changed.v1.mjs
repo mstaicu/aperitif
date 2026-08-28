@@ -2,18 +2,35 @@ import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { randomUUID } from "node:crypto";
 
-import { AccountSchema, UuidSchema } from "../schemas.mjs";
-
 export const AccountChangedV1Source = "/domains/accounts";
 export const AccountChangedV1Type = "accounts.account.changed.v1";
 export const AccountV1SubjectPrefix = "accounts.account.v1";
+
+const UuidSchema = Type.String({
+  pattern:
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+});
+
+const AccountMemberSchema = Type.Object(
+  {
+    role: Type.Union([Type.Literal("owner"), Type.Literal("member")]),
+    user_id: UuidSchema,
+  },
+  { additionalProperties: false },
+);
 
 const UuidCheck = TypeCompiler.Compile(UuidSchema);
 
 export const AccountChangedV1DataSchema = Type.Object(
   {
-    account: Type.Union([AccountSchema, Type.Null()]),
-    version: Type.Integer({ minimum: 1 }),
+    id: UuidSchema,
+    members: Type.Array(AccountMemberSchema, { minItems: 1 }),
+    name: Type.String({ maxLength: 160, minLength: 1 }),
+    type: Type.Union([
+      Type.Literal("individual"),
+      Type.Literal("organization"),
+    ]),
+    revision: Type.Integer({ minimum: 1 }),
   },
   { additionalProperties: false },
 );
@@ -54,10 +71,7 @@ export const AccountChangedV1EventCheck = {
       return false;
     }
 
-    return (
-      event.data.account === null ||
-      event.subject === `account/${event.data.account.id}`
-    );
+    return event.subject === `account/${event.data.id}`;
   },
 };
 
@@ -73,34 +87,28 @@ export function buildAccountV1Subject(accountId) {
 }
 
 /**
- * @param {{ account: AccountChangedV1Event["data"]["account"], accountId: string }} data
- * @param {number} version
+ * @param {Omit<AccountChangedV1Event["data"], "revision">} data
+ * @param {number} revision
  * @returns {AccountChangedV1Event}
  */
-export function buildAccountChangedV1Event({ account, accountId }, version) {
-  if (!UuidCheck.Check(accountId)) {
-    throw new Error("INVALID_ACCOUNT_ID");
-  }
-
-  if (account !== null && account.id !== accountId) {
-    throw new Error("ACCOUNT_ID_MISMATCH");
-  }
-
-  if (!Number.isInteger(version) || version < 1) {
-    throw new Error("INVALID_EVENT_VERSION");
-  }
-
-  return {
+export function buildAccountChangedV1Event(data, revision) {
+  const event = {
     data: {
-      account,
-      version,
+      ...data,
+      revision,
     },
     datacontenttype: "application/json",
     id: randomUUID(),
     source: AccountChangedV1Source,
     specversion: "1.0",
-    subject: `account/${accountId}`,
+    subject: `account/${data.id}`,
     time: new Date().toISOString(),
     type: AccountChangedV1Type,
   };
+
+  if (!AccountChangedV1EventCheck.Check(event)) {
+    throw new Error("INVALID_ACCOUNT_CHANGED_EVENT");
+  }
+
+  return event;
 }

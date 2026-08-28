@@ -6,8 +6,8 @@ Only unresolved, product-agnostic platform work belongs here.
 
 - Replace in-cluster PostgreSQL with managed databases and test backup and
   restoration.
-- Verify the seven-day JetStream window and 400 MiB stream limits against
-  measured event volume before production.
+- Verify the 400 MiB current-resource stream limits against measured retained
+  resource count and representation size before production.
 - Choose a certificate flow that supports redundant production ingress.
 - Measure workloads, then set replicas, resources, disruption budgets, and
   topology placement.

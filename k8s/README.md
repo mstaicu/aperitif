@@ -35,6 +35,7 @@ Every event-driven component follows the same reliability contract:
 - Treat every published contract version as immutable and snapshot-test its
   contract.
 - Include a unique event ID, source, and timestamp.
+- Publish the structured CloudEvent body with NATS `Content-Type: application/cloudevents`.
 - Publish with the event ID as the JetStream message ID.
 - Wait for PubAck before removing the outbox row.
 - Validate events before projecting them.
@@ -42,16 +43,46 @@ Every event-driven component follows the same reliability contract:
 
 Resource projection feeds additionally:
 
-- Include a monotonic resource version and carry the complete current resource
-  state.
+- Carry the complete current resource state and a monotonic `data.revision`.
+  It is unrelated to the schema version in `v<schema>`, the
+  CloudEvents `specversion`, and the JetStream sequence.
 - Publish to `<domain>.<resource>.v<schema>.<resource-id>`; the CloudEvent
   `type` is not the NATS subject.
-- Replace a still-pending snapshot for the same resource when writing a newer
-  one, so an older state cannot publish after newer state.
+- Configure a state stream for the resource family as
+  `<domain>.<resource>.*.*`; a projector filters the one schema version it
+  understands. A new schema version therefore does not require changing the
+  stream's subject family.
+- Serialize mutations of one resource through its source revision. In the same
+  transaction, replace a still-pending snapshot for that resource subject when
+  writing a newer one, so an older state cannot publish after newer state.
 - Retain one latest message per resource subject.
+- Converge to current state, rather than promise every intermediate revision.
+  A resource can change from revision 1 to 3 before a projector observes
+  revision 2; a consumer that must observe every occurrence needs a separate
+  append-only fact stream.
 - A singleton projector creates an unnamed `DeliverLastPerSubject` consumer;
   each start reconciles the current baseline and then follows new messages.
-- Apply its local writes idempotently in one database transaction.
+  Replicas would create independent reconcilers, not a shared worker pool.
+- Apply local writes idempotently in one database transaction. A projection
+  that persists upstream state also persists its upstream resource revision and
+  ignores an equal or older revision.
+- Treat stream byte capacity and pending-outbox age as monitored operational
+  limits. Before relying on recovery from state-stream loss, the owning domain
+  must provide a controlled reseed from its authoritative database that
+  republishes current representations with new event IDs and their existing
+  resource revisions.
+
+A published resource representation is immutable. When its data schema rejects
+unknown properties, as current V1 feeds do, any data-shape change starts a new
+complete V2 feed on its own `v2` subjects and CloudEvent type. Dual-publish only
+while a real V1 consumer still needs migration.
+
+Each domain owns its contract package. For each exported resource feed, it
+contains only the resource data schema, its CloudEvent schema and validator,
+the NATS subject builder, an event builder, one example, and a schema snapshot
+test. The resource representation is `data`; `data.revision` is its source
+revision. Do not export database records, a shared event framework, generic
+metadata, or unused fact and command contracts.
 
 Historical facts are append-only occurrences. They may use bounded retention;
 they are not resource projection feeds and do not require a complete resource

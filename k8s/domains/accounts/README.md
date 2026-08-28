@@ -29,7 +29,7 @@ The API exposes `GET/POST /v1/accounts`. OpenAPI is available at
 
 Accounts publishes `accounts.account.changed.v1` to
 `accounts.account.v1.<account-id>`. Every message carries the complete
-exported Account and its monotonic `data.version`; the stream retains one
+exported Account and its monotonic `data.revision`; the stream retains one
 current message per Account subject. Account creation includes its initial
 owner in revision `1`. State and its outbox event are committed in one database
 transaction. Member management and invitations are proposed capabilities under

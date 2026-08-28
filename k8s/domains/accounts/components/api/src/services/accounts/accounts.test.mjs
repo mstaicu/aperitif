@@ -40,8 +40,8 @@ test("creates account ownership and lists only the caller's accounts", async () 
       SELECT event,
         subject
       FROM outbox_events
-      WHERE event #>> '{data,account,id}' = $1
-      ORDER BY (event #>> '{data,version}')::bigint
+      WHERE event #>> '{data,id}' = $1
+      ORDER BY (event #>> '{data,revision}')::bigint
     `,
     [alpha.account.id],
   );
@@ -49,8 +49,8 @@ test("creates account ownership and lists only the caller's accounts", async () 
   assert.deepEqual(
     outbox.map(({ event, subject }) => [
       event.type,
-      event.data.version,
-      event.data.account,
+      event.data.revision,
+      event.data,
       subject,
     ]),
     [
@@ -60,6 +60,7 @@ test("creates account ownership and lists only the caller's accounts", async () 
         {
           ...alpha.account,
           members: [{ role: "owner", user_id: userId }],
+          revision: 1,
         },
         buildAccountV1Subject(alpha.account.id),
       ],
