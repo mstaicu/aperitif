@@ -6,7 +6,7 @@ import {
   trace,
 } from "@opentelemetry/api";
 
-import { projections } from "./projections/index.mjs";
+import { projectAccountChangedV1 } from "./projections/account-changed-v1.mjs";
 
 const tracer = trace.getTracer("accounts-projection");
 
@@ -26,7 +26,6 @@ export async function project({ message, pool }) {
     `process ${message.subject}`,
     {
       attributes: {
-        "messaging.consumer.group.name": "plans-accounts-projection",
         "messaging.destination.name": message.subject,
         "messaging.operation.name": "process",
         "messaging.operation.type": "process",
@@ -37,7 +36,7 @@ export async function project({ message, pool }) {
     parentContext,
     async (span) => {
       try {
-        await projections[message.subject]({ event: message.json(), pool });
+        await projectAccountChangedV1({ event: message.json(), pool });
       } catch (err) {
         span.setStatus({ code: SpanStatusCode.ERROR });
 

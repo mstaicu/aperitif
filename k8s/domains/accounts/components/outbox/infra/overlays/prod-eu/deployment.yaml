@@ -19,8 +19,6 @@ spec:
               value: "postgres://postgres:postgres@postgres:5432/accounts"
             - name: NATS_URL
               value: nats://nats-client.nats.svc.cluster.local:4222
-            - name: NATS_STREAM_MAX_AGE_NANOS
-              value: "604800000000000" # 7 days in ns; automatic replay window.
             - name: NATS_STREAM_MAX_BYTES
               value: "419430400" # 400 MiB; half the 800 MiB server budget.
             - name: NATS_STREAM_REPLICAS

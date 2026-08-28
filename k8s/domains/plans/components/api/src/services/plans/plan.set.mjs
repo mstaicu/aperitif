@@ -1,4 +1,7 @@
-import { buildAccountFeaturesUpdatedV1Event } from "@mstaicu/plans-contracts";
+import {
+  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
 /**
@@ -80,7 +83,8 @@ export const setPlan =
           [accountId, planId],
         );
 
-        const event = buildAccountFeaturesUpdatedV1Event(
+        const subject = buildAccountFeaturesV1Subject(accountId);
+        const event = buildAccountFeaturesChangedV1Event(
           {
             account: {
               id: accountId,
@@ -95,16 +99,26 @@ export const setPlan =
 
         await client.query(
           `
+            DELETE FROM outbox_events
+            WHERE subject = $1
+          `,
+          [subject],
+        );
+
+        await client.query(
+          `
             INSERT INTO outbox_events (
               id,
+              subject,
               event,
               traceparent,
               tracestate
             )
-            VALUES ($1, $2::jsonb, $3, $4)
+            VALUES ($1, $2, $3::jsonb, $4, $5)
           `,
           [
             event.id,
+            subject,
             JSON.stringify(event),
             traceContext.traceparent,
             traceContext.tracestate,

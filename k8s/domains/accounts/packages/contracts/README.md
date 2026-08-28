@@ -15,9 +15,7 @@ Source schemas are under `src/events`; example payloads are under
 
 Events use CloudEvents `1.0`. The event `type` versions the payload contract.
 `data.account` carries the complete exported Account, including its basic
-`owner` and `member` roles. `data.account: null` is the versioned deletion
-tombstone. `data.version` is the monotonic Account revision that consumers
-compare per projected Account.
+`owner` and `member` roles. `data.version` is the monotonic Account revision.
 
 ## NATS subjects
 
@@ -43,9 +41,8 @@ Facts in the `event` family are append-only occurrences when a concrete
 consumer needs history. Commands are requests to one owning domain and are not
 CloudEvents. Neither is needed to project the current Account representation.
 
-A breaking representation change creates the parallel subject and event type
-family `accounts.account.v2.<account-id>` and
-`accounts.account.changed.v2`.
+A breaking representation change uses a new versioned feed. Define its
+migration only when a real consumer requires one.
 
 ## Build and publish
 

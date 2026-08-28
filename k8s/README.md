@@ -29,20 +29,33 @@ manifests under `domains/<domain>/components/<component>`.
 
 ### Event processing
 
-Every event-driven component follows the same contract:
+Every event-driven component follows the same reliability contract:
 
 - Commit the business mutation and outbox event in one database transaction.
-- Treat every published event version as immutable and snapshot-test its
+- Treat every published contract version as immutable and snapshot-test its
   contract.
-- Include a unique event ID, source, timestamp, and monotonic resource version.
-- Carry the complete current resource state or an explicit deletion.
+- Include a unique event ID, source, and timestamp.
 - Publish with the event ID as the JetStream message ID.
 - Wait for PubAck before removing the outbox row.
 - Validate events before projecting them.
-- Apply only newer resource versions in one database transaction.
 - Acknowledge the message only after that transaction commits.
-- Preserve deletions as versioned tombstones so older events cannot restore
-  them.
+
+Resource projection feeds additionally:
+
+- Include a monotonic resource version and carry the complete current resource
+  state.
+- Publish to `<domain>.<resource>.v<schema>.<resource-id>`; the CloudEvent
+  `type` is not the NATS subject.
+- Replace a still-pending snapshot for the same resource when writing a newer
+  one, so an older state cannot publish after newer state.
+- Retain one latest message per resource subject.
+- A singleton projector creates an unnamed `DeliverLastPerSubject` consumer;
+  each start reconciles the current baseline and then follows new messages.
+- Apply its local writes idempotently in one database transaction.
+
+Historical facts are append-only occurrences. They may use bounded retention;
+they are not resource projection feeds and do not require a complete resource
+representation.
 
 ## Work locally
 

@@ -27,10 +27,12 @@ PostgreSQL -> migrations -> API
 The API exposes `GET/POST /v1/accounts`. OpenAPI is available at
 `/v1/accounts/docs`.
 
-Accounts publishes account creation with its initial owner in the complete
-Account state. State and its outbox event are committed in one database
-transaction. `data.version` is a monotonic account revision. Member management
-and invitations are proposed capabilities under
+Accounts publishes `accounts.account.changed.v1` to
+`accounts.account.v1.<account-id>`. Every message carries the complete
+exported Account and its monotonic `data.version`; the stream retains one
+current message per Account subject. Account creation includes its initial
+owner in revision `1`. State and its outbox event are committed in one database
+transaction. Member management and invitations are proposed capabilities under
 [`docs/capabilities`](../../docs/capabilities/).
 
 ## Work here

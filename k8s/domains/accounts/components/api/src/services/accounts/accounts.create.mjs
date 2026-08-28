@@ -1,4 +1,7 @@
-import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
+import {
+  buildAccountChangedV1Event,
+  buildAccountV1Subject,
+} from "@mstaicu/accounts-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
 /**
@@ -47,7 +50,7 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountCreatedEvent = buildAccountCreatedV1Event(
+      const accountChangedEvent = buildAccountChangedV1Event(
         {
           account: {
             id: account.id,
@@ -60,6 +63,7 @@ export const createAccount =
             name: account.name,
             type: account.type,
           },
+          accountId: account.id,
         },
         Number(account.version),
       );
@@ -71,15 +75,17 @@ export const createAccount =
         `
           INSERT INTO outbox_events (
             id,
+            subject,
             event,
             traceparent,
             tracestate
           )
-          VALUES ($1, $2::jsonb, $3, $4)
+          VALUES ($1, $2, $3::jsonb, $4, $5)
         `,
         [
-          accountCreatedEvent.id,
-          JSON.stringify(accountCreatedEvent),
+          accountChangedEvent.id,
+          buildAccountV1Subject(account.id),
+          JSON.stringify(accountChangedEvent),
           traceContext.traceparent,
           traceContext.tracestate,
         ],

@@ -1,11 +1,11 @@
-import { AckPolicy, jetstream } from "@nats-io/jetstream";
+import { AccountV1SubjectPrefix } from "@mstaicu/accounts-contracts";
+import { AckPolicy, DeliverPolicy, jetstream } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
 import process from "node:process";
 import { Pool } from "pg";
 
 import { createProbeServer } from "./platform/probes.mjs";
 import { project } from "./project.mjs";
-import { subjects } from "./projections/index.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -23,12 +23,12 @@ const js = jetstream(nc);
 const jsm = await js.jetstreamManager();
 const info = await jsm.consumers.add("ACCOUNTS", {
   ack_policy: AckPolicy.Explicit, // Advance only after projection succeeds.
-  durable_name: "plans-accounts-projection", // Share one saved cursor across replicas.
-  filter_subjects: subjects, // Pull registered event types; no push subject.
+  deliver_policy: DeliverPolicy.LastPerSubject,
+  filter_subject: `${AccountV1SubjectPrefix}.>`,
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
 const messages = await consumer.consume({
-  max_messages: 1, // Process one message at a time per replica.
+  max_messages: 1, // Process one message at a time.
 });
 
 await using probeServer = createProbeServer({ nc, pool });

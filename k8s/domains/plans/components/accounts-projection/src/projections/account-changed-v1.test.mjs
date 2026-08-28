@@ -1,11 +1,14 @@
-import { buildAccountCreatedV1Event } from "@mstaicu/accounts-contracts";
-import { AccountFeaturesUpdatedV1EventCheck } from "@mstaicu/plans-contracts";
+import { buildAccountChangedV1Event } from "@mstaicu/accounts-contracts";
+import {
+  AccountFeaturesChangedV1EventCheck,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../test/fixtures/postgres.mjs";
-import { projectAccountCreatedV1 } from "./account-created-v1.mjs";
+import { projectAccountChangedV1 } from "./account-changed-v1.mjs";
 
 test("assigns the free plan and publishes its features once", async () => {
   await using postgres = await startPostgres();
@@ -22,7 +25,7 @@ test("assigns the free plan and publishes its features once", async () => {
     `,
   );
 
-  const accountCreated = buildAccountCreatedV1Event(
+  const accountChanged = buildAccountChangedV1Event(
     {
       account: {
         id: accountId,
@@ -35,12 +38,13 @@ test("assigns the free plan and publishes its features once", async () => {
         name: "Acme",
         type: "organization",
       },
+      accountId,
     },
     1,
   );
 
-  await projectAccountCreatedV1({ event: accountCreated, pool });
-  await projectAccountCreatedV1({ event: accountCreated, pool });
+  await projectAccountChangedV1({ event: accountChanged, pool });
+  await projectAccountChangedV1({ event: accountChanged, pool });
 
   const {
     rows: [state],
@@ -49,6 +53,7 @@ test("assigns the free plan and publishes its features once", async () => {
       SELECT plan_id,
         version::integer,
         (SELECT count(*)::integer FROM outbox_events) AS event_count,
+        (SELECT subject FROM outbox_events LIMIT 1) AS subject,
         (SELECT event FROM outbox_events LIMIT 1) AS snapshot
       FROM account_plans
       WHERE account_id = $1
@@ -56,7 +61,7 @@ test("assigns the free plan and publishes its features once", async () => {
     [accountId],
   );
 
-  assert.equal(AccountFeaturesUpdatedV1EventCheck.Check(state.snapshot), true);
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(state.snapshot), true);
   assert.deepEqual(
     {
       ...state,
@@ -70,6 +75,7 @@ test("assigns the free plan and publishes its features once", async () => {
         features: { "test.limit": 10 },
         version: 1,
       },
+      subject: buildAccountFeaturesV1Subject(accountId),
       version: 1,
     },
   );

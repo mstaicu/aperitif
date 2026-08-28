@@ -1,4 +1,7 @@
-import { AccountCreatedV1Type } from "@mstaicu/accounts-contracts";
+import {
+  AccountChangedV1Type,
+  buildAccountV1Subject,
+} from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -34,7 +37,8 @@ test("creates account ownership and lists only the caller's accounts", async () 
 
   const { rows: outbox } = await pool.query(
     `
-      SELECT event
+      SELECT event,
+        subject
       FROM outbox_events
       WHERE event #>> '{data,account,id}' = $1
       ORDER BY (event #>> '{data,version}')::bigint
@@ -43,19 +47,21 @@ test("creates account ownership and lists only the caller's accounts", async () 
   );
 
   assert.deepEqual(
-    outbox.map(({ event }) => [
+    outbox.map(({ event, subject }) => [
       event.type,
       event.data.version,
       event.data.account,
+      subject,
     ]),
     [
       [
-        AccountCreatedV1Type,
+        AccountChangedV1Type,
         1,
         {
           ...alpha.account,
           members: [{ role: "owner", user_id: userId }],
         },
+        buildAccountV1Subject(alpha.account.id),
       ],
     ],
   );

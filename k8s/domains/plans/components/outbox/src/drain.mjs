@@ -52,6 +52,7 @@ async function drainNextEvent({ client, js }) {
       `
         SELECT id,
           event,
+          subject,
           traceparent,
           tracestate
         FROM outbox_events

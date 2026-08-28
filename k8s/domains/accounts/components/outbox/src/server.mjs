@@ -1,3 +1,4 @@
+import { AccountV1SubjectPrefix } from "@mstaicu/accounts-contracts";
 import {
   DiscardPolicy,
   jetstream,
@@ -33,16 +34,30 @@ await using nc = await connect({
 const js = jetstream(nc);
 const jsm = await js.jetstreamManager();
 
-await jsm.streams.add({
-  discard: DiscardPolicy.New, // Reject overflow; preserve retained history.
-  max_age: Number(process.env.NATS_STREAM_MAX_AGE_NANOS), // 7-day replay window.
-  max_bytes: Number(process.env.NATS_STREAM_MAX_BYTES), // Half the 800 MiB budget.
-  name: "ACCOUNTS", // Stable Accounts stream identity.
-  num_replicas: Number(process.env.NATS_STREAM_REPLICAS), // One copy per NATS pod.
-  retention: RetentionPolicy.Limits, // Expire by age; cap by bytes.
-  storage: StorageType.File, // Persist each copy on its pod PVC.
-  subjects: ["accounts.>"], // Capture Accounts-owned events only.
-});
+const accountsStream = {
+  // Keep one current Account per subject. At byte capacity, existing Accounts
+  // still update; a new Account stays in the outbox instead of evicting one.
+  discard: DiscardPolicy.New,
+  discard_new_per_subject: false,
+  max_age: 0,
+  max_bytes: Number(process.env.NATS_STREAM_MAX_BYTES),
+  max_msgs_per_subject: 1,
+  name: "ACCOUNTS",
+  num_replicas: Number(process.env.NATS_STREAM_REPLICAS),
+  retention: RetentionPolicy.Limits,
+  storage: StorageType.File,
+  subjects: [`${AccountV1SubjectPrefix}.>`],
+};
+
+try {
+  await jsm.streams.update(accountsStream.name, accountsStream);
+} catch (err) {
+  if (!(err instanceof Error) || err.name !== "StreamNotFoundError") {
+    throw err;
+  }
+
+  await jsm.streams.add(accountsStream);
+}
 
 await using probeServer = createProbeServer({ nc, pool });
 

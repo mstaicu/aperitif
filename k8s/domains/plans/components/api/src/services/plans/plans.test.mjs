@@ -1,4 +1,8 @@
-import { AccountFeaturesUpdatedV1EventCheck } from "@mstaicu/plans-contracts";
+import {
+  AccountFeaturesChangedV1EventCheck,
+  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -35,6 +39,23 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
     [accountId],
   );
 
+  const subject = buildAccountFeaturesV1Subject(accountId);
+  const freeSnapshot = buildAccountFeaturesChangedV1Event(
+    {
+      account: { id: accountId },
+      features: { "test.limit": 10 },
+    },
+    1,
+  );
+
+  await pool.query(
+    `
+      INSERT INTO outbox_events (id, subject, event)
+      VALUES ($1, $2, $3::jsonb)
+    `,
+    [freeSnapshot.id, subject, JSON.stringify(freeSnapshot)],
+  );
+
   assert.deepEqual(await plans.setPlan({ accountId, planId: "pro" }), {
     plan: {
       features: { "test.limit": 100 },
@@ -50,6 +71,7 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
       SELECT plan_id,
         version::integer,
         (SELECT count(*)::integer FROM outbox_events) AS event_count,
+        (SELECT subject FROM outbox_events LIMIT 1) AS subject,
         (SELECT event FROM outbox_events LIMIT 1) AS snapshot
       FROM account_plans
       WHERE account_id = $1
@@ -57,7 +79,7 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
     [accountId],
   );
 
-  assert.equal(AccountFeaturesUpdatedV1EventCheck.Check(state.snapshot), true);
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(state.snapshot), true);
   assert.deepEqual(
     { ...state, snapshot: state.snapshot.data },
     {
@@ -68,6 +90,7 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
         features: { "test.limit": 100 },
         version: 2,
       },
+      subject,
       version: 2,
     },
   );

@@ -86,11 +86,10 @@ nats --no-context stream info ACCOUNTS
 nats --no-context consumer report --leaders ACCOUNTS
 ```
 
-For a consumer, inspect its durable name:
+List the active consumers on a stream:
 
 ```sh
-nats --no-context consumer info \
-  ACCOUNTS plans-accounts-projection
+nats --no-context consumer ls ACCOUNTS
 ```
 
 - Growing pending messages means the projection component is absent or slow.

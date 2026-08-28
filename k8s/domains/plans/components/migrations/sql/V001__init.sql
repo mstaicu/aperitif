@@ -41,6 +41,8 @@ CREATE TABLE account_plans (
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
 
+    subject TEXT NOT NULL CHECK (subject <> ''),
+
     event JSONB NOT NULL CHECK (
         jsonb_typeof(event) = 'object'
         AND COALESCE(event->>'id', '') = id::text

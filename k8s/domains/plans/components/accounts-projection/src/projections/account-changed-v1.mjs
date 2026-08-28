@@ -1,5 +1,8 @@
-import { AccountCreatedV1EventCheck } from "@mstaicu/accounts-contracts";
-import { buildAccountFeaturesUpdatedV1Event } from "@mstaicu/plans-contracts";
+import { AccountChangedV1EventCheck } from "@mstaicu/accounts-contracts";
+import {
+  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
 /**
@@ -8,19 +11,26 @@ import { context, propagation } from "@opentelemetry/api";
  *   pool: import("pg").Pool,
  * }} args
  */
-export async function projectAccountCreatedV1({ event, pool }) {
-  if (!AccountCreatedV1EventCheck.Check(event)) {
-    throw new Error("INVALID_ACCOUNT_CREATED_EVENT");
+export async function projectAccountChangedV1({ event, pool }) {
+  if (!AccountChangedV1EventCheck.Check(event)) {
+    throw new Error("INVALID_ACCOUNT_CHANGED_EVENT");
   }
 
-  const { data } = event;
+  const accountChanged =
+    /** @type {import("@mstaicu/accounts-contracts").AccountChangedV1Event} */ (
+      event
+    );
+  const { account } = accountChanged.data;
 
+  if (account === null) {
+    return;
+  }
+
+  const accountId = account.id;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-
-    const initialPlanId = "free";
 
     const {
       rows: [accountPlan],
@@ -30,11 +40,11 @@ export async function projectAccountCreatedV1({ event, pool }) {
           account_id,
           plan_id
         )
-        VALUES ($1, $2)
+        VALUES ($1, 'free')
         ON CONFLICT (account_id) DO NOTHING
         RETURNING plan_id, version
       `,
-      [data.account.id, initialPlanId],
+      [accountId],
     );
 
     if (accountPlan) {
@@ -51,14 +61,13 @@ export async function projectAccountCreatedV1({ event, pool }) {
         rows.map((row) => [row.feature_id, row.value]),
       );
 
-      const accountFeaturesUpdated = buildAccountFeaturesUpdatedV1Event(
+      const accountFeaturesChanged = buildAccountFeaturesChangedV1Event(
         {
-          account: { id: data.account.id },
+          account: { id: accountId },
           features,
         },
         Number(accountPlan.version),
       );
-
       const traceContext = /** @type {Record<string, string>} */ ({});
 
       propagation.inject(context.active(), traceContext);
@@ -67,15 +76,17 @@ export async function projectAccountCreatedV1({ event, pool }) {
         `
           INSERT INTO outbox_events (
             id,
+            subject,
             event,
             traceparent,
             tracestate
           )
-          VALUES ($1, $2::jsonb, $3, $4)
+          VALUES ($1, $2, $3::jsonb, $4, $5)
         `,
         [
-          accountFeaturesUpdated.id,
-          JSON.stringify(accountFeaturesUpdated),
+          accountFeaturesChanged.id,
+          buildAccountFeaturesV1Subject(accountId),
+          JSON.stringify(accountFeaturesChanged),
           traceContext.traceparent,
           traceContext.tracestate,
         ],

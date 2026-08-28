@@ -10,8 +10,8 @@ A feature has a stable ID. A plan assigns each included feature a boolean,
 number, or string value. An account has one current plan. Products consume the
 resolved feature values and never branch on a plan name.
 
-Every projected account starts on the seeded `free` plan. Plans publishes its
-initial feature snapshot at version `1`.
+Every current account starts on the seeded `free` plan. Plans publishes its
+initial Account feature snapshot at version `1`.
 
 Plans does not own accounts, payments, compliance decisions, or product data.
 
@@ -45,8 +45,15 @@ PUT /v1/accounts/:account_id/plan
 }
 ```
 
-The domain consumes `accounts.account.created.v1` and publishes
-`plans.account.features.updated.v1`.
+The Accounts projector consumes
+`accounts.account.v1.<account-id>` messages of type
+`accounts.account.changed.v1`. It receives the current Account state when it
+starts, then follows changes through an unnamed JetStream consumer. It runs as
+one replica; each start reconciles the Account baseline. Plans publishes
+`plans.account-features.changed.v1` to
+`plans.account-features.v1.<account-id>` when it first assigns `free` and when
+an Account's effective features change. `PLANS` retains one current feature map
+per Account; it is not a historical event stream.
 
 ## Work here
 
@@ -61,8 +68,9 @@ Add schema and configuration changes as
 `components/migrations/sql/V###__description.sql`.
 
 If a migration changes an account's effective features, it must also increment
-that account's plan version and insert a complete feature snapshot into the
-outbox. The matrix update, versions, and outbox rows belong in one transaction.
+that account's plan version, replace any still-pending snapshot for that
+Account, and insert the complete current feature snapshot. The matrix update,
+version, and outbox row belong in one transaction.
 
 | Change | Publish snapshots? |
 | --- | --- |

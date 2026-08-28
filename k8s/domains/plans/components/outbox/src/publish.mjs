@@ -15,6 +15,7 @@ const tracer = trace.getTracer("outbox");
  *   outboxEvent: {
  *     event: { type: string },
  *     id: string,
+ *     subject: string,
  *     traceparent: string | null,
  *     tracestate: string | null,
  *   },
@@ -22,7 +23,7 @@ const tracer = trace.getTracer("outbox");
  */
 export async function publish({
   js,
-  outboxEvent: { event, id, traceparent, tracestate },
+  outboxEvent: { event, id, subject, traceparent, tracestate },
 }) {
   const parentContext = propagation.extract(context.active(), {
     traceparent,
@@ -33,7 +34,7 @@ export async function publish({
     `publish ${event.type}`,
     {
       attributes: {
-        "messaging.destination.name": event.type,
+        "messaging.destination.name": subject,
         "messaging.message.id": id,
         "messaging.operation.name": "publish",
         "messaging.operation.type": "send",
@@ -50,7 +51,7 @@ export async function publish({
           set: (carrier, key, value) => carrier.set(key, value),
         });
 
-        await js.publish(event.type, JSON.stringify(event), {
+        await js.publish(subject, JSON.stringify(event), {
           headers: messageHeaders,
           msgID: id,
         });

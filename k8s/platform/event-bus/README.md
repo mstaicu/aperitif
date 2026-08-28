@@ -34,11 +34,17 @@ PLANS          400 MiB
 That fits below the `819.2 MiB` server ceiling. The remaining 20% of each PVC
 is outside JetStream's configured file-store budget.
 
-To size another stream:
+To size a time-bounded fact stream:
 
 ```text
 stream max_bytes = measured daily growth * retained days * safety factor
 required PVC      = sum of R3 stream limits / 0.80
+```
+
+For a compacted resource-projection stream:
+
+```text
+stream max_bytes = retained resource count * average representation size * safety factor
 ```
 
 Set a stream's `NATS_STREAM_MAX_BYTES` and `NATS_STREAM_REPLICAS` in its owning
@@ -46,8 +52,7 @@ outbox overlay. Then keep `max_file_store` at 80% of the PVC. Existing
 streams and PVCs require an explicit update or resize; changing initial
 manifests does not mutate them automatically.
 
-Reaching a stream limit rejects new events because the streams use
-`DiscardNew`. Publishers then leave their outbox rows unpublished for retry.
+At a stream limit, a rejected publication remains in the outbox for retry.
 
 ## Event rule
 

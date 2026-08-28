@@ -1,4 +1,8 @@
 import {
+  AccountFeaturesV1SubjectPrefix,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
+import {
   DiscardPolicy,
   jetstream,
   RetentionPolicy,
@@ -19,30 +23,34 @@ test("publishes and removes an outbox event", async () => {
   const controller = new AbortController();
   const event = {
     id: randomUUID(),
-    type: "plans.test",
+    type: "plans.account-features.changed.v1",
   };
+  const subject = buildAccountFeaturesV1Subject(randomUUID());
   const js = jetstream(nats.nc);
   const jsm = await js.jetstreamManager();
 
   await jsm.streams.add({
     discard: DiscardPolicy.New,
+    discard_new_per_subject: false,
+    max_age: 0,
     max_bytes: 419_430_400,
+    max_msgs_per_subject: 1,
     name: "PLANS",
     num_replicas: 1,
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
-    subjects: ["plans.>"],
+    subjects: [`${AccountFeaturesV1SubjectPrefix}.>`],
   });
 
   await pool.query(
     `
-      INSERT INTO outbox_events (id, event)
-      VALUES ($1, $2::jsonb)
+      INSERT INTO outbox_events (id, subject, event)
+      VALUES ($1, $2, $3::jsonb)
     `,
-    [event.id, JSON.stringify(event)],
+    [event.id, subject, JSON.stringify(event)],
   );
 
-  const subscription = nats.nc.subscribe(event.type, {
+  const subscription = nats.nc.subscribe(subject, {
     max: 1,
     timeout: 5000,
   });
@@ -54,6 +62,7 @@ test("publishes and removes an outbox event", async () => {
 
   assert.ok(message);
   assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
+  assert.equal(message.subject, subject);
   assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
 
   const {
@@ -69,15 +78,16 @@ test("keeps an outbox event when publishing fails", async () => {
   await using nats = await startNats();
   const event = {
     id: randomUUID(),
-    type: "plans.test",
+    type: "plans.account-features.changed.v1",
   };
+  const subject = buildAccountFeaturesV1Subject(randomUUID());
 
   await pool.query(
     `
-      INSERT INTO outbox_events (id, event)
-      VALUES ($1, $2::jsonb)
+      INSERT INTO outbox_events (id, subject, event)
+      VALUES ($1, $2, $3::jsonb)
     `,
-    [event.id, JSON.stringify(event)],
+    [event.id, subject, JSON.stringify(event)],
   );
 
   await assert.rejects(

@@ -2,7 +2,6 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 
 const requiredEnv = [
   "DATABASE_URL",
-  "NATS_STREAM_MAX_AGE_NANOS",
   "NATS_STREAM_MAX_BYTES",
   "NATS_STREAM_REPLICAS",
   "NATS_URL",
@@ -12,12 +11,6 @@ for (const name of requiredEnv) {
   if (!process.env[name]) {
     throw new Error(`${name} is required`);
   }
-}
-
-const streamMaxAge = Number(process.env.NATS_STREAM_MAX_AGE_NANOS);
-
-if (!Number.isSafeInteger(streamMaxAge) || streamMaxAge <= 0) {
-  throw new Error("NATS_STREAM_MAX_AGE_NANOS must be a positive integer");
 }
 
 const streamMaxBytes = Number(process.env.NATS_STREAM_MAX_BYTES);
