@@ -161,12 +161,12 @@ cluster changes require platform or release review:
 
 - add its Relay and/or projection workload to the NATS NetworkPolicy in
   `platform/cluster/event-bus/base/networkpolicy.yaml`;
-- add its production Flux inventory and image policy under
-  `clusters/prod-eu/`.
+- add its production Flux inventory under `clusters/prod-eu/` and an image
+  policy for every domain-owned image.
 
-The shared Relay has no completed production image or Flux path yet. Do not add
-a production state publisher until that boundary is established; see
-[TODO.md](../TODO.md).
+The shared Relay image uses `flux-system:relay`. A domain adding a Relay adds a
+domain-local Relay Kustomization that depends on its migrations and `event-bus`;
+it does not add another Relay image policy.
 
 ## What this guide does not decide
 

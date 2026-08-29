@@ -1,0 +1,77 @@
+name: relay
+
+on:
+  pull_request:
+
+  merge_group:
+    types: [checks_requested]
+
+  push:
+    branches: [master]
+    paths:
+      - platform/runtime/relay/**
+
+concurrency:
+  group: relay-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 26
+
+      - run: make -C platform/runtime/relay check
+
+  publish:
+    if: github.event_name == 'push'
+    needs: check
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: platform/runtime/relay
+          target: prod
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ghcr.io/mstaicu/relay:${{ github.sha }}
+
+      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ghcr.io/mstaicu/relay@${{ steps.build.outputs.digest }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+
+      - run: >
+          docker buildx imagetools create
+          --tag ghcr.io/mstaicu/relay:latest
+          ghcr.io/mstaicu/relay@${{ steps.build.outputs.digest }}

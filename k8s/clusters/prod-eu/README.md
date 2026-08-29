@@ -2,14 +2,6 @@
 
 Flux reconciles `master` from `k8s/clusters/prod-eu`.
 
-## Current status
-
-The current production inventory deliberately does not reconcile the Accounts
-or Plans Relay, and it has no Relay image policy. Those state feeds therefore
-cannot publish in production yet. Local development deploys Relay with each
-emitting domain; production delivery must be established before this cluster is
-used for event-driven domains.
-
 ## Before bootstrap
 
 - Select the production Kubernetes context.
@@ -62,7 +54,8 @@ clusters/prod-eu/
 │   ├── automation.yaml       one Git digest writer
 │   ├── auth.yaml         Auth repositories and policies
 │   ├── accounts.yaml         Accounts repositories and policies
-│   └── plans.yaml            Plans repositories and policies
+│   ├── plans.yaml            Plans repositories and policies
+│   └── relay.yaml            shared Relay repository and policy
 ├── platform.yaml             platform reconciliation graph
 └── kustomization.yaml        complete cluster inventory
 ```
@@ -81,8 +74,8 @@ merge to master
   -> normal Flux reconciliation deploys it
 ```
 
-- Code changes build only the listed domain workload images. Shared runtime
-  images are not yet in this release path.
+- Domain code changes build their domain workload images. Relay code changes
+  build the shared Relay image through its own workflow.
 - Infrastructure-only changes are applied directly by Flux.
 - Image publishing runs are serialized and retained.
 - One image repository and policy exists per listed production workload image.
@@ -135,11 +128,14 @@ ingress-crds ──┬──> ingress
 auth-postgres ──> auth-migrations ──┬──> auth-api
                                            └──> auth-cleanup
 
-accounts-postgres ──> accounts-migrations ──> accounts-api
+accounts-postgres ──> accounts-migrations ──┬──> accounts-api
+                                             └──> accounts-relay
+event-bus ───────────────────────────────────────> accounts-relay
 
 plans-postgres ──> plans-migrations ──┬──> plans-api
-                                      └──> plans-accounts-projection
-event-bus ──> plans-accounts-projection
+                                      └──> plans-relay
+event-bus ───────────────────────────────────> plans-relay
+accounts-relay ──────────────────────────────> plans-accounts-projection
 
 observability
   └──> receives optional telemetry without blocking domain reconciliation

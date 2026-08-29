@@ -129,15 +129,15 @@ There is no root Makefile or repository-wide development loop.
 
 ## Deliver changes
 
-Today, pull requests check changed domains. Merges build, scan, and publish
-changed domain workload images; Flux then commits and reconciles their digests.
-Contracts and deployment configuration are checked with their owning domain but
-do not produce images.
+Today, pull requests check changed domains; Relay has its own check. Merges
+build, scan, and publish changed domain workload images; Relay has its own
+release workflow. Flux then commits and reconciles their digests. Contracts and
+deployment configuration are checked with their owning domain but do not
+produce images.
 
-`platform/runtime/relay` is deliberately outside that production path for now:
-it has local development deployments, but no image publication or Flux
-reconciliation. Do not treat Accounts or Plans state publication as
-production-ready until that delivery boundary is established.
+`platform/runtime/relay` publishes one shared image. Each emitting domain owns
+its Relay deployment and stream configuration; Flux reconciles that deployment
+through the domain's graph.
 
 When this directory becomes the repository root, change the workflow and Flux
 paths together:

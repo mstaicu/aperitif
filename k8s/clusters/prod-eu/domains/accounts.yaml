@@ -62,3 +62,23 @@ spec:
     - name: accounts-migrations
   wait: true
   timeout: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: accounts-relay
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/domains/accounts/deploy/relay/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: accounts-migrations
+    - name: event-bus
+  wait: true
+  timeout: 5m
