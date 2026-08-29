@@ -1,11 +1,11 @@
 import { AccountV1SubjectPrefix } from "@mstaicu/accounts-contracts";
 import { AckPolicy, DeliverPolicy, jetstream } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
+import { createServer } from "node:http";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { createProbeServer } from "./platform/probes.mjs";
-import { project } from "./project.mjs";
+import { projectAccountV1 } from "./account-v1.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -31,7 +31,31 @@ const messages = await consumer.consume({
   max_messages: 1, // Process one message at a time.
 });
 
-await using probeServer = createProbeServer({ nc, pool });
+await using probeServer = createServer(async (req, res) => {
+  if (req.url === "/livez") {
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("ok");
+    return;
+  }
+
+  if (req.url === "/readyz") {
+    try {
+      await pool.query("SELECT 1");
+      await nc.flush();
+
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end("ok");
+    } catch {
+      res.writeHead(503, { "content-type": "text/plain" });
+      res.end("not ready");
+    }
+
+    return;
+  }
+
+  res.writeHead(404, { "content-type": "text/plain" });
+  res.end();
+});
 
 probeServer.listen(3000, "0.0.0.0");
 
@@ -41,7 +65,7 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
 
 try {
   for await (const message of messages) {
-    await project({ message, pool });
+    await projectAccountV1({ message, pool });
     message.ack();
   }
 } finally {

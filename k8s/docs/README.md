@@ -60,6 +60,8 @@ regulatory requirement justifies the next stage.
 
 ### Event processing
 
+- [New domain](new-domain.md) — the implemented local path for an API-only
+  domain, an Accounts-state consumer, and a state producer.
 - [Platform event contract](../README.md#event-processing) — the implemented
   contract for outboxes, resource projection feeds, facts, and projectors.
 - [Relay](../platform/runtime/relay/README.md) — shared outbox-to-JetStream

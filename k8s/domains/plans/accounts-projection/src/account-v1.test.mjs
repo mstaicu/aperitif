@@ -7,8 +7,8 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { startPostgres } from "../../test/fixtures/postgres.mjs";
-import { projectAccountChangedV1 } from "./account-changed-v1.mjs";
+import { startPostgres } from "../test/fixtures/postgres.mjs";
+import { projectAccountV1 } from "./account-v1.mjs";
 
 test("assigns the free plan and publishes its features once", async () => {
   await using postgres = await startPostgres();
@@ -39,9 +39,13 @@ test("assigns the free plan and publishes its features once", async () => {
     },
     1,
   );
+  const message = {
+    json: () => accountChanged,
+    subject: `accounts.account.v1.${accountId}`,
+  };
 
-  await projectAccountChangedV1({ event: accountChanged, pool });
-  await projectAccountChangedV1({ event: accountChanged, pool });
+  await projectAccountV1({ message, pool });
+  await projectAccountV1({ message, pool });
 
   const {
     rows: [state],
@@ -75,5 +79,34 @@ test("assigns the free plan and publishes its features once", async () => {
       subject: buildAccountFeaturesV1Subject(accountId),
       version: 1,
     },
+  );
+});
+
+test("rejects an Account event under another Account's subject", async () => {
+  const accountId = randomUUID();
+  const event = buildAccountChangedV1Event(
+    {
+      id: accountId,
+      members: [
+        {
+          role: "owner",
+          user_id: randomUUID(),
+        },
+      ],
+      name: "Acme",
+      type: "organization",
+    },
+    1,
+  );
+
+  await assert.rejects(
+    projectAccountV1({
+      message: {
+        json: () => event,
+        subject: `accounts.account.v1.${randomUUID()}`,
+      },
+      pool: /** @type {import("pg").Pool} */ ({}),
+    }),
+    { message: "ACCOUNT_V1_SUBJECT_MISMATCH" },
   );
 });

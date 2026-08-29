@@ -1,8 +1,9 @@
 # Relay
 
 Relay is the shared runtime that publishes a domain's durable PostgreSQL outbox
-to NATS JetStream. It is deliberately event-agnostic: it transports the
+to NATS JetStream. It is domain-agnostic: it transports the structured
 CloudEvent, subject, and tracing context already committed by the source domain.
+It is not a generic relay for arbitrary command payloads.
 
 It does four things:
 
