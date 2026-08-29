@@ -15,8 +15,6 @@ check: ## Validate Accounts workloads, contracts, and manifests.
 	cd contracts && npm test
 	cd contracts && npm run build
 
-	$(MAKE) -C ../../platform/runtime/relay check
-
 	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null

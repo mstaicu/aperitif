@@ -13,7 +13,6 @@ check: ## Validate Plans workloads, contracts, and manifests.
 	cd contracts && npm ci
 	cd contracts && npm test
 	cd contracts && npm run build
-	$(MAKE) -C ../../platform/runtime/relay check
 	cd accounts-projection && npm ci
 	cd accounts-projection && npm exec -- eslint .
 	cd accounts-projection && npm exec -- tsc -p jsconfig.json --noEmit

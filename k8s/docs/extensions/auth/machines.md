@@ -12,7 +12,7 @@ Owner: Auth.
 
 ## Requires
 
-- [Auth](../../domains/auth/README.md) for users, sessions, credentials, and
+- [Auth](../../../domains/auth/README.md) for users, sessions, credentials, and
   access tokens.
 
 ## State
@@ -46,7 +46,7 @@ ON machine_credentials (machine_id);
 Auth generates machine IDs and never reuses them. In the first version, the
 human who creates a machine is its only manager. Account membership is a
 separate, many-to-many relationship; see
-[Account machine membership](account-machine-membership.md).
+[Account machine membership](../accounts/machine-membership.md).
 
 ## API
 

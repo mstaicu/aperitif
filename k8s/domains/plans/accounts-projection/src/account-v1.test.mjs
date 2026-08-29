@@ -1,4 +1,7 @@
-import { buildAccountChangedV1Event } from "@mstaicu/accounts-contracts";
+import {
+  buildAccountChangedV1Event,
+  buildAccountV1Subject,
+} from "@mstaicu/accounts-contracts";
 import {
   AccountFeaturesChangedV1EventCheck,
   buildAccountFeaturesV1Subject,
@@ -10,10 +13,11 @@ import test from "node:test";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
 import { projectAccountV1 } from "./account-v1.mjs";
 
-test("assigns the free plan and publishes its features once", async () => {
+test("initializes an Account's free plan once from its current state", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
+  const ownerId = randomUUID();
 
   await pool.query(
     `
@@ -25,23 +29,24 @@ test("assigns the free plan and publishes its features once", async () => {
     `,
   );
 
-  const accountChanged = buildAccountChangedV1Event(
+  const event = buildAccountChangedV1Event(
     {
       id: accountId,
       members: [
         {
           role: "owner",
-          user_id: randomUUID(),
+          user_id: ownerId,
         },
       ],
       name: "Acme",
       type: "organization",
     },
-    1,
+    7,
   );
+  const subject = buildAccountV1Subject(accountId);
   const message = {
-    json: () => accountChanged,
-    subject: `accounts.account.v1.${accountId}`,
+    json: () => event,
+    subject,
   };
 
   await projectAccountV1({ message, pool });
@@ -80,32 +85,14 @@ test("assigns the free plan and publishes its features once", async () => {
       version: 1,
     },
   );
-});
-
-test("rejects an Account event under another Account's subject", async () => {
-  const accountId = randomUUID();
-  const event = buildAccountChangedV1Event(
-    {
-      id: accountId,
-      members: [
-        {
-          role: "owner",
-          user_id: randomUUID(),
-        },
-      ],
-      name: "Acme",
-      type: "organization",
-    },
-    1,
-  );
 
   await assert.rejects(
     projectAccountV1({
       message: {
-        json: () => event,
-        subject: `accounts.account.v1.${randomUUID()}`,
+        ...message,
+        subject: buildAccountV1Subject(randomUUID()),
       },
-      pool: /** @type {import("pg").Pool} */ ({}),
+      pool,
     }),
     { message: "ACCOUNT_V1_SUBJECT_MISMATCH" },
   );

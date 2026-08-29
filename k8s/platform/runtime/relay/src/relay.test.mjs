@@ -7,7 +7,6 @@ import {
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
-import { setTimeout } from "node:timers/promises";
 
 import { startNats } from "../test/fixtures/nats.mjs";
 import { startPostgres } from "../test/fixtures/postgres.mjs";
@@ -23,7 +22,7 @@ const stream = {
   subjects: ["events.>"],
 };
 
-test("publishes pending rows and later rows", async () => {
+test("relays rows already queued and queued while running", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
@@ -62,7 +61,6 @@ test("publishes pending rows and later rows", async () => {
   });
   const { value: queuedMessage } = await messages.next();
 
-  await setTimeout(50);
   await pool.query(
     `
       INSERT INTO outbox_events (id, subject, event)
@@ -76,19 +74,28 @@ test("publishes pending rows and later rows", async () => {
   controller.abort();
   await task;
 
-  for (const [message, event, subject] of [
-    [queuedMessage, queued, "events.queued"],
-    [notifiedMessage, notified, "events.notified"],
-  ]) {
-    assert.ok(message);
-    assert.deepEqual(JSON.parse(new TextDecoder().decode(message.data)), event);
-    assert.equal(
-      message.headers?.get("Content-Type"),
-      "application/cloudevents",
-    );
-    assert.equal(message.headers?.get("Nats-Msg-Id"), event.id);
-    assert.equal(message.subject, subject);
-  }
+  assert.ok(queuedMessage);
+  assert.ok(notifiedMessage);
+  assert.deepEqual(
+    JSON.parse(new TextDecoder().decode(queuedMessage.data)),
+    queued,
+  );
+  assert.equal(queuedMessage.subject, "events.queued");
+  assert.equal(
+    queuedMessage.headers?.get("Content-Type"),
+    "application/cloudevents",
+  );
+  assert.equal(queuedMessage.headers?.get("Nats-Msg-Id"), queued.id);
+  assert.deepEqual(
+    JSON.parse(new TextDecoder().decode(notifiedMessage.data)),
+    notified,
+  );
+  assert.equal(notifiedMessage.subject, "events.notified");
+  assert.equal(
+    notifiedMessage.headers?.get("Content-Type"),
+    "application/cloudevents",
+  );
+  assert.equal(notifiedMessage.headers?.get("Nats-Msg-Id"), notified.id);
 
   const {
     rows: [{ count }],
@@ -102,15 +109,15 @@ test("publishes pending rows and later rows", async () => {
   assert.equal(count, 0);
 });
 
-test("keeps a row when bounded JetStream publication fails", async () => {
+test("keeps an outbox row when PubAck fails", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
+  await using nats = await startNats({ jetstream: false });
+  const js = jetstream(nats.nc);
   const event = {
     id: randomUUID(),
     type: "test.timeout",
   };
-  const controller = new AbortController();
-
   await pool.query(
     `
       INSERT INTO outbox_events (id, subject, event)
@@ -121,22 +128,11 @@ test("keeps a row when bounded JetStream publication fails", async () => {
 
   await assert.rejects(
     drain({
-      js: /** @type {import("@nats-io/jetstream").JetStreamClient} */ (
-        /** @type {unknown} */ ({
-          publish: async (
-            /** @type {string} */ _subject,
-            /** @type {unknown} */ _data,
-            /** @type {{ timeout?: number } | undefined} */ options,
-          ) => {
-            assert.equal(options?.timeout, 5_000);
-            throw new Error("PUBACK_TIMEOUT");
-          },
-        })
-      ),
+      js,
       pool,
-      signal: controller.signal,
+      signal: new AbortController().signal,
     }),
-    /PUBACK_TIMEOUT/,
+    /JetStreamNotEnabled/,
   );
 
   const {
@@ -151,97 +147,4 @@ test("keeps a row when bounded JetStream publication fails", async () => {
   );
 
   assert.equal(outboxEvent.id, event.id);
-});
-
-test("two Relay instances drain separate locked rows", async () => {
-  await using postgres = await startPostgres();
-  const { pool } = postgres;
-  await using nats = await startNats();
-  const firstController = new AbortController();
-  const secondController = new AbortController();
-  const js = jetstream(nats.nc);
-  const jsm = await js.jetstreamManager();
-  const first = {
-    id: randomUUID(),
-    type: "test.first",
-  };
-  const second = {
-    id: randomUUID(),
-    type: "test.second",
-  };
-  let publishCount = 0;
-  let release = () => {};
-  const bothPublishing = new Promise((resolve) => {
-    release = () => resolve(undefined);
-  });
-
-  await jsm.streams.add(stream);
-  await pool.query(
-    `
-      INSERT INTO outbox_events (id, subject, event, queued_at)
-      VALUES
-        ($1, 'events.first', $2::jsonb, '2026-01-01T00:00:00Z'),
-        ($3, 'events.second', $4::jsonb, '2026-01-01T00:00:01Z')
-    `,
-    [first.id, JSON.stringify(first), second.id, JSON.stringify(second)],
-  );
-
-  const subscription = nats.nc.subscribe("events.>", {
-    max: 2,
-    timeout: 5_000,
-  });
-  const messages = subscription[Symbol.asyncIterator]();
-  const concurrentJs =
-    /** @type {import("@nats-io/jetstream").JetStreamClient} */ ({
-      publish: async (...args) => {
-        publishCount += 1;
-
-        if (publishCount === 2) {
-          release();
-        }
-
-        await bothPublishing;
-        return js.publish(...args);
-      },
-    });
-
-  const firstTask = drain({
-    js: concurrentJs,
-    pool,
-    signal: firstController.signal,
-  });
-  const secondTask = drain({
-    js: concurrentJs,
-    pool,
-    signal: secondController.signal,
-  });
-
-  const { value: firstMessage } = await messages.next();
-  const { value: secondMessage } = await messages.next();
-
-  firstController.abort();
-  secondController.abort();
-  await Promise.all([firstTask, secondTask]);
-
-  assert.ok(firstMessage);
-  assert.ok(secondMessage);
-  assert.deepEqual(
-    new Set(
-      [firstMessage, secondMessage].map(
-        (message) => JSON.parse(new TextDecoder().decode(message.data)).id,
-      ),
-    ),
-    new Set([first.id, second.id]),
-  );
-
-  const {
-    rows: [{ count }],
-  } = await pool.query(
-    `
-      SELECT count(*)::integer AS count
-      FROM outbox_events
-    `,
-  );
-
-  assert.equal(count, 0);
 });

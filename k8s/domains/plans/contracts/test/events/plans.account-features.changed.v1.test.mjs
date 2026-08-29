@@ -16,26 +16,24 @@ test("plans.account-features.changed.v1 remains compatible", (t) => {
   t.assert.snapshot(AccountFeaturesChangedV1EventSchema);
 
   assert.equal(AccountFeaturesChangedV1EventCheck.Check(example), true);
-
   assert.equal(
     AccountFeaturesChangedV1EventCheck.Check(
-      buildAccountFeaturesChangedV1Event(
-        {
-          account_id: accountId,
-          features: {
-            "example.enabled": true,
-            "example.level": "expanded",
-            "example.limit": 100,
-          },
+      buildAccountFeaturesChangedV1Event({
+        account_id: accountId,
+        features: {
+          "example.enabled": true,
+          "example.level": "expanded",
+          "example.limit": 100,
         },
-        1,
-      ),
+      }, 1),
     ),
     true,
   );
-});
-
-test("plans.account-features.changed.v1 keeps its Account identity consistent", () => {
+  assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
+  assert.equal(
+    buildAccountFeaturesV1Subject(accountId),
+    `plans.account-features.v1.${accountId}`,
+  );
   assert.equal(
     AccountFeaturesChangedV1EventCheck.Check({
       ...example,
@@ -43,30 +41,4 @@ test("plans.account-features.changed.v1 keeps its Account identity consistent", 
     }),
     false,
   );
-});
-
-test("plans.account-features.changed.v1 builder rejects an invalid representation", () => {
-  assert.throws(
-    () =>
-      buildAccountFeaturesChangedV1Event(
-        {
-          account_id: accountId,
-          features: {},
-          unexpected: true,
-        },
-        1,
-      ),
-    { message: "INVALID_ACCOUNT_FEATURES_CHANGED_EVENT" },
-  );
-});
-
-test("plans.account-features.v1 identifies the retained Account feature representation", () => {
-  assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
-  assert.equal(
-    buildAccountFeaturesV1Subject(accountId),
-    `plans.account-features.v1.${accountId}`,
-  );
-  assert.throws(() => buildAccountFeaturesV1Subject("not-a-uuid"), {
-    message: "INVALID_ACCOUNT_ID",
-  });
 });

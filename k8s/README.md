@@ -7,7 +7,7 @@ domains/             business domains, workload source, and deployment configura
 platform/cluster/    cluster capabilities
 platform/runtime/    shared runtime executables
 clusters/prod-eu/    production Flux inventory
-docs/                platform capabilities and business recipes
+docs/                domain extensions and product examples
 .github/workflows/   checks and image publication
 ```
 
@@ -20,7 +20,7 @@ docs/                platform capabilities and business recipes
 | `plans`    | Plans and resolved account features                  |
 
 See [docs/README.md](docs/README.md) for the platform model, proposed
-capabilities, and business recipes.
+extensions, and product examples.
 
 Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
@@ -145,9 +145,10 @@ paths together:
 ```text
 pull request
   -> check changed domains
+  -> check Relay
 
 merge to master
-  -> build changed domain workload images
+  -> build changed domain workload and Relay images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay

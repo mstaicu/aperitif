@@ -12,7 +12,7 @@ Owner: Accounts.
 
 ## Requires
 
-- [Accounts](../../domains/accounts/README.md) for the Account and membership
+- [Accounts](../../../domains/accounts/README.md) for the Account and membership
   boundary.
 
 ## State
@@ -27,7 +27,7 @@ role        owner | member
 ```
 
 An Account always retains one `owner`. Product roles remain Product state; see
-[Product member roles](product-member-roles.md).
+[Product member roles](../product/member-roles.md).
 
 ## API
 
@@ -44,7 +44,7 @@ DELETE /v1/accounts/{account_id}/members/{user_id}
 the role is unchanged. `DELETE` returns `204 No Content`. Both reject removing
 or demoting the last owner.
 
-There is no `POST /members`: [Account invitations](account-invitations.md) are
+There is no `POST /members`: [Account invitations](invitations.md) are
 the human-admission mechanism.
 
 ## Processing and Account state

@@ -6,6 +6,13 @@ Only unresolved, product-agnostic platform work belongs here.
 
 - Replace in-cluster PostgreSQL with managed databases and test backup and
   restoration.
+- Implement and rehearse controlled current-resource feed recovery for every
+  state-producing domain. A manually invoked Job, using that domain's existing
+  API image, reads its authoritative database and writes one current
+  representation per resource—with its existing revision and a fresh CloudEvent
+  ID—to the normal outbox. Relay republishes it after a state-stream loss; this
+  is not a scheduled workload or normal deployment step. See the
+  [production recovery contract](clusters/prod-eu/README.md#recover-a-current-resource-state-stream).
 - Verify the 400 MiB current-resource stream limits against measured retained
   resource count and representation size before production.
 - Choose a certificate flow that supports redundant production ingress.

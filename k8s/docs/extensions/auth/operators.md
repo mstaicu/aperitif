@@ -11,7 +11,7 @@ Owner: Auth.
 
 ## Requires
 
-- [Auth](../../domains/auth/README.md) for users, sessions, and access tokens.
+- [Auth](../../../domains/auth/README.md) for users, sessions, and access tokens.
 
 ## State
 
@@ -24,7 +24,7 @@ CREATE TABLE operators (
 ```
 
 Bootstrap the first operator through the controlled procedure in the
-[Auth README](../../domains/auth/README.md#first-operator). When that user
+[Auth README](../../../domains/auth/README.md#first-operator). When that user
 exchanges a session for a short-lived access token, Auth adds `operator: true`.
 
 An operator-only endpoint requires that claim plus its own action-specific

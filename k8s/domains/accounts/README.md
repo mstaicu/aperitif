@@ -32,8 +32,9 @@ Accounts publishes `accounts.account.changed.v1` to
 exported Account and its monotonic `data.revision`; the stream retains one
 current message per Account subject. Account creation includes its initial
 owner in revision `1`. State and its outbox event are committed in one database
-transaction. Member management and invitations are proposed capabilities under
-[`docs/capabilities`](../../docs/capabilities/).
+transaction. [Member management](../../docs/extensions/accounts/membership.md)
+and [invitations](../../docs/extensions/accounts/invitations.md) are proposed
+extensions.
 
 ## Work here
 

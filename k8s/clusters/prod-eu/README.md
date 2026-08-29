@@ -160,6 +160,41 @@ flux reconcile kustomization <name> --with-source
 flux logs --kind=Kustomization --name=<name>
 ```
 
+## Recover a current-resource state stream
+
+This is a required production recovery capability for every domain that
+publishes a current-resource feed. It is not implemented yet.
+
+The domain provides a manually invoked, one-shot Kubernetes Job using its
+existing API image at the deployed digest. Its `src/reseed.mjs` entrypoint:
+
+1. reads only the domain's authoritative database;
+2. builds the active complete resource representation with the domain's
+   published contract;
+3. preserves each resource's stored `data.revision`, but creates a fresh
+   CloudEvent ID and timestamp; and
+4. writes it to the ordinary domain outbox using the same per-resource
+   transaction and pending-snapshot replacement as a normal mutation.
+
+The Job does not connect to NATS. Relay publishes the normal outbox rows and
+removes them only after PubAck. It is neither a CronJob nor part of Flux's
+normal reconciliation graph.
+
+After a state-stream loss or deliberate reset:
+
+1. Recreate the stream from the domain-owned `streams.json` configuration.
+2. Run that domain's reseed Job once.
+3. Wait for Relay to drain the outbox and verify one current subject per
+   authoritative resource.
+4. Start or reset dependent state projectors so they bootstrap from the
+   restored current baseline and follow subsequent revisions.
+
+A domain's recovery test deletes and recreates its state stream, runs the
+reseed Job, starts a fresh projector, and proves that it reconstructs every
+resource and applies a later mutation. It must also cover a concurrent mutation
+of the same resource, so an older representation cannot be enqueued after a
+newer one.
+
 ## Validate
 
 ```sh

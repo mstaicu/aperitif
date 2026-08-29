@@ -11,10 +11,8 @@ test("passkeys require the configured origin and user verification", async () =>
     origin: "https://auth.test",
     pool,
   });
-  const [registration, login] = await Promise.all([
-    passkeys.createRegistrationOptions(),
-    passkeys.createAuthenticationOptions(),
-  ]);
+  const registration = await passkeys.createRegistrationOptions();
+  const login = await passkeys.createAuthenticationOptions();
   const {
     rows: [challenges],
   } = await pool.query(`

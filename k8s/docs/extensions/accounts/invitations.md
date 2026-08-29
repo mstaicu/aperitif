@@ -12,8 +12,8 @@ Owner: Accounts.
 
 ## Requires
 
-- [Auth](../../domains/auth/README.md) for the recipient's access token.
-- [Accounts](../../domains/accounts/README.md) for the membership boundary.
+- [Auth](../../../domains/auth/README.md) for the recipient's access token.
+- [Accounts](../../../domains/accounts/README.md) for the membership boundary.
 
 ## State
 
@@ -84,7 +84,7 @@ different-user requests return one indistinguishable failure. Accounts always
 looks up an invitation by both `account_id` and `invitation_id`.
 
 There is no public `POST /members`: invitations are human admission. Existing
-members use [Account membership management](account-membership-management.md).
+members use [Account membership management](membership.md).
 
 ## Processing and Account state
 

@@ -77,8 +77,7 @@ separate stream with their own retention policy.
    migration.
 3. Add the domain-owned Relay deployment and `streams.json`, following
    `domains/accounts/deploy/relay/` or `domains/plans/deploy/relay/`.
-4. Add the Relay image to that domain's local development configuration and run
-   the Relay check from the domain's `make check` target.
+4. Add the Relay image to that domain's local development configuration.
 5. Verify the producer, Relay, and any projector together; a restarted
    projector must reconcile its source feed before it processes new changes.
 
@@ -88,8 +87,5 @@ separate stream with their own retention policy.
 make -C platform/runtime/relay check
 ```
 
-Domain checks include this runtime check:
-
-```sh
-make -C domains/<domain> check
-```
+Relay has its own CI check. Domain checks validate only their own source,
+contracts, and deployment configuration.

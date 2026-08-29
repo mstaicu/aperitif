@@ -12,7 +12,7 @@ Owner: Auth.
 
 ## Requires
 
-- [Auth](../../domains/auth/README.md) for users, sessions, and access tokens.
+- [Auth](../../../domains/auth/README.md) for users, sessions, and access tokens.
 
 ## State
 

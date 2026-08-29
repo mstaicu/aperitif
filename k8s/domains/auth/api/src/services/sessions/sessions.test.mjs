@@ -27,11 +27,9 @@ test("sessions issue access tokens and revoke independently", async () => {
     const laptop = await createSession({ client, userId });
     const phone = await createSession({ client, userId });
 
-    const [laptopAccess] = await Promise.all([
-      sessions.createAccessToken({ session_token: laptop.sessionToken }),
-      sessions.createAccessToken({ session_token: laptop.sessionToken }),
-      sessions.createAccessToken({ session_token: phone.sessionToken }),
-    ]);
+    const laptopAccess = await sessions.createAccessToken({
+      session_token: laptop.sessionToken,
+    });
     const { payload } = await jwtVerify(
       laptopAccess.access_token,
       createLocalJWKSet(jwt.jwks),

@@ -14,8 +14,8 @@ onboard controller remains responsible for physical control and safety.
 | ---------- | --------------------------------------------------------------------------- | ------------------------------------------- | ----------- |
 | Domain     | [Auth](../../domains/auth/README.md)                                        | Human authentication                        | Implemented |
 | Domain     | [Accounts](../../domains/accounts/README.md)                                | Organization ownership and human membership | Implemented |
-| Capability | [Machines](../capabilities/machines.md)                                     | Machine principal and credential exchange   | Proposed    |
-| Capability | [Account machine membership](../capabilities/account-machine-membership.md) | Machine Account context                     | Proposed    |
+| Extension | [Machines](../extensions/auth/machines.md)                                  | Machine principal and credential exchange   | Proposed    |
+| Extension | [Account machine membership](../extensions/accounts/machine-membership.md)  | Machine Account context                     | Proposed    |
 
 This first product does not require plans, compliance, payments, operators, or
 personal access tokens.
@@ -90,8 +90,8 @@ NATS is internal to platform components; the machine calls the Farm API.
 
 ## Build
 
-1. Implement [Machines](../capabilities/machines.md).
-2. Implement [Account machine membership](../capabilities/account-machine-membership.md).
+1. Implement [Machines](../extensions/auth/machines.md).
+2. Implement [Account machine membership](../extensions/accounts/machine-membership.md).
 3. Build Farm with fields, vehicles, missions, and observations.
 4. Prove the workflow with a simulated machine and duplicate/retried requests.
 5. Add object storage and hardware integration.

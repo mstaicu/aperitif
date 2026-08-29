@@ -11,8 +11,8 @@ Owner: Accounts.
 
 ## Requires
 
-- [Machines](machines.md) for Auth-issued machine IDs.
-- [Accounts](../../domains/accounts/README.md) for the Account boundary.
+- [Machines](../auth/machines.md) for Auth-issued machine IDs.
+- [Accounts](../../../domains/accounts/README.md) for the Account boundary.
 
 ## State
 
@@ -80,5 +80,5 @@ consumer exists, machine membership remains Accounts-private state.
 | Stage | Strengthen | Add when |
 | --- | --- | --- |
 | Baseline | An owner attaches an Auth-issued ID. | A controlled first product. |
-| Controlled | Require a machine to use a stronger proof from [Machines](machines.md) before it performs important work; notify the Account when membership changes. | Machines operate beyond a controlled environment. |
+| Controlled | Require a machine to use a stronger proof from [Machines](../auth/machines.md) before it performs important work; notify the Account when membership changes. | Machines operate beyond a controlled environment. |
 | High assurance | Replace one-sided attachment with an explicit enrollment approval between the Account and machine manager. For operations where eventual projection removal is insufficient, enforce immediate Product-local denial in addition to the event. | A misattached or recently removed machine could cause material harm. |

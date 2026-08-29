@@ -31,10 +31,6 @@ test("creates account ownership and lists only the caller's accounts", async () 
     type: "individual",
   });
 
-  assert.deepEqual(await accounts.listAccounts({ currentUserId: userId }), {
-    accounts: [alpha.account, zulu.account],
-  });
-
   const { rows: outbox } = await pool.query(
     `
       SELECT event,
@@ -46,24 +42,16 @@ test("creates account ownership and lists only the caller's accounts", async () 
     [alpha.account.id],
   );
 
-  assert.deepEqual(
-    outbox.map(({ event, subject }) => [
-      event.type,
-      event.data.revision,
-      event.data,
-      subject,
-    ]),
-    [
-      [
-        AccountChangedV1Type,
-        1,
-        {
-          ...alpha.account,
-          members: [{ role: "owner", user_id: userId }],
-          revision: 1,
-        },
-        buildAccountV1Subject(alpha.account.id),
-      ],
-    ],
-  );
+  const [{ event, subject }] = outbox;
+
+  assert.deepEqual(await accounts.listAccounts({ currentUserId: userId }), {
+    accounts: [alpha.account, zulu.account],
+  });
+  assert.equal(event.type, AccountChangedV1Type);
+  assert.deepEqual(event.data, {
+    ...alpha.account,
+    members: [{ role: "owner", user_id: userId }],
+    revision: 1,
+  });
+  assert.equal(subject, buildAccountV1Subject(alpha.account.id));
 });

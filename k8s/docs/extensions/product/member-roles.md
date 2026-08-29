@@ -11,7 +11,7 @@ Owner: the Product domain.
 
 ## Requires
 
-- [Accounts](../../domains/accounts/README.md) Account state feed.
+- [Accounts](../../../domains/accounts/README.md) Account state feed.
 
 ## State
 
@@ -77,6 +77,19 @@ makes replay and out-of-order delivery safe without membership tombstones.
 
 Product authorization follows its local projection. An Accounts membership
 change takes effect in a Product after that Product commits the event.
+
+## Invitation-time roles
+
+If a Product needs to assign roles while a person is being invited, Accounts
+still owns admission and the Product still owns its role vocabulary. Do not add
+Product roles to Accounts or design a Product invitation API before the Product
+can reliably learn the invitation's current state.
+
+At that time, choose one boundary: Accounts exports a complete current
+invitation resource feed, or the Product owns the invitation workflow itself.
+Define its representations, revisions, and removal behaviour then. Until then,
+the Product continues to use the Account state feed for membership
+authorization and assigns roles only to active members.
 
 ## Evolution
 

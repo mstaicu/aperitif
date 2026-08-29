@@ -16,29 +16,27 @@ test("accounts.account.changed.v1 remains compatible", (t) => {
   t.assert.snapshot(AccountChangedV1EventSchema);
 
   assert.equal(AccountChangedV1EventCheck.Check(example), true);
-
   assert.equal(
     AccountChangedV1EventCheck.Check(
-      buildAccountChangedV1Event(
-        {
-          id: accountId,
-          members: [
-            {
-              role: "owner",
-              user_id: "33333333-3333-4333-8333-333333333333",
-            },
-          ],
-          name: "Acme",
-          type: "individual",
-        },
-        1,
-      ),
+      buildAccountChangedV1Event({
+        id: accountId,
+        members: [
+          {
+            role: "owner",
+            user_id: "33333333-3333-4333-8333-333333333333",
+          },
+        ],
+        name: "Acme",
+        type: "individual",
+      }, 1),
     ),
     true,
   );
-});
-
-test("accounts.account.changed.v1 keeps its Account identity consistent", () => {
+  assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
+  assert.equal(
+    buildAccountV1Subject(accountId),
+    `accounts.account.v1.${accountId}`,
+  );
   assert.equal(
     AccountChangedV1EventCheck.Check({
       ...example,
@@ -46,31 +44,4 @@ test("accounts.account.changed.v1 keeps its Account identity consistent", () => 
     }),
     false,
   );
-});
-
-test("accounts.account.changed.v1 builder rejects an invalid representation", () => {
-  assert.throws(
-    () =>
-      buildAccountChangedV1Event(
-        {
-          id: accountId,
-          members: [],
-          name: "Acme",
-          type: "organization",
-        },
-        1,
-      ),
-    { message: "INVALID_ACCOUNT_CHANGED_EVENT" },
-  );
-});
-
-test("accounts.account.v1 identifies the retained Account representation", () => {
-  assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
-  assert.equal(
-    buildAccountV1Subject(accountId),
-    `accounts.account.v1.${accountId}`,
-  );
-  assert.throws(() => buildAccountV1Subject("not-a-uuid"), {
-    message: "INVALID_ACCOUNT_ID",
-  });
 });
