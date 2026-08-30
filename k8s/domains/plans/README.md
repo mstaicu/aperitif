@@ -65,7 +65,7 @@ make -C domains/plans dev
 ```
 
 Add schema and configuration changes as
-`migrations/sql/V###__description.sql`.
+`workloads/migrations/sql/V###__description.sql`.
 
 If a migration changes an account's effective features, it must also increment
 that account's plan version, replace any still-pending snapshot for that

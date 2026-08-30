@@ -45,5 +45,5 @@ make -C domains/accounts deploy
 make -C domains/accounts dev
 ```
 
-Add schema changes as `migrations/sql/V###__description.sql`. Outbox rows stay
+Add schema changes as `workloads/migrations/sql/V###__description.sql`. Outbox rows stay
 durable until Outbox Relay receives JetStream PubAck.

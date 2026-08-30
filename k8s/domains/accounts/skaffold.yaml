@@ -25,7 +25,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/accounts-migrations
-      context: migrations
+      context: workloads/migrations
       docker:
         dockerfile: Dockerfile
 
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/accounts-api
-      context: api
+      context: workloads/api
       docker:
         dockerfile: Dockerfile
         target: dev

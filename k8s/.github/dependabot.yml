@@ -8,12 +8,14 @@ updates:
 
   - package-ecosystem: npm
     directories:
-      - /domains/*/*
+      - /domains/*/workloads/*
+      - /platform/runtime/*
     schedule:
       interval: weekly
 
   - package-ecosystem: docker
     directories:
-      - /domains/*/*
+      - /domains/*/workloads/*
+      - /platform/runtime/*
     schedule:
       interval: weekly

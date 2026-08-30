@@ -57,7 +57,7 @@ deployment configuration. Choose only the extensions the domain needs.
 | Shape | Use when | Reference |
 | --- | --- | --- |
 | API and database | The domain has no cross-domain state requirement. | [Accounts](../domains/accounts/README.md) |
-| Accounts-state consumer | The domain needs current Account data for local business logic or authorization. | [Plans Accounts projection](../domains/plans/accounts-projection/) |
+| Accounts-state consumer | The domain needs current Account data for local business logic or authorization. | [Plans Accounts projection](../domains/plans/workloads/accounts-projection/) |
 | State producer | Another domain needs the domain's complete current resource state. | [Accounts](../domains/accounts/README.md) |
 | Consumer and producer | The domain both uses upstream state and exports its own. | [Plans](../domains/plans/README.md) |
 
@@ -70,8 +70,10 @@ Every domain owns only the folders for workloads it actually has:
 
 ```text
 domains/<domain>/
-  api/                         # if it exposes HTTP
-  migrations/                  # its PostgreSQL schema
+  workloads/
+    api/                       # if it exposes HTTP
+    migrations/                # its PostgreSQL schema
+    <source>-projection/       # if it consumes source state
   deploy/
     postgres/
     migrations/
@@ -84,9 +86,10 @@ domains/<domain>/
   skaffold.yaml
 ```
 
-Keep source with the workload and Kubernetes configuration under the matching
-`deploy/<workload>/` directory. A domain owns its database; it never reads
-another domain's database.
+Keep first-party container source under `workloads/`. `deploy/` owns the
+domain's Kubernetes instances; it can run a domain workload, an upstream image,
+or a shared runtime. A domain owns its database; it never reads another
+domain's database.
 
 Use the existing `check`, `migrate`, `deploy`, and `dev` Make targets. Their
 meaning is consistent across implemented domains.
@@ -95,9 +98,9 @@ meaning is consistent across implemented domains.
 
 Start with this shape unless a real cross-domain need says otherwise.
 
-1. Add the domain migration image and `migrations/sql/V001__init.sql`.
+1. Add the domain migration image and `workloads/migrations/sql/V001__init.sql`.
 2. Add only the tables owned by the domain.
-3. Add its API workload and `deploy/postgres`, `deploy/migrations`, and
+3. Add its API workload under `workloads/api` and `deploy/postgres`, `deploy/migrations`, and
    `deploy/api` configuration.
 4. Add the local Skaffold modules and the four Make targets.
 5. Add a short domain README that names the data and authority it owns.
@@ -128,10 +131,10 @@ locally; it does not query Accounts during a request.
    equal to or lower than the stored revision. Otherwise apply the complete
    representation and store the newer revision.
 5. Acknowledge the NATS message only after that transaction commits.
-6. Add `deploy/<name>-projection` and its NATS, database, DNS, and telemetry
-   NetworkPolicy access.
+6. Add `workloads/<name>-projection`, `deploy/<name>-projection`, and its
+   NATS, database, DNS, and telemetry NetworkPolicy access.
 
-[Plans' Accounts projection](../domains/plans/accounts-projection/) is the
+[Plans' Accounts projection](../domains/plans/workloads/accounts-projection/) is the
 complete working reference. It uses no outbox or Outbox Relay because it only
 consumes state.
 
@@ -169,9 +172,9 @@ deltas.
 6. Add `deploy/outbox-relay`, including a domain-owned `streams.json`. The
    state stream matches the resource subject family, retains one message per
    subject, and declares its own `max_bytes`.
-7. Add Outbox Relay to local Skaffold. Outbox Relay has its own CI check; the
-   domain's check validates its own source, contracts, and deployment
-   configuration.
+7. Add Outbox Relay to local Skaffold. Shared-runtime changes use their own
+   generic CI check; the domain's check validates its own source, contracts,
+   and deployment configuration.
 
 [Accounts](../domains/accounts/README.md) is the minimal producer reference.
 [Plans](../domains/plans/README.md) is the reference for a consumer that also

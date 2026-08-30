@@ -4,9 +4,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "domains/*/*/**"
-      - "!domains/*/contracts/**"
-      - "!domains/*/deploy/**"
+      - "domains/*/workloads/*/**"
+      - "platform/runtime/*/**"
 
 concurrency:
   group: publish-images
@@ -16,11 +15,11 @@ permissions:
   contents: read
 
 jobs:
-  workloads:
-    name: find changed workloads
+  domain-workloads:
+    name: find changed domain workloads
     runs-on: ubuntu-24.04
     outputs:
-      workloads: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      sources: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -30,18 +29,33 @@ jobs:
       - id: changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: domains/*/*/**
-          files_ignore: |
-            domains/*/contracts/**
-            domains/*/deploy/**
+          files: domains/*/workloads/*/**
+          dir_names: true
+          dir_names_max_depth: 4
+          matrix: true
+
+  runtimes:
+    name: find changed shared runtimes
+    runs-on: ubuntu-24.04
+    outputs:
+      sources: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: platform/runtime/*/**
           dir_names: true
           dir_names_max_depth: 3
           matrix: true
 
-  publish:
-    name: publish ${{ matrix.workload }}
-    needs: workloads
-    runs-on: ubuntu-24.04
+  publish-domain-workload:
+    name: publish ${{ matrix.source }}
+    needs: domain-workloads
     permissions:
       contents: read
       packages: write
@@ -49,50 +63,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        workload: ${{ fromJSON(needs.workloads.outputs.workloads) }}
+        source: ${{ fromJSON(needs.domain-workloads.outputs.sources) }}
 
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    uses: ./.github/workflows/publish-image.yaml
+    with:
+      source: ${{ matrix.source }}
 
-      - id: image
-        name: read image name
-        run: |
-          source="${{ matrix.workload }}"
-          domain="${source%/*}"
-          workload="${source##*/}"
-          echo "name=$(yq -r '.images[0].name' "$domain/deploy/$workload/overlays/prod-eu/kustomization.yaml")" >> "$GITHUB_OUTPUT"
+  publish-runtime:
+    name: publish ${{ matrix.source }}
+    needs: runtimes
+    permissions:
+      contents: read
+      packages: write
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ${{ fromJSON(needs.runtimes.outputs.sources) }}
 
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - id: build
-        name: build and publish image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: ${{ matrix.workload }}
-          target: prod
-          push: true
-          provenance: mode=max
-          sbom: true
-          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
-
-      - name: scan image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
-        with:
-          image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
-          scanners: vuln
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          exit-code: 1
-
-      - name: promote image to 'latest'
-        run: >
-          docker buildx imagetools create
-          --tag "${{ steps.image.outputs.name }}:latest"
-          "${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}"
+    uses: ./.github/workflows/publish-image.yaml
+    with:
+      source: ${{ matrix.source }}

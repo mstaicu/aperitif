@@ -71,5 +71,5 @@ make -C domains/auth deploy
 make -C domains/auth dev
 ```
 
-Add schema changes as `migrations/sql/V###__description.sql` and use
+Add schema changes as `workloads/migrations/sql/V###__description.sql` and use
 expand/contract for changes consumed by running code.

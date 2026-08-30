@@ -26,9 +26,10 @@ test("relays queued entries", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
+  const { nc } = nats;
   const abortController = new AbortController();
-  const jetStream = jetstream(nats.nc);
-  const jetStreamManager = await jetStream.jetstreamManager();
+  const js = jetstream(nc);
+  const jsm = await js.jetstreamManager();
   const queued = {
     id: randomUUID(),
     type: "test.queued",
@@ -38,9 +39,9 @@ test("relays queued entries", async () => {
     type: "test.notified",
   };
 
-  await jetStreamManager.streams.add(stream);
+  await jsm.streams.add(stream);
 
-  const subscription = nats.nc.subscribe("events.>", {
+  const subscription = nc.subscribe("events.>", {
     max: 2,
     timeout: 5_000,
   });
@@ -56,8 +57,8 @@ test("relays queued entries", async () => {
 
   const task = relayOutbox({
     abortSignal: abortController.signal,
-    databasePool: pool,
-    jetStream,
+    js,
+    pool,
   });
   const { value: queuedMessage } = await messages.next();
 
@@ -113,7 +114,8 @@ test("keeps an outbox entry when PubAck fails", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats({ jetstream: false });
-  const jetStream = jetstream(nats.nc);
+  const { nc } = nats;
+  const js = jetstream(nc);
   const event = {
     id: randomUUID(),
     type: "test.timeout",
@@ -129,8 +131,8 @@ test("keeps an outbox entry when PubAck fails", async () => {
   await assert.rejects(
     relayOutbox({
       abortSignal: new AbortController().signal,
-      databasePool: pool,
-      jetStream,
+      js,
+      pool,
     }),
     /JetStreamNotEnabled/,
   );

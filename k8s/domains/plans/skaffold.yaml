@@ -25,7 +25,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-migrations
-      context: migrations
+      context: workloads/migrations
       docker:
         dockerfile: Dockerfile
 
@@ -50,7 +50,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-api
-      context: api
+      context: workloads/api
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -112,7 +112,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/plans-accounts-projection
-      context: accounts-projection
+      context: workloads/accounts-projection
       docker:
         dockerfile: Dockerfile
         target: dev

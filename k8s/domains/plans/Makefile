@@ -6,17 +6,17 @@ help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 check: ## Validate Plans workloads, contracts, and manifests.
-	cd api && npm ci
-	cd api && npm exec -- eslint .
-	cd api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd api && npm test
+	cd workloads/api && npm ci
+	cd workloads/api && npm exec -- eslint .
+	cd workloads/api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd workloads/api && npm test
 	cd contracts && npm ci
 	cd contracts && npm test
 	cd contracts && npm run build
-	cd accounts-projection && npm ci
-	cd accounts-projection && npm exec -- eslint .
-	cd accounts-projection && npm exec -- tsc -p jsconfig.json --noEmit
-	cd accounts-projection && npm test
+	cd workloads/accounts-projection && npm ci
+	cd workloads/accounts-projection && npm exec -- eslint .
+	cd workloads/accounts-projection && npm exec -- tsc -p jsconfig.json --noEmit
+	cd workloads/accounts-projection && npm test
 	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null

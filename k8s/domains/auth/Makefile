@@ -6,12 +6,12 @@ help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 check: ## Validate Auth workloads and manifests.
-	cd api && npm ci
-	cd api && npm exec -- eslint .
-	cd api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd api && npm test
-	cd ui && npm ci
-	cd ui && npm run check
+	cd workloads/api && npm ci
+	cd workloads/api && npm exec -- eslint .
+	cd workloads/api && npm exec -- tsc -p jsconfig.json --noEmit
+	cd workloads/api && npm test
+	cd workloads/ui && npm ci
+	cd workloads/ui && npm run check
 	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/cleanup/overlays/prod-eu >/dev/null

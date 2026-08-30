@@ -26,9 +26,9 @@ Each domain owns its database. Domains exchange versioned events through an
 outbox and NATS JetStream; they never read each other's databases.
 
 Domain workload source and Dockerfiles live under
-`domains/<domain>/<workload>`. Shared runtime source lives under
-`platform/runtime/<runtime>`. A domain still owns every workload deployment and
-stream configuration under `domains/<domain>/deploy/<workload>`.
+`domains/<domain>/workloads/<workload>`. Shared runtime source lives under
+`platform/runtime/<runtime>`. A domain owns its Kubernetes instances and stream
+configuration under `domains/<domain>/deploy/<name>`.
 
 ### Event processing
 
@@ -129,11 +129,10 @@ There is no root Makefile or repository-wide development loop.
 
 ## Deliver changes
 
-Today, pull requests check changed domains; Outbox Relay has its own check.
-Merges build, scan, and publish changed domain workload images; Outbox Relay
-has its own release workflow. Flux then commits and reconciles their digests.
-Contracts and deployment configuration are checked with their owning domain but
-do not produce images.
+Pull requests check changed domains and shared runtimes. Merges build, scan,
+and publish changed domain workload and shared-runtime images. Flux then
+commits and reconciles their digests. Contracts and deployment configuration
+are checked with their owning domain but do not produce images.
 
 `platform/runtime/outbox-relay` publishes one shared image. Each emitting
 domain owns its Outbox Relay deployment and stream configuration; Flux
@@ -145,10 +144,10 @@ paths together:
 ```text
 pull request
   -> check changed domains
-  -> check Outbox Relay
+  -> check changed shared runtimes
 
 merge to master
-  -> build changed domain workload and Outbox Relay images
+  -> build changed domain workload and shared-runtime images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay
