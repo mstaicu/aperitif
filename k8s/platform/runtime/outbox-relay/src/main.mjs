@@ -8,15 +8,11 @@ import { Pool } from "pg";
 
 import { relayOutbox } from "./outbox.mjs";
 
-const requiredEnvironmentVariables = [
-  "DATABASE_URL",
-  "NATS_STREAMS_PATH",
-  "NATS_URL",
-];
+const required = ["DATABASE_URL", "NATS_STREAMS_PATH", "NATS_URL"];
 
-for (const environmentVariable of requiredEnvironmentVariables) {
-  if (!process.env[environmentVariable]) {
-    throw new Error(`${environmentVariable} is required`);
+for (const envVar of required) {
+  if (!process.env[envVar]) {
+    throw new Error(`${envVar} is required`);
   }
 }
 
@@ -48,42 +44,39 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
   process.once(signal, () => abortController.abort());
 }
 
-const telemetry = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
   ? new NodeSDK({
       serviceName: process.env.OTEL_SERVICE_NAME,
     })
   : undefined;
 
-telemetry?.start();
+otel?.start();
 
-const databasePool = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-databasePool.on("error", (err) => console.error(err));
+pool.on("error", (err) => console.error(err));
 
 try {
-  await using natsConnection = await connect({
+  await using nc = await connect({
     maxReconnectAttempts: -1,
     name: "outbox-relay",
     servers: [/** @type {string} */ (process.env.NATS_URL)],
     timeout: 2_000,
   });
-  const jetStream = jetstream(natsConnection);
-  const jetStreamManager = await jetStream.jetstreamManager();
+  const js = jetstream(nc);
+  const jsm = await js.jetstreamManager();
 
   for (const streamConfiguration of streamConfigurations) {
     try {
-      await jetStreamManager.streams.update(
-        streamConfiguration.name,
-        streamConfiguration,
-      );
+      await jsm.streams.update(streamConfiguration.name, streamConfiguration);
     } catch (err) {
       if (!(err instanceof Error) || err.name !== "StreamNotFoundError") {
         throw err;
       }
 
-      await jetStreamManager.streams.add(streamConfiguration);
+      await jsm.streams.add(streamConfiguration);
     }
   }
 
@@ -96,8 +89,8 @@ try {
 
     if (req.url === "/readyz") {
       try {
-        await databasePool.query("SELECT 1");
-        await natsConnection.flush();
+        await pool.query("SELECT 1");
+        await nc.flush();
 
         res.writeHead(200, { "content-type": "text/plain" });
         res.end("ok");
@@ -118,8 +111,8 @@ try {
   try {
     await relayOutbox({
       abortSignal: abortController.signal,
-      databasePool,
-      jetStream,
+      js,
+      pool,
     });
   } finally {
     await new Promise((resolve, reject) =>
@@ -127,6 +120,6 @@ try {
     );
   }
 } finally {
-  await databasePool.end();
-  await telemetry?.shutdown();
+  await pool.end();
+  await otel?.shutdown();
 }

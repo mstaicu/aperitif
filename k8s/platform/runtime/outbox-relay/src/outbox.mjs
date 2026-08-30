@@ -8,48 +8,46 @@ import {
 } from "@opentelemetry/api";
 import { setTimeout } from "node:timers/promises";
 
-const POLL_INTERVAL_MS = 1_000;
-const PUBLISH_ACK_TIMEOUT_MS = 5_000;
 const tracer = trace.getTracer("outbox-relay");
 
 /**
  * @param {{
  *   abortSignal: AbortSignal,
- *   databasePool: import("pg").Pool,
- *   jetStream: import("@nats-io/jetstream").JetStreamClient,
+ *   pool: import("pg").Pool,
+ *   js: import("@nats-io/jetstream").JetStreamClient,
  * }} args
  */
-export async function relayOutbox({ abortSignal, databasePool, jetStream }) {
-  const databaseClient = await databasePool.connect();
+export async function relayOutbox({ abortSignal, js, pool }) {
+  const client = await pool.connect();
 
   try {
     while (!abortSignal.aborted) {
-      const relayed = await relayNextEntry({ databaseClient, jetStream });
+      const relayed = await relayNextEntry({ client, js });
 
       if (!relayed) {
-        await setTimeout(POLL_INTERVAL_MS, undefined, {
+        await setTimeout(1_000, undefined, {
           signal: abortSignal,
         }).catch(() => {});
       }
     }
   } finally {
-    databaseClient.release();
+    client.release();
   }
 }
 
 /**
  * @param {{
- *   databaseClient: import("pg").PoolClient,
- *   jetStream: import("@nats-io/jetstream").JetStreamClient,
+ *   client: import("pg").PoolClient,
+ *   js: import("@nats-io/jetstream").JetStreamClient,
  * }} args
  */
-async function relayNextEntry({ databaseClient, jetStream }) {
+async function relayNextEntry({ client, js }) {
   try {
-    await databaseClient.query("BEGIN");
+    await client.query("BEGIN");
 
     const {
       rows: [outboxEntry],
-    } = await databaseClient.query(
+    } = await client.query(
       `
         SELECT id,
           event,
@@ -64,7 +62,7 @@ async function relayNextEntry({ databaseClient, jetStream }) {
     );
 
     if (!outboxEntry) {
-      await databaseClient.query("COMMIT");
+      await client.query("COMMIT");
       return false;
     }
 
@@ -96,13 +94,13 @@ async function relayNextEntry({ databaseClient, jetStream }) {
             set: (carrier, key, value) => carrier.set(key, value),
           });
 
-          await jetStream.publish(
+          await js.publish(
             outboxEntry.subject,
             JSON.stringify(outboxEntry.event),
             {
               headers: messageHeaders,
               msgID: outboxEntry.id,
-              timeout: PUBLISH_ACK_TIMEOUT_MS,
+              timeout: 5_000,
             },
           );
         } catch (err) {
@@ -119,7 +117,7 @@ async function relayNextEntry({ databaseClient, jetStream }) {
       },
     );
 
-    await databaseClient.query(
+    await client.query(
       `
         DELETE FROM outbox_events
         WHERE id = $1
@@ -127,10 +125,11 @@ async function relayNextEntry({ databaseClient, jetStream }) {
       [outboxEntry.id],
     );
 
-    await databaseClient.query("COMMIT");
+    await client.query("COMMIT");
+
     return true;
   } catch (err) {
-    await databaseClient.query("ROLLBACK").catch(() => {});
+    await client.query("ROLLBACK").catch(() => {});
     throw err;
   }
 }
