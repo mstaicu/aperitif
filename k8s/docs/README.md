@@ -71,25 +71,21 @@ Every domain owns only the folders for workloads it actually has:
 ```text
 domains/<domain>/
   workloads/
-    api/                       # if it exposes HTTP
-    migrations/                # its PostgreSQL schema
-    <source>-projection/       # if it consumes source state
-  deploy/
-    postgres/
-    migrations/
-    api/                       # if it exposes HTTP
-    <source>-projection/       # if it consumes source state
-    outbox-relay/              # if it publishes state or facts
+    postgres/infra/            # PostgreSQL instance
+    migrations/                # Dockerfile, SQL, and infra/
+    api/                       # source, Dockerfile, and infra/
+    <source>-projection/       # source, Dockerfile, and infra/
+    outbox-relay/infra/        # if it publishes state or facts
   contracts/                   # if it exports an event contract
   Makefile
   README.md
   skaffold.yaml
 ```
 
-Keep first-party container source under `workloads/`. `deploy/` owns the
-domain's Kubernetes instances; it can run a domain workload, an upstream image,
-or a shared runtime. A domain owns its database; it never reads another
-domain's database.
+Each workload owns its source when it has any and always owns its `infra/`.
+`postgres`, `cleanup`, and `outbox-relay` can contain only `infra/`: they run
+an upstream image or shared runtime. A domain owns its database; it never reads
+another domain's database.
 
 Use the existing `check`, `migrate`, `deploy`, and `dev` Make targets. Their
 meaning is consistent across implemented domains.
@@ -100,8 +96,8 @@ Start with this shape unless a real cross-domain need says otherwise.
 
 1. Add the domain migration image and `workloads/migrations/sql/V001__init.sql`.
 2. Add only the tables owned by the domain.
-3. Add its API workload under `workloads/api` and `deploy/postgres`, `deploy/migrations`, and
-   `deploy/api` configuration.
+3. Add `workloads/postgres/infra`, `workloads/migrations/infra`, and
+   `workloads/api/infra` configuration.
 4. Add the local Skaffold modules and the four Make targets.
 5. Add a short domain README that names the data and authority it owns.
 
@@ -131,8 +127,8 @@ locally; it does not query Accounts during a request.
    equal to or lower than the stored revision. Otherwise apply the complete
    representation and store the newer revision.
 5. Acknowledge the NATS message only after that transaction commits.
-6. Add `workloads/<name>-projection`, `deploy/<name>-projection`, and its
-   NATS, database, DNS, and telemetry NetworkPolicy access.
+6. Add `workloads/<name>-projection/infra` and its NATS, database, DNS, and
+   telemetry NetworkPolicy access.
 
 [Plans' Accounts projection](../domains/plans/workloads/accounts-projection/) is the
 complete working reference. It uses no outbox or Outbox Relay because it only
@@ -169,12 +165,11 @@ deltas.
    still unpublished, replace the pending row for that resource subject in the
    same transaction. An older representation must never publish after a newer
    one.
-6. Add `deploy/outbox-relay`, including a domain-owned `streams.json`. The
+6. Add `workloads/outbox-relay/infra`, including a domain-owned `streams.json`. The
    state stream matches the resource subject family, retains one message per
    subject, and declares its own `max_bytes`.
-7. Add Outbox Relay to local Skaffold. Shared-runtime changes use their own
-   generic CI check; the domain's check validates its own source, contracts,
-   and deployment configuration.
+7. Add Outbox Relay to local Skaffold. The domain's check validates its source,
+   contracts, and workload infrastructure.
 
 [Accounts](../domains/accounts/README.md) is the minimal producer reference.
 [Plans](../domains/plans/README.md) is the reference for a consumer that also
@@ -209,7 +204,7 @@ a newer revision of the same resource.
 
 ### Shared-cluster registration
 
-The domain owns its source and `deploy/` configuration. Two current shared
+The domain owns its source and workload `infra/` configuration. Two current shared
 cluster changes require platform or release review:
 
 - add its Outbox Relay and/or projection workload to the NATS NetworkPolicy in
@@ -222,8 +217,8 @@ source domain's Outbox Relay. For example, an Accounts-state projector depends
 on `accounts-outbox-relay`, which creates `ACCOUNTS` before the projector starts.
 
 The shared Outbox Relay image uses `flux-system:outbox-relay`. A domain adding
-an Outbox Relay adds a domain-local Outbox Relay Kustomization that depends on
-its migrations and `event-bus`; it does not add another image policy.
+an Outbox Relay adds `workloads/outbox-relay/infra`, which depends on its
+migrations and `event-bus`; it does not add another image policy.
 
 ### What this does not decide
 

@@ -5,7 +5,7 @@ on:
     branches: [master]
     paths:
       - "domains/*/workloads/*/**"
-      - "platform/runtime/*/**"
+      - "!domains/*/workloads/*/infra/**"
 
 concurrency:
   group: publish-images
@@ -15,11 +15,11 @@ permissions:
   contents: read
 
 jobs:
-  domain-workloads:
-    name: find changed domain workloads
+  workloads:
+    name: find changed workloads
     runs-on: ubuntu-24.04
     outputs:
-      sources: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      workloads: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -30,57 +30,61 @@ jobs:
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: domains/*/workloads/*/**
+          files_ignore: domains/*/workloads/*/infra/**
           dir_names: true
           dir_names_max_depth: 4
           matrix: true
-
-  runtimes:
-    name: find changed shared runtimes
+  publish:
+    name: publish ${{ matrix.workload }}
+    needs: workloads
     runs-on: ubuntu-24.04
-    outputs:
-      sources: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        workload: ${{ fromJSON(needs.workloads.outputs.workloads) }}
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - id: image
+        name: read image name
+        run: echo "name=$(yq -r '.images[0].name' '${{ matrix.workload }}/infra/overlays/prod-eu/kustomization.yaml')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
-          fetch-depth: 0
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
-      - id: changes
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+      - id: build
+        name: build and publish image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          files: platform/runtime/*/**
-          dir_names: true
-          dir_names_max_depth: 3
-          matrix: true
+          context: ${{ matrix.workload }}
+          target: prod
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
 
-  publish-domain-workload:
-    name: publish ${{ matrix.source }}
-    needs: domain-workloads
-    permissions:
-      contents: read
-      packages: write
+      - name: scan image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
 
-    strategy:
-      fail-fast: false
-      matrix:
-        source: ${{ fromJSON(needs.domain-workloads.outputs.sources) }}
-
-    uses: ./.github/workflows/publish-image.yaml
-    with:
-      source: ${{ matrix.source }}
-
-  publish-runtime:
-    name: publish ${{ matrix.source }}
-    needs: runtimes
-    permissions:
-      contents: read
-      packages: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        source: ${{ fromJSON(needs.runtimes.outputs.sources) }}
-
-    uses: ./.github/workflows/publish-image.yaml
-    with:
-      source: ${{ matrix.source }}
+      - name: promote image to 'latest'
+        run: >
+          docker buildx imagetools create
+          --tag "${{ steps.image.outputs.name }}:latest"
+          "${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}"

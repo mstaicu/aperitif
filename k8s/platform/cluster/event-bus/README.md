@@ -47,7 +47,7 @@ For a compacted resource-projection stream:
 stream max_bytes = retained resource count * average representation size * safety factor
 ```
 
-Set a stream's limits in its owning `deploy/outbox-relay/base/streams.json`.
+Set a stream's limits in its owning `workloads/outbox-relay/infra/base/streams.json`.
 Then keep `max_file_store` at 80% of the PVC. Restarting the owning Outbox
 Relay applies the stream configuration; resizing an existing PVC remains an
 explicit operation. NATS requires every APP stream to declare `max_bytes`.

@@ -60,7 +60,7 @@ Outbox Relay requires:
 
 If `OTEL_EXPORTER_OTLP_ENDPOINT` is set, `OTEL_SERVICE_NAME` is also required.
 
-Each emitting domain owns `domains/<domain>/deploy/outbox-relay/`:
+Each emitting domain owns `domains/<domain>/workloads/outbox-relay/infra/`:
 
 - a `streams.json` ConfigMap source mounted at `NATS_STREAMS_PATH`;
 - an Outbox Relay Deployment with its domain database and NATS configuration;
@@ -81,8 +81,8 @@ separate stream with their own retention policy.
 2. Add the durable outbox table and `(queued_at, id)` index in the domain
    migration.
 3. Add the domain-owned Outbox Relay deployment and `streams.json`, following
-   `domains/accounts/deploy/outbox-relay/` or
-   `domains/plans/deploy/outbox-relay/`.
+   `domains/accounts/workloads/outbox-relay/infra/` or
+   `domains/plans/workloads/outbox-relay/infra/`.
 4. Add the Outbox Relay image to that domain's local development configuration.
 5. Verify the producer, Outbox Relay, and any projector together; a restarted
    projector must reconcile its source feed before it processes new changes.

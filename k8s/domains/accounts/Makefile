@@ -15,10 +15,10 @@ check: ## Validate Accounts workloads, contracts, and manifests.
 	cd contracts && npm test
 	cd contracts && npm run build
 
-	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/outbox-relay/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/outbox-relay/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres

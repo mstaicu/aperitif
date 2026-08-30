@@ -27,8 +27,8 @@ outbox and NATS JetStream; they never read each other's databases.
 
 Domain workload source and Dockerfiles live under
 `domains/<domain>/workloads/<workload>`. Shared runtime source lives under
-`platform/runtime/<runtime>`. A domain owns its Kubernetes instances and stream
-configuration under `domains/<domain>/deploy/<name>`.
+`platform/runtime/<runtime>`. Each domain workload owns its Kubernetes
+configuration under `domains/<domain>/workloads/<workload>/infra`.
 
 ### Event processing
 
@@ -129,10 +129,10 @@ There is no root Makefile or repository-wide development loop.
 
 ## Deliver changes
 
-Pull requests check changed domains and shared runtimes. Merges build, scan,
-and publish changed domain workload and shared-runtime images. Flux then
-commits and reconciles their digests. Contracts and deployment configuration
-are checked with their owning domain but do not produce images.
+Pull requests check changed domains. Merges build, scan, and publish changed
+domain workload images. Flux then commits and reconciles their digests.
+Contracts and workload infrastructure are checked with their owning domain but
+do not produce images.
 
 `platform/runtime/outbox-relay` publishes one shared image. Each emitting
 domain owns its Outbox Relay deployment and stream configuration; Flux
@@ -144,10 +144,9 @@ paths together:
 ```text
 pull request
   -> check changed domains
-  -> check changed shared runtimes
 
 merge to master
-  -> build changed domain workload and shared-runtime images
+  -> build changed domain workload images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay

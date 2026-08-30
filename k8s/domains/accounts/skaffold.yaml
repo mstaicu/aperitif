@@ -7,7 +7,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - deploy/postgres/overlays/ephemeral
+      - workloads/postgres/infra/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -32,7 +32,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - deploy/migrations/overlays/ephemeral
+      - workloads/migrations/infra/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -63,7 +63,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - deploy/api/overlays/ephemeral
+      - workloads/api/infra/overlays/ephemeral
 
 deploy:
   kubectl: {}
@@ -94,7 +94,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - deploy/outbox-relay/overlays/ephemeral
+      - workloads/outbox-relay/infra/overlays/ephemeral
 
 deploy:
   kubectl: {}

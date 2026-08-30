@@ -17,11 +17,11 @@ check: ## Validate Plans workloads, contracts, and manifests.
 	cd workloads/accounts-projection && npm exec -- eslint .
 	cd workloads/accounts-projection && npm exec -- tsc -p jsconfig.json --noEmit
 	cd workloads/accounts-projection && npm test
-	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/outbox-relay/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/accounts-projection/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/outbox-relay/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/accounts-projection/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Plans database and run its migrations.
 	skaffold run -m plans-postgres

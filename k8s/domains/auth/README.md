@@ -18,7 +18,7 @@ PostgreSQL -> migrations -> API -> UI
 | `ui`                    | Passkey signup and login                                         |
 | `migrations`            | Flyway SQL                                                       |
 | `deploy`                | Kubernetes workloads, including the database and migration Job   |
-| `deploy/cleanup`        | Removes expired challenges and old sessions                      |
+| `workloads/cleanup/infra` | Removes expired challenges and old sessions                    |
 
 Auth currently publishes no domain events, so it has no outbox table or Outbox Relay
 deployment.

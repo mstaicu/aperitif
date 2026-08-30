@@ -12,11 +12,11 @@ check: ## Validate Auth workloads and manifests.
 	cd workloads/api && npm test
 	cd workloads/ui && npm ci
 	cd workloads/ui && npm run check
-	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/cleanup/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/ui/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/cleanup/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/ui/infra/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Auth database and run its migrations.
 	skaffold run -m auth-postgres
