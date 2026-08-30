@@ -1,0 +1,26 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: outbox-relay
+  namespace: flux-system
+spec:
+  image: ghcr.io/mstaicu/outbox-relay
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: outbox-relay
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: outbox-relay
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m

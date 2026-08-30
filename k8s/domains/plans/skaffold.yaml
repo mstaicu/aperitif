@@ -73,15 +73,15 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: plans-relay
+  name: plans-outbox-relay
 
 build:
   local:
     push: false
 
   artifacts:
-    - image: ghcr.io/mstaicu/relay
-      context: ../../platform/runtime/relay
+    - image: ghcr.io/mstaicu/outbox-relay
+      context: ../../platform/runtime/outbox-relay
       docker:
         dockerfile: Dockerfile
         target: dev
@@ -94,7 +94,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - deploy/relay/overlays/ephemeral
+      - deploy/outbox-relay/overlays/ephemeral
 
 deploy:
   kubectl: {}

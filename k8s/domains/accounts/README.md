@@ -13,13 +13,13 @@ itself; product-specific roles remain inside product domains.
 
 ```text
 PostgreSQL -> migrations -> API
-                          -> outbox -> Relay -> ACCOUNTS stream
+                          -> outbox -> Outbox Relay -> ACCOUNTS stream
 ```
 
 | Part | Purpose |
 | --- | --- |
 | `api` | Create and list accounts |
-| `relay` | Publish committed Accounts events |
+| `outbox-relay` | Publish committed Accounts events |
 | `migrations` | Flyway SQL |
 | `contracts` | Published Accounts event package |
 | `deploy` | Kubernetes workloads, including the database and migration Job |
@@ -46,4 +46,4 @@ make -C domains/accounts dev
 ```
 
 Add schema changes as `migrations/sql/V###__description.sql`. Outbox rows stay
-durable until Relay receives JetStream PubAck.
+durable until Outbox Relay receives JetStream PubAck.

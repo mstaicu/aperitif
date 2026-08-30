@@ -20,14 +20,14 @@ Plans does not own accounts, payments, compliance decisions, or product data.
 ```text
 ACCOUNTS stream -> accounts projection -> PostgreSQL
                                        -> API
-                                       -> outbox -> Relay -> PLANS stream
+                                       -> outbox -> Outbox Relay -> PLANS stream
 ```
 
 | Part | Purpose |
 | --- | --- |
 | `accounts-projection` | Assign the initial plan when it sees an Account state |
 | `api` | Assign plans and resolve features |
-| `relay` | Publish account feature snapshots |
+| `outbox-relay` | Publish account feature snapshots |
 | `migrations` | Flyway SQL |
 | `contracts` | Published Plans event package |
 | `deploy` | Kubernetes workloads, including the database and migration Job |

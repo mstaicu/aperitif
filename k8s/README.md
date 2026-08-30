@@ -91,13 +91,13 @@ Historical facts are append-only occurrences. They may use bounded retention;
 they are not resource projection feeds and do not require a complete resource
 representation.
 
-### Relay
+### Outbox Relay
 
-[`platform/runtime/relay`](platform/runtime/relay/README.md) is the shared
-runtime that drains a domain's durable outbox table to NATS. It is transport
-only: it does not define a domain's event data, revisions, subjects, streams,
-or projections. The emitting domain owns those decisions, its Relay deployment,
-and its stream configuration.
+[`platform/runtime/outbox-relay`](platform/runtime/outbox-relay/README.md) is
+the shared runtime that drains a domain's durable outbox table to NATS. It is
+transport only: it does not define a domain's event data, revisions, subjects,
+streams, or projections. The emitting domain owns those decisions, its Outbox
+Relay deployment, and its stream configuration.
 
 ## Work locally
 
@@ -129,15 +129,15 @@ There is no root Makefile or repository-wide development loop.
 
 ## Deliver changes
 
-Today, pull requests check changed domains; Relay has its own check. Merges
-build, scan, and publish changed domain workload images; Relay has its own
-release workflow. Flux then commits and reconciles their digests. Contracts and
-deployment configuration are checked with their owning domain but do not
-produce images.
+Today, pull requests check changed domains; Outbox Relay has its own check.
+Merges build, scan, and publish changed domain workload images; Outbox Relay
+has its own release workflow. Flux then commits and reconciles their digests.
+Contracts and deployment configuration are checked with their owning domain but
+do not produce images.
 
-`platform/runtime/relay` publishes one shared image. Each emitting domain owns
-its Relay deployment and stream configuration; Flux reconciles that deployment
-through the domain's graph.
+`platform/runtime/outbox-relay` publishes one shared image. Each emitting
+domain owns its Outbox Relay deployment and stream configuration; Flux
+reconciles that deployment through the domain's graph.
 
 When this directory becomes the repository root, change the workflow and Flux
 paths together:
@@ -145,10 +145,10 @@ paths together:
 ```text
 pull request
   -> check changed domains
-  -> check Relay
+  -> check Outbox Relay
 
 merge to master
-  -> build changed domain workload and Relay images
+  -> build changed domain workload and Outbox Relay images
   -> scan the immutable image digest
   -> move :latest to that digest
   -> Flux commits the digest into the production overlay

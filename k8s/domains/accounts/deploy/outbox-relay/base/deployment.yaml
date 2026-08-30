@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: outbox-relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outbox-relay
+  template:
+    metadata:
+      labels:
+        app: outbox-relay
+    spec:
+      terminationGracePeriodSeconds: 15
+      automountServiceAccountToken: false
+
+      containers:
+        - name: outbox-relay
+          image: ghcr.io/mstaicu/outbox-relay
+          ports:
+            - name: health
+              containerPort: 3000
+
+          volumeMounts:
+            - name: streams
+              mountPath: /etc/outbox-relay
+              readOnly: true
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+      volumes:
+        - name: streams
+          configMap:
+            name: outbox-relay-streams

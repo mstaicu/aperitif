@@ -55,7 +55,7 @@ clusters/prod-eu/
 │   ├── auth.yaml         Auth repositories and policies
 │   ├── accounts.yaml         Accounts repositories and policies
 │   ├── plans.yaml            Plans repositories and policies
-│   └── relay.yaml            shared Relay repository and policy
+│   └── outbox-relay.yaml     shared Outbox Relay repository and policy
 ├── platform.yaml             platform reconciliation graph
 └── kustomization.yaml        complete cluster inventory
 ```
@@ -74,8 +74,8 @@ merge to master
   -> normal Flux reconciliation deploys it
 ```
 
-- Domain code changes build their domain workload images. Relay code changes
-  build the shared Relay image through its own workflow.
+- Domain code changes build their domain workload images. Outbox Relay code
+  changes build the shared Outbox Relay image through its own workflow.
 - Infrastructure-only changes are applied directly by Flux.
 - Image publishing runs are serialized and retained.
 - One image repository and policy exists per listed production workload image.
@@ -129,13 +129,13 @@ auth-postgres ──> auth-migrations ──┬──> auth-api
                                            └──> auth-cleanup
 
 accounts-postgres ──> accounts-migrations ──┬──> accounts-api
-                                             └──> accounts-relay
-event-bus ───────────────────────────────────────> accounts-relay
+                                             └──> accounts-outbox-relay
+event-bus ───────────────────────────────────────> accounts-outbox-relay
 
 plans-postgres ──> plans-migrations ──┬──> plans-api
-                                      └──> plans-relay
-event-bus ───────────────────────────────────> plans-relay
-accounts-relay ──────────────────────────────> plans-accounts-projection
+                                      └──> plans-outbox-relay
+event-bus ───────────────────────────────────> plans-outbox-relay
+accounts-outbox-relay ───────────────────────> plans-accounts-projection
 
 observability
   └──> receives optional telemetry without blocking domain reconciliation
@@ -176,15 +176,15 @@ existing API image at the deployed digest. Its `src/reseed.mjs` entrypoint:
 4. writes it to the ordinary domain outbox using the same per-resource
    transaction and pending-snapshot replacement as a normal mutation.
 
-The Job does not connect to NATS. Relay publishes the normal outbox rows and
-removes them only after PubAck. It is neither a CronJob nor part of Flux's
-normal reconciliation graph.
+The Job does not connect to NATS. Outbox Relay publishes the normal outbox
+entries and removes them only after PubAck. It is neither a CronJob nor part of
+Flux's normal reconciliation graph.
 
 After a state-stream loss or deliberate reset:
 
 1. Recreate the stream from the domain-owned `streams.json` configuration.
 2. Run that domain's reseed Job once.
-3. Wait for Relay to drain the outbox and verify one current subject per
+3. Wait for Outbox Relay to drain the outbox and verify one current subject per
    authoritative resource.
 4. Start or reset dependent state projectors so they bootstrap from the
    restored current baseline and follow subsequent revisions.

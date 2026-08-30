@@ -7,7 +7,7 @@ resources:
   - images/auth.yaml
   - images/accounts.yaml
   - images/plans.yaml
-  - images/relay.yaml
+  - images/outbox-relay.yaml
   - domains/auth.yaml
   - domains/accounts.yaml
   - domains/plans.yaml

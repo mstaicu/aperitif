@@ -78,7 +78,7 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: accounts-relay
+    - name: accounts-outbox-relay
     - name: plans-migrations
   wait: true
   timeout: 5m
@@ -88,11 +88,11 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 
 metadata:
-  name: plans-relay
+  name: plans-outbox-relay
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./k8s/domains/plans/deploy/relay/overlays/prod-eu
+  path: ./k8s/domains/plans/deploy/outbox-relay/overlays/prod-eu
   prune: true
   sourceRef:
     kind: GitRepository

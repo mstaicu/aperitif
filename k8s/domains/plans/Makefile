@@ -20,7 +20,7 @@ check: ## Validate Plans workloads, contracts, and manifests.
 	kubectl kustomize deploy/postgres/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/migrations/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/api/overlays/prod-eu >/dev/null
-	kubectl kustomize deploy/relay/overlays/prod-eu >/dev/null
+	kubectl kustomize deploy/outbox-relay/overlays/prod-eu >/dev/null
 	kubectl kustomize deploy/accounts-projection/overlays/prod-eu >/dev/null
 
 migrate: ## Deploy the Plans database and run its migrations.
@@ -30,7 +30,7 @@ migrate: ## Deploy the Plans database and run its migrations.
 	kubectl wait -n plans --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n plans job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Plans once in the current cluster.
-	skaffold run -m plans-api,plans-relay,plans-accounts-projection
+	skaffold run -m plans-api,plans-outbox-relay,plans-accounts-projection
 
 dev: migrate ## Start the Plans development loop.
-	skaffold dev -m plans-api,plans-relay,plans-accounts-projection
+	skaffold dev -m plans-api,plans-outbox-relay,plans-accounts-projection

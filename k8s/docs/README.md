@@ -61,8 +61,8 @@ deployment configuration. Choose only the extensions the domain needs.
 | State producer | Another domain needs the domain's complete current resource state. | [Accounts](../domains/accounts/README.md) |
 | Consumer and producer | The domain both uses upstream state and exports its own. | [Plans](../domains/plans/README.md) |
 
-Do not add NATS, an outbox, Relay, or a projection merely because the domain
-exists.
+Do not add NATS, an outbox, Outbox Relay, or a projection merely because the
+domain exists.
 
 ### Common domain shape
 
@@ -77,7 +77,7 @@ domains/<domain>/
     migrations/
     api/                       # if it exposes HTTP
     <source>-projection/       # if it consumes source state
-    relay/                     # if it publishes state or facts
+    outbox-relay/              # if it publishes state or facts
   contracts/                   # if it exports an event contract
   Makefile
   README.md
@@ -102,7 +102,8 @@ Start with this shape unless a real cross-domain need says otherwise.
 4. Add the local Skaffold modules and the four Make targets.
 5. Add a short domain README that names the data and authority it owns.
 
-There is no event contract, projector, outbox table, or Relay in this shape.
+There is no event contract, projector, outbox table, or Outbox Relay in this
+shape.
 
 ### Consume Account state
 
@@ -131,7 +132,7 @@ locally; it does not query Accounts during a request.
    NetworkPolicy access.
 
 [Plans' Accounts projection](../domains/plans/accounts-projection/) is the
-complete working reference. It uses no outbox or Relay because it only
+complete working reference. It uses no outbox or Outbox Relay because it only
 consumes state.
 
 An unnamed state-projector consumer is deliberately not a shared worker queue.
@@ -156,8 +157,8 @@ deltas.
    Keep the CloudEvent `type` separate from the NATS subject.
 3. Add the standard `outbox_events` table and `(queued_at, id)` index to the
    domain migration. Copy the table contract from
-   [Relay](../platform/runtime/relay/README.md#domain-contract). Do not add a
-   PostgreSQL notification trigger.
+   [Outbox Relay](../platform/runtime/outbox-relay/README.md#domain-contract).
+   Do not add a PostgreSQL notification trigger.
 4. In the same transaction as every exported resource mutation, write the
    complete representation, its next monotonic `data.revision`, and its
    CloudEvent outbox row.
@@ -165,11 +166,12 @@ deltas.
    still unpublished, replace the pending row for that resource subject in the
    same transaction. An older representation must never publish after a newer
    one.
-6. Add `deploy/relay`, including a domain-owned `streams.json`. The state
-   stream matches the resource subject family, retains one message per subject,
-   and declares its own `max_bytes`.
-7. Add Relay to local Skaffold. Relay has its own CI check; the domain's check
-   validates its own source, contracts, and deployment configuration.
+6. Add `deploy/outbox-relay`, including a domain-owned `streams.json`. The
+   state stream matches the resource subject family, retains one message per
+   subject, and declares its own `max_bytes`.
+7. Add Outbox Relay to local Skaffold. Outbox Relay has its own CI check; the
+   domain's check validates its own source, contracts, and deployment
+   configuration.
 
 [Accounts](../domains/accounts/README.md) is the minimal producer reference.
 [Plans](../domains/plans/README.md) is the reference for a consumer that also
@@ -177,8 +179,8 @@ publishes state. The complete rules for versions, recovery, facts, and schema
 evolution remain in the [platform event contract](../README.md#event-processing).
 
 Historical facts are different: add an append-only stream only when a real
-consumer needs an occurrence history. Relay can transport those rows too; the
-domain chooses their contract and retention policy.
+consumer needs an occurrence history. Outbox Relay can transport those rows
+too; the domain chooses their contract and retention policy.
 
 ### Validate locally
 
@@ -197,28 +199,28 @@ For a consumer, prove all three cases:
 2. Replaying the same event changes nothing.
 3. A newer revision applies and an older revision does not.
 
-For a producer, prove the business mutation and outbox row commit together;
-then prove Relay publishes it and deletes it only after PubAck. For a state
-feed, also test that an older pending representation cannot publish after a
-newer revision of the same resource.
+For a producer, prove the business mutation and outbox entry commit together;
+then prove Outbox Relay publishes it and deletes it only after PubAck. For a
+state feed, also test that an older pending representation cannot publish after
+a newer revision of the same resource.
 
 ### Shared-cluster registration
 
 The domain owns its source and `deploy/` configuration. Two current shared
 cluster changes require platform or release review:
 
-- add its Relay and/or projection workload to the NATS NetworkPolicy in
+- add its Outbox Relay and/or projection workload to the NATS NetworkPolicy in
   `platform/cluster/event-bus/base/networkpolicy.yaml`;
 - add its production Flux inventory under `clusters/prod-eu/` and an image
   policy for every domain-owned image.
 
 A state-projection Kustomization also depends on its own migrations and the
-source domain's Relay. For example, an Accounts-state projector depends on
-`accounts-relay`, which creates `ACCOUNTS` before the projector starts.
+source domain's Outbox Relay. For example, an Accounts-state projector depends
+on `accounts-outbox-relay`, which creates `ACCOUNTS` before the projector starts.
 
-The shared Relay image uses `flux-system:relay`. A domain adding a Relay adds a
-domain-local Relay Kustomization that depends on its migrations and `event-bus`;
-it does not add another Relay image policy.
+The shared Outbox Relay image uses `flux-system:outbox-relay`. A domain adding
+an Outbox Relay adds a domain-local Outbox Relay Kustomization that depends on
+its migrations and `event-bus`; it does not add another image policy.
 
 ### What this does not decide
 
@@ -241,9 +243,9 @@ machine behavior. Add those only when the Product requires them.
 
 - [Platform event contract](../README.md#event-processing) — the implemented
   contract for outboxes, resource projection feeds, facts, and projectors.
-- [Relay](../platform/runtime/relay/README.md) — shared outbox-to-JetStream
-  transport runtime; each emitting domain owns its deployment and stream
-  configuration.
+- [Outbox Relay](../platform/runtime/outbox-relay/README.md) — shared
+  outbox-to-JetStream transport runtime; each emitting domain owns its
+  deployment and stream configuration.
 
 ### Extensions
 

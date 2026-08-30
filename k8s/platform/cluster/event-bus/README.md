@@ -47,21 +47,21 @@ For a compacted resource-projection stream:
 stream max_bytes = retained resource count * average representation size * safety factor
 ```
 
-Set a stream's limits in its owning `deploy/relay/base/streams.json`. Then
-keep `max_file_store` at 80% of the PVC. Restarting the owning Relay applies
-the stream configuration; resizing an existing PVC remains an explicit
-operation. NATS requires every APP stream to declare `max_bytes`.
+Set a stream's limits in its owning `deploy/outbox-relay/base/streams.json`.
+Then keep `max_file_store` at 80% of the PVC. Restarting the owning Outbox
+Relay applies the stream configuration; resizing an existing PVC remains an
+explicit operation. NATS requires every APP stream to declare `max_bytes`.
 
 At a stream limit, a rejected publication remains in the outbox for retry.
 
 ## Event rule
 
 ```text
-domain DB transaction -> outbox row -> Relay -> JetStream
+domain DB transaction -> outbox entry -> Outbox Relay (polling publisher) -> JetStream
 ```
 
 Request handlers do not directly publish authority events. The NATS
-NetworkPolicy must list every Relay and projection component allowed to
+NetworkPolicy must list every Outbox Relay and projection component allowed to
 connect.
 
 Render both environments with:

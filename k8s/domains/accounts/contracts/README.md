@@ -19,7 +19,7 @@ including its basic `owner` and `member` roles. `data.revision` is the
 monotonic Account revision; it is unrelated to CloudEvents `specversion` and
 the JetStream sequence.
 
-The builder creates the structured CloudEvents JSON body. Relay owns NATS
+The builder creates the structured CloudEvents JSON body. Outbox Relay owns NATS
 transport details, including the `Content-Type: application/cloudevents` header
 and JetStream message ID.
 

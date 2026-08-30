@@ -19,7 +19,7 @@ spec:
               app: migrations
         - podSelector:
             matchLabels:
-              app: relay
+              app: outbox-relay
         - podSelector:
             matchLabels:
               app: accounts-projection
