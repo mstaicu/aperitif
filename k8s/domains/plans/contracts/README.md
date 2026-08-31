@@ -1,55 +1,48 @@
-# Plans Contracts
+# Plans contracts
 
-`@mstaicu/plans-contracts` is the published event boundary owned by Plans.
+`@mstaicu/plans-contracts` is the public Plans resource-feed boundary.
 
-It exports the schema, validator, constants, subject builder, and event builder
-for:
+It exports the complete V1 resolved Account feature schema, structured
+CloudEvent schema and validator, subject builder, event builder, example, and
+schema snapshot test for:
 
 ```text
 plans.account-features.changed.v1
 ```
 
-The event carries the complete boolean, number, and string feature values
-resolved from an Account's current plan. Its source schema is under
-`src/events`; its example is under `examples/events`.
+`data` contains the complete resolved boolean, number, and string feature map.
+`data.revision` is the monotonic revision of that Account's resolved feature
+state; it is not the payload schema version, CloudEvents `specversion`, or
+JetStream sequence.
 
-Events use CloudEvents `1.0`. The `v1` in the event `type` and NATS subject is
-the payload schema version. `data.revision` is the monotonic Account feature
-revision; it is unrelated to CloudEvents `specversion` and the JetStream
-sequence.
-
-The builder creates the structured CloudEvents JSON body. Outbox Relay owns NATS
-transport details, including the `Content-Type: application/cloudevents` header
-and JetStream message ID.
-
-## NATS subject
-
-The Account feature projection feed uses one stable subject for each Account:
+## Feed contract
 
 ```text
-plans.account-features.v1.<account-id>
+subject: plans.account-features.v1.<account-id>
+type:    plans.account-features.changed.v1
+stream:  PLANS subjects plans.account-features.*.*
 ```
 
-Each message on that subject has type `plans.account-features.changed.v1` and
-the complete resolved feature map at its revision. The NATS subject is transport
-routing and retention identity; it is not derived from the CloudEvent `type`.
-`PLANS` captures the version family as `plans.account-features.*.*`; a V1
-projector filters `plans.account-features.v1.*`.
+The subject identifies routing and retained-resource identity. The type identifies
+the CloudEvent data schema. Relay publishes the builder's structured JSON with a
+CloudEvents content type and uses the event ID as the JetStream message ID.
 
-This V1 schema is closed. Any change to its `data` shape uses a new complete
-feed, for example `plans.account-features.v2.<account-id>` with type
-`plans.account-features.changed.v2`; it does not add fields to V1. If a real V1
-consumer still exists, the source dual-publishes complete V1 and V2
-representations of the same feature revision until that consumer migrates.
+V1 is closed. A shape change creates a new complete feed, such as:
 
-Plans owns the authoritative resolved Account feature state. Before relying on
-recovery from state-stream loss, Plans must provide a controlled reseed that
-republishes one current representation per Account with new CloudEvent IDs and
-the stored feature revisions. It is recovery work, not a historical Plans fact.
+```text
+subject: plans.account-features.v2.<account-id>
+type:    plans.account-features.changed.v2
+```
 
-Any future Plans mutation that changes an Account's resolved feature map,
-including a change to a selected plan's feature values, increments that
-Account's feature revision and publishes its complete current feature map.
+Publish both versions only while a real V1 consumer is migrating. Both represent
+the same feature revision; V2 must carry everything its consumers need to replace
+V1.
+
+Any Plans mutation that changes an Account's resolved feature map increments that
+Account's feature revision and publishes the complete current map.
+
+Plans must eventually provide a controlled reseed for state-stream recovery. No
+reseed Job exists yet; see [the production recovery contract](../../../clusters/prod-eu/README.md#future-state-feed-recovery).
 
 ## Build and publish
 
@@ -60,6 +53,5 @@ npm pack --dry-run
 npm publish
 ```
 
-`prepack` generates `types/`, and the package tarball includes it. Generated
-declarations are intentionally not committed. Bump the package version before
-every publication.
+`prepack` generates `types/` for the package tarball. Generated declarations are
+not committed; bump the package version before publication.

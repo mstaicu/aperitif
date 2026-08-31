@@ -1,66 +1,62 @@
 # Auth
 
-Auth authenticates users. It owns users, passkeys, WebAuthn challenges,
-sessions, platform operators, and the JWKS used by other APIs.
+Auth proves user identity. It owns users, passkeys, WebAuthn challenges,
+sessions, platform operators, and the JWKS used to verify its access tokens.
+It does not own Accounts, Plans, or product resources.
 
-It does not own accounts, plans, or product resources.
-
-## Runtime
+## Implemented workloads
 
 ```text
 PostgreSQL -> migrations -> API -> UI
                           -> scheduled cleanup
 ```
 
-| Part                    | Purpose                                                          |
-| ----------------------- | ---------------------------------------------------------------- |
-| `api`                   | Passkey ceremonies, sessions, operator claims, JWKS, and OpenAPI |
-| `ui`                    | Passkey signup and login                                         |
-| `migrations`            | Flyway SQL                                                       |
-| `deploy`                | Kubernetes workloads, including the database and migration Job   |
-| `workloads/cleanup/infra` | Removes expired challenges and old sessions                    |
+| Workload | Responsibility |
+| --- | --- |
+| `postgres` | Auth's current local PostgreSQL instance |
+| `migrations` | Flyway schema changes |
+| `api` | Passkey ceremonies, sessions, operator claim, JWKS, and OpenAPI |
+| `ui` | Passkey signup and login |
+| `cleanup` | Remove expired challenges and old sessions |
 
-Auth currently publishes no domain events, so it has no outbox table or Outbox Relay
-deployment.
+Auth currently publishes no domain events, has no outbox table, and deploys no
+Outbox Relay.
 
 ## Public surface
 
-- `POST /v1/passkeys/registration/options`
-- `POST /v1/passkeys/registration`
-- `POST /v1/passkeys/authentication/options`
-- `POST /v1/passkeys/authentication`
-- `POST /v1/session/access-tokens`
-- `DELETE /v1/session`
-- `GET /.well-known/jwks.json`
-- `/v1/auth/docs`
-- `/signup` and `/login`
+```text
+POST   /v1/passkeys/registration/options
+POST   /v1/passkeys/registration
+POST   /v1/passkeys/authentication/options
+POST   /v1/passkeys/authentication
+POST   /v1/session/access-tokens
+DELETE /v1/session
+GET    /.well-known/jwks.json
+GET    /v1/auth/docs
+GET    /signup and /login
+```
 
-Every successful passkey registration or login creates an independent 30-day
-session with its own session token. The session can mint five-minute access
-tokens without replacing its session token or extending its lifetime. Deleting
-the session revokes only that session. Other
-domains verify access tokens through JWKS and make authorization decisions from
-their own state.
+Each successful registration or login creates one independent 30-day session.
+Its session token can mint five-minute access tokens without rotating or extending
+the session. Deleting a session revokes only that session. Other domains verify
+tokens through JWKS and make authorization decisions from their own state.
 
 ## First operator
 
-A new Auth database has no platform operators. Bootstrap exactly one after
-that user registers:
+A new Auth database has no operators. After the first user registers:
 
-1. Exchange the user's session token for an access token and read its `sub`
-   claim.
-2. Using a controlled administrative connection to the Auth database, run:
+1. Exchange that user's session token for an access token and read `sub`.
+2. Through a controlled administrative database connection, run:
 
    ```sql
    INSERT INTO operators (user_id) VALUES ('<sub>');
    ```
 
-3. Exchange the same session token again. The new access token now contains
+3. Exchange the session token again; the new access token contains
    `operator: true`.
 
-There is no operator-management HTTP API. Manage the small operator set through
-a controlled administrative database connection until that API is actually
-needed.
+There is no operator-management HTTP API. Keep the operator set under controlled
+database administration until a real product requirement justifies one.
 
 ## Work here
 
@@ -72,4 +68,4 @@ make -C domains/auth dev
 ```
 
 Add schema changes as `workloads/migrations/sql/V###__description.sql` and use
-expand/contract for changes consumed by running code.
+expand/contract while running code consumes the schema.

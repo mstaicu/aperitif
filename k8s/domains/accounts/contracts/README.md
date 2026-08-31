@@ -1,64 +1,54 @@
-# Accounts Contracts
+# Accounts contracts
 
-`@mstaicu/accounts-contracts` is the published event boundary owned by
-Accounts.
+`@mstaicu/accounts-contracts` is the public Accounts resource-feed boundary.
 
-It exports schemas, validators, constants, subject builders, and event builders
-for:
+It exports the complete V1 Account data schema, structured CloudEvent schema and
+validator, subject builder, event builder, example, and schema snapshot test for:
 
 ```text
 accounts.account.changed.v1
 ```
 
-Source schemas are under `src/events`; example payloads are under
-`examples/events`.
+`data` is the complete exported Account, including basic `owner` and `member`
+memberships. `data.revision` is the monotonic Account revision; it is not the
+payload schema version, CloudEvents `specversion`, or JetStream sequence.
 
-Events use CloudEvents `1.0`. The `v1` in the event `type` and NATS subject is
-the payload schema version. `data` carries the complete exported Account,
-including its basic `owner` and `member` roles. `data.revision` is the
-monotonic Account revision; it is unrelated to CloudEvents `specversion` and
-the JetStream sequence.
-
-The builder creates the structured CloudEvents JSON body. Outbox Relay owns NATS
-transport details, including the `Content-Type: application/cloudevents` header
-and JetStream message ID.
-
-## NATS subjects
-
-The Account projection feed uses one stable subject for each Account:
+## Feed contract
 
 ```text
-accounts.account.v1.<account-id>
+subject: accounts.account.v1.<account-id>
+type:    accounts.account.changed.v1
+stream:  ACCOUNTS subjects accounts.account.*.*
 ```
 
-Each message on that subject has type `accounts.account.changed.v1` and the
-complete exported Account at its revision. The NATS subject is transport routing
-and retention identity; it is not derived from the CloudEvent `type`.
-`ACCOUNTS` captures the version family as `accounts.account.*.*`; a V1
-projector filters `accounts.account.v1.*`.
+The subject identifies routing and retained-resource identity. The type identifies
+the CloudEvent data schema. Relay publishes the builder's structured JSON with a
+CloudEvents content type and uses the event ID as the JetStream message ID.
 
-The platform reserves these other subject families for distinct message
-semantics. They are documented conventions, not current Accounts streams:
+V1 is closed. A shape change creates a new complete feed, such as:
+
+```text
+subject: accounts.account.v2.<account-id>
+type:    accounts.account.changed.v2
+```
+
+Publish both versions only while a real V1 consumer is migrating. They represent
+the same Account revision; V2 must carry everything its consumers need to replace
+V1.
+
+The following are documented conventions, not implemented Accounts streams:
 
 ```text
 <domain>.event.<resource>.<past-tense-occurrence>.v<schema>.<routing-id>
 <domain>.command.<resource>.<imperative>.v<schema>
 ```
 
-Facts in the `event` family are append-only occurrences when a concrete
-consumer needs history. Commands are requests to one owning domain and are not
-CloudEvents. Neither is needed to project the current Account representation.
+Facts are append-only history when a consumer needs occurrences. Commands are
+requests to one owner and are not CloudEvents. Neither is required to project
+current Account state.
 
-This V1 schema is closed. Any change to its `data` shape uses a new complete
-feed, for example `accounts.account.v2.<account-id>` with type
-`accounts.account.changed.v2`; it does not add fields to V1. If a real V1
-consumer still exists, the source dual-publishes complete V1 and V2
-representations of the same Account revision until that consumer migrates.
-
-Accounts owns the authoritative Account state. Before relying on recovery from
-state-stream loss, Accounts must provide a controlled reseed that republishes
-one current representation per Account with new CloudEvent IDs and the stored
-Account revisions. It is recovery work, not a historical Account fact.
+Accounts must eventually provide a controlled reseed for state-stream recovery.
+No reseed Job exists yet; see [the production recovery contract](../../../clusters/prod-eu/README.md#future-state-feed-recovery).
 
 ## Build and publish
 
@@ -69,6 +59,5 @@ npm pack --dry-run
 npm publish
 ```
 
-`prepack` generates `types/`, and the package tarball includes it. Generated
-declarations are intentionally not committed. Bump the package version before
-every publication.
+`prepack` generates `types/` for the package tarball. Generated declarations are
+not committed; bump the package version before publication.

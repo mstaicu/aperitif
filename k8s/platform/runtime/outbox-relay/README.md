@@ -1,91 +1,75 @@
 # Outbox Relay
 
-Outbox Relay is the shared runtime that publishes a domain's durable PostgreSQL
-outbox to NATS JetStream. It is domain-agnostic: it transports the structured
-CloudEvent, subject, and tracing context already committed by the source domain.
-It is not a generic transport for arbitrary command payloads.
+Outbox Relay is the shared polling publisher from one domain's durable PostgreSQL
+outbox to NATS JetStream. It transports the structured CloudEvent, subject, and
+trace context the domain already committed; it does not define domain semantics.
 
-It is the polling-publisher implementation of the transactional-outbox
-pattern. `main.mjs` owns process composition; `outbox.mjs` owns the one-entry
-lock, publish, PubAck, and delete procedure.
+```text
+domain transaction -> outbox_events -> Outbox Relay -> JetStream
+```
 
-It does four things:
+At startup Relay creates or updates the domain-owned stream configurations. It
+then repeatedly locks one queued row with `FOR UPDATE SKIP LOCKED`, publishes it,
+waits for PubAck, and deletes it in the same database transaction. A failed or
+timed-out publication rolls back, leaving the row for retry. Delivery is at least
+once, so consumers must be idempotent.
 
-1. Reconciles the domain-owned JetStream stream configurations at startup.
-2. Locks one queued outbox entry with `FOR UPDATE SKIP LOCKED`.
-3. Publishes its structured CloudEvent to the stored subject, using the event
-   ID as the NATS message ID.
-4. Deletes the entry only after JetStream acknowledges the publication.
+Relay transports current-resource feeds and, when a real requirement exists,
+append-only CloudEvent facts. It does not create events, calculate revisions,
+choose subjects or retention, serialize source mutations, run projectors, or
+transport arbitrary command payloads.
 
-On a failed or timed-out publication, the transaction rolls back and the entry
-remains for retry. Delivery is therefore at least once; consumers must follow
-the idempotent projection rule in the [platform event contract](../../../README.md#event-processing).
+## Database contract
 
-Outbox Relay does not create events, calculate a resource revision, serialize
-source mutations, choose retention, or run projections. Those are domain
-decisions.
+Every emitting domain has an `outbox_events` table containing:
 
-## Domain contract
+| Column | Meaning |
+| --- | --- |
+| `id` | Unique CloudEvent ID and JetStream message ID |
+| `subject` | Exact NATS subject to publish |
+| `event` | Structured CloudEvent JSON; its `id` equals `id` |
+| `traceparent`, `tracestate` | Optional W3C trace context |
+| `queued_at` | Stable relay order |
 
-The domain database must have an `outbox_events` table with these columns:
-
-| Column                      | Purpose                                                       |
-| --------------------------- | ------------------------------------------------------------- |
-| `id`                        | Unique event ID; Outbox Relay uses it as the NATS message ID. |
-| `subject`                   | Exact NATS subject to publish.                                |
-| `event`                     | Structured CloudEvent JSON object. Its `id` must equal `id`.  |
-| `traceparent`, `tracestate` | Optional W3C tracing context.                                 |
-| `queued_at`                 | Queue order.                                                  |
-
-It also needs this index:
+It also needs:
 
 ```sql
 CREATE INDEX outbox_events_queued_at_id ON outbox_events (queued_at, id);
 ```
 
-Commit the business change and its outbox entry in the same transaction. For a
-current-resource state feed, the source also follows the root contract: it
-serializes revisions for that resource and replaces an unpublished older
-snapshot for the same subject in that transaction.
+Write the business change and outbox row in one transaction. For a current-state
+feed, the source also serializes revisions of one resource and replaces an
+unpublished older snapshot for that resource subject in that transaction.
 
-## Deployment contract
+## Domain-owned deployment
 
-Outbox Relay requires:
+Relay requires:
 
-| Variable            | Meaning                                                         |
-| ------------------- | --------------------------------------------------------------- |
-| `DATABASE_URL`      | The emitting domain's PostgreSQL database.                      |
-| `NATS_URL`          | The NATS client endpoint.                                       |
-| `NATS_STREAMS_PATH` | Path to a JSON array of native JetStream stream configurations. |
+| Variable | Meaning |
+| --- | --- |
+| `DATABASE_URL` | Emitting domain's PostgreSQL database |
+| `NATS_URL` | NATS client endpoint |
+| `NATS_STREAMS_PATH` | JSON array of native JetStream stream configurations |
+| `OTEL_SERVICE_NAME` | Required when `OTEL_EXPORTER_OTLP_ENDPOINT` is set |
 
-If `OTEL_EXPORTER_OTLP_ENDPOINT` is set, `OTEL_SERVICE_NAME` is also required.
+Each emitting domain owns `workloads/outbox-relay/infra/`: its Relay Deployment,
+`streams.json` ConfigMap source, database/NATS NetworkPolicy access, and
+environment overlays. Accounts and Plans are the working references.
 
-Each emitting domain owns `domains/<domain>/workloads/outbox-relay/infra/`:
+For a current-resource feed, configure a stable resource-subject family and one
+retained message per subject. Every stream declares its own `max_bytes`; the
+platform intentionally has no universal value. Historical facts use a separate
+append-only stream with a retention policy justified by their consumer.
 
-- a `streams.json` ConfigMap source mounted at `NATS_STREAMS_PATH`;
-- an Outbox Relay Deployment with its domain database and NATS configuration;
-- network access to that database and NATS; and
-- its environment overlays.
+## Add an emitting domain
 
-The stream configuration expresses the domain's retention promise. For a
-current-resource projection feed, configure a stable resource-subject family
-and retain one message per subject. Every stream declares `max_bytes`; the
-platform does not impose one universal value. Accounts and Plans are the
-working examples. Append-only facts, when a real requirement needs them, use a
-separate stream with their own retention policy.
-
-## Adding an emitting domain
-
-1. Define its contract and producer according to the [platform event
-   contract](../../../README.md#event-processing).
-2. Add the durable outbox table and `(queued_at, id)` index in the domain
-   migration.
-3. Add the domain-owned Outbox Relay deployment and `streams.json`, following
-   `domains/accounts/workloads/outbox-relay/infra/` or
-   `domains/plans/workloads/outbox-relay/infra/`.
-4. Add the Outbox Relay image to that domain's local development configuration.
-5. Verify the producer, Outbox Relay, and any projector together; a restarted
-   projector must reconcile its source feed before it processes new changes.
+1. Define the domain contract and producer under the [platform event contract](../../../README.md#event-processing).
+2. Add `outbox_events` and the relay index in the domain migration.
+3. Write the complete representation and outbox row in each exporting mutation.
+4. Add `workloads/outbox-relay/infra`, including `streams.json` and local
+   Skaffold configuration.
+5. Prove producer transaction/outbox atomicity, PubAck-before-delete, duplicate
+   delivery, and projector restart.
 
 ## Check
 
@@ -93,5 +77,5 @@ separate stream with their own retention policy.
 make -C platform/runtime/outbox-relay check
 ```
 
-Outbox Relay has its own CI check. Domain checks validate only their own source,
-contracts, and deployment configuration.
+This validates Relay source. Current pull-request automation validates changed
+domains only; Relay source delivery routing is not implemented yet.

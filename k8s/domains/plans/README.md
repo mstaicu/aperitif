@@ -1,59 +1,62 @@
 # Plans
 
-Plans owns the reusable pricing matrix for account-level product access:
+Plans owns optional account-level commercial configuration:
 
 ```text
-features -> plans -> account plan -> feature snapshot
+feature definitions -> plans -> selected Account plan -> resolved feature map
 ```
 
-A feature has a stable ID. A plan assigns each included feature a boolean,
-number, or string value. An account has one current plan. Products consume the
-resolved feature values and never branch on a plan name.
+A feature has a stable ID and a boolean, number, or string value. An Account has
+one current plan. Products consume resolved feature values; they do not branch on
+plan names.
 
-When Plans first projects an Account, it assigns the seeded `free` plan and
-publishes the complete Account feature representation at revision `1`.
+Plans does not own Accounts, payments, compliance decisions, or product data.
 
-Plans does not own accounts, payments, compliance decisions, or product data.
-
-## Runtime
+## Implemented workloads
 
 ```text
-ACCOUNTS stream -> accounts projection -> PostgreSQL
-                                       -> API
-                                       -> outbox -> Outbox Relay -> PLANS stream
+ACCOUNTS -> accounts projection -> PostgreSQL -> API
+                                      -> outbox -> Outbox Relay -> PLANS
 ```
 
-| Part | Purpose |
+| Workload | Responsibility |
 | --- | --- |
-| `accounts-projection` | Assign the initial plan when it sees an Account state |
-| `api` | Assign plans and resolve features |
-| `outbox-relay` | Publish account feature snapshots |
-| `migrations` | Flyway SQL |
-| `contracts` | Published Plans event package |
-| `deploy` | Kubernetes workloads, including the database and migration Job |
+| `postgres` | Plans' current local PostgreSQL instance |
+| `migrations` | Flyway schema and seeded plan configuration |
+| `accounts-projection` | Project Accounts and assign the initial `free` plan |
+| `api` | Assign an Account plan and resolve features |
+| `outbox-relay` | Publish resolved Account feature representations |
+| `contracts` | Published Plans resource-feed package |
 
-Plans and their feature values are product configuration added through
-migrations. The operator API exposes one command:
+The operator API assigns an Account's selected plan:
 
 ```text
 PUT /v1/accounts/:account_id/plan
+{ "plan_id": "pro" }
 ```
 
-```json
-{
-  "plan_id": "pro"
-}
+## State flow
+
+When the Accounts projection first sees an Account, Plans assigns `free` and
+publishes revision `1` of that Account's complete feature map.
+
+```text
+consumes: accounts.account.v1.<account-id>
+type:     accounts.account.changed.v1
+
+publishes: plans.account-features.v1.<account-id>
+type:      plans.account-features.changed.v1
+stream:    PLANS
 ```
 
-The Accounts projector consumes
-`accounts.account.v1.<account-id>` messages of type
-`accounts.account.changed.v1`. It receives the current Account state when it
-starts, then follows changes through an unnamed JetStream consumer. It runs as
-one replica; each start reconciles the Account baseline. Plans publishes
-`plans.account-features.changed.v1` to
-`plans.account-features.v1.<account-id>` when it first assigns `free` and when
-an Account's effective features change. `PLANS` retains one current feature map
-per Account; it is not a historical event stream.
+The Accounts projector is one replica with an unnamed baseline consumer. It
+reconciles retained Account state at startup, then applies newer revisions.
+`PLANS` retains one current feature map per Account; it is not a history stream.
+
+Publish a new snapshot whenever an assigned Account's effective feature map
+changes. That includes API plan assignment and a migration that changes features
+for a plan with assigned Accounts. The feature change, Account feature revision,
+pending-snapshot replacement, and outbox row belong in one transaction.
 
 ## Work here
 
@@ -64,21 +67,5 @@ make -C domains/plans deploy
 make -C domains/plans dev
 ```
 
-Add schema and configuration changes as
+Add schema and seeded configuration changes as
 `workloads/migrations/sql/V###__description.sql`.
-
-If a migration changes an account's effective features, it must also increment
-that account's plan version, replace any still-pending snapshot for that
-Account, and insert the complete current feature snapshot. The matrix update,
-version, and outbox row belong in one transaction.
-
-| Change | Publish snapshots? |
-| --- | --- |
-| Add or rename a plan | No |
-| Add or rename a feature definition | No |
-| Change a plan with no assigned accounts | No |
-| Add, change, or remove a feature from a plan with assigned accounts | Yes |
-| Assign an account to a plan through the API | Handled by the API |
-
-The rule is simple: publish a new snapshot whenever an existing account's
-effective feature map changes.

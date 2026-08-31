@@ -1,172 +1,149 @@
 # Aperitif
 
-A small Kubernetes platform for independently developed domains.
+A small Kubernetes foundation for independently developed product domains.
 
 ```text
-domains/             business domains, workload source, and deployment configuration
-platform/cluster/    cluster capabilities
-platform/runtime/    shared runtime executables
-clusters/prod-eu/    production Flux inventory
-docs/                domain extensions and product examples
-.github/workflows/   checks and image publication
+domains/             business ownership, workload source, and Kubernetes configuration
+platform/cluster/    cluster-wide capabilities
+platform/runtime/    shared executable code
+clusters/prod-eu/    production Flux inventory and reconciliation graph
+docs/                implemented-boundary guide, proposed extensions, and examples
 ```
 
-## Domains
+## Ownership
 
-| Domain     | Owns                                                 |
-| ---------- | ---------------------------------------------------- |
-| `auth`     | Users, passkeys, sessions, operator status, and JWKS |
-| `accounts` | Accounts and membership                              |
-| `plans`    | Plans and resolved account features                  |
+| Domain | Owns | Does not own |
+| --- | --- | --- |
+| Auth | Users, passkeys, sessions, operators, and JWKS | Accounts and product resources |
+| Accounts | Individual and organization account boundaries and membership | Users, plans, and product data |
+| Plans | Optional account plans and resolved feature snapshots | Accounts, payments, and product data |
 
-See [docs/README.md](docs/README.md) for the platform model, proposed
-extensions, and product examples.
+Each domain owns its database. Domains exchange messages through NATS JetStream;
+they never read another domain's database.
 
-Each domain owns its database. Domains exchange versioned events through an
-outbox and NATS JetStream; they never read each other's databases.
+```text
+domains/<domain>/
+  contracts/                   # published event boundary, only when exported
+  workloads/
+    <workload>/                # source when owned, plus infra/ in every case
+      infra/base/              # reusable Kubernetes resources
+      infra/overlays/<env>/    # environment-specific configuration
+  Makefile                     # check, migrate, deploy, and dev interface
+  skaffold.yaml                # local composition of that domain's workloads
+```
 
-Domain workload source and Dockerfiles live under
-`domains/<domain>/workloads/<workload>`. Shared runtime source lives under
-`platform/runtime/<runtime>`. Each domain workload owns its Kubernetes
-configuration under `domains/<domain>/workloads/<workload>/infra`.
+`workloads/` contains operational units: APIs, UIs, databases, migration Jobs,
+CronJobs, projectors, and domain-owned instances of shared runtimes. A workload's
+`infra/` stays beside it because its image, network access, configuration, and
+dependencies evolve together.
 
-### Event processing
+[`platform/runtime/outbox-relay`](platform/runtime/outbox-relay/README.md) owns
+shared relay code only. An emitting domain owns its Relay Deployment, database
+connection, NATS stream configuration, and NetworkPolicies.
 
-Every event-driven component follows the same reliability contract:
+## Event processing
 
-- Commit the business mutation and outbox event in one database transaction.
-- Treat every published contract version as immutable and snapshot-test its
-  contract.
-- Include a unique event ID, source, and timestamp.
-- Publish the structured CloudEvent body with NATS `Content-Type: application/cloudevents`.
-- Publish with the event ID as the JetStream message ID.
-- Wait for PubAck before removing the outbox row.
-- Validate events before projecting them.
-- Acknowledge the message only after that transaction commits.
+The following is implemented policy for every producer and projector:
 
-Resource projection feeds additionally:
+1. Commit the domain mutation and outbox row in one database transaction.
+2. Publish a structured CloudEvent with `Content-Type: application/cloudevents`.
+3. Use the CloudEvent ID as the JetStream message ID.
+4. Delete the outbox row only after JetStream PubAck.
+5. Validate before projecting; acknowledge only after the local projection
+   transaction commits.
+6. Treat published contract versions as immutable and snapshot-test them.
 
-- Carry the complete current resource state and a monotonic `data.revision`.
-  It is unrelated to the schema version in `v<schema>`, the
-  CloudEvents `specversion`, and the JetStream sequence.
-- Publish to `<domain>.<resource>.v<schema>.<resource-id>`; the CloudEvent
-  `type` is not the NATS subject.
-- Configure a state stream for the resource family as
-  `<domain>.<resource>.*.*`; a projector filters the one schema version it
-  understands. A new schema version therefore does not require changing the
-  stream's subject family.
-- Serialize mutations of one resource through its source revision. In the same
-  transaction, replace a still-pending snapshot for that resource subject when
-  writing a newer one, so an older state cannot publish after newer state.
-- Retain one latest message per resource subject.
-- Converge to current state, rather than promise every intermediate revision.
-  A resource can change from revision 1 to 3 before a projector observes
-  revision 2; a consumer that must observe every occurrence needs a separate
-  append-only fact stream.
-- A singleton projector creates an unnamed `DeliverLastPerSubject` consumer;
-  each start reconciles the current baseline and then follows new messages.
-  Replicas would create independent reconcilers, not a shared worker pool.
-- Apply local writes idempotently in one database transaction. A projection
-  that persists upstream state also persists its upstream resource revision and
-  ignores an equal or older revision.
-- Treat stream byte capacity and pending-outbox age as monitored operational
-  limits. Before relying on recovery from state-stream loss, the owning domain
-  must provide a controlled reseed from its authoritative database that
-  republishes current representations with new event IDs and their existing
-  resource revisions.
+### Current-resource projection feeds
 
-A published resource representation is immutable. When its data schema rejects
-unknown properties, as current V1 feeds do, any data-shape change starts a new
-complete V2 feed on its own `v2` subjects and CloudEvent type. Dual-publish only
-while a real V1 consumer still needs migration.
+A resource feed lets another domain reconstruct current state without reading the
+source database.
 
-Each domain owns its contract package. For each exported resource feed, it
-contains only the resource data schema, its CloudEvent schema and validator,
-the NATS subject builder, an event builder, one example, and a schema snapshot
-test. The resource representation is `data`; `data.revision` is its source
-revision. Do not export database records, a shared event framework, generic
-metadata, or unused fact and command contracts.
+```text
+subject: <domain>.<resource>.v<schema>.<resource-id>
+message: complete current resource representation + data.revision
+stream:  one latest message per subject
+```
 
-Historical facts are append-only occurrences. They may use bounded retention;
-they are not resource projection feeds and do not require a complete resource
-representation.
+- `data.revision` is the source resource revision. It is unrelated to the
+  subject schema version, CloudEvents `specversion`, and JetStream sequence.
+- A state mutation replaces an unpublished older snapshot for the same subject
+  in the same transaction. An older representation must never publish after a
+  newer one.
+- A singleton projector starts with `DeliverLastPerSubject`, persists the
+  upstream revision with its local state, and ignores equal or older revisions.
+  It converges to current state; it does not promise every intermediate change.
+- A schema-shape change uses a complete new feed, for example `v2`. Publish V1
+  and V2 together only while a real V1 consumer is migrating.
+- A domain that promises recovery from state-stream loss must eventually provide
+  a controlled reseed from its authoritative database. That Job is documented
+  but not implemented yet; see [production recovery](clusters/prod-eu/README.md#future-state-feed-recovery).
 
-### Outbox Relay
-
-[`platform/runtime/outbox-relay`](platform/runtime/outbox-relay/README.md) is
-the shared runtime that drains a domain's durable outbox table to NATS. It is
-transport only: it does not define a domain's event data, revisions, subjects,
-streams, or projections. The emitting domain owns those decisions, its Outbox
-Relay deployment, and its stream configuration.
+Historical facts are different: they are append-only occurrences with their own
+retention policy. Add them only when a concrete consumer needs history. Commands
+are requests to one owner; they are not current-resource feeds.
 
 ## Work locally
 
-Install tools:
+Install the local tools:
 
 ```sh
 brew bundle
 ```
 
-Deploy the shared units you need:
+Deploy only the shared capabilities a domain needs:
 
 ```sh
 make -C platform/cluster/ingress deploy
-make -C platform/cluster/event-bus deploy
-make -C platform/cluster/observability deploy  # optional
+make -C platform/cluster/event-bus deploy       # consumers or producers
+make -C platform/cluster/observability deploy   # optional
 ```
 
-Every domain exposes the same commands:
+Every domain has the same interface:
 
 ```sh
-make -C domains/<domain> help
 make -C domains/<domain> check
 make -C domains/<domain> migrate
 make -C domains/<domain> deploy
 make -C domains/<domain> dev
 ```
 
-There is no root Makefile or repository-wide development loop.
+There is deliberately no root Makefile or repository-wide development loop.
 
-## Deliver changes
+## Delivery
 
-Pull requests check changed domains. Merges build, scan, and publish changed
-domain workload images. Flux then commits and reconciles their digests.
-Contracts and workload infrastructure are checked with their owning domain but
-do not produce images.
-
-`platform/runtime/outbox-relay` publishes one shared image. Each emitting
-domain owns its Outbox Relay deployment and stream configuration; Flux
-reconciles that deployment through the domain's graph.
-
-When this directory becomes the repository root, change the workflow and Flux
-paths together:
+Domain pull requests run the owning domain's `check`. A merge to `master`
+builds, scans, and promotes changed first-party domain workload images. Flux
+then writes the observed immutable digest into the production overlay and
+reconciles it.
 
 ```text
-pull request
-  -> check changed domains
-
-merge to master
-  -> build changed domain workload images
-  -> scan the immutable image digest
-  -> move :latest to that digest
-  -> Flux commits the digest into the production overlay
-  -> Flux reconciles the cluster
+merge
+  -> publish changed domain image
+  -> scan immutable digest
+  -> promote :latest to that digest
+  -> Flux records the digest in Git
+  -> Flux applies the affected production overlay
 ```
 
-Infrastructure changes are reconciled directly from Git. Database changes use
-expand/contract, and migration Jobs complete before dependent workloads.
+Infrastructure-only changes reconcile directly from Git. Migration and
+application changes use expand/contract because Flux does not make several
+workloads atomic.
 
-See [clusters/prod-eu/README.md](clusters/prod-eu/README.md) for production
-bootstrap and operation.
+The shared Relay image already has one Flux policy used by every domain Relay
+Deployment. Its source is not yet selected by the domain-only GitHub workflows,
+so Relay changes require its local check and a controlled image publication until
+that delivery routing is added. See [Production EU](clusters/prod-eu/README.md).
 
-## Secrets and telemetry
+## Documentation and operations
 
-Secrets remain SOPS-encrypted in their environment overlays. Ephemeral and
-production use different Age keys. KSOPS decrypts locally; Flux decrypts
-production with `Secret/flux-system/sops-age`.
+- [Documentation guide](docs/README.md) explains implemented boundaries,
+  proposed extensions, examples, and the minimal new-domain path.
+- [Production EU](clusters/prod-eu/README.md) covers Flux bootstrap, operation,
+  dependencies, and the documented future recovery procedure.
+- [TODO.md](TODO.md) contains only unresolved product-agnostic platform work.
 
-Applications and Traefik send OpenTelemetry to the cluster Collector. The node
-agent collects container logs and Kubernetes metrics. Environment overlays
-choose the backend; both currently use OpenObserve.
-
-See [TODO.md](TODO.md) for unfinished production work.
+Secrets remain SOPS-encrypted in environment overlays. Ephemeral and production
+use separate Age keys; KSOPS decrypts locally and Flux decrypts production with
+`Secret/flux-system/sops-age`. Applications and Traefik send telemetry to the
+cluster OpenTelemetry Collector; the node agent collects container logs and
+Kubernetes metrics. Current overlays use OpenObserve.

@@ -1,74 +1,68 @@
 # Event Bus
 
 This unit runs a three-server NATS JetStream cluster. It transports durable
-cross-domain events; domains own their streams, consumers, contracts,
-outbox tables, and projections.
-
-Deploy it locally with:
+cross-domain messages; every domain owns its contracts, outbox table, streams,
+consumers, and projections.
 
 ```sh
 make -C platform/cluster/event-bus deploy
 ```
 
-Applications connect to `nats-client.nats.svc.cluster.local:4222`. The
-headless service and port `6222` are only for server clustering.
+Applications use `nats-client.nats.svc.cluster.local:4222`. The headless service
+and port `6222` exist only for NATS server clustering.
 
-## Storage model
+## Current storage configuration
 
-Each NATS pod has its own `1Gi` PVC. JetStream may use 80% of each PVC:
-
-```text
-1,024 MiB * 0.80 = 819.2 MiB per pod
-```
-
-A stream replica is a complete copy, not a shard. Both current streams use R3,
-so every pod stores one copy of each:
+Each NATS pod has a `1Gi` PVC. JetStream may use 80% of that volume:
 
 ```text
-ACCOUNTS       400 MiB
-PLANS          400 MiB
-               -------
-               800 MiB per pod
+1,024 MiB × 0.80 = 819.2 MiB per pod
 ```
 
-That fits below the `819.2 MiB` server ceiling. The remaining 20% of each PVC
-is outside JetStream's configured file-store budget.
-
-To size a time-bounded fact stream:
+`ACCOUNTS` and `PLANS` each declare `400 MiB`, file storage, and three replicas.
+A JetStream replica is a complete copy, not a shard, so each pod currently stores
+both streams:
 
 ```text
-stream max_bytes = measured daily growth * retained days * safety factor
-required PVC      = sum of R3 stream limits / 0.80
+ACCOUNTS + PLANS = 800 MiB per pod
 ```
 
-For a compacted resource-projection stream:
+That fits the current configured ceiling but is only an initial allocation. Before
+a production product, derive every stream budget from measured representation
+size, retained resource count or fact rate, concurrently retained schema versions,
+and a safety factor. Then size the NATS PVC and `max_file_store` from the sum of
+replicated stream budgets. See [TODO.md](../../../TODO.md#set-resource-and-retention-budgets).
 
 ```text
-stream max_bytes = retained resource count * average representation size * safety factor
+current-resource stream = retained resources × average representation size × safety factor
+fact stream             = measured daily growth × retained days × safety factor
 ```
 
-Set a stream's limits in its owning `workloads/outbox-relay/infra/base/streams.json`.
-Then keep `max_file_store` at 80% of the PVC. Restarting the owning Outbox
-Relay applies the stream configuration; resizing an existing PVC remains an
-explicit operation. NATS requires every APP stream to declare `max_bytes`.
+Set each stream's `max_bytes` in its owning
+`workloads/outbox-relay/infra/base/streams.json`. At the limit, NATS rejects the
+publication; Relay leaves the outbox row for retry. Monitor the oldest pending
+outbox row and consumer lag.
 
-At a stream limit, a rejected publication remains in the outbox for retry.
-
-## Event rule
+## Message path and access
 
 ```text
-domain DB transaction -> outbox entry -> Outbox Relay (polling publisher) -> JetStream
+domain database transaction -> outbox row -> Outbox Relay -> JetStream
 ```
 
-Request handlers do not directly publish authority events. The NATS
-NetworkPolicy must list every Outbox Relay and projection component allowed to
-connect.
+Request handlers do not publish authority-changing messages directly. The NATS
+NetworkPolicy explicitly allows every Relay and projection workload that connects
+to the cluster. Add a new domain client there when it is introduced.
 
-Render both environments with:
+Current-resource feeds retain one complete latest representation per subject.
+Facts, when a product needs occurrence history, use a separate append-only stream
+with independently chosen retention.
+
+## Validate and diagnose
 
 ```sh
 kubectl kustomize platform/cluster/event-bus/overlays/ephemeral >/dev/null
 kubectl kustomize platform/cluster/event-bus/overlays/prod-eu >/dev/null
 ```
 
-See [DEBUG.md](DEBUG.md) when the cluster or an event path is unhealthy.
+See [DEBUG.md](DEBUG.md) for NATS, Relay, stream, consumer, and projection
+failure procedures.
