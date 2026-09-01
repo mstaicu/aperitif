@@ -56,19 +56,19 @@ exists. Add each only for a concrete boundary or consumer.
 domains/<domain>/
   contracts/                   # only when another domain consumes a contract
   workloads/
-    postgres/infra/            # current domain-local PostgreSQL deployment
-    migrations/                # Dockerfile, SQL, and infra/
-    api/                       # source, Dockerfile, and infra/
-    <source>-projection/       # source, Dockerfile, and infra/
-    outbox-relay/infra/        # only when the domain emits messages
+    postgres/                  # skaffold.yaml and infra/
+    migrations/                # Dockerfile, SQL, skaffold.yaml, and infra/
+    api/                       # source, Dockerfile, skaffold.yaml, and infra/
+    <source>-projection/       # source, Dockerfile, skaffold.yaml, and infra/
+    outbox-relay/              # skaffold.yaml and infra/ when the domain emits messages
   Makefile
   README.md
   skaffold.yaml
 ```
 
-A workload always owns its `infra/`. It owns source only when the source belongs
+A workload always owns `skaffold.yaml` and `infra/`. It owns source only when the source belongs
 to the domain. `postgres`, `cleanup`, and `outbox-relay` may therefore contain
-only `infra/`: they run an upstream image or shared runtime.
+no source: they run an upstream image or shared runtime.
 
 Use the existing domain interface:
 

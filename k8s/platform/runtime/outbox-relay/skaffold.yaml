@@ -10,7 +10,7 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/outbox-relay
-      context: outbox-relay
+      context: .
       docker:
         dockerfile: Dockerfile
         target: dev

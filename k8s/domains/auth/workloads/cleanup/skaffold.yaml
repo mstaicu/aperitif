@@ -1,0 +1,13 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: auth-cleanup
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/ephemeral
+
+deploy:
+  kubectl: {}

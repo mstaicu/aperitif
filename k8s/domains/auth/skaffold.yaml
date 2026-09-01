@@ -2,117 +2,16 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: auth-postgres
+  name: auth
 
-manifests:
-  kustomize:
-    paths:
-      - workloads/postgres/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: auth-migrations
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/auth-migrations
-      context: workloads/migrations
-      docker:
-        dockerfile: Dockerfile
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/migrations/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: auth-api
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/auth-api
-      context: workloads/api
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/api/infra/overlays/ephemeral
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: auth-ui
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/auth-ui
-      context: workloads/ui
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/ui/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: auth-cleanup
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/cleanup/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
+requires:
+  - path: workloads/postgres/skaffold.yaml
+    configs: [auth-postgres]
+  - path: workloads/migrations/skaffold.yaml
+    configs: [auth-migrations]
+  - path: workloads/api/skaffold.yaml
+    configs: [auth-api]
+  - path: workloads/ui/skaffold.yaml
+    configs: [auth-ui]
+  - path: workloads/cleanup/skaffold.yaml
+    configs: [auth-cleanup]

@@ -14,22 +14,31 @@ permissions:
 
 jobs:
   changes:
-    name: find changed domains
+    name: find changed units
     runs-on: ubuntu-24.04
     outputs:
-      paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      domains: ${{ steps.domains.outputs.all_changed_and_modified_files }}
+      runtimes: ${{ steps.runtimes.outputs.all_changed_and_modified_files }}
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
-      - id: changes
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+      - id: domains
+        uses: tj-actions/changed-files@v47.0.6
         with:
           files: domains/**
           dir_names: true
           dir_names_max_depth: 2
+          matrix: true
+
+      - id: runtimes
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: platform/runtime/*/**
+          dir_names: true
+          dir_names_max_depth: 3
           matrix: true
 
   check:
@@ -40,16 +49,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        path: ${{ fromJSON(needs.changes.outputs.paths) }}
+        path: ${{ fromJSON(needs.changes.outputs.domains) }}
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@v6.1.0
 
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      - uses: actions/setup-node@v6.5.0
         with:
           node-version: 26
 
-      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
+      - uses: azure/setup-kubectl@v4.0.1
+
+      - name: check
+        run: make -C "${{ matrix.path }}" check
+
+  check-runtime:
+    name: check ${{ matrix.path }}
+    needs: changes
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{ fromJSON(needs.changes.outputs.runtimes) }}
+
+    steps:
+      - uses: actions/checkout@v6.1.0
+
+      - uses: actions/setup-node@v6.5.0
+        with:
+          node-version: 26
 
       - name: check
         run: make -C "${{ matrix.path }}" check

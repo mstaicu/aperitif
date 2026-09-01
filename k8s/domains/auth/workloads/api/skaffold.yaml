@@ -1,0 +1,32 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: auth-api
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/auth-api
+      context: .
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/ephemeral
+    buildArgs:
+      - --enable-alpha-plugins
+      - --enable-exec
+
+deploy:
+  kubectl: {}

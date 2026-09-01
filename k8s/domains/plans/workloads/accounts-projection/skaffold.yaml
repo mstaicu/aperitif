@@ -1,0 +1,29 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: plans-accounts-projection
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/plans-accounts-projection
+      context: .
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/ephemeral
+
+deploy:
+  kubectl: {}

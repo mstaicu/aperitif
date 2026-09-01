@@ -66,8 +66,8 @@ append-only stream with a retention policy justified by their consumer.
 1. Define the domain contract and producer under the [platform event contract](../../../README.md#event-processing).
 2. Add `outbox_events` and the relay index in the domain migration.
 3. Write the complete representation and outbox row in each exporting mutation.
-4. Add `workloads/outbox-relay/infra`, including `streams.json` and local
-   Skaffold configuration.
+4. Add `workloads/outbox-relay/skaffold.yaml` and its `infra/`, including
+   `streams.json` and the domain-specific Relay deployment.
 5. Prove producer transaction/outbox atomicity, PubAck-before-delete, duplicate
    delivery, and projector restart.
 
@@ -77,5 +77,6 @@ append-only stream with a retention policy justified by their consumer.
 make -C platform/runtime/outbox-relay check
 ```
 
-This validates Relay source. Current pull-request automation validates changed
-domains only; Relay source delivery routing is not implemented yet.
+Pull requests that change Relay run this check. A merge to `master` builds,
+scans, and promotes the Relay image through the same workflow as a domain-owned
+buildable workload.

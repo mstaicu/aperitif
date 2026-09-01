@@ -25,7 +25,8 @@ they never read another domain's database.
 domains/<domain>/
   contracts/                   # published event boundary, only when exported
   workloads/
-    <workload>/                # source when owned, plus infra/ in every case
+    <workload>/                # source when owned, plus deployment configuration
+      skaffold.yaml            # local workload configuration
       infra/base/              # reusable Kubernetes resources
       infra/overlays/<env>/    # environment-specific configuration
   Makefile                     # check, migrate, deploy, and dev interface
@@ -111,9 +112,9 @@ There is deliberately no root Makefile or repository-wide development loop.
 
 ## Delivery
 
-Domain pull requests run the owning domain's `check`. A merge to `master`
-builds, scans, and promotes changed first-party domain workload images. Flux
-then writes the observed immutable digest into the production overlay and
+Domain and shared-runtime pull requests run the owning unit's `check`. A merge
+to `master` builds, scans, and promotes changed first-party workload images.
+Flux then writes the observed immutable digest into the production overlay and
 reconciles it.
 
 ```text
@@ -129,10 +130,9 @@ Infrastructure-only changes reconcile directly from Git. Migration and
 application changes use expand/contract because Flux does not make several
 workloads atomic.
 
-The shared Relay image already has one Flux policy used by every domain Relay
-Deployment. Its source is not yet selected by the domain-only GitHub workflows,
-so Relay changes require its local check and a controlled image publication until
-that delivery routing is added. See [Production EU](clusters/prod-eu/README.md).
+The shared Relay image has one Flux policy used by every domain Relay Deployment.
+Its source follows the same pull-request and image-publication path as any other
+buildable workload. See [Production EU](clusters/prod-eu/README.md).
 
 ## Documentation and operations
 

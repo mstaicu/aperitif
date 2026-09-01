@@ -1,0 +1,17 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: plans-outbox-relay
+
+requires:
+  - path: ../../../../platform/runtime/outbox-relay/skaffold.yaml
+    configs: [outbox-relay]
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/ephemeral
+
+deploy:
+  kubectl: {}

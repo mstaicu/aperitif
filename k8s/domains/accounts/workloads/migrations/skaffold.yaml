@@ -1,0 +1,23 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: accounts-migrations
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/accounts-migrations
+      context: .
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/ephemeral
+
+deploy:
+  kubectl: {}

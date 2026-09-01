@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - "domains/*/workloads/*/**"
+      - "platform/runtime/*/**"
       - "!domains/*/workloads/*/infra/**"
 
 concurrency:
@@ -22,14 +23,16 @@ jobs:
       workloads: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - id: changes
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        uses: tj-actions/changed-files@v47.0.6
         with:
-          files: domains/*/workloads/*/**
+          files: |
+            domains/*/workloads/*/**
+            platform/runtime/*/**
           files_ignore: domains/*/workloads/*/infra/**
           dir_names: true
           dir_names_max_depth: 4
@@ -49,15 +52,15 @@ jobs:
         workload: ${{ fromJSON(needs.workloads.outputs.workloads) }}
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@v6.1.0
 
       - id: image
-        name: read image name
-        run: echo "name=$(yq -r '.images[0].name' '${{ matrix.workload }}/infra/overlays/prod-eu/kustomization.yaml')" >> "$GITHUB_OUTPUT"
+        name: read build-unit image
+        run: echo "name=$(yq -r '.build.artifacts[0].image // ""' '${{ matrix.workload }}/skaffold.yaml')" >> "$GITHUB_OUTPUT"
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/setup-buildx-action@v4.2.0
 
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      - uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -65,7 +68,7 @@ jobs:
 
       - id: build
         name: build and publish image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@v7.3.0
         with:
           context: ${{ matrix.workload }}
           target: prod
@@ -75,7 +78,7 @@ jobs:
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
 
       - name: scan image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
           scanners: vuln

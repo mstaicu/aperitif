@@ -2,87 +2,14 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: accounts-postgres
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/postgres/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: accounts-migrations
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/accounts-migrations
-      context: workloads/migrations
-      docker:
-        dockerfile: Dockerfile
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/migrations/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: accounts-api
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/accounts-api
-      context: workloads/api
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/api/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: accounts-outbox-relay
+  name: accounts
 
 requires:
-  - path: ../../platform/runtime/skaffold.yaml
-    configs: [outbox-relay]
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/outbox-relay/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
+  - path: workloads/postgres/skaffold.yaml
+    configs: [accounts-postgres]
+  - path: workloads/migrations/skaffold.yaml
+    configs: [accounts-migrations]
+  - path: workloads/api/skaffold.yaml
+    configs: [accounts-api]
+  - path: workloads/outbox-relay/skaffold.yaml
+    configs: [accounts-outbox-relay]

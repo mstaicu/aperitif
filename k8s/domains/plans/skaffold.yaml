@@ -2,118 +2,16 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: plans-postgres
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/postgres/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: plans-migrations
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/plans-migrations
-      context: workloads/migrations
-      docker:
-        dockerfile: Dockerfile
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/migrations/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: plans-api
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/plans-api
-      context: workloads/api
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/api/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: plans-outbox-relay
+  name: plans
 
 requires:
-  - path: ../../platform/runtime/skaffold.yaml
-    configs: [outbox-relay]
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/outbox-relay/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
-
----
-apiVersion: skaffold/v4beta14
-kind: Config
-
-metadata:
-  name: plans-accounts-projection
-
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/plans-accounts-projection
-      context: workloads/accounts-projection
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
-
-manifests:
-  kustomize:
-    paths:
-      - workloads/accounts-projection/infra/overlays/ephemeral
-
-deploy:
-  kubectl: {}
+  - path: workloads/postgres/skaffold.yaml
+    configs: [plans-postgres]
+  - path: workloads/migrations/skaffold.yaml
+    configs: [plans-migrations]
+  - path: workloads/api/skaffold.yaml
+    configs: [plans-api]
+  - path: workloads/outbox-relay/skaffold.yaml
+    configs: [plans-outbox-relay]
+  - path: workloads/accounts-projection/skaffold.yaml
+    configs: [plans-accounts-projection]
