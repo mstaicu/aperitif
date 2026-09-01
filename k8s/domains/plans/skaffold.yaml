@@ -75,21 +75,9 @@ kind: Config
 metadata:
   name: plans-outbox-relay
 
-build:
-  local:
-    push: false
-
-  artifacts:
-    - image: ghcr.io/mstaicu/outbox-relay
-      context: ../../platform/runtime/outbox-relay
-      docker:
-        dockerfile: Dockerfile
-        target: dev
-
-      sync:
-        manual:
-          - src: src/**/*
-            dest: /home/node/app
+requires:
+  - path: ../../platform/runtime/skaffold.yaml
+    configs: [outbox-relay]
 
 manifests:
   kustomize:

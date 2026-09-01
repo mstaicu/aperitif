@@ -1,0 +1,21 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: outbox-relay
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/outbox-relay
+      context: outbox-relay
+      docker:
+        dockerfile: Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: src/**/*
+            dest: /home/node/app
