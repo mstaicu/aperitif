@@ -74,7 +74,7 @@ append-only stream with a retention policy justified by their consumer.
 ## Check
 
 ```sh
-make -C platform/runtime/outbox-relay check
+make -C platform/runtime check
 ```
 
 Pull requests that change Relay run this check. A merge to `master` builds,
