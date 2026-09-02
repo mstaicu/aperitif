@@ -69,6 +69,7 @@ jobs:
       - id: build
         name: build and publish image
         uses: docker/build-push-action@v7.3.0
+        if: steps.image.outputs.name != ''
         with:
           context: ${{ matrix.workload }}
           target: prod
@@ -79,6 +80,7 @@ jobs:
 
       - name: scan image
         uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.image.outputs.name != ''
         with:
           image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
           scanners: vuln
@@ -88,6 +90,7 @@ jobs:
           exit-code: 1
 
       - name: promote image to 'latest'
+        if: steps.image.outputs.name != ''
         run: >
           docker buildx imagetools create
           --tag "${{ steps.image.outputs.name }}:latest"
