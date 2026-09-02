@@ -53,7 +53,6 @@ spec:
   digestReflectionPolicy: Always
   interval: 5m
 
-
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository

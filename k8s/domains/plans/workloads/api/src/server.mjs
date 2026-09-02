@@ -1,7 +1,8 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify, { LogController } from "fastify";
-import { createRemoteJWKSet } from "jose";
+import { createLocalJWKSet, createRemoteJWKSet } from "jose";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import process from "node:process";
 import { Pool } from "pg";
 
@@ -26,9 +27,13 @@ const pool = new Pool({
 
 pool.on("error", (err) => console.error(err));
 
-const jwks = createRemoteJWKSet(
-  new URL(/** @type {string} */ (process.env.AUTH_JWKS_URL)),
-);
+const jwks = process.env.AUTH_JWKS_FILE
+  ? createLocalJWKSet(
+      JSON.parse(await readFile(process.env.AUTH_JWKS_FILE, "utf8")),
+    )
+  : createRemoteJWKSet(
+      new URL(/** @type {string} */ (process.env.AUTH_JWKS_URL)),
+    );
 const plans = createPlansService({ pool });
 
 /** @type {FastifyInstance} */

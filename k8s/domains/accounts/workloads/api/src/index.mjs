@@ -4,12 +4,18 @@ import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { PinoInstrumentation } from "@opentelemetry/instrumentation-pino";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-const requiredEnv = ["DATABASE_URL", "AUTH_JWKS_URL"];
+const requiredEnv = ["DATABASE_URL"];
 
 for (const name of requiredEnv) {
   if (!process.env[name]) {
     throw new Error(`${name} is required`);
   }
+}
+
+if (
+  Boolean(process.env.AUTH_JWKS_URL) === Boolean(process.env.AUTH_JWKS_FILE)
+) {
+  throw new Error("exactly one of AUTH_JWKS_URL or AUTH_JWKS_FILE is required");
 }
 
 if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT && !process.env.OTEL_SERVICE_NAME) {
