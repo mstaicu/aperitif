@@ -16,13 +16,6 @@ const AccountType = Type.Union(
       "Kind of account boundary being created. Individual accounts represent one person. Organization accounts represent a shared organization.",
   },
 );
-export const AccountParams = Type.Object(
-  {
-    account_id: AccountId,
-  },
-  { additionalProperties: false },
-);
-
 export const CreateAccountBody = Type.Object(
   {
     name: AccountName,
