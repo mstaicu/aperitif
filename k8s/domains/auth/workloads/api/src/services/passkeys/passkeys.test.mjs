@@ -5,14 +5,19 @@ import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createPasskeysService } from "./index.mjs";
 
 test("passkeys require the configured origin and user verification", async () => {
+  // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const passkeys = createPasskeysService({
     origin: "https://auth.test",
     pool,
   });
+
+  // Act
   const registration = await passkeys.createRegistrationOptions();
   const login = await passkeys.createAuthenticationOptions();
+
+  // Assert
   const { rows: registrationChallenges } = await pool.query(
     "SELECT COUNT(*)::int AS count FROM registration_challenges",
   );

@@ -9,6 +9,7 @@ import { createSessionsService } from "./index.mjs";
 import { createSession } from "./session.create.mjs";
 
 test("sessions issue access tokens and revoke independently", async () => {
+  // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const jwt = await createJwtFixture();
@@ -27,6 +28,7 @@ test("sessions issue access tokens and revoke independently", async () => {
     const laptop = await createSession({ client, userId });
     const phone = await createSession({ client, userId });
 
+    // Act
     const laptopAccess = await sessions.createAccessToken({
       session_token: laptop.sessionToken,
     });
@@ -34,19 +36,22 @@ test("sessions issue access tokens and revoke independently", async () => {
       laptopAccess.access_token,
       createLocalJWKSet(jwt.jwks),
     );
+    await sessions.revokeSession({ session_token: phone.sessionToken });
+    const laptopAccessAfterPhoneRevocation = await sessions.createAccessToken({
+      session_token: laptop.sessionToken,
+    });
+    const phoneAccessAfterRevocation = sessions.createAccessToken({
+      session_token: phone.sessionToken,
+    });
 
+    // Assert
     assert.equal(payload.sub, userId);
     assert.equal(payload.operator, true);
     assert.equal(laptop.expiresIn, 2_592_000);
     assert.equal(laptopAccess.expires_in, 300);
     assert.equal(laptopAccess.token_type, "Bearer");
-
-    await sessions.revokeSession({ session_token: phone.sessionToken });
-    await sessions.createAccessToken({ session_token: laptop.sessionToken });
-    await assert.rejects(
-      sessions.createAccessToken({ session_token: phone.sessionToken }),
-      /SESSION_NOT_FOUND/,
-    );
+    assert.equal(laptopAccessAfterPhoneRevocation.token_type, "Bearer");
+    await assert.rejects(phoneAccessAfterRevocation, /SESSION_NOT_FOUND/);
   } finally {
     client.release();
   }

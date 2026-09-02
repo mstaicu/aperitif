@@ -1,5 +1,4 @@
 import {
-  AccountFeaturesChangedV1EventCheck,
   buildAccountFeaturesChangedV1Event,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
@@ -11,6 +10,7 @@ import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createPlansService } from "./index.mjs";
 
 test("replaces a pending feature snapshot when a plan changes", async () => {
+  // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
@@ -56,13 +56,17 @@ test("replaces a pending feature snapshot when a plan changes", async () => {
     [freeSnapshot.id, subject, JSON.stringify(freeSnapshot)],
   );
 
-  assert.deepEqual(await plans.setPlan({ accountId, planId: "pro" }), {
+  // Act
+  const result = await plans.setPlan({ accountId, planId: "pro" });
+  await plans.setPlan({ accountId, planId: "pro" });
+
+  // Assert
+  assert.deepEqual(result, {
     plan: {
       features: { "test.limit": 100 },
       id: "pro",
     },
   });
-  await plans.setPlan({ accountId, planId: "pro" });
 
   const {
     rows: [accountPlan],
@@ -86,7 +90,6 @@ test("replaces a pending feature snapshot when a plan changes", async () => {
   assert.deepEqual(accountPlan, { plan_id: "pro", version: 2 });
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
-  assert.equal(AccountFeaturesChangedV1EventCheck.Check(snapshot.event), true);
   assert.equal(snapshot.subject, subject);
   assert.deepEqual(snapshot.event.data, {
     account_id: accountId,

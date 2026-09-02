@@ -13,7 +13,13 @@ import {
 const accountId = "22222222-2222-4222-8222-222222222222";
 
 test("plans.account-features.changed.v1 remains compatible", (t) => {
-  t.assert.snapshot(AccountFeaturesChangedV1EventSchema);
+  // Arrange
+  const mismatchedSubject = {
+    ...example,
+    subject: "account/44444444-4444-4444-8444-444444444444",
+  };
+
+  // Act
   const event = buildAccountFeaturesChangedV1Event(
     {
       account_id: accountId,
@@ -25,19 +31,13 @@ test("plans.account-features.changed.v1 remains compatible", (t) => {
     },
     1,
   );
+  const subject = buildAccountFeaturesV1Subject(accountId);
 
+  // Assert
+  t.assert.snapshot(AccountFeaturesChangedV1EventSchema);
   assert.equal(AccountFeaturesChangedV1EventCheck.Check(example), true);
   assert.equal(AccountFeaturesChangedV1EventCheck.Check(event), true);
   assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
-  assert.equal(
-    buildAccountFeaturesV1Subject(accountId),
-    `plans.account-features.v1.${accountId}`,
-  );
-  assert.equal(
-    AccountFeaturesChangedV1EventCheck.Check({
-      ...example,
-      subject: "account/44444444-4444-4444-8444-444444444444",
-    }),
-    false,
-  );
+  assert.equal(subject, `plans.account-features.v1.${accountId}`);
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(mismatchedSubject), false);
 });

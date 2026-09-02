@@ -23,6 +23,7 @@ const stream = {
 };
 
 test("relays queued entries", async () => {
+  // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
@@ -55,6 +56,7 @@ test("relays queued entries", async () => {
     [queued.id, JSON.stringify(queued)],
   );
 
+  // Act
   const task = relayOutbox({
     abortSignal: abortController.signal,
     js,
@@ -75,6 +77,7 @@ test("relays queued entries", async () => {
   abortController.abort();
   await task;
 
+  // Assert
   assert.ok(queuedMessage);
   assert.ok(notifiedMessage);
   assert.deepEqual(
@@ -111,6 +114,7 @@ test("relays queued entries", async () => {
 });
 
 test("keeps an outbox entry when PubAck fails", async () => {
+  // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats({ jetstream: false });
@@ -128,14 +132,15 @@ test("keeps an outbox entry when PubAck fails", async () => {
     [event.id, JSON.stringify(event)],
   );
 
-  await assert.rejects(
-    relayOutbox({
-      abortSignal: new AbortController().signal,
-      js,
-      pool,
-    }),
-    /JetStreamNotEnabled/,
-  );
+  // Act
+  const relay = relayOutbox({
+    abortSignal: new AbortController().signal,
+    js,
+    pool,
+  });
+
+  // Assert
+  await assert.rejects(relay, /JetStreamNotEnabled/);
 
   const {
     rows: [outboxEntry],
