@@ -37,11 +37,11 @@ test("creates account ownership and lists only the caller's accounts", async () 
         subject
       FROM outbox_events
       WHERE event #>> '{data,id}' = $1
-      ORDER BY (event #>> '{data,revision}')::bigint
     `,
     [alpha.account.id],
   );
 
+  assert.equal(outbox.length, 1);
   const [{ event, subject }] = outbox;
 
   assert.deepEqual(await accounts.listAccounts({ currentUserId: userId }), {

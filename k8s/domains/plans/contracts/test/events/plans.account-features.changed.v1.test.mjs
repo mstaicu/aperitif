@@ -14,21 +14,20 @@ const accountId = "22222222-2222-4222-8222-222222222222";
 
 test("plans.account-features.changed.v1 remains compatible", (t) => {
   t.assert.snapshot(AccountFeaturesChangedV1EventSchema);
+  const event = buildAccountFeaturesChangedV1Event(
+    {
+      account_id: accountId,
+      features: {
+        "example.enabled": true,
+        "example.level": "expanded",
+        "example.limit": 100,
+      },
+    },
+    1,
+  );
 
   assert.equal(AccountFeaturesChangedV1EventCheck.Check(example), true);
-  assert.equal(
-    AccountFeaturesChangedV1EventCheck.Check(
-      buildAccountFeaturesChangedV1Event({
-        account_id: accountId,
-        features: {
-          "example.enabled": true,
-          "example.level": "expanded",
-          "example.limit": 100,
-        },
-      }, 1),
-    ),
-    true,
-  );
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(event), true);
   assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
   assert.equal(
     buildAccountFeaturesV1Subject(accountId),

@@ -13,13 +13,12 @@ test("passkeys require the configured origin and user verification", async () =>
   });
   const registration = await passkeys.createRegistrationOptions();
   const login = await passkeys.createAuthenticationOptions();
-  const {
-    rows: [challenges],
-  } = await pool.query(`
-    SELECT
-      (SELECT COUNT(*)::int FROM registration_challenges) AS registrations,
-      (SELECT COUNT(*)::int FROM authentication_challenges) AS authentications
-  `);
+  const { rows: registrationChallenges } = await pool.query(
+    "SELECT COUNT(*)::int AS count FROM registration_challenges",
+  );
+  const { rows: authenticationChallenges } = await pool.query(
+    "SELECT COUNT(*)::int AS count FROM authentication_challenges",
+  );
 
   assert.equal(registration.rp.id, "auth.test");
   assert.equal(registration.authenticatorSelection?.residentKey, "required");
@@ -29,5 +28,6 @@ test("passkeys require the configured origin and user verification", async () =>
   );
   assert.equal(login.rpId, "auth.test");
   assert.equal(login.userVerification, "required");
-  assert.deepEqual(challenges, { authentications: 1, registrations: 1 });
+  assert.equal(registrationChallenges[0].count, 1);
+  assert.equal(authenticationChallenges[0].count, 1);
 });

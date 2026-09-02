@@ -14,24 +14,23 @@ const accountId = "22222222-2222-4222-8222-222222222222";
 
 test("accounts.account.changed.v1 remains compatible", (t) => {
   t.assert.snapshot(AccountChangedV1EventSchema);
+  const event = buildAccountChangedV1Event(
+    {
+      id: accountId,
+      members: [
+        {
+          role: "owner",
+          user_id: "33333333-3333-4333-8333-333333333333",
+        },
+      ],
+      name: "Acme",
+      type: "individual",
+    },
+    1,
+  );
 
   assert.equal(AccountChangedV1EventCheck.Check(example), true);
-  assert.equal(
-    AccountChangedV1EventCheck.Check(
-      buildAccountChangedV1Event({
-        id: accountId,
-        members: [
-          {
-            role: "owner",
-            user_id: "33333333-3333-4333-8333-333333333333",
-          },
-        ],
-        name: "Acme",
-        type: "individual",
-      }, 1),
-    ),
-    true,
-  );
+  assert.equal(AccountChangedV1EventCheck.Check(event), true);
   assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
   assert.equal(
     buildAccountV1Subject(accountId),

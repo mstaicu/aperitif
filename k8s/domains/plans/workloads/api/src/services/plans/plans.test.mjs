@@ -10,7 +10,7 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createPlansService } from "./index.mjs";
 
-test("sets a plan and publishes one versioned feature snapshot", async () => {
+test("replaces a pending feature snapshot when a plan changes", async () => {
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
@@ -65,33 +65,32 @@ test("sets a plan and publishes one versioned feature snapshot", async () => {
   await plans.setPlan({ accountId, planId: "pro" });
 
   const {
-    rows: [state],
+    rows: [accountPlan],
   } = await pool.query(
     `
       SELECT plan_id,
-        version::integer,
-        (SELECT count(*)::integer FROM outbox_events) AS event_count,
-        (SELECT subject FROM outbox_events LIMIT 1) AS subject,
-        (SELECT event FROM outbox_events LIMIT 1) AS snapshot
+        version::integer
       FROM account_plans
       WHERE account_id = $1
     `,
     [accountId],
   );
-
-  assert.equal(AccountFeaturesChangedV1EventCheck.Check(state.snapshot), true);
-  assert.deepEqual(
-    { ...state, snapshot: state.snapshot.data },
-    {
-      event_count: 1,
-      plan_id: "pro",
-      snapshot: {
-        account_id: accountId,
-        features: { "test.limit": 100 },
-        revision: 2,
-      },
-      subject,
-      version: 2,
-    },
+  const { rows: outbox } = await pool.query(
+    `
+      SELECT event,
+        subject
+      FROM outbox_events
+    `,
   );
+
+  assert.deepEqual(accountPlan, { plan_id: "pro", version: 2 });
+  assert.equal(outbox.length, 1);
+  const [snapshot] = outbox;
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(snapshot.event), true);
+  assert.equal(snapshot.subject, subject);
+  assert.deepEqual(snapshot.event.data, {
+    account_id: accountId,
+    features: { "test.limit": 100 },
+    revision: 2,
+  });
 });

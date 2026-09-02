@@ -53,38 +53,34 @@ test("initializes an Account's free plan once from its current state", async () 
   await projectAccountV1({ message, pool });
 
   const {
-    rows: [state],
+    rows: [accountPlan],
   } = await pool.query(
     `
       SELECT plan_id,
-        version::integer,
-        (SELECT count(*)::integer FROM outbox_events) AS event_count,
-        (SELECT subject FROM outbox_events LIMIT 1) AS subject,
-        (SELECT event FROM outbox_events LIMIT 1) AS snapshot
+        version::integer
       FROM account_plans
       WHERE account_id = $1
     `,
     [accountId],
   );
-
-  assert.equal(AccountFeaturesChangedV1EventCheck.Check(state.snapshot), true);
-  assert.deepEqual(
-    {
-      ...state,
-      snapshot: state.snapshot.data,
-    },
-    {
-      event_count: 1,
-      plan_id: "free",
-      snapshot: {
-        account_id: accountId,
-        features: { "test.limit": 10 },
-        revision: 1,
-      },
-      subject: buildAccountFeaturesV1Subject(accountId),
-      version: 1,
-    },
+  const { rows: outbox } = await pool.query(
+    `
+      SELECT event,
+        subject
+      FROM outbox_events
+    `,
   );
+
+  assert.deepEqual(accountPlan, { plan_id: "free", version: 1 });
+  assert.equal(outbox.length, 1);
+  const [snapshot] = outbox;
+  assert.equal(AccountFeaturesChangedV1EventCheck.Check(snapshot.event), true);
+  assert.equal(snapshot.subject, buildAccountFeaturesV1Subject(accountId));
+  assert.deepEqual(snapshot.event.data, {
+    account_id: accountId,
+    features: { "test.limit": 10 },
+    revision: 1,
+  });
 
   await assert.rejects(
     projectAccountV1({
