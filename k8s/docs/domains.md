@@ -48,7 +48,7 @@ It exports one complete Account per subject:
 
 ```text
 subject: accounts.account.v1.<account-id>
-type:    accounts.account.changed.v1
+type:    accounts.account.snapshot.v1
 stream:  ACCOUNTS
 ```
 
@@ -72,7 +72,7 @@ publishes a complete feature map:
 ```text
 consumes: accounts.account.v1.<account-id>
 publishes: plans.account-features.v1.<account-id>
-type:      plans.account-features.changed.v1
+type:      plans.account-features.snapshot.v1
 stream:    PLANS
 ```
 

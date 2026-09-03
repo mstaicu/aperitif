@@ -1,5 +1,5 @@
 import {
-  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesSnapshotV1Event,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
@@ -40,7 +40,7 @@ test("replaces a pending feature snapshot when a plan changes", async () => {
   );
 
   const subject = buildAccountFeaturesV1Subject(accountId);
-  const freeSnapshot = buildAccountFeaturesChangedV1Event(
+  const freeSnapshot = buildAccountFeaturesSnapshotV1Event(
     {
       account_id: accountId,
       features: { "test.limit": 10 },

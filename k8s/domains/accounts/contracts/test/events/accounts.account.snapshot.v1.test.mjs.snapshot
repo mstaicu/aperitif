@@ -1,4 +1,4 @@
-exports[`accounts.account.changed.v1 remains compatible 1`] = `
+exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
 {
   "additionalProperties": false,
   "type": "object",
@@ -106,7 +106,7 @@ exports[`accounts.account.changed.v1 remains compatible 1`] = `
       "type": "string"
     },
     "type": {
-      "const": "accounts.account.changed.v1",
+      "const": "accounts.account.snapshot.v1",
       "type": "string"
     }
   }

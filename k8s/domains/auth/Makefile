@@ -35,7 +35,8 @@ deploy: migrate ## Deploy Auth once in the current cluster.
 dev: migrate ## Start the Auth development loop.
 	skaffold dev -m auth-api,auth-ui,auth-retention
 
-e2e: deploy ## Run Auth browser journeys through the local edge.
+e2e: migrate ## Run Auth browser journeys.
+	skaffold run -m auth-api,auth-ui
 	cd workloads/ui && npm ci
 	cd workloads/ui && npm exec -- playwright install chromium
 	cd workloads/ui && npm run test:e2e

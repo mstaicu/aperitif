@@ -2,8 +2,8 @@ import { Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { randomUUID } from "node:crypto";
 
-export const AccountFeaturesChangedV1Source = "/domains/plans";
-export const AccountFeaturesChangedV1Type = "plans.account-features.changed.v1";
+export const AccountFeaturesSnapshotV1Source = "/domains/plans";
+export const AccountFeaturesSnapshotV1Type = "plans.account-features.snapshot.v1";
 export const AccountFeaturesV1SubjectPrefix = "plans.account-features.v1";
 
 const UuidSchema = Type.String({
@@ -13,7 +13,7 @@ const UuidSchema = Type.String({
 
 const UuidCheck = TypeCompiler.Compile(UuidSchema);
 
-export const AccountFeaturesChangedV1DataSchema = Type.Object(
+export const AccountFeaturesSnapshotV1DataSchema = Type.Object(
   {
     account_id: UuidSchema,
     features: Type.Record(
@@ -25,39 +25,39 @@ export const AccountFeaturesChangedV1DataSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const AccountFeaturesChangedV1EventSchema = Type.Object(
+export const AccountFeaturesSnapshotV1EventSchema = Type.Object(
   {
     datacontenttype: Type.Literal("application/json"),
-    data: AccountFeaturesChangedV1DataSchema,
+    data: AccountFeaturesSnapshotV1DataSchema,
     id: UuidSchema,
-    source: Type.Literal(AccountFeaturesChangedV1Source),
+    source: Type.Literal(AccountFeaturesSnapshotV1Source),
     specversion: Type.Literal("1.0"),
     subject: Type.String({
       pattern:
         "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
     }),
     time: Type.String({ minLength: 1 }),
-    type: Type.Literal(AccountFeaturesChangedV1Type),
+    type: Type.Literal(AccountFeaturesSnapshotV1Type),
   },
   { additionalProperties: false },
 );
 
 /**
  * @typedef {import("@sinclair/typebox").Static<
- *   typeof AccountFeaturesChangedV1EventSchema
- * >} AccountFeaturesChangedV1Event
+ *   typeof AccountFeaturesSnapshotV1EventSchema
+ * >} AccountFeaturesSnapshotV1Event
  */
 
-const AccountFeaturesChangedV1EventSchemaCheck = TypeCompiler.Compile(
-  AccountFeaturesChangedV1EventSchema,
+const AccountFeaturesSnapshotV1EventSchemaCheck = TypeCompiler.Compile(
+  AccountFeaturesSnapshotV1EventSchema,
 );
 
-export const AccountFeaturesChangedV1EventCheck = {
+export const AccountFeaturesSnapshotV1EventCheck = {
   /**
    * @param {unknown} event
    */
   Check(event) {
-    if (!AccountFeaturesChangedV1EventSchemaCheck.Check(event)) {
+    if (!AccountFeaturesSnapshotV1EventSchemaCheck.Check(event)) {
       return false;
     }
 
@@ -77,11 +77,11 @@ export function buildAccountFeaturesV1Subject(accountId) {
 }
 
 /**
- * @param {Omit<AccountFeaturesChangedV1Event["data"], "revision">} data
+ * @param {Omit<AccountFeaturesSnapshotV1Event["data"], "revision">} data
  * @param {number} revision
- * @returns {AccountFeaturesChangedV1Event}
+ * @returns {AccountFeaturesSnapshotV1Event}
  */
-export function buildAccountFeaturesChangedV1Event(data, revision) {
+export function buildAccountFeaturesSnapshotV1Event(data, revision) {
   const event = {
     data: {
       ...data,
@@ -89,15 +89,15 @@ export function buildAccountFeaturesChangedV1Event(data, revision) {
     },
     datacontenttype: "application/json",
     id: randomUUID(),
-    source: AccountFeaturesChangedV1Source,
+    source: AccountFeaturesSnapshotV1Source,
     specversion: "1.0",
     subject: `account/${data.account_id}`,
     time: new Date().toISOString(),
-    type: AccountFeaturesChangedV1Type,
+    type: AccountFeaturesSnapshotV1Type,
   };
 
-  if (!AccountFeaturesChangedV1EventCheck.Check(event)) {
-    throw new Error("INVALID_ACCOUNT_FEATURES_CHANGED_EVENT");
+  if (!AccountFeaturesSnapshotV1EventCheck.Check(event)) {
+    throw new Error("INVALID_ACCOUNT_FEATURES_SNAPSHOT_EVENT");
   }
 
   return event;

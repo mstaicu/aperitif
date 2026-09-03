@@ -1,5 +1,5 @@
 import {
-  buildAccountChangedV1Event,
+  buildAccountSnapshotV1Event,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
 import { context, propagation } from "@opentelemetry/api";
@@ -50,7 +50,7 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountChangedEvent = buildAccountChangedV1Event(
+      const accountSnapshotEvent = buildAccountSnapshotV1Event(
         {
           id: account.id,
           members: [
@@ -80,9 +80,9 @@ export const createAccount =
           VALUES ($1, $2, $3::jsonb, $4, $5)
         `,
         [
-          accountChangedEvent.id,
+          accountSnapshotEvent.id,
           buildAccountV1Subject(account.id),
-          JSON.stringify(accountChangedEvent),
+          JSON.stringify(accountSnapshotEvent),
           traceContext.traceparent,
           traceContext.tracestate,
         ],

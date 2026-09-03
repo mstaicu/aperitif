@@ -1,1 +1,1 @@
-export * from "./events/accounts.account.changed.v1.mjs";
+export * from "./events/accounts.account.snapshot.v1.mjs";

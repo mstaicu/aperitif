@@ -1,9 +1,9 @@
 import {
-  AccountChangedV1EventCheck,
+  AccountSnapshotV1EventCheck,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
 import {
-  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesSnapshotV1Event,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
 import {
@@ -48,16 +48,16 @@ export async function projectAccountV1({ message, pool }) {
       try {
         const event = message.json();
 
-        if (!AccountChangedV1EventCheck.Check(event)) {
-          throw new Error("INVALID_ACCOUNT_CHANGED_EVENT");
+        if (!AccountSnapshotV1EventCheck.Check(event)) {
+          throw new Error("INVALID_ACCOUNT_SNAPSHOT_EVENT");
         }
 
-        const accountChanged =
-          /** @type {import("@mstaicu/accounts-contracts").AccountChangedV1Event} */ (
+        const snapshot =
+          /** @type {import("@mstaicu/accounts-contracts").AccountSnapshotV1Event} */ (
             event
           );
 
-        if (message.subject !== buildAccountV1Subject(accountChanged.data.id)) {
+        if (message.subject !== buildAccountV1Subject(snapshot.data.id)) {
           throw new Error("ACCOUNT_V1_SUBJECT_MISMATCH");
         }
 
@@ -66,7 +66,9 @@ export async function projectAccountV1({ message, pool }) {
         try {
           await client.query("BEGIN");
 
-          const accountId = accountChanged.data.id;
+          const {
+            data: { id: accountId },
+          } = snapshot;
 
           const {
             rows: [accountPlan],
@@ -97,13 +99,14 @@ export async function projectAccountV1({ message, pool }) {
               rows.map((row) => [row.feature_id, row.value]),
             );
 
-            const accountFeaturesChanged = buildAccountFeaturesChangedV1Event(
+            const accountFeaturesSnapshot = buildAccountFeaturesSnapshotV1Event(
               {
                 account_id: accountId,
                 features,
               },
               Number(accountPlan.version),
             );
+
             const traceContext = /** @type {Record<string, string>} */ ({});
 
             propagation.inject(context.active(), traceContext);
@@ -120,9 +123,9 @@ export async function projectAccountV1({ message, pool }) {
                 VALUES ($1, $2, $3::jsonb, $4, $5)
               `,
               [
-                accountFeaturesChanged.id,
+                accountFeaturesSnapshot.id,
                 buildAccountFeaturesV1Subject(accountId),
-                JSON.stringify(accountFeaturesChanged),
+                JSON.stringify(accountFeaturesSnapshot),
                 traceContext.traceparent,
                 traceContext.tracestate,
               ],

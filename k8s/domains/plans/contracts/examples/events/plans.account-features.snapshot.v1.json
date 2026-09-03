@@ -14,5 +14,5 @@
   "specversion": "1.0",
   "subject": "account/22222222-2222-4222-8222-222222222222",
   "time": "2026-07-06T00:00:00.000Z",
-  "type": "plans.account-features.changed.v1"
+  "type": "plans.account-features.snapshot.v1"
 }

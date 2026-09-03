@@ -1,5 +1,5 @@
 import {
-  buildAccountChangedV1Event,
+  buildAccountSnapshotV1Event,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
 import { buildAccountFeaturesV1Subject } from "@mstaicu/plans-contracts";
@@ -27,7 +27,7 @@ test("initializes an Account's free plan once from its current state", async () 
     `,
   );
 
-  const event = buildAccountChangedV1Event(
+  const event = buildAccountSnapshotV1Event(
     {
       id: accountId,
       members: [

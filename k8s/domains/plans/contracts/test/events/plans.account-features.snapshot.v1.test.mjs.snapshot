@@ -1,4 +1,4 @@
-exports[`plans.account-features.changed.v1 remains compatible 1`] = `
+exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
 {
   "additionalProperties": false,
   "type": "object",
@@ -75,7 +75,7 @@ exports[`plans.account-features.changed.v1 remains compatible 1`] = `
       "type": "string"
     },
     "type": {
-      "const": "plans.account-features.changed.v1",
+      "const": "plans.account-features.snapshot.v1",
       "type": "string"
     }
   }

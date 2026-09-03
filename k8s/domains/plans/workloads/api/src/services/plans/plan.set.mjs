@@ -1,5 +1,5 @@
 import {
-  buildAccountFeaturesChangedV1Event,
+  buildAccountFeaturesSnapshotV1Event,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
 import { context, propagation } from "@opentelemetry/api";
@@ -84,7 +84,7 @@ export const setPlan =
         );
 
         const subject = buildAccountFeaturesV1Subject(accountId);
-        const event = buildAccountFeaturesChangedV1Event(
+        const event = buildAccountFeaturesSnapshotV1Event(
           {
             account_id: accountId,
             features,
