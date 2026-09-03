@@ -5,7 +5,6 @@ namespace: auth
 
 resources:
   - ../../base
-  - public-ingressroute.yaml
 
 patches:
   - path: deployment.yaml

@@ -16,7 +16,7 @@ patches:
 configMapGenerator:
   - name: api-config
     literals:
-      - ORIGIN=http://localhost:3000
+      - ORIGIN=https://tma.com
 
 generatorOptions:
   disableNameSuffixHash: true

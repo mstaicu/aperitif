@@ -23,21 +23,10 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/overlays/local-edge
+      - infra/overlays/local
     buildArgs:
       - --enable-alpha-plugins
       - --enable-exec
 
 deploy:
   kubectl: {}
-
-profiles:
-  - name: local-direct
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/local-direct
-
-        buildArgs:
-          - --enable-alpha-plugins
-          - --enable-exec

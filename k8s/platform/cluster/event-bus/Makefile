@@ -7,8 +7,8 @@ help: ## Show available targets.
 
 check: ## Validate Event Bus manifests.
 	kubectl kustomize overlays/prod-eu >/dev/null
-	kubectl kustomize overlays/local-edge >/dev/null
+	kubectl kustomize overlays/local >/dev/null
 
 deploy: ## Deploy NATS JetStream and wait for readiness.
-	kubectl apply -k overlays/local-edge
+	kubectl apply -k overlays/local
 	kubectl rollout status -n nats statefulset/nats --timeout=300s

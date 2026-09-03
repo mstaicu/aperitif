@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - networkpolicy.yaml
+  - public-ingressroute.yaml
   - service.yaml

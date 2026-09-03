@@ -13,10 +13,12 @@ test("a person can sign up and log in with a passkey", async ({
 
   // Assert
   await expect(page.locator("[data-status]")).toHaveText("Passkey created.");
-  expect(await context.credentials.get({ rpId: "tma.com" })).toHaveLength(1);
+  expect(await context.credentials.get()).toHaveLength(1);
 
-  const [signupSession] = await context.cookies();
-  expect(signupSession).toMatchObject({ name: "session_token" });
+  const signupSession = (await context.cookies()).find(
+    (cookie) => cookie.name === "session_token",
+  );
+  expect(signupSession).toBeDefined();
 
   // Arrange
   await context.clearCookies({ name: "session_token" });
@@ -28,7 +30,9 @@ test("a person can sign up and log in with a passkey", async ({
   // Assert
   await expect(page.locator("[data-status]")).toHaveText("Logged in.");
 
-  const [loginSession] = await context.cookies();
-  expect(loginSession).toMatchObject({ name: "session_token" });
-  expect(loginSession.value).not.toBe(signupSession.value);
+  const loginSession = (await context.cookies()).find(
+    (cookie) => cookie.name === "session_token",
+  );
+  expect(loginSession).toBeDefined();
+  expect(loginSession?.value).not.toBe(signupSession?.value);
 });

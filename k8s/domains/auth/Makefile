@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help check migrate deploy dev e2e deploy-local-direct dev-local-direct
+.PHONY: help check migrate deploy dev e2e
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -17,13 +17,11 @@ check: ## Validate Auth workloads and manifests.
 	kubectl kustomize workloads/retention/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize workloads/postgres/infra/overlays/local-edge >/dev/null
-	kubectl kustomize workloads/migrations/infra/overlays/local-edge >/dev/null
-	kubectl kustomize workloads/retention/infra/overlays/local-edge >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local-edge >/dev/null
-	kubectl kustomize workloads/ui/infra/overlays/local-edge >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local-direct >/dev/null
-	kubectl kustomize workloads/ui/infra/overlays/local-direct >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/local >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/local >/dev/null
+	kubectl kustomize workloads/retention/infra/overlays/local >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local >/dev/null
+	kubectl kustomize workloads/ui/infra/overlays/local >/dev/null
 
 migrate: ## Deploy the Auth database and run its migrations.
 	skaffold run -m auth-postgres
@@ -41,9 +39,3 @@ e2e: deploy ## Run Auth browser journeys through the local edge.
 	cd workloads/ui && npm ci
 	cd workloads/ui && npm exec -- playwright install chromium
 	cd workloads/ui && npm run test:e2e
-
-deploy-local-direct: migrate ## Deploy Auth without Traefik.
-	skaffold run -p local-direct -m auth-api,auth-ui,auth-retention
-
-dev-local-direct: migrate ## Start Auth without Traefik and forward the UI to localhost:3000.
-	skaffold dev -p local-direct -m auth-api,auth-ui,auth-retention

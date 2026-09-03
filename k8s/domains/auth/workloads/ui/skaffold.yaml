@@ -23,14 +23,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/overlays/local-edge
+      - infra/overlays/local
 
 deploy:
   kubectl: {}
-
-profiles:
-  - name: local-direct
-    manifests:
-      kustomize:
-        paths:
-          - infra/overlays/local-direct

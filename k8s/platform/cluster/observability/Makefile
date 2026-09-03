@@ -7,10 +7,10 @@ help: ## Show available targets.
 
 check: ## Validate Observability manifests.
 	kubectl kustomize overlays/prod-eu >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec overlays/local-edge >/dev/null
+	kustomize build --enable-alpha-plugins --enable-exec overlays/local >/dev/null
 
 deploy: ## Deploy observability and wait for readiness.
-	kustomize build --enable-alpha-plugins --enable-exec overlays/local-edge | kubectl apply -f -
+	kustomize build --enable-alpha-plugins --enable-exec overlays/local | kubectl apply -f -
 	kubectl rollout status -n otel statefulset/openobserve --timeout=300s
 	kubectl rollout status -n otel deploy/collector --timeout=300s
 	kubectl rollout status -n otel daemonset/agent --timeout=300s
