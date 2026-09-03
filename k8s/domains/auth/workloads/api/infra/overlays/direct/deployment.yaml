@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: api
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/auth"

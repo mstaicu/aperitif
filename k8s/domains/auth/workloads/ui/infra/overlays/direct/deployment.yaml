@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: ui
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: ui
+          env:
+            - name: API_INTERNAL_V1_URL
+              value: http://api.auth.svc.cluster.local:3000/v1

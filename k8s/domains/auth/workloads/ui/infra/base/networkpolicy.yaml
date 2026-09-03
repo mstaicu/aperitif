@@ -23,6 +23,13 @@ spec:
           port: 3000
   egress:
     - to:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 3000
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
@@ -31,16 +38,6 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: traefik
-          podSelector:
-            matchLabels:
-              app: traefik
-      ports:
-        - protocol: TCP
-          port: 80
     - to:
         - namespaceSelector:
             matchLabels:

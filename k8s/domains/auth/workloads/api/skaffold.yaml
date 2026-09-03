@@ -30,3 +30,14 @@ manifests:
 
 deploy:
   kubectl: {}
+
+profiles:
+  - name: direct
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/direct
+
+        buildArgs:
+          - --enable-alpha-plugins
+          - --enable-exec

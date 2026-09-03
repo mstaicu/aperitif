@@ -27,3 +27,16 @@ manifests:
 
 deploy:
   kubectl: {}
+
+profiles:
+  - name: direct
+    manifests:
+      kustomize:
+        paths:
+          - infra/overlays/direct
+    portForward:
+      - resourceType: service
+        resourceName: ui
+        namespace: auth
+        port: 3000
+        localPort: 3000

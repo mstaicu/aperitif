@@ -12,6 +12,33 @@ spec:
     - Egress
   ingress:
     - from:
+        - podSelector:
+            matchLabels:
+              app: ui
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: accounts
+          podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: plans
+          podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: traefik

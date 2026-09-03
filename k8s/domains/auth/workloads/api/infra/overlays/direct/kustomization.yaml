@@ -6,9 +6,6 @@ namespace: auth
 resources:
   - namespace.yaml
   - ../../base
-  - public-docs-ingressroute.yaml
-  - public-ingressroute.yaml
-  - public-jwks-ingressroute.yaml
 
 generators:
   - ksops-generator.yaml
@@ -19,7 +16,7 @@ patches:
 configMapGenerator:
   - name: api-config
     literals:
-      - ORIGIN=https://tma.com
+      - ORIGIN=http://localhost:3000
 
 generatorOptions:
   disableNameSuffixHash: true

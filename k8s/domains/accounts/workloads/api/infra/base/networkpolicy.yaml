@@ -34,13 +34,13 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: traefik
+              kubernetes.io/metadata.name: auth
           podSelector:
             matchLabels:
-              app: traefik
+              app: api
       ports:
         - protocol: TCP
-          port: 80
+          port: 3000
     - to:
         - podSelector:
             matchLabels:

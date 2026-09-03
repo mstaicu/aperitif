@@ -11,7 +11,7 @@ spec:
         - name: ui
           env:
             - name: API_INTERNAL_V1_URL
-              value: http://traefik-internal.traefik.svc.cluster.local/v1
+              value: http://api.auth.svc.cluster.local:3000/v1
             - name: NODE_OPTIONS
               value: "--experimental-loader=@opentelemetry/instrumentation/hook.mjs --import ./src/otel.ts"
             - name: OTEL_SERVICE_NAME

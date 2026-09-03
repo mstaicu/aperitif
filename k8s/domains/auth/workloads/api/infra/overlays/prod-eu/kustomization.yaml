@@ -6,6 +6,9 @@ namespace: auth
 resources:
   - ../../base
   - jwt-secret.yaml
+  - public-docs-ingressroute.yaml
+  - public-ingressroute.yaml
+  - public-jwks-ingressroute.yaml
 
 patches:
   - path: deployment.yaml
