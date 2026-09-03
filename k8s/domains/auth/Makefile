@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help check migrate deploy dev deploy-local-direct dev-local-direct
+.PHONY: help check migrate deploy dev e2e deploy-local-direct dev-local-direct
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -36,6 +36,11 @@ deploy: migrate ## Deploy Auth once in the current cluster.
 
 dev: migrate ## Start the Auth development loop.
 	skaffold dev -m auth-api,auth-ui,auth-retention
+
+e2e: deploy ## Run Auth browser journeys through the local edge.
+	cd workloads/ui && npm ci
+	cd workloads/ui && npm exec -- playwright install chromium
+	cd workloads/ui && npm run test:e2e
 
 deploy-local-direct: migrate ## Deploy Auth without Traefik.
 	skaffold run -p local-direct -m auth-api,auth-ui,auth-retention
