@@ -1,5 +1,23 @@
 import { expect, test } from "@playwright/test";
 
+test("explains when a browser cannot use passkeys", async ({ page }) => {
+  // Arrange
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "PublicKeyCredential", { value: undefined });
+  });
+
+  // Act
+  await page.goto("/signup");
+
+  // Assert
+  await expect(
+    page.getByText("Passkeys are not supported by this browser."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Sign up with passkey" }),
+  ).toBeDisabled();
+});
+
 test("a person can sign up and log in with a passkey", async ({
   context,
   page,

@@ -1,4 +1,5 @@
 import {
+  browserSupportsPasskeys,
   startAuthentication,
   startRegistration,
   type PublicKeyCredentialCreationOptionsJSON,
@@ -20,6 +21,12 @@ if (
   (kind !== "authentication" && kind !== "registration")
 ) {
   throw new Error("Passkey configuration is invalid");
+}
+
+if (!(await browserSupportsPasskeys())) {
+  button.disabled = true;
+  status.dataset.error = "true";
+  status.textContent = "Passkeys are not supported by this browser.";
 }
 
 button.addEventListener("click", async () => {
