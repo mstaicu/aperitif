@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta14
 kind: Config
 
 metadata:
-  name: auth-cleanup
+  name: auth-retention
 
 manifests:
   kustomize:

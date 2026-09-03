@@ -16,7 +16,7 @@ spec:
               app: api
         - podSelector:
             matchLabels:
-              app: cleanup
+              app: retention
         - podSelector:
             matchLabels:
               app: migrations

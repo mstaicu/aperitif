@@ -14,12 +14,12 @@ check: ## Validate Auth workloads and manifests.
 	cd workloads/ui && npm run check
 	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize workloads/cleanup/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/retention/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/postgres/infra/overlays/local-edge >/dev/null
 	kubectl kustomize workloads/migrations/infra/overlays/local-edge >/dev/null
-	kubectl kustomize workloads/cleanup/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/retention/infra/overlays/local-edge >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local-edge >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/local-edge >/dev/null
 	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local-direct >/dev/null
@@ -32,13 +32,13 @@ migrate: ## Deploy the Auth database and run its migrations.
 	kubectl wait -n auth --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n auth job/migrations --all-containers=true; exit 1; }
 
 deploy: migrate ## Deploy Auth once in the current cluster.
-	skaffold run -m auth-api,auth-ui,auth-cleanup
+	skaffold run -m auth-api,auth-ui,auth-retention
 
 dev: migrate ## Start the Auth development loop.
-	skaffold dev -m auth-api,auth-ui,auth-cleanup
+	skaffold dev -m auth-api,auth-ui,auth-retention
 
 deploy-local-direct: migrate ## Deploy Auth without Traefik.
-	skaffold run -p local-direct -m auth-api,auth-ui,auth-cleanup
+	skaffold run -p local-direct -m auth-api,auth-ui,auth-retention
 
 dev-local-direct: migrate ## Start Auth without Traefik and forward the UI to localhost:3000.
-	skaffold dev -p local-direct -m auth-api,auth-ui,auth-cleanup
+	skaffold dev -p local-direct -m auth-api,auth-ui,auth-retention

@@ -13,5 +13,5 @@ requires:
     configs: [auth-api]
   - path: workloads/ui/skaffold.yaml
     configs: [auth-ui]
-  - path: workloads/cleanup/skaffold.yaml
-    configs: [auth-cleanup]
+  - path: workloads/retention/skaffold.yaml
+    configs: [auth-retention]
