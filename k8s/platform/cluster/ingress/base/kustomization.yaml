@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - deployment.yaml
-  - internal-service.yaml
   - public-service.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml

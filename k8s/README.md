@@ -44,8 +44,10 @@ stream:  one latest message per subject
 `data.revision` belongs to the source resource. It is unrelated to the subject
 schema version, CloudEvents `specversion`, or JetStream sequence. A mutation
 replaces an unpublished older representation for the same subject in its source
-transaction. A singleton projector starts with `DeliverLastPerSubject`, stores
-the upstream revision, and ignores equal or older messages.
+transaction. A current-state projector starts with `DeliverLastPerSubject`,
+stores the upstream revision, and ignores equal or older messages. A consumer
+that uses a feed only to initialize a local resource remains idempotent but
+need not retain the source representation or revision.
 
 A shape change creates a complete new feed such as `v2`. Publish both versions
 only while a real V1 consumer migrates. Historical facts are separate

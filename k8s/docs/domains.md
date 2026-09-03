@@ -66,7 +66,7 @@ Plans implements optional account-level plans and the resolved feature map. A
 feature value is boolean, number, or string. Products use resolved feature
 values, not plan names.
 
-Plans projects Accounts. Seeing an Account for the first time assigns `free` and
+Plans observes Accounts. Seeing an Account for the first time assigns `free` and
 publishes a complete feature map:
 
 ```text
@@ -87,6 +87,10 @@ Any change to an Account's effective features increments that Account's feature
 revision and publishes its complete map. The public package is
 `@mstaicu/plans-contracts`.
 
+This is a first-seen initializer, not a replicated Account-state projection:
+Plans retains only its local Account plan. It is idempotent and does not store
+the Account revision.
+
 ## Add the smallest product domain
 
 Start with an API, PostgreSQL, migrations, and a domain Makefile:
@@ -105,8 +109,8 @@ Every workload owns `skaffold.yaml` and `infra/`. It owns source only when the
 source belongs to the domain. The domain owns its deployment configuration even
 when it uses an upstream image or shared runtime.
 
-Add a projection only when local authorization or business logic needs another
-domain's current state:
+Add a current-state projection only when local authorization or business logic
+needs another domain's current state:
 
 1. Depend on the source contracts package and validate every message.
 2. Store only the source fields needed locally, plus the source revision.
@@ -115,6 +119,10 @@ domain's current state:
 4. In one transaction, ignore equal or older revisions; otherwise replace local
    state and its revision.
 5. Acknowledge after commit.
+
+If a feed only initializes a local resource on first observation, make that
+creation idempotent. Do not call it a current-state projection or add an unused
+source-revision column.
 
 Add a resource feed only when another domain needs your current state:
 
@@ -140,6 +148,5 @@ npm run build
 npm publish
 ```
 
-When a domain adds a NATS client, add its NetworkPolicy access under
-`platform/cluster/event-bus` and its production Flux graph and image policy under
-`clusters/prod-eu`.
+When a domain adds a NATS client, add its production Flux graph and image policy
+under `clusters/prod-eu`.
