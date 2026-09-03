@@ -17,7 +17,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/overlays/ephemeral
+      - infra/overlays/local-edge
 
 deploy:
   kubectl: {}

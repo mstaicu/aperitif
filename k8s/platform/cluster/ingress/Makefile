@@ -5,9 +5,10 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate the production Ingress manifests.
+check: ## Validate Ingress manifests.
 	kubectl kustomize crds >/dev/null
 	kubectl kustomize overlays/prod-eu >/dev/null
+	kubectl kustomize overlays/local-edge >/dev/null
 
 deploy-crds:
 	kubectl apply -k crds
@@ -35,5 +36,5 @@ deploy: deploy-crds ## Deploy local Traefik TLS, hosts entries, and Traefik.
 		--key=/tmp/traefik-tls.key \
 		--dry-run=client -o yaml | kubectl apply -f -
 
-	kubectl apply -k overlays/ephemeral
+	kubectl apply -k overlays/local-edge
 	kubectl rollout status -n traefik deploy/traefik --timeout=300s

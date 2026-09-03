@@ -19,6 +19,10 @@ check: ## Validate Accounts workloads, contracts, and manifests.
 	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/outbox-relay/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/outbox-relay/infra/overlays/local-edge >/dev/null
 
 migrate: ## Deploy the Accounts database and run its migrations.
 	skaffold run -m accounts-postgres

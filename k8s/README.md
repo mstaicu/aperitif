@@ -75,6 +75,6 @@ There is deliberately no root Makefile or repository-wide development loop.
 - [Operations and production](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 
-Secrets remain SOPS-encrypted in overlays. Ephemeral and production use separate
+Secrets remain SOPS-encrypted in overlays. Local and production use separate
 Age keys. Applications emit OTLP to the cluster Collector; the node agent
 collects container logs and Kubernetes metrics.

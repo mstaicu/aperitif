@@ -23,17 +23,17 @@ build:
 manifests:
   kustomize:
     paths:
-      - infra/overlays/ephemeral
+      - infra/overlays/local-edge
 
 deploy:
   kubectl: {}
 
 profiles:
-  - name: direct
+  - name: local-direct
     manifests:
       kustomize:
         paths:
-          - infra/overlays/direct
+          - infra/overlays/local-direct
     portForward:
       - resourceType: service
         resourceName: ui

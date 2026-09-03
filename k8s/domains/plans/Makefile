@@ -22,6 +22,11 @@ check: ## Validate Plans workloads, contracts, and manifests.
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/outbox-relay/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/accounts-projection/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/postgres/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/outbox-relay/infra/overlays/local-edge >/dev/null
+	kubectl kustomize workloads/accounts-projection/infra/overlays/local-edge >/dev/null
 
 migrate: ## Deploy the Plans database and run its migrations.
 	skaffold run -m plans-postgres
