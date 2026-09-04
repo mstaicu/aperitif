@@ -13,7 +13,10 @@ const UuidSchema = Type.String({
 
 const AccountMemberSchema = Type.Object(
   {
-    role: Type.Union([Type.Literal("owner"), Type.Literal("member")]),
+    roles: Type.Array(
+      Type.Literal("owner"),
+      { uniqueItems: true },
+    ),
     user_id: UuidSchema,
   },
   { additionalProperties: false },

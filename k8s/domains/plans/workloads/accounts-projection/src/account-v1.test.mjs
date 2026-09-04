@@ -32,8 +32,12 @@ test("initializes an Account's free plan once from its current state", async () 
       id: accountId,
       members: [
         {
-          role: "owner",
+          roles: ["owner"],
           user_id: ownerId,
+        },
+        {
+          roles: [],
+          user_id: randomUUID(),
         },
       ],
       name: "Acme",

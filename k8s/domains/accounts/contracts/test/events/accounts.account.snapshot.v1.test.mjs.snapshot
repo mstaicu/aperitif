@@ -39,21 +39,17 @@ exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
             "additionalProperties": false,
             "type": "object",
             "required": [
-              "role",
+              "roles",
               "user_id"
             ],
             "properties": {
-              "role": {
-                "anyOf": [
-                  {
-                    "const": "owner",
-                    "type": "string"
-                  },
-                  {
-                    "const": "member",
-                    "type": "string"
-                  }
-                ]
+              "roles": {
+                "uniqueItems": true,
+                "type": "array",
+                "items": {
+                  "const": "owner",
+                  "type": "string"
+                }
               },
               "user_id": {
                 "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",

@@ -42,6 +42,17 @@ export const createAccount =
         `
           INSERT INTO account_members (
             account_id,
+            user_id
+          )
+          VALUES ($1, $2)
+        `,
+        [account.id, currentUserId],
+      );
+
+      await client.query(
+        `
+          INSERT INTO account_member_roles (
+            account_id,
             user_id,
             role
           )
@@ -55,7 +66,7 @@ export const createAccount =
           id: account.id,
           members: [
             {
-              role: "owner",
+              roles: ["owner"],
               user_id: currentUserId,
             },
           ],

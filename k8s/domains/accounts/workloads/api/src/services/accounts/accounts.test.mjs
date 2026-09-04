@@ -44,13 +44,23 @@ test("creates account ownership and lists only the caller's accounts", async () 
 
   assert.equal(outbox.length, 1);
   const [{ event, subject }] = outbox;
+  const { rows: roles } = await pool.query(
+    `
+      SELECT role
+      FROM account_member_roles
+      WHERE account_id = $1
+        AND user_id = $2
+    `,
+    [alpha.account.id, userId],
+  );
 
   assert.deepEqual(listed, {
     accounts: [alpha.account, zulu.account],
   });
+  assert.deepEqual(roles, [{ role: "owner" }]);
   assert.deepEqual(event.data, {
     ...alpha.account,
-    members: [{ role: "owner", user_id: userId }],
+    members: [{ roles: ["owner"], user_id: userId }],
     revision: 1,
   });
   assert.equal(subject, buildAccountV1Subject(alpha.account.id));

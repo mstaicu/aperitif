@@ -25,7 +25,7 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
       id: accountId,
       members: [
         {
-          role: "owner",
+          roles: [],
           user_id: "33333333-3333-4333-8333-333333333333",
         },
       ],

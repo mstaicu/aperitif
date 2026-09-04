@@ -20,6 +20,7 @@ members, remove roles for departed members, and store the source revision. Role
 routes require a current projected member. Re-adding a member does not restore
 removed Product roles.
 
-Build this when a Product needs permissions beyond owner/member. Keep invitation
-roles out of Accounts: when a Product actually needs them, either Accounts
-exports current invitation state or the Product owns that workflow.
+Build this when a Product needs permissions beyond Account membership and its
+generic `owner` grant. Keep invitation roles out of Accounts: when a Product
+actually needs them, either Accounts exports current invitation state or the
+Product owns that workflow.

@@ -12,9 +12,9 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const assets = createAssetServer({
   basePath: "/auth/assets",
   rootDir: process.cwd(),
-  fileMap: {
-    "src/*path": "src/*path",
-    "node_modules/*path": "node_modules/*path",
+  mounts: {
+    src: "src",
+    node_modules: "node_modules",
   },
   allowFiles: ["src/pages/**/*.client.ts", "src/pages/**/*.css"],
   allowPackages: ["@simplewebauthn/browser"],

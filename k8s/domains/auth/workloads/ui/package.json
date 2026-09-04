@@ -17,10 +17,10 @@
     "@opentelemetry/instrumentation-undici": "^0.32.0",
     "@opentelemetry/sdk-node": "^0.222.0",
     "@simplewebauthn/browser": "^14.0.0",
-    "remix": "^3.0.0-beta.10"
+    "remix": "^3.0.0-rc.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.4.1",
     "typescript": "^7.0.2"
   },

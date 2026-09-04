@@ -16,7 +16,7 @@
     "@testcontainers/postgresql": "^12.1.0",
     "@types/node": "^26.4.1",
     "@types/pg": "^8.23.1",
-    "eslint": "^10.9.1",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-perfectionist": "^5.11.0",
     "eslint-plugin-prettier": "^5.5.6",

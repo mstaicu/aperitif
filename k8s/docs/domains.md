@@ -35,8 +35,9 @@ is no operator-management API until a real requirement exists. See
 ## Accounts
 
 Accounts implements `individual` and `organization` ownership boundaries. New
-Accounts receive an initial `owner` membership in the same transaction. Generic
-roles are only `owner` and `member`; product roles are Product state.
+Accounts receive an initial `owner` grant in the same transaction. Membership
+is the baseline Account relationship; `owner` is the only current generic role.
+Product roles are Product state.
 
 ```text
 GET  /v1/accounts

@@ -19,11 +19,21 @@ CREATE TABLE account_members (
 
     user_id UUID NOT NULL,
 
-    role TEXT NOT NULL CHECK (
-        role IN ('owner', 'member')
-    ),
-
     PRIMARY KEY (account_id, user_id)
+);
+
+CREATE TABLE account_member_roles (
+    account_id UUID NOT NULL,
+
+    user_id UUID NOT NULL,
+
+    role TEXT NOT NULL CHECK (role = 'owner'),
+
+    PRIMARY KEY (account_id, user_id, role),
+
+    FOREIGN KEY (account_id, user_id)
+        REFERENCES account_members(account_id, user_id)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE outbox_events (
