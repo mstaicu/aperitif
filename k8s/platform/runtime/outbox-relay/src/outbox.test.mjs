@@ -87,7 +87,7 @@ test("relays queued entries", async () => {
   assert.equal(queuedMessage.subject, "events.queued");
   assert.equal(
     queuedMessage.headers?.get("Content-Type"),
-    "application/cloudevents",
+    "application/cloudevents+json",
   );
   assert.equal(queuedMessage.headers?.get("Nats-Msg-Id"), queued.id);
   assert.deepEqual(
@@ -97,7 +97,7 @@ test("relays queued entries", async () => {
   assert.equal(notifiedMessage.subject, "events.notified");
   assert.equal(
     notifiedMessage.headers?.get("Content-Type"),
-    "application/cloudevents",
+    "application/cloudevents+json",
   );
   assert.equal(notifiedMessage.headers?.get("Nats-Msg-Id"), notified.id);
 

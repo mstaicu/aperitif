@@ -88,7 +88,7 @@ async function relayNextEntry({ client, js }) {
         try {
           const messageHeaders = headers();
 
-          messageHeaders.set("Content-Type", "application/cloudevents");
+          messageHeaders.set("Content-Type", "application/cloudevents+json");
 
           propagation.inject(context.active(), messageHeaders, {
             set: (carrier, key, value) => carrier.set(key, value),

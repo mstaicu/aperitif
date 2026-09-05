@@ -26,7 +26,7 @@ domain's database.
 Every producer and projector follows these rules:
 
 1. Commit the source mutation and outbox row in one database transaction.
-2. Publish a structured CloudEvent with `Content-Type: application/cloudevents`.
+2. Publish a structured CloudEvent with `Content-Type: application/cloudevents+json`.
 3. Use the CloudEvent ID as the JetStream message ID.
 4. Delete an outbox row only after JetStream PubAck.
 5. Validate before projecting and acknowledge only after the local transaction

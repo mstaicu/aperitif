@@ -28,6 +28,7 @@ const info = await jsm.consumers.add("ACCOUNTS", {
 });
 const consumer = js.consumers.getConsumerFromInfo(info);
 const messages = await consumer.consume({
+  abort_on_missing_resource: true,
   max_messages: 1, // Process one message at a time.
 });
 
