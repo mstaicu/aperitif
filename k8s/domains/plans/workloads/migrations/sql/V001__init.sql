@@ -35,30 +35,20 @@ CREATE TABLE account_plans (
     plan_id TEXT NOT NULL
         REFERENCES plans(id),
 
-    version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0)
+    version BIGINT NOT NULL DEFAULT 1 CHECK (version BETWEEN 1 AND 9007199254740991)
 );
 
-CREATE TABLE outbox_events (
+CREATE TABLE outbox_messages (
     id UUID PRIMARY KEY,
 
     subject TEXT NOT NULL CHECK (subject <> ''),
 
-    event JSONB NOT NULL CHECK (
-        jsonb_typeof(event) = 'object'
-        AND COALESCE(event->>'id', '') = id::text
-        AND COALESCE(event->>'type', '') <> ''
-    ),
+    payload JSONB NOT NULL,
 
-    traceparent TEXT,
+    headers JSONB NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(headers) = 'object'),
 
-    tracestate TEXT,
-
-    queued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CHECK (
-        tracestate IS NULL OR traceparent IS NOT NULL
-    )
+    queued_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX outbox_events_queued_at_id
-ON outbox_events (queued_at, id);
+CREATE INDEX outbox_messages_queued_at_id
+ON outbox_messages (queued_at, id);

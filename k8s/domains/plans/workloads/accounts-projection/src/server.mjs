@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { projectAccountV1 } from "./account-v1.mjs";
+import { projectAccountSnapshotV1 } from "./events/accounts.account.snapshot.v1.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -66,7 +66,7 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
 
 try {
   for await (const message of messages) {
-    await projectAccountV1({ message, pool });
+    await projectAccountSnapshotV1({ message, pool });
     message.ack();
   }
 } finally {

@@ -54,7 +54,7 @@ stream:  ACCOUNTS
 ```
 
 The representation includes current generic members and a monotonic Account
-revision. Creation is revision `1`. Future membership or Account changes must
+version. Creation is version `1`. Future membership or Account changes must
 write the complete newer representation and replace any unpublished older
 snapshot for that Account in the same transaction.
 
@@ -85,12 +85,12 @@ PUT /v1/accounts/:account_id/plan
 ```
 
 Any change to an Account's effective features increments that Account's feature
-revision and publishes its complete map. The public package is
+version and publishes its complete map. The public package is
 `@mstaicu/plans-contracts`.
 
 This is a first-seen initializer, not a replicated Account-state projection:
 Plans retains only its local Account plan. It is idempotent and does not store
-the Account revision.
+the Account version.
 
 ## Message contracts
 
@@ -139,6 +139,11 @@ An occurrence-specific event such as `member.added` need not include `delta` in
 its name. Do not add separate snapshot/delta folders or an empty `commands/`
 folder. Accounts and Plans currently implement snapshot contracts only.
 
+Consumer workloads use the same message-type filenames for handlers under
+`src/events/` and tests under `test/events/`. Their tests import the handler
+directly: a workload's `src/index.mjs` starts the application, unlike a contracts
+package's public export file. Keep handler calls explicit; no registry is needed.
+
 ### Storage follows meaning
 
 For current-state replication, full snapshots allow replacement of pending older
@@ -171,24 +176,27 @@ Add a current-state projection only when local authorization or business logic
 needs another domain's current state:
 
 1. Depend on the source contracts package and validate every message.
-2. Store only the source fields needed locally, plus the source revision.
+2. Store only the source fields needed locally, plus the source version.
 3. Use one unnamed `DeliverLastPerSubject` consumer, filtered to the feed
    subject family, and run one replica.
-4. In one transaction, ignore equal or older revisions; otherwise replace local
-   state and its revision.
+4. In one transaction, ignore equal or older versions; otherwise replace local
+   state and its version.
 5. Acknowledge after commit.
 
 If a feed only initializes a local resource on first observation, make that
 creation idempotent. Do not call it a current-state projection or add an unused
-source-revision column.
+source-version column.
 
 Add a resource feed only when another domain needs your current state:
 
 1. Define a small contracts package: complete data schema, CloudEvent schema and
    validator, subject builder, event builder, example, and compatibility test.
-2. Add `outbox_events` and its `(queued_at, id)` index in the migration.
-3. Commit each exported mutation and complete CloudEvent together.
-4. Give each resource a monotonic revision; replace still-pending state for the
+2. Add the [outbox table](operations.md#relay) and its `(queued_at, id)` index in
+   the migration.
+3. Commit each exported mutation and outbox row together: CloudEvent `id`, NATS
+   `subject`, complete CloudEvent as `payload`, and transport `headers` containing
+   `Content-Type: application/cloudevents+json` and injected tracing context.
+4. Give each resource a monotonic version; replace still-pending state for the
    same subject in that transaction.
 5. Add a domain-owned `workloads/outbox-relay/` deployment, `streams.json`, and
    NATS access.

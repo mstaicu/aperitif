@@ -1,4 +1,7 @@
-import { buildAccountV1Subject } from "@mstaicu/accounts-contracts";
+import {
+  AccountSnapshotV1EventCheck,
+  buildAccountV1Subject,
+} from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -34,16 +37,18 @@ test("creates account ownership and lists only the caller's accounts", async () 
   // Assert
   const { rows: outbox } = await pool.query(
     `
-      SELECT event,
+      SELECT id,
+        payload,
+        headers,
         subject
-      FROM outbox_events
-      WHERE event #>> '{data,id}' = $1
+      FROM outbox_messages
+      WHERE payload #>> '{data,id}' = $1
     `,
     [alpha.account.id],
   );
 
   assert.equal(outbox.length, 1);
-  const [{ event, subject }] = outbox;
+  const [{ headers, id, payload, subject }] = outbox;
   const { rows: roles } = await pool.query(
     `
       SELECT role
@@ -58,10 +63,13 @@ test("creates account ownership and lists only the caller's accounts", async () 
     accounts: [alpha.account, zulu.account],
   });
   assert.deepEqual(roles, [{ role: "owner" }]);
-  assert.deepEqual(event.data, {
+  assert.equal(AccountSnapshotV1EventCheck.Check(payload), true);
+  assert.equal(id, payload.id);
+  assert.equal(headers["Content-Type"], "application/cloudevents+json");
+  assert.deepEqual(payload.data, {
     ...alpha.account,
     members: [{ roles: ["owner"], user_id: userId }],
-    revision: 1,
+    version: 1,
   });
   assert.equal(subject, buildAccountV1Subject(alpha.account.id));
 });

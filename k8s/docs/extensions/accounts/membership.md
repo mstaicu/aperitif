@@ -24,7 +24,7 @@ member removal. Human admission remains the invitation boundary, not a public
 `POST /members`.
 
 Each mutation locks the Account, verifies the caller is an owner, changes the
-membership or owner grant, increments the Account revision, and writes the
+membership or owner grant, increments the Account version, and writes the
 complete newer Account representation to the outbox in one transaction. There
 are no member CRUD feed events. Products reconstruct current membership from
 the Account resource feed.

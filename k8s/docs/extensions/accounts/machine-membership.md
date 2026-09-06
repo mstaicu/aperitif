@@ -17,7 +17,7 @@ because Auth IDs are never reused.
 
 This is private Accounts state until another domain needs it. Then define a
 separate current relationship feed with its own identifier, complete
-representation, revision, and removal rule. Do not overload the Account revision
+representation, version, and removal rule. Do not overload the Account version
 or begin with membership deltas.
 
 Build it when a product needs a machine to have Account context. Add enrollment

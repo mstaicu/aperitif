@@ -52,11 +52,10 @@ async function relayNextEntry({ client, js, jsm }) {
     } = await client.query(
       `
         SELECT id,
-          event,
+          payload,
           subject,
-          traceparent,
-          tracestate
-        FROM outbox_events
+          headers
+        FROM outbox_messages
         ORDER BY queued_at, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
@@ -68,13 +67,13 @@ async function relayNextEntry({ client, js, jsm }) {
       return false;
     }
 
-    const parentContext = propagation.extract(context.active(), {
-      traceparent: outboxEntry.traceparent,
-      tracestate: outboxEntry.tracestate,
-    });
+    const parentContext = propagation.extract(
+      context.active(),
+      outboxEntry.headers,
+    );
 
     await tracer.startActiveSpan(
-      `publish ${outboxEntry.event.type}`,
+      `publish ${outboxEntry.subject}`,
       {
         attributes: {
           "messaging.destination.name": outboxEntry.subject,
@@ -90,7 +89,14 @@ async function relayNextEntry({ client, js, jsm }) {
         try {
           const messageHeaders = headers();
 
-          messageHeaders.set("Content-Type", "application/cloudevents+json");
+          for (const [name, value] of Object.entries(outboxEntry.headers)) {
+            // JetStream control headers belong to Relay, not the queued message.
+            if (!name || /^nats-/i.test(name) || typeof value !== "string") {
+              throw new Error("INVALID_OUTBOX_HEADER");
+            }
+
+            messageHeaders.set(name, value);
+          }
 
           propagation.inject(context.active(), messageHeaders, {
             set: (carrier, key, value) => carrier.set(key, value),
@@ -106,7 +112,7 @@ async function relayNextEntry({ client, js, jsm }) {
 
           await js.publish(
             outboxEntry.subject,
-            JSON.stringify(outboxEntry.event),
+            JSON.stringify(outboxEntry.payload),
             {
               expect: {
                 lastSubjectSequence: lastMessage?.seq ?? 0,
@@ -133,7 +139,7 @@ async function relayNextEntry({ client, js, jsm }) {
 
     await client.query(
       `
-        DELETE FROM outbox_events
+        DELETE FROM outbox_messages
         WHERE id = $1
       `,
       [outboxEntry.id],

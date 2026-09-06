@@ -21,7 +21,7 @@ wrong-secret, and already-used-by-another-user cases are indistinguishable.
 An invitation is a bearer credential, not an email or phone assertion. It has an
 expiry and may be revoked while pending. It is private Accounts state: creation,
 expiry, and revocation do not change Account state. Acceptance locks the Account,
-adds the member, increments the Account revision, and emits the complete newer
+adds the member, increments the Account version, and emits the complete newer
 Account representation in the same transaction.
 
 Build it when human admission needs an API. Add verified delivery, rate limiting,

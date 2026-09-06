@@ -4,6 +4,8 @@ import {
   RetentionPolicy,
   StorageType,
 } from "@nats-io/jetstream";
+import { context, propagation, trace } from "@opentelemetry/api";
+import { NodeSDK, tracing } from "@opentelemetry/sdk-node";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -22,8 +24,22 @@ const stream = {
   subjects: ["events.>"],
 };
 
-test("relays queued entries", async () => {
+test("relays snapshot and command payloads with their headers to separate streams", async (t) => {
   // Arrange
+  const otel = new NodeSDK({
+    autoDetectResources: false,
+    logRecordProcessors: [],
+    spanProcessors: [
+      new tracing.SimpleSpanProcessor(new tracing.InMemorySpanExporter()),
+    ],
+  });
+  otel.start();
+  t.after(async () => {
+    await otel.shutdown();
+    context.disable();
+    propagation.disable();
+    trace.disable();
+  });
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats();
@@ -32,15 +48,26 @@ test("relays queued entries", async () => {
   const js = jetstream(nc);
   const jsm = await js.jetstreamManager();
   const queued = {
+    data: { id: randomUUID(), name: "Acme", version: 1 },
+    datacontenttype: "application/json",
     id: randomUUID(),
-    type: "test.queued",
+    source: "/test",
+    specversion: "1.0",
+    type: "test.account.snapshot.v1",
   };
-  const notified = {
-    id: randomUUID(),
-    type: "test.notified",
+  const commandId = randomUUID();
+  const command = {
+    action: "add-member",
+    user_id: randomUUID(),
   };
+  const traceparent = "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01";
 
-  await jsm.streams.add(stream);
+  await jsm.streams.add({ ...stream, subjects: ["events.snapshot"] });
+  await jsm.streams.add({
+    ...stream,
+    name: "COMMANDS",
+    subjects: ["events.command"],
+  });
 
   const subscription = nc.subscribe("events.>", {
     max: 2,
@@ -50,10 +77,18 @@ test("relays queued entries", async () => {
 
   await pool.query(
     `
-      INSERT INTO outbox_events (id, subject, event)
-      VALUES ($1, 'events.queued', $2::jsonb)
+      INSERT INTO outbox_messages (id, subject, payload, headers)
+      VALUES ($1, 'events.snapshot', $2::jsonb, $3::jsonb)
     `,
-    [queued.id, JSON.stringify(queued)],
+    [
+      queued.id,
+      JSON.stringify(queued),
+      JSON.stringify({
+        "Content-Type": "application/cloudevents+json",
+        traceparent,
+        tracestate: "vendor=value",
+      }),
+    ],
   );
 
   // Act
@@ -67,25 +102,32 @@ test("relays queued entries", async () => {
 
   await pool.query(
     `
-      INSERT INTO outbox_events (id, subject, event)
-      VALUES ($1, 'events.notified', $2::jsonb)
+      INSERT INTO outbox_messages (id, subject, payload, headers)
+      VALUES ($1, 'events.command', $2::jsonb, $3::jsonb)
     `,
-    [notified.id, JSON.stringify(notified)],
+    [
+      commandId,
+      JSON.stringify(command),
+      JSON.stringify({
+        "Content-Type": "application/json",
+        "Correlation-Id": "test-request",
+      }),
+    ],
   );
 
-  const { value: notifiedMessage } = await messages.next();
+  const { value: commandMessage } = await messages.next();
 
   abortController.abort();
   await task;
 
   // Assert
   assert.ok(queuedMessage);
-  assert.ok(notifiedMessage);
+  assert.ok(commandMessage);
   assert.deepEqual(
     JSON.parse(new TextDecoder().decode(queuedMessage.data)),
     queued,
   );
-  assert.equal(queuedMessage.subject, "events.queued");
+  assert.equal(queuedMessage.subject, "events.snapshot");
   assert.equal(
     queuedMessage.headers?.get("Content-Type"),
     "application/cloudevents+json",
@@ -96,27 +138,80 @@ test("relays queued entries", async () => {
     "0",
   );
   assert.equal(queuedMessage.headers?.get("Nats-Expected-Stream"), "EVENTS");
+  assert.match(
+    queuedMessage.headers?.get("traceparent") ?? "",
+    /^00-0af7651916cd43dd8448eb211c80319c-[0-9a-f]{16}-01$/,
+  );
+  assert.notEqual(queuedMessage.headers?.get("traceparent"), traceparent);
+  assert.equal(queuedMessage.headers?.get("tracestate"), "vendor=value");
   assert.deepEqual(
-    JSON.parse(new TextDecoder().decode(notifiedMessage.data)),
-    notified,
+    JSON.parse(new TextDecoder().decode(commandMessage.data)),
+    command,
   );
-  assert.equal(notifiedMessage.subject, "events.notified");
-  assert.equal(
-    notifiedMessage.headers?.get("Content-Type"),
-    "application/cloudevents+json",
-  );
-  assert.equal(notifiedMessage.headers?.get("Nats-Msg-Id"), notified.id);
+  assert.equal(commandMessage.subject, "events.command");
+  assert.equal(commandMessage.headers?.get("Content-Type"), "application/json");
+  assert.equal(commandMessage.headers?.get("Correlation-Id"), "test-request");
+  assert.equal(commandMessage.headers?.get("Nats-Msg-Id"), commandId);
+  assert.equal(commandMessage.headers?.get("Nats-Expected-Stream"), "COMMANDS");
+  const storedCommand = await jsm.streams.getMessage("COMMANDS", {
+    last_by_subj: "events.command",
+  });
+  assert.deepEqual(storedCommand?.json(), command);
 
   const {
     rows: [{ count }],
   } = await pool.query(
     `
       SELECT count(*)::integer AS count
-      FROM outbox_events
+      FROM outbox_messages
     `,
   );
 
   assert.equal(count, 0);
+});
+
+test("keeps messages with invalid or reserved headers without publishing them", async () => {
+  // Arrange
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  await using nats = await startNats();
+  const js = jetstream(nats.nc);
+  const jsm = await js.jetstreamManager();
+  await jsm.streams.add(stream);
+  const invalidHeaders = [
+    { "nAtS-Expected-Last-Subject-Sequence": "123" },
+    { "Nats-Msg-Id": "override" },
+    { "Nats-Rollup": "all" },
+    { "Content-Type": 123 },
+    { "": "empty name" },
+    { "Bad:Name": "value" },
+    { "Correlation-Id": "value\r\nNats-Msg-Id: override" },
+  ];
+
+  for (const headers of invalidHeaders) {
+    const id = randomUUID();
+    await pool.query(
+      "INSERT INTO outbox_messages (id, subject, payload, headers) VALUES ($1, 'events.invalid', '{}', $2)",
+      [id, headers],
+    );
+
+    // Act & Assert
+    await assert.rejects(
+      relayOutbox({
+        abortSignal: new AbortController().signal,
+        js,
+        jsm,
+        pool,
+      }),
+      /INVALID_OUTBOX_HEADER|header/i,
+    );
+    const { rows } = await pool.query("SELECT id FROM outbox_messages");
+    assert.deepEqual(rows, [{ id }]);
+    const info = await jsm.streams.info("EVENTS");
+    assert.equal(info.state.messages, 0);
+
+    await pool.query("DELETE FROM outbox_messages WHERE id = $1", [id]);
+  }
 });
 
 test("keeps an outbox entry when JetStream is unavailable", async () => {
@@ -133,7 +228,7 @@ test("keeps an outbox entry when JetStream is unavailable", async () => {
   };
   await pool.query(
     `
-      INSERT INTO outbox_events (id, subject, event)
+      INSERT INTO outbox_messages (id, subject, payload)
       VALUES ($1, 'events.timeout', $2::jsonb)
     `,
     [event.id, JSON.stringify(event)],
@@ -155,7 +250,7 @@ test("keeps an outbox entry when JetStream is unavailable", async () => {
   } = await pool.query(
     `
       SELECT id
-      FROM outbox_events
+      FROM outbox_messages
       WHERE id = $1
     `,
     [event.id],
@@ -173,12 +268,12 @@ test("rejects a delayed older snapshot after a newer snapshot is retained", asyn
   const jsm = await js.jetstreamManager();
   const subject = "events.resource";
   const older = {
-    data: { revision: 1 },
+    data: { version: 1 },
     id: randomUUID(),
     type: "test.snapshot",
   };
   const newer = {
-    data: { revision: 2 },
+    data: { version: 2 },
     id: randomUUID(),
     type: "test.snapshot",
   };
@@ -188,7 +283,7 @@ test("rejects a delayed older snapshot after a newer snapshot is retained", asyn
 
   await jsm.streams.add({ ...stream, max_msgs_per_subject: 1 });
   await pool.query(
-    "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+    "INSERT INTO outbox_messages (id, subject, payload) VALUES ($1, $2, $3)",
     [older.id, subject, older],
   );
 
@@ -212,11 +307,11 @@ test("rejects a delayed older snapshot after a newer snapshot is retained", asyn
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("DELETE FROM outbox_events WHERE subject = $1", [
+    await client.query("DELETE FROM outbox_messages WHERE subject = $1", [
       subject,
     ]);
     await client.query(
-      "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+      "INSERT INTO outbox_messages (id, subject, payload) VALUES ($1, $2, $3)",
       [newer.id, subject, newer],
     );
     await client.query("COMMIT");
@@ -237,7 +332,7 @@ test("rejects a delayed older snapshot after a newer snapshot is retained", asyn
   try {
     await t.waitFor(
       async () => {
-        const { rowCount } = await pool.query("SELECT id FROM outbox_events");
+        const { rowCount } = await pool.query("SELECT id FROM outbox_messages");
         assert.equal(rowCount, 0);
       },
       { timeout: 5_000 },
@@ -266,12 +361,12 @@ test("does not publish after losing the outbox database session", async (t) => {
   const jsm = await js.jetstreamManager();
   const subject = "events.resource";
   const older = {
-    data: { revision: 1 },
+    data: { version: 1 },
     id: randomUUID(),
     type: "test.snapshot",
   };
   const newer = {
-    data: { revision: 2 },
+    data: { version: 2 },
     id: randomUUID(),
     type: "test.snapshot",
   };
@@ -287,7 +382,7 @@ test("does not publish after losing the outbox database session", async (t) => {
 
   await jsm.streams.add({ ...stream, max_msgs_per_subject: 1 });
   await pool.query(
-    "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+    "INSERT INTO outbox_messages (id, subject, payload) VALUES ($1, $2, $3)",
     [older.id, subject, older],
   );
   t.mock.method(
@@ -295,7 +390,7 @@ test("does not publish after losing the outbox database session", async (t) => {
     "getMessage",
     async (/** @type {Parameters<typeof getMessage>} */ ...args) => {
       await pool.query("SELECT pg_terminate_backend($1)", [pid]);
-      await pool.query("DELETE FROM outbox_events WHERE id = $1", [older.id]);
+      await pool.query("DELETE FROM outbox_messages WHERE id = $1", [older.id]);
       await js.publish(subject, JSON.stringify(newer), {
         expect: { lastSubjectSequence: 0 },
         msgID: newer.id,

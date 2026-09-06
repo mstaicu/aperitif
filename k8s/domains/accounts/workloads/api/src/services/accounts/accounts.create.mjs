@@ -75,27 +75,27 @@ export const createAccount =
         },
         Number(account.version),
       );
-      const traceContext = /** @type {Record<string, string>} */ ({});
+      const headers = {
+        "Content-Type": "application/cloudevents+json",
+      };
 
-      propagation.inject(context.active(), traceContext);
+      propagation.inject(context.active(), headers);
 
       await client.query(
         `
-          INSERT INTO outbox_events (
+          INSERT INTO outbox_messages (
             id,
             subject,
-            event,
-            traceparent,
-            tracestate
+            payload,
+            headers
           )
-          VALUES ($1, $2, $3::jsonb, $4, $5)
+          VALUES ($1, $2, $3::jsonb, $4::jsonb)
         `,
         [
           accountSnapshotEvent.id,
           buildAccountV1Subject(account.id),
           JSON.stringify(accountSnapshotEvent),
-          traceContext.traceparent,
-          traceContext.tracestate,
+          JSON.stringify(headers),
         ],
       );
 

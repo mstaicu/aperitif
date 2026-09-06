@@ -1,4 +1,5 @@
 import {
+  AccountFeaturesSnapshotV1EventCheck,
   buildAccountFeaturesSnapshotV1Event,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
@@ -50,7 +51,7 @@ test("replaces a pending feature snapshot when a plan changes", async () => {
 
   await pool.query(
     `
-      INSERT INTO outbox_events (id, subject, event)
+      INSERT INTO outbox_messages (id, subject, payload)
       VALUES ($1, $2, $3::jsonb)
     `,
     [freeSnapshot.id, subject, JSON.stringify(freeSnapshot)],
@@ -81,19 +82,30 @@ test("replaces a pending feature snapshot when a plan changes", async () => {
   );
   const { rows: outbox } = await pool.query(
     `
-      SELECT event,
+      SELECT id,
+        payload,
+        headers,
         subject
-      FROM outbox_events
+      FROM outbox_messages
     `,
   );
 
   assert.deepEqual(accountPlan, { plan_id: "pro", version: 2 });
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
+  assert.equal(
+    AccountFeaturesSnapshotV1EventCheck.Check(snapshot.payload),
+    true,
+  );
+  assert.equal(snapshot.id, snapshot.payload.id);
+  assert.equal(
+    snapshot.headers["Content-Type"],
+    "application/cloudevents+json",
+  );
   assert.equal(snapshot.subject, subject);
-  assert.deepEqual(snapshot.event.data, {
+  assert.deepEqual(snapshot.payload.data, {
     account_id: accountId,
     features: { "test.limit": 100 },
-    revision: 2,
+    version: 2,
   });
 });

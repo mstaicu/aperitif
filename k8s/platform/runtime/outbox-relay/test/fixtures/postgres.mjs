@@ -14,19 +14,18 @@ export const startPostgres = async () => {
   stack.defer(() => pool.end());
 
   await pool.query(`
-    CREATE TABLE outbox_events (
+    CREATE TABLE outbox_messages (
       id UUID PRIMARY KEY,
-      subject TEXT NOT NULL,
-      event JSONB NOT NULL,
-      traceparent TEXT,
-      tracestate TEXT,
+      subject TEXT NOT NULL CHECK (subject <> ''),
+      payload JSONB NOT NULL,
+      headers JSONB NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(headers) = 'object'),
       queued_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
   await pool.query(
     `
-      CREATE INDEX outbox_events_queued_at_id
-      ON outbox_events (queued_at, id)
+      CREATE INDEX outbox_messages_queued_at_id
+      ON outbox_messages (queued_at, id)
     `,
   );
 

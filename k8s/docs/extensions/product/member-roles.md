@@ -15,8 +15,8 @@ An active Account owner manages roles; an active member reads only their own.
 `PUT` and `DELETE` are idempotent. Role IDs are Product-defined.
 
 Project `accounts.account.snapshot.v1` from `accounts.account.v1.<account-id>`.
-In one transaction, ignore an old revision; otherwise synchronize current
-members, remove roles for departed members, and store the source revision. Role
+In one transaction, ignore an old version; otherwise synchronize current
+members, remove roles for departed members, and store the source version. Role
 routes require a current projected member. Re-adding a member does not restore
 removed Product roles.
 

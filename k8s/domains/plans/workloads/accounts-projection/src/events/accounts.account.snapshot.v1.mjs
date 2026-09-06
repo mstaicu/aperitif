@@ -26,7 +26,7 @@ const tracer = trace.getTracer("accounts-projection");
  *   pool: import("pg").Pool,
  * }} args
  */
-export async function projectAccountV1({ message, pool }) {
+export async function projectAccountSnapshotV1({ message, pool }) {
   const parentContext = propagation.extract(context.active(), {
     traceparent: message.headers?.get("traceparent"),
     tracestate: message.headers?.get("tracestate"),
@@ -107,27 +107,27 @@ export async function projectAccountV1({ message, pool }) {
               Number(accountPlan.version),
             );
 
-            const traceContext = /** @type {Record<string, string>} */ ({});
+            const headers = {
+              "Content-Type": "application/cloudevents+json",
+            };
 
-            propagation.inject(context.active(), traceContext);
+            propagation.inject(context.active(), headers);
 
             await client.query(
               `
-                INSERT INTO outbox_events (
+                INSERT INTO outbox_messages (
                   id,
                   subject,
-                  event,
-                  traceparent,
-                  tracestate
+                  payload,
+                  headers
                 )
-                VALUES ($1, $2, $3::jsonb, $4, $5)
+                VALUES ($1, $2, $3::jsonb, $4::jsonb)
               `,
               [
                 accountFeaturesSnapshot.id,
                 buildAccountFeaturesV1Subject(accountId),
                 JSON.stringify(accountFeaturesSnapshot),
-                traceContext.traceparent,
-                traceContext.tracestate,
+                JSON.stringify(headers),
               ],
             );
           }

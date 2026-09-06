@@ -91,13 +91,15 @@ export const setPlan =
           },
           Number(version),
         );
-        const traceContext = /** @type {Record<string, string>} */ ({});
+        const headers = {
+          "Content-Type": "application/cloudevents+json",
+        };
 
-        propagation.inject(context.active(), traceContext);
+        propagation.inject(context.active(), headers);
 
         await client.query(
           `
-            DELETE FROM outbox_events
+            DELETE FROM outbox_messages
             WHERE subject = $1
           `,
           [subject],
@@ -105,22 +107,15 @@ export const setPlan =
 
         await client.query(
           `
-            INSERT INTO outbox_events (
+            INSERT INTO outbox_messages (
               id,
               subject,
-              event,
-              traceparent,
-              tracestate
+              payload,
+              headers
             )
-            VALUES ($1, $2, $3::jsonb, $4, $5)
+            VALUES ($1, $2, $3::jsonb, $4::jsonb)
           `,
-          [
-            event.id,
-            subject,
-            JSON.stringify(event),
-            traceContext.traceparent,
-            traceContext.tracestate,
-          ],
+          [event.id, subject, JSON.stringify(event), JSON.stringify(headers)],
         );
       }
 

@@ -2,13 +2,16 @@ import {
   buildAccountSnapshotV1Event,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
-import { buildAccountFeaturesV1Subject } from "@mstaicu/plans-contracts";
+import {
+  AccountFeaturesSnapshotV1EventCheck,
+  buildAccountFeaturesV1Subject,
+} from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { startPostgres } from "../test/fixtures/postgres.mjs";
-import { projectAccountV1 } from "./account-v1.mjs";
+import { projectAccountSnapshotV1 } from "../../src/events/accounts.account.snapshot.v1.mjs";
+import { startPostgres } from "../fixtures/postgres.mjs";
 
 test("initializes an Account's free plan once from its current state", async () => {
   // Arrange
@@ -52,9 +55,9 @@ test("initializes an Account's free plan once from its current state", async () 
   };
 
   // Act
-  await projectAccountV1({ message, pool });
-  await projectAccountV1({ message, pool });
-  const invalidProjection = projectAccountV1({
+  await projectAccountSnapshotV1({ message, pool });
+  await projectAccountSnapshotV1({ message, pool });
+  const invalidProjection = projectAccountSnapshotV1({
     message: {
       ...message,
       subject: buildAccountV1Subject(randomUUID()),
@@ -79,19 +82,30 @@ test("initializes an Account's free plan once from its current state", async () 
   );
   const { rows: outbox } = await pool.query(
     `
-      SELECT event,
+      SELECT id,
+        payload,
+        headers,
         subject
-      FROM outbox_events
+      FROM outbox_messages
     `,
   );
 
   assert.deepEqual(accountPlan, { plan_id: "free", version: 1 });
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
+  assert.equal(
+    AccountFeaturesSnapshotV1EventCheck.Check(snapshot.payload),
+    true,
+  );
+  assert.equal(snapshot.id, snapshot.payload.id);
+  assert.equal(
+    snapshot.headers["Content-Type"],
+    "application/cloudevents+json",
+  );
   assert.equal(snapshot.subject, buildAccountFeaturesV1Subject(accountId));
-  assert.deepEqual(snapshot.event.data, {
+  assert.deepEqual(snapshot.payload.data, {
     account_id: accountId,
     features: { "test.limit": 10 },
-    revision: 1,
+    version: 1,
   });
 });

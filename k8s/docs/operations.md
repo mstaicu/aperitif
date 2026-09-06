@@ -104,16 +104,48 @@ namespace while diagnosing.
 ### Relay
 
 Outbox Relay is shared polling code, not a domain capability. A domain owns its
-Relay Deployment, `outbox_events`, NATS stream definitions, and database/NATS
+Relay Deployment, `outbox_messages`, NATS stream definitions, and database/NATS
 access. Relay locks a queued row, reads its subject's last JetStream sequence,
 checks the database session, and publishes with that sequence as an expectation.
 It deletes only after PubAck. Failures roll back and exit; the Deployment restarts
 Relay to read the current outbox again. Retries can duplicate publications, so
 projectors must be idempotent. The sequence guard does not impose business
-revision order on append-only facts or deltas.
+version order on append-only facts or deltas.
 
-Its required outbox columns are `id`, `subject`, `event`, optional
-`traceparent` and `tracestate`, and `queued_at`; index `(queued_at, id)`.
+The domain migration defines `outbox_messages` with five columns:
+
+| Column | Type | Purpose |
+| --- | --- | --- |
+| `id` | `UUID PRIMARY KEY` | Stable JetStream message ID across retries. For a CloudEvent, use its `id`. |
+| `subject` | Nonempty `TEXT` | NATS routing subject, captured by a configured stream. |
+| `payload` | `JSONB` | Complete JSON message, including its envelope if it has one. |
+| `headers` | `JSONB` object, default `{}` | String-valued transport headers, including content type and tracing context. |
+| `queued_at` | `TIMESTAMPTZ`, default `now()` | Queue age and scan order; index `(queued_at, id)`. |
+
+Producers validate their messages before insertion. Relay does not import domain
+contracts or inspect payload fields. It serializes `payload` as JSON; this is
+not an arbitrary-binary or exact-original-bytes transport. Snapshot producers
+set `Content-Type: application/cloudevents+json`; ordinary JSON messages use
+`application/json`. Set `datacontenttype: application/json` inside CloudEvents.
+
+Producers inject OpenTelemetry context into `headers`. Relay extracts that
+context, starts a publish span, and injects the outgoing context into NATS
+headers. Tracing does not need to be duplicated in the JSON envelope. Header
+names must be valid NATS names and values must be strings without newlines.
+Producer-supplied `Nats-*` headers are rejected, regardless of case: Relay owns
+the publication controls. Invalid headers leave the row queued and fail the
+worker; correct the source data before retrying.
+
+The same Relay supports JSON commands and delta events when their domain supplies
+the appropriate contracts, stream configuration, and consumer behavior. It does
+not coalesce rows, infer business ordering, or implement Core NATS request/reply.
+
+The pre-live V001 migrations were changed in place. Existing databases with
+`outbox_events` are not upgraded automatically; recreate disposable domain
+databases before running the new producers and Relay. Do not mix old and new
+workloads. Existing retained snapshots using `data.revision` also need replacement
+with `data.version` before starting the updated consumer; there is no automatic
+state-feed reseed yet. Do not clear retained state without a recovery source.
 
 ### Ingress and telemetry
 
@@ -135,7 +167,7 @@ authoritative database:
 1. Recreate the source domain's stream from `streams.json`.
 2. Run a manually invoked one-shot Job using that domain's API image.
 3. The Job writes one current representation per resource to the normal outbox,
-   preserving `data.revision` and using a fresh CloudEvent ID and timestamp.
+   preserving `data.version` and using a fresh CloudEvent ID and timestamp.
 4. Relay publishes normally; reset dependent projectors so they bootstrap again.
 
 No reseed Job exists yet. It is not a normal deployment step and does not connect
