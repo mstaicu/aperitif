@@ -123,6 +123,33 @@ Contracts live in `domains/<domain>/contracts/`. A source filename matches its
 message type. Keep its schema, validation, and builders together in that file;
 export the public API through `src/index.mjs`.
 
+TypeBox (`typebox`) is the only runtime dependency of a contracts package.
+Define schemas with `Type`, derive types with `Static`, and compile validators
+once per module. Validate without coercing values, inserting defaults, or
+removing properties. Keep database, NATS client, and tracing code in workloads.
+
+Each current-resource feed exports five runtime names:
+
+| Accounts example | Purpose |
+| --- | --- |
+| `AccountSnapshotV1Schema` | Complete message schema. |
+| `isAccountSnapshotV1(value)` | Validate an unknown value and narrow it to the inferred `AccountSnapshotV1` type. |
+| `buildAccountSnapshotV1(data)` | Build a validated message from complete data, including its resource version. |
+| `AccountV1SubjectPrefix` | Select the feed with `${AccountV1SubjectPrefix}.*`. |
+| `buildAccountV1Subject(id)` | Construct an exact NATS routing subject. |
+
+The message type is inferred from its schema, not maintained separately.
+Source/type literals, data schemas, and compiled validators stay private unless
+a consumer needs them. The validator also checks the CloudEvent subject against
+the data's resource ID; the receiving workload checks the actual NATS subject.
+Builders generate a new message ID and timestamp; outbox retries reuse the stored
+message. Commands and occurrence-specific events follow the same schema,
+validation, and builder naming pattern, but define their own data and routing;
+they do not inherit a snapshot's `version` requirement.
+
+Changing package exports or the validator implementation needs a new npm release,
+not a new event schema version when the wire contract remains unchanged.
+
 | Example source file | Meaning |
 | --- | --- |
 | `src/events/accounts.account.snapshot.v1.mjs` | Current Account representation; implemented. |

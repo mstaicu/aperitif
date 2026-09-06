@@ -5,9 +5,9 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { startNats } from "../test/fixtures/nats.mjs";
-import { startPostgres } from "../test/fixtures/postgres.mjs";
-import { relayOutbox } from "./outbox.mjs";
+import { relayOutbox } from "../src/outbox.mjs";
+import { startNats } from "./fixtures/nats.mjs";
+import { startPostgres } from "./fixtures/postgres.mjs";
 
 const stream = { name: "EVENTS", subjects: ["events.>"] };
 
@@ -136,7 +136,7 @@ test("relays a snapshot, then a command, preserving payloads and headers", async
   assert.equal(storedCommand.header.get("Nats-Expected-Stream"), "COMMANDS");
 });
 
-test("rejects invalid or reserved headers without losing or publishing the row", async (t) => {
+test("keeps the outbox row when a header is malformed", async (t) => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
@@ -145,37 +145,22 @@ test("rejects invalid or reserved headers without losing or publishing the row",
   const jsm = await js.jetstreamManager();
   await jsm.streams.add(stream);
 
-  for (const headers of [
-    { "nAtS-Expected-Last-Subject-Sequence": "123" },
-    { "Nats-Msg-Id": "override" },
-    { "Nats-Rollup": "all" },
-    { "Content-Type": 123 },
-    { "": "empty name" },
-    { "Bad:Name": "value" },
-    { "Correlation-Id": "value\r\nNats-Msg-Id: override" },
-  ]) {
-    // Arrange
-    const id = randomUUID();
-    await pool.query(
-      `INSERT INTO outbox_messages (id, subject, payload, headers)
-       VALUES ($1, 'events.invalid', '{}', $2)`,
-      [id, headers],
-    );
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO outbox_messages (id, subject, payload, headers)
+     VALUES ($1, 'events.invalid', '{}', $2)`,
+    [id, { "Correlation-Id": "value\r\nNats-Msg-Id: override" }],
+  );
 
-    // Act
-    const task = relayOutbox({ abortSignal: t.signal, js, jsm, pool });
+  // Act
+  const task = relayOutbox({ abortSignal: t.signal, js, jsm, pool });
 
-    // Assert
-    await assert.rejects(task, /INVALID_OUTBOX_HEADER|header/i);
-    assert.deepEqual(
-      (await pool.query("SELECT id FROM outbox_messages")).rows,
-      [{ id }],
-    );
-    assert.equal((await jsm.streams.info("EVENTS")).state.messages, 0);
-
-    // Clean up this rejected row before trying the next header.
-    await pool.query("DELETE FROM outbox_messages WHERE id = $1", [id]);
-  }
+  // Assert
+  await assert.rejects(task, /header/i);
+  assert.deepEqual((await pool.query("SELECT id FROM outbox_messages")).rows, [
+    { id },
+  ]);
+  assert.equal((await jsm.streams.info("EVENTS")).state.messages, 0);
 });
 
 test("keeps the outbox row when JetStream is unavailable", async (t) => {

@@ -89,12 +89,8 @@ async function relayNextEntry({ client, js, jsm }) {
         try {
           const messageHeaders = headers();
 
+          // Copy the producer's stored headers into the NATS message.
           for (const [name, value] of Object.entries(outboxEntry.headers)) {
-            // JetStream control headers belong to Relay, not the queued message.
-            if (!name || /^nats-/i.test(name) || typeof value !== "string") {
-              throw new Error("INVALID_OUTBOX_HEADER");
-            }
-
             messageHeaders.set(name, value);
           }
 

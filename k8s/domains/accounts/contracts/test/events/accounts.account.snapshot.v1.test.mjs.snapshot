@@ -1,5 +1,123 @@
 exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
 {
+  "type": "object",
+  "required": [
+    "datacontenttype",
+    "data",
+    "id",
+    "source",
+    "specversion",
+    "subject",
+    "time",
+    "type"
+  ],
+  "properties": {
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json"
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "id",
+        "members",
+        "name",
+        "type",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "roles",
+              "user_id"
+            ],
+            "properties": {
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "const": "owner"
+                },
+                "uniqueItems": true
+              },
+              "user_id": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 160,
+          "minLength": 1
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "individual"
+            },
+            {
+              "type": "string",
+              "const": "organization"
+            }
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    },
+    "dataschema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "source": {
+      "type": "string",
+      "const": "/domains/accounts"
+    },
+    "specversion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "subject": {
+      "type": "string",
+      "pattern": "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traceparent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tracestate": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "const": "accounts.account.snapshot.v1"
+    }
+  },
   "propertyNames": {
     "pattern": "^[a-z0-9]+$"
   },
@@ -17,129 +135,11 @@ exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
         "type": "boolean"
       },
       {
+        "type": "integer",
         "minimum": -2147483648,
-        "maximum": 2147483647,
-        "type": "integer"
+        "maximum": 2147483647
       }
     ]
-  },
-  "type": "object",
-  "required": [
-    "datacontenttype",
-    "data",
-    "id",
-    "source",
-    "specversion",
-    "subject",
-    "time",
-    "type"
-  ],
-  "properties": {
-    "datacontenttype": {
-      "const": "application/json",
-      "type": "string"
-    },
-    "data": {
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "id",
-        "members",
-        "name",
-        "type",
-        "version"
-      ],
-      "properties": {
-        "id": {
-          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-          "type": "string"
-        },
-        "members": {
-          "minItems": 1,
-          "type": "array",
-          "items": {
-            "additionalProperties": false,
-            "type": "object",
-            "required": [
-              "roles",
-              "user_id"
-            ],
-            "properties": {
-              "roles": {
-                "uniqueItems": true,
-                "type": "array",
-                "items": {
-                  "const": "owner",
-                  "type": "string"
-                }
-              },
-              "user_id": {
-                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-                "type": "string"
-              }
-            }
-          }
-        },
-        "name": {
-          "maxLength": 160,
-          "minLength": 1,
-          "type": "string"
-        },
-        "type": {
-          "anyOf": [
-            {
-              "const": "individual",
-              "type": "string"
-            },
-            {
-              "const": "organization",
-              "type": "string"
-            }
-          ]
-        },
-        "version": {
-          "minimum": 1,
-          "maximum": 9007199254740991,
-          "type": "integer"
-        }
-      }
-    },
-    "dataschema": {
-      "format": "uri",
-      "type": "string"
-    },
-    "id": {
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-      "type": "string"
-    },
-    "source": {
-      "const": "/domains/accounts",
-      "type": "string"
-    },
-    "specversion": {
-      "const": "1.0",
-      "type": "string"
-    },
-    "subject": {
-      "pattern": "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-      "type": "string"
-    },
-    "time": {
-      "format": "date-time",
-      "type": "string"
-    },
-    "traceparent": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "tracestate": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "type": {
-      "const": "accounts.account.snapshot.v1",
-      "type": "string"
-    }
   }
 }
 `;

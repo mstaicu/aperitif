@@ -3,11 +3,11 @@ import test from "node:test";
 
 import example from "../../examples/events/plans.account-features.snapshot.v1.json" with { type: "json" };
 import {
-  AccountFeaturesSnapshotV1EventCheck,
-  AccountFeaturesSnapshotV1EventSchema,
+  AccountFeaturesSnapshotV1Schema,
   AccountFeaturesV1SubjectPrefix,
-  buildAccountFeaturesSnapshotV1Event,
+  buildAccountFeaturesSnapshotV1,
   buildAccountFeaturesV1Subject,
+  isAccountFeaturesSnapshotV1,
 } from "../../src/index.mjs";
 
 test("plans.account-features.snapshot.v1 remains compatible", (t) => {
@@ -16,11 +16,12 @@ test("plans.account-features.snapshot.v1 remains compatible", (t) => {
   const data = {
     account_id: example.data.account_id,
     features: { enabled: false, level: "basic", limit: 0 },
+    version,
   };
 
   // Act
-  const event = buildAccountFeaturesSnapshotV1Event(data, version);
-  const republished = buildAccountFeaturesSnapshotV1Event(data, version);
+  const event = buildAccountFeaturesSnapshotV1(data);
+  const republished = buildAccountFeaturesSnapshotV1(data);
   const subject = buildAccountFeaturesV1Subject(data.account_id);
   const withMetadata = {
     ...event,
@@ -33,11 +34,11 @@ test("plans.account-features.snapshot.v1 remains compatible", (t) => {
   };
 
   // Assert
-  t.assert.snapshot(AccountFeaturesSnapshotV1EventSchema);
-  assert.equal(AccountFeaturesSnapshotV1EventCheck.Check(example), true);
-  assert.equal(AccountFeaturesSnapshotV1EventCheck.Check(event), true);
-  assert.equal(AccountFeaturesSnapshotV1EventCheck.Check(withMetadata), true);
-  assert.deepEqual(event.data, { ...data, version });
+  t.assert.snapshot(AccountFeaturesSnapshotV1Schema);
+  assert.equal(isAccountFeaturesSnapshotV1(example), true);
+  assert.equal(isAccountFeaturesSnapshotV1(event), true);
+  assert.equal(isAccountFeaturesSnapshotV1(withMetadata), true);
+  assert.deepEqual(event.data, data);
   assert.notEqual(event.id, republished.id);
   assert.deepEqual(republished.data, event.data);
   assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
@@ -69,7 +70,7 @@ test("rejects malformed V1 snapshots", () => {
 
   for (const event of invalidEvents) {
     // Act
-    const valid = AccountFeaturesSnapshotV1EventCheck.Check(event);
+    const valid = isAccountFeaturesSnapshotV1(event);
 
     // Assert
     assert.equal(valid, false, JSON.stringify(event));
@@ -82,7 +83,7 @@ test("builders reject invalid input", () => {
 
   // Act
   const buildSubject = () => buildAccountFeaturesV1Subject("not-a-uuid");
-  const buildEvent = () => buildAccountFeaturesSnapshotV1Event(data, 0);
+  const buildEvent = () => buildAccountFeaturesSnapshotV1({ ...data, version: 0 });
 
   // Assert
   assert.throws(buildSubject, /INVALID_ACCOUNT_ID/);

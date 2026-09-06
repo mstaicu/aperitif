@@ -1,8 +1,11 @@
 {
   "name": "outbox-relay",
   "private": true,
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
-    "test": "node --test --test-concurrency=1 \"src/**/*.test.mjs\""
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\""
   },
   "dependencies": {
     "@nats-io/jetstream": "^3.4.0",

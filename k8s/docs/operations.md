@@ -132,9 +132,9 @@ Producers inject OpenTelemetry context into `headers`. Relay extracts that
 context, starts a publish span, and injects the outgoing context into NATS
 headers. Tracing does not need to be duplicated in the JSON envelope. Header
 names must be valid NATS names and values must be strings without newlines.
-Producer-supplied `Nats-*` headers are rejected, regardless of case: Relay owns
-the publication controls. Invalid headers leave the row queued and fail the
-worker; correct the source data before retrying.
+Producers must leave `Nats-*` publication controls to Relay; Relay does not
+enforce this restriction. Header errors raised by the NATS client leave the row
+queued and fail the worker; correct the source data before retrying.
 
 The same Relay supports JSON commands and delta events when their domain supplies
 the appropriate contracts, stream configuration, and consumer behavior. It does
@@ -146,6 +146,74 @@ databases before running the new producers and Relay. Do not mix old and new
 workloads. Existing retained snapshots using `data.revision` also need replacement
 with `data.version` before starting the updated consumer; there is no automatic
 state-feed reseed yet. Do not clear retained state without a recovery source.
+
+#### Run Relay without Kubernetes
+
+Requires Node.js 26+, an empty disposable PostgreSQL database, a NATS server with
+JetStream enabled, and the `psql` and `nats` CLIs. Export `DATABASE_URL` and `NATS_URL`
+to those test services in both terminals. Do not use a production database.
+
+Create the outbox:
+
+```sh
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+CREATE TABLE outbox_messages (
+  id UUID PRIMARY KEY,
+  subject TEXT NOT NULL CHECK (subject <> ''),
+  payload JSONB NOT NULL,
+  headers JSONB NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(headers) = 'object'),
+  queued_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX outbox_messages_queued_at_id ON outbox_messages (queued_at, id);
+SQL
+```
+
+Save this as `streams.json` and export `NATS_STREAMS_PATH` with its absolute path. This
+small demonstration stream retains one JSON representation per resource subject;
+its 1 MiB limit is not a production sizing recommendation.
+
+```json
+[
+  {
+    "name": "RELAY_DEMO",
+    "subjects": ["relay-demo.resource.*"],
+    "storage": "file",
+    "retention": "limits",
+    "max_msgs_per_subject": 1,
+    "max_age": 0,
+    "max_bytes": 1048576,
+    "discard": "new"
+  }
+]
+```
+
+From the `k8s` root, start Relay:
+
+```sh
+npm ci --prefix platform/runtime/outbox-relay
+node platform/runtime/outbox-relay/src/main.mjs
+```
+
+In the other terminal, check readiness and enqueue a plain JSON message:
+
+```sh
+curl --fail http://127.0.0.1:3000/readyz
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+INSERT INTO outbox_messages (id, subject, payload, headers)
+VALUES (
+  gen_random_uuid(), 'relay-demo.resource.1',
+  '{"name":"Example","version":1}', '{"Content-Type":"application/json"}'
+);
+SQL
+nats --no-context stream get RELAY_DEMO --last-for=relay-demo.resource.1
+psql "$DATABASE_URL" -c 'SELECT * FROM outbox_messages;'
+```
+
+Publication is asynchronous: retry the lookup if it precedes the next poll.
+Expect the JSON in NATS and an empty outbox after PubAck. Use Ctrl-C to stop Relay.
+Outside Kubernetes, a process supervisor must restart it after a delivery failure.
+Telemetry is optional; set both `OTEL_EXPORTER_OTLP_ENDPOINT` and
+`OTEL_SERVICE_NAME` to enable it.
 
 ### Ingress and telemetry
 

@@ -1,6 +1,7 @@
 import { jetstream } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import process from "node:process";
@@ -106,7 +107,7 @@ try {
     res.end();
   });
 
-  healthServer.listen(3000, "0.0.0.0");
+  await once(healthServer.listen(3000, "0.0.0.0"), "listening");
 
   try {
     await relayOutbox({
@@ -116,9 +117,7 @@ try {
       pool,
     });
   } finally {
-    await new Promise((resolve, reject) =>
-      healthServer.close((err) => (err ? reject(err) : resolve(undefined))),
-    );
+    await healthServer[Symbol.asyncDispose]();
   }
 } finally {
   await pool.end();

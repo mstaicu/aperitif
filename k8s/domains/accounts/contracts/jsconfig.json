@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
-    "allowJs": true,
+    "checkJs": true,
     "declaration": true,
     "declarationDir": "types",
     "emitDeclarationOnly": true,
     "module": "NodeNext",
+    "noEmit": false,
     "rootDir": "src",
+    "strict": true,
     "types": ["node"]
   },
   "include": ["src/**/*.mjs"]

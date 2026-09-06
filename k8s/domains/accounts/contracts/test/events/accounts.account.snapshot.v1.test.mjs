@@ -3,11 +3,11 @@ import test from "node:test";
 
 import example from "../../examples/events/accounts.account.snapshot.v1.json" with { type: "json" };
 import {
-  AccountSnapshotV1EventCheck,
-  AccountSnapshotV1EventSchema,
+  AccountSnapshotV1Schema,
   AccountV1SubjectPrefix,
-  buildAccountSnapshotV1Event,
+  buildAccountSnapshotV1,
   buildAccountV1Subject,
+  isAccountSnapshotV1,
 } from "../../src/index.mjs";
 
 test("accounts.account.snapshot.v1 remains compatible", (t) => {
@@ -18,11 +18,12 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
     members: [{ user_id: example.data.members[0].user_id, roles: [] }],
     name: "My account",
     type: "individual",
+    version,
   };
 
   // Act
-  const event = buildAccountSnapshotV1Event(data, version);
-  const republished = buildAccountSnapshotV1Event(data, version);
+  const event = buildAccountSnapshotV1(data);
+  const republished = buildAccountSnapshotV1(data);
   const subject = buildAccountV1Subject(data.id);
   const withMetadata = {
     ...event,
@@ -35,11 +36,11 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
   };
 
   // Assert
-  t.assert.snapshot(AccountSnapshotV1EventSchema);
-  assert.equal(AccountSnapshotV1EventCheck.Check(example), true);
-  assert.equal(AccountSnapshotV1EventCheck.Check(event), true);
-  assert.equal(AccountSnapshotV1EventCheck.Check(withMetadata), true);
-  assert.deepEqual(event.data, { ...data, version });
+  t.assert.snapshot(AccountSnapshotV1Schema);
+  assert.equal(isAccountSnapshotV1(example), true);
+  assert.equal(isAccountSnapshotV1(event), true);
+  assert.equal(isAccountSnapshotV1(withMetadata), true);
+  assert.deepEqual(event.data, data);
   assert.notEqual(event.id, republished.id);
   assert.deepEqual(republished.data, event.data);
   assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
@@ -77,7 +78,7 @@ test("rejects malformed V1 snapshots", () => {
 
   for (const event of invalidEvents) {
     // Act
-    const valid = AccountSnapshotV1EventCheck.Check(event);
+    const valid = isAccountSnapshotV1(event);
 
     // Assert
     assert.equal(valid, false, JSON.stringify(event));
@@ -90,7 +91,7 @@ test("builders reject invalid input", () => {
 
   // Act
   const buildSubject = () => buildAccountV1Subject("not-a-uuid");
-  const buildEvent = () => buildAccountSnapshotV1Event(data, 0);
+  const buildEvent = () => buildAccountSnapshotV1({ ...data, version: 0 });
 
   // Assert
   assert.throws(buildSubject, /INVALID_ACCOUNT_ID/);
