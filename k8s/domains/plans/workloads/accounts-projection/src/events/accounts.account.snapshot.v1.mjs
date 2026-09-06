@@ -1,9 +1,9 @@
 import {
-  AccountSnapshotV1EventCheck,
   buildAccountV1Subject,
+  isAccountSnapshotV1,
 } from "@mstaicu/accounts-contracts";
 import {
-  buildAccountFeaturesSnapshotV1Event,
+  buildAccountFeaturesSnapshotV1,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
 import {
@@ -46,16 +46,11 @@ export async function projectAccountSnapshotV1({ message, pool }) {
     parentContext,
     async (span) => {
       try {
-        const event = message.json();
+        const snapshot = message.json();
 
-        if (!AccountSnapshotV1EventCheck.Check(event)) {
+        if (!isAccountSnapshotV1(snapshot)) {
           throw new Error("INVALID_ACCOUNT_SNAPSHOT_EVENT");
         }
-
-        const snapshot =
-          /** @type {import("@mstaicu/accounts-contracts").AccountSnapshotV1Event} */ (
-            event
-          );
 
         if (message.subject !== buildAccountV1Subject(snapshot.data.id)) {
           throw new Error("ACCOUNT_V1_SUBJECT_MISMATCH");
@@ -99,13 +94,11 @@ export async function projectAccountSnapshotV1({ message, pool }) {
               rows.map((row) => [row.feature_id, row.value]),
             );
 
-            const accountFeaturesSnapshot = buildAccountFeaturesSnapshotV1Event(
-              {
-                account_id: accountId,
-                features,
-              },
-              Number(accountPlan.version),
-            );
+            const accountFeaturesSnapshot = buildAccountFeaturesSnapshotV1({
+              account_id: accountId,
+              features,
+              version: Number(accountPlan.version),
+            });
 
             const headers = {
               "Content-Type": "application/cloudevents+json",

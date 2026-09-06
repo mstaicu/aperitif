@@ -1,5 +1,5 @@
 import {
-  buildAccountSnapshotV1Event,
+  buildAccountSnapshotV1,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
 import { context, propagation } from "@opentelemetry/api";
@@ -61,20 +61,18 @@ export const createAccount =
         [account.id, currentUserId],
       );
 
-      const accountSnapshotEvent = buildAccountSnapshotV1Event(
-        {
-          id: account.id,
-          members: [
-            {
-              roles: ["owner"],
-              user_id: currentUserId,
-            },
-          ],
-          name: account.name,
-          type: account.type,
-        },
-        Number(account.version),
-      );
+      const accountSnapshotEvent = buildAccountSnapshotV1({
+        id: account.id,
+        members: [
+          {
+            roles: ["owner"],
+            user_id: currentUserId,
+          },
+        ],
+        name: account.name,
+        type: account.type,
+        version: Number(account.version),
+      });
       const headers = {
         "Content-Type": "application/cloudevents+json",
       };

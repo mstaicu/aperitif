@@ -1,10 +1,10 @@
 import {
-  buildAccountSnapshotV1Event,
+  buildAccountSnapshotV1,
   buildAccountV1Subject,
 } from "@mstaicu/accounts-contracts";
 import {
-  AccountFeaturesSnapshotV1EventCheck,
   buildAccountFeaturesV1Subject,
+  isAccountFeaturesSnapshotV1,
 } from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -29,18 +29,16 @@ test("initializes a free plan once; replay does not reset a paid plan", async ()
       VALUES ('free', 'test.limit', '10')`,
   );
 
-  const event = buildAccountSnapshotV1Event(
-    {
-      id: accountId,
-      members: [
-        { roles: ["owner"], user_id: randomUUID() },
-        { roles: [], user_id: randomUUID() },
-      ],
-      name: "Acme",
-      type: "organization",
-    },
-    7,
-  );
+  const event = buildAccountSnapshotV1({
+    id: accountId,
+    members: [
+      { roles: ["owner"], user_id: randomUUID() },
+      { roles: [], user_id: randomUUID() },
+    ],
+    name: "Acme",
+    type: "organization",
+    version: 7,
+  });
   const message = {
     json: () => event,
     subject: buildAccountV1Subject(accountId),
@@ -63,10 +61,7 @@ test("initializes a free plan once; replay does not reset a paid plan", async ()
   ]);
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
-  assert.equal(
-    AccountFeaturesSnapshotV1EventCheck.Check(snapshot.payload),
-    true,
-  );
+  assert.equal(isAccountFeaturesSnapshotV1(snapshot.payload), true);
   assert.equal(snapshot.id, snapshot.payload.id);
   assert.equal(
     snapshot.headers["Content-Type"],
@@ -105,15 +100,13 @@ test("rejects an unsupported event or a mismatched NATS subject before writing",
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
-  const event = buildAccountSnapshotV1Event(
-    {
-      id: randomUUID(),
-      members: [{ roles: ["owner"], user_id: randomUUID() }],
-      name: "Acme",
-      type: "organization",
-    },
-    1,
-  );
+  const event = buildAccountSnapshotV1({
+    id: randomUUID(),
+    members: [{ roles: ["owner"], user_id: randomUUID() }],
+    name: "Acme",
+    type: "organization",
+    version: 1,
+  });
 
   // Act
   const unsupported = projectAccountSnapshotV1({

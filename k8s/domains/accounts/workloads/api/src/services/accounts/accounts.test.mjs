@@ -1,6 +1,6 @@
 import {
-  AccountSnapshotV1EventCheck,
   buildAccountV1Subject,
+  isAccountSnapshotV1,
 } from "@mstaicu/accounts-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -49,7 +49,7 @@ test("creates account ownership and lists only the caller's accounts", async () 
   assert.deepEqual(roles, [{ role: "owner" }]);
   assert.equal(outbox.length, 1);
   const [{ headers, id, payload }] = outbox;
-  assert.equal(AccountSnapshotV1EventCheck.Check(payload), true);
+  assert.equal(isAccountSnapshotV1(payload), true);
   assert.equal(id, payload.id);
   assert.equal(headers["Content-Type"], "application/cloudevents+json");
   assert.deepEqual(payload.data, {

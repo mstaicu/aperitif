@@ -1,7 +1,7 @@
 import {
-  AccountFeaturesSnapshotV1EventCheck,
-  buildAccountFeaturesSnapshotV1Event,
+  buildAccountFeaturesSnapshotV1,
   buildAccountFeaturesV1Subject,
+  isAccountFeaturesSnapshotV1,
 } from "@mstaicu/plans-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -33,10 +33,11 @@ test("changes a plan once and replaces its pending feature snapshot", async () =
   );
 
   const subject = buildAccountFeaturesV1Subject(accountId);
-  const freeSnapshot = buildAccountFeaturesSnapshotV1Event(
-    { account_id: accountId, features: { "test.limit": 10 } },
-    1,
-  );
+  const freeSnapshot = buildAccountFeaturesSnapshotV1({
+    account_id: accountId,
+    features: { "test.limit": 10 },
+    version: 1,
+  });
 
   await pool.query(
     "INSERT INTO outbox_messages (id, subject, payload) VALUES ($1, $2, $3)",
@@ -64,10 +65,7 @@ test("changes a plan once and replaces its pending feature snapshot", async () =
   ]);
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
-  assert.equal(
-    AccountFeaturesSnapshotV1EventCheck.Check(snapshot.payload),
-    true,
-  );
+  assert.equal(isAccountFeaturesSnapshotV1(snapshot.payload), true);
   assert.equal(snapshot.id, snapshot.payload.id);
   assert.notEqual(snapshot.id, freeSnapshot.id);
   assert.equal(

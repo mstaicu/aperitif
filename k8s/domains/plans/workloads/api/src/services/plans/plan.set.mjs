@@ -1,5 +1,5 @@
 import {
-  buildAccountFeaturesSnapshotV1Event,
+  buildAccountFeaturesSnapshotV1,
   buildAccountFeaturesV1Subject,
 } from "@mstaicu/plans-contracts";
 import { context, propagation } from "@opentelemetry/api";
@@ -84,13 +84,11 @@ export const setPlan =
         );
 
         const subject = buildAccountFeaturesV1Subject(accountId);
-        const event = buildAccountFeaturesSnapshotV1Event(
-          {
-            account_id: accountId,
-            features,
-          },
-          Number(version),
-        );
+        const event = buildAccountFeaturesSnapshotV1({
+          account_id: accountId,
+          features,
+          version: Number(version),
+        });
         const headers = {
           "Content-Type": "application/cloudevents+json",
         };
