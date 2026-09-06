@@ -4,7 +4,7 @@ import test from "node:test";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createPasskeysService } from "./index.mjs";
 
-test("passkeys require the configured origin and user verification", async () => {
+test("stores challenges and requires passkeys for the configured relying party", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
@@ -19,10 +19,10 @@ test("passkeys require the configured origin and user verification", async () =>
 
   // Assert
   const { rows: registrationChallenges } = await pool.query(
-    "SELECT COUNT(*)::int AS count FROM registration_challenges",
+    "SELECT challenge FROM registration_challenges",
   );
   const { rows: authenticationChallenges } = await pool.query(
-    "SELECT COUNT(*)::int AS count FROM authentication_challenges",
+    "SELECT challenge FROM authentication_challenges",
   );
 
   assert.equal(registration.rp.id, "auth.test");
@@ -33,6 +33,10 @@ test("passkeys require the configured origin and user verification", async () =>
   );
   assert.equal(login.rpId, "auth.test");
   assert.equal(login.userVerification, "required");
-  assert.equal(registrationChallenges[0].count, 1);
-  assert.equal(authenticationChallenges[0].count, 1);
+  assert.deepEqual(registrationChallenges, [
+    { challenge: Buffer.from(registration.challenge, "base64url") },
+  ]);
+  assert.deepEqual(authenticationChallenges, [
+    { challenge: Buffer.from(login.challenge, "base64url") },
+  ]);
 });

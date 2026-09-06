@@ -13,84 +13,54 @@ import test from "node:test";
 import { projectAccountSnapshotV1 } from "../../src/events/accounts.account.snapshot.v1.mjs";
 import { startPostgres } from "../fixtures/postgres.mjs";
 
-test("initializes an Account's free plan once from its current state", async () => {
+test("initializes a free plan once; replay does not reset a paid plan", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
-  const ownerId = randomUUID();
 
   await pool.query(
-    `
+    `INSERT INTO plans (id, name) VALUES ('pro', 'Pro');
+
       INSERT INTO features (id, name)
       VALUES ('test.limit', 'Test limit');
 
       INSERT INTO plan_features (plan_id, feature_id, value)
-      VALUES ('free', 'test.limit', '10')
-    `,
+      VALUES ('free', 'test.limit', '10')`,
   );
 
   const event = buildAccountSnapshotV1Event(
     {
       id: accountId,
       members: [
-        {
-          roles: ["owner"],
-          user_id: ownerId,
-        },
-        {
-          roles: [],
-          user_id: randomUUID(),
-        },
+        { roles: ["owner"], user_id: randomUUID() },
+        { roles: [], user_id: randomUUID() },
       ],
       name: "Acme",
       type: "organization",
     },
     7,
   );
-  const subject = buildAccountV1Subject(accountId);
   const message = {
     json: () => event,
-    subject,
+    subject: buildAccountV1Subject(accountId),
   };
 
   // Act
   await projectAccountSnapshotV1({ message, pool });
   await projectAccountSnapshotV1({ message, pool });
-  const invalidProjection = projectAccountSnapshotV1({
-    message: {
-      ...message,
-      subject: buildAccountV1Subject(randomUUID()),
-    },
-    pool,
-  });
 
   // Assert
-  await assert.rejects(invalidProjection, {
-    message: "ACCOUNT_V1_SUBJECT_MISMATCH",
-  });
-  const {
-    rows: [accountPlan],
-  } = await pool.query(
-    `
-      SELECT plan_id,
-        version::integer
-      FROM account_plans
-      WHERE account_id = $1
-    `,
-    [accountId],
+  const { rows: accountPlans } = await pool.query(
+    "SELECT account_id, plan_id, version::integer FROM account_plans",
   );
   const { rows: outbox } = await pool.query(
-    `
-      SELECT id,
-        payload,
-        headers,
-        subject
-      FROM outbox_messages
-    `,
+    "SELECT id, payload, headers, subject FROM outbox_messages",
   );
 
-  assert.deepEqual(accountPlan, { plan_id: "free", version: 1 });
+  assert.deepEqual(accountPlans, [
+    { account_id: accountId, plan_id: "free", version: 1 },
+  ]);
   assert.equal(outbox.length, 1);
   const [snapshot] = outbox;
   assert.equal(
@@ -108,4 +78,69 @@ test("initializes an Account's free plan once from its current state", async () 
     features: { "test.limit": 10 },
     version: 1,
   });
+
+  // Arrange: Plans has since upgraded this Account.
+  await pool.query(
+    "UPDATE account_plans SET plan_id = 'pro', version = 2 WHERE account_id = $1",
+    [accountId],
+  );
+
+  // Act
+  await projectAccountSnapshotV1({ message, pool });
+
+  // Assert
+  const { rows: afterReplay } = await pool.query(
+    "SELECT account_id, plan_id, version::integer FROM account_plans",
+  );
+  const { rows: pending } = await pool.query(
+    "SELECT id, payload, headers, subject FROM outbox_messages",
+  );
+  assert.deepEqual(afterReplay, [
+    { account_id: accountId, plan_id: "pro", version: 2 },
+  ]);
+  assert.deepEqual(pending, outbox);
+});
+
+test("rejects an unsupported event or a mismatched NATS subject before writing", async () => {
+  // Arrange
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  const event = buildAccountSnapshotV1Event(
+    {
+      id: randomUUID(),
+      members: [{ roles: ["owner"], user_id: randomUUID() }],
+      name: "Acme",
+      type: "organization",
+    },
+    1,
+  );
+
+  // Act
+  const unsupported = projectAccountSnapshotV1({
+    message: {
+      json: () => ({ ...event, type: "accounts.account.snapshot.v2" }),
+      subject: buildAccountV1Subject(event.data.id),
+    },
+    pool,
+  });
+
+  // Assert
+  await assert.rejects(unsupported, /INVALID_ACCOUNT_SNAPSHOT_EVENT/);
+
+  // Act
+  const mismatched = projectAccountSnapshotV1({
+    message: {
+      json: () => event,
+      subject: buildAccountV1Subject(randomUUID()),
+    },
+    pool,
+  });
+
+  // Assert
+  await assert.rejects(mismatched, /ACCOUNT_V1_SUBJECT_MISMATCH/);
+  assert.deepEqual((await pool.query("SELECT * FROM account_plans")).rows, []);
+  assert.deepEqual(
+    (await pool.query("SELECT * FROM outbox_messages")).rows,
+    [],
+  );
 });

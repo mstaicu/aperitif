@@ -12,38 +12,20 @@ import {
 
 test("accounts.account.snapshot.v1 remains compatible", (t) => {
   // Arrange
+  const version = Number.MAX_SAFE_INTEGER;
   const data = {
     id: example.data.id,
-    members: example.data.members,
+    members: [{ user_id: example.data.members[0].user_id, roles: [] }],
     name: "My account",
     type: "individual",
   };
 
   // Act
-  const event = buildAccountSnapshotV1Event(data, 7);
-  const republished = buildAccountSnapshotV1Event(data, 7);
+  const event = buildAccountSnapshotV1Event(data, version);
+  const republished = buildAccountSnapshotV1Event(data, version);
   const subject = buildAccountV1Subject(data.id);
-
-  // Assert
-  t.assert.snapshot(AccountSnapshotV1EventSchema);
-  assert.equal(AccountSnapshotV1EventCheck.Check(example), true);
-  assert.equal(AccountSnapshotV1EventCheck.Check(event), true);
-  assert.deepEqual(event.data, { ...data, version: 7 });
-  assert.notEqual(event.id, republished.id);
-  assert.deepEqual(republished.data, event.data);
-  assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
-  assert.equal(subject, `accounts.account.v1.${data.id}`);
-});
-
-test("accepts members without roles, metadata, and the largest safe version", () => {
-  // Arrange
-  const event = {
-    ...example,
-    data: {
-      ...example.data,
-      members: [{ user_id: example.data.members[0].user_id, roles: [] }],
-      version: Number.MAX_SAFE_INTEGER,
-    },
+  const withMetadata = {
+    ...event,
     dataschema: "https://example.com/accounts/account/v1",
     time: "2024-02-29T12:30:00+02:00",
     traceparent: "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01",
@@ -52,15 +34,21 @@ test("accepts members without roles, metadata, and the largest safe version", ()
     replay: true,
   };
 
-  // Act
-  const valid = AccountSnapshotV1EventCheck.Check(event);
-
   // Assert
-  assert.equal(valid, true);
+  t.assert.snapshot(AccountSnapshotV1EventSchema);
+  assert.equal(AccountSnapshotV1EventCheck.Check(example), true);
+  assert.equal(AccountSnapshotV1EventCheck.Check(event), true);
+  assert.equal(AccountSnapshotV1EventCheck.Check(withMetadata), true);
+  assert.deepEqual(event.data, { ...data, version });
+  assert.notEqual(event.id, republished.id);
+  assert.deepEqual(republished.data, event.data);
+  assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
+  assert.equal(subject, `accounts.account.v1.${data.id}`);
 });
 
 test("rejects malformed V1 snapshots", () => {
   // Arrange
+  const { data } = example;
   const invalidEvents = [
     null,
     { ...example, type: "accounts.account.snapshot.v2" },
@@ -72,20 +60,17 @@ test("rejects malformed V1 snapshots", () => {
     { ...example, invalid_name: true },
     { ...example, metadata: { nested: true } },
     { ...example, attempt: 2147483648 },
-    { ...example, data: { ...example.data, version: 0 } },
-    { ...example, data: { ...example.data, version: 1.5 } },
-    { ...example, data: { ...example.data, version: "1" } },
-    {
-      ...example,
-      data: { ...example.data, version: Number.MAX_SAFE_INTEGER + 1 },
-    },
+    { ...example, data: { ...data, version: 0 } },
+    { ...example, data: { ...data, version: 1.5 } },
+    { ...example, data: { ...data, version: "1" } },
+    { ...example, data: { ...data, version: Number.MAX_SAFE_INTEGER + 1 } },
     { ...example, data: {} },
-    { ...example, data: { ...example.data, unexpected: true } },
+    { ...example, data: { ...data, unexpected: true } },
     {
       ...example,
       data: {
-        ...example.data,
-        members: [{ user_id: example.data.members[0].user_id, roles: ["admin"] }],
+        ...data,
+        members: [{ user_id: data.members[0].user_id, roles: ["admin"] }],
       },
     },
   ];
@@ -95,23 +80,19 @@ test("rejects malformed V1 snapshots", () => {
     const valid = AccountSnapshotV1EventCheck.Check(event);
 
     // Assert
-    assert.equal(valid, false, `Accepted invalid event: ${JSON.stringify(event)}`);
+    assert.equal(valid, false, JSON.stringify(event));
   }
 });
 
 test("builders reject invalid input", () => {
   // Arrange
-  const data = {
-    id: example.data.id,
-    members: example.data.members,
-    name: example.data.name,
-    type: example.data.type,
-  };
+  const { data } = example;
 
-  // Act & Assert
-  assert.throws(() => buildAccountV1Subject("not-a-uuid"), /INVALID_ACCOUNT_ID/);
-  assert.throws(
-    () => buildAccountSnapshotV1Event(data, 0),
-    /INVALID_ACCOUNT_SNAPSHOT_EVENT/,
-  );
+  // Act
+  const buildSubject = () => buildAccountV1Subject("not-a-uuid");
+  const buildEvent = () => buildAccountSnapshotV1Event(data, 0);
+
+  // Assert
+  assert.throws(buildSubject, /INVALID_ACCOUNT_ID/);
+  assert.throws(buildEvent, /INVALID_ACCOUNT_SNAPSHOT_EVENT/);
 });

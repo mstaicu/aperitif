@@ -17,15 +17,15 @@ test("creates account ownership and lists only the caller's accounts", async () 
   const userId = randomUUID();
 
   // Act
-  const alpha = await accounts.createAccount({
-    currentUserId: userId,
-    name: "Alpha",
-    type: "individual",
-  });
   const zulu = await accounts.createAccount({
     currentUserId: userId,
     name: "Zulu",
     type: "organization",
+  });
+  const alpha = await accounts.createAccount({
+    currentUserId: userId,
+    name: "Alpha",
+    type: "individual",
   });
   await accounts.createAccount({
     currentUserId: randomUUID(),
@@ -36,33 +36,19 @@ test("creates account ownership and lists only the caller's accounts", async () 
 
   // Assert
   const { rows: outbox } = await pool.query(
-    `
-      SELECT id,
-        payload,
-        headers,
-        subject
-      FROM outbox_messages
-      WHERE payload #>> '{data,id}' = $1
-    `,
-    [alpha.account.id],
+    "SELECT id, payload, headers, subject FROM outbox_messages WHERE subject = $1",
+    [buildAccountV1Subject(alpha.account.id)],
   );
-
-  assert.equal(outbox.length, 1);
-  const [{ headers, id, payload, subject }] = outbox;
   const { rows: roles } = await pool.query(
-    `
-      SELECT role
-      FROM account_member_roles
-      WHERE account_id = $1
-        AND user_id = $2
-    `,
+    `SELECT role FROM account_member_roles
+     WHERE account_id = $1 AND user_id = $2`,
     [alpha.account.id, userId],
   );
 
-  assert.deepEqual(listed, {
-    accounts: [alpha.account, zulu.account],
-  });
+  assert.deepEqual(listed, { accounts: [alpha.account, zulu.account] });
   assert.deepEqual(roles, [{ role: "owner" }]);
+  assert.equal(outbox.length, 1);
+  const [{ headers, id, payload }] = outbox;
   assert.equal(AccountSnapshotV1EventCheck.Check(payload), true);
   assert.equal(id, payload.id);
   assert.equal(headers["Content-Type"], "application/cloudevents+json");
@@ -71,5 +57,4 @@ test("creates account ownership and lists only the caller's accounts", async () 
     members: [{ roles: ["owner"], user_id: userId }],
     version: 1,
   });
-  assert.equal(subject, buildAccountV1Subject(alpha.account.id));
 });

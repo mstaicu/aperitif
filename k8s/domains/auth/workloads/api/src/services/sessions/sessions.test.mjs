@@ -1,9 +1,8 @@
-import { createLocalJWKSet, jwtVerify } from "jose";
+import { generateKeyPair, jwtVerify } from "jose";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { createJwtFixture } from "../../../test/fixtures/jwt.mjs";
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
 import { createSessionsService } from "./index.mjs";
 import { createSession } from "./session.create.mjs";
@@ -12,10 +11,10 @@ test("sessions issue access tokens and revoke independently", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
-  const jwt = await createJwtFixture();
+  const { privateKey, publicKey } = await generateKeyPair("ES256");
   const sessions = createSessionsService({
     pool,
-    signingKey: jwt.signingKey,
+    signingKey: { kid: "test", privateKey },
   });
   const userId = randomUUID();
 
@@ -29,29 +28,28 @@ test("sessions issue access tokens and revoke independently", async () => {
     const phone = await createSession({ client, userId });
 
     // Act
-    const laptopAccess = await sessions.createAccessToken({
-      session_token: laptop.sessionToken,
-    });
-    const { payload } = await jwtVerify(
-      laptopAccess.access_token,
-      createLocalJWKSet(jwt.jwks),
-    );
     await sessions.revokeSession({ session_token: phone.sessionToken });
-    const laptopAccessAfterPhoneRevocation = await sessions.createAccessToken({
+    const access = await sessions.createAccessToken({
       session_token: laptop.sessionToken,
     });
-    const phoneAccessAfterRevocation = sessions.createAccessToken({
+    const { payload, protectedHeader } = await jwtVerify(
+      access.access_token,
+      publicKey,
+    );
+    const revokedAccess = sessions.createAccessToken({
       session_token: phone.sessionToken,
     });
 
     // Assert
+    assert.deepEqual(protectedHeader, { alg: "ES256", kid: "test" });
     assert.equal(payload.sub, userId);
     assert.equal(payload.operator, true);
+    assert.ok(payload.iat);
+    assert.equal(payload.exp, payload.iat + 300);
     assert.equal(laptop.expiresIn, 2_592_000);
-    assert.equal(laptopAccess.expires_in, 300);
-    assert.equal(laptopAccess.token_type, "Bearer");
-    assert.equal(laptopAccessAfterPhoneRevocation.token_type, "Bearer");
-    await assert.rejects(phoneAccessAfterRevocation, /SESSION_NOT_FOUND/);
+    assert.equal(access.expires_in, 300);
+    assert.equal(access.token_type, "Bearer");
+    await assert.rejects(revokedAccess, /SESSION_NOT_FOUND/);
   } finally {
     client.release();
   }

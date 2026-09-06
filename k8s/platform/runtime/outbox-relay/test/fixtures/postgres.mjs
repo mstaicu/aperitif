@@ -20,14 +20,10 @@ export const startPostgres = async () => {
       payload JSONB NOT NULL,
       headers JSONB NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(headers) = 'object'),
       queued_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
+    );
+    CREATE INDEX outbox_messages_queued_at_id
+    ON outbox_messages (queued_at, id);
   `);
-  await pool.query(
-    `
-      CREATE INDEX outbox_messages_queued_at_id
-      ON outbox_messages (queued_at, id)
-    `,
-  );
 
   const resources = stack.move();
 

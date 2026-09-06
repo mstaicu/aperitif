@@ -1,11 +1,7 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 import { GenericContainer, Network, Wait } from "testcontainers";
-
-const fixtureDir = dirname(fileURLToPath(import.meta.url));
-const sqlPath = resolve(fixtureDir, "../../../migrations/sql");
 
 export const startPostgres = async () => {
   await using stack = new AsyncDisposableStack();
@@ -23,7 +19,9 @@ export const startPostgres = async () => {
     .withNetwork(network)
     .withBindMounts([
       {
-        source: sqlPath,
+        source: fileURLToPath(
+          new URL("../../../migrations/sql", import.meta.url),
+        ),
         target: "/flyway/sql",
       },
     ])
