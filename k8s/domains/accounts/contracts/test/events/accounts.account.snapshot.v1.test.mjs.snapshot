@@ -1,6 +1,28 @@
 exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
 {
-  "additionalProperties": false,
+  "propertyNames": {
+    "pattern": "^[a-z0-9]+$"
+  },
+  "dependencies": {
+    "tracestate": [
+      "traceparent"
+    ]
+  },
+  "additionalProperties": {
+    "anyOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "boolean"
+      },
+      {
+        "minimum": -2147483648,
+        "maximum": 2147483647,
+        "type": "integer"
+      }
+    ]
+  },
   "type": "object",
   "required": [
     "datacontenttype",
@@ -25,7 +47,7 @@ exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
         "members",
         "name",
         "type",
-        "revision"
+        "version"
       ],
       "properties": {
         "id": {
@@ -75,11 +97,16 @@ exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
             }
           ]
         },
-        "revision": {
+        "version": {
           "minimum": 1,
+          "maximum": 9007199254740991,
           "type": "integer"
         }
       }
+    },
+    "dataschema": {
+      "format": "uri",
+      "type": "string"
     },
     "id": {
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
@@ -98,6 +125,14 @@ exports[`accounts.account.snapshot.v1 remains compatible 1`] = `
       "type": "string"
     },
     "time": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "traceparent": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "tracestate": {
       "minLength": 1,
       "type": "string"
     },

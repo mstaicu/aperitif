@@ -60,6 +60,7 @@ test("relays queued entries", async () => {
   const task = relayOutbox({
     abortSignal: abortController.signal,
     js,
+    jsm,
     pool,
   });
   const { value: queuedMessage } = await messages.next();
@@ -90,6 +91,11 @@ test("relays queued entries", async () => {
     "application/cloudevents+json",
   );
   assert.equal(queuedMessage.headers?.get("Nats-Msg-Id"), queued.id);
+  assert.equal(
+    queuedMessage.headers?.get("Nats-Expected-Last-Subject-Sequence"),
+    "0",
+  );
+  assert.equal(queuedMessage.headers?.get("Nats-Expected-Stream"), "EVENTS");
   assert.deepEqual(
     JSON.parse(new TextDecoder().decode(notifiedMessage.data)),
     notified,
@@ -113,13 +119,14 @@ test("relays queued entries", async () => {
   assert.equal(count, 0);
 });
 
-test("keeps an outbox entry when PubAck fails", async () => {
+test("keeps an outbox entry when JetStream is unavailable", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   await using nats = await startNats({ jetstream: false });
   const { nc } = nats;
   const js = jetstream(nc);
+  const jsm = await js.jetstreamManager(false);
   const event = {
     id: randomUUID(),
     type: "test.timeout",
@@ -136,6 +143,7 @@ test("keeps an outbox entry when PubAck fails", async () => {
   const relay = relayOutbox({
     abortSignal: new AbortController().signal,
     js,
+    jsm,
     pool,
   });
 
@@ -154,4 +162,162 @@ test("keeps an outbox entry when PubAck fails", async () => {
   );
 
   assert.equal(outboxEntry.id, event.id);
+});
+
+test("rejects a delayed older snapshot after a newer snapshot is retained", async (t) => {
+  // Arrange
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  await using nats = await startNats();
+  const js = jetstream(nats.nc);
+  const jsm = await js.jetstreamManager();
+  const subject = "events.resource";
+  const older = {
+    data: { revision: 1 },
+    id: randomUUID(),
+    type: "test.snapshot",
+  };
+  const newer = {
+    data: { revision: 2 },
+    id: randomUUID(),
+    type: "test.snapshot",
+  };
+  const publish = js.publish.bind(js);
+  /** @type {(() => ReturnType<typeof js.publish>) | undefined} */
+  let publishLate;
+
+  await jsm.streams.add({ ...stream, max_msgs_per_subject: 1 });
+  await pool.query(
+    "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+    [older.id, subject, older],
+  );
+
+  t.mock.method(
+    js,
+    "publish",
+    async (/** @type {Parameters<typeof js.publish>} */ ...args) => {
+      // The caller times out, but the original bytes can still arrive later.
+      publishLate = () => publish(...args);
+      throw new Error("PUBACK_TIMEOUT");
+    },
+    { times: 1 },
+  );
+
+  // Act
+  await assert.rejects(
+    relayOutbox({ abortSignal: new AbortController().signal, js, jsm, pool }),
+    /PUBACK_TIMEOUT/,
+  );
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM outbox_events WHERE subject = $1", [
+      subject,
+    ]);
+    await client.query(
+      "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+      [newer.id, subject, newer],
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  const abortController = new AbortController();
+  const task = relayOutbox({
+    abortSignal: abortController.signal,
+    js,
+    jsm,
+    pool,
+  });
+  try {
+    await t.waitFor(
+      async () => {
+        const { rowCount } = await pool.query("SELECT id FROM outbox_events");
+        assert.equal(rowCount, 0);
+      },
+      { timeout: 5_000 },
+    );
+  } finally {
+    abortController.abort();
+    await task;
+  }
+
+  // Assert
+  assert.ok(publishLate);
+  await assert.rejects(publishLate(), /wrong last sequence/);
+  const retained = await jsm.streams.getMessage("EVENTS", {
+    last_by_subj: subject,
+  });
+  assert.ok(retained);
+  assert.deepEqual(retained.json(), newer);
+});
+
+test("does not publish after losing the outbox database session", async (t) => {
+  // Arrange
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  await using nats = await startNats();
+  const js = jetstream(nats.nc);
+  const jsm = await js.jetstreamManager();
+  const subject = "events.resource";
+  const older = {
+    data: { revision: 1 },
+    id: randomUUID(),
+    type: "test.snapshot",
+  };
+  const newer = {
+    data: { revision: 2 },
+    id: randomUUID(),
+    type: "test.snapshot",
+  };
+  const getMessage = jsm.streams.getMessage.bind(jsm.streams);
+  const client = await pool.connect();
+  const {
+    rows: [{ pid }],
+  } = await client.query("SELECT pg_backend_pid() AS pid");
+
+  // Let this test observe the query failure instead of exiting the process.
+  client.on("error", () => {});
+  client.release();
+
+  await jsm.streams.add({ ...stream, max_msgs_per_subject: 1 });
+  await pool.query(
+    "INSERT INTO outbox_events (id, subject, event) VALUES ($1, $2, $3)",
+    [older.id, subject, older],
+  );
+  t.mock.method(
+    jsm.streams,
+    "getMessage",
+    async (/** @type {Parameters<typeof getMessage>} */ ...args) => {
+      await pool.query("SELECT pg_terminate_backend($1)", [pid]);
+      await pool.query("DELETE FROM outbox_events WHERE id = $1", [older.id]);
+      await js.publish(subject, JSON.stringify(newer), {
+        expect: { lastSubjectSequence: 0 },
+        msgID: newer.id,
+      });
+      return getMessage(...args);
+    },
+    { times: 1 },
+  );
+
+  // Act
+  const task = relayOutbox({
+    abortSignal: new AbortController().signal,
+    js,
+    jsm,
+    pool,
+  });
+
+  // Assert
+  await assert.rejects(task, /connection|queryable|terminat/i);
+  const retained = await jsm.streams.getMessage("EVENTS", {
+    last_by_subj: subject,
+  });
+  assert.ok(retained);
+  assert.deepEqual(retained.json(), newer);
 });

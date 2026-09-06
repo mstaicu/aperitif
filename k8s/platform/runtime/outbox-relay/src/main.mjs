@@ -112,6 +112,7 @@ try {
     await relayOutbox({
       abortSignal: abortController.signal,
       js,
+      jsm,
       pool,
     });
   } finally {

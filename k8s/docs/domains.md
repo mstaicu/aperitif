@@ -92,6 +92,63 @@ This is a first-seen initializer, not a replicated Account-state projection:
 Plans retains only its local Account plan. It is idempotent and does not store
 the Account revision.
 
+## Message contracts
+
+Intent and payload shape answer different questions:
+
+| Intent: why was this message sent? | Meaning |
+| --- | --- |
+| Command | "Please add this member." Requests an action from its owner; it can be rejected. |
+| Event | "This member was added." Reports a fact; consumers decide how to react. |
+
+| Shape: what data does it carry? | Meaning |
+| --- | --- |
+| Snapshot | Complete exported representation of one resource, not the entire domain database. |
+| Delta | Changes to apply to an existing representation; it needs an appropriate baseline. |
+
+An event can carry a snapshot or a delta. A command can carry a complete desired
+representation or a patch. Payload shape alone does not determine intent.
+If the sender expects a recipient to perform an action, name it as a command,
+not an event describing an action that has not happened yet.
+
+Our snapshot feeds implement
+[Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html#Event-carriedStateTransfer):
+consumers maintain local data without fetching it from the producer. This is an
+architecture pattern, not an envelope field or filename prefix. CloudEvents
+standardizes our event envelope; it does not prescribe a command envelope.
+
+### Files and names
+
+Contracts live in `domains/<domain>/contracts/`. A source filename matches its
+message type. Keep its schema, validation, and builders together in that file;
+export the public API through `src/index.mjs`.
+
+| Example source file | Meaning |
+| --- | --- |
+| `src/events/accounts.account.snapshot.v1.mjs` | Current Account representation; implemented. |
+| `src/events/accounts.account.delta.v1.mjs` | Changes to an Account representation; illustrative. |
+| `src/events/accounts.member.added.v1.mjs` | A member was added; illustrative. |
+| `src/commands/accounts.member.add.v1.mjs` | Request to add a member; illustrative. |
+
+Mirror these paths under `test/` with `.test.mjs` and `examples/` with `.json`.
+Tests import from `src/index.mjs`. Keep V2 beside V1; the filename's `v1` is the
+schema version, not the resource's changing version. The NATS routing subject is
+separate from the message type and CloudEvent resource subject.
+
+An occurrence-specific event such as `member.added` need not include `delta` in
+its name. Do not add separate snapshot/delta folders or an empty `commands/`
+folder. Accounts and Plans currently implement snapshot contracts only.
+
+### Storage follows meaning
+
+For current-state replication, full snapshots allow replacement of pending older
+snapshots and retention of one latest message per resource subject. A delta feed
+needs a baseline and all required subsequent changes; version comparison cannot
+recover missing changes. Do not coalesce required deltas, historical facts, or
+commands where every requested action matters. Define their retention, ordering,
+and idempotency requirements when implementing them; the filename does not
+configure any of these guarantees.
+
 ## Add the smallest product domain
 
 Start with an API, PostgreSQL, migrations, and a domain Makefile:

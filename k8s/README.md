@@ -23,17 +23,23 @@ domain's database.
 
 ## Event processing
 
-Every producer and projector follows these rules:
+For the currently implemented snapshot feeds, every producer and projector
+follows these rules:
 
 1. Commit the source mutation and outbox row in one database transaction.
 2. Publish a structured CloudEvent with `Content-Type: application/cloudevents+json`.
 3. Use the CloudEvent ID as the JetStream message ID.
-4. Delete an outbox row only after JetStream PubAck.
-5. Validate before projecting and acknowledge only after the local transaction
+4. Condition publication on the subject's last JetStream sequence. After a
+   failed attempt, retry from a fresh outbox transaction.
+5. Delete an outbox row only after JetStream PubAck.
+6. Validate before projecting and acknowledge only after the local transaction
    commits.
-6. Never change a published contract version; snapshot-test it.
+7. Never change a published contract version; snapshot-test it.
 
-A current-resource feed is a complete representation, not a history:
+Current-resource feeds implement
+[Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html#Event-carriedStateTransfer):
+consumers maintain local data without fetching it from the source domain.
+Each snapshot is a complete resource representation, not a history:
 
 ```text
 subject: <domain>.<resource>.v<schema>.<resource-id>
@@ -52,6 +58,8 @@ need not retain the source representation or revision.
 A shape change creates a complete new feed such as `v2`. Publish both versions
 only while a real V1 consumer migrates. Historical facts are separate
 append-only streams. Commands are owner-directed requests, not resource feeds.
+See [Message contracts](docs/domains.md#message-contracts) for intent, payload
+shapes, and the filename convention.
 
 ## Local work
 

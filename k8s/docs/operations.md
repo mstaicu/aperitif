@@ -105,9 +105,12 @@ namespace while diagnosing.
 
 Outbox Relay is shared polling code, not a domain capability. A domain owns its
 Relay Deployment, `outbox_events`, NATS stream definitions, and database/NATS
-access. Relay locks queued rows, publishes the CloudEvent, waits for PubAck, and
-deletes only then. It provides at-least-once delivery; projectors must be
-idempotent.
+access. Relay locks a queued row, reads its subject's last JetStream sequence,
+checks the database session, and publishes with that sequence as an expectation.
+It deletes only after PubAck. Failures roll back and exit; the Deployment restarts
+Relay to read the current outbox again. Retries can duplicate publications, so
+projectors must be idempotent. The sequence guard does not impose business
+revision order on append-only facts or deltas.
 
 Its required outbox columns are `id`, `subject`, `event`, optional
 `traceparent` and `tracestate`, and `queued_at`; index `(queued_at, id)`.

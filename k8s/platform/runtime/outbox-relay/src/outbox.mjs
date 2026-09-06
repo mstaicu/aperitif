@@ -15,14 +15,15 @@ const tracer = trace.getTracer("outbox-relay");
  *   abortSignal: AbortSignal,
  *   pool: import("pg").Pool,
  *   js: import("@nats-io/jetstream").JetStreamClient,
+ *   jsm: import("@nats-io/jetstream").JetStreamManager,
  * }} args
  */
-export async function relayOutbox({ abortSignal, js, pool }) {
+export async function relayOutbox({ abortSignal, js, jsm, pool }) {
   const client = await pool.connect();
 
   try {
     while (!abortSignal.aborted) {
-      const relayed = await relayNextEntry({ client, js });
+      const relayed = await relayNextEntry({ client, js, jsm });
 
       if (!relayed) {
         await setTimeout(1_000, undefined, {
@@ -39,9 +40,10 @@ export async function relayOutbox({ abortSignal, js, pool }) {
  * @param {{
  *   client: import("pg").PoolClient,
  *   js: import("@nats-io/jetstream").JetStreamClient,
+ *   jsm: import("@nats-io/jetstream").JetStreamManager,
  * }} args
  */
-async function relayNextEntry({ client, js }) {
+async function relayNextEntry({ client, js, jsm }) {
   try {
     await client.query("BEGIN");
 
@@ -94,10 +96,22 @@ async function relayNextEntry({ client, js }) {
             set: (carrier, key, value) => carrier.set(key, value),
           });
 
+          const streamName = await jsm.streams.find(outboxEntry.subject);
+          const lastMessage = await jsm.streams.getMessage(streamName, {
+            last_by_subj: outboxEntry.subject,
+          });
+
+          // Do not publish if the database session failed during the NATS lookup.
+          await client.query("SELECT 1");
+
           await js.publish(
             outboxEntry.subject,
             JSON.stringify(outboxEntry.event),
             {
+              expect: {
+                lastSubjectSequence: lastMessage?.seq ?? 0,
+                streamName,
+              },
               headers: messageHeaders,
               msgID: outboxEntry.id,
               timeout: 5_000,

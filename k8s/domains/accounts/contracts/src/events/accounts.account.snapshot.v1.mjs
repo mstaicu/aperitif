@@ -1,10 +1,14 @@
 import { Type } from "@sinclair/typebox";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import { randomUUID } from "node:crypto";
 
 export const AccountSnapshotV1Source = "/domains/accounts";
 export const AccountSnapshotV1Type = "accounts.account.snapshot.v1";
 export const AccountV1SubjectPrefix = "accounts.account.v1";
+
+const ajv = new Ajv();
+addFormats(ajv);
 
 const UuidSchema = Type.String({
   pattern:
@@ -22,7 +26,7 @@ const AccountMemberSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const UuidCheck = TypeCompiler.Compile(UuidSchema);
+const checkUuid = ajv.compile(UuidSchema);
 
 export const AccountSnapshotV1DataSchema = Type.Object(
   {
@@ -33,7 +37,7 @@ export const AccountSnapshotV1DataSchema = Type.Object(
       Type.Literal("individual"),
       Type.Literal("organization"),
     ]),
-    revision: Type.Integer({ minimum: 1 }),
+    version: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   },
   { additionalProperties: false },
 );
@@ -42,6 +46,7 @@ export const AccountSnapshotV1EventSchema = Type.Object(
   {
     datacontenttype: Type.Literal("application/json"),
     data: AccountSnapshotV1DataSchema,
+    dataschema: Type.Optional(Type.String({ format: "uri" })),
     id: UuidSchema,
     source: Type.Literal(AccountSnapshotV1Source),
     specversion: Type.Literal("1.0"),
@@ -49,10 +54,21 @@ export const AccountSnapshotV1EventSchema = Type.Object(
       pattern:
         "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
     }),
-    time: Type.String({ minLength: 1 }),
+    time: Type.String({ format: "date-time" }),
+    traceparent: Type.Optional(Type.String({ minLength: 1 })),
+    tracestate: Type.Optional(Type.String({ minLength: 1 })),
     type: Type.Literal(AccountSnapshotV1Type),
   },
-  { additionalProperties: false },
+  {
+    // CloudEvents integer metadata is 32-bit; data.version is separate.
+    propertyNames: { pattern: "^[a-z0-9]+$" },
+    dependencies: { tracestate: ["traceparent"] },
+    additionalProperties: Type.Union([
+      Type.String(),
+      Type.Boolean(),
+      Type.Integer({ minimum: -2147483648, maximum: 2147483647 }),
+    ]),
+  },
 );
 
 /**
@@ -61,16 +77,14 @@ export const AccountSnapshotV1EventSchema = Type.Object(
  * >} AccountSnapshotV1Event
  */
 
-const AccountSnapshotV1EventSchemaCheck = TypeCompiler.Compile(
-  AccountSnapshotV1EventSchema,
-);
+const checkAccountSnapshotV1Event = ajv.compile(AccountSnapshotV1EventSchema);
 
 export const AccountSnapshotV1EventCheck = {
   /**
    * @param {unknown} event
    */
   Check(event) {
-    if (!AccountSnapshotV1EventSchemaCheck.Check(event)) {
+    if (!checkAccountSnapshotV1Event(event)) {
       return false;
     }
 
@@ -82,7 +96,7 @@ export const AccountSnapshotV1EventCheck = {
  * @param {string} accountId
  */
 export function buildAccountV1Subject(accountId) {
-  if (!UuidCheck.Check(accountId)) {
+  if (!checkUuid(accountId)) {
     throw new Error("INVALID_ACCOUNT_ID");
   }
 
@@ -90,15 +104,15 @@ export function buildAccountV1Subject(accountId) {
 }
 
 /**
- * @param {Omit<AccountSnapshotV1Event["data"], "revision">} data
- * @param {number} revision
+ * @param {Omit<AccountSnapshotV1Event["data"], "version">} data
+ * @param {number} version
  * @returns {AccountSnapshotV1Event}
  */
-export function buildAccountSnapshotV1Event(data, revision) {
+export function buildAccountSnapshotV1Event(data, version) {
   const event = {
     data: {
       ...data,
-      revision,
+      version,
     },
     datacontenttype: "application/json",
     id: randomUUID(),
