@@ -37,6 +37,7 @@ jobs:
   check:
     name: check ${{ matrix.path }}
     needs: changes
+    if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
 
     strategy:

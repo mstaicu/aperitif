@@ -20,27 +20,39 @@ jobs:
     name: find changed workloads
     runs-on: ubuntu-24.04
     outputs:
-      workloads: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      # Flatten the domain and runtime lists into one publishing matrix.
+      workloads: >-
+        ${{ toJSON(fromJSON(format('[{0},{1}]',
+          steps.domains.outputs.all_changed_and_modified_files,
+          steps.runtimes.outputs.all_changed_and_modified_files
+        )).*.*) }}
 
     steps:
       - uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
-      - id: changes
+      - id: domains
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: |
-            domains/*/workloads/*/**
-            platform/runtime/*/**
+          files: domains/*/workloads/*/**
           files_ignore: domains/*/workloads/*/infra/**
           dir_names: true
           dir_names_max_depth: 4
           matrix: true
 
+      - id: runtimes
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: platform/runtime/*/**
+          dir_names: true
+          dir_names_max_depth: 3
+          matrix: true
+
   publish:
     name: publish ${{ matrix.workload }}
     needs: workloads
+    if: needs.workloads.outputs.workloads != '[]'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -56,7 +68,11 @@ jobs:
 
       - id: image
         name: read build-unit image
-        run: echo "name=$(yq -r '.build.artifacts[0].image // ""' '${{ matrix.workload }}/skaffold.yaml')" >> "$GITHUB_OUTPUT"
+        env:
+          WORKLOAD: ${{ matrix.workload }}
+        run: |
+          image=$(yq -r '.build.artifacts[0].image // ""' "$WORKLOAD/skaffold.yaml")
+          echo "name=$image" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4.2.0
 
