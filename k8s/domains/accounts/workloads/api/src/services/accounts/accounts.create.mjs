@@ -92,8 +92,8 @@ export const createAccount =
         [
           accountSnapshotEvent.id,
           buildAccountV1Subject(account.id),
-          JSON.stringify(accountSnapshotEvent),
-          JSON.stringify(headers),
+          accountSnapshotEvent,
+          headers,
         ],
       );
 

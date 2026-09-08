@@ -78,7 +78,7 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: accounts-outbox-relay
+    - name: event-bus
     - name: plans-migrations
   wait: true
   timeout: 5m

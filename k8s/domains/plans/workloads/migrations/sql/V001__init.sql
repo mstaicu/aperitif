@@ -52,3 +52,5 @@ CREATE TABLE outbox_messages (
 
 CREATE INDEX outbox_messages_queued_at_id
 ON outbox_messages (queued_at, id);
+
+CREATE INDEX outbox_messages_subject ON outbox_messages (subject);

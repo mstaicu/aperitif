@@ -206,8 +206,9 @@ needs another domain's current state:
 2. Store only the source fields needed locally, plus the source version.
 3. Use one unnamed `DeliverLastPerSubject` consumer, filtered to the feed
    subject family, and run one replica.
-4. In one transaction, ignore equal or older versions; otherwise replace local
-   state and its version.
+4. While the projection schema is unchanged, ignore equal or older
+   `data.version` values. Compare and replace local state and its version in one
+   transaction.
 5. Acknowledge after commit.
 
 If a feed only initializes a local resource on first observation, make that
@@ -228,9 +229,27 @@ Add a resource feed only when another domain needs your current state:
 5. Add a domain-owned `workloads/outbox-relay/` deployment, `streams.json`, and
    NATS access.
 
-For a V2 shape, create a complete V2 feed. Continue V1 only while a consumer is
-migrating. A V2 representation carries everything its own consumers need; it
-does not need to preserve V1's internal shape.
+For a V2 shape, populate a complete V2 feed for every current resource, including
+unchanged resources, through the normal source transaction and outbox rules.
+V1 and V2 representations of the same resource state use the same `data.version`;
+schema V2 does not reset this counter. V2 carries everything its consumers need,
+but does not need to preserve V1's internal shape.
+
+When a consumer needs new projected fields, choose one migration procedure:
+
+- Build a fresh V2 projection and switch reads after its initial bootstrap.
+- Migrate in place, tracking which source schema built the projection alongside
+  `data.version`. For supported versions of the same resource feed, accept newer
+  resource versions without downgrading the schema. Accept an equal resource
+  version when upgrading the schema; reject older resource versions even if the
+  schema is newer. Compare and update the schema, version, and projected data in
+  one transaction. Stop or fence old V1 writers so they cannot overwrite V2 state.
+
+For example, V2 at `data.version: 7` can fill new fields in a V1 projection at
+version 7; it must not replace a projection already at version 8. Preserve
+product-owned data in either migration procedure. Keep publishing V1 while its
+consumers migrate, then retire it. Add migration code only when a consumer needs
+it; there is no generic version router or automatic projection migration today.
 
 Build a contracts package from its directory:
 

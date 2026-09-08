@@ -119,8 +119,8 @@ export async function projectAccountSnapshotV1({ message, pool }) {
               [
                 accountFeaturesSnapshot.id,
                 buildAccountFeaturesV1Subject(accountId),
-                JSON.stringify(accountFeaturesSnapshot),
-                JSON.stringify(headers),
+                accountFeaturesSnapshot,
+                headers,
               ],
             );
           }

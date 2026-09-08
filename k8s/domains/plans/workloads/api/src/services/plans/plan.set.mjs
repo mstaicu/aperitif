@@ -113,7 +113,7 @@ export const setPlan =
             )
             VALUES ($1, $2, $3::jsonb, $4::jsonb)
           `,
-          [event.id, subject, JSON.stringify(event), JSON.stringify(headers)],
+          [event.id, subject, event, headers],
         );
       }
 
