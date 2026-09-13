@@ -1,17 +1,15 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import { registerCreateAccountRoute } from "./accounts/accounts.create.mjs";
-import { registerListAccountsRoute } from "./accounts/accounts.list.mjs";
+import accountsRoutes from "./accounts.mjs";
 
 /**
- * @param {import("../../server.mjs").FastifyInstance} fastify
- * @param {{
- *   accounts: import("../../services/accounts/index.mjs").AccountsService,
+ * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
+ *   pool: import("pg").Pool,
  *   jwks: import("jose").JWTVerifyGetKey,
- * }} opts
+ * }>}
  */
-export const registerV1Routes = async (fastify, { accounts, jwks }) => {
+export default async function v1(fastify, { jwks, pool }) {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -44,16 +42,9 @@ export const registerV1Routes = async (fastify, { accounts, jwks }) => {
     },
   });
 
-  registerListAccountsRoute(fastify, {
-    accounts,
-    jwks,
-  });
-  registerCreateAccountRoute(fastify, {
-    accounts,
-    jwks,
-  });
+  fastify.register(accountsRoutes, { jwks, pool });
 
   await fastify.register(swaggerUI, {
-    routePrefix: "/v1/accounts/docs",
+    routePrefix: "/accounts/docs",
   });
-};
+}

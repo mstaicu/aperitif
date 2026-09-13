@@ -1,16 +1,15 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import { registerSetPlanRoute } from "./accounts/plan.set.mjs";
+import plansRoutes from "./plans.mjs";
 
 /**
- * @param {import("../../server.mjs").FastifyInstance} fastify
- * @param {{
- *   plans: import("../../services/plans/index.mjs").PlansService,
+ * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
+ *   pool: import("pg").Pool,
  *   jwks: import("jose").JWTVerifyGetKey,
- * }} opts
+ * }>}
  */
-export const registerV1Routes = async (fastify, { jwks, plans }) => {
+export default async function v1(fastify, { jwks, pool }) {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -43,12 +42,9 @@ export const registerV1Routes = async (fastify, { jwks, plans }) => {
     },
   });
 
-  registerSetPlanRoute(fastify, {
-    jwks,
-    plans,
-  });
+  fastify.register(plansRoutes, { jwks, pool });
 
   await fastify.register(swaggerUI, {
-    routePrefix: "/v1/plans/docs",
+    routePrefix: "/plans/docs",
   });
-};
+}

@@ -191,7 +191,7 @@ From the `k8s` root, start Relay:
 
 ```sh
 npm ci --prefix platform/runtime/outbox-relay
-node platform/runtime/outbox-relay/src/main.mjs
+node platform/runtime/outbox-relay/src/index.mjs
 ```
 
 In the other terminal, check readiness and enqueue a plain JSON message:

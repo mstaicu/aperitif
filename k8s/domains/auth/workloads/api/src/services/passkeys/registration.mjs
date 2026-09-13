@@ -2,7 +2,7 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 import { DatabaseError } from "pg";
 
-import { createSession } from "../sessions/session.create.mjs";
+import { createSession } from "../sessions/create.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
@@ -69,44 +69,43 @@ const verifyPasskeyRegistration = async ({ origin, pool }, credential) => {
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @returns {(credential: import("@simplewebauthn/server").RegistrationResponseJSON) => Promise<{
+ * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
+ * @returns {Promise<{
  *   expires_in: number,
  *   session_token: string,
  * }>}
  */
-export const register =
-  ({ origin, pool }) =>
-  async (credential) => {
-    let client;
+export const register = async ({ origin, pool }, credential) => {
+  let client;
 
-    try {
-      const registration = await verifyPasskeyRegistration(
-        { origin, pool },
-        credential,
-      );
+  try {
+    const registration = await verifyPasskeyRegistration(
+      { origin, pool },
+      credential,
+    );
 
-      client = await pool.connect();
+    client = await pool.connect();
 
-      await client.query("BEGIN");
+    await client.query("BEGIN");
 
-      const {
-        rows: [user],
-      } = await client.query(
-        `
+    const {
+      rows: [user],
+    } = await client.query(
+      `
           INSERT INTO users (id)
           VALUES ($1)
           ON CONFLICT DO NOTHING
           RETURNING id
         `,
-        [registration.userId],
-      );
+      [registration.userId],
+    );
 
-      if (!user) {
-        throw new Error("USER_ALREADY_REGISTERED");
-      }
+    if (!user) {
+      throw new Error("USER_ALREADY_REGISTERED");
+    }
 
-      await client.query(
-        `
+    await client.query(
+      `
           INSERT INTO passkey_credentials
           (
             user_id,
@@ -116,35 +115,35 @@ export const register =
           )
           VALUES ($1, $2, $3, $4)
         `,
-        [
-          registration.userId,
-          registration.credentialId,
-          registration.publicKey,
-          registration.signCount,
-        ],
-      );
+      [
+        registration.userId,
+        registration.credentialId,
+        registration.publicKey,
+        registration.signCount,
+      ],
+    );
 
-      const session = await createSession({
-        client,
-        userId: registration.userId,
+    const session = await createSession({
+      client,
+      userId: registration.userId,
+    });
+
+    await client.query("COMMIT");
+
+    return {
+      expires_in: session.expiresIn,
+      session_token: session.sessionToken,
+    };
+  } catch (err) {
+    await client?.query("ROLLBACK").catch(() => {});
+
+    if (err instanceof DatabaseError && err.code === "23505") {
+      throw new Error("CREDENTIAL_ALREADY_EXISTS", {
+        cause: err,
       });
-
-      await client.query("COMMIT");
-
-      return {
-        expires_in: session.expiresIn,
-        session_token: session.sessionToken,
-      };
-    } catch (err) {
-      await client?.query("ROLLBACK").catch(() => {});
-
-      if (err instanceof DatabaseError && err.code === "23505") {
-        throw new Error("CREDENTIAL_ALREADY_EXISTS", {
-          cause: err,
-        });
-      }
-      throw err;
-    } finally {
-      client?.release();
     }
-  };
+    throw err;
+  } finally {
+    client?.release();
+  }
+};

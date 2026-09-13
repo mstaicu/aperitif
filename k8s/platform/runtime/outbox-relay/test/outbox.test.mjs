@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { relayOutbox } from "../src/outbox.mjs";
+import { relayOutbox } from "../src/app.mjs";
 import { startNats } from "./fixtures/nats.mjs";
 import { startPostgres } from "./fixtures/postgres.mjs";
 

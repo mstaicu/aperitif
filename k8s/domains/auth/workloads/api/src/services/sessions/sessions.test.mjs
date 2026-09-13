@@ -4,18 +4,19 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { createSessionsService } from "./index.mjs";
-import { createSession } from "./session.create.mjs";
+import { createAccessToken } from "./create-access-token.mjs";
+import { createSession } from "./create.mjs";
+import { revokeSession } from "./revoke.mjs";
 
 test("sessions issue access tokens and revoke independently", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const { privateKey, publicKey } = await generateKeyPair("ES256");
-  const sessions = createSessionsService({
+  const sessions = {
     pool,
     signingKey: { kid: "test", privateKey },
-  });
+  };
   const userId = randomUUID();
 
   await pool.query("INSERT INTO users (id) VALUES ($1)", [userId]);
@@ -28,15 +29,15 @@ test("sessions issue access tokens and revoke independently", async () => {
     const phone = await createSession({ client, userId });
 
     // Act
-    await sessions.revokeSession({ session_token: phone.sessionToken });
-    const access = await sessions.createAccessToken({
+    await revokeSession(sessions, { session_token: phone.sessionToken });
+    const access = await createAccessToken(sessions, {
       session_token: laptop.sessionToken,
     });
     const { payload, protectedHeader } = await jwtVerify(
       access.access_token,
       publicKey,
     );
-    const revokedAccess = sessions.createAccessToken({
+    const revokedAccess = createAccessToken(sessions, {
       session_token: phone.sessionToken,
     });
 

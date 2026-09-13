@@ -1,26 +1,9 @@
-import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
-import Fastify, { LogController } from "fastify";
 import { once } from "node:events";
 import process from "node:process";
 import { Pool } from "pg";
 
+import { buildApp } from "./app.mjs";
 import { createJwtKeys } from "./platform/jwt-keys.mjs";
-import problemDetails from "./platform/problem-details.mjs";
-import jwksRoutes from "./routes/jwks.mjs";
-import probes from "./routes/probes.mjs";
-import { registerV1Routes } from "./routes/v1/index.mjs";
-import { createPasskeysService } from "./services/passkeys/index.mjs";
-import { createSessionsService } from "./services/sessions/index.mjs";
-
-/**
- * @typedef {Fastify.FastifyInstance<
- *   Fastify.RawServerDefault,
- *   Fastify.RawRequestDefaultExpression,
- *   Fastify.RawReplyDefaultExpression,
- *   Fastify.FastifyBaseLogger,
- *   import("@fastify/type-provider-typebox").TypeBoxTypeProvider
- * >} FastifyInstance
- */
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -28,39 +11,23 @@ const pool = new Pool({
 
 pool.on("error", (err) => console.error(err));
 
-const { jwks, signingKey } = await createJwtKeys();
+try {
+  const { jwks, signingKey } = await createJwtKeys();
 
-const passkeys = createPasskeysService({
-  origin: /** @type {string} */ (process.env.ORIGIN),
-  pool,
-});
-const sessions = createSessionsService({
-  pool,
-  signingKey,
-});
+  await using app = buildApp({
+    jwks,
+    origin: /** @type {string} */ (process.env.ORIGIN),
+    pool,
+    signingKey,
+  });
 
-/** @type {FastifyInstance} */
-await using app = Fastify({
-  logController: new LogController({ disableRequestLogging: true }),
-  logger: true,
-})
-  .setValidatorCompiler(TypeBoxValidatorCompiler)
-  .withTypeProvider();
+  await app.listen({ host: "0.0.0.0", port: 3000 });
 
-app.addHook("onClose", () => pool.end());
+  const [signal] = await Promise.race(
+    ["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
+  );
 
-await app.register(problemDetails);
-await app.register(probes, { pool });
-await app.register(jwksRoutes, { jwks });
-await registerV1Routes(app, {
-  passkeys,
-  sessions,
-});
-
-await app.listen({ host: "0.0.0.0", port: 3000 });
-
-const [signal] = await Promise.race(
-  ["SIGINT", "SIGTERM", "SIGUSR2"].map((code) => once(process, code)),
-);
-
-app.log.info({ signal }, "closing server");
+  app.log.info({ signal }, "closing server");
+} finally {
+  await pool.end();
+}

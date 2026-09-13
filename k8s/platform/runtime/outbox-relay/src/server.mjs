@@ -1,25 +1,12 @@
 import { jetstream } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
-import { NodeSDK } from "@opentelemetry/sdk-node";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { relayOutbox } from "./outbox.mjs";
-
-const required = ["DATABASE_URL", "NATS_STREAMS_PATH", "NATS_URL"];
-
-for (const envVar of required) {
-  if (!process.env[envVar]) {
-    throw new Error(`${envVar} is required`);
-  }
-}
-
-if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT && !process.env.OTEL_SERVICE_NAME) {
-  throw new Error("OTEL_SERVICE_NAME is required");
-}
+import { relayOutbox } from "./app.mjs";
 
 const streamConfigurations = JSON.parse(
   await readFile(/** @type {string} */ (process.env.NATS_STREAMS_PATH), "utf8"),
@@ -44,14 +31,6 @@ const abortController = new AbortController();
 for (const signal of ["SIGINT", "SIGTERM", "SIGUSR2"]) {
   process.once(signal, () => abortController.abort());
 }
-
-const otel = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
-  ? new NodeSDK({
-      serviceName: process.env.OTEL_SERVICE_NAME,
-    })
-  : undefined;
-
-otel?.start();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -121,5 +100,4 @@ try {
   }
 } finally {
   await pool.end();
-  await otel?.shutdown();
 }

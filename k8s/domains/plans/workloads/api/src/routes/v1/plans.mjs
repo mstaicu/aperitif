@@ -1,17 +1,17 @@
-import { authenticateOperator } from "../../../platform/authentication.mjs";
-import { ProblemResponse } from "../../../platform/problem-details.mjs";
-import { PlanBody, PlanParams, PlanResponse } from "./plan.schemas.mjs";
+import { authenticateOperator } from "../../platform/authentication.mjs";
+import { ProblemResponse } from "../../platform/problem-details.mjs";
+import { setPlan } from "../../services/plans/set.mjs";
+import { PlanBody, PlanParams, PlanResponse } from "./plans.schemas.mjs";
 
 /**
- * @param {import("../../../server.mjs").FastifyInstance} fastify
- * @param {{
- *   plans: import("../../../services/plans/index.mjs").PlansService,
+ * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
+ *   pool: import("pg").Pool,
  *   jwks: import("jose").JWTVerifyGetKey,
- * }} opts
+ * }>}
  */
-export function registerSetPlanRoute(fastify, { jwks, plans }) {
+export default async function plansRoutes(fastify, { jwks, pool }) {
   fastify.put(
-    "/v1/accounts/:account_id/plan",
+    "/accounts/:account_id/plan",
     {
       schema: {
         body: PlanBody,
@@ -39,10 +39,13 @@ export function registerSetPlanRoute(fastify, { jwks, plans }) {
       });
 
       return reply.send(
-        await plans.setPlan({
-          accountId: req.params.account_id,
-          planId: req.body.plan_id,
-        }),
+        await setPlan(
+          { pool },
+          {
+            accountId: req.params.account_id,
+            planId: req.body.plan_id,
+          },
+        ),
       );
     },
   );

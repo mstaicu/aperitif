@@ -7,32 +7,33 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { createAccountsService } from "./index.mjs";
+import { createAccount } from "./create.mjs";
+import { listAccounts } from "./list.mjs";
 
 test("creates account ownership and lists only the caller's accounts", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
-  const accounts = createAccountsService({ pool });
+  const accounts = { pool };
   const userId = randomUUID();
 
   // Act
-  const zulu = await accounts.createAccount({
+  const zulu = await createAccount(accounts, {
     currentUserId: userId,
     name: "Zulu",
     type: "organization",
   });
-  const alpha = await accounts.createAccount({
+  const alpha = await createAccount(accounts, {
     currentUserId: userId,
     name: "Alpha",
     type: "individual",
   });
-  await accounts.createAccount({
+  await createAccount(accounts, {
     currentUserId: randomUUID(),
     name: "Other",
     type: "individual",
   });
-  const listed = await accounts.listAccounts({ currentUserId: userId });
+  const listed = await listAccounts(accounts, { currentUserId: userId });
 
   // Assert
   const { rows: outbox } = await pool.query(

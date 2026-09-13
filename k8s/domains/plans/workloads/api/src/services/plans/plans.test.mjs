@@ -8,14 +8,14 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { createPlansService } from "./index.mjs";
+import { setPlan } from "./set.mjs";
 
 test("changes a plan once and replaces its pending feature snapshot", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const accountId = randomUUID();
-  const plans = createPlansService({ pool });
+  const plans = { pool };
 
   await pool.query(
     `INSERT INTO plans (id, name) VALUES ('pro', 'Pro');
@@ -45,8 +45,8 @@ test("changes a plan once and replaces its pending feature snapshot", async () =
   );
 
   // Act
-  const result = await plans.setPlan({ accountId, planId: "pro" });
-  const repeated = await plans.setPlan({ accountId, planId: "pro" });
+  const result = await setPlan(plans, { accountId, planId: "pro" });
+  const repeated = await setPlan(plans, { accountId, planId: "pro" });
 
   // Assert
   const { rows: accountPlans } = await pool.query(

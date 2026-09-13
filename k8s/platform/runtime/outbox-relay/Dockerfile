@@ -26,7 +26,7 @@ EXPOSE 3000
 
 USER node
 
-CMD ["./node_modules/.bin/nodemon", "src/main.mjs"]
+CMD ["./node_modules/.bin/nodemon", "src/index.mjs"]
 
 FROM base AS prod
 
@@ -37,4 +37,4 @@ COPY --chown=node:node src ./src
 
 USER node
 
-CMD ["node", "src/main.mjs"]
+CMD ["node", "src/index.mjs"]

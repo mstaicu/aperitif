@@ -2,20 +2,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { startPostgres } from "../../../test/fixtures/postgres.mjs";
-import { createPasskeysService } from "./index.mjs";
+import { createAuthenticationOptions } from "./authentication-options.mjs";
+import { createRegistrationOptions } from "./registration-options.mjs";
 
 test("stores challenges and requires passkeys for the configured relying party", async () => {
   // Arrange
   await using postgres = await startPostgres();
   const { pool } = postgres;
-  const passkeys = createPasskeysService({
+  const passkeys = {
     origin: "https://auth.test",
     pool,
-  });
+  };
 
   // Act
-  const registration = await passkeys.createRegistrationOptions();
-  const login = await passkeys.createAuthenticationOptions();
+  const registration = await createRegistrationOptions(passkeys);
+  const login = await createAuthenticationOptions(passkeys);
 
   // Assert
   const { rows: registrationChallenges } = await pool.query(

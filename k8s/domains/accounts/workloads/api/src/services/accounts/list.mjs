@@ -1,6 +1,7 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @returns {(args: { currentUserId: string }) => Promise<{
+ * @param {{ currentUserId: string }} args
+ * @returns {Promise<{
  *   accounts: {
  *     id: string,
  *     name: string,
@@ -8,11 +9,9 @@
  *   }[],
  * }>}
  */
-export const listAccounts =
-  ({ pool }) =>
-  async ({ currentUserId }) => {
-    const { rows } = await pool.query(
-      `
+export const listAccounts = async ({ pool }, { currentUserId }) => {
+  const { rows } = await pool.query(
+    `
         SELECT a.id,
           a.name,
           a.type
@@ -21,14 +20,14 @@ export const listAccounts =
         WHERE am.user_id = $1
         ORDER BY a.name, a.id
       `,
-      [currentUserId],
-    );
+    [currentUserId],
+  );
 
-    return {
-      accounts: rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        type: row.type,
-      })),
-    };
+  return {
+    accounts: rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      type: row.type,
+    })),
   };
+};

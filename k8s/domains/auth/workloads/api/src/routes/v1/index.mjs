@@ -1,21 +1,17 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
-import { registerAuthenticationRoute } from "./passkeys/authentication.mjs";
-import { registerAuthenticationOptionsRoute } from "./passkeys/authentication.options.mjs";
-import { registerRegistrationRoute } from "./passkeys/registration.mjs";
-import { registerRegistrationOptionsRoute } from "./passkeys/registration.options.mjs";
-import { registerAccessTokenRoute } from "./session/access-tokens.create.mjs";
-import { registerRevokeSessionRoute } from "./session/session.delete.mjs";
+import passkeysRoutes from "./passkeys.mjs";
+import sessionsRoutes from "./sessions.mjs";
 
 /**
- * @param {import("../../server.mjs").FastifyInstance} fastify
- * @param {{
- *   passkeys: import("../../services/passkeys/index.mjs").PasskeysService,
- *   sessions: import("../../services/sessions/index.mjs").SessionsService,
- * }} opts
+ * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
+ *   pool: import("pg").Pool,
+ *   origin: string,
+ *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
+ * }>}
  */
-export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
+export default async function v1(fastify, { origin, pool, signingKey }) {
   await fastify.register(swagger, {
     openapi: {
       components: {
@@ -53,26 +49,10 @@ export const registerV1Routes = async (fastify, { passkeys, sessions }) => {
     },
   });
 
-  registerAuthenticationOptionsRoute(fastify, {
-    passkeys,
-  });
-  registerAuthenticationRoute(fastify, {
-    passkeys,
-  });
-  registerRegistrationOptionsRoute(fastify, {
-    passkeys,
-  });
-  registerRegistrationRoute(fastify, {
-    passkeys,
-  });
-  registerAccessTokenRoute(fastify, {
-    sessions,
-  });
-  registerRevokeSessionRoute(fastify, {
-    sessions,
-  });
+  fastify.register(passkeysRoutes, { origin, pool });
+  fastify.register(sessionsRoutes, { pool, signingKey });
 
   await fastify.register(swaggerUI, {
-    routePrefix: "/v1/auth/docs",
+    routePrefix: "/auth/docs",
   });
-};
+}
