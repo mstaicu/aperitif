@@ -29,7 +29,7 @@ EXPOSE 3000
 
 USER node
 
-CMD ["node", "--watch", "--import", "remix/node-tsx", "src/server.ts"]
+CMD ["./node_modules/.bin/nodemon"]
 
 # PROD
 FROM base AS prod
@@ -46,4 +46,4 @@ EXPOSE 3000
 
 USER node
 
-CMD ["node", "--import", "remix/node-tsx", "src/server.ts"]
+CMD ["node", "--import", "remix/node-tsx", "src/index.ts"]
