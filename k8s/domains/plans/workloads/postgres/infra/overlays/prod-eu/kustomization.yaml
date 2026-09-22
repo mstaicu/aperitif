@@ -5,6 +5,7 @@ namespace: plans
 
 resources:
   - ../../base
+  - networkpolicy.yaml
 
 patches:
   - path: deployment.yaml

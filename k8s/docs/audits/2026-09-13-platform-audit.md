@@ -353,7 +353,7 @@ Dates below are publication/version dates when stated; otherwise the source is l
 <!-- Repository evidence at audited commit; absolute links open in Codex. -->
 [account-create]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/api/src/services/accounts/accounts.create.mjs:29
 [accounts-contract]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/contracts/src/events/accounts.account.snapshot.v1.mjs:26
-[accounts-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/outbox-relay/infra/base/streams.json:1
+[accounts-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/outbox-relay/infra/overlays/prod-eu/streams.json:1
 [auth-ui]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/auth/workloads/ui/src/passkeys.ts:1
 [image-automation]: /Users/mircea/work/projects/mircea/aperitif/k8s/clusters/prod-eu/images/automation.yaml:1
 [image-policy]: /Users/mircea/work/projects/mircea/aperitif/k8s/clusters/prod-eu/images/accounts.yaml:18
@@ -364,7 +364,7 @@ Dates below are publication/version dates when stated; otherwise the source is l
 [nats-topology]: /Users/mircea/work/projects/mircea/aperitif/k8s/platform/cluster/event-bus/overlays/prod-eu/statefulset.yaml:1
 [operations]: /Users/mircea/work/projects/mircea/aperitif/k8s/docs/operations.md:1
 [plan-set]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/plans/workloads/api/src/services/plans/plan.set.mjs:24
-[plans-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/plans/workloads/outbox-relay/infra/base/streams.json:1
+[plans-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/plans/workloads/outbox-relay/infra/overlays/prod-eu/streams.json:1
 [publish-workflow]: /Users/mircea/work/projects/mircea/aperitif/k8s/.github/workflows/publish-images.yaml:1
 [relay]: /Users/mircea/work/projects/mircea/aperitif/k8s/platform/runtime/outbox-relay/src/outbox.mjs:46
 [session-route]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/auth/workloads/api/src/routes/v1/session/access-tokens.create.mjs:39

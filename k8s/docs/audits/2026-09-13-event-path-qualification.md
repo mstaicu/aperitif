@@ -38,7 +38,7 @@ Existing relay tests additionally exercise malformed headers, unavailable JetStr
 
 ### 1. Broker and stream ownership
 
-Files: `platform/cluster/event-bus/{base,overlays/prod-eu}` and each domain's `workloads/outbox-relay/infra/base/streams.json`.
+Files: `platform/cluster/event-bus/{base,overlays/prod-eu}` and each domain's `workloads/outbox-relay/infra/overlays/prod-eu/streams.json`.
 
 Three broker replicas, three stream replicas, file storage, and production node anti-affinity fit the intended single-node failure tolerance. NATS replication relies on a quorum; it is not a guarantee against total storage loss. Kubernetes volume permissions, DigitalOcean storage behavior, actual node placement, and power-loss durability were reviewed as configuration but were not exercised by the Docker test. [NATS replication guidance](https://docs.nats.io/learn/jetstream/surviving-node-loss).
 

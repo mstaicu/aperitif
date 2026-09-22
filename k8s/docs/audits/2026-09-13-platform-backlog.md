@@ -426,7 +426,7 @@ The next stage is reached when one complete product composition demonstrates ind
 [accounts-contract]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/contracts/src/events/accounts.account.snapshot.v1.mjs:26
 [accounts-flux]: /Users/mircea/work/projects/mircea/aperitif/k8s/clusters/prod-eu/domains/accounts.yaml:28
 [accounts-sql]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/migrations/sql/V001__init.sql:17
-[accounts-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/outbox-relay/infra/base/streams.json:1
+[accounts-stream]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/accounts/workloads/outbox-relay/infra/overlays/prod-eu/streams.json:1
 [auth-make]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/auth/Makefile:8
 [auth-services]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/auth/workloads/api/src/services/passkeys/registration.mjs:1
 [auth-ui]: /Users/mircea/work/projects/mircea/aperitif/k8s/domains/auth/workloads/ui/src/passkeys.ts:1

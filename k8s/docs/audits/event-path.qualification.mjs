@@ -48,7 +48,7 @@ test('qualify actual replicated streams and the composed snapshot path', { timeo
   const js = jetstream(nc);
   const jsm = await eventually(() => js.jetstreamManager());
   for (const domain of ['accounts', 'plans']) {
-    const [stream] = JSON.parse(await file(`domains/${domain}/workloads/outbox-relay/infra/base/streams.json`));
+    const [stream] = JSON.parse(await file(`domains/${domain}/workloads/outbox-relay/infra/overlays/prod-eu/streams.json`));
     await eventually(() => jsm.streams.add(stream));
     await eventually(async () => {
       const info = await jsm.streams.info(stream.name);

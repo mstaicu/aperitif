@@ -5,6 +5,7 @@ namespace: auth
 
 resources:
   - ../../base
+  - networkpolicy.yaml
 
 patches:
   - path: cronjob.yaml

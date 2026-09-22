@@ -5,6 +5,7 @@ namespace: accounts
 
 resources:
   - ../../base
+  - networkpolicy.yaml
 
 patches:
   - path: job.yaml

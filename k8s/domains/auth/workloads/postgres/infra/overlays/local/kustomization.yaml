@@ -6,6 +6,7 @@ namespace: auth
 resources:
   - namespace.yaml
   - ../../base
+  - networkpolicy.yaml
 
 patches:
   - path: deployment.yaml
