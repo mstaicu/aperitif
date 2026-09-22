@@ -1,4 +1,4 @@
-name: pull request check
+name: Checks
 
 on:
   pull_request:
@@ -14,17 +14,19 @@ permissions:
 
 jobs:
   changes:
-    name: find changed units
+    name: Find changes
     runs-on: ubuntu-24.04
     outputs:
       paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
-      - uses: actions/checkout@v6.1.0
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - id: changes
+        name: Find domain and runtime changes
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: |
@@ -32,10 +34,12 @@ jobs:
             platform/runtime/**
           dir_names: true
           dir_names_max_depth: 2
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
           matrix: true
 
   check:
-    name: check ${{ matrix.path }}
+    name: Check · ${{ matrix.path }}
     needs: changes
     if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
@@ -46,13 +50,15 @@ jobs:
         path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
-      - uses: actions/checkout@v6.1.0
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
 
-      - uses: actions/setup-node@v6.5.0
+      - name: Set up Node
+        uses: actions/setup-node@v6.5.0
         with:
           node-version: 26
 
-      - uses: azure/setup-kubectl@v4.0.1
-
-      - name: check
-        run: make -C "${{ matrix.path }}" check
+      - name: Run checks
+        env:
+          UNIT: ${{ matrix.path }}
+        run: make -C "$UNIT" check

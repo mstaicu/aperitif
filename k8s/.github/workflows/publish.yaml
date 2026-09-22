@@ -1,4 +1,4 @@
-name: publish images
+name: Publish
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     paths:
       - "domains/*/workloads/*/**"
       - "platform/runtime/*/**"
-      - "!domains/*/workloads/*/infra/**"
+      - "!**/infra/**"
 
 concurrency:
   group: publish-images
@@ -16,12 +16,11 @@ permissions:
   contents: read
 
 jobs:
-  workloads:
-    name: find changed workloads
+  changes:
+    name: Find changes
     runs-on: ubuntu-24.04
     outputs:
-      # Flatten the domain and runtime lists into one publishing matrix.
-      workloads: >-
+      paths: >-
         ${{ toJSON(fromJSON(format('[{0},{1}]',
           steps.domains.outputs.all_changed_and_modified_files,
           steps.runtimes.outputs.all_changed_and_modified_files
@@ -33,26 +32,33 @@ jobs:
           fetch-depth: 0
 
       - id: domains
+        name: Domain changes
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: domains/*/workloads/*/**
-          files_ignore: domains/*/workloads/*/infra/**
+          files_ignore: "**/infra/**"
           dir_names: true
           dir_names_max_depth: 4
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
           matrix: true
 
       - id: runtimes
+        name: Runtime changes
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: platform/runtime/*/**
+          files_ignore: "**/infra/**"
           dir_names: true
           dir_names_max_depth: 3
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
           matrix: true
 
   publish:
-    name: publish ${{ matrix.workload }}
-    needs: workloads
-    if: needs.workloads.outputs.workloads != '[]'
+    name: Publish · ${{ matrix.path }}
+    needs: changes
+    if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -61,17 +67,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        workload: ${{ fromJSON(needs.workloads.outputs.workloads) }}
+        path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
       - uses: actions/checkout@v6.1.0
 
       - id: image
-        name: read build-unit image
+        name: Read image name
         env:
-          WORKLOAD: ${{ matrix.workload }}
+          COMPONENT: ${{ matrix.path }}
         run: |
-          image=$(yq -r '.build.artifacts[0].image // ""' "$WORKLOAD/skaffold.yaml")
+          image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
           echo "name=$image" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4.2.0
@@ -83,31 +89,31 @@ jobs:
           password: ${{ github.token }}
 
       - id: build
-        name: build and publish image
         uses: docker/build-push-action@v7.3.0
         if: steps.image.outputs.name != ''
         with:
-          context: ${{ matrix.workload }}
+          context: ${{ matrix.path }}
           target: prod
           push: true
           provenance: mode=max
           sbom: true
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
 
-      - name: scan image
-        uses: aquasecurity/trivy-action@v0.36.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         if: steps.image.outputs.name != ''
         with:
           image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
           scanners: vuln
-          vuln-type: os,library
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: 1
 
-      - name: promote image to 'latest'
+      - name: Promote latest
         if: steps.image.outputs.name != ''
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: >
           docker buildx imagetools create
-          --tag "${{ steps.image.outputs.name }}:latest"
-          "${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}"
+          --tag "$IMAGE:latest"
+          "$IMAGE@$DIGEST"

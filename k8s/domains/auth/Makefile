@@ -5,7 +5,7 @@
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-check: ## Validate Auth workloads and manifests.
+check: ## Validate Auth workloads and manifests without decryption keys.
 	cd workloads/api && npm ci
 	cd workloads/api && npm exec -- eslint .
 	cd workloads/api && npm exec -- tsc -p jsconfig.json --noEmit
@@ -20,7 +20,6 @@ check: ## Validate Auth workloads and manifests.
 	kubectl kustomize workloads/postgres/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/migrations/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/retention/infra/overlays/local >/dev/null
-	kustomize build --enable-alpha-plugins --enable-exec workloads/api/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/local >/dev/null
 
 migrate: ## Deploy the Auth database and run its migrations.
