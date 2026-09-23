@@ -6,12 +6,7 @@ metadata:
 
 requires:
   - path: workloads/postgres/skaffold.yaml
-    configs: [auth-postgres]
   - path: workloads/migrations/skaffold.yaml
-    configs: [auth-migrations]
   - path: workloads/api/skaffold.yaml
-    configs: [auth-api]
   - path: workloads/ui/skaffold.yaml
-    configs: [auth-ui]
   - path: workloads/retention/skaffold.yaml
-    configs: [auth-retention]

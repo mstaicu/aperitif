@@ -15,10 +15,17 @@ Then use the domain interface:
 
 ```sh
 make -C domains/<domain> check
-make -C domains/<domain> migrate
-make -C domains/<domain> deploy
+make -C domains/<domain> up
 make -C domains/<domain> dev
+make -C domains/<domain> down
 ```
+
+`up` waits for PostgreSQL, runs and waits for the migration Job, and then deploys
+the runtime workloads. `dev` performs the same setup before starting Skaffold's
+development loop for the runtime workloads. A completed migration Job is not
+rerun implicitly; delete it explicitly before `up` or `dev` when a disposable
+database needs the migration to run again. `down` deletes the resources in the
+domain's Skaffold graph.
 
 `ingress deploy` changes the local workstation and selected cluster: it installs
 mkcert, local host entries, and temporary TLS. Do not run it against production.

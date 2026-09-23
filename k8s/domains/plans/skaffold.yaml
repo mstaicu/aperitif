@@ -6,12 +6,7 @@ metadata:
 
 requires:
   - path: workloads/postgres/skaffold.yaml
-    configs: [plans-postgres]
   - path: workloads/migrations/skaffold.yaml
-    configs: [plans-migrations]
   - path: workloads/api/skaffold.yaml
-    configs: [plans-api]
   - path: workloads/outbox-relay/skaffold.yaml
-    configs: [plans-outbox-relay]
   - path: workloads/accounts-projection/skaffold.yaml
-    configs: [plans-accounts-projection]

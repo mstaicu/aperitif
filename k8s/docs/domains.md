@@ -191,13 +191,23 @@ domains/<domain>/
     postgres/            # skaffold.yaml and infra/
     migrations/          # Dockerfile, SQL, skaffold.yaml, and infra/
     api/                 # source, Dockerfile, skaffold.yaml, and infra/
-  Makefile               # check, migrate, deploy, dev
+  Makefile               # check, up, dev, down
   skaffold.yaml          # composes the domain workloads
 ```
 
-Every workload owns `skaffold.yaml` and `infra/`. It owns source only when the
-source belongs to the domain. The domain owns its deployment configuration even
-when it uses an upstream image or shared runtime.
+Every workload owns `skaffold.yaml` and `infra/`. Its Skaffold config builds the
+workload when it owns an image, renders its local overlay, and deploys it with
+`kubectl`. Each file defines one named config, so parents import it by path
+without an additional config selector. It owns source only when the source
+belongs to the domain. The domain config only requires its workload configs. The
+domain owns its deployment configuration even when it uses an upstream image or
+shared runtime.
+
+Production deployment does not run Skaffold; Flux reconciles the `prod-eu`
+overlays. CI reads component image identities from the component configs. A
+local environment can compose complete domains by requiring their Skaffold
+configs. Skaffold resolves the transitive dependency graph and reuses a shared
+config, such as the Relay image build, when several domains require it.
 
 Add a current-state projection only when local authorization or business logic
 needs another domain's current state:

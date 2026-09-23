@@ -1,41 +1,33 @@
-.DEFAULT_GOAL := help
+.PHONY: check up dev e2e down
 
-.PHONY: help check migrate deploy dev e2e
-
-help: ## Show available targets.
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-check: ## Validate Auth workloads and manifests without decryption keys.
-	cd workloads/api && npm ci
-	cd workloads/api && npm exec -- eslint .
-	cd workloads/api && npm exec -- tsc -p jsconfig.json --noEmit
-	cd workloads/api && npm test
-	cd workloads/ui && npm ci
-	cd workloads/ui && npm run check
+check:
+	npm --prefix workloads/api ci
+	npm --prefix workloads/api run check
+	npm --prefix workloads/ui ci
+	npm --prefix workloads/ui run check
 	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/retention/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/prod-eu >/dev/null
-	kubectl kustomize workloads/postgres/infra/overlays/local >/dev/null
-	kubectl kustomize workloads/migrations/infra/overlays/local >/dev/null
-	kubectl kustomize workloads/retention/infra/overlays/local >/dev/null
-	kubectl kustomize workloads/ui/infra/overlays/local >/dev/null
+	skaffold render --digest-source=none --offline >/dev/null
 
-migrate: ## Deploy the Auth database and run its migrations.
+up:
 	skaffold run -m auth-postgres
-	kubectl delete job -n auth migrations --ignore-not-found
-	skaffold run --force -m auth-migrations
-	kubectl wait -n auth --for=condition=complete --timeout=300s job/migrations || { kubectl logs -n auth job/migrations --all-containers=true; exit 1; }
+	skaffold run -m auth-migrations
+	kubectl wait --namespace=auth --for=condition=complete --timeout=300s job/migrations
+	skaffold run -m auth-api,auth-retention,auth-ui
 
-deploy: migrate ## Deploy Auth once in the current cluster.
-	skaffold run -m auth-api,auth-ui,auth-retention
+dev:
+	skaffold run -m auth-postgres
+	skaffold run -m auth-migrations
+	kubectl wait --namespace=auth --for=condition=complete --timeout=300s job/migrations
+	skaffold dev -m auth-api,auth-retention,auth-ui
 
-dev: migrate ## Start the Auth development loop.
-	skaffold dev -m auth-api,auth-ui,auth-retention
+e2e: up
+	npm --prefix workloads/ui ci
+	npm --prefix workloads/ui exec -- playwright install chromium
+	npm --prefix workloads/ui run test:e2e
 
-e2e: migrate ## Run Auth browser journeys.
-	skaffold run -m auth-api,auth-ui
-	cd workloads/ui && npm ci
-	cd workloads/ui && npm exec -- playwright install chromium
-	cd workloads/ui && npm run test:e2e
+down:
+	skaffold delete

@@ -76,9 +76,9 @@ make -C platform/cluster/event-bus deploy
 make -C platform/cluster/observability deploy
 
 make -C domains/<domain> check
-make -C domains/<domain> migrate
-make -C domains/<domain> deploy
+make -C domains/<domain> up
 make -C domains/<domain> dev
+make -C domains/<domain> down
 ```
 
 There is deliberately no root Makefile or repository-wide development loop.

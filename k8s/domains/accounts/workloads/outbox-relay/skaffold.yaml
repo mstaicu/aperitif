@@ -6,7 +6,6 @@ metadata:
 
 requires:
   - path: ../../../../platform/runtime/outbox-relay/skaffold.yaml
-    configs: [outbox-relay]
 
 manifests:
   kustomize:

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon",
     "start": "NODE_ENV=production node --import remix/node-tsx src/index.ts",
-    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck",
     "test:e2e": "playwright test"
   },
   "engines": {

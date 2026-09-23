@@ -1,7 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "test": "node --test --test-concurrency=1 \"src/**/*.test.mjs\""
+    "lint": "eslint .",
+    "typecheck": "tsc -p jsconfig.json --noEmit",
+    "test": "node --test --test-concurrency=1 \"src/**/*.test.mjs\"",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
     "@fastify/otel": "^0.20.1",
