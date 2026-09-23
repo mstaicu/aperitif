@@ -24,9 +24,6 @@ manifests:
   kustomize:
     paths:
       - infra/overlays/local
-    buildArgs:
-      - --enable-alpha-plugins
-      - --enable-exec
 
 deploy:
   kubectl: {}

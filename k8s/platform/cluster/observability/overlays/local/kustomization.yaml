@@ -17,8 +17,12 @@ configMapGenerator:
     files:
       - otel-config.yaml=collector-config.yaml
 
-generators:
-  - openobserve-ksops-generator.yaml
+secretGenerator:
+  - name: openobserve
+    literals:
+      - OPENOBSERVE_TOKEN=bG9jYWxAZXhhbXBsZS5jb206bG9jYWwtcGFzc3dvcmQ=
+      - ZO_ROOT_USER_EMAIL=mircea@tma.com
+      - ZO_ROOT_USER_PASSWORD=password
 
 patches:
   - path: agent-daemonset.yaml

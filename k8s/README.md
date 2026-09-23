@@ -71,9 +71,10 @@ shapes, and the filename convention.
 ```sh
 brew bundle
 
-make -C platform/cluster/ingress deploy
-make -C platform/cluster/event-bus deploy
-make -C platform/cluster/observability deploy
+make -C platform/cluster/ingress setup
+make -C platform/cluster/ingress up
+make -C platform/cluster/event-bus up
+make -C platform/cluster/observability up
 
 make -C domains/<domain> check
 make -C domains/<domain> up
@@ -90,6 +91,7 @@ There is deliberately no root Makefile or repository-wide development loop.
 - [Operations and production](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 
-Secrets remain SOPS-encrypted in overlays. Local and production use separate
-Age keys. Applications emit OTLP to the cluster Collector; the node agent
-collects container logs and Kubernetes metrics.
+Non-local secrets remain SOPS-encrypted. Local overlays use public, disposable
+fixtures so that local and ephemeral environments need no Age identity.
+Applications emit OTLP to the cluster Collector; the node agent collects
+container logs and Kubernetes metrics.

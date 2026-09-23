@@ -18,7 +18,6 @@ spec:
             - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle internal keep-alives.
             - --entrypoints.http.http.maxheaderbytes=16384 # Bound header abuse from in-cluster callers.
 
-            # - --entrypoints.https.forwardedHeaders.trustedIPs=<CF CIDR>
             - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow public request reads after CF.
             - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public edge connections.
             - --entrypoints.https.http.maxheaderbytes=16384 # Bound oversized public headers before domains.
@@ -56,11 +55,26 @@ spec:
             - --tracing.sampleRate=1.0 # Keep every trace until measured traffic justifies sampling.
 
           env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: otel-collector.otel.svc.cluster.local:4317 # Shared in-cluster OpenTelemetry Collector.
             - name: CF_DNS_API_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: cloudflare-dns
                   key: CF_DNS_API_TOKEN # Cloudflare credentials for ACME DNS-01.
+
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            periodSeconds: 10
+
           volumeMounts:
             - name: acme
               mountPath: /data # Persistent ACME state shared across Traefik restarts.

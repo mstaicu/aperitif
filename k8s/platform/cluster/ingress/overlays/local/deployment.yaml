@@ -52,3 +52,19 @@ spec:
             - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
             - --tracing.otlp.grpc.insecure=true # Local collector runs without TLS.
             - --tracing.sampleRate=1.0 # Keep full traces while shaping the baseline.
+
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: otel-collector.otel.svc.cluster.local:4317 # Shared in-cluster OpenTelemetry Collector.
+
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            periodSeconds: 10

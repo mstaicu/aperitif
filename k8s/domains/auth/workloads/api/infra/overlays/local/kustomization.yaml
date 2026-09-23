@@ -11,9 +11,6 @@ resources:
   - public-ingressroute.yaml
   - public-jwks-ingressroute.yaml
 
-generators:
-  - ksops-generator.yaml
-
 patches:
   - path: deployment.yaml
 
@@ -21,6 +18,12 @@ configMapGenerator:
   - name: api-config
     literals:
       - ORIGIN=https://tma.com
+
+secretGenerator:
+  - name: api-jwt
+    files:
+      - jwt-private.pem=jwt-private.local.pem
+      - jwt-public.pem=jwt-public.local.pem
 
 generatorOptions:
   disableNameSuffixHash: true

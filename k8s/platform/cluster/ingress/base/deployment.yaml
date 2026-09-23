@@ -18,27 +18,11 @@ spec:
       containers:
         - name: traefik
           image: docker.io/library/traefik:v3.7.11
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: otel-collector.otel.svc.cluster.local:4317 # Shared in-cluster OpenTelemetry Collector.
-
           ports:
             - containerPort: 80
               name: http
             - containerPort: 443
               name: https
-
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            periodSeconds: 10
-
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: 80
-            periodSeconds: 10
 
           volumeMounts:
             - name: tmp

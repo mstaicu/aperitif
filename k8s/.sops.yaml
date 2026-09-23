@@ -1,5 +1,5 @@
 # ❯ age-keygen \
-#   -y "$HOME/.config/sops/age/keys.agekey"
+#   -y "$HOME/.config/sops/age/keys.txt"
 
 creation_rules:
   - path_regex: ^(domains|platform)/.+/overlays/prod-eu/.+\.ya?ml$

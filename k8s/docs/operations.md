@@ -6,9 +6,10 @@ Install local tools with `brew bundle`. Deploy only the shared capability a
 domain needs:
 
 ```sh
-make -C platform/cluster/ingress deploy
-make -C platform/cluster/event-bus deploy
-make -C platform/cluster/observability deploy
+make -C platform/cluster/ingress setup # Once per workstation.
+make -C platform/cluster/ingress up
+make -C platform/cluster/event-bus up
+make -C platform/cluster/observability up
 ```
 
 Then use the domain interface:
@@ -27,8 +28,10 @@ rerun implicitly; delete it explicitly before `up` or `dev` when a disposable
 database needs the migration to run again. `down` deletes the resources in the
 domain's Skaffold graph.
 
-`ingress deploy` changes the local workstation and selected cluster: it installs
-mkcert, local host entries, and temporary TLS. Do not run it against production.
+`ingress setup` installs the local mkcert CA and adds the development hostnames
+to `/etc/hosts`. It is a one-time workstation operation. `ingress up` only
+changes the selected cluster: it creates temporary TLS, installs the CRDs, and
+deploys the local overlay. Do not run either target against production.
 
 ## Production EU
 
