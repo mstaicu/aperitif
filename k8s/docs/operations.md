@@ -231,11 +231,14 @@ Traefik owns its controller, CRDs, and TLS entry points. Domains own
 `IngressRoute`s. Production uses Cloudflare DNS-01; redundant ingress and
 direct-origin restriction remain roadmap work.
 
-Applications send OTLP to `otel-collector.otel.svc.cluster.local`. The Collector
+Applications send OTLP to `otel-collector.otel`. The Collector
 receives application telemetry and Kubernetes workload state; the node agent
 collects container logs and kubelet metrics. Current overlays use one
 non-HA OpenObserve instance. Telemetry durability and high availability are not
 implemented promises.
+
+The [operations dashboard](../platform/cluster/observability/operations-dashboard.json)
+is a manual OpenObserve import and is not reconciled into a cluster.
 
 ## State-feed recovery — documented, not implemented
 

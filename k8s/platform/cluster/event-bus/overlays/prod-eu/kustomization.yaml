@@ -6,5 +6,10 @@ namespace: nats
 resources:
   - ../../base
 
+configMapGenerator:
+  - name: nats-config
+    files:
+      - nats.conf=nats.conf
+
 patches:
   - path: statefulset.yaml

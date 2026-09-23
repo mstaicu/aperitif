@@ -14,12 +14,6 @@ spec:
                   app: nats
               topologyKey: kubernetes.io/hostname
 
-      containers:
-        - name: nats
-          volumeMounts:
-            - name: nats-storage
-              mountPath: /data
-
   volumeClaimTemplates:
     - metadata:
         name: nats-storage

@@ -20,4 +20,4 @@ spec:
         - name: docker-container-logs
           hostPath:
             path: /var/lib/docker/containers
-            type: Directory
+            type: DirectoryOrCreate

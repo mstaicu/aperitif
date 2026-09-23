@@ -6,21 +6,15 @@ namespace: otel
 resources:
   - namespace.yaml
   - ../../base
-  - openobserve-statefulset.yaml
-  - openobserve-service.yaml
+  - collector-networkpolicy.yaml
   - openobserve-networkpolicy.yaml
   - openobserve-ingressroute.yaml
   - openobserve-traefik-networkpolicy.yaml
 
-configMapGenerator:
-  - name: collector
-    files:
-      - otel-config.yaml=collector-config.yaml
-
 secretGenerator:
   - name: openobserve
     literals:
-      - OPENOBSERVE_TOKEN=bG9jYWxAZXhhbXBsZS5jb206bG9jYWwtcGFzc3dvcmQ=
+      - OPENOBSERVE_TOKEN=bWlyY2VhQHRtYS5jb206cGFzc3dvcmQ=
       - ZO_ROOT_USER_EMAIL=mircea@tma.com
       - ZO_ROOT_USER_PASSWORD=password
 

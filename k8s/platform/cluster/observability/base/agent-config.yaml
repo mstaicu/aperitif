@@ -114,7 +114,7 @@ processors:
 
 exporters:
   otlp_grpc:
-    endpoint: otel-collector.otel.svc.cluster.local:4317
+    endpoint: otel-collector:4317
     tls:
       insecure: true
 

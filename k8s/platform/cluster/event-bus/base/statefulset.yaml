@@ -101,6 +101,8 @@ spec:
           volumeMounts:
             - mountPath: /etc/nats-config
               name: config
+            - mountPath: /data
+              name: nats-storage
             - mountPath: /var/run/nats
               name: pid
       volumes:
@@ -109,3 +111,13 @@ spec:
             name: nats-config
         - emptyDir: {}
           name: pid
+
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

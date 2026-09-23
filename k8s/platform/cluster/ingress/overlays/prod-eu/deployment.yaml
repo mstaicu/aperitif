@@ -56,7 +56,7 @@ spec:
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: otel-collector.otel.svc.cluster.local:4317 # Shared in-cluster OpenTelemetry Collector.
+              value: otel-collector.otel:4317 # Shared in-cluster OpenTelemetry Collector.
             - name: CF_DNS_API_TOKEN
               valueFrom:
                 secretKeyRef:

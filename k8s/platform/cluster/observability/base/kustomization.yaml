@@ -11,9 +11,13 @@ resources:
   - collector-clusterrolebinding.yaml
   - collector-deployment.yaml
   - collector-service.yaml
-  - collector-networkpolicy.yaml
+  - openobserve-statefulset.yaml
+  - openobserve-service.yaml
 
 configMapGenerator:
   - name: agent
     files:
       - otel-config.yaml=agent-config.yaml
+  - name: collector
+    files:
+      - otel-config.yaml=collector-config.yaml

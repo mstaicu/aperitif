@@ -10,7 +10,7 @@ spec:
         - name: collector
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://openobserve.otel.svc.cluster.local:5080/api/default
+              value: http://openobserve:5080/api/default
             - name: OTEL_EXPORTER_OTLP_AUTHORIZATION
               valueFrom:
                 secretKeyRef:

@@ -3,11 +3,5 @@ kind: Kustomization
 
 resources:
   - statefulset.yaml
-  - poddisruptionbudget.yaml
   - headless-service.yaml
-  - client-service.yaml
-
-configMapGenerator:
-  - name: nats-config
-    files:
-      - nats.conf=nats.conf
+  - service.yaml
