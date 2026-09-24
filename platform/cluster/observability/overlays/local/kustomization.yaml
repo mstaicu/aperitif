@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: otel
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - collector-networkpolicy.yaml
+
+secretGenerator:
+  - name: openobserve
+    literals:
+      - OPENOBSERVE_TOKEN=bWlyY2VhQHRtYS5jb206cGFzc3dvcmQ=
+      - ZO_ROOT_USER_EMAIL=admin@example.com
+      - ZO_ROOT_USER_PASSWORD=password
+
+patches:
+  - path: agent-daemonset.yaml
+  - path: collector-deployment.yaml

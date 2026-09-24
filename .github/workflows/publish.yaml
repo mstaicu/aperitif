@@ -1,0 +1,123 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "domains/*/workloads/*/**"
+      - "platform/runtime/*/**"
+      - "!**/infra/**"
+
+concurrency:
+  group: publish-images
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Find changes
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    outputs:
+      paths: >-
+        ${{ toJSON(fromJSON(format('[{0},{1}]',
+          steps.domains.outputs.all_changed_and_modified_files,
+          steps.runtimes.outputs.all_changed_and_modified_files
+        )).*.*) }}
+
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          fetch-depth: 0
+
+      - id: domains
+        name: Domain changes
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: domains/*/workloads/*/**
+          files_ignore: "**/infra/**"
+          dir_names: true
+          dir_names_max_depth: 4
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
+          matrix: true
+
+      - id: runtimes
+        name: Runtime changes
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: platform/runtime/*/**
+          files_ignore: "**/infra/**"
+          dir_names: true
+          dir_names_max_depth: 3
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
+          matrix: true
+
+  publish:
+    name: Publish · ${{ matrix.path }}
+    needs: changes
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.paths != '[]')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["domains/accounts/workloads/api","domains/accounts/workloads/migrations","domains/auth/workloads/api","domains/auth/workloads/migrations","domains/auth/workloads/ui","domains/plans/workloads/accounts-projection","domains/plans/workloads/api","domains/plans/workloads/migrations","platform/runtime/outbox-relay"]' || needs.changes.outputs.paths) }}
+
+    steps:
+      - uses: actions/checkout@v6.1.0
+
+      - id: image
+        name: Read image name
+        env:
+          COMPONENT: ${{ matrix.path }}
+        run: |
+          image=""
+          if [[ -f "$COMPONENT/skaffold.yaml" ]]; then
+            image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          fi
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4.2.0
+
+      - uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - id: build
+        uses: docker/build-push-action@v7.3.0
+        if: steps.image.outputs.name != ''
+        with:
+          context: ${{ matrix.path }}
+          target: prod
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+
+      - uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.image.outputs.name != ''
+        with:
+          image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: Promote latest
+        if: steps.image.outputs.name != ''
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: >
+          docker buildx imagetools create
+          --tag "$IMAGE:latest"
+          "$IMAGE@$DIGEST"

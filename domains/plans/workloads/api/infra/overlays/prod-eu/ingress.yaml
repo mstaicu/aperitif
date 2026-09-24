@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: api-docs
+spec:
+  rules:
+    - host: api.puuury.com
+      http:
+        paths:
+          - path: /v1/plans/docs
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: api-account-plan
+  annotations:
+    traefik.ingress.kubernetes.io/router.pathmatcher: PathRegexp
+spec:
+  rules:
+    - host: api.puuury.com
+      http:
+        paths:
+          - path: /v1/accounts/[^/]+/plan$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3000
