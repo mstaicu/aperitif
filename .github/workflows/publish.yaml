@@ -1,7 +1,6 @@
 name: Publish
 
 on:
-  workflow_dispatch:
   push:
     branches: [master]
     paths:
@@ -18,7 +17,6 @@ permissions:
 jobs:
   changes:
     name: Find changes
-    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     outputs:
       paths: >-
@@ -59,7 +57,7 @@ jobs:
   publish:
     name: Publish · ${{ matrix.path }}
     needs: changes
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.paths != '[]')
+    if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -68,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        path: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["domains/accounts/workloads/api","domains/accounts/workloads/migrations","domains/auth/workloads/api","domains/auth/workloads/migrations","domains/auth/workloads/ui","domains/plans/workloads/accounts-projection","domains/plans/workloads/api","domains/plans/workloads/migrations","platform/runtime/outbox-relay"]' || needs.changes.outputs.paths) }}
+        path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
       - uses: actions/checkout@v6.1.0
