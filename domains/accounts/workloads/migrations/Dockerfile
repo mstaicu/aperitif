@@ -1,4 +1,7 @@
-FROM docker.io/flyway/flyway:13.3.0 AS prod
+FROM docker.io/flyway/flyway:13.8.0-alpine AS prod
+
+RUN apk upgrade --no-cache \
+    && rm -f /flyway/drivers/databricks-jdbc-*.jar /flyway/drivers/mssql-jdbc-*.jar
 
 COPY sql /db/sql
 

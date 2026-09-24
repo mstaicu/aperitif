@@ -1,4 +1,4 @@
-FROM docker.io/library/node:26.7.0-alpine3.24 AS base
+FROM docker.io/library/node:26.10.0-alpine3.24 AS base
 
 RUN apk add --no-cache tini
 
