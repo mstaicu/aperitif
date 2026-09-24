@@ -48,6 +48,7 @@ try {
   const js = jetstream(nc);
   const jsm = await js.jetstreamManager();
 
+  // Reconcile every owned stream before relaying any outbox entry.
   for (const streamConfiguration of streamConfigurations) {
     try {
       await jsm.streams.update(streamConfiguration.name, streamConfiguration);
