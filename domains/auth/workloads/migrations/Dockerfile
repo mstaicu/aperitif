@@ -1,5 +1,6 @@
 FROM docker.io/flyway/flyway:13.8.0-alpine AS prod
 
+# Keep the migration image limited to its PostgreSQL runtime surface.
 RUN apk upgrade --no-cache \
     && rm -f /flyway/drivers/databricks-jdbc-*.jar /flyway/drivers/mssql-jdbc-*.jar
 
