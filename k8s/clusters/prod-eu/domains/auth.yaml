@@ -145,7 +145,6 @@ spec:
     secretRef:
       name: sops-age
   dependsOn:
-    - name: ingress-crds
     - name: auth-migrations
   wait: true
   timeout: 5m
@@ -183,7 +182,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  dependsOn:
-    - name: ingress-crds
   wait: true
   timeout: 5m

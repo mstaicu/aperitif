@@ -5,9 +5,9 @@ namespace: traefik
 
 resources:
   - ../../base
+  - service.yaml
   - cloudflare-dns-secret.yaml
   - acme-persistentvolumeclaim.yaml
 
 patches:
   - path: deployment.yaml
-  - path: service.yaml

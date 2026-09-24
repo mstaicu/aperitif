@@ -17,12 +17,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: traefik
-          image: docker.io/library/traefik:v3.7.11
-          ports:
-            - containerPort: 80
-              name: http
-            - containerPort: 443
-              name: https
+          image: docker.io/library/traefik:v3.7.13
 
           volumeMounts:
             - name: tmp

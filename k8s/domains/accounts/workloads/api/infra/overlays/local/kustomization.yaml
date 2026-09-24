@@ -7,8 +7,7 @@ resources:
   - namespace.yaml
   - ../../base
   - networkpolicy.yaml
-  - public-docs-ingressroute.yaml
-  - public-ingressroute.yaml
+  - ingress.yaml
 
 patches:
   - path: deployment.yaml

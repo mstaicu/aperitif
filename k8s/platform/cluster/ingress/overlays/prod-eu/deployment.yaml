@@ -8,26 +8,27 @@ spec:
     spec:
       containers:
         - name: traefik
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+
           args:
-            - --entrypoints.http.address=:80 # Internal cluster listener for SSR and service calls.
+            - --entrypoints.http.address=:80 # Health listener; the public Service does not expose it.
             - --entrypoints.https.address=:443 # Public listener behind Cloudflare.
+            - --entrypoints.https.asDefault=true # Host domain routes on the public HTTPS listener by default.
             - --entrypoints.https.http.tls=true # Terminate TLS for every public route.
             - --entrypoints.https.http.tls.certResolver=le # Obtain certificates from each route's Host rule.
-
-            - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow internal request reads.
-            - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle internal keep-alives.
-            - --entrypoints.http.http.maxheaderbytes=16384 # Bound header abuse from in-cluster callers.
-
-            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow public request reads after CF.
-            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public edge connections.
-            - --entrypoints.https.http.maxheaderbytes=16384 # Bound oversized public headers before domains.
+            - --entrypoints.https.http.aliasHeadersStrategy=delete # Drop ambiguous header aliases before forwarding.
 
             - --certificatesresolvers.le.acme.email=ops@tma.com # Let's Encrypt account contact.
             - --certificatesresolvers.le.acme.dnschallenge=true # Mint public certs through DNS-01.
             - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare # Use Cloudflare as the DNS solver.
             - --certificatesresolvers.le.acme.storage=/data/acme.json # Persist issued cert state across pod restarts.
 
-            - --providers.kubernetescrd=true # Domains attach Traefik IngressRoutes.
+            - --providers.kubernetesingress=true # Domains publish standard Kubernetes Ingress resources.
+            - --providers.kubernetesingress.strictPrefixMatching=true # Use Kubernetes path-element prefix semantics.
 
             - --log.level=INFO # Keep shared edge logs production-readable.
             - --log.format=json # Keep Traefik's own operational logs machine-readable.
@@ -39,20 +40,14 @@ spec:
             - --ping.entryPoint=http # Health stays on the internal-only listener.
 
             - --metrics.otlp=true # Export edge metrics to the in-cluster collector.
-            - --metrics.otlp.serviceName=traefik # Stable producer name for the shared edge.
             - --metrics.otlp.grpc=true # Use OTLP gRPC for the collector hop.
             - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Shared collector service.
             - --metrics.otlp.grpc.insecure=true # In-cluster collector runs without TLS.
-            - --metrics.otlp.addEntryPointsLabels=true # Keep public vs internal edge latency split.
-            - --metrics.otlp.addRoutersLabels=false # Avoid per-route cardinality at the edge.
-            - --metrics.otlp.addServicesLabels=true # Split the bounded edge baseline by backend service.
 
             - --tracing.otlp=true # Emit edge traces into the shared collector.
-            - --tracing.serviceName=traefik # Stable trace service name for ingress.
             - --tracing.otlp.grpc=true # Use OTLP gRPC for the collector hop.
             - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Shared collector service.
             - --tracing.otlp.grpc.insecure=true # In-cluster collector runs without TLS.
-            - --tracing.sampleRate=1.0 # Keep every trace until measured traffic justifies sampling.
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

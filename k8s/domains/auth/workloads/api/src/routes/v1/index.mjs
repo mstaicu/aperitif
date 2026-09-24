@@ -53,6 +53,7 @@ export default async function v1(fastify, { origin, pool, signingKey }) {
   fastify.register(sessionsRoutes, { pool, signingKey });
 
   await fastify.register(swaggerUI, {
+    indexPrefix: "/v1",
     routePrefix: "/auth/docs",
   });
 }

@@ -4,8 +4,7 @@ export default defineConfig({
   reporter: "list",
   testDir: "test/e2e",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "https://tma.com",
-    ignoreHTTPSErrors: true,
+    baseURL: "http://localhost",
     trace: "retain-on-failure",
   },
 });

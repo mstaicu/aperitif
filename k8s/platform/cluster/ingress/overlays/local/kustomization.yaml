@@ -6,9 +6,19 @@ namespace: traefik
 resources:
   - namespace.yaml
   - ../../base
-  - dashboard-ingressroute.yaml
-  - tlsstore.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: dashboard
+    literals:
+      - |
+        dashboard.yaml=http:
+          routers:
+            dashboard:
+              entryPoints:
+                - http
+              rule: PathPrefix(`/api`) || PathPrefix(`/dashboard`)
+              service: api@internal
 
 patches:
   - path: deployment.yaml
-  - path: service.yaml

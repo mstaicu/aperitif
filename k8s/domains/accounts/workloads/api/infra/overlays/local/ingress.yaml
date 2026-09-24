@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: api
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /v1/accounts
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3000
+          - path: /v1/accounts/docs
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3000

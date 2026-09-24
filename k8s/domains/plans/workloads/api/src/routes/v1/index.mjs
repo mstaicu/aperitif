@@ -45,6 +45,7 @@ export default async function v1(fastify, { jwks, pool }) {
   fastify.register(plansRoutes, { jwks, pool });
 
   await fastify.register(swaggerUI, {
+    indexPrefix: "/v1",
     routePrefix: "/plans/docs",
   });
 }

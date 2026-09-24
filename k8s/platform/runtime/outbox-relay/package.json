@@ -5,7 +5,10 @@
     "node": ">=26"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\""
+    "lint": "eslint .",
+    "typecheck": "tsc -p jsconfig.json --noEmit",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\"",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
     "@nats-io/jetstream": "^3.4.0",

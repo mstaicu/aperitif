@@ -113,7 +113,6 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: ingress-crds
     - name: accounts-migrations
   wait: true
   timeout: 5m

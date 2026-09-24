@@ -10,7 +10,6 @@ rules:
       - services
       - secrets
       - nodes
-      - configmaps
     verbs:
       - get
       - list
@@ -32,7 +31,6 @@ rules:
       - watch
 
   - apiGroups:
-      - extensions
       - networking.k8s.io
     resources:
       - ingresses
@@ -43,27 +41,8 @@ rules:
       - watch
 
   - apiGroups:
-      - extensions
       - networking.k8s.io
     resources:
       - ingresses/status
     verbs:
       - update
-
-  - apiGroups:
-      - traefik.io
-    resources:
-      - middlewares
-      - middlewaretcps
-      - ingressroutes
-      - traefikservices
-      - ingressroutetcps
-      - ingressrouteudps
-      - tlsoptions
-      - tlsstores
-      - serverstransports
-      - serverstransporttcps
-    verbs:
-      - get
-      - list
-      - watch

@@ -7,9 +7,6 @@ resources:
   - namespace.yaml
   - ../../base
   - collector-networkpolicy.yaml
-  - openobserve-networkpolicy.yaml
-  - openobserve-ingressroute.yaml
-  - openobserve-traefik-networkpolicy.yaml
 
 secretGenerator:
   - name: openobserve

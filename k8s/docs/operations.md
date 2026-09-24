@@ -6,10 +6,16 @@ Install local tools with `brew bundle`. Deploy only the shared capability a
 domain needs:
 
 ```sh
-make -C platform/cluster/ingress setup # Once per workstation.
-make -C platform/cluster/ingress up
-make -C platform/cluster/event-bus up
-make -C platform/cluster/observability up
+kubectl apply -k platform/cluster/ingress/overlays/local
+kubectl apply -k platform/cluster/event-bus/overlays/local
+kubectl apply -k platform/cluster/observability/overlays/local
+```
+
+Kubernetes probes own capability readiness. A deterministic E2E caller that
+needs NATS before starting domains can wait explicitly:
+
+```sh
+kubectl rollout status --namespace=nats statefulset/nats --timeout=300s
 ```
 
 Then use the domain interface:
@@ -28,10 +34,22 @@ rerun implicitly; delete it explicitly before `up` or `dev` when a disposable
 database needs the migration to run again. `down` deletes the resources in the
 domain's Skaffold graph.
 
-`ingress setup` installs the local mkcert CA and adds the development hostnames
-to `/etc/hosts`. It is a one-time workstation operation. `ingress up` only
-changes the selected cluster: it creates temporary TLS, installs the CRDs, and
-deploys the local overlay. Do not run either target against production.
+Local application traffic uses `http://localhost`. A local cluster with
+LoadBalancer support exposes port 80 directly. For Kind or another cluster
+without LoadBalancer support, forward the same origin explicitly:
+
+```sh
+kubectl port-forward --namespace=traefik service/traefik-public 80:80
+```
+
+Browser E2E uses this same ingress origin. The environment must deploy Traefik
+and expose `localhost:80` before running a domain's browser tests.
+
+The local Traefik dashboard uses the same HTTP entrypoint:
+
+```text
+http://localhost/dashboard/
+```
 
 ## Production EU
 
@@ -227,9 +245,16 @@ Telemetry is optional; set both `OTEL_EXPORTER_OTLP_ENDPOINT` and
 
 ### Ingress and telemetry
 
-Traefik owns its controller, CRDs, and TLS entry points. Domains own
-`IngressRoute`s. Production uses Cloudflare DNS-01; redundant ingress and
-direct-origin restriction remain roadmap work.
+Traefik owns its controller and TLS entry points. Domains own standard
+Kubernetes `Ingress` resources. Local routes are hostless HTTP routes on
+`localhost:80`; production routes retain their public hosts and use
+Cloudflare DNS-01.
+
+Local OpenObserve is exposed only when requested:
+
+```sh
+kubectl port-forward --namespace=otel service/openobserve 5080:5080
+```
 
 Applications send OTLP to `otel-collector.otel`. The Collector
 receives application telemetry and Kubernetes workload state; the node agent
@@ -257,8 +282,11 @@ to NATS.
 ## Validate manifests
 
 ```sh
-make -C platform/cluster/event-bus check
-make -C platform/cluster/ingress check
-make -C platform/cluster/observability check
+kubectl kustomize platform/cluster/event-bus/overlays/local >/dev/null
+kubectl kustomize platform/cluster/event-bus/overlays/prod-eu >/dev/null
+kubectl kustomize platform/cluster/ingress/overlays/local >/dev/null
+kubectl kustomize platform/cluster/ingress/overlays/prod-eu >/dev/null
+kubectl kustomize platform/cluster/observability/overlays/local >/dev/null
+kubectl kustomize platform/cluster/observability/overlays/prod-eu >/dev/null
 kubectl kustomize clusters/prod-eu >/dev/null
 ```

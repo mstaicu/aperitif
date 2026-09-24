@@ -141,7 +141,6 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: ingress-crds
     - name: plans-migrations
   wait: true
   timeout: 5m

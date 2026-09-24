@@ -5,3 +5,10 @@ metadata:
   name: traefik-public
 spec:
   type: LoadBalancer
+  selector:
+    app: traefik
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP

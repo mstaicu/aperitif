@@ -8,22 +8,19 @@ spec:
     spec:
       containers:
         - name: traefik
+          ports:
+            - containerPort: 80
+              name: http
+
           args:
-            - --entrypoints.http.address=:80 # Local plain HTTP for internal routes and probes.
-            - --entrypoints.https.address=:443 # Local TLS listener for public routes.
-            - --entrypoints.https.http.tls=true # Terminate every local public route with the default development certificate.
+            - --entrypoints.http.address=:80 # Local application traffic and health checks.
+            - --entrypoints.http.http.aliasHeadersStrategy=delete # Drop ambiguous header aliases before forwarding.
 
-            - --entrypoints.http.forwardedHeaders.insecure=true # Local only; trust dev proxy headers.
-            - --entrypoints.http.transport.respondingTimeouts.readTimeout=10s # Cut off slow request reads at the shared edge.
-            - --entrypoints.http.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle keep-alives across local domains.
-            - --entrypoints.http.http.maxheaderbytes=16384 # Match live header bounds in local dev.
+            - --providers.kubernetesingress=true # Domains publish standard Kubernetes Ingress resources.
+            - --providers.kubernetesingress.strictPrefixMatching=true # Use Kubernetes path-element prefix semantics.
+            - --providers.file.filename=/etc/traefik/dynamic/dashboard.yaml # Route the dashboard through the same HTTP entrypoint.
 
-            - --entrypoints.https.forwardedHeaders.insecure=true # Local only; same trust model on TLS.
-            - --entrypoints.https.transport.respondingTimeouts.readTimeout=10s # Cut off slow TLS request reads.
-            - --entrypoints.https.transport.respondingTimeouts.idleTimeout=15s # Reclaim idle public TLS sockets.
-            - --entrypoints.https.http.maxheaderbytes=16384 # Match live header bounds in local dev.
-
-            - --providers.kubernetescrd=true # Domains publish Traefik IngressRoutes.
+            - --api=true # Enable the internal API service used by the dashboard router.
 
             - --log.level=INFO # Keep local edge logs useful without provider debug noise.
             - --log.format=json # Keep Traefik's own operational logs machine-readable.
@@ -34,37 +31,38 @@ spec:
             - --ping=true # Kubernetes probes ingress health through Traefik itself.
             - --ping.entryPoint=http # Health lives on the plain listener.
 
-            - --api=true # Enable local admin API for route debugging.
-            - --api.dashboard=true # Expose the local-only Traefik dashboard.
-
             - --metrics.otlp=true # Export ingress metrics to the platform collector.
-            - --metrics.otlp.serviceName=traefik # Stable producer name for shared edge telemetry.
             - --metrics.otlp.grpc=true # Use OTLP gRPC to the in-cluster collector.
             - --metrics.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
             - --metrics.otlp.grpc.insecure=true # Local collector runs without TLS.
-            - --metrics.otlp.addEntryPointsLabels=true # Keep public vs internal latency split.
-            - --metrics.otlp.addRoutersLabels=false # Avoid per-route cardinality across domains.
-            - --metrics.otlp.addServicesLabels=true # Split the bounded edge baseline by backend service.
 
             - --tracing.otlp=true # Emit spans from the shared edge first.
-            - --tracing.serviceName=traefik # Stable trace service name for ingress.
             - --tracing.otlp.grpc=true # Use OTLP gRPC to the in-cluster collector.
             - --tracing.otlp.grpc.endpoint=$(OTEL_EXPORTER_OTLP_ENDPOINT) # Collector service for the whole local stack.
             - --tracing.otlp.grpc.insecure=true # Local collector runs without TLS.
-            - --tracing.sampleRate=1.0 # Keep full traces while shaping the baseline.
 
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: otel-collector.otel:4317 # Shared in-cluster OpenTelemetry Collector.
 
+          volumeMounts:
+            - name: dashboard
+              mountPath: /etc/traefik/dynamic
+              readOnly: true
+
           readinessProbe:
             httpGet:
               path: /ping
-              port: 80
+              port: http
             periodSeconds: 10
 
           livenessProbe:
             httpGet:
               path: /ping
-              port: 80
+              port: http
             periodSeconds: 10
+
+      volumes:
+        - name: dashboard
+          configMap:
+            name: dashboard

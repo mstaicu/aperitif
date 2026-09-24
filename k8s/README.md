@@ -71,10 +71,9 @@ shapes, and the filename convention.
 ```sh
 brew bundle
 
-make -C platform/cluster/ingress setup
-make -C platform/cluster/ingress up
-make -C platform/cluster/event-bus up
-make -C platform/cluster/observability up
+kubectl apply -k platform/cluster/ingress/overlays/local
+kubectl apply -k platform/cluster/event-bus/overlays/local
+kubectl apply -k platform/cluster/observability/overlays/local
 
 make -C domains/<domain> check
 make -C domains/<domain> up
