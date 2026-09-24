@@ -10,4 +10,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/auth-ui
     newTag: latest
-    digest: sha256:c446e7b6e9ba2165555e0a5b0fd97c4db76c5ea35d41435fd7e345a56314ccf9 # {"$imagepolicy": "flux-system:auth-ui:digest"}
+    digest: sha256:6f23eff3e92d473179cea00f80fdc061efba768a2934c72c45bb351969b6fc3d # {"$imagepolicy": "flux-system:auth-ui:digest"}
