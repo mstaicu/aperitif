@@ -9,4 +9,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/auth-migrations
     newTag: latest
-    digest: sha256:35672d933807936f09c2947f338896842d792e579974714e095ab23fe2f48186 # {"$imagepolicy": "flux-system:auth-migrations:digest"}
+    digest: sha256:026a705996cf65f40b7ff5281912e127ebfcb881e878c43c8ab430c9cba81d41 # {"$imagepolicy": "flux-system:auth-migrations:digest"}
