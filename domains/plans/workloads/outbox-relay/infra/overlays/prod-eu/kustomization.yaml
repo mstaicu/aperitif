@@ -13,4 +13,4 @@ patches:
 images:
   - name: ghcr.io/mstaicu/outbox-relay
     newTag: latest
-    digest: sha256:e358ab8cc6677bd345ab4f21f987a6344eda5c0771594e336be21fdf728769df # {"$imagepolicy": "flux-system:outbox-relay:digest"}
+    digest: sha256:b3fe5b1c123244f4eeb91784c3bf1875515ae0a96e32ed169307190dae38c9f7 # {"$imagepolicy": "flux-system:outbox-relay:digest"}
