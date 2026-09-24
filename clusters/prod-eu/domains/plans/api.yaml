@@ -1,0 +1,52 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+
+spec:
+  image: ghcr.io/mstaicu/plans-api
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+
+spec:
+  imageRepositoryRef:
+    name: plans-api
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-api
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./domains/plans/workloads/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: plans-migrations
+  images:
+    - name: ghcr.io/mstaicu/plans-api
+      newTag: latest
+      digest: sha256:92f5a34544de2f17a040ac60083a706b65f02206ff15f39c5c80869116cec015 # {"$imagepolicy": "flux-system:plans-api:digest"}
+  wait: true
+  timeout: 5m

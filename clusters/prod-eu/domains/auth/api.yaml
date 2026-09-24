@@ -1,0 +1,56 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+
+spec:
+  image: ghcr.io/mstaicu/auth-api
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+
+spec:
+  imageRepositoryRef:
+    name: auth-api
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: auth-api
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./domains/auth/workloads/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: auth-migrations
+  images:
+    - name: ghcr.io/mstaicu/auth-api
+      newTag: latest
+      digest: sha256:0fe4ec9f47b7f1d67d89f5ccdd3174e79ee2a829e8c1d2db1bc0ab615566b71e # {"$imagepolicy": "flux-system:auth-api:digest"}
+  wait: true
+  timeout: 5m

@@ -1,0 +1,52 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: accounts-api
+  namespace: flux-system
+
+spec:
+  image: ghcr.io/mstaicu/accounts-api
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: accounts-api
+  namespace: flux-system
+
+spec:
+  imageRepositoryRef:
+    name: accounts-api
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: accounts-api
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./domains/accounts/workloads/api/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: accounts-migrations
+  images:
+    - name: ghcr.io/mstaicu/accounts-api
+      newTag: latest
+      digest: sha256:5c7cde04455278b303dd17a5c49d669989d5010708165403711d06cc20fc56e5 # {"$imagepolicy": "flux-system:accounts-api:digest"}
+  wait: true
+  timeout: 5m

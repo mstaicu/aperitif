@@ -1,18 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 namespace: auth
+
 resources:
   - ../../base
   - networkpolicy.yaml
   - jwt-secret.yaml
   - ingress.yaml
+
 patches:
   - path: deployment.yaml
+
 configMapGenerator:
   - name: api-config
     literals:
       - ORIGIN=https://puuury.com
-images:
-  - name: ghcr.io/mstaicu/auth-api
-    newTag: latest
-    digest: sha256:0fe4ec9f47b7f1d67d89f5ccdd3174e79ee2a829e8c1d2db1bc0ab615566b71e # {"$imagepolicy": "flux-system:auth-api:digest"}

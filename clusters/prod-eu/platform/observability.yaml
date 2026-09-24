@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: otel
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: observability
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./platform/cluster/observability/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  wait: true
+  timeout: 5m

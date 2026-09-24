@@ -1,16 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 namespace: accounts
+
 resources:
   - ../../base
   - networkpolicy.yaml
+
 configMapGenerator:
   - name: outbox-relay-streams
     files:
       - streams.json
+
 patches:
   - path: deployment.yaml
-images:
-  - name: ghcr.io/mstaicu/outbox-relay
-    newTag: latest
-    digest: sha256:b3fe5b1c123244f4eeb91784c3bf1875515ae0a96e32ed169307190dae38c9f7 # {"$imagepolicy": "flux-system:outbox-relay:digest"}

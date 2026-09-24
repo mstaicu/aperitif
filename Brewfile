@@ -5,8 +5,8 @@ brew "kubernetes-cli" # Installs kubectl
 brew "kustomize" # Render Kubernetes overlays
 brew "skaffold" # Local Kubernetes dev/debug loop
 
-# tap "fluxcd/tap"
-# brew "fluxcd/tap/flux" # Bootstrap and inspect Flux reconciliation
+tap "fluxcd/tap"
+brew "fluxcd/tap/flux" # Build, bootstrap and inspect Flux reconciliation
 
 #
 # Optional

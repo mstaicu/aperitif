@@ -1,0 +1,54 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: plans-accounts-projection
+  namespace: flux-system
+
+spec:
+  image: ghcr.io/mstaicu/plans-accounts-projection
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: plans-accounts-projection
+  namespace: flux-system
+
+spec:
+  imageRepositoryRef:
+    name: plans-accounts-projection
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: plans-accounts-projection
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./domains/plans/workloads/accounts-projection/infra/overlays/prod-eu
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: accounts-outbox-relay
+    - name: event-bus
+    - name: plans-migrations
+  images:
+    - name: ghcr.io/mstaicu/plans-accounts-projection
+      newTag: latest
+      digest: sha256:e45e438b9c7c4dad451d95bf8b3176c35b1adf249393546072056ec17404b1d3 # {"$imagepolicy": "flux-system:plans-accounts-projection:digest"}
+  wait: true
+  timeout: 5m
