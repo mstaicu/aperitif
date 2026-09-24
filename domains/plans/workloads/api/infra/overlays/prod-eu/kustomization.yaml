@@ -1,17 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: plans
-
 resources:
   - ../../base
   - networkpolicy.yaml
   - ingress.yaml
-
 patches:
   - path: deployment.yaml
-
 images:
   - name: ghcr.io/mstaicu/plans-api
     newTag: latest
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:plans-api:digest"}
+    digest: sha256:92f5a34544de2f17a040ac60083a706b65f02206ff15f39c5c80869116cec015 # {"$imagepolicy": "flux-system:plans-api:digest"}

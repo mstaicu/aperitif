@@ -1,16 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: accounts
-
 resources:
   - ../../base
   - networkpolicy.yaml
-
 patches:
   - path: job.yaml
-
 images:
   - name: ghcr.io/mstaicu/accounts-migrations
     newTag: latest
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:accounts-migrations:digest"}
+    digest: sha256:4971ff9b1580a730b68c439d450071f094d8f20277d1c3fce4fd1413cfdcac22 # {"$imagepolicy": "flux-system:accounts-migrations:digest"}

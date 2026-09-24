@@ -1,17 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: accounts
-
 resources:
   - ../../base
   - networkpolicy.yaml
   - ingress.yaml
-
 patches:
   - path: deployment.yaml
-
 images:
   - name: ghcr.io/mstaicu/accounts-api
     newTag: latest
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # {"$imagepolicy": "flux-system:accounts-api:digest"}
+    digest: sha256:5c7cde04455278b303dd17a5c49d669989d5010708165403711d06cc20fc56e5 # {"$imagepolicy": "flux-system:accounts-api:digest"}
