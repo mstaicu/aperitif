@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: ui
+spec:
+  rules:
+    - host: puuury.com
+      http:
+        paths:
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: ui
+                port:
+                  number: 3000
+          - path: /signup
+            pathType: Prefix
+            backend:
+              service:
+                name: ui
+                port:
+                  number: 3000
+          - path: /auth/assets
+            pathType: Prefix
+            backend:
+              service:
+                name: ui
+                port:
+                  number: 3000
