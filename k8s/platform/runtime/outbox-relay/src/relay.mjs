@@ -91,6 +91,10 @@ async function relayNextEntry({ client, js, jsm }) {
 
           // Copy the producer's stored headers into the NATS message.
           for (const [name, value] of Object.entries(outboxEntry.headers)) {
+            if (name.toLowerCase().startsWith("nats-")) {
+              throw new Error(`Reserved NATS header: ${name}`);
+            }
+
             messageHeaders.set(name, value);
           }
 

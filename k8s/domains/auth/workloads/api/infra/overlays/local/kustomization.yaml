@@ -22,6 +22,3 @@ secretGenerator:
     files:
       - jwt-private.pem=jwt-private.local.pem
       - jwt-public.pem=jwt-public.local.pem
-
-generatorOptions:
-  disableNameSuffixHash: true

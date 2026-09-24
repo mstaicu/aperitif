@@ -6,14 +6,8 @@ metadata:
 spec:
   template:
     spec:
-      volumes:
-        - name: tmp
-          emptyDir: {}
       containers:
         - name: ui
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
           env:
             - name: API_INTERNAL_V1_URL
               value: http://api.auth.svc.cluster.local:3000/v1

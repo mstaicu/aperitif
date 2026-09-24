@@ -8,14 +8,8 @@ metadata:
 spec:
   template:
     spec:
-      volumes:
-        - name: tmp
-          emptyDir: {}
       containers:
         - name: migrations
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
           env:
             - name: FLYWAY_URL
               value: "jdbc:postgresql://postgres:5432/auth?user=postgres&password=postgres"

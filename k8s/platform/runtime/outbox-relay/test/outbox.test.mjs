@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 
-import { relayOutbox } from "../src/app.mjs";
+import { relayOutbox } from "../src/relay.mjs";
 import { startNats } from "./fixtures/nats.mjs";
 import { startPostgres } from "./fixtures/postgres.mjs";
 
@@ -157,6 +157,33 @@ test("keeps the outbox row when a header is malformed", async (t) => {
 
   // Assert
   await assert.rejects(task, /header/i);
+  assert.deepEqual((await pool.query("SELECT id FROM outbox_messages")).rows, [
+    { id },
+  ]);
+  assert.equal((await jsm.streams.info("EVENTS")).state.messages, 0);
+});
+
+test("keeps the outbox row when a producer supplies a reserved NATS header", async (t) => {
+  // Arrange
+  await using postgres = await startPostgres();
+  const { pool } = postgres;
+  await using nats = await startNats();
+  const js = jetstream(nats.nc);
+  const jsm = await js.jetstreamManager();
+  await jsm.streams.add(stream);
+
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO outbox_messages (id, subject, payload, headers)
+     VALUES ($1, 'events.invalid', '{}', $2)`,
+    [id, { "nAtS-RollUp": "sub" }],
+  );
+
+  // Act
+  const task = relayOutbox({ abortSignal: t.signal, js, jsm, pool });
+
+  // Assert
+  await assert.rejects(task, /reserved NATS header: nAtS-RollUp/i);
   assert.deepEqual((await pool.query("SELECT id FROM outbox_messages")).rows, [
     { id },
   ]);

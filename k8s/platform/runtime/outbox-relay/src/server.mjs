@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import process from "node:process";
 import { Pool } from "pg";
 
-import { relayOutbox } from "./app.mjs";
+import { relayOutbox } from "./relay.mjs";
 
 const streamConfigurations = JSON.parse(
   await readFile(/** @type {string} */ (process.env.NATS_STREAMS_PATH), "utf8"),

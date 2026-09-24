@@ -160,9 +160,9 @@ Producers inject OpenTelemetry context into `headers`. Relay extracts that
 context, starts a publish span, and injects the outgoing context into NATS
 headers. Tracing does not need to be duplicated in the JSON envelope. Header
 names must be valid NATS names and values must be strings without newlines.
-Producers must leave `Nats-*` publication controls to Relay; Relay does not
-enforce this restriction. Header errors raised by the NATS client leave the row
-queued and fail the worker; correct the source data before retrying.
+Producers must leave `Nats-*` publication controls to Relay. Relay rejects those
+reserved headers. Reserved or malformed headers leave the row queued and fail
+the worker; correct the source data before retrying.
 
 The same Relay supports JSON commands and delta events when their domain supplies
 the appropriate contracts, stream configuration, and consumer behavior. It does
