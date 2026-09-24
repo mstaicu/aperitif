@@ -77,7 +77,10 @@ jobs:
         env:
           COMPONENT: ${{ matrix.path }}
         run: |
-          image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          image=""
+          if [[ -f "$COMPONENT/skaffold.yaml" ]]; then
+            image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          fi
           echo "name=$image" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4.2.0

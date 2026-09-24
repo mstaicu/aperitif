@@ -58,6 +58,16 @@ jobs:
         with:
           node-version: 26
 
+      - name: Install Skaffold
+        env:
+          SKAFFOLD_VERSION: v2.25.0
+        run: |
+          curl --fail --location --silent --show-error \
+            --output "$RUNNER_TEMP/skaffold" \
+            "https://storage.googleapis.com/skaffold/releases/$SKAFFOLD_VERSION/skaffold-linux-amd64"
+          chmod +x "$RUNNER_TEMP/skaffold"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
       - name: Run checks
         env:
           UNIT: ${{ matrix.path }}

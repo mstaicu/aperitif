@@ -3,11 +3,7 @@ kind: Kustomization
 
 resources:
   - platform.yaml
-  - images/automation.yaml
-  - images/auth.yaml
-  - images/accounts.yaml
-  - images/plans.yaml
-  - images/outbox-relay.yaml
+  - automation.yaml
   - domains/auth.yaml
   - domains/accounts.yaml
   - domains/plans.yaml

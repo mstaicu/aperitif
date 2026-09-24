@@ -1,11 +1,9 @@
-.DEFAULT_GOAL := help
+.PHONY: check bootstrap
 
-.PHONY: help bootstrap
+check:
+	kubectl kustomize . >/dev/null
 
-help: ## Show available targets.
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-bootstrap: ## Bootstrap Flux and create its required cluster-local secrets.
+bootstrap:
 	@test -n "$$GITHUB_TOKEN" || { echo "GITHUB_TOKEN is required"; exit 1; }
 	@test -n "$$SOPS_AGE_KEY_FILE" || { echo "SOPS_AGE_KEY_FILE is required"; exit 1; }
 	@test -f "$$SOPS_AGE_KEY_FILE" || { echo "SOPS_AGE_KEY_FILE does not exist: $$SOPS_AGE_KEY_FILE"; exit 1; }
@@ -25,4 +23,5 @@ bootstrap: ## Bootstrap Flux and create its required cluster-local secrets.
 		--personal \
 		--components=source-controller,kustomize-controller \
 		--components-extra=image-reflector-controller,image-automation-controller \
+		--version=v2.9.4 \
 		--read-write-key
