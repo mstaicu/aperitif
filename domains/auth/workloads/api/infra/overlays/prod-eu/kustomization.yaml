@@ -16,3 +16,4 @@ configMapGenerator:
   - name: api-config
     literals:
       - ORIGIN=https://puuury.com
+      - JWT_SIGNING_KID=k1

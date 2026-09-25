@@ -4,12 +4,7 @@ import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { PinoInstrumentation } from "@opentelemetry/instrumentation-pino";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-const requiredEnv = [
-  "DATABASE_URL",
-  "JWT_PRIVATE_KEY_PATH",
-  "JWT_PUBLIC_KEY_PATH",
-  "ORIGIN",
-];
+const requiredEnv = ["DATABASE_URL", "JWKS_PATH", "JWT_SIGNING_KID", "ORIGIN"];
 
 for (const name of requiredEnv) {
   if (!process.env[name]) {

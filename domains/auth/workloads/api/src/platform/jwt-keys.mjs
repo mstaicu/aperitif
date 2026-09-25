@@ -1,28 +1,28 @@
-import { exportJWK, importPKCS8, importSPKI } from "jose";
+import { importJWK } from "jose";
 import { readFile } from "node:fs/promises";
 
 export const createJwtKeys = async () => {
-  const [privatePem, publicPem] = await Promise.all([
-    readFile(/** @type {string} */ (process.env.JWT_PRIVATE_KEY_PATH), "utf8"),
-    readFile(/** @type {string} */ (process.env.JWT_PUBLIC_KEY_PATH), "utf8"),
-  ]);
+  const jwksPath = /** @type {string} */ (process.env.JWKS_PATH);
+  const signingKid = /** @type {string} */ (process.env.JWT_SIGNING_KID);
+  const { keys } = /** @type {{ keys: import("jose").JWK[] }} */ (
+    JSON.parse(await readFile(jwksPath, "utf8"))
+  );
+  const signingJwk = keys.find(({ kid }) => kid === signingKid);
+  const publicKeys = structuredClone(keys);
 
-  const [privateKey, publicKey] = await Promise.all([
-    importPKCS8(privatePem, "ES256"),
-    importSPKI(publicPem, "ES256"),
-  ]);
-  const publicJwk = await exportJWK(publicKey);
+  if (!signingJwk?.d) {
+    throw new Error(`JWT signing key ${signingKid} is unavailable`);
+  }
 
-  /** @type {import("jose").JSONWebKeySet} */
-  const jwks = {
-    keys: [{ ...publicJwk, alg: "ES256", kid: "k1", use: "sig" }],
-  };
+  for (const key of publicKeys) {
+    delete key.d;
+  }
 
   return {
-    jwks,
+    jwks: { keys: publicKeys },
     signingKey: {
-      kid: "k1",
-      privateKey,
+      kid: signingKid,
+      privateKey: await importJWK(signingJwk, "ES256"),
     },
   };
 };

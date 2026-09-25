@@ -16,9 +16,9 @@ configMapGenerator:
   - name: api-config
     literals:
       - ORIGIN=http://localhost
+      - JWT_SIGNING_KID=local-2026-09-25
 
 secretGenerator:
   - name: api-jwt
     files:
-      - jwt-private.pem=jwt-private.local.pem
-      - jwt-public.pem=jwt-public.local.pem
+      - jwks.json=jwks.local.json

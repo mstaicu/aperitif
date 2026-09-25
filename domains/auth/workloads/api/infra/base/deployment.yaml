@@ -26,10 +26,14 @@ spec:
                   name: api-config
                   key: ORIGIN
 
-            - name: JWT_PRIVATE_KEY_PATH
-              value: /app/keys/jwt-private.pem
-            - name: JWT_PUBLIC_KEY_PATH
-              value: /app/keys/jwt-public.pem
+            - name: JWKS_PATH
+              value: /app/keys/jwks.json
+
+            - name: JWT_SIGNING_KID
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: JWT_SIGNING_KID
 
           volumeMounts:
             - name: jwt
