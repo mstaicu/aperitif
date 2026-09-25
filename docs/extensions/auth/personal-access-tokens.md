@@ -15,8 +15,7 @@ POST   /v1/personal-access-tokens/{id}/access-tokens
 Creation requires a session, accepts a name and expiry, returns the raw token
 once with `Cache-Control: no-store`, and stores only its hash. Listing returns
 metadata only. Revocation is idempotent. Expired or revoked PATs cannot mint new
-tokens; issued access tokens expire normally. A PAT cannot manage PATs and never
-produces an `operator` claim.
+tokens; issued access tokens expire normally. A PAT cannot manage PATs.
 
 PATs are private Auth credentials: no events, scopes, refresh tokens, OAuth/OIDC
 surface, or new JWT format. Build them when a user needs unattended automation.

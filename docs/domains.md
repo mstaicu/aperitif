@@ -45,7 +45,6 @@ GET    /.well-known/jwks.json
 GET    /v1/auth/docs
 ```
 
-The first operator is inserted through controlled database administration.
 Credential types such as enterprise federation, machine credentials or personal
 access tokens remain Auth concerns but should be added only for a real product.
 
@@ -89,10 +88,6 @@ stream:  PLANS
 package: @mstaicu/plans-contracts
 ```
 
-```text
-PUT /v1/accounts/:account_id/plan
-```
-
 Products consume boolean, number or string feature values, not plan names. A
 future Billing domain may provide commercial state, while Plans remains the
 authority that resolves effective features.
@@ -105,7 +100,7 @@ HTTP is appropriate for the operation being requested now: authentication,
 commands initiated by a person, and reads whose authoritative answer cannot be
 local. A caller must tolerate the callee being unavailable.
 
-Accounts and Plans fetch Auth's JWKS to validate access tokens. That is a narrow
+Accounts fetches Auth's JWKS to validate access tokens. That is a narrow
 identity dependency. Business domains do not call one another for routine
 authorization.
 

@@ -5,7 +5,7 @@ Status: Proposed. Owner: Auth.
 A machine is a non-human principal. It is not the device, vehicle, or Product
 resource it operates. Auth creates immutable machine IDs, stores credential
 hashes, and exchanges a machine credential for the normal five-minute access
-token. A machine token has its machine ID as `sub` and never has `operator`.
+token. A machine token has its machine ID as `sub`.
 
 ```text
 POST   /v1/machines

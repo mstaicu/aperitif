@@ -104,6 +104,10 @@ export SOPS_AGE_KEY_FILE=/path/to/production-age-key
 make -C clusters/prod-eu bootstrap
 ```
 
+Bootstrap generates and commits `clusters/prod-eu/flux-system`. For a retained
+cluster, add that directory to `clusters/prod-eu/kustomization.yaml` so Flux
+continues managing its own installation from Git.
+
 The GitHub token is used to install a read/write deploy key. The Age identity is
 stored in `flux-system` for SOPS decryption. Do not commit either credential.
 
@@ -214,8 +218,7 @@ make -C domains/accounts check
 make -C domains/auth check
 make -C domains/plans check
 make -C platform/runtime check
-make -C clusters/prod-eu check
 ```
 
 Domain checks run package tests, render production overlays and render the full
-local Skaffold graph. The cluster check recursively builds the Flux inventory.
+local Skaffold graph.

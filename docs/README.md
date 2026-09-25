@@ -15,7 +15,6 @@ Proposed capabilities:
 - [Account membership](extensions/accounts/membership.md)
 - [Account invitations](extensions/accounts/invitations.md)
 - [Account machine membership](extensions/accounts/machine-membership.md)
-- [Operators](extensions/auth/operators.md)
 - [Personal access tokens](extensions/auth/personal-access-tokens.md)
 - [Machines](extensions/auth/machines.md)
 - [Product member roles](extensions/product/member-roles.md)

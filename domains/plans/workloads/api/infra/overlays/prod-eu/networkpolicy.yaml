@@ -32,16 +32,6 @@ spec:
         - protocol: TCP
           port: 53
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: auth
-          podSelector:
-            matchLabels:
-              app: api
-      ports:
-        - protocol: TCP
-          port: 3000
-    - to:
         - podSelector:
             matchLabels:
               app: postgres

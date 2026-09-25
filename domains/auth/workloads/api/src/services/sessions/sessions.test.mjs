@@ -20,8 +20,6 @@ test("sessions issue access tokens and revoke independently", async () => {
   const userId = randomUUID();
 
   await pool.query("INSERT INTO users (id) VALUES ($1)", [userId]);
-  await pool.query("INSERT INTO operators (user_id) VALUES ($1)", [userId]);
-
   const client = await pool.connect();
 
   try {
@@ -44,7 +42,6 @@ test("sessions issue access tokens and revoke independently", async () => {
     // Assert
     assert.deepEqual(protectedHeader, { alg: "ES256", kid: "test" });
     assert.equal(payload.sub, userId);
-    assert.equal(payload.operator, true);
     assert.ok(payload.iat);
     assert.equal(payload.exp, payload.iat + 300);
     assert.equal(laptop.expiresIn, 2_592_000);

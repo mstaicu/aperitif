@@ -60,16 +60,6 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
-  FORBIDDEN: {
-    status: 403,
-    title: "Forbidden",
-    type: "/problems/forbidden",
-  },
-  INVALID_ACCESS_TOKEN: {
-    status: 401,
-    title: "Invalid access token",
-    type: "/problems/invalid-access-token",
-  },
   PLAN_NOT_FOUND: {
     status: 404,
     title: "Plan not found",
@@ -115,10 +105,6 @@ export default fp(async function (app) {
     if (problem) {
       if (problem.status >= 500) {
         request.log.error({ err: error }, "request failed");
-      }
-
-      if (error.message === "INVALID_ACCESS_TOKEN") {
-        reply.header("www-authenticate", "Bearer");
       }
 
       return reply

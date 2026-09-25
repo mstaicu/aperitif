@@ -27,13 +27,7 @@ export const createAccessToken = async (
     rows: [session],
   } = await pool.query(
     `
-        SELECT
-          s.user_id,
-          EXISTS (
-            SELECT 1
-            FROM operators o
-            WHERE o.user_id = s.user_id
-          ) AS operator
+        SELECT s.user_id
         FROM sessions s
         WHERE s.token_hash = $1
           AND s.revoked_at IS NULL
@@ -46,13 +40,7 @@ export const createAccessToken = async (
     throw new Error("SESSION_NOT_FOUND");
   }
 
-  /** @type {{ operator?: true, sub: string }} */
-  const claims = {
-    sub: session.user_id,
-    ...(session.operator ? { operator: /** @type {const} */ (true) } : {}),
-  };
-
-  const access_token = await new SignJWT(claims)
+  const access_token = await new SignJWT({ sub: session.user_id })
     .setProtectedHeader({
       alg: "ES256",
       kid: signingKey.kid,

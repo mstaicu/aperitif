@@ -16,7 +16,7 @@ docs/                domain rules, operations, and outstanding work
 
 | Domain | Owns | Does not own |
 | --- | --- | --- |
-| Auth | Users, credentials, sessions, operators, JWTs and JWKS | Accounts and product authority |
+| Auth | Users, credentials, sessions, JWTs and JWKS | Accounts and product authority |
 | Accounts | Individual and organization boundaries; generic membership | Identities, plans and product roles |
 | Plans | Account plan selection and resolved feature values | Accounts, billing and product data |
 

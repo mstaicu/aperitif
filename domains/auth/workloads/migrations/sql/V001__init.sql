@@ -2,12 +2,6 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 );
 
-CREATE TABLE operators (
-    user_id UUID PRIMARY KEY
-        REFERENCES users(id)
-        ON DELETE CASCADE
-);
-
 CREATE TABLE passkey_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 

@@ -4,7 +4,7 @@ import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { PinoInstrumentation } from "@opentelemetry/instrumentation-pino";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-const requiredEnv = ["DATABASE_URL", "AUTH_JWKS_URL"];
+const requiredEnv = ["DATABASE_URL"];
 
 for (const name of requiredEnv) {
   if (!process.env[name]) {

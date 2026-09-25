@@ -1,13 +1,4 @@
-.PHONY: check bootstrap
-
-check:
-	cd ../.. && flux build kustomization flux-system \
-		--path clusters/prod-eu \
-		--kustomization-file clusters/prod-eu/flux-system/gotk-sync.yaml \
-		--local-sources GitRepository/flux-system/flux-system=. \
-		--recursive \
-		--dry-run \
-		--in-memory-build >/dev/null
+.PHONY: bootstrap
 
 bootstrap:
 	@test -n "$$GITHUB_TOKEN" || { echo "GITHUB_TOKEN is required"; exit 1; }
