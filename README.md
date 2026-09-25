@@ -1,50 +1,37 @@
 # Aperitif
 
-A small Kubernetes foundation for independently developed product domains.
+A Kubernetes foundation for independently developed B2B and B2C SaaS domains.
+It supplies small deployment and integration boundaries without prescribing a
+product model.
 
 ```text
-domains/             business ownership and deployable workloads
-platform/cluster/    cluster-wide capabilities
-platform/runtime/    shared executable source
-clusters/prod-eu/    Flux production inventory
-docs/                platform documentation, extensions, and examples
+domains/             business capabilities and their deployable workloads
+platform/cluster/    optional cluster-wide capabilities
+platform/runtime/    shared executable infrastructure code
+clusters/prod-eu/    Flux production inventory and release state
+docs/                domain rules, operations, and outstanding work
 ```
 
-## Implemented boundaries
+## Boundaries
 
 | Domain | Owns | Does not own |
 | --- | --- | --- |
-| Auth | Users, passkeys, sessions, operators, JWKS | Accounts and product resources |
-| Accounts | Individual and organization ownership boundaries; generic membership | Users, plans, and product data |
-| Plans | Optional account plans and resolved feature maps | Accounts, payments, and product data |
+| Auth | Users, credentials, sessions, operators, JWTs and JWKS | Accounts and product authority |
+| Accounts | Individual and organization boundaries; generic membership | Identities, plans and product roles |
+| Plans | Account plan selection and resolved feature values | Accounts, billing and product data |
 
-Domains own their databases. They exchange NATS messages; no domain reads another
-domain's database.
+Each domain owns its data and schema. No domain reads another domain's database.
+Cross-domain identifiers are opaque. A domain decides authorization from its own
+state and local projections. Shared runtime code transports data but contains no
+business rules.
 
-## Event processing
+Capabilities are optional. A product adds NATS, contracts, an outbox or a
+projection only when it has a concrete asynchronous integration.
 
-For the currently implemented snapshot feeds, every producer and projector
-follows these rules:
+## Event contract
 
-1. Commit the source mutation and outbox row in one database transaction.
-2. Publish a structured CloudEvent with `Content-Type: application/cloudevents+json`.
-3. Use the CloudEvent ID as the JetStream message ID.
-4. Condition publication on the subject's last JetStream sequence. After a
-   failed attempt, retry from a fresh outbox transaction.
-5. Delete an outbox row only after JetStream PubAck.
-6. Validate before projecting and acknowledge only after the local transaction
-   commits.
-7. Never change a published contract version; snapshot-test it.
-
-Relay transports JSON messages using the domain-owned `outbox_messages` table:
-`id`, NATS `subject`, `payload`, `headers`, and `queued_at`. It does not interpret
-the payload; producers own validation and consumers own processing. See the
-[Relay contract](docs/operations.md#relay) for header rules and delivery limits.
-
-Current-resource feeds implement
-[Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html#Event-carriedStateTransfer):
-consumers maintain local data without fetching it from the source domain.
-Each snapshot is a complete resource representation, not a history:
+Current-resource feeds use complete snapshots so a consumer can rebuild local
+state without calling the producer:
 
 ```text
 subject: <domain>.<resource>.v<schema>.<resource-id>
@@ -52,25 +39,35 @@ message: complete representation + data.version
 stream:  one latest message per subject
 ```
 
-`data.version` is a positive safe integer owned by the source resource. It is
-unrelated to the subject schema version, CloudEvents `specversion`, or JetStream
-sequence. A mutation replaces an unpublished older representation for the same
-subject in its source transaction. A current-state projector starts with `DeliverLastPerSubject`,
-stores the upstream version, and ignores equal or older messages. A consumer
-that uses a feed only to initialize a local resource remains idempotent but
-need not retain the source representation or version.
+Every current snapshot producer and consumer follows these rules:
 
-A shape change creates a complete new feed such as `v2`. Publish both versions
-only while a real V1 consumer migrates. Historical facts are separate
-append-only streams. Commands are owner-directed requests, not resource feeds.
-See [Message contracts](docs/domains.md#message-contracts) for intent, payload
-shapes, and the filename convention.
+1. Commit the business mutation and outbox row in one database transaction.
+2. Replace any unpublished older snapshot for the same subject in that transaction.
+3. Publish a structured CloudEvent as `application/cloudevents+json`.
+4. Reuse the CloudEvent ID as the JetStream message ID across retries.
+5. Condition publication on the subject's previous JetStream sequence.
+6. Retry a failed publication from a fresh outbox transaction.
+7. Delete an outbox row only after JetStream acknowledges publication.
+8. Validate a message before projecting it.
+9. Commit projected state before acknowledging the message.
+10. Store and compare the producer's positive, monotonic `data.version`.
+11. Ignore an equal or older snapshot while the projection schema is unchanged.
+12. Never change a published wire schema; introduce a new feed version.
 
-## Local work
+`data.version` belongs to the business resource. It is independent of the feed
+schema version, CloudEvents version and JetStream sequence. Relay transports JSON
+and headers without interpreting domain payloads.
+
+Historical facts, deltas and commands need their own retention and ordering
+rules. They must not inherit snapshot coalescing merely because they use the
+same transport.
+
+## Local workflow
+
+Install tools with `brew bundle`, deploy only the platform capabilities the
+domain needs, and use the domain's stable interface:
 
 ```sh
-brew bundle
-
 kubectl apply -k platform/cluster/ingress/overlays/local
 kubectl apply -k platform/cluster/event-bus/overlays/local
 kubectl apply -k platform/cluster/observability/overlays/local
@@ -82,15 +79,12 @@ make -C domains/<domain> down
 ```
 
 There is deliberately no root Makefile or repository-wide development loop.
+Local and disposable environments use public development credentials. Non-local
+secrets remain SOPS-encrypted.
 
-## Read next
+## Documentation
 
-- [Platform guide](docs/README.md)
-- [Domains](docs/domains.md)
-- [Operations and production](docs/operations.md)
-- [Roadmap](docs/roadmap.md)
-
-Non-local secrets remain SOPS-encrypted. Local overlays use public, disposable
-fixtures so that local and ephemeral environments need no Age identity.
-Applications emit OTLP to the cluster Collector; the node agent collects
-container logs and Kubernetes metrics.
+- [Guide, extension recipes and examples](docs/README.md)
+- [Domain model and extension rules](docs/domains.md)
+- [Local, E2E and production operations](docs/operations.md)
+- [Outstanding foundation work](docs/roadmap.md)

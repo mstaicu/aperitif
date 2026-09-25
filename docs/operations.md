@@ -1,9 +1,9 @@
 # Operations
 
-## Local cluster
+## Local and disposable clusters
 
-Install local tools with `brew bundle`. Deploy only the shared capability a
-domain needs:
+Install the pinned tools with `brew bundle`. Apply only the shared capabilities
+needed by the scenario:
 
 ```sh
 kubectl apply -k platform/cluster/ingress/overlays/local
@@ -11,14 +11,13 @@ kubectl apply -k platform/cluster/event-bus/overlays/local
 kubectl apply -k platform/cluster/observability/overlays/local
 ```
 
-Kubernetes probes own capability readiness. A deterministic E2E caller that
-needs NATS before starting domains can wait explicitly:
+| Capability | Needed for |
+| --- | --- |
+| Ingress | Browser and HTTP testing through `http://localhost` |
+| Event bus | Outbox relays, state feeds and projections |
+| Observability | Local traces, logs and cluster telemetry |
 
-```sh
-kubectl rollout status --namespace=nats statefulset/nats --timeout=300s
-```
-
-Then use the domain interface:
+Use the domain interface:
 
 ```sh
 make -C domains/<domain> check
@@ -27,34 +26,77 @@ make -C domains/<domain> dev
 make -C domains/<domain> down
 ```
 
-`up` waits for PostgreSQL, runs and waits for the migration Job, and then deploys
-the runtime workloads. `dev` performs the same setup before starting Skaffold's
-development loop for the runtime workloads. A completed migration Job is not
-rerun implicitly; delete it explicitly before `up` or `dev` when a disposable
-database needs the migration to run again. `down` deletes the resources in the
-domain's Skaffold graph.
+`up` deploys PostgreSQL, runs the migration Job, waits for it, and then deploys
+runtime workloads. `dev` performs the same preparation before starting the
+Skaffold development loop. `down` removes resources in that domain's Skaffold
+graph. A completed migration Job is not rerun automatically; delete it explicitly
+before rerunning migrations against a disposable database.
 
-Local application traffic uses `http://localhost`. A local cluster with
-LoadBalancer support exposes port 80 directly. For Kind or another cluster
-without LoadBalancer support, forward the same origin explicitly:
+Start real domain dependencies explicitly. Auth must precede APIs that validate
+its JWTs. Accounts and the event bus must precede Plans when testing its Account
+initializer.
+
+Local traffic uses `http://localhost` on port 80. A cluster with LoadBalancer
+support exposes it directly. With Kind or another cluster without that support:
 
 ```sh
 kubectl port-forward --namespace=traefik service/traefik-public 80:80
 ```
 
-Browser E2E uses this same ingress origin. The environment must deploy Traefik
-and expose `localhost:80` before running a domain's browser tests.
+The Traefik dashboard is available at `http://localhost/dashboard/`.
 
-The local Traefik dashboard uses the same HTTP entrypoint:
+## E2E composition
+
+An E2E overlay would duplicate environment configuration and eventually drift.
+The `local` overlay already describes how each component runs in a disposable
+cluster. E2E composition only selects and orders existing units:
 
 ```text
-http://localhost/dashboard/
+cluster
+  + required platform capabilities
+  + provider domains or boundary fixtures
+  + target domain
+  + test process
 ```
 
-## Production EU
+For a domain-isolated suite, deploy the target and required platform capabilities,
+then seed upstream state at the domain boundary. For example, a Plans suite may
+publish a valid Accounts snapshot rather than deploy Accounts.
 
-Flux reconciles `master` from `clusters/prod-eu`. After bootstrap, Git is
-the normal way to change the cluster.
+For an integration suite, deploy the real providers:
+
+```sh
+kubectl apply -k platform/cluster/ingress/overlays/local
+kubectl apply -k platform/cluster/event-bus/overlays/local
+make -C domains/auth up
+make -C domains/accounts up
+make -C domains/plans up
+```
+
+Both forms use the same component and domain manifests. The only new artifact is
+the explicit scenario runner that performs these commands and cleanup. Add it
+with the first real cross-domain suite rather than inventing a generic environment
+language now.
+
+Auth browser E2E expects Traefik at `http://localhost` by default. Set
+`PLAYWRIGHT_BASE_URL` to run the same suite against an already deployed
+environment.
+
+## Production GitOps
+
+Flux reconciles `master` from `clusters/prod-eu`. Git is the normal production
+interface after bootstrap:
+
+```text
+merge to master
+  -> build and scan each changed first-party image
+  -> promote its immutable digest behind latest
+  -> Flux observes the new digest
+  -> Flux writes it into clusters/prod-eu/domains/<domain>/<component>.yaml
+  -> Flux reconciles the component's production overlay
+```
+
+Bootstrap against the selected production cluster:
 
 ```sh
 export GITHUB_TOKEN=<github-token>
@@ -62,22 +104,10 @@ export SOPS_AGE_KEY_FILE=/path/to/production-age-key
 make -C clusters/prod-eu bootstrap
 ```
 
-Before bootstrap, select the production context, provide the production Age key,
-and make every referenced image pullable. Bootstrap creates Flux, its SOPS key,
-a deploy key, and the root reconciliation; commit the generated `flux-system/`
-directory when instructed.
+The GitHub token is used to install a read/write deploy key. The Age identity is
+stored in `flux-system` for SOPS decryption. Do not commit either credential.
 
-```text
-merge to master
-  -> build, scan, and promote changed first-party images
-  -> Flux observes the promoted digest
-  -> Flux writes the digest into the production domain overlay
-  -> Flux reconciles the affected workload
-```
-
-Infrastructure-only changes reconcile directly from Git. Flux does not make a
-multi-workload release atomic; use expand/contract for schema and application
-changes. Its usual inspection commands are:
+Inspect reconciliation with:
 
 ```sh
 flux get kustomizations --all-namespaces
@@ -88,34 +118,34 @@ flux reconcile source git flux-system
 flux reconcile kustomization <name> --with-source
 ```
 
-`clusters/prod-eu` contains the root inventory, shared cluster graph,
-domain reconciliation graphs, and image policies. A domain owns its workload
-overlays; the platform owns only cluster-wide capabilities.
+Flux does not make a multi-image release atomic. Use backward-compatible,
+expand/contract database and event changes.
 
-## Shared capabilities
+## Event bus and Relay
 
-### NATS JetStream
+NATS runs three servers in production. Domains own streams, contracts, outbox
+rows, consumers and projections. Relay is shared executable code deployed and
+configured by each publishing domain.
 
-NATS runs three servers. Domains own contracts, outbox rows, streams, consumers,
-and projections. Relay connects to
-`nats-client.nats.svc.cluster.local:4222`; port `6222` is server clustering only.
+Relay reads the next locked outbox row, validates transport headers, publishes
+with the subject's expected JetStream sequence, and deletes only after PubAck.
+Failures roll back and exit so Kubernetes restarts it. Retries may duplicate
+delivery; consumers must remain idempotent.
 
-Each state stream retains one message per resource subject. The current cluster
-has three 1 GiB NATS PVCs, an approximately 819 MiB JetStream file budget per
-pod, and two 400 MiB replicated state streams. This is an initial allocation,
-not a product sizing model.
+The domain-owned table is:
 
-Before production sizing, set each stream's `max_bytes` from retained-resource
-count, measured representation size, concurrent feed versions, and headroom.
-Size NATS PVCs and `max_file_store` from the replicated stream total. When a
-stream is full, NATS rejects publication and Relay keeps the outbox row for
-retry.
+| Column | Meaning |
+| --- | --- |
+| `id` | Stable message and JetStream deduplication ID |
+| `subject` | NATS subject captured by an owned stream |
+| `payload` | Complete JSON message |
+| `headers` | String-valued transport headers |
+| `queued_at` | Retry and scan ordering |
 
-For diagnosis, work inward:
+Producers inject trace context into headers. Relay rejects malformed values and
+producer-supplied `Nats-*` publication controls. A failed row remains queued.
 
-```text
-Kubernetes -> NATS -> stream -> consumer -> Relay/projector -> local table
-```
+Diagnose from infrastructure toward business state:
 
 ```sh
 kubectl get statefulset,pod,pvc,service -n nats
@@ -125,168 +155,67 @@ NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info ACCOUNTS
 NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders ACCOUNTS
 ```
 
-An unpublished outbox row points to Relay or NATS. A growing consumer backlog
-points to its projector. Do not purge streams, consumers, PVCs, or the `nats`
-namespace while diagnosing.
+An old unpublished row points to its producer, Relay or NATS. Consumer backlog
+points to the projector.
 
-### Relay
+## State-feed recovery
 
-Outbox Relay is shared polling code, not a domain capability. A domain owns its
-Relay Deployment, `outbox_messages`, NATS stream definitions, and database/NATS
-access. Relay locks a queued row, reads its subject's last JetStream sequence,
-checks the database session, and publishes with that sequence as an expectation.
-It deletes only after PubAck. Failures roll back and exit; the Deployment restarts
-Relay to read the current outbox again. Retries can duplicate publications, so
-projectors must be idempotent. The sequence guard does not impose business
-version order on append-only facts or deltas.
+JetStream is a recoverable distribution layer. The producer database remains
+authoritative. Each state producer must eventually provide an on-demand reseed
+command with these properties:
 
-The domain migration defines `outbox_messages` with five columns:
+1. Read authoritative resources in bounded batches.
+2. Lock each source resource using the same lock used by normal mutations.
+3. Build the current contract version from the locked row.
+4. Preserve the resource's existing `data.version`.
+5. Generate a new CloudEvent ID and timestamp.
+6. Insert through the normal outbox path in the same transaction.
+7. Never publish directly to NATS.
+8. Be safe to stop and restart.
 
-| Column | Type | Purpose |
-| --- | --- | --- |
-| `id` | `UUID PRIMARY KEY` | Stable JetStream message ID across retries. For a CloudEvent, use its `id`. |
-| `subject` | Nonempty `TEXT` | NATS routing subject, captured by a configured stream. |
-| `payload` | `JSONB` | Complete JSON message, including its envelope if it has one. |
-| `headers` | `JSONB` object, default `{}` | String-valued transport headers, including content type and tracing context. |
-| `queued_at` | `TIMESTAMPTZ`, default `now()` | Queue age and scan order; index `(queued_at, id)`. |
+Using the normal source lock matters: a concurrent mutation must either happen
+before the reseed reads the resource or afterward and replace the older pending
+snapshot. The reseed must never overwrite a newer pending version.
 
-Producers validate their messages before insertion. Relay does not import domain
-contracts or inspect payload fields. It serializes `payload` as JSON; this is
-not an arbitrary-binary or exact-original-bytes transport. Snapshot producers
-set `Content-Type: application/cloudevents+json`; ordinary JSON messages use
-`application/json`. Set `datacontenttype: application/json` inside CloudEvents.
+Recovery is then explicit:
 
-Producers inject OpenTelemetry context into `headers`. Relay extracts that
-context, starts a publish span, and injects the outgoing context into NATS
-headers. Tracing does not need to be duplicated in the JSON envelope. Header
-names must be valid NATS names and values must be strings without newlines.
-Producers must leave `Nats-*` publication controls to Relay. Relay rejects those
-reserved headers. Reserved or malformed headers leave the row queued and fail
-the worker; correct the source data before retrying.
-
-The same Relay supports JSON commands and delta events when their domain supplies
-the appropriate contracts, stream configuration, and consumer behavior. It does
-not coalesce rows, infer business ordering, or implement Core NATS request/reply.
-
-The pre-live V001 migrations were changed in place. Existing databases with
-`outbox_events` are not upgraded automatically; recreate disposable domain
-databases before running the new producers and Relay. Do not mix old and new
-workloads. Existing retained snapshots using `data.revision` also need replacement
-with `data.version` before starting the updated consumer; there is no automatic
-state-feed reseed yet. Do not clear retained state without a recovery source.
-
-#### Run Relay without Kubernetes
-
-Requires Node.js 26+, an empty disposable PostgreSQL database, a NATS server with
-JetStream enabled, and the `psql` and `nats` CLIs. Export `DATABASE_URL` and `NATS_URL`
-to those test services in both terminals. Do not use a production database.
-
-Create the outbox:
-
-```sh
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
-CREATE TABLE outbox_messages (
-  id UUID PRIMARY KEY,
-  subject TEXT NOT NULL CHECK (subject <> ''),
-  payload JSONB NOT NULL,
-  headers JSONB NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(headers) = 'object'),
-  queued_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX outbox_messages_queued_at_id ON outbox_messages (queued_at, id);
-SQL
+```text
+recreate stream from the domain's streams.json
+  -> run the producer's one-shot reseed Job
+  -> Relay republishes current snapshots
+  -> recreate or restart lost projections
+  -> verify stream subjects, outbox age and consumer lag
 ```
 
-Save this as `streams.json` and export `NATS_STREAMS_PATH` with its absolute path. This
-small demonstration stream retains one JSON representation per resource subject;
-its 1 MiB limit is not a production sizing recommendation.
+The Job needs database access but no NATS access. It is invoked during recovery,
+not continuously reconciled by Flux. No reseed command exists yet.
 
-```json
-[
-  {
-    "name": "RELAY_DEMO",
-    "subjects": ["relay-demo.resource.*"],
-    "storage": "file",
-    "retention": "limits",
-    "max_msgs_per_subject": 1,
-    "max_age": 0,
-    "max_bytes": 1048576,
-    "discard": "new"
-  }
-]
-```
+## Ingress and observability
 
-From the `k8s` root, start Relay:
-
-```sh
-npm ci --prefix platform/runtime/outbox-relay
-node platform/runtime/outbox-relay/src/index.mjs
-```
-
-In the other terminal, check readiness and enqueue a plain JSON message:
-
-```sh
-curl --fail http://127.0.0.1:3000/readyz
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
-INSERT INTO outbox_messages (id, subject, payload, headers)
-VALUES (
-  gen_random_uuid(), 'relay-demo.resource.1',
-  '{"name":"Example","version":1}', '{"Content-Type":"application/json"}'
-);
-SQL
-nats --no-context stream get RELAY_DEMO --last-for=relay-demo.resource.1
-psql "$DATABASE_URL" -c 'SELECT * FROM outbox_messages;'
-```
-
-Publication is asynchronous: retry the lookup if it precedes the next poll.
-Expect the JSON in NATS and an empty outbox after PubAck. Use Ctrl-C to stop Relay.
-Outside Kubernetes, a process supervisor must restart it after a delivery failure.
-Telemetry is optional; set both `OTEL_EXPORTER_OTLP_ENDPOINT` and
-`OTEL_SERVICE_NAME` to enable it.
-
-### Ingress and telemetry
-
-Traefik owns its controller and TLS entry points. Domains own standard
-Kubernetes `Ingress` resources. Local routes are hostless HTTP routes on
-`localhost:80`; production routes retain their public hosts and use
+Traefik owns ingress and TLS entrypoints. Domains own standard Kubernetes Ingress
+resources. Local routes are hostless; production routes use `puuury.com` and
 Cloudflare DNS-01.
 
-Local OpenObserve is exposed only when requested:
+Applications send OTLP to `otel-collector.otel`. The node agent collects
+container logs and Kubernetes metrics. OpenObserve is intentionally non-HA until
+telemetry durability becomes a product requirement. Access it locally with:
 
 ```sh
 kubectl port-forward --namespace=otel service/openobserve 5080:5080
 ```
 
-Applications send OTLP to `otel-collector.otel`. The Collector
-receives application telemetry and Kubernetes workload state; the node agent
-collects container logs and kubelet metrics. Current overlays use one
-non-HA OpenObserve instance. Telemetry durability and high availability are not
-implemented promises.
+The operations dashboard under `platform/cluster/observability` is imported
+manually and is not reconciled.
 
-The [operations dashboard](../platform/cluster/observability/operations-dashboard.json)
-is a manual OpenObserve import and is not reconciled into a cluster.
-
-## State-feed recovery — documented, not implemented
-
-If a state stream is lost, its source must eventually rebuild it from its own
-authoritative database:
-
-1. Recreate the source domain's stream from `streams.json`.
-2. Run a manually invoked one-shot Job using that domain's API image.
-3. The Job writes one current representation per resource to the normal outbox,
-   preserving `data.version` and using a fresh CloudEvent ID and timestamp.
-4. Relay publishes normally; reset dependent projectors so they bootstrap again.
-
-No reseed Job exists yet. It is not a normal deployment step and does not connect
-to NATS.
-
-## Validate manifests
+## Validation
 
 ```sh
-kubectl kustomize platform/cluster/event-bus/overlays/local >/dev/null
-kubectl kustomize platform/cluster/event-bus/overlays/prod-eu >/dev/null
-kubectl kustomize platform/cluster/ingress/overlays/local >/dev/null
-kubectl kustomize platform/cluster/ingress/overlays/prod-eu >/dev/null
-kubectl kustomize platform/cluster/observability/overlays/local >/dev/null
-kubectl kustomize platform/cluster/observability/overlays/prod-eu >/dev/null
-kubectl kustomize clusters/prod-eu >/dev/null
+make -C domains/accounts check
+make -C domains/auth check
+make -C domains/plans check
+make -C platform/runtime check
+make -C clusters/prod-eu check
 ```
+
+Domain checks run package tests, render production overlays and render the full
+local Skaffold graph. The cluster check recursively builds the Flux inventory.

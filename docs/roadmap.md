@@ -1,41 +1,32 @@
-# Roadmap
+# Foundation roadmap
 
-Only product-agnostic work belongs here.
+Only work needed by multiple products or required to operate the foundation
+belongs here.
 
-## Before the first production product
+## Before sustained production
 
-### Recover authoritative state
-
-- Use managed databases and prove backup and restore for every domain.
-- Implement and rehearse current-resource feed reseed for every state producer;
-  see [operations](operations.md).
-- Rehearse database restore, JetStream restore, projection replay, and complete
+- Bind every domain to a managed database and rehearse backup and restore.
+- Implement and rehearse state-feed reseed for every current-state producer.
+- Rehearse database restore, JetStream loss, projection rebuild and complete
   disposable-environment reset.
-
-### Size and operate the platform
-
-- Derive NATS stream limits and PVC capacity from measured product state.
-- Set workload replicas, resources, disruption budgets, and topology placement
-  from measurements.
-- Give telemetry suitable storage, recovery, retention, and alerts.
-- Alert on the oldest unpublished outbox row and JetStream consumer lag.
-
-### Harden the edge and delivery
-
-- Choose a redundant production certificate flow.
+- Measure workloads, then set production requests, memory limits, replicas and
+  topology placement.
+- Size NATS streams and PVCs from retained resource count and measured message
+  size.
+- Alert on old outbox rows, consumer lag and failed Flux reconciliation.
+- Give telemetry deliberate retention, recovery and availability.
 - Restrict direct origin access and define forwarded-header trust.
 - Rehearse merge-to-production and Flux recovery.
-- Require `pre-merge / check` through branch protection.
+- Protect `master` with the required pull-request checks.
 
-## Add only when required
+## Add when required
 
-- NATS authentication, TLS, and subject ACLs when workloads become untrusted.
-- OTLP authentication, Collector HA, and persistent queues when telemetry loss
-  is unacceptable.
-- JWT issuer, audience, token type, and product claims when trust zones split.
+- Enterprise federation, account invitations, machine identities and personal
+  access tokens.
+- Billing, product roles, audit and notifications as independently owned domains.
+- NATS authentication, TLS and subject permissions when workloads become
+  mutually untrusted.
+- OTLP authentication, Collector high availability and persistent queues when
+  telemetry loss becomes unacceptable.
+- Stronger JWT claims when products introduce separate issuers or trust zones.
 - Release signing and admission verification when policy requires them.
-
-## Repository move
-
-Workflow and Flux paths include `k8s/`. Change them together if this directory
-becomes the repository root.

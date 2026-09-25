@@ -1,21 +1,38 @@
-# Domains
+# Domain model
 
-## Ownership
+The foundation supports products by composing independent business capabilities.
+Auth, Accounts and Plans are reusable capabilities; a product domain owns the
+actual user journey and product vocabulary.
 
-| Domain | Owns | Exports today |
-| --- | --- | --- |
-| Auth | Users, passkeys, sessions, operators, JWKS | Access JWTs and JWKS |
-| Accounts | Account boundaries and generic human membership | Current Account state |
-| Plans | Account plan selection and resolved features | Current Account feature state |
+```text
+B2C product       Auth + individual Account + Product
+B2B product       Auth + organization Account + Product
+Paid product      Auth + Accounts + Plans + Billing + Product
+Machine product   Auth machines + Account machine membership + Product
+```
 
-Auth proves identity. A domain decides authority from its own resource facts and
-local projections. Accounts decides who belongs to an Account. Product domains
-decide product permissions.
+Only deploy capabilities a product uses.
 
-## Auth
+## Rules
 
-Auth implements passkey registration and login, independent 30-day sessions,
-five-minute access tokens, JWKS, and a passkey UI. It has no domain event feed.
+- A domain owns its data, migrations, logic, APIs, messages and deployment.
+- A domain never reads another domain's database.
+- Cross-domain IDs are opaque values without cross-database foreign keys.
+- Auth proves identity. Each domain decides authority locally.
+- Accounts owns generic membership. Product roles belong to the Product domain.
+- Plans publishes resolved feature values. Products do not authorize from plan
+  names.
+- Prefer asynchronous state transfer when a domain needs remote state during
+  routine decisions. Use synchronous calls only when the user operation requires
+  an immediate authoritative answer.
+- Shared infrastructure code contains no domain vocabulary.
+
+## Implemented domains
+
+### Auth
+
+Auth implements passkey registration and authentication, independent sessions,
+five-minute access tokens, JWKS and the passkey UI.
 
 ```text
 POST   /v1/passkeys/registration/options
@@ -28,16 +45,14 @@ GET    /.well-known/jwks.json
 GET    /v1/auth/docs
 ```
 
-The first operator is inserted through controlled database administration. There
-is no operator-management API until a real requirement exists. See
-[Operators](extensions/auth/operators.md).
+The first operator is inserted through controlled database administration.
+Credential types such as enterprise federation, machine credentials or personal
+access tokens remain Auth concerns but should be added only for a real product.
 
-## Accounts
+### Accounts
 
-Accounts implements `individual` and `organization` ownership boundaries. New
-Accounts receive an initial `owner` grant in the same transaction. Membership
-is the baseline Account relationship; `owner` is the only current generic role.
-Product roles are Product state.
+Accounts implements `individual` and `organization` boundaries. Creating an
+Account adds the caller as its initial owner in the same transaction.
 
 ```text
 GET  /v1/accounts
@@ -45,230 +60,125 @@ POST /v1/accounts
 GET  /v1/accounts/docs
 ```
 
-It exports one complete Account per subject:
+Accounts publishes its current representation:
 
 ```text
 subject: accounts.account.v1.<account-id>
 type:    accounts.account.snapshot.v1
 stream:  ACCOUNTS
+package: @mstaicu/accounts-contracts
 ```
 
-The representation includes current generic members and a monotonic Account
-version. Creation is version `1`. Future membership or Account changes must
-write the complete newer representation and replace any unpublished older
-snapshot for that Account in the same transaction.
+The V1 snapshot contains the Account and its current generic members. This is a
+simple model for ordinary tenant sizes. If very large tenants make complete
+membership snapshots expensive, introduce separate versioned Account and
+membership feeds; do not mutate V1.
 
-The public package is `@mstaicu/accounts-contracts`. It exports V1 schemas,
-validation, subject and event builders, an example, and a compatibility test.
+Invitations, member administration and machine membership belong here. Product
+roles do not.
 
-## Plans
+### Plans
 
-Plans implements optional account-level plans and the resolved feature map. A
-feature value is boolean, number, or string. Products use resolved feature
-values, not plan names.
-
-Plans observes Accounts. Seeing an Account for the first time assigns `free` and
-publishes a complete feature map:
+Plans owns optional Account plans and resolves them into product feature values.
+It observes the Accounts feed, assigns `free` on first observation, and publishes:
 
 ```text
-consumes: accounts.account.v1.<account-id>
-publishes: plans.account-features.v1.<account-id>
-type:      plans.account-features.snapshot.v1
-stream:    PLANS
+subject: plans.account-features.v1.<account-id>
+type:    plans.account-features.snapshot.v1
+stream:  PLANS
+package: @mstaicu/plans-contracts
 ```
-
-The operator API assigns a plan:
 
 ```text
 PUT /v1/accounts/:account_id/plan
-{ "plan_id": "pro" }
 ```
 
-Any change to an Account's effective features increments that Account's feature
-version and publishes its complete map. The public package is
-`@mstaicu/plans-contracts`.
+Products consume boolean, number or string feature values, not plan names. A
+future Billing domain may provide commercial state, while Plans remains the
+authority that resolves effective features.
 
-This is a first-seen initializer, not a replicated Account-state projection:
-Plans retains only its local Account plan. It is idempotent and does not store
-the Account version.
+## Communication
 
-## Message contracts
+### Synchronous
 
-Intent and payload shape answer different questions:
+HTTP is appropriate for the operation being requested now: authentication,
+commands initiated by a person, and reads whose authoritative answer cannot be
+local. A caller must tolerate the callee being unavailable.
 
-| Intent: why was this message sent? | Meaning |
-| --- | --- |
-| Command | "Please add this member." Requests an action from its owner; it can be rejected. |
-| Event | "This member was added." Reports a fact; consumers decide how to react. |
+Accounts and Plans fetch Auth's JWKS to validate access tokens. That is a narrow
+identity dependency. Business domains do not call one another for routine
+authorization.
 
-| Shape: what data does it carry? | Meaning |
-| --- | --- |
-| Snapshot | Complete exported representation of one resource, not the entire domain database. |
-| Delta | Changes to apply to an existing representation; it needs an appropriate baseline. |
+### Asynchronous
 
-An event can carry a snapshot or a delta. A command can carry a complete desired
-representation or a patch. Payload shape alone does not determine intent.
-If the sender expects a recipient to perform an action, name it as a command,
-not an event describing an action that has not happened yet.
+Use a current-resource feed when a consumer needs another domain's state locally.
+A snapshot is one complete exported resource, not an entire database. An event
+reports a fact; a command asks an owner to perform an action. Snapshot, delta and
+command describe different delivery requirements and must remain explicit.
 
-Our snapshot feeds implement
-[Event-Carried State Transfer](https://martinfowler.com/articles/201701-event-driven.html#Event-carriedStateTransfer):
-consumers maintain local data without fetching it from the producer. This is an
-architecture pattern, not an envelope field or filename prefix. CloudEvents
-standardizes our event envelope; it does not prescribe a command envelope.
+Contracts live under `domains/<domain>/contracts`. Keep the schema, validator
+and builders for one message together and export the supported API through
+`src/index.mjs`. Contract packages contain no database, NATS or tracing clients.
 
-### Files and names
+Consumers pin exact package versions and validate every message. Publishing is
+manual for now:
 
-Contracts live in `domains/<domain>/contracts/`. A source filename matches its
-message type. Keep its schema, validation, and builders together in that file;
-export the public API through `src/index.mjs`.
+```sh
+cd domains/<domain>/contracts
+npm ci
+npm run check
+npm publish
+```
 
-TypeBox (`typebox`) is the only runtime dependency of a contracts package.
-Define schemas with `Type`, derive types with `Static`, and compile validators
-once per module. Validate without coercing values, inserting defaults, or
-removing properties. Keep database, NATS client, and tracing code in workloads.
+Changing JavaScript exports requires a package release. Changing the wire shape
+requires a new message version. Keep V2 beside V1 and publish both while real V1
+consumers migrate.
 
-Each current-resource feed exports five runtime names:
+## Publishing a current-resource feed
 
-| Accounts example | Purpose |
-| --- | --- |
-| `AccountSnapshotV1Schema` | Complete message schema. |
-| `isAccountSnapshotV1(value)` | Validate an unknown value and narrow it to the inferred `AccountSnapshotV1` type. |
-| `buildAccountSnapshotV1(data)` | Build a validated message from complete data, including its resource version. |
-| `AccountV1SubjectPrefix` | Select the feed with `${AccountV1SubjectPrefix}.*`. |
-| `buildAccountV1Subject(id)` | Construct an exact NATS routing subject. |
+1. Give the source resource a positive monotonic version.
+2. Build and validate its complete exported representation.
+3. In the source transaction, replace any unpublished older snapshot for the
+   same subject and insert the new outbox row.
+4. Store the complete CloudEvent as `payload` and transport metadata as
+   string-valued `headers`.
+5. Let the domain-owned Relay Deployment publish it.
 
-The message type is inferred from its schema, not maintained separately.
-Source/type literals, data schemas, and compiled validators stay private unless
-a consumer needs them. The validator also checks the CloudEvent subject against
-the data's resource ID; the receiving workload checks the actual NATS subject.
-Builders generate a new message ID and timestamp; outbox retries reuse the stored
-message. Commands and occurrence-specific events follow the same schema,
-validation, and builder naming pattern, but define their own data and routing;
-they do not inherit a snapshot's `version` requirement.
+Relay is generic. It must not import the producer's contract or interpret its
+payload.
 
-Changing package exports or the validator implementation needs a new npm release,
-not a new event schema version when the wire contract remains unchanged.
+## Consuming a current-resource feed
 
-| Example source file | Meaning |
-| --- | --- |
-| `src/events/accounts.account.snapshot.v1.mjs` | Current Account representation; implemented. |
-| `src/events/accounts.account.delta.v1.mjs` | Changes to an Account representation; illustrative. |
-| `src/events/accounts.member.added.v1.mjs` | A member was added; illustrative. |
-| `src/commands/accounts.member.add.v1.mjs` | Request to add a member; illustrative. |
+1. Depend on the producer's exact contract package version.
+2. Validate the CloudEvent and its actual NATS subject.
+3. Store only the remote fields needed locally, including source version.
+4. Compare and write projection state in one transaction.
+5. Acknowledge only after commit.
 
-Mirror these paths under `test/` with `.test.mjs` and `examples/` with `.json`.
-Tests import from `src/index.mjs`. Keep V2 beside V1; the filename's `v1` is the
-schema version, not the resource's changing version. The NATS routing subject is
-separate from the message type and CloudEvent resource subject.
+Use `DeliverLastPerSubject` for a fresh current-state projection. A consumer that
+only initializes local state may remain idempotent without storing a full remote
+projection.
 
-An occurrence-specific event such as `member.added` need not include `delta` in
-its name. Do not add separate snapshot/delta folders or an empty `commands/`
-folder. Accounts and Plans currently implement snapshot contracts only.
+## Adding a product domain
 
-Consumer workloads use the same message-type filenames for handlers under
-`src/events/` and tests under `test/events/`. Their tests import the handler
-directly: a workload's `src/index.mjs` starts the application, unlike a contracts
-package's public export file. Keep handler calls explicit; no registry is needed.
-
-### Storage follows meaning
-
-For current-state replication, full snapshots allow replacement of pending older
-snapshots and retention of one latest message per resource subject. A delta feed
-needs a baseline and all required subsequent changes; version comparison cannot
-recover missing changes. Do not coalesce required deltas, historical facts, or
-commands where every requested action matters. Define their retention, ordering,
-and idempotency requirements when implementing them; the filename does not
-configure any of these guarantees.
-
-## Add the smallest product domain
-
-Start with an API, PostgreSQL, migrations, and a domain Makefile:
+Start with the smallest deployable unit:
 
 ```text
 domains/<domain>/
   workloads/
-    postgres/            # skaffold.yaml and infra/
-    migrations/          # Dockerfile, SQL, skaffold.yaml, and infra/
-    api/                 # source, Dockerfile, skaffold.yaml, and infra/
-  Makefile               # check, up, dev, down
-  skaffold.yaml          # composes the domain workloads
+    postgres/            local/disposable database manifests
+    migrations/          SQL, image, Skaffold and manifests
+    api/                 source, image, Skaffold and manifests
+  Makefile               check, up, dev, down
+  skaffold.yaml          component composition
 ```
 
-Every workload owns `skaffold.yaml` and `infra/`. Its Skaffold config builds the
-workload when it owns an image, renders its local overlay, and deploys it with
-`kubectl`. Each file defines one named config, so parents import it by path
-without an additional config selector. It owns source only when the source
-belongs to the domain. The domain config only requires its workload configs. The
-domain owns its deployment configuration even when it uses an upstream image or
-shared runtime.
+Every workload owns its `infra/base`, environment overlays and `skaffold.yaml`.
+The base contains the portable workload and Service. Overlays contain routing,
+access, credentials and environment configuration. The domain Skaffold file only
+requires its component configs.
 
-Production deployment does not run Skaffold; Flux reconciles the `prod-eu`
-overlays. CI reads component image identities from the component configs. A
-local environment can compose complete domains by requiring their Skaffold
-configs. Skaffold resolves the transitive dependency graph and reuses a shared
-config, such as the Relay image build, when several domains require it.
-
-Add a current-state projection only when local authorization or business logic
-needs another domain's current state:
-
-1. Depend on the source contracts package and validate every message.
-2. Store only the source fields needed locally, plus the source version.
-3. Use one unnamed `DeliverLastPerSubject` consumer, filtered to the feed
-   subject family, and run one replica.
-4. While the projection schema is unchanged, ignore equal or older
-   `data.version` values. Compare and replace local state and its version in one
-   transaction.
-5. Acknowledge after commit.
-
-If a feed only initializes a local resource on first observation, make that
-creation idempotent. Do not call it a current-state projection or add an unused
-source-version column.
-
-Add a resource feed only when another domain needs your current state:
-
-1. Define a small contracts package: complete data schema, CloudEvent schema and
-   validator, subject builder, event builder, example, and compatibility test.
-2. Add the [outbox table](operations.md#relay) and its `(queued_at, id)` index in
-   the migration.
-3. Commit each exported mutation and outbox row together: CloudEvent `id`, NATS
-   `subject`, complete CloudEvent as `payload`, and transport `headers` containing
-   `Content-Type: application/cloudevents+json` and injected tracing context.
-4. Give each resource a monotonic version; replace still-pending state for the
-   same subject in that transaction.
-5. Add a domain-owned `workloads/outbox-relay/` deployment, `streams.json`, and
-   NATS access.
-
-For a V2 shape, populate a complete V2 feed for every current resource, including
-unchanged resources, through the normal source transaction and outbox rules.
-V1 and V2 representations of the same resource state use the same `data.version`;
-schema V2 does not reset this counter. V2 carries everything its consumers need,
-but does not need to preserve V1's internal shape.
-
-When a consumer needs new projected fields, choose one migration procedure:
-
-- Build a fresh V2 projection and switch reads after its initial bootstrap.
-- Migrate in place, tracking which source schema built the projection alongside
-  `data.version`. For supported versions of the same resource feed, accept newer
-  resource versions without downgrading the schema. Accept an equal resource
-  version when upgrading the schema; reject older resource versions even if the
-  schema is newer. Compare and update the schema, version, and projected data in
-  one transaction. Stop or fence old V1 writers so they cannot overwrite V2 state.
-
-For example, V2 at `data.version: 7` can fill new fields in a V1 projection at
-version 7; it must not replace a projection already at version 8. Preserve
-product-owned data in either migration procedure. Keep publishing V1 while its
-consumers migrate, then retire it. Add migration code only when a consumer needs
-it; there is no generic version router or automatic projection migration today.
-
-Build a contracts package from its directory:
-
-```sh
-npm ci
-npm test
-npm run build
-npm publish
-```
-
-When a domain adds a NATS client, add its production Flux graph and image policy
-under `clusters/prod-eu`.
+Add a UI, worker, contracts package, outbox relay or projection only when the
+domain requires it. Product-owned records should carry `account_id` when they
+belong to a tenant, and isolation tests must prove that one Account cannot read
+or mutate another Account's data.

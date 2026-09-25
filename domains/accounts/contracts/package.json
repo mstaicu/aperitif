@@ -2,12 +2,15 @@
   "name": "@mstaicu/accounts-contracts",
   "version": "0.17.0",
   "type": "module",
-  "main": "src/index.mjs",
-  "types": "types/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.mts",
+      "import": "./src/index.mjs"
+    }
+  },
   "scripts": {
     "build": "rm -rf types && tsc -p jsconfig.json",
-    "prepack": "npm test && npm run build",
-    "typecheck": "tsc -p jsconfig.json --noEmit",
+    "prepack": "npm run check",
     "test": "node --test",
     "check": "npm test && npm run build"
   },
