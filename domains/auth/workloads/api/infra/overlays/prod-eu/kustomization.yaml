@@ -6,7 +6,6 @@ namespace: auth
 resources:
   - ../../base
   - networkpolicy.yaml
-  - jwt-secret.yaml
   - ingress.yaml
 
 patches:
@@ -17,3 +16,8 @@ configMapGenerator:
     literals:
       - ORIGIN=https://puuury.com
       - JWT_SIGNING_KID=k1
+
+secretGenerator:
+  - name: api-jwt
+    files:
+      - jwks.json=jwks.enc.json

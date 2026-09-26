@@ -2,6 +2,8 @@
 #   -y "$HOME/.config/sops/age/keys.txt"
 
 creation_rules:
+  - path_regex: ^domains/auth/workloads/api/infra/overlays/prod-eu/jwks\.enc\.json$
+    age: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
   - path_regex: ^(domains|platform)/.+/overlays/prod-eu/.+\.ya?ml$
     encrypted_regex: "^(data|stringData)$"
     age: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0

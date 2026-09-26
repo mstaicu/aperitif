@@ -28,10 +28,3 @@ spec:
                 name: api
                 port:
                   number: 3000
-          - path: /.well-known/jwks.json
-            pathType: Exact
-            backend:
-              service:
-                name: api
-                port:
-                  number: 3000
