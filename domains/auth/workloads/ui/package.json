@@ -18,7 +18,7 @@
     "@opentelemetry/instrumentation-undici": "^0.32.0",
     "@opentelemetry/sdk-node": "^0.222.0",
     "@simplewebauthn/browser": "^14.0.0",
-    "remix": "^3.0.0-rc.1"
+    "remix": "3.0.0-rc.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

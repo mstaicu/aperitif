@@ -14,15 +14,6 @@ try {
   server.listen(port);
   await once(server, "listening");
 
-  console.log(
-    JSON.stringify({
-      event: "server_started",
-      level: "info",
-      port,
-      service: "auth-ui",
-    }),
-  );
-
   await Promise.race([
     once(server, "close"),
     ...["SIGINT", "SIGTERM"].map((signal) => once(process, signal)),

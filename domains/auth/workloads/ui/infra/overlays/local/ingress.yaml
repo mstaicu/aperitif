@@ -21,6 +21,13 @@ spec:
                 name: ui
                 port:
                   number: 3000
+          - path: /logout
+            pathType: Exact
+            backend:
+              service:
+                name: ui
+                port:
+                  number: 3000
           - path: /auth/assets
             pathType: Prefix
             backend:
