@@ -2,13 +2,24 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 import { DatabaseError } from "pg";
 
-import { createSession } from "../sessions/create.mjs";
-
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
+ * @param {{
+ *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
+ *   name: string,
+ *   userId: string,
+ * }} args
  */
-export const register = async ({ origin, pool }, credential) => {
+export async function addPasskey(
+  { origin, pool },
+  { credential, name, userId },
+) {
+  const normalizedName = name.trim();
+
+  if (normalizedName.length < 1 || normalizedName.length > 100) {
+    throw new Error("INVALID_PASSKEY_NAME");
+  }
+
   let challenge;
 
   try {
@@ -33,7 +44,11 @@ export const register = async ({ origin, pool }, credential) => {
     [Buffer.from(challenge, "base64url")],
   );
 
-  if (!challengeRow?.user_id || !challengeRow?.challenge) {
+  if (
+    !challengeRow?.user_id ||
+    !challengeRow?.challenge ||
+    challengeRow.user_id !== userId
+  ) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
@@ -59,67 +74,36 @@ export const register = async ({ origin, pool }, credential) => {
 
   const registrationCredential = verification.registrationInfo.credential;
 
-  const client = await pool.connect();
-
   try {
-    await client.query("BEGIN");
-
     const {
-      rows: [user],
-    } = await client.query(
-      `
-        INSERT INTO users (id)
-        VALUES ($1)
-        ON CONFLICT DO NOTHING
-        RETURNING id
-      `,
-      [challengeRow.user_id],
-    );
-
-    if (!user) {
-      throw new Error("USER_ALREADY_REGISTERED");
-    }
-
-    await client.query(
+      rows: [passkey],
+    } = await pool.query(
       `
         INSERT INTO passkey_credentials (
           user_id,
           credential_id,
+          name,
           public_key,
           sign_count
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, name, created_at
       `,
       [
-        challengeRow.user_id,
+        userId,
         Buffer.from(registrationCredential.id, "base64url"),
+        normalizedName,
         Buffer.from(registrationCredential.publicKey),
         registrationCredential.counter,
       ],
     );
 
-    const session = await createSession({
-      client,
-      userId: challengeRow.user_id,
-    });
-
-    await client.query("COMMIT");
-
-    return {
-      expires_in: session.expiresIn,
-      session_token: session.sessionToken,
-    };
+    return passkey;
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-
     if (err instanceof DatabaseError && err.code === "23505") {
-      throw new Error("CREDENTIAL_ALREADY_EXISTS", {
-        cause: err,
-      });
+      throw new Error("CREDENTIAL_ALREADY_EXISTS", { cause: err });
     }
 
     throw err;
-  } finally {
-    client.release();
   }
-};
+}

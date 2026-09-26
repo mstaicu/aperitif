@@ -78,3 +78,87 @@ test("return_to accepts only local paths", async ({ page }) => {
     "/signup",
   );
 });
+
+test("a signed-in person can add and manage another passkey", async ({
+  browser,
+  context,
+  page,
+}) => {
+  // Arrange
+  await context.credentials.install();
+  await page.goto("/signup?return_to=%2Flogin");
+  await page.getByRole("button", { name: "Sign up with passkey" }).click();
+  await expect(page).toHaveURL("/login");
+
+  const session = (await context.cookies()).find(
+    (cookie) => cookie.name === "session_token",
+  );
+  expect(session).toBeDefined();
+
+  const secondContext = await browser.newContext();
+  await secondContext.credentials.install();
+  const secondPage = await secondContext.newPage();
+  await secondPage.goto("/login");
+
+  // Act
+  const added = await secondPage.evaluate(async (sessionToken) => {
+    const importMap = JSON.parse(
+      document.querySelector('script[type="importmap"]').textContent,
+    );
+    const { startRegistration } = await import(
+      Object.values(importMap.scopes)[0]["@simplewebauthn/browser"]
+    );
+    const options = await fetch("/v1/passkeys/options", {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+      method: "POST",
+    });
+    const credential = await startRegistration({
+      optionsJSON: await options.json(),
+    });
+    const response = await fetch("/v1/passkeys", {
+      body: JSON.stringify({ credential, name: "Work passkey" }),
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    return { body: await response.json(), status: response.status };
+  }, session.value);
+  await secondContext.close();
+  const listed = await context.request.get("/v1/passkeys", {
+    headers: { Authorization: `Bearer ${session.value}` },
+  });
+  const { passkeys } = await listed.json();
+  const firstPasskey = passkeys.find(({ name }) => name === "Passkey");
+
+  // Assert
+  expect(added.status).toBe(201);
+  expect(added.body.name).toBe("Work passkey");
+  expect(listed.status()).toBe(200);
+  expect(passkeys).toHaveLength(2);
+  expect(firstPasskey).toBeDefined();
+
+  const renamed = await context.request.patch(`/v1/passkeys/${added.body.id}`, {
+    data: { name: "Work MacBook" },
+    headers: { Authorization: `Bearer ${session.value}` },
+  });
+  expect(renamed.status()).toBe(200);
+  expect((await renamed.json()).name).toBe("Work MacBook");
+
+  const removed = await context.request.delete(
+    `/v1/passkeys/${firstPasskey.id}`,
+    { headers: { Authorization: `Bearer ${session.value}` } },
+  );
+  expect(removed.status()).toBe(204);
+
+  const finalRemoval = await context.request.delete(
+    `/v1/passkeys/${added.body.id}`,
+    { headers: { Authorization: `Bearer ${session.value}` } },
+  );
+  expect(finalRemoval.status()).toBe(409);
+  expect((await finalRemoval.json()).type).toBe(
+    "/problems/last-authentication-method",
+  );
+});

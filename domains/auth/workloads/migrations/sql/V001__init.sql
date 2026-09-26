@@ -11,10 +11,18 @@ CREATE TABLE passkey_credentials (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
+    name TEXT NOT NULL DEFAULT 'Passkey'
+        CHECK (LENGTH(TRIM(name)) BETWEEN 1 AND 100),
+
     public_key BYTEA NOT NULL,
 
-    sign_count BIGINT NOT NULL DEFAULT 0
+    sign_count BIGINT NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX passkey_credentials_user_id_idx
+    ON passkey_credentials (user_id);
 
 CREATE TABLE registration_challenges (
     challenge BYTEA PRIMARY KEY,

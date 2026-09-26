@@ -75,6 +75,11 @@ const PROBLEMS = {
     title: "Invalid authorization header",
     type: "/problems/invalid-authorization-header",
   },
+  INVALID_PASSKEY_NAME: {
+    status: 400,
+    title: "Invalid passkey name",
+    type: "/problems/invalid-passkey-name",
+  },
   INVALID_REGISTRATION_RESPONSE: {
     status: 400,
     title: "Invalid registration response",
@@ -84,6 +89,16 @@ const PROBLEMS = {
     status: 401,
     title: "Invalid session token",
     type: "/problems/invalid-session-token",
+  },
+  LAST_AUTHENTICATION_METHOD: {
+    status: 409,
+    title: "The final authentication method cannot be removed",
+    type: "/problems/last-authentication-method",
+  },
+  PASSKEY_NOT_FOUND: {
+    status: 404,
+    title: "Passkey not found",
+    type: "/problems/passkey-not-found",
   },
   REGISTRATION_VERIFICATION_FAILED: {
     status: 401,

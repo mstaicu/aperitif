@@ -1,6 +1,7 @@
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
+import passkeyManagementRoutes from "./passkey-management.mjs";
 import passkeysRoutes from "./passkeys.mjs";
 import sessionsRoutes from "./sessions.mjs";
 
@@ -38,7 +39,8 @@ export default async function v1(fastify, { origin, pool, signingKey }) {
       ],
       tags: [
         {
-          description: "Passkey registration and authentication",
+          description:
+            "Passkey signup, authentication, and credential management",
           name: "passkeys",
         },
         {
@@ -49,6 +51,7 @@ export default async function v1(fastify, { origin, pool, signingKey }) {
     },
   });
 
+  fastify.register(passkeyManagementRoutes, { origin, pool });
   fastify.register(passkeysRoutes, { origin, pool });
   fastify.register(sessionsRoutes, { pool, signingKey });
 
