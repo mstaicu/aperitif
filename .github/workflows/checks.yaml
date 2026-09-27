@@ -1,4 +1,4 @@
-name: Checks
+name: check
 
 on:
   pull_request:
@@ -14,19 +14,19 @@ permissions:
 
 jobs:
   changes:
-    name: Find changes
+    name: find changed components
     runs-on: ubuntu-24.04
     outputs:
       paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
-      - name: Checkout
+      - name: check out source
         uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - id: changes
-        name: Find domain and runtime changes
+        name: find changed components
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: |
@@ -39,7 +39,7 @@ jobs:
           matrix: true
 
   check:
-    name: Check · ${{ matrix.path }}
+    name: check ${{ matrix.path }}
     needs: changes
     if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
@@ -50,15 +50,15 @@ jobs:
         path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
-      - name: Checkout
+      - name: check out source
         uses: actions/checkout@v6.1.0
 
-      - name: Set up Node
+      - name: set up node 26
         uses: actions/setup-node@v6.5.0
         with:
           node-version: 26
 
-      - name: Install Skaffold
+      - name: install skaffold
         env:
           SKAFFOLD_VERSION: v2.25.0
         run: |
@@ -68,7 +68,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/skaffold"
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
-      - name: Run checks
+      - name: run make check
         env:
           UNIT: ${{ matrix.path }}
         run: make -C "$UNIT" check
