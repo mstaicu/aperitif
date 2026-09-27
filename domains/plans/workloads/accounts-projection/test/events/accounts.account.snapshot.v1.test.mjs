@@ -30,13 +30,9 @@ test("initializes a free plan once; replay does not reset a paid plan", async ()
   );
 
   const event = buildAccountSnapshotV1({
+    created_at: "2026-09-27T12:00:00.000Z",
     id: accountId,
-    members: [
-      { roles: ["owner"], user_id: randomUUID() },
-      { roles: [], user_id: randomUUID() },
-    ],
     name: "Acme",
-    type: "organization",
     version: 7,
   });
   const message = {
@@ -101,10 +97,9 @@ test("rejects an unsupported event or a mismatched NATS subject before writing",
   await using postgres = await startPostgres();
   const { pool } = postgres;
   const event = buildAccountSnapshotV1({
+    created_at: "2026-09-27T12:00:00.000Z",
     id: randomUUID(),
-    members: [{ roles: ["owner"], user_id: randomUUID() }],
     name: "Acme",
-    type: "organization",
     version: 1,
   });
 

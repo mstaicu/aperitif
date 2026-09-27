@@ -11,32 +11,20 @@ const UuidSchema = Type.String({
     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
-const AccountMemberSchema = Type.Object(
-  {
-    roles: Type.Array(Type.Literal("owner"), { uniqueItems: true }),
-    user_id: UuidSchema,
-  },
-  { additionalProperties: false },
-);
-
 const AccountSnapshotV1DataSchema = Type.Object(
   {
+    created_at: Type.String({ format: "date-time" }),
     id: UuidSchema,
-    members: Type.Array(AccountMemberSchema, { minItems: 1 }),
     name: Type.String({ maxLength: 160, minLength: 1 }),
-    type: Type.Union([
-      Type.Literal("individual"),
-      Type.Literal("organization"),
-    ]),
-    version: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+    version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
   },
   { additionalProperties: false },
 );
 
 export const AccountSnapshotV1Schema = Type.Object(
   {
-    datacontenttype: Type.Literal("application/json"),
     data: AccountSnapshotV1DataSchema,
+    datacontenttype: Type.Literal("application/json"),
     dataschema: Type.Optional(Type.String({ format: "uri" })),
     id: UuidSchema,
     source: Type.Literal(source),
@@ -51,14 +39,14 @@ export const AccountSnapshotV1Schema = Type.Object(
     type: Type.Literal(type),
   },
   {
-    // CloudEvents integer metadata is 32-bit; data.version is separate.
-    propertyNames: { pattern: "^[a-z0-9]+$" },
-    dependencies: { tracestate: ["traceparent"] },
     additionalProperties: Type.Union([
       Type.String(),
       Type.Boolean(),
-      Type.Integer({ minimum: -2147483648, maximum: 2147483647 }),
+      Type.Integer({ maximum: 2147483647, minimum: -2147483648 }),
     ]),
+    dependencies: { tracestate: ["traceparent"] },
+    // CloudEvents integer metadata is 32-bit; data.version is separate.
+    propertyNames: { pattern: "^[a-z0-9]+$" },
   },
 );
 
@@ -70,17 +58,6 @@ export const AccountSnapshotV1Schema = Type.Object(
 
 const uuidValidator = Compile(UuidSchema);
 const accountSnapshotV1Validator = Compile(AccountSnapshotV1Schema);
-
-/**
- * @param {unknown} event
- * @returns {event is AccountSnapshotV1}
- */
-export function isAccountSnapshotV1(event) {
-  return (
-    accountSnapshotV1Validator.Check(event) &&
-    event.subject === `account/${event.data.id}`
-  );
-}
 
 /**
  * @param {AccountSnapshotV1["data"]} data
@@ -116,4 +93,15 @@ export function buildAccountV1Subject(accountId) {
   }
 
   return `${AccountV1SubjectPrefix}.${accountId}`;
+}
+
+/**
+ * @param {unknown} event
+ * @returns {event is AccountSnapshotV1}
+ */
+export function isAccountSnapshotV1(event) {
+  return (
+    accountSnapshotV1Validator.Check(event) &&
+    event.subject === `account/${event.data.id}`
+  );
 }

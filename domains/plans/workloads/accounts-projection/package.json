@@ -7,7 +7,7 @@
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
-    "@mstaicu/accounts-contracts": "0.17.0",
+    "@mstaicu/accounts-contracts": "0.18.0",
     "@mstaicu/plans-contracts": "0.6.0",
     "@nats-io/jetstream": "^3.4.0",
     "@nats-io/transport-node": "^3.4.0",

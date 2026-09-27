@@ -1,5 +1,4 @@
 import { fileURLToPath } from "node:url";
-
 import { createAssetServer } from "remix/assets";
 import { cop } from "remix/middleware/cop";
 import { createRouter } from "remix/router";
@@ -8,16 +7,16 @@ import { completePasskey, logout, passkeyOptions } from "./auth.ts";
 import { authPage } from "./page.ts";
 
 export const assets = createAssetServer({
-  basePath: "/auth/assets",
-  rootDir: fileURLToPath(new URL("../", import.meta.url)),
-  mounts: {
-    src: "src",
-    node_modules: "node_modules",
-  },
   allowFiles: ["src/public/**"],
   allowPackages: ["@simplewebauthn/browser"],
-  sourceMaps: process.env.NODE_ENV === "development" ? "external" : undefined,
+  basePath: "/auth/assets",
   minify: process.env.NODE_ENV !== "development",
+  mounts: {
+    node_modules: "node_modules",
+    src: "src",
+  },
+  rootDir: fileURLToPath(new URL("../", import.meta.url)),
+  sourceMaps: process.env.NODE_ENV === "development" ? "external" : undefined,
   watch: false,
 });
 

@@ -10,15 +10,13 @@ import {
   isAccountSnapshotV1,
 } from "../../src/index.mjs";
 
-test("accounts.account.snapshot.v1 remains compatible", (t) => {
+test("builds and validates an Account V1 snapshot", (t) => {
   // Arrange
-  const version = Number.MAX_SAFE_INTEGER;
   const data = {
+    created_at: example.data.created_at,
     id: example.data.id,
-    members: [{ user_id: example.data.members[0].user_id, roles: [] }],
     name: "My account",
-    type: "individual",
-    version,
+    version: Number.MAX_SAFE_INTEGER,
   };
 
   // Act
@@ -30,12 +28,12 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
   );
   const withMetadata = {
     ...event,
+    attempt: 2,
     dataschema: "https://example.com/accounts/account/v1",
+    replay: true,
     time: "2024-02-29T12:30:00+02:00",
     traceparent: "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01",
     tracestate: "vendor=value",
-    attempt: 2,
-    replay: true,
   };
 
   // Assert
@@ -54,7 +52,7 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
   );
 });
 
-test("rejects malformed V1 snapshots", () => {
+test("rejects malformed Account V1 snapshots", () => {
   // Arrange
   const { data } = example;
   const invalidEvents = [
@@ -74,25 +72,16 @@ test("rejects malformed V1 snapshots", () => {
     { ...example, data: { ...data, version: Number.MAX_SAFE_INTEGER + 1 } },
     { ...example, data: {} },
     { ...example, data: { ...data, unexpected: true } },
-    {
-      ...example,
-      data: {
-        ...data,
-        members: [{ user_id: data.members[0].user_id, roles: ["admin"] }],
-      },
-    },
+    { ...example, data: { id: data.id, name: data.name, version: 1 } },
   ];
 
+  // Act and assert
   for (const event of invalidEvents) {
-    // Act
-    const valid = isAccountSnapshotV1(event);
-
-    // Assert
-    assert.equal(valid, false, JSON.stringify(event));
+    assert.equal(isAccountSnapshotV1(event), false, JSON.stringify(event));
   }
 });
 
-test("builders reject invalid input", () => {
+test("builders reject invalid Account V1 input", () => {
   // Arrange
   const { data } = example;
 

@@ -6,23 +6,9 @@ import { context, propagation } from "@opentelemetry/api";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{
- *   currentUserId: string,
- *   name: string,
- *   type: "individual" | "organization",
- * }} args
- * @returns {Promise<{
- *   account: {
- *     id: string,
- *     name: string,
- *     type: "individual" | "organization",
- *   },
- * }>}
+ * @param {{ currentSubjectId: string, name: string }} args
  */
-export const createAccount = async (
-  { pool },
-  { currentUserId, name, type },
-) => {
+export const createAccount = async ({ pool }, { currentSubjectId, name }) => {
   let client;
 
   try {
@@ -33,46 +19,30 @@ export const createAccount = async (
       rows: [account],
     } = await client.query(
       `
-          INSERT INTO accounts (type, name)
-          VALUES ($1, $2)
-          RETURNING id, type, name, version
+          INSERT INTO accounts (name)
+          VALUES ($1)
+          RETURNING id, name, created_at, version
         `,
-      [type, name],
+      [name],
     );
 
     await client.query(
       `
-          INSERT INTO account_members (
+          INSERT INTO account_memberships (
             account_id,
-            user_id
-          )
-          VALUES ($1, $2)
-        `,
-      [account.id, currentUserId],
-    );
-
-    await client.query(
-      `
-          INSERT INTO account_member_roles (
-            account_id,
-            user_id,
+            subject_id,
             role
           )
           VALUES ($1, $2, 'owner')
         `,
-      [account.id, currentUserId],
+      [account.id, currentSubjectId],
     );
 
+    const createdAt = account.created_at.toISOString();
     const accountSnapshotEvent = buildAccountSnapshotV1({
+      created_at: createdAt,
       id: account.id,
-      members: [
-        {
-          roles: ["owner"],
-          user_id: currentUserId,
-        },
-      ],
       name: account.name,
-      type: account.type,
       version: Number(account.version),
     });
     const headers = {
@@ -103,9 +73,10 @@ export const createAccount = async (
 
     return {
       account: {
+        created_at: createdAt,
         id: account.id,
         name: account.name,
-        type: account.type,
+        role: "owner",
       },
     };
   } catch (err) {

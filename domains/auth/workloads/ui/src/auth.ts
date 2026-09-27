@@ -16,15 +16,11 @@ const sessionCookie = createCookie("session_token", {
 });
 
 const session = s.object({
-  session_token: s.string().pipe(minLength(1)),
   expires_in: s
     .number()
     .refine((value) => Number.isSafeInteger(value) && value > 0),
+  session_token: s.string().pipe(minLength(1)),
 });
-
-export function passkeyOptions(ceremony: "authentication" | "registration") {
-  return fetch(`${apiUrl}/passkeys/${ceremony}/options`, { method: "POST" });
-}
 
 export async function completePasskey(
   request: Request,
@@ -39,7 +35,7 @@ export async function completePasskey(
 
   if (!response.ok) return response;
 
-  const { session_token, expires_in } = s.parse(session, await response.json());
+  const { expires_in, session_token } = s.parse(session, await response.json());
 
   return Response.json(
     { ok: true, return_to: returnTo },
@@ -76,4 +72,8 @@ export async function logout(request: Request) {
     },
     status: 303,
   });
+}
+
+export function passkeyOptions(ceremony: "authentication" | "registration") {
+  return fetch(`${apiUrl}/passkeys/${ceremony}/options`, { method: "POST" });
 }

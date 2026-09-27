@@ -19,15 +19,15 @@ const AccountFeaturesSnapshotV1DataSchema = Type.Object(
       Type.String({ pattern: "^(.*)$" }),
       Type.Union([Type.Boolean(), Type.Number(), Type.String()]),
     ),
-    version: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+    version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
   },
   { additionalProperties: false },
 );
 
 export const AccountFeaturesSnapshotV1Schema = Type.Object(
   {
-    datacontenttype: Type.Literal("application/json"),
     data: AccountFeaturesSnapshotV1DataSchema,
+    datacontenttype: Type.Literal("application/json"),
     dataschema: Type.Optional(Type.String({ format: "uri" })),
     id: UuidSchema,
     source: Type.Literal(source),
@@ -42,14 +42,14 @@ export const AccountFeaturesSnapshotV1Schema = Type.Object(
     type: Type.Literal(type),
   },
   {
-    // CloudEvents integer metadata is 32-bit; data.version is separate.
-    propertyNames: { pattern: "^[a-z0-9]+$" },
-    dependencies: { tracestate: ["traceparent"] },
     additionalProperties: Type.Union([
       Type.String(),
       Type.Boolean(),
-      Type.Integer({ minimum: -2147483648, maximum: 2147483647 }),
+      Type.Integer({ maximum: 2147483647, minimum: -2147483648 }),
     ]),
+    dependencies: { tracestate: ["traceparent"] },
+    // CloudEvents integer metadata is 32-bit; data.version is separate.
+    propertyNames: { pattern: "^[a-z0-9]+$" },
   },
 );
 
@@ -63,17 +63,6 @@ const uuidValidator = Compile(UuidSchema);
 const accountFeaturesSnapshotV1Validator = Compile(
   AccountFeaturesSnapshotV1Schema,
 );
-
-/**
- * @param {unknown} event
- * @returns {event is AccountFeaturesSnapshotV1}
- */
-export function isAccountFeaturesSnapshotV1(event) {
-  return (
-    accountFeaturesSnapshotV1Validator.Check(event) &&
-    event.subject === `account/${event.data.account_id}`
-  );
-}
 
 /**
  * @param {AccountFeaturesSnapshotV1["data"]} data
@@ -109,4 +98,15 @@ export function buildAccountFeaturesV1Subject(accountId) {
   }
 
   return `${AccountFeaturesV1SubjectPrefix}.${accountId}`;
+}
+
+/**
+ * @param {unknown} event
+ * @returns {event is AccountFeaturesSnapshotV1}
+ */
+export function isAccountFeaturesSnapshotV1(event) {
+  return (
+    accountFeaturesSnapshotV1Validator.Check(event) &&
+    event.subject === `account/${event.data.account_id}`
+  );
 }

@@ -7,9 +7,9 @@ import { jwtVerify } from "jose";
  * }} args
  */
 export async function authenticate({ authorization, jwks }) {
-  const [type, token] = (authorization ?? "").split(" ");
+  const [type, token, extra] = (authorization ?? "").split(" ");
 
-  if (type !== "Bearer" || !token) {
+  if (type !== "Bearer" || !token || extra) {
     throw new Error("INVALID_ACCESS_TOKEN");
   }
 

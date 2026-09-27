@@ -1,4 +1,5 @@
 import type { AssetServer } from "remix/assets";
+
 import { html } from "remix/html-template";
 import { createHtmlResponse } from "remix/response/html";
 
@@ -45,9 +46,11 @@ export async function authPage(
             <p class="eyebrow">Auth</p>
             <h1>${registration ? "Create your passkey" : "Welcome back"}</h1>
             <p class="lead">
-              ${registration
-                ? "Register with a passkey and start your first session."
-                : "Use your passkey to start a new session."}
+              ${
+                registration
+                  ? "Register with a passkey and start your first session."
+                  : "Use your passkey to start a new session."
+              }
             </p>
 
             <form
@@ -67,10 +70,12 @@ export async function authPage(
             </form>
 
             <p class="switch">
-              ${registration
-                ? html`Already registered?
-                    <a href="${alternate}${query}">Log in</a>`
-                : html`New here? <a href="${alternate}${query}">Sign up</a>`}
+              ${
+                registration
+                  ? html`Already registered?
+                      <a href="${alternate}${query}">Log in</a>`
+                  : html`New here? <a href="${alternate}${query}">Sign up</a>`
+              }
             </p>
           </main>
         </body>

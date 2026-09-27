@@ -28,12 +28,12 @@ test("plans.account-features.snapshot.v1 remains compatible", (t) => {
   );
   const withMetadata = {
     ...event,
+    attempt: 2,
     dataschema: "https://example.com/plans/account-features/v1",
+    replay: true,
     time: "2024-02-29T12:30:00+02:00",
     traceparent: "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01",
     tracestate: "vendor=value",
-    attempt: 2,
-    replay: true,
   };
 
   // Assert
@@ -90,7 +90,8 @@ test("builders reject invalid input", () => {
 
   // Act
   const buildSubject = () => buildAccountFeaturesV1Subject("not-a-uuid");
-  const buildEvent = () => buildAccountFeaturesSnapshotV1({ ...data, version: 0 });
+  const buildEvent = () =>
+    buildAccountFeaturesSnapshotV1({ ...data, version: 0 });
 
   // Assert
   assert.throws(buildSubject, /INVALID_ACCOUNT_ID/);

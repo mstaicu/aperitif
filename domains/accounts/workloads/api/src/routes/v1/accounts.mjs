@@ -21,7 +21,7 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
       schema: {
         body: CreateAccountBody,
         description:
-          "Create an account as the authority root for account-scoped access.",
+          "Creates an account and grants the authenticated caller its initial owner membership.",
         operationId: "createAccount",
         response: {
           201: CreateAccountResponse,
@@ -35,9 +35,9 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
         tags: ["accounts"],
       },
     },
-    async function (req, reply) {
-      const currentUserId = await authenticate({
-        authorization: req.headers.authorization,
+    async function (request, reply) {
+      const currentSubjectId = await authenticate({
+        authorization: request.headers.authorization,
         jwks,
       });
 
@@ -45,9 +45,8 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
         await createAccount(
           { pool },
           {
-            currentUserId,
-            name: req.body.name,
-            type: req.body.type,
+            currentSubjectId,
+            name: request.body.name,
           },
         ),
       );
@@ -59,7 +58,7 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
     {
       schema: {
         description:
-          "List accounts where the authenticated caller has account-level authority.",
+          "Lists accounts where the authenticated caller is a member.",
         operationId: "listAccounts",
         response: {
           200: AccountsResponse,
@@ -72,13 +71,13 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
         tags: ["accounts"],
       },
     },
-    async function (req, reply) {
-      const currentUserId = await authenticate({
-        authorization: req.headers.authorization,
+    async function (request, reply) {
+      const currentSubjectId = await authenticate({
+        authorization: request.headers.authorization,
         jwks,
       });
 
-      return reply.send(await listAccounts({ pool }, { currentUserId }));
+      return reply.send(await listAccounts({ pool }, { currentSubjectId }));
     },
   );
 }

@@ -2,8 +2,8 @@ exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
 {
   "type": "object",
   "required": [
-    "datacontenttype",
     "data",
+    "datacontenttype",
     "id",
     "source",
     "specversion",
@@ -12,10 +12,6 @@ exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
     "type"
   ],
   "properties": {
-    "datacontenttype": {
-      "type": "string",
-      "const": "application/json"
-    },
     "data": {
       "type": "object",
       "required": [
@@ -48,11 +44,15 @@ exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
         },
         "version": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 9007199254740991
+          "maximum": 9007199254740991,
+          "minimum": 1
         }
       },
       "additionalProperties": false
+    },
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json"
     },
     "dataschema": {
       "type": "string",
@@ -91,14 +91,6 @@ exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
       "const": "plans.account-features.snapshot.v1"
     }
   },
-  "propertyNames": {
-    "pattern": "^[a-z0-9]+$"
-  },
-  "dependencies": {
-    "tracestate": [
-      "traceparent"
-    ]
-  },
   "additionalProperties": {
     "anyOf": [
       {
@@ -109,10 +101,18 @@ exports[`plans.account-features.snapshot.v1 remains compatible 1`] = `
       },
       {
         "type": "integer",
-        "minimum": -2147483648,
-        "maximum": 2147483647
+        "maximum": 2147483647,
+        "minimum": -2147483648
       }
     ]
+  },
+  "dependencies": {
+    "tracestate": [
+      "traceparent"
+    ]
+  },
+  "propertyNames": {
+    "pattern": "^[a-z0-9]+$"
   }
 }
 `;

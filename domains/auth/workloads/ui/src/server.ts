@@ -1,6 +1,5 @@
 import { once } from "node:events";
 import * as http from "node:http";
-
 import { createRequestListener } from "remix/node-fetch-server";
 
 import { assets, router } from "./app.ts";

@@ -4,8 +4,9 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon",
     "start": "NODE_ENV=production node --import remix/node-tsx src/index.ts",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck",
+    "check": "npm run lint && npm run typecheck",
     "test:e2e": "playwright test"
   },
   "engines": {
@@ -19,9 +20,19 @@
     "remix": "3.0.0-rc.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/eslint-parser": "^7.29.9",
+    "@babel/plugin-syntax-typescript": "^7.29.7",
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.4.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-perfectionist": "^5.12.1",
+    "eslint-plugin-prettier": "^5.5.6",
+    "globals": "^17.12.0",
     "nodemon": "^3.1.14",
+    "prettier": "^3.9.9",
     "typescript": "^7.0.2"
   },
   "overrides": {

@@ -2,33 +2,34 @@
 
 Status: Proposed. Owner: Accounts.
 
-Accounts already owns generic membership:
+Accounts owns generic membership:
 
-```text
-account_id  Account boundary
-user_id     Auth user
-owner       optional generic Account grant
-```
+    id          Durable membership resource identifier
+    account_id  Account boundary
+    subject_id  Opaque Auth subject
+    role        owner, admin, or member
 
-This extension adds owner-managed listing, owner grants, and removal:
+This extension adds owner-managed listing, role changes, and removal:
 
-```text
-GET    /v1/accounts/{account_id}/members
-PUT    /v1/accounts/{account_id}/members/{user_id}/roles/owner
-DELETE /v1/accounts/{account_id}/members/{user_id}/roles/owner
-DELETE /v1/accounts/{account_id}/members/{user_id}
-```
+    GET    /v1/accounts/{account_id}/members
+    PUT    /v1/accounts/{account_id}/members/{subject_id}
+    DELETE /v1/accounts/{account_id}/members/{subject_id}
 
-An Account must retain one owner. Owner grant and removal are idempotent, as is
-member removal. Human admission remains the invitation boundary, not a public
-`POST /members`.
+An Account retains at least one owner. Role changes and removal are idempotent.
+Human admission remains the invitation boundary, not a public member-creation
+route.
 
-Each mutation locks the Account, verifies the caller is an owner, changes the
-membership or owner grant, increments the Account version, and writes the
-complete newer Account representation to the outbox in one transaction. There
-are no member CRUD feed events. Products reconstruct current membership from
-the Account resource feed.
+Membership changes do not change Account state. When another domain needs
+membership state, Accounts publishes each membership as a separate current
+resource with its own identifier and monotonic version:
 
-Build it when Account owners need to manage existing members. Notifications,
+    subject: accounts.membership.v1.{membership-id}
+    type:    accounts.membership.snapshot.v1
+    data:    id, account_id, subject_id, role, version
+
+Removal needs an explicit current-state tombstone on the same subject. It does
+not become a delta in the Account feed.
+
+Build this when Account owners need to manage existing members. Notifications,
 fresh authentication, durable evidence, approvals, and review follow only when
 access risk requires them.

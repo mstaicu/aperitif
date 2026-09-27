@@ -17,13 +17,17 @@ docs/                domain rules, operations, and outstanding work
 | Domain | Owns | Does not own |
 | --- | --- | --- |
 | Auth | Users, credentials, sessions, JWTs and JWKS | Accounts and product authority |
-| Accounts | Individual and organization boundaries; generic membership | Identities, plans and product roles |
+| Accounts | Account boundaries, generic membership and customer attribution | Identities, plans, prices and product roles |
 | Plans | Account plan selection and resolved feature values | Accounts, billing and product data |
 
 Each domain owns its data and schema. No domain reads another domain's database.
 Cross-domain identifiers are opaque. A domain decides authorization from its own
 state and local projections. Shared runtime code transports data but contains no
 business rules.
+
+An Account is the primary customer and economic attribution key. Product-owned
+records carry `account_id`; prices, usage and revenue belong to future Billing
+and Finance capabilities.
 
 Capabilities are optional. A product adds NATS, contracts, an outbox or a
 projection only when it has a concrete asynchronous integration.
@@ -52,7 +56,7 @@ Every current snapshot producer and consumer follows these rules:
 9. Commit projected state before acknowledging the message.
 10. Store and compare the producer's positive, monotonic `data.version`.
 11. Ignore an equal or older snapshot while the projection schema is unchanged.
-12. Never change a published wire schema; introduce a new feed version.
+12. Do not change a wire schema with live consumers; introduce a new feed version.
 
 `data.version` belongs to the business resource. It is independent of the feed
 schema version, CloudEvents version and JetStream sequence. Relay transports JSON

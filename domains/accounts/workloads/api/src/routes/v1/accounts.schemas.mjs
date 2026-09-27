@@ -1,25 +1,13 @@
 import { Type } from "@fastify/type-provider-typebox";
 
-const AccountId = Type.String({
-  description: "Stable identifier for an account resource.",
-  format: "uuid",
-});
 const AccountName = Type.String({
   description: "Human-readable account name.",
   maxLength: 160,
   minLength: 1,
 });
-const AccountType = Type.Union(
-  [Type.Literal("individual"), Type.Literal("organization")],
-  {
-    description:
-      "Kind of account boundary being created. Individual accounts represent one person. Organization accounts represent a shared organization.",
-  },
-);
 export const CreateAccountBody = Type.Object(
   {
     name: AccountName,
-    type: AccountType,
   },
   {
     additionalProperties: false,
@@ -29,14 +17,23 @@ export const CreateAccountBody = Type.Object(
 
 export const Account = Type.Object(
   {
-    id: AccountId,
+    created_at: Type.String({
+      description: "Time when the account was created.",
+      format: "date-time",
+    }),
+    id: Type.String({
+      description: "Stable identifier for an account resource.",
+      format: "uuid",
+    }),
     name: AccountName,
-    type: AccountType,
+    role: Type.String({
+      description: "The authenticated caller's membership role.",
+      enum: ["owner", "admin", "member"],
+    }),
   },
   {
     additionalProperties: false,
-    description:
-      "Account resource. Accounts are the authority root for account-scoped access.",
+    description: "Account visible to the authenticated caller.",
   },
 );
 

@@ -1,11 +1,10 @@
-# `@mstaicu/accounts-contracts`
+# @mstaicu/accounts-contracts
 
-The public message contract for the Accounts domain. It contains the current
-Account snapshot schema, validator, subject builder, event builder, generated
-types, and a complete example.
+The public current-Account message contract. It contains the schema, validator,
+subject builder, event builder, generated types, and a complete example.
 
 ```sh
-npm install @mstaicu/accounts-contracts@0.17.0
+npm install @mstaicu/accounts-contracts@0.18.0
 ```
 
 ```js
@@ -16,10 +15,9 @@ import {
 } from "@mstaicu/accounts-contracts";
 ```
 
-Consumers must pin an exact package version and validate every received message.
-Never change a published wire schema. Add a new schema version beside the old
-one, publish both while consumers migrate, and retire the old feed only after its
-last consumer has moved.
+Consumers pin an exact package version and validate every received message. Once
+a contract has live consumers, add a new schema version instead of changing its
+wire shape.
 
 Publishing is deliberately manual:
 

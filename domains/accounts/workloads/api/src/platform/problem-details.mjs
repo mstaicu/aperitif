@@ -103,7 +103,7 @@ export default fp(async function (app) {
       }
 
       if (error.message === "INVALID_ACCESS_TOKEN") {
-        reply.header("www-authenticate", "Bearer");
+        reply.header("WWW-Authenticate", "Bearer");
       }
 
       return reply

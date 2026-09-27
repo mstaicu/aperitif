@@ -5,8 +5,8 @@ Auth, Accounts and Plans are reusable capabilities; a product domain owns the
 actual user journey and product vocabulary.
 
 ```text
-B2C product       Auth + individual Account + Product
-B2B product       Auth + organization Account + Product
+B2C product       Auth + Account + Product
+B2B product       Auth + Account + Product
 Paid product      Auth + Accounts + Plans + Billing + Product
 Machine product   Auth machines + Account machine membership + Product
 ```
@@ -50,8 +50,9 @@ access tokens remain Auth concerns but should be added only for a real product.
 
 ### Accounts
 
-Accounts implements `individual` and `organization` boundaries. Creating an
-Account adds the caller as its initial owner in the same transaction.
+Accounts implements account boundaries and generic membership. Creating an
+Account adds the caller as its initial owner in the same transaction. An Account
+is the product's primary customer and economic attribution key.
 
 ```text
 GET  /v1/accounts
@@ -68,10 +69,9 @@ stream:  ACCOUNTS
 package: @mstaicu/accounts-contracts
 ```
 
-The V1 snapshot contains the Account and its current generic members. This is a
-simple model for ordinary tenant sizes. If very large tenants make complete
-membership snapshots expensive, introduce separate versioned Account and
-membership feeds; do not mutate V1.
+The V1 snapshot contains only Account state. A consumer that needs membership
+state receives a separate versioned membership feed; it does not make the
+Account feed a growing aggregate.
 
 Invitations, member administration and machine membership belong here. Product
 roles do not.
@@ -125,9 +125,9 @@ npm run check
 npm publish
 ```
 
-Changing JavaScript exports requires a package release. Changing the wire shape
-requires a new message version. Keep V2 beside V1 and publish both while real V1
-consumers migrate.
+After a contract has live consumers, changing JavaScript exports requires a
+package release and changing the wire shape requires a new message version. Keep
+V2 beside V1 and publish both while real V1 consumers migrate.
 
 ## Publishing a current-resource feed
 
@@ -174,6 +174,7 @@ access, credentials and environment configuration. The domain Skaffold file only
 requires its component configs.
 
 Add a UI, worker, contracts package, outbox relay or projection only when the
-domain requires it. Product-owned records should carry `account_id` when they
-belong to a tenant, and isolation tests must prove that one Account cannot read
-or mutate another Account's data.
+domain requires it. Product-owned records carry `account_id` when they belong
+to a customer. Billable and directly attributable actions use the same key.
+Isolation tests must prove that one Account cannot read or mutate another
+Account's data.

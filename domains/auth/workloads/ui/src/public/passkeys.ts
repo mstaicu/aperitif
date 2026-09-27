@@ -23,7 +23,9 @@ form.addEventListener("submit", async (event) => {
   status.textContent = "Waiting for your passkey…";
 
   try {
-    const options = await fetch(form.dataset.optionsAction!, { method: "POST" });
+    const options = await fetch(form.dataset.optionsAction!, {
+      method: "POST",
+    });
 
     if (!options.ok) throw new Error();
 

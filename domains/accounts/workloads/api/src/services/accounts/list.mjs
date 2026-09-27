@@ -1,33 +1,28 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ currentUserId: string }} args
- * @returns {Promise<{
- *   accounts: {
- *     id: string,
- *     name: string,
- *     type: "individual" | "organization",
- *   }[],
- * }>}
+ * @param {{ currentSubjectId: string }} args
  */
-export const listAccounts = async ({ pool }, { currentUserId }) => {
+export const listAccounts = async ({ pool }, { currentSubjectId }) => {
   const { rows } = await pool.query(
     `
         SELECT a.id,
           a.name,
-          a.type
-        FROM account_members am
+          a.created_at,
+          am.role
+        FROM account_memberships am
         JOIN accounts a ON a.id = am.account_id
-        WHERE am.user_id = $1
+        WHERE am.subject_id = $1
         ORDER BY a.name, a.id
       `,
-    [currentUserId],
+    [currentSubjectId],
   );
 
   return {
-    accounts: rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      type: row.type,
+    accounts: rows.map((account) => ({
+      created_at: account.created_at.toISOString(),
+      id: account.id,
+      name: account.name,
+      role: account.role,
     })),
   };
 };
