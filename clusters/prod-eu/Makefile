@@ -1,4 +1,7 @@
-.PHONY: bootstrap
+.PHONY: check bootstrap
+
+check:
+	kubectl kustomize . >/dev/null
 
 bootstrap:
 	@test -n "$$GITHUB_TOKEN" || { echo "GITHUB_TOKEN is required"; exit 1; }

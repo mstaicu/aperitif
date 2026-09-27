@@ -2,7 +2,6 @@ brew "age" # SOPS age key generation and encryption
 brew "sops" # Encrypt Kubernetes Secret manifests
 
 brew "kubernetes-cli" # Installs kubectl
-brew "kustomize" # Render Kubernetes overlays
 brew "skaffold" # Local Kubernetes dev/debug loop
 
 tap "fluxcd/tap"

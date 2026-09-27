@@ -30,8 +30,9 @@ jobs:
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: |
-            domains/**
-            platform/runtime/**
+            domains/*/**
+            platform/*/**
+            clusters/*/**
           dir_names: true
           dir_names_max_depth: 2
           output_renamed_files_as_deleted_and_added: true
@@ -57,16 +58,6 @@ jobs:
         uses: actions/setup-node@v6.5.0
         with:
           node-version: 26
-
-      - name: install skaffold
-        env:
-          SKAFFOLD_VERSION: v2.25.0
-        run: |
-          curl --fail --location --silent --show-error \
-            --output "$RUNNER_TEMP/skaffold" \
-            "https://storage.googleapis.com/skaffold/releases/$SKAFFOLD_VERSION/skaffold-linux-amd64"
-          chmod +x "$RUNNER_TEMP/skaffold"
-          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
       - name: run make check
         env:

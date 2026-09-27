@@ -5,11 +5,14 @@ check:
 	npm --prefix contracts run check
 	npm --prefix workloads/api ci
 	npm --prefix workloads/api run check
+	kubectl kustomize workloads/postgres/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/postgres/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/migrations/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/migrations/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/api/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/api/infra/overlays/prod-eu >/dev/null
+	kubectl kustomize workloads/outbox-relay/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/outbox-relay/infra/overlays/prod-eu >/dev/null
-	skaffold render --digest-source=none --offline >/dev/null
 
 up:
 	skaffold run -m accounts-postgres
