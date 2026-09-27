@@ -1,4 +1,4 @@
-name: publish
+name: Publish images
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   changes:
-    name: find changed components
+    name: Find changed components
     runs-on: ubuntu-24.04
     outputs:
       paths: >-
@@ -26,13 +26,13 @@ jobs:
         )).*.*) }}
 
     steps:
-      - name: check out source
+      - name: Check out source
         uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - id: domains
-        name: find changed domain components
+        name: Find changed domain components
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: domains/*/workloads/*/**
@@ -44,7 +44,7 @@ jobs:
           matrix: true
 
       - id: runtimes
-        name: find changed platform components
+        name: Find changed platform components
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: platform/runtime/*/**
@@ -56,7 +56,7 @@ jobs:
           matrix: true
 
   publish:
-    name: publish ${{ matrix.path }}
+    name: ${{ matrix.path }}
     needs: changes
     if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
@@ -70,11 +70,11 @@ jobs:
         path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
-      - name: check out source
+      - name: Check out source
         uses: actions/checkout@v6.1.0
 
       - id: image
-        name: read image reference
+        name: Read image reference
         env:
           COMPONENT: ${{ matrix.path }}
         run: |
@@ -84,10 +84,10 @@ jobs:
           fi
           echo "name=$image" >> "$GITHUB_OUTPUT"
 
-      - name: set up buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v4.2.0
 
-      - name: log in to ghcr
+      - name: Log in to GHCR
         uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
@@ -95,7 +95,7 @@ jobs:
           password: ${{ github.token }}
 
       - id: build
-        name: build and push sha image
+        name: Build and push SHA image
         uses: docker/build-push-action@v7.3.0
         if: steps.image.outputs.name != ''
         with:
@@ -106,7 +106,7 @@ jobs:
           sbom: true
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
 
-      - name: scan sha image
+      - name: Scan SHA image
         uses: aquasecurity/trivy-action@v0.36.0
         if: steps.image.outputs.name != ''
         with:
@@ -116,7 +116,7 @@ jobs:
           ignore-unfixed: true
           exit-code: 1
 
-      - name: tag scanned image as latest
+      - name: Tag scanned image as latest
         if: steps.image.outputs.name != ''
         env:
           IMAGE: ${{ steps.image.outputs.name }}

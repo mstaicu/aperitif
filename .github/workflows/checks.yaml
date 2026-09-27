@@ -1,4 +1,4 @@
-name: check
+name: Check
 
 on:
   pull_request:
@@ -14,19 +14,19 @@ permissions:
 
 jobs:
   changes:
-    name: find changed components
+    name: Find changed components
     runs-on: ubuntu-24.04
     outputs:
       paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
 
     steps:
-      - name: check out source
+      - name: Check out source
         uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - id: changes
-        name: find changed components
+        name: Find changed components
         uses: tj-actions/changed-files@v47.0.6
         with:
           files: |
@@ -40,7 +40,7 @@ jobs:
           matrix: true
 
   check:
-    name: check ${{ matrix.path }}
+    name: ${{ matrix.path }}
     needs: changes
     if: needs.changes.outputs.paths != '[]'
     runs-on: ubuntu-24.04
@@ -51,15 +51,15 @@ jobs:
         path: ${{ fromJSON(needs.changes.outputs.paths) }}
 
     steps:
-      - name: check out source
+      - name: Check out source
         uses: actions/checkout@v6.1.0
 
-      - name: set up node 26
+      - name: Set up Node 26
         uses: actions/setup-node@v6.5.0
         with:
           node-version: 26
 
-      - name: run make check
+      - name: Run make check
         env:
           UNIT: ${{ matrix.path }}
         run: make -C "$UNIT" check
