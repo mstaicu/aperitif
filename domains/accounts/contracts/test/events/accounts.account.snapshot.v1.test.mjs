@@ -25,6 +25,9 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
   const event = buildAccountSnapshotV1(data);
   const republished = buildAccountSnapshotV1(data);
   const subject = buildAccountV1Subject(data.id);
+  const uuidV7Subject = buildAccountV1Subject(
+    "01922e91-8f6e-7d32-a786-765a0ebca6d6",
+  );
   const withMetadata = {
     ...event,
     dataschema: "https://example.com/accounts/account/v1",
@@ -45,6 +48,10 @@ test("accounts.account.snapshot.v1 remains compatible", (t) => {
   assert.deepEqual(republished.data, event.data);
   assert.equal(AccountV1SubjectPrefix, "accounts.account.v1");
   assert.equal(subject, `accounts.account.v1.${data.id}`);
+  assert.equal(
+    uuidV7Subject,
+    "accounts.account.v1.01922e91-8f6e-7d32-a786-765a0ebca6d6",
+  );
 });
 
 test("rejects malformed V1 snapshots", () => {

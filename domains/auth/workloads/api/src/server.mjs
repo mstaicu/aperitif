@@ -12,13 +12,12 @@ const pool = new Pool({
 pool.on("error", (err) => console.error(err));
 
 try {
-  const { jwks, signingKey } = await createJwtKeys();
+  const jwt = await createJwtKeys();
 
   await using app = buildApp({
-    jwks,
+    jwt,
     origin: /** @type {string} */ (process.env.ORIGIN),
     pool,
-    signingKey,
   });
 
   await app.listen({ host: "0.0.0.0", port: 3000 });

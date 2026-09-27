@@ -1,5 +1,4 @@
 {
-  "name": "plans-accounts-projection",
   "private": true,
   "scripts": {
     "lint": "eslint .",

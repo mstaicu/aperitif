@@ -6,11 +6,9 @@ export const AccessTokenResponse = Type.Object(
       description: "Short-lived JWT access token.",
       minLength: 1,
     }),
-    expires_in: Type.Literal(300, {
+    expires_in: Type.Integer({
       description: "Access-token lifetime in seconds.",
-    }),
-    token_type: Type.Literal("Bearer", {
-      description: "Authorization scheme used with the access token.",
+      minimum: 1,
     }),
   },
   {

@@ -7,11 +7,6 @@ import { createHash } from "node:crypto";
  *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
  * }} resources
  * @param {{ session_token: string }} args
- * @returns {Promise<{
- *   access_token: string,
- *   expires_in: 300,
- *   token_type: "Bearer",
- * }>}
  */
 export const createAccessToken = async (
   { pool, signingKey },
@@ -52,6 +47,5 @@ export const createAccessToken = async (
   return {
     access_token,
     expires_in: 300,
-    token_type: /** @type {const} */ ("Bearer"),
   };
 };

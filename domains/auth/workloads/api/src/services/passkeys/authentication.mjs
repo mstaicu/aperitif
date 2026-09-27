@@ -6,10 +6,6 @@ import { createSession } from "../sessions/create.mjs";
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
- * @returns {Promise<{
- *   expires_in: number,
- *   session_token: string,
- * }>}
  */
 export const authenticate = async ({ origin, pool }, authentication) => {
   let challenge;

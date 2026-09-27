@@ -4,12 +4,14 @@ import { authenticate } from "../../services/passkeys/authentication.mjs";
 import { createRegistrationOptions } from "../../services/passkeys/registration-options.mjs";
 import { register } from "../../services/passkeys/registration.mjs";
 import {
-  AuthenticationBody,
   AuthenticationOptionsResponse,
-  RegistrationBody,
   RegistrationOptionsResponse,
   SessionResponse,
 } from "./passkeys.schemas.mjs";
+import {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+} from "./webauthn.schemas.mjs";
 
 /**
  * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
@@ -22,7 +24,7 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     "/passkeys/authentication",
     {
       schema: {
-        body: AuthenticationBody,
+        body: AuthenticationResponseJSON,
         description:
           "Verifies a WebAuthn authentication response and creates an independent session.",
         operationId: "authenticateWithPasskey",
@@ -39,7 +41,6 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     },
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
 
       return reply
         .code(200)
@@ -65,7 +66,6 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     },
     async function (_, reply) {
       reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
 
       return reply.send(await createAuthenticationOptions({ origin, pool }));
     },
@@ -75,7 +75,7 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     "/passkeys/registration",
     {
       schema: {
-        body: RegistrationBody,
+        body: RegistrationResponseJSON,
         description:
           "Verifies a WebAuthn registration response, creates the user and passkey, and creates the first session.",
         operationId: "registerWithPasskey",
@@ -93,7 +93,6 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     },
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
 
       return reply
         .code(201)
@@ -119,7 +118,6 @@ export default async function passkeysRoutes(fastify, { origin, pool }) {
     },
     async function (_, reply) {
       reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
 
       return reply
         .code(200)

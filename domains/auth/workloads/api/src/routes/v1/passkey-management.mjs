@@ -127,7 +127,6 @@ export default async function passkeyManagementRoutes(
       const userId = session.user_id;
 
       reply.header("Cache-Control", "no-store");
-      reply.header("Pragma", "no-cache");
 
       return reply.send(
         await createPasskeyOptions({ origin, pool }, { userId }),
@@ -270,10 +269,7 @@ export default async function passkeyManagementRoutes(
         operationId: "deletePasskey",
         params: PasskeyIdParams,
         response: {
-          204: {
-            description: "Passkey removed.",
-            type: "null",
-          },
+          204: { description: "Passkey removed." },
           401: ProblemResponse,
           404: ProblemResponse,
           409: ProblemResponse,
@@ -316,7 +312,7 @@ export default async function passkeyManagementRoutes(
 
       await removePasskey({ pool }, { id: request.params.id, userId });
 
-      return reply.code(204).send(null);
+      return reply.code(204).send();
     },
   );
 }

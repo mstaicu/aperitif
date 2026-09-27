@@ -1,5 +1,4 @@
 {
-  "name": "outbox-relay",
   "private": true,
   "engines": {
     "node": ">=26"

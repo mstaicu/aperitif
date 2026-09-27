@@ -23,6 +23,9 @@ test("plans.account-features.snapshot.v1 remains compatible", (t) => {
   const event = buildAccountFeaturesSnapshotV1(data);
   const republished = buildAccountFeaturesSnapshotV1(data);
   const subject = buildAccountFeaturesV1Subject(data.account_id);
+  const uuidV7Subject = buildAccountFeaturesV1Subject(
+    "01922e91-8f6e-7d32-a786-765a0ebca6d6",
+  );
   const withMetadata = {
     ...event,
     dataschema: "https://example.com/plans/account-features/v1",
@@ -43,6 +46,10 @@ test("plans.account-features.snapshot.v1 remains compatible", (t) => {
   assert.deepEqual(republished.data, event.data);
   assert.equal(AccountFeaturesV1SubjectPrefix, "plans.account-features.v1");
   assert.equal(subject, `plans.account-features.v1.${data.account_id}`);
+  assert.equal(
+    uuidV7Subject,
+    "plans.account-features.v1.01922e91-8f6e-7d32-a786-765a0ebca6d6",
+  );
 });
 
 test("rejects malformed V1 snapshots", () => {

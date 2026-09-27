@@ -29,9 +29,9 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       },
     },
     async function (req, reply) {
-      const [type, token] = (req.headers.authorization || "").split(" ");
+      const [type, token, extra] = (req.headers.authorization ?? "").split(" ");
 
-      if (type !== "Bearer" || !token) {
+      if (type !== "Bearer" || !token || extra) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
@@ -51,10 +51,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
           "Revokes the session represented by the bearer credential.",
         operationId: "deleteSession",
         response: {
-          204: {
-            description: "Session revoked.",
-            type: "null",
-          },
+          204: { description: "Session revoked." },
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
@@ -65,15 +62,15 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       },
     },
     async function (req, reply) {
-      const [type, token] = (req.headers.authorization || "").split(" ");
+      const [type, token, extra] = (req.headers.authorization ?? "").split(" ");
 
-      if (type !== "Bearer" || !token) {
+      if (type !== "Bearer" || !token || extra) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
       await revokeSession({ pool }, { session_token: token });
 
-      return reply.code(204).send(null);
+      return reply.code(204).send();
     },
   );
 }

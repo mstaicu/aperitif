@@ -153,6 +153,14 @@ export default fp(async function (app) {
         : undefined;
 
     if (problem) {
+      if (
+        problem === PROBLEMS.INVALID_AUTHORIZATION_HEADER ||
+        problem === PROBLEMS.INVALID_SESSION_TOKEN ||
+        problem === PROBLEMS.SESSION_NOT_FOUND
+      ) {
+        reply.header("WWW-Authenticate", "Bearer");
+      }
+
       if (problem.status >= 500) {
         request.log.error({ err: error }, "request failed");
       }

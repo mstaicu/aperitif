@@ -10,11 +10,10 @@ import v1 from "./routes/v1/index.mjs";
  * @param {{
  *   pool: import("pg").Pool,
  *   origin: string,
- *   signingKey: import("./platform/jwt-keys.mjs").JwtKeys["signingKey"],
- *   jwks: import("jose").JSONWebKeySet,
+ *   jwt: import("./platform/jwt-keys.mjs").JwtKeys,
  * }} dependencies
  */
-export function buildApp({ jwks, origin, pool, signingKey }) {
+export function buildApp({ jwt: { jwks, signingKey }, origin, pool }) {
   const app = Fastify({
     logController: new LogController({ disableRequestLogging: true }),
     logger: true,

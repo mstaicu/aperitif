@@ -8,7 +8,7 @@ export const AccountV1SubjectPrefix = "accounts.account.v1";
 
 const UuidSchema = Type.String({
   pattern:
-    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
 });
 
 const AccountMemberSchema = Type.Object(
@@ -43,7 +43,7 @@ export const AccountSnapshotV1Schema = Type.Object(
     specversion: Type.Literal("1.0"),
     subject: Type.String({
       pattern:
-        "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+        "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
     }),
     time: Type.String({ format: "date-time" }),
     traceparent: Type.Optional(Type.String({ minLength: 1 })),

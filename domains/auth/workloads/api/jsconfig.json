@@ -4,5 +4,6 @@
     "strict": true,
     "module": "nodenext",
     "lib": ["ESNext"]
-  }
+  },
+  "include": ["src/**/*.mjs"]
 }

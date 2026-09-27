@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 /**
  * @param {{ pool: import("pg").Pool }} resources
  * @param {{ session_token: string }} args
- * @returns {Promise<void>}
  */
 export const revokeSession = async ({ pool }, { session_token }) => {
   if (!session_token || typeof session_token !== "string") {
