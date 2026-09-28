@@ -27,6 +27,8 @@ CREATE TABLE account_memberships (
         status IN ('active', 'inactive')
     ),
 
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
     version BIGINT NOT NULL DEFAULT 1 CHECK (version BETWEEN 1 AND 9007199254740991),
 
     UNIQUE (account_id, subject_id)

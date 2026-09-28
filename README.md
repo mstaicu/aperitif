@@ -3,9 +3,9 @@
 A Kubernetes foundation for SaaS products built from independently deployable
 domains.
 
-Aperitif provides product-agnostic identity, accounts and entitlements. Product
-domains compose those capabilities and own their own vocabulary, workflows and
-data.
+Aperitif provides product-agnostic identity and account boundaries. Product
+domains compose those capabilities and own their vocabulary, workflows, data and
+commercial model.
 
 ## Included domains
 
@@ -13,15 +13,13 @@ data.
 | ------------------------------------ | --------------------------------------------------------------------------- |
 | [Auth](docs/domains.md#auth)         | Passkey registration and login, sessions, access tokens and JWKS            |
 | [Accounts](docs/domains.md#accounts) | Customer accounts, initial owner membership and an economic attribution key |
-| [Plans](docs/domains.md#plans)       | Free-plan initialization and resolved feature values                        |
 
 ```mermaid
 flowchart LR
   Product[Product domain] --> Auth[Auth]
   Product --> Accounts[Accounts]
-  Product --> Plans[Plans]
-  Accounts -->|account snapshot| NATS[NATS]
-  NATS --> Plans
+  Accounts -->|optional account and membership state| NATS[NATS]
+  NATS --> Product
 ```
 
 A domain owns its database, migrations, API, contracts and Kubernetes manifests.

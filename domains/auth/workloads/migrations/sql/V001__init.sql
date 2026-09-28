@@ -1,5 +1,7 @@
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE passkey_credentials (
@@ -18,7 +20,6 @@ CREATE TABLE passkey_credentials (
 
     sign_count BIGINT NOT NULL DEFAULT 0,
 
-    last_used_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

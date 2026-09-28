@@ -1,13 +1,13 @@
 # Domain model
 
 The foundation supports products by composing independent business capabilities.
-Auth, Accounts and Plans are reusable capabilities; a product domain owns the
-actual user journey and product vocabulary.
+Auth and Accounts are reusable capabilities. A product domain owns the actual
+user journey, product vocabulary and commercial model.
 
 ```text
 B2C product       Auth + Account + Product
 B2B product       Auth + Account + Product
-Paid product      Auth + Accounts + Plans + Billing + Product
+Paid product      Auth + Accounts + Product
 Machine product   Auth machines + Account machine membership + Product
 ```
 
@@ -20,8 +20,9 @@ Only deploy capabilities a product uses.
 - Cross-domain IDs are opaque values without cross-database foreign keys.
 - Auth proves identity. Each domain decides authority locally.
 - Accounts owns generic membership. Product roles belong to the Product domain.
-- Plans publishes resolved feature values. Products do not authorize from plan
-  names.
+- A product owns its commercial model: entitlements, plans and payments begin in
+  that same boundary. Split it only when separate ownership or lifecycle proves
+  necessary.
 - Prefer asynchronous state transfer when a domain needs remote state during
   routine decisions. Use synchronous calls only when the user operation requires
   an immediate authoritative answer.
@@ -84,22 +85,6 @@ feed; it does not make the Account feed a growing aggregate.
 Invitations, member administration and machine membership belong here. Product
 roles do not.
 
-### Plans
-
-Plans owns optional Account plans and resolves them into product feature values.
-It observes the Accounts feed, assigns `free` on first observation, and publishes:
-
-```text
-subject: plans.account-features.v1.<account-id>
-type:    plans.account-features.snapshot.v1
-stream:  PLANS
-package: @mstaicu/plans-contracts
-```
-
-Products consume boolean, number or string feature values, not plan names. A
-future Billing domain may provide commercial state, while Plans remains the
-authority that resolves effective features.
-
 ## Communication
 
 ### Synchronous
@@ -161,6 +146,9 @@ payload.
 Use `DeliverLastPerSubject` for a fresh current-state projection. A consumer that
 only initializes local state may remain idempotent without storing a full remote
 projection.
+
+See the [current-state projection example](examples/current-state-projection.md)
+for the small local table and transaction.
 
 ## Adding a product domain
 

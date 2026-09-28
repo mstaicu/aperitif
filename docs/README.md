@@ -19,9 +19,10 @@ Proposed capabilities:
 - [Machines](extensions/auth/machines.md)
 - [Product member roles](extensions/product/member-roles.md)
 
-Example composition:
+Examples:
 
 - [Automated farm](examples/automated-farm.md)
+- [Current-state projection](examples/current-state-projection.md)
 
 Add infrastructure only for a concrete requirement. A domain does not need NATS,
 an outbox, Relay, a projector, or a contracts package merely because it exists.

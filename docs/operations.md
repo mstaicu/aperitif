@@ -33,8 +33,8 @@ graph. A completed migration Job is not rerun automatically; delete it explicitl
 before rerunning migrations against a disposable database.
 
 Start real domain dependencies explicitly. Auth must precede APIs that validate
-its JWTs. Accounts and the event bus must precede Plans when testing its Account
-initializer.
+its JWTs. Accounts and the event bus must precede a product that consumes Account
+state.
 
 Local traffic uses `http://localhost` on port 80. A cluster with LoadBalancer
 support exposes it directly. With Kind or another cluster without that support:
@@ -60,7 +60,7 @@ cluster
 ```
 
 For a domain-isolated suite, deploy the target and required platform capabilities,
-then seed upstream state at the domain boundary. For example, a Plans suite may
+then seed upstream state at the domain boundary. For example, a product suite may
 publish a valid Accounts snapshot rather than deploy Accounts.
 
 For an integration suite, deploy the real providers:
@@ -70,7 +70,6 @@ kubectl apply -k platform/cluster/ingress/overlays/local
 kubectl apply -k platform/cluster/event-bus/overlays/local
 make -C domains/auth up
 make -C domains/accounts up
-make -C domains/plans up
 ```
 
 Both forms use the same component and domain manifests. The only new artifact is
@@ -216,7 +215,6 @@ manually and is not reconciled.
 ```sh
 make -C domains/accounts check
 make -C domains/auth check
-make -C domains/plans check
 make -C platform/runtime check
 ```
 
