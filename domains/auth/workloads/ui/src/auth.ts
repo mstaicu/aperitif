@@ -12,7 +12,7 @@ const sessionCookie = createCookie("session_token", {
   httpOnly: true,
   path: "/",
   sameSite: "Lax",
-  secure: true,
+  secure: process.env.NODE_ENV === "production",
 });
 
 const session = s.object({

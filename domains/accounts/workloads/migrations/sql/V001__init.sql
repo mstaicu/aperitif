@@ -23,6 +23,12 @@ CREATE TABLE account_memberships (
         role IN ('owner', 'admin', 'member')
     ),
 
+    status TEXT NOT NULL DEFAULT 'active' CHECK (
+        status IN ('active', 'inactive')
+    ),
+
+    version BIGINT NOT NULL DEFAULT 1 CHECK (version BETWEEN 1 AND 9007199254740991),
+
     UNIQUE (account_id, subject_id)
 );
 

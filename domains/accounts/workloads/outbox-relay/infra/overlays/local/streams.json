@@ -9,6 +9,6 @@
     "num_replicas": 3,
     "retention": "limits",
     "storage": "file",
-    "subjects": ["accounts.account.*.*"]
+    "subjects": ["accounts.account.*.*", "accounts.membership.*.*"]
   }
 ]

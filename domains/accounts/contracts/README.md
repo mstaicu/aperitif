@@ -1,10 +1,10 @@
 # @mstaicu/accounts-contracts
 
-The public current-Account message contract. It contains the schema, validator,
+The public Account and Membership current-state message contracts. They contain the schemas, validators,
 subject builder, event builder, generated types, and a complete example.
 
 ```sh
-npm install @mstaicu/accounts-contracts@0.18.0
+npm install @mstaicu/accounts-contracts@0.20.0
 ```
 
 ```js

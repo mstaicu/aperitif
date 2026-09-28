@@ -5,15 +5,16 @@
 export const listAccounts = async ({ pool }, { currentSubjectId }) => {
   const { rows } = await pool.query(
     `
-        SELECT a.id,
-          a.name,
-          a.created_at,
-          am.role
-        FROM account_memberships am
-        JOIN accounts a ON a.id = am.account_id
-        WHERE am.subject_id = $1
-        ORDER BY a.name, a.id
-      `,
+      SELECT a.id,
+        a.name,
+        a.created_at,
+        am.role
+      FROM account_memberships am
+      JOIN accounts a ON a.id = am.account_id
+      WHERE am.subject_id = $1
+        AND am.status = 'active'
+      ORDER BY a.name, a.id
+    `,
     [currentSubjectId],
   );
 

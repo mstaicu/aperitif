@@ -1,5 +1,27 @@
-# ❯ age-keygen \
-#   -y "$HOME/.config/sops/age/keys.txt"
+# `$FILE` is a path to a file that matches a path_regex.
+#
+# Encrypt:
+#   sops encrypt --in-place "$FILE"
+#
+# Decrypt:
+#   SOPS_AGE_KEY_FILE="$AGE_KEY" sops decrypt "$FILE"
+
+# SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops decrypt domains/auth/workloads/api/infra/overlays/prod-eu/jwks.enc.json
+#
+# {
+#   "keys": [
+#     {
+#       "kty": "EC",
+#       "x": "btzX6O3WHUvBo75KbvrSZ2Thgo6YKMf-yhy3TE-0yUQ",
+#       "y": "UNnGbbVV4i_qB7ZltZjdATVvGoqtnv8LHhzyx7dKVyA",
+#       "crv": "P-256",
+#       "d": "outqYiPzxmk7SoY_CRMhp0gZ7CF6fOdN0cI-o_j6ATw",
+#       "kid": "k1",
+#       "alg": "ES256",
+#       "use": "sig"
+#     }
+#   ]
+# }
 
 creation_rules:
   - path_regex: ^domains/auth/workloads/api/infra/overlays/prod-eu/jwks\.enc\.json$

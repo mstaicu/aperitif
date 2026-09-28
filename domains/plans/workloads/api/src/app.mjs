@@ -1,7 +1,7 @@
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify, { LogController } from "fastify";
 
-import problemDetails from "./platform/problem-details.mjs";
+import configureProblemDetails from "./platform/problem-details.mjs";
 import probes from "./routes/probes.mjs";
 import v1 from "./routes/v1/index.mjs";
 
@@ -14,7 +14,7 @@ export function buildApp({ pool }) {
     logger: true,
   }).setValidatorCompiler(TypeBoxValidatorCompiler);
 
-  app.register(problemDetails);
+  configureProblemDetails(app);
   app.register(probes, { pool });
   app.register(v1, { prefix: "/v1" });
 

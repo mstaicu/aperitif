@@ -1,5 +1,4 @@
 import { Type } from "@fastify/type-provider-typebox";
-import fp from "fastify-plugin";
 import { DatabaseError } from "pg";
 
 const PROBLEM_CONTENT_TYPE = "application/problem+json";
@@ -67,7 +66,8 @@ const PROBLEMS = {
   },
 };
 
-export default fp(async function (app) {
+/** @param {import("fastify").FastifyInstance} app */
+export default function configureProblemDetails(app) {
   app.setNotFoundHandler((_, reply) =>
     reply
       .type(PROBLEM_CONTENT_TYPE)
@@ -132,4 +132,4 @@ export default fp(async function (app) {
       .code(INTERNAL_SERVER_ERROR.status)
       .send(INTERNAL_SERVER_ERROR);
   });
-});
+}

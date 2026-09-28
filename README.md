@@ -1,94 +1,114 @@
 # Aperitif
 
-A Kubernetes foundation for independently developed B2B and B2C SaaS domains.
-It supplies small deployment and integration boundaries without prescribing a
-product model.
+A Kubernetes foundation for SaaS products built from independently deployable
+domains.
 
-```text
-domains/             business capabilities and their deployable workloads
-platform/cluster/    optional cluster-wide capabilities
-platform/runtime/    shared executable infrastructure code
-clusters/prod-eu/    Flux production inventory and release state
-docs/                domain rules, operations, and outstanding work
+Aperitif provides product-agnostic identity, accounts and entitlements. Product
+domains compose those capabilities and own their own vocabulary, workflows and
+data.
+
+## Included domains
+
+| Domain                               | Provides                                                                    |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| [Auth](docs/domains.md#auth)         | Passkey registration and login, sessions, access tokens and JWKS            |
+| [Accounts](docs/domains.md#accounts) | Customer accounts, initial owner membership and an economic attribution key |
+| [Plans](docs/domains.md#plans)       | Free-plan initialization and resolved feature values                        |
+
+```mermaid
+flowchart LR
+  Product[Product domain] --> Auth[Auth]
+  Product --> Accounts[Accounts]
+  Product --> Plans[Plans]
+  Accounts -->|account snapshot| NATS[NATS]
+  NATS --> Plans
 ```
 
-## Boundaries
+A domain owns its database, migrations, API, contracts and Kubernetes manifests.
+It exports state through versioned HTTP or NATS contracts; it does not read
+another domain’s database.
 
-| Domain | Owns | Does not own |
-| --- | --- | --- |
-| Auth | Users, credentials, sessions, JWTs and JWKS | Accounts and product authority |
-| Accounts | Account boundaries, generic membership and customer attribution | Identities, plans, prices and product roles |
-| Plans | Account plan selection and resolved feature values | Accounts, billing and product data |
+## Develop
 
-Each domain owns its data and schema. No domain reads another domain's database.
-Cross-domain identifiers are opaque. A domain decides authorization from its own
-state and local projections. Shared runtime code transports data but contains no
-business rules.
-
-An Account is the primary customer and economic attribution key. Product-owned
-records carry `account_id`; prices, usage and revenue belong to future Billing
-and Finance capabilities.
-
-Capabilities are optional. A product adds NATS, contracts, an outbox or a
-projection only when it has a concrete asynchronous integration.
-
-## Event contract
-
-Current-resource feeds use complete snapshots so a consumer can rebuild local
-state without calling the producer:
-
-```text
-subject: <domain>.<resource>.v<schema>.<resource-id>
-message: complete representation + data.version
-stream:  one latest message per subject
-```
-
-Every current snapshot producer and consumer follows these rules:
-
-1. Commit the business mutation and outbox row in one database transaction.
-2. Replace any unpublished older snapshot for the same subject in that transaction.
-3. Publish a structured CloudEvent as `application/cloudevents+json`.
-4. Reuse the CloudEvent ID as the JetStream message ID across retries.
-5. Condition publication on the subject's previous JetStream sequence.
-6. Retry a failed publication from a fresh outbox transaction.
-7. Delete an outbox row only after JetStream acknowledges publication.
-8. Validate a message before projecting it.
-9. Commit projected state before acknowledging the message.
-10. Store and compare the producer's positive, monotonic `data.version`.
-11. Ignore an equal or older snapshot while the projection schema is unchanged.
-12. Do not change a wire schema with live consumers; introduce a new feed version.
-
-`data.version` belongs to the business resource. It is independent of the feed
-schema version, CloudEvents version and JetStream sequence. Relay transports JSON
-and headers without interpreting domain payloads.
-
-Historical facts, deltas and commands need their own retention and ordering
-rules. They must not inherit snapshot coalescing merely because they use the
-same transport.
-
-## Local workflow
-
-Install tools with `brew bundle`, deploy only the platform capabilities the
-domain needs, and use the domain's stable interface:
+Install the project tools:
 
 ```sh
-kubectl apply -k platform/cluster/ingress/overlays/local
-kubectl apply -k platform/cluster/event-bus/overlays/local
-kubectl apply -k platform/cluster/observability/overlays/local
-
-make -C domains/<domain> check
-make -C domains/<domain> up
-make -C domains/<domain> dev
-make -C domains/<domain> down
+brew bundle
 ```
 
-There is deliberately no root Makefile or repository-wide development loop.
-Local and disposable environments use public development credentials. Non-local
-secrets remain SOPS-encrypted.
+Every domain has the same local interface:
+
+| Command                          | Action                                                     |
+| -------------------------------- | ---------------------------------------------------------- |
+| `make -C domains/<domain> check` | Run package checks and render manifests                    |
+| `make -C domains/<domain> up`    | Start its database, run migrations and deploy its runtime  |
+| `make -C domains/<domain> dev`   | Start the same environment with Skaffold development loops |
+| `make -C domains/<domain> down`  | Delete the domain’s deployed resources                     |
+
+Install only the cluster capability a scenario needs:
+
+```sh
+# Browser and HTTP traffic at http://localhost
+kubectl apply -k platform/cluster/ingress/overlays/local
+
+# Outbox Relay, NATS state feeds and projections
+kubectl apply -k platform/cluster/event-bus/overlays/local
+```
+
+For example:
+
+```sh
+make -C domains/auth dev
+make -C domains/auth e2e
+```
+
+## Repository
+
+```text
+domains/                 business boundaries and deployable workloads
+platform/cluster/        optional cluster capabilities: ingress, NATS and observability
+platform/runtime/        shared executable infrastructure without domain rules
+clusters/prod-eu/        Flux production inventory and release state
+docs/                    domain model, operations, extension recipes and roadmap
+```
+
+Workload manifests have a portable base and environment overlays. Domain
+Skaffold files compose workloads. Flux composes domains and platform
+capabilities into a cluster.
+
+## Delivery
+
+Pull requests check changed units. The current production path is:
+
+```text
+master → build immutable SHA image → scan → latest → Flux digest commit → prod-eu
+```
+
+Flux reconciles `master` from `clusters/prod-eu`. Its image automation resolves
+the scanned image digest, commits that release state back to Git, then applies
+the matching production overlay.
+
+## Production secrets
+
+Local overlays use disposable development credentials. Production Secret files are
+SOPS-encrypted for the Age recipient selected by [`.sops.yaml`](.sops.yaml).
+Private Age identities stay outside Git; bootstrap receives the selected identity
+through `SOPS_AGE_KEY_FILE`.
+Generate a key using `age`:
+```
+$ age-keygen --help
+
+$ age-keygen -o key.txt
+Public key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
+
+$ age-keygen -y key.txt
+age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
+```
 
 ## Documentation
 
-- [Guide, extension recipes and examples](docs/README.md)
-- [Domain model and extension rules](docs/domains.md)
-- [Local, E2E and production operations](docs/operations.md)
-- [Outstanding foundation work](docs/roadmap.md)
+- [Platform guide](docs/README.md) — implemented facts, proposed extensions and examples
+- [Domain model](docs/domains.md) — boundaries, contracts and new product domains
+- [Operations](docs/operations.md) — local clusters, E2E composition, GitOps and recovery
+- [Extension recipes](docs/README.md#proposed-capabilities) — invitations, machine access, personal access tokens and product roles
+- [Roadmap](docs/roadmap.md) — remaining foundation work

@@ -15,9 +15,9 @@ PUT and DELETE are idempotent. Role IDs are Product-defined.
 When the Product needs current membership locally, it projects the separate
 Accounts membership feed. In one transaction, it ignores an old membership
 version; otherwise it updates the member projection and stores the source
-version. A membership tombstone removes that subject's Product roles. Role
-routes require a current projected member. Re-adding a member does not restore
-removed Product roles.
+version. An inactive membership removes that subject's Product roles. Role
+routes require a current active projected member. Re-adding a member does not
+restore removed Product roles.
 
 Build this when a Product needs permissions beyond Account membership. Keep
 invitation roles out of Accounts: when a Product actually needs them, either

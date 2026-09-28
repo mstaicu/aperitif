@@ -60,7 +60,7 @@ POST /v1/accounts
 GET  /v1/accounts/docs
 ```
 
-Accounts publishes its current representation:
+Accounts publishes separate current representations:
 
 ```text
 subject: accounts.account.v1.<account-id>
@@ -69,9 +69,17 @@ stream:  ACCOUNTS
 package: @mstaicu/accounts-contracts
 ```
 
-The V1 snapshot contains only Account state. A consumer that needs membership
-state receives a separate versioned membership feed; it does not make the
-Account feed a growing aggregate.
+```text
+subject: accounts.membership.v1.<membership-id>
+type:    accounts.membership.snapshot.v1
+stream:  ACCOUNTS
+package: @mstaicu/accounts-contracts
+```
+
+The Account snapshot contains only Account state. The Membership snapshot
+contains one subject's relationship with one Account, including whether it is
+active. A consumer that needs membership state consumes the separate membership
+feed; it does not make the Account feed a growing aggregate.
 
 Invitations, member administration and machine membership belong here. Product
 roles do not.
