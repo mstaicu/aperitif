@@ -17,7 +17,7 @@ export async function createSession({ client, userId }) {
         expires_at
       )
       VALUES ($1, $2, NOW() + INTERVAL '30 days')
-      RETURNING EXTRACT(EPOCH FROM (expires_at - created_at))::int AS expires_in
+      RETURNING EXTRACT(EPOCH FROM (expires_at - now()))::int AS expires_in
     `,
     [userId, tokenHash],
   );
