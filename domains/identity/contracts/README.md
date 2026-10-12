@@ -16,6 +16,8 @@ stream. The NATS subject is transport metadata; the CloudEvent `subject` is
 inside the event. Consumers validate both with the exported validators and
 subject builders.
 
+Once the package is published, consumers pin its exact version:
+
 ```sh
 npm install @mstaicu/identity-contracts@0.1.0
 ```

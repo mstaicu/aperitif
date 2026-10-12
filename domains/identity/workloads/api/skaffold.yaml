@@ -10,15 +10,15 @@ build:
 
   artifacts:
     - image: ghcr.io/mstaicu/identity-api
-      context: ../..
+      context: .
       docker:
-        dockerfile: workloads/api/Dockerfile
+        dockerfile: Dockerfile
         target: dev
 
       sync:
         manual:
-          - src: workloads/api/src/**/*
-            dest: /home/node/app/workloads/api
+          - src: src/**/*
+            dest: /home/node/app
 
 manifests:
   kustomize:
