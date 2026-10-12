@@ -19,9 +19,9 @@ state for its own local decisions. It validates the producer's exact contract,
 stores only the fields it needs, and never queries the producer database.
 
 A product can use the initialization form of this pattern: create its local
-commercial state once for each Account snapshot, then leave a later customer
+commercial state once for each Identity Account snapshot, then leave a later customer
 choice unchanged on replay. The versioned projection below is for a product that
-makes routine authorization decisions from Account membership.
+makes routine authorization decisions from Identity membership.
 
 ## Source
 
@@ -30,8 +30,9 @@ increments that resource's positive monotonic version whenever the exported
 representation changes.
 
 ```text
-subject: accounts.membership.v1.<membership-id>
-type:    accounts.membership.snapshot.v1
+NATS subject:       identity.membership.v1.<membership-id>
+type:               identity.membership.snapshot.v1
+CloudEvent subject: membership/<membership-id>
 data:    id, account_id, subject_id, role, status, version
 ```
 
@@ -76,12 +77,12 @@ incorrect.
 
 ## Consumer
 
-The workload pins an exact `@mstaicu/accounts-contracts` version. It creates an
+The workload pins an exact `@mstaicu/identity-contracts` version. It creates an
 explicit-ack JetStream consumer for:
 
 ```text
-stream:         ACCOUNTS
-filter_subject: accounts.membership.v1.*
+stream:         IDENTITY
+filter_subject: identity.membership.v1.*
 deliver_policy: DeliverLastPerSubject
 ack_policy:     Explicit
 ```
@@ -175,7 +176,7 @@ WHERE account_id = $1
   AND status = 'active';
 ```
 
-Account membership says that a subject belongs to an Account. It does not grant
+Identity membership says that a subject belongs to an Account. It does not grant
 access to every resource in that Account.
 
 ## Edge cases

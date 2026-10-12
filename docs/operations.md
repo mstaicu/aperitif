@@ -32,9 +32,10 @@ Skaffold development loop. `down` removes resources in that domain's Skaffold
 graph. A completed migration Job is not rerun automatically; delete it explicitly
 before rerunning migrations against a disposable database.
 
-Start real domain dependencies explicitly. Auth must precede APIs that validate
-its JWTs. Accounts and the event bus must precede a product that consumes Account
-state.
+Start real domain dependencies explicitly. Identity must precede APIs that
+validate its JWTs. Identity and the event bus must precede a Product that
+consumes Identity account or membership state. `Auth` and `Accounts` are legacy
+references, not dependencies for new scenarios.
 
 Local traffic uses `http://localhost` on port 80. A cluster with LoadBalancer
 support exposes it directly. With Kind or another cluster without that support:
@@ -60,16 +61,15 @@ cluster
 ```
 
 For a domain-isolated suite, deploy the target and required platform capabilities,
-then seed upstream state at the domain boundary. For example, a product suite may
-publish a valid Accounts snapshot rather than deploy Accounts.
+then seed upstream state at the domain boundary. For example, a Product suite may
+publish a valid Identity snapshot rather than deploy Identity.
 
-For an integration suite, deploy the real providers:
+For an integration suite, deploy the real provider:
 
 ```sh
 kubectl apply -k platform/cluster/ingress/overlays/local
 kubectl apply -k platform/cluster/event-bus/overlays/local
-make -C domains/auth up
-make -C domains/accounts up
+make -C domains/identity up
 ```
 
 Both forms use the same component and domain manifests. The only new artifact is
@@ -77,14 +77,18 @@ the explicit scenario runner that performs these commands and cleanup. Add it
 with the first real cross-domain suite rather than inventing a generic environment
 language now.
 
-Auth browser E2E expects Traefik at `http://localhost` by default. Set
+Identity browser E2E expects Traefik at `http://localhost` by default. Set
 `PLAYWRIGHT_BASE_URL` to run the same suite against an already deployed
 environment.
 
-## Production GitOps
+## Deployment-ready GitOps
 
-Flux reconciles `master` from `clusters/prod-eu`. Git is the normal production
-interface after bootstrap:
+No environment is currently deployed. The repository's Flux configuration is
+deployment-ready source code, not a record of a running production system. When
+a real cluster is introduced, Flux can reconcile `master` from
+`clusters/prod-eu` using the following model:
+
+Git is the intended production interface after bootstrap:
 
 ```text
 merge to master
@@ -95,7 +99,7 @@ merge to master
   -> Flux reconciles the component's production overlay
 ```
 
-Bootstrap against the selected production cluster:
+Bootstrap only against a selected real cluster:
 
 ```sh
 export GITHUB_TOKEN=<github-token>
@@ -126,9 +130,9 @@ expand/contract database and event changes.
 
 ## Event bus and Relay
 
-NATS runs three servers in production. Domains own streams, contracts, outbox
-rows, consumers and projections. Relay is shared executable code deployed and
-configured by each publishing domain.
+The production overlay configures three NATS servers; it has not been deployed.
+Domains own streams, contracts, outbox rows, consumers, and projections. Relay
+is shared executable code deployed and configured by each publishing domain.
 
 Relay reads the next locked outbox row, validates transport headers, publishes
 with the subject's expected JetStream sequence, and deletes only after PubAck.
@@ -154,8 +158,8 @@ Diagnose from infrastructure toward business state:
 kubectl get statefulset,pod,pvc,service -n nats
 kubectl logs -n nats -l app=nats --prefix --since=10m
 kubectl port-forward -n nats service/nats-client 4222:4222
-NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info ACCOUNTS
-NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders ACCOUNTS
+NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info IDENTITY
+NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders IDENTITY
 ```
 
 An old unpublished row points to its producer, Relay or NATS. Consumer backlog
@@ -213,10 +217,11 @@ manually and is not reconciled.
 ## Validation
 
 ```sh
-make -C domains/accounts check
-make -C domains/auth check
+make -C domains/identity check
 make -C platform/runtime check
 ```
 
 Domain checks run package tests, render production overlays and render the full
-local Skaffold graph.
+local Skaffold graph. Run `make -C domains/auth check` or
+`make -C domains/accounts check` only when maintaining their legacy comparison
+and regression coverage.

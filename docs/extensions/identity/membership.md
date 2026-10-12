@@ -1,12 +1,12 @@
-# Account membership
+# Identity membership
 
-Status: Membership feed implemented; management API proposed. Owner: Accounts.
+Status: Membership feed implemented; management API proposed. Owner: Identity.
 
-Accounts owns generic membership:
+Identity owns generic membership:
 
     id          Durable membership resource identifier
     account_id  Account boundary
-    subject_id  Opaque Auth subject
+    subject_id  Opaque Identity subject
     role        owner, admin, or member
     status      active or inactive
 
@@ -20,11 +20,12 @@ An Account retains at least one owner. Role changes and removal are idempotent.
 Human admission remains the invitation boundary, not a public member-creation
 route.
 
-Membership changes do not change Account state. Accounts publishes each membership as a separate current resource with its
+Membership changes do not change Account state. Identity publishes each membership as a separate current resource with its
 own identifier and monotonic version:
 
-    subject: accounts.membership.v1.{membership-id}
-    type:    accounts.membership.snapshot.v1
+    NATS subject:       identity.membership.v1.{membership-id}
+    type:               identity.membership.snapshot.v1
+    CloudEvent subject: membership/{membership-id}
     data:    id, account_id, subject_id, role, status, version
 
 Removal marks the existing membership inactive, increments its version, and

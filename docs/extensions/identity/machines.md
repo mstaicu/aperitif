@@ -1,9 +1,9 @@
 # Machines
 
-Status: Proposed. Owner: Auth.
+Status: Proposed. Owner: Identity.
 
 A machine is a non-human principal. It is not the device, vehicle, or Product
-resource it operates. Auth creates immutable machine IDs, stores credential
+resource it operates. Identity creates immutable machine IDs, stores credential
 hashes, and exchanges a machine credential for the normal five-minute access
 token. A machine token has its machine ID as `sub`.
 
@@ -27,7 +27,7 @@ replacement credential may exist before the old one is revoked.
 This is a narrow Client Credentials exchange. It does not require browser OAuth,
 OIDC, PKCE, refresh tokens, or machine lifecycle events. Product domains must
 not assume every JWT subject is human. Machine Account context is a separate
-[Account machine-membership](../accounts/machine-membership.md) decision.
+[Identity machine-membership](machine-membership.md) decision.
 
 Start with a shared secret. Move to `private_key_jwt`, mTLS, or hardware-backed
 keys only when device compromise and the operating cost justify it.

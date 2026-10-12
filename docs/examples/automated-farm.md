@@ -3,8 +3,9 @@
 Status: Illustrative. No Farm implementation exists.
 
 Farm is one Product domain for organization-owned fields, vehicles, missions,
-and observations. It uses Auth for humans, Accounts for ownership, and—only when
-implemented—Machines plus Account machine membership for non-human actors.
+and observations. It uses Identity for humans and account ownership, and—only
+when implemented—Identity Machines plus Identity machine membership for
+non-human actors.
 
 Farm owns fields, vehicles, missions, observations, assignments, and all
 product permissions. A machine is the authenticated actor; a vehicle is a Farm
@@ -24,6 +25,6 @@ ID. A machine may act only on its assigned mission. Use `If-Match` for mission
 changes and an `Idempotency-Key` for retried observation uploads. Store media in
 object storage; Farm stores metadata and relationships.
 
-Build only after Machines and Account machine membership exist. Do not add remote
+Build only after Machines and Identity machine membership exist. Do not add remote
 vehicle control, physical safety, compliance, payments, plan gates, or
 product-specific human roles without a product requirement.

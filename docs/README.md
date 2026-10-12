@@ -8,15 +8,17 @@ Start here:
 - [Domains](domains.md) — implemented boundaries and the smallest new-domain
   path.
 - [Operations](operations.md) — local cluster, GitOps, recovery, and diagnosis.
+- [ADR 0001](adr/0001-identity-is-the-canonical-development-boundary.md) —
+  Identity is the canonical local-development boundary.
 - [Roadmap](roadmap.md) — unresolved product-agnostic work.
 
 Proposed capabilities:
 
-- [Account membership](extensions/accounts/membership.md)
-- [Account invitations](extensions/accounts/invitations.md)
-- [Account machine membership](extensions/accounts/machine-membership.md)
-- [Personal access tokens](extensions/auth/personal-access-tokens.md)
-- [Machines](extensions/auth/machines.md)
+- [Identity membership management](extensions/identity/membership.md)
+- [Identity invitations](extensions/identity/invitations.md)
+- [Identity machine membership](extensions/identity/machine-membership.md)
+- [Personal access tokens](extensions/identity/personal-access-tokens.md)
+- [Machines](extensions/identity/machines.md)
 - [Product member roles](extensions/product/member-roles.md)
 
 Examples:

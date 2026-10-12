@@ -1,6 +1,6 @@
 # Personal access tokens
 
-Status: Proposed. Owner: Auth.
+Status: Proposed. Owner: Identity.
 
 A PAT lets unattended user automation obtain the owner's normal five-minute
 access token. It proves identity; every domain still decides authority locally.
@@ -17,7 +17,7 @@ once with `Cache-Control: no-store`, and stores only its hash. Listing returns
 metadata only. Revocation is idempotent. Expired or revoked PATs cannot mint new
 tokens; issued access tokens expire normally. A PAT cannot manage PATs.
 
-PATs are private Auth credentials: no events, scopes, refresh tokens, OAuth/OIDC
+PATs are private Identity credentials: no events, scopes, refresh tokens, OAuth/OIDC
 surface, or new JWT format. Build them when a user needs unattended automation.
 Add constrained claims, fresh authentication, proof of possession, or network
 restrictions only when the actual token risk requires them.

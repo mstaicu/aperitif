@@ -3,22 +3,21 @@
 A Kubernetes foundation for SaaS products built from independently deployable
 domains.
 
-Aperitif provides product-agnostic identity and account boundaries. Product
-domains compose those capabilities and own their vocabulary, workflows, data and
-commercial model.
+Aperitif provides `Identity`, a product-agnostic boundary for authentication,
+accounts, and generic membership. Product domains integrate with Identity and
+own their vocabulary, workflows, data, and commercial model.
 
 ## Included domains
 
-| Domain                               | Provides                                                                    |
-| ------------------------------------ | --------------------------------------------------------------------------- |
-| [Auth](docs/domains.md#auth)         | Passkey registration and login, sessions, access tokens and JWKS            |
-| [Accounts](docs/domains.md#accounts) | Customer accounts, initial owner membership and an economic attribution key |
+| Domain | Provides |
+| --- | --- |
+| [Identity](docs/domains.md#identity) | Passkeys, sessions, access tokens, JWKS, accounts, generic membership, and current-state feeds |
+| [Auth](domains/auth/README.md) and [Accounts](domains/accounts/README.md) (legacy references only) | Runnable comparison and regression implementations; not for new product dependencies |
 
 ```mermaid
 flowchart LR
-  Product[Product domain] --> Auth[Auth]
-  Product --> Accounts[Accounts]
-  Accounts -->|optional account and membership state| NATS[NATS]
+  Product[Product domain] --> Identity[Identity]
+  Identity -->|optional account and membership state| NATS[NATS]
   NATS --> Product
 ```
 
@@ -56,9 +55,13 @@ kubectl apply -k platform/cluster/event-bus/overlays/local
 For example:
 
 ```sh
-make -C domains/auth dev
-make -C domains/auth e2e
+make -C domains/identity dev
+make -C domains/identity e2e
 ```
+
+`Auth` and `Accounts` remain runnable only as legacy references. Do not add new
+product dependencies or capabilities to them; see
+[ADR 0001](docs/adr/0001-identity-is-the-canonical-development-boundary.md).
 
 ## Repository
 
@@ -74,19 +77,21 @@ Workload manifests have a portable base and environment overlays. Domain
 Skaffold files compose workloads. Flux composes domains and platform
 capabilities into a cluster.
 
-## Delivery
+## Deployment-ready delivery
 
-Pull requests check changed units. The current production path is:
+Pull requests check changed units. The repository contains a deployment-ready
+Flux path, but no environment is currently deployed. When a cluster is
+introduced, the intended path is:
 
 ```text
 master → build immutable SHA image → scan → latest → Flux digest commit → prod-eu
 ```
 
-Flux reconciles `master` from `clusters/prod-eu`. Its image automation resolves
-the scanned image digest, commits that release state back to Git, then applies
-the matching production overlay.
+Flux would reconcile `master` from `clusters/prod-eu`. Its image automation
+would resolve the scanned image digest, commit that release state back to Git,
+then apply the matching production overlay.
 
-## Production secrets
+## Secrets for a future deployed environment
 
 Local overlays use disposable development credentials. Production Secret files are
 SOPS-encrypted for the Age recipient selected by [`.sops.yaml`](.sops.yaml).

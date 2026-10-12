@@ -1,14 +1,14 @@
 # Domain model
 
 The foundation supports products by composing independent business capabilities.
-Auth and Accounts are reusable capabilities. A product domain owns the actual
-user journey, product vocabulary and commercial model.
+Identity is the reusable authentication and account capability. A Product domain
+owns the actual user journey, product vocabulary, and commercial model.
 
 ```text
-B2C product       Auth + Account + Product
-B2B product       Auth + Account + Product
-Paid product      Auth + Accounts + Product
-Machine product   Auth machines + Account machine membership + Product
+B2C product       Identity + Product
+B2B product       Identity + Product
+Paid product      Identity + Product
+Machine product   Identity machines + Identity machine membership + Product
 ```
 
 Only deploy capabilities a product uses.
@@ -18,8 +18,8 @@ Only deploy capabilities a product uses.
 - A domain owns its data, migrations, logic, APIs, messages and deployment.
 - A domain never reads another domain's database.
 - Cross-domain IDs are opaque values without cross-database foreign keys.
-- Auth proves identity. Each domain decides authority locally.
-- Accounts owns generic membership. Product roles belong to the Product domain.
+- Identity proves identity. Each domain decides authority locally.
+- Identity owns generic membership. Product roles belong to the Product domain.
 - A product owns its commercial model: entitlements, plans and payments begin in
   that same boundary. Split it only when separate ownership or lifecycle proves
   necessary.
@@ -30,10 +30,12 @@ Only deploy capabilities a product uses.
 
 ## Implemented domains
 
-### Auth
+### Identity
 
-Auth implements passkey registration and authentication, independent sessions,
-five-minute access tokens, JWKS and the passkey UI.
+Identity implements passkey registration and authentication, independent
+sessions, five-minute access tokens, JWKS, accounts, initial owner membership,
+and the passkey UI. An Account is a Product's primary customer and economic
+attribution key.
 
 ```text
 POST   /v1/passkeys/registration/options
@@ -43,38 +45,28 @@ POST   /v1/passkeys/authentication
 POST   /v1/session/access-tokens
 DELETE /v1/session
 GET    /.well-known/jwks.json
-GET    /v1/auth/docs
-```
-
-Credential types such as enterprise federation, machine credentials or personal
-access tokens remain Auth concerns but should be added only for a real product.
-
-### Accounts
-
-Accounts implements account boundaries and generic membership. Creating an
-Account adds the caller as its initial owner in the same transaction. An Account
-is the product's primary customer and economic attribution key.
-
-```text
 GET  /v1/accounts
 POST /v1/accounts
-GET  /v1/accounts/docs
+GET  /v1/identity/docs
 ```
 
-Accounts publishes separate current representations:
+Creating an Account adds the caller as its initial owner in the same transaction.
+Identity publishes separate current representations:
 
 ```text
-subject: accounts.account.v1.<account-id>
-type:    accounts.account.snapshot.v1
-stream:  ACCOUNTS
-package: @mstaicu/accounts-contracts
+NATS subject:       identity.account.v1.<account-id>
+type:               identity.account.snapshot.v1
+CloudEvent subject: account/<account-id>
+stream:             IDENTITY
+package:            @mstaicu/identity-contracts
 ```
 
 ```text
-subject: accounts.membership.v1.<membership-id>
-type:    accounts.membership.snapshot.v1
-stream:  ACCOUNTS
-package: @mstaicu/accounts-contracts
+NATS subject:       identity.membership.v1.<membership-id>
+type:               identity.membership.snapshot.v1
+CloudEvent subject: membership/<membership-id>
+stream:             IDENTITY
+package:            @mstaicu/identity-contracts
 ```
 
 The Account snapshot contains only Account state. The Membership snapshot
@@ -82,8 +74,15 @@ contains one subject's relationship with one Account, including whether it is
 active. A consumer that needs membership state consumes the separate membership
 feed; it does not make the Account feed a growing aggregate.
 
-Invitations, member administration and machine membership belong here. Product
-roles do not.
+Member administration, invitations, machine principals, machine membership, and
+personal access tokens are proposed Identity extensions. They are not
+implemented. Product roles do not belong in Identity.
+
+### Legacy references
+
+`domains/auth` and `domains/accounts` are frozen, runnable reference
+implementations. They exist for comparison and regression coverage only. New
+Product domains must integrate with Identity instead.
 
 ## Communication
 
@@ -93,9 +92,9 @@ HTTP is appropriate for the operation being requested now: authentication,
 commands initiated by a person, and reads whose authoritative answer cannot be
 local. A caller must tolerate the callee being unavailable.
 
-Accounts fetches Auth's JWKS to validate access tokens. That is a narrow
-identity dependency. Business domains do not call one another for routine
-authorization.
+Products obtain Identity's JWKS to validate Identity access tokens. That is a
+narrow identity dependency. Business domains do not call one another for
+routine authorization.
 
 ### Asynchronous
 
