@@ -1,0 +1,51 @@
+import { SignJWT } from "jose";
+import { createHash } from "node:crypto";
+
+/**
+ * @param {{
+ *   pool: import("pg").Pool,
+ *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
+ * }} resources
+ * @param {{ session_token: string }} args
+ */
+export const createAccessToken = async (
+  { pool, signingKey },
+  { session_token },
+) => {
+  if (!session_token || typeof session_token !== "string") {
+    throw new Error("INVALID_SESSION_TOKEN");
+  }
+
+  const tokenHash = createHash("sha256").update(session_token).digest();
+
+  const {
+    rows: [session],
+  } = await pool.query(
+    `
+        SELECT s.user_id
+        FROM sessions s
+        WHERE s.token_hash = $1
+          AND s.revoked_at IS NULL
+          AND s.expires_at > NOW()
+      `,
+    [tokenHash],
+  );
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  const access_token = await new SignJWT({ sub: session.user_id })
+    .setProtectedHeader({
+      alg: "ES256",
+      kid: signingKey.kid,
+    })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(signingKey.privateKey);
+
+  return {
+    access_token,
+    expires_in: 300,
+  };
+};

@@ -1,0 +1,17 @@
+{
+  "specversion": "1.0",
+  "id": "018f7300-8e2f-7000-8d25-4cfe3d258e11",
+  "source": "/domains/identity",
+  "type": "identity.membership.snapshot.v1",
+  "subject": "membership/018f7300-8e2f-7000-8d25-4cfe3d258e10",
+  "time": "2026-09-30T10:00:00.000Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "id": "018f7300-8e2f-7000-8d25-4cfe3d258e10",
+    "account_id": "018f7300-8e2f-7000-8d25-4cfe3d258e08",
+    "subject_id": "018f7300-8e2f-7000-8d25-4cfe3d258e07",
+    "role": "owner",
+    "status": "active",
+    "version": 1
+  }
+}

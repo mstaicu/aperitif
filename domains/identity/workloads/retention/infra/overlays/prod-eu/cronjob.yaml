@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: retention
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: retention
+              env:
+                - name: DATABASE_URL
+                  value: "postgres://postgres:postgres@postgres:5432/identity"

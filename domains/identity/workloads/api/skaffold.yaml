@@ -1,0 +1,29 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: identity-api
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: ghcr.io/mstaicu/identity-api
+      context: ../..
+      docker:
+        dockerfile: workloads/api/Dockerfile
+        target: dev
+
+      sync:
+        manual:
+          - src: workloads/api/src/**/*
+            dest: /home/node/app/workloads/api
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/local
+
+deploy:
+  kubectl: {}

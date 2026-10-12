@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api
+spec:
+  selector:
+    matchLabels:
+      app: api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      terminationGracePeriodSeconds: 15
+      automountServiceAccountToken: false
+
+      containers:
+        - name: api
+          image: ghcr.io/mstaicu/identity-api
+          env:
+            - name: ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: ORIGIN
+
+            - name: JWKS_PATH
+              value: /app/keys/jwks.json
+
+            - name: JWT_SIGNING_KID
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: JWT_SIGNING_KID
+
+          volumeMounts:
+            - name: jwt
+              mountPath: /app/keys
+              readOnly: true
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+
+      volumes:
+        - name: jwt
+          secret:
+            secretName: api-jwt

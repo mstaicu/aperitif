@@ -1,0 +1,13 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: identity
+
+requires:
+  - path: workloads/postgres/skaffold.yaml
+  - path: workloads/migrations/skaffold.yaml
+  - path: workloads/api/skaffold.yaml
+  - path: workloads/outbox-relay/skaffold.yaml
+  - path: workloads/ui/skaffold.yaml
+  - path: workloads/retention/skaffold.yaml

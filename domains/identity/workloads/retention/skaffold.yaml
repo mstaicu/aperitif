@@ -1,0 +1,13 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: identity-retention
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/local
+
+deploy:
+  kubectl: {}

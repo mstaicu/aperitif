@@ -1,0 +1,15 @@
+{
+  "specversion": "1.0",
+  "id": "018f7300-8e2f-7000-8d25-4cfe3d258e09",
+  "source": "/domains/identity",
+  "type": "identity.account.snapshot.v1",
+  "subject": "account/018f7300-8e2f-7000-8d25-4cfe3d258e08",
+  "time": "2026-09-30T10:00:00.000Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "id": "018f7300-8e2f-7000-8d25-4cfe3d258e08",
+    "name": "Acme",
+    "created_at": "2026-09-30T10:00:00.000Z",
+    "version": 1
+  }
+}
