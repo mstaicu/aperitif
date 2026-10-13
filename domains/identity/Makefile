@@ -1,4 +1,4 @@
-.PHONY: check up dev e2e down
+.PHONY: check migrate-local up dev e2e down
 
 check:
 	npm --prefix contracts ci
@@ -20,16 +20,19 @@ check:
 	kubectl kustomize workloads/ui/infra/overlays/local >/dev/null
 	kubectl kustomize workloads/ui/infra/overlays/prod-eu >/dev/null
 
-up:
-	skaffold run -m identity-postgres
+migrate-local:
+	kubectl delete --namespace=identity --ignore-not-found job/migrations
 	skaffold run -m identity-migrations
 	kubectl wait --namespace=identity --for=condition=complete --timeout=300s job/migrations
+
+up:
+	skaffold run -m identity-postgres
+	$(MAKE) migrate-local
 	skaffold run -m identity-api,identity-outbox-relay,identity-retention,identity-ui
 
 dev:
 	skaffold run -m identity-postgres
-	skaffold run -m identity-migrations
-	kubectl wait --namespace=identity --for=condition=complete --timeout=300s job/migrations
+	$(MAKE) migrate-local
 	skaffold dev -m identity-api,identity-outbox-relay,identity-retention,identity-ui
 
 e2e: up

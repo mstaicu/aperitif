@@ -64,6 +64,11 @@ const PROBLEMS = {
     title: "Database unavailable",
     type: "/problems/database-unavailable",
   },
+  INVALID_ACCESS_TOKEN: {
+    status: 401,
+    title: "Invalid access token",
+    type: "/problems/invalid-access-token",
+  },
   INVALID_AUTHENTICATION_RESPONSE: {
     status: 400,
     title: "Invalid authentication response",
@@ -155,6 +160,7 @@ export default function configureProblemDetails(app) {
     if (problem) {
       if (
         problem === PROBLEMS.INVALID_AUTHORIZATION_HEADER ||
+        problem === PROBLEMS.INVALID_ACCESS_TOKEN ||
         problem === PROBLEMS.INVALID_SESSION_TOKEN ||
         problem === PROBLEMS.SESSION_NOT_FOUND
       ) {

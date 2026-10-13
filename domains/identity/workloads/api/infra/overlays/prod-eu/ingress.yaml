@@ -8,28 +8,7 @@ spec:
     - host: api.puuury.com
       http:
         paths:
-          - path: /v1/passkeys
-            pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  number: 3000
-          - path: /v1/session
-            pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  number: 3000
-          - path: /v1/accounts
-            pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  number: 3000
-          - path: /v1/identity/docs
+          - path: /v1
             pathType: Prefix
             backend:
               service:
