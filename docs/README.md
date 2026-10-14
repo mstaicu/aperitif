@@ -1,7 +1,22 @@
-# Platform guide
+# Aperitif
+
+A Kubernetes foundation for SaaS products built from independently deployable
+domains. Identity provides passkeys, sessions, accounts, generic membership, and
+current-state feeds. Product domains own their vocabulary, workflows, data, and
+commercial model.
 
 Code, contracts, and manifests are implemented facts. An extension is a proposed
 capability. An example is an illustrative product composition.
+
+Repository layout:
+
+```text
+domains/                 business boundaries and deployable workloads
+platform/cluster/        ingress, NATS and observability
+platform/runtime/        shared executable infrastructure without domain rules
+clusters/prod-eu/        Flux production inventory and release state
+docs/                    domain model, operations, extension recipes and roadmap
+```
 
 Start here:
 

@@ -32,23 +32,13 @@ Only deploy capabilities a product uses.
 
 ### Identity
 
-Identity implements passkey registration and authentication, independent
-sessions, five-minute access tokens, JWKS, accounts, initial owner membership,
-and the passkey UI. An Account is a Product's primary customer and economic
-attribution key.
+[`domains/identity`](../domains/identity) implements passkey registration,
+authentication and credential management, independent sessions, five-minute
+access tokens, JWKS, accounts, initial owner membership, and the passkey UI.
+An Account is a Product's primary customer and economic attribution key.
 
-```text
-POST   /v1/passkeys/registration/options
-POST   /v1/passkeys/registration
-POST   /v1/passkeys/authentication/options
-POST   /v1/passkeys/authentication
-POST   /v1/session/access-tokens
-DELETE /v1/session
-GET    /.well-known/jwks.json
-GET  /v1/accounts
-POST /v1/accounts
-GET  /v1/identity/docs
-```
+The API generates its HTTP reference at `/v1/identity/docs`. Public signing keys
+are available at `/.well-known/jwks.json`.
 
 Creating an Account adds the caller as its initial owner in the same transaction.
 Identity publishes separate current representations:
@@ -80,9 +70,15 @@ implemented. Product roles do not belong in Identity.
 
 ### Legacy references
 
-`domains/auth` and `domains/accounts` are frozen, runnable reference
-implementations. They exist for comparison and regression coverage only. New
-Product domains must integrate with Identity instead.
+[`domains/auth`](../domains/auth) and [`domains/accounts`](../domains/accounts)
+are frozen, runnable reference implementations. They exist for comparison and
+regression coverage only. New Product domains must integrate with Identity
+instead. Limit legacy maintenance to comparison, regression coverage, build
+fixes, and security fixes.
+
+The legacy `@mstaicu/accounts-contracts` package remains under
+[`domains/accounts/contracts`](../domains/accounts/contracts) for the same
+purpose. New consumers use Identity's contracts.
 
 ## Communication
 
@@ -103,9 +99,12 @@ A snapshot is one complete exported resource, not an entire database. An event
 reports a fact; a command asks an owner to perform an action. Snapshot, delta and
 command describe different delivery requirements and must remain explicit.
 
-Contracts live under `domains/<domain>/contracts`. Keep the schema, validator
-and builders for one message together and export the supported API through
-`src/index.mjs`. Contract packages contain no database, NATS or tracing clients.
+Identity's public contracts live under
+[`domains/identity/contracts`](../domains/identity/contracts). Contracts for other
+domains follow the same `domains/<domain>/contracts` structure. Keep the schema,
+validator and builders for one message together and export the supported API
+through `src/index.mjs`. Contract packages contain no database, NATS or tracing
+clients.
 
 Consumers pin exact package versions and validate every message. Publishing is
 manual for now:

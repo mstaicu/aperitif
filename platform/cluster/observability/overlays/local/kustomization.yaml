@@ -11,7 +11,7 @@ resources:
 secretGenerator:
   - name: openobserve
     literals:
-      - OPENOBSERVE_TOKEN=bWlyY2VhQHRtYS5jb206cGFzc3dvcmQ=
+      - OPENOBSERVE_TOKEN=YWRtaW5AZXhhbXBsZS5jb206cGFzc3dvcmQ=
       - ZO_ROOT_USER_EMAIL=admin@example.com
       - ZO_ROOT_USER_PASSWORD=password
 

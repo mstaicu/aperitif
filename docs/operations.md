@@ -2,8 +2,12 @@
 
 ## Local and disposable clusters
 
-Install the pinned tools with `brew bundle`. Apply only the shared capabilities
-needed by the scenario:
+Use Node 26 and a working Docker-compatible runtime for package checks. Install
+the CLI tools listed in [Brewfile](../Brewfile) with `brew bundle`. Local
+deployment also requires a Kubernetes cluster. Run commands from the repository
+root.
+
+Apply the shared capabilities needed by the scenario:
 
 ```sh
 kubectl apply -k platform/cluster/ingress/overlays/local
@@ -17,6 +21,9 @@ kubectl apply -k platform/cluster/observability/overlays/local
 | Event bus | Outbox relays, state feeds and projections |
 | Observability | Local traces, logs and cluster telemetry |
 
+Identity's `up` and `dev` targets deploy its outbox relay, so they require the
+event bus. Browser E2E also requires ingress. Observability is optional.
+
 Use the domain interface:
 
 ```sh
@@ -29,8 +36,15 @@ make -C domains/<domain> down
 `up` deploys PostgreSQL, runs the migration Job, waits for it, and then deploys
 runtime workloads. `dev` performs the same preparation before starting the
 Skaffold development loop. `down` removes resources in that domain's Skaffold
-graph. A completed migration Job is not rerun automatically; delete it explicitly
-before rerunning migrations against a disposable database.
+graph. Identity's `up` and `dev` invoke `migrate-local`, which deletes the previous
+migration Job, runs it again, and waits for completion. To rerun only migrations:
+
+```sh
+make -C domains/identity migrate-local
+```
+
+The legacy Auth and Accounts targets retain completed migration Jobs; delete
+their Job explicitly before rerunning migrations against a disposable database.
 
 Start real domain dependencies explicitly. Identity must precede APIs that
 validate its JWTs. Identity and the event bus must precede a Product that
@@ -83,10 +97,9 @@ environment.
 
 ## Deployment-ready GitOps
 
-No environment is currently deployed. The repository's Flux configuration is
-deployment-ready source code, not a record of a running production system. When
-a real cluster is introduced, Flux can reconcile `master` from
-`clusters/prod-eu` using the following model:
+The repository declares a production Flux configuration under
+`clusters/prod-eu`. Its presence does not establish that a production cluster is
+running. After bootstrap, Flux can reconcile `master` using the following model:
 
 Git is the intended production interface after bootstrap:
 
@@ -102,7 +115,7 @@ merge to master
 Bootstrap only against a selected real cluster:
 
 ```sh
-export GITHUB_TOKEN=<github-token>
+export GITHUB_TOKEN='<github-token>'
 export SOPS_AGE_KEY_FILE=/path/to/production-age-key
 make -C clusters/prod-eu bootstrap
 ```
@@ -113,6 +126,14 @@ continues managing its own installation from Git.
 
 The GitHub token is used to install a read/write deploy key. The Age identity is
 stored in `flux-system` for SOPS decryption. Do not commit either credential.
+
+Production Secrets are SOPS-encrypted for the Age recipient selected by
+[`.sops.yaml`](../.sops.yaml). Keep private Age identities outside the checkout.
+To generate an identity, use `age-keygen -o /path/to/production-age-key` and
+configure its public recipient before encrypting new files. Bootstrap must
+receive an identity that matches the files' existing recipients through
+`SOPS_AGE_KEY_FILE`. Do not decrypt encrypted Secrets in place or commit
+plaintext secrets.
 
 Inspect reconciliation with:
 
@@ -130,7 +151,7 @@ expand/contract database and event changes.
 
 ## Event bus and Relay
 
-The production overlay configures three NATS servers; it has not been deployed.
+The production overlay configures three NATS servers.
 Domains own streams, contracts, outbox rows, consumers, and projections. Relay
 is shared executable code deployed and configured by each publishing domain.
 
@@ -221,7 +242,15 @@ make -C domains/identity check
 make -C platform/runtime check
 ```
 
-Domain checks run package tests, render production overlays and render the full
-local Skaffold graph. Run `make -C domains/auth check` or
+Domain checks run each package's checks and render individual local and
+production workload overlays. API and contract checks include tests; UI checks
+run lint and type checking. These targets do not render the composed Skaffold
+graph. To validate that composition without building images:
+
+```sh
+(cd domains/identity && skaffold render --offline=true --digest-source=none >/dev/null)
+```
+
+Run `make -C domains/auth check` or
 `make -C domains/accounts check` only when maintaining their legacy comparison
 and regression coverage.

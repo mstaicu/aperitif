@@ -124,7 +124,10 @@ if (message.subject !== buildMembershipV1Subject(snapshot.data.id)) {
 }
 ```
 
-Then write only a newer representation. Acknowledge only after commit:
+Then write only a newer representation. For an equal version, compare the
+exported resource fields: identical state is a duplicate; different state is a
+contract violation. CloudEvent IDs and timestamps are not part of that
+comparison. Acknowledge only after commit:
 
 ```js
 const { id, account_id, role, status, subject_id, version } = snapshot.data;
@@ -133,7 +136,7 @@ const client = await pool.connect();
 try {
   await client.query("BEGIN");
 
-  await client.query(
+  const { rowCount } = await client.query(
     `
       INSERT INTO account_membership_state (
         membership_id,
@@ -151,9 +154,34 @@ try {
         status = EXCLUDED.status,
         source_version = EXCLUDED.source_version
       WHERE account_membership_state.source_version < EXCLUDED.source_version
+      RETURNING membership_id
     `,
     [id, account_id, subject_id, role, status, version],
   );
+
+  if (rowCount === 0) {
+    const {
+      rows: [current],
+    } = await client.query(
+      `
+        SELECT account_id, subject_id, role, status, source_version
+        FROM account_membership_state
+        WHERE membership_id = $1
+        FOR UPDATE
+      `,
+      [id],
+    );
+
+    if (
+      Number(current.source_version) === version &&
+      (current.account_id !== account_id.toLowerCase() ||
+        current.subject_id !== subject_id ||
+        current.role !== role ||
+        current.status !== status)
+    ) {
+      throw new Error("MEMBERSHIP_VERSION_CONFLICT");
+    }
+  }
 
   await client.query("COMMIT");
   message.ack();
@@ -181,23 +209,23 @@ access to every resource in that Account.
 
 ## Edge cases
 
-| Situation | Required behavior |
-| --- | --- |
-| A consumer commits, then dies before acknowledgement | JetStream redelivers. The source-version write is a no-op. |
-| Version 7 arrives before version 6 | Keep version 7. Never order state by CloudEvent time. |
-| Equal version carries different data | Reject and alert: the producer violated its contract. |
-| A Membership arrives before its Account representation | Project each resource independently. Do not require cross-subject ordering. |
-| A Membership becomes inactive | Keep the row and deny authorization. Do not delete it. |
-| A message fails validation or has a mismatched NATS subject | Do not acknowledge it. Fail the projector and alert rather than silently authorizing from stale state. |
-| The consumer database is unavailable | Roll back and do not acknowledge; delivery retries after recovery. |
-| Relay or JetStream is unavailable | The source transaction still commits with its outbox row. Relay resumes publication later. |
-| Relay publishes but dies before deleting its outbox row | A later attempt can publish again. State consumers tolerate it through source version. Command consumers need event or business-key idempotency. |
-| A stream reaches capacity | `discard: new` preserves existing current state and rejects new publication. Monitor stream bytes and Relay failures before capacity is reached. |
-| A projector starts cold | It must not report ready until its initial `DeliverLastPerSubject` state has drained. Until then, an empty projection can cause false denials. |
-| A Membership is revoked | Routine authorization sees revocation after propagation. For an operation that needs an immediate authoritative answer, make a narrow synchronous check at that operation boundary. |
-| The projector is scaled | One projector replica is simplest for one shared projection database. Scaling requires one shared durable consumer and idempotent local effects. |
-| One state update needs to change several resources atomically | Do not infer a global event order. Export one combined resource if consumers require one atomic representation. |
-| The wire contract changes | Publish a new event type and contract version. Keep the prior type while live consumers migrate. |
+| Situation                                                     | Required behavior                                                                                                                                                                   |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A consumer commits, then dies before acknowledgement          | JetStream redelivers. The source-version write is a no-op.                                                                                                                          |
+| Version 7 arrives before version 6                            | Keep version 7. Never order state by CloudEvent time.                                                                                                                               |
+| Equal version carries different data                          | Reject and alert: the producer violated its contract.                                                                                                                               |
+| A Membership arrives before its Account representation        | Project each resource independently. Do not require cross-subject ordering.                                                                                                         |
+| A Membership becomes inactive                                 | Keep the row and deny authorization. Do not delete it.                                                                                                                              |
+| A message fails validation or has a mismatched NATS subject   | Do not acknowledge it. Fail the projector and alert rather than silently authorizing from stale state.                                                                              |
+| The consumer database is unavailable                          | Roll back and do not acknowledge; delivery retries after recovery.                                                                                                                  |
+| Relay or JetStream is unavailable                             | The source transaction still commits with its outbox row. Relay resumes publication later.                                                                                          |
+| Relay publishes but dies before deleting its outbox row       | A later attempt can publish again. State consumers tolerate it through source version. Command consumers need event or business-key idempotency.                                    |
+| A stream reaches capacity                                     | `discard: new` preserves existing current state and rejects new publication. Monitor stream bytes and Relay failures before capacity is reached.                                    |
+| A projector starts cold                                       | It must not report ready until its initial `DeliverLastPerSubject` state has drained. Until then, an empty projection can cause false denials.                                      |
+| A Membership is revoked                                       | Routine authorization sees revocation after propagation. For an operation that needs an immediate authoritative answer, make a narrow synchronous check at that operation boundary. |
+| The projector is scaled                                       | One projector replica is simplest for one shared projection database. Scaling requires one shared durable consumer and idempotent local effects.                                    |
+| One state update needs to change several resources atomically | Do not infer a global event order. Export one combined resource if consumers require one atomic representation.                                                                     |
+| The wire contract changes                                     | Publish a new event type and contract version. Keep the prior type while live consumers migrate.                                                                                    |
 
 An invalid current-state message is not a dead-letter candidate by default. A
 skipped message makes the projection silently stale. Fail, alert, correct the
@@ -215,6 +243,7 @@ behaviors:
 3. An inactive Membership denies access.
 4. Membership and Account state can arrive in either order.
 5. The workload remains unready until its first current-state load completes.
+6. Equal versions with conflicting resource fields fail without acknowledgment.
 
 Do not test broker internals or build a generic projection framework. Test the
 product's local authority boundary and its consequences.

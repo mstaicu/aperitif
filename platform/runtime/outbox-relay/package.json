@@ -13,22 +13,22 @@
     "@nats-io/jetstream": "^3.4.0",
     "@nats-io/transport-node": "^3.4.0",
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/sdk-node": "^0.222.0",
-    "pg": "^8.23.0"
+    "@opentelemetry/sdk-node": "^0.223.0",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@testcontainers/postgresql": "^12.1.0",
-    "@types/node": "^26.4.1",
+    "@testcontainers/postgresql": "^12.2.1",
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
-    "eslint": "^10.10.0",
+    "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-perfectionist": "^5.11.0",
-    "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^17.12.0",
+    "eslint-plugin-perfectionist": "^5.12.1",
+    "eslint-plugin-prettier": "^5.5.7",
+    "globals": "^17.13.0",
     "nodemon": "^3.1.14",
-    "prettier": "^3.9.6",
-    "testcontainers": "^12.1.0",
+    "prettier": "^3.9.10",
+    "testcontainers": "^12.2.1",
     "typescript": "^7.0.2"
   },
   "allowScripts": {

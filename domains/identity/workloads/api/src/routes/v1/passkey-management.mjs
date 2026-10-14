@@ -270,6 +270,7 @@ export default async function passkeyManagementRoutes(
         params: PasskeyIdParams,
         response: {
           204: { description: "Passkey removed." },
+          400: ProblemResponse,
           401: ProblemResponse,
           404: ProblemResponse,
           409: ProblemResponse,
