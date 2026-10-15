@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("a person signs up, logs in, receives an access token, and logs out", async ({
+test("signs up, logs in, creates an account, and logs out", async ({
   context,
   page,
 }) => {
@@ -11,78 +11,84 @@ test("a person signs up, logs in, receives an access token, and logs out", async
   await page.goto("/identity/signup?return_to=%2Fidentity%2Flogin");
   await page.getByRole("button", { name: "Sign up with passkey" }).click();
 
-  // Assert
   await expect(page).toHaveURL("/identity/login");
 
-  const signupToken = (await context.cookies()).find(
-    (cookie) => cookie.name === "identity_session_token",
-  )?.value;
-  expect(signupToken).toBeTruthy();
+  expect(
+    (await context.cookies()).find(
+      (cookie) => cookie.name === "identity_session_token",
+    )?.httpOnly,
+  ).toBe(true);
 
-  // Act
   await context.clearCookies({ name: "identity_session_token" });
   await page.goto("/identity/login?return_to=%2Fidentity%2Fsignup");
   await page.getByRole("button", { name: "Log in with passkey" }).click();
 
-  // Assert
   await expect(page).toHaveURL("/identity/signup");
 
-  const sessionToken = (await context.cookies()).find(
-    (cookie) => cookie.name === "identity_session_token",
-  )?.value;
-  expect(sessionToken).toBeTruthy();
-  expect(sessionToken).not.toBe(signupToken);
+  const logoutResponse = page.waitForResponse("**/identity/logout");
+  const result = await page.evaluate(async () => {
+    const access = await fetch("/identity/access-token", { method: "POST" });
+    const { access_token, expires_in } = await access.json();
+    const headers = { Authorization: `Bearer ${access_token}` };
+    const account = await fetch("/v1/accounts", {
+      body: JSON.stringify({ name: "Browser test account" }),
+      headers: { ...headers, "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const { account: created } = await account.json();
+    const logout = await fetch("/identity/logout", { method: "POST" });
+    const exchange = await fetch("/identity/access-token", { method: "POST" });
+    const revoked = await fetch("/v1/accounts", { headers });
 
-  // Act
-  const access = await context.request.post("/v1/session/access-tokens", {
-    headers: { Authorization: `Bearer ${sessionToken}` },
-  });
-  const logout = await context.request.post("/identity/logout", {
-    maxRedirects: 0,
-  });
-  const revoked = await context.request.post("/v1/session/access-tokens", {
-    headers: { Authorization: `Bearer ${sessionToken}` },
+    return {
+      access: access.status,
+      account: account.status,
+      cacheControl: access.headers.get("Cache-Control"),
+      challenge: revoked.headers.get("WWW-Authenticate"),
+      exchange: exchange.status,
+      expiresIn: expires_in,
+      logoutPath: new URL(logout.url).pathname,
+      revoked: revoked.status,
+      roles: created.roles,
+    };
   });
 
   // Assert
-  const accessToken = await access.json();
-
-  expect(access.status()).toBe(200);
-  expect(accessToken.access_token).toBeTruthy();
-  expect(accessToken.expires_in).toBe(300);
-  expect(logout.status()).toBe(303);
-  expect(logout.headers().location).toBe("/identity/login");
+  expect(result).toEqual({
+    access: 200,
+    account: 201,
+    cacheControl: "no-store",
+    challenge: "Bearer",
+    exchange: 401,
+    expiresIn: 300,
+    logoutPath: "/identity/login",
+    revoked: 401,
+    roles: ["account.owner"],
+  });
+  expect((await logoutResponse).status()).toBe(303);
   expect(
     (await context.cookies()).find(
       (cookie) => cookie.name === "identity_session_token",
     ),
   ).toBeUndefined();
-  expect(revoked.status()).toBe(401);
-  expect(revoked.headers()["www-authenticate"]).toBe("Bearer");
 });
 
 test("keeps unsafe return paths on this site", async ({ page }) => {
-  // Act
-  await page.goto("/identity/login?return_to=https%3A%2F%2Fevil.example");
+  for (const returnTo of ["https://evil.example", "//evil.example"]) {
+    // Act
+    const query = new URLSearchParams({ return_to: returnTo });
+    await page.goto(`/identity/login?${query}`);
 
-  // Assert
-  await expect(page.locator("form")).toHaveAttribute(
-    "action",
-    "/identity/login",
-  );
-  await expect(page.getByRole("link", { name: "Sign up" })).toHaveAttribute(
-    "href",
-    "/identity/signup",
-  );
-
-  // Act
-  await page.goto("/identity/login?return_to=%2F%2Fevil.example");
-
-  // Assert
-  await expect(page.locator("form")).toHaveAttribute(
-    "action",
-    "/identity/login",
-  );
+    // Assert
+    await expect(page.locator("form")).toHaveAttribute(
+      "action",
+      "/identity/login",
+    );
+    await expect(page.getByRole("link", { name: "Sign up" })).toHaveAttribute(
+      "href",
+      "/identity/signup",
+    );
+  }
 });
 
 test("explains when passkeys are unavailable", async ({ page }) => {

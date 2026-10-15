@@ -8,28 +8,7 @@ spec:
     - host: puuury.com
       http:
         paths:
-          - path: /identity/login
-            pathType: Prefix
-            backend:
-              service:
-                name: ui
-                port:
-                  number: 3000
-          - path: /identity/signup
-            pathType: Prefix
-            backend:
-              service:
-                name: ui
-                port:
-                  number: 3000
-          - path: /identity/logout
-            pathType: Exact
-            backend:
-              service:
-                name: ui
-                port:
-                  number: 3000
-          - path: /identity/assets
+          - path: /identity
             pathType: Prefix
             backend:
               service:

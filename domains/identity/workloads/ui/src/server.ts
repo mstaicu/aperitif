@@ -2,11 +2,11 @@ import { once } from "node:events";
 import * as http from "node:http";
 import { createRequestListener } from "remix/node-fetch-server";
 
-import { assets, router } from "./app.ts";
+import { app, assets } from "./app.ts";
 
 try {
   await using server = http.createServer(
-    createRequestListener((request) => router.fetch(request)),
+    createRequestListener((request) => app.fetch(request)),
   );
   const port = Number(process.env.PORT ?? 3000);
 
