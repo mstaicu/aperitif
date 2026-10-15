@@ -39,7 +39,8 @@ Proposed capabilities:
 Examples:
 
 - [Automated farm](examples/automated-farm.md)
-- [Current-state projection](examples/current-state-projection.md)
+- [Identity account snapshot](../domains/identity/contracts/examples/events/identity.account.snapshot.v1.json)
+- [Identity membership snapshot](../domains/identity/contracts/examples/events/identity.membership.snapshot.v1.json)
 
 Add infrastructure only for a concrete requirement. A domain does not need NATS,
 an outbox, Relay, a projector, or a contracts package merely because it exists.

@@ -145,8 +145,14 @@ Use `DeliverLastPerSubject` for a fresh current-state projection. A consumer tha
 only initializes local state may remain idempotent without storing a full remote
 projection.
 
-See the [current-state projection example](examples/current-state-projection.md)
-for the small local table and transaction.
+Use the tested Identity contract examples for current event payloads:
+
+- [Account snapshot](../domains/identity/contracts/examples/events/identity.account.snapshot.v1.json)
+- [Membership snapshot](../domains/identity/contracts/examples/events/identity.membership.snapshot.v1.json)
+
+These examples are validated by the [contract tests](../domains/identity/contracts/test/events).
+A complete consumer example should be included only when it is executable and
+tested against those contracts.
 
 ## Adding a product domain
 

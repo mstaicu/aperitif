@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - job.yaml
+  - networkpolicy.yaml

@@ -129,9 +129,13 @@ function returnTo(request: Request) {
 
   if (!value?.startsWith("/")) return "/";
 
-  const target = new URL(value, requestUrl);
+  try {
+    const target = new URL(value, requestUrl);
 
-  return target.origin === requestUrl.origin
-    ? target.pathname + target.search + target.hash
-    : "/";
+    return target.origin === requestUrl.origin
+      ? target.pathname + target.search + target.hash
+      : "/";
+  } catch {
+    return "/";
+  }
 }

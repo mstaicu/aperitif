@@ -32,6 +32,7 @@ export const AuthenticationResponseJSON = Type.Object(
         authenticatorData: NonEmptyString,
         clientDataJSON: NonEmptyString,
         signature: NonEmptyString,
+        userHandle: Type.Optional(Type.String()),
       },
       { additionalProperties: true },
     ),

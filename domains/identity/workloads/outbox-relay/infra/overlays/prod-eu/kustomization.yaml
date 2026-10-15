@@ -5,12 +5,6 @@ namespace: identity
 
 resources:
   - ../../base
-  - networkpolicy.yaml
-
-configMapGenerator:
-  - name: outbox-relay-streams
-    files:
-      - streams.json
 
 patches:
   - path: deployment.yaml

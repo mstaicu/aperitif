@@ -12,7 +12,7 @@ const PasskeyName = Type.String({
   description: "Name chosen by the user for this passkey.",
   maxLength: 100,
   minLength: 1,
-  pattern: "\\S",
+  pattern: "^(?=[\\s\\S]*\\S)[^\\u0000]+$",
 });
 
 export const AddPasskeyBody = Type.Object(

@@ -3,3 +3,9 @@ kind: Kustomization
 
 resources:
   - deployment.yaml
+  - networkpolicy.yaml
+
+configMapGenerator:
+  - name: outbox-relay-streams
+    files:
+      - streams.json

@@ -4,6 +4,7 @@ const AccountName = Type.String({
   description: "Human-readable account name.",
   maxLength: 160,
   minLength: 1,
+  pattern: "^[^\\u0000]*$",
 });
 
 export const CreateAccountBody = Type.Object(

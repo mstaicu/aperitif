@@ -5,7 +5,6 @@ namespace: identity
 
 resources:
   - ../../base
-  - networkpolicy.yaml
   - ingress.yaml
 
 patches:

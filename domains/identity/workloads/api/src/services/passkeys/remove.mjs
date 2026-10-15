@@ -7,9 +7,15 @@ export async function removePasskey({ pool }, { id, principalId }) {
 
   try {
     await client.query("BEGIN");
-    await client.query("SELECT id FROM principals WHERE id = $1 FOR UPDATE", [
-      principalId,
-    ]);
+    await client.query(
+      `
+        SELECT id
+        FROM principals
+        WHERE id = $1
+        FOR NO KEY UPDATE
+      `,
+      [principalId],
+    );
 
     const { rows: passkeys } = await client.query(
       `
