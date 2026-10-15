@@ -11,9 +11,9 @@ resources:
 secretGenerator:
   - name: openobserve
     literals:
-      - OPENOBSERVE_TOKEN=YWRtaW5AZXhhbXBsZS5jb206cGFzc3dvcmQ=
+      - OPENOBSERVE_TOKEN=YWRtaW5AZXhhbXBsZS5jb206TG9jYWwtMjc2YzdmNjk2ZGMzNThjOWQwMDIzMWE5LUFhMSE=
       - ZO_ROOT_USER_EMAIL=admin@example.com
-      - ZO_ROOT_USER_PASSWORD=password
+      - ZO_ROOT_USER_PASSWORD=Local-276c7f696dc358c9d00231a9-Aa1!
 
 patches:
   - path: agent-daemonset.yaml
