@@ -13,7 +13,6 @@ const UuidSchema = Type.String({
 
 const AccountSnapshotV1DataSchema = Type.Object(
   {
-    created_at: Type.String({ format: "date-time" }),
     id: UuidSchema,
     name: Type.String({ maxLength: 160, minLength: 1 }),
     version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
@@ -24,16 +23,10 @@ const AccountSnapshotV1DataSchema = Type.Object(
 export const AccountSnapshotV1Schema = Type.Object(
   {
     data: AccountSnapshotV1DataSchema,
-    datacontenttype: Type.Literal("application/json"),
     dataschema: Type.Optional(Type.String({ format: "uri" })),
     id: UuidSchema,
     source: Type.Literal(source),
     specversion: Type.Literal("1.0"),
-    subject: Type.String({
-      pattern:
-        "^account/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-    }),
-    time: Type.String({ format: "date-time" }),
     traceparent: Type.Optional(Type.String({ minLength: 1 })),
     tracestate: Type.Optional(Type.String({ minLength: 1 })),
     type: Type.Literal(type),
@@ -67,12 +60,9 @@ export function buildAccountSnapshotV1(data) {
     data: {
       ...data,
     },
-    datacontenttype: "application/json",
     id: randomUUID(),
     source,
     specversion: "1.0",
-    subject: `account/${data.id}`,
-    time: new Date().toISOString(),
     type,
   };
 
@@ -99,8 +89,5 @@ export function buildAccountV1Subject(accountId) {
  * @returns {event is AccountSnapshotV1}
  */
 export function isAccountSnapshotV1(event) {
-  return (
-    accountSnapshotV1Validator.Check(event) &&
-    event.subject === `account/${event.data.id}`
-  );
+  return accountSnapshotV1Validator.Check(event);
 }

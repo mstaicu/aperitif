@@ -1,23 +1,23 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ id: string, userId: string }} args
+ * @param {{ id: string, principalId: string }} args
  */
-export async function removePasskey({ pool }, { id, userId }) {
+export async function removePasskey({ pool }, { id, principalId }) {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    await client.query("SELECT id FROM users WHERE id = $1 FOR UPDATE", [
-      userId,
+    await client.query("SELECT id FROM principals WHERE id = $1 FOR UPDATE", [
+      principalId,
     ]);
 
     const { rows: passkeys } = await client.query(
       `
         SELECT id
         FROM passkey_credentials
-        WHERE user_id = $1
+        WHERE principal_id = $1
       `,
-      [userId],
+      [principalId],
     );
 
     if (!passkeys.some((passkey) => passkey.id === id)) {
@@ -32,9 +32,9 @@ export async function removePasskey({ pool }, { id, userId }) {
       `
         DELETE FROM passkey_credentials
         WHERE id = $1
-          AND user_id = $2
+          AND principal_id = $2
       `,
-      [id, userId],
+      [id, principalId],
     );
     await client.query("COMMIT");
   } catch (error) {

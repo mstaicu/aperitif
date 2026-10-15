@@ -1,21 +1,25 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ currentUserId: string }} args
+ * @param {{ currentPrincipalId: string }} args
  */
-export const listAccounts = async ({ pool }, { currentUserId }) => {
+export const listAccounts = async ({ pool }, { currentPrincipalId }) => {
   const { rows } = await pool.query(
     `
       SELECT a.id,
         a.name,
         a.created_at,
-        am.role
+        ARRAY(
+          SELECT amr.role
+          FROM account_membership_roles amr
+          WHERE amr.membership_id = am.id
+          ORDER BY amr.role
+        ) AS roles
       FROM account_memberships am
       JOIN accounts a ON a.id = am.account_id
-      WHERE am.user_id = $1
-        AND am.status = 'active'
+      WHERE am.principal_id = $1
       ORDER BY a.name, a.id
     `,
-    [currentUserId],
+    [currentPrincipalId],
   );
 
   return {
@@ -23,7 +27,7 @@ export const listAccounts = async ({ pool }, { currentUserId }) => {
       created_at: account.created_at.toISOString(),
       id: account.id,
       name: account.name,
-      role: account.role,
+      roles: account.roles,
     })),
   };
 };

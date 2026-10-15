@@ -3,7 +3,7 @@ import process from "node:process";
 import { Pool } from "pg";
 
 import { buildApp } from "./app.mjs";
-import { createJwtKeys } from "./platform/jwt-keys.mjs";
+import { createJwtKeys } from "./jwks.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

@@ -15,10 +15,8 @@ export const revokeSession = async ({ pool }, { session_token }) => {
     rows: [session],
   } = await pool.query(
     `
-        UPDATE sessions
-        SET revoked_at = NOW()
+        DELETE FROM sessions
         WHERE token_hash = $1
-          AND revoked_at IS NULL
           AND expires_at > NOW()
         RETURNING id
       `,

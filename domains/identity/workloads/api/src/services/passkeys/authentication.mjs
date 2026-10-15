@@ -48,7 +48,7 @@ export const authenticate = async ({ origin, pool }, authentication) => {
       rows: [credential],
     } = await client.query(
       `
-          SELECT user_id, credential_id, public_key, sign_count
+          SELECT principal_id, credential_id, public_key, sign_count
           FROM passkey_credentials
           WHERE credential_id = $1
           FOR UPDATE
@@ -67,7 +67,7 @@ export const authenticate = async ({ origin, pool }, authentication) => {
       );
 
       const expectedHandle = Buffer.from(
-        credential.user_id.replace(/-/g, ""),
+        credential.principal_id.replace(/-/g, ""),
         "hex",
       );
 
@@ -114,7 +114,7 @@ export const authenticate = async ({ origin, pool }, authentication) => {
 
     const session = await createSession({
       client,
-      userId: credential.user_id,
+      principalId: credential.principal_id,
     });
 
     await client.query("COMMIT");

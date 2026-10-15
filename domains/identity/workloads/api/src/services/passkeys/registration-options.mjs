@@ -13,17 +13,17 @@ export const createRegistrationOptions = async ({ origin, pool }) => {
     `
         INSERT INTO registration_challenges (
           challenge,
-          user_id
+          principal_id
         )
         VALUES ($1, gen_random_uuid())
-        RETURNING user_id
+        RETURNING principal_id
       `,
     [challenge],
   );
 
   const { hostname } = new URL(origin);
   const webauthnUserHandle = Buffer.from(
-    registrationChallenge.user_id.replace(/-/g, ""),
+    registrationChallenge.principal_id.replace(/-/g, ""),
     "hex",
   );
 
@@ -37,8 +37,8 @@ export const createRegistrationOptions = async ({ origin, pool }) => {
     rpID: hostname,
     rpName: hostname,
     timeout: 60000,
-    userDisplayName: registrationChallenge.user_id,
+    userDisplayName: registrationChallenge.principal_id,
     userID: webauthnUserHandle,
-    userName: registrationChallenge.user_id,
+    userName: registrationChallenge.principal_id,
   });
 };

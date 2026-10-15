@@ -4,20 +4,14 @@ export declare const MembershipSnapshotV1Schema: Type.TObject<{
   data: Type.TObject<{
     account_id: Type.TString;
     id: Type.TString;
-    role: Type.TUnion<
-      [Type.TLiteral<"owner">, Type.TLiteral<"admin">, Type.TLiteral<"member">]
-    >;
-    status: Type.TUnion<[Type.TLiteral<"active">, Type.TLiteral<"inactive">]>;
-    subject_id: Type.TString;
+    principal_id: Type.TString;
+    roles: Type.TArray<Type.TString>;
     version: Type.TInteger;
   }>;
-  datacontenttype: Type.TLiteral<"application/json">;
   dataschema: Type.TOptional<Type.TString>;
   id: Type.TString;
   source: Type.TLiteral<"/domains/identity">;
   specversion: Type.TLiteral<"1.0">;
-  subject: Type.TString;
-  time: Type.TString;
   traceparent: Type.TOptional<Type.TString>;
   tracestate: Type.TOptional<Type.TString>;
   type: Type.TLiteral<"identity.membership.snapshot.v1">;

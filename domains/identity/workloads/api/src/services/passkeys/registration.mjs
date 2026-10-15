@@ -28,12 +28,12 @@ export const register = async ({ origin, pool }, credential) => {
       DELETE FROM registration_challenges
       WHERE challenge = $1
         AND expires_at > NOW()
-      RETURNING user_id, challenge
+      RETURNING principal_id, challenge
     `,
     [Buffer.from(challenge, "base64url")],
   );
 
-  if (!challengeRow?.user_id || !challengeRow?.challenge) {
+  if (!challengeRow?.principal_id || !challengeRow?.challenge) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
@@ -65,25 +65,25 @@ export const register = async ({ origin, pool }, credential) => {
     await client.query("BEGIN");
 
     const {
-      rows: [user],
+      rows: [principal],
     } = await client.query(
       `
-        INSERT INTO users (id)
+        INSERT INTO principals (id)
         VALUES ($1)
         ON CONFLICT DO NOTHING
         RETURNING id
       `,
-      [challengeRow.user_id],
+      [challengeRow.principal_id],
     );
 
-    if (!user) {
+    if (!principal) {
       throw new Error("USER_ALREADY_REGISTERED");
     }
 
     await client.query(
       `
         INSERT INTO passkey_credentials (
-          user_id,
+          principal_id,
           credential_id,
           public_key,
           sign_count
@@ -91,7 +91,7 @@ export const register = async ({ origin, pool }, credential) => {
         VALUES ($1, $2, $3, $4)
       `,
       [
-        challengeRow.user_id,
+        challengeRow.principal_id,
         Buffer.from(registrationCredential.id, "base64url"),
         Buffer.from(registrationCredential.publicKey),
         registrationCredential.counter,
@@ -100,7 +100,7 @@ export const register = async ({ origin, pool }, credential) => {
 
     const session = await createSession({
       client,
-      userId: challengeRow.user_id,
+      principalId: challengeRow.principal_id,
     });
 
     await client.query("COMMIT");

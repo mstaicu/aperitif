@@ -11,7 +11,7 @@ import sessionsRoutes from "./sessions.mjs";
  *   pool: import("pg").Pool,
  *   jwks: import("jose").JWTVerifyGetKey,
  *   origin: string,
- *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
+ *   signingKey: import("../../jwks.mjs").JwtKeys["signingKey"],
  * }>}
  */
 export default async function v1(fastify, { jwks, origin, pool, signingKey }) {

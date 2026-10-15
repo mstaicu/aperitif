@@ -15,13 +15,8 @@ const MembershipSnapshotV1DataSchema = Type.Object(
   {
     account_id: UuidSchema,
     id: UuidSchema,
-    role: Type.Union([
-      Type.Literal("owner"),
-      Type.Literal("admin"),
-      Type.Literal("member"),
-    ]),
-    status: Type.Union([Type.Literal("active"), Type.Literal("inactive")]),
-    subject_id: Type.String({ minLength: 1 }),
+    principal_id: Type.String({ minLength: 1 }),
+    roles: Type.Array(Type.String({ minLength: 1 }), { uniqueItems: true }),
     version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
   },
   { additionalProperties: false },
@@ -30,16 +25,10 @@ const MembershipSnapshotV1DataSchema = Type.Object(
 export const MembershipSnapshotV1Schema = Type.Object(
   {
     data: MembershipSnapshotV1DataSchema,
-    datacontenttype: Type.Literal("application/json"),
     dataschema: Type.Optional(Type.String({ format: "uri" })),
     id: UuidSchema,
     source: Type.Literal(source),
     specversion: Type.Literal("1.0"),
-    subject: Type.String({
-      pattern:
-        "^membership/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-    }),
-    time: Type.String({ format: "date-time" }),
     traceparent: Type.Optional(Type.String({ minLength: 1 })),
     tracestate: Type.Optional(Type.String({ minLength: 1 })),
     type: Type.Literal(type),
@@ -73,12 +62,9 @@ export function buildMembershipSnapshotV1(data) {
     data: {
       ...data,
     },
-    datacontenttype: "application/json",
     id: randomUUID(),
     source,
     specversion: "1.0",
-    subject: `membership/${data.id}`,
-    time: new Date().toISOString(),
     type,
   };
 
@@ -105,8 +91,5 @@ export function buildMembershipV1Subject(membershipId) {
  * @returns {event is MembershipSnapshotV1}
  */
 export function isMembershipSnapshotV1(event) {
-  return (
-    membershipSnapshotV1Validator.Check(event) &&
-    event.subject === `membership/${event.data.id}`
-  );
+  return membershipSnapshotV1Validator.Check(event);
 }

@@ -1,8 +1,8 @@
-import { ProblemResponse } from "../../platform/problem-details.mjs";
 import { createAuthenticationOptions } from "../../services/passkeys/authentication-options.mjs";
 import { authenticate } from "../../services/passkeys/authentication.mjs";
 import { createRegistrationOptions } from "../../services/passkeys/registration-options.mjs";
 import { register } from "../../services/passkeys/registration.mjs";
+import { ProblemResponse } from "../problem-details.mjs";
 import {
   AuthenticationOptionsResponse,
   RegistrationOptionsResponse,

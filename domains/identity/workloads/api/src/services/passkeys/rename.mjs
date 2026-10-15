@@ -1,8 +1,8 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ id: string, name: string, userId: string }} args
+ * @param {{ id: string, name: string, principalId: string }} args
  */
-export async function renamePasskey({ pool }, { id, name, userId }) {
+export async function renamePasskey({ pool }, { id, name, principalId }) {
   const normalizedName = name.trim();
 
   if (normalizedName.length < 1 || normalizedName.length > 100) {
@@ -16,10 +16,10 @@ export async function renamePasskey({ pool }, { id, name, userId }) {
       UPDATE passkey_credentials
       SET name = $1
       WHERE id = $2
-        AND user_id = $3
+        AND principal_id = $3
       RETURNING id, name, created_at
     `,
-    [normalizedName, id, userId],
+    [normalizedName, id, principalId],
   );
 
   if (!passkey) throw new Error("PASSKEY_NOT_FOUND");

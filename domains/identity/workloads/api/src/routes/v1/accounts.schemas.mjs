@@ -27,9 +27,8 @@ export const Account = Type.Object(
       format: "uuid",
     }),
     name: AccountName,
-    role: Type.String({
-      description: "The authenticated caller's membership role.",
-      enum: ["owner", "admin", "member"],
+    roles: Type.Array(Type.String(), {
+      description: "The authenticated caller's assigned membership roles.",
     }),
   },
   {

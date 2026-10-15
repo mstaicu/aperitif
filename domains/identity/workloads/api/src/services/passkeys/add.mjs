@@ -7,12 +7,12 @@ import { DatabaseError } from "pg";
  * @param {{
  *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
  *   name: string,
- *   userId: string,
+ *   principalId: string,
  * }} args
  */
 export async function addPasskey(
   { origin, pool },
-  { credential, name, userId },
+  { credential, name, principalId },
 ) {
   const normalizedName = name.trim();
 
@@ -39,15 +39,15 @@ export async function addPasskey(
       DELETE FROM registration_challenges
       WHERE challenge = $1
         AND expires_at > NOW()
-      RETURNING user_id, challenge
+      RETURNING principal_id, challenge
     `,
     [Buffer.from(challenge, "base64url")],
   );
 
   if (
-    !challengeRow?.user_id ||
+    !challengeRow?.principal_id ||
     !challengeRow?.challenge ||
-    challengeRow.user_id !== userId
+    challengeRow.principal_id !== principalId
   ) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
@@ -80,7 +80,7 @@ export async function addPasskey(
     } = await pool.query(
       `
         INSERT INTO passkey_credentials (
-          user_id,
+          principal_id,
           credential_id,
           name,
           public_key,
@@ -90,7 +90,7 @@ export async function addPasskey(
         RETURNING id, name, created_at
       `,
       [
-        userId,
+        principalId,
         Buffer.from(registrationCredential.id, "base64url"),
         normalizedName,
         Buffer.from(registrationCredential.publicKey),

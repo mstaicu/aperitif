@@ -1,11 +1,10 @@
-import { createHash } from "node:crypto";
-
-import { ProblemResponse } from "../../platform/problem-details.mjs";
 import { createPasskeyOptions } from "../../services/passkeys/add-options.mjs";
 import { addPasskey } from "../../services/passkeys/add.mjs";
 import { listPasskeys } from "../../services/passkeys/list.mjs";
 import { removePasskey } from "../../services/passkeys/remove.mjs";
 import { renamePasskey } from "../../services/passkeys/rename.mjs";
+import { authenticateSession } from "../../services/sessions/authenticate.mjs";
+import { ProblemResponse } from "../problem-details.mjs";
 import {
   AddPasskeyBody,
   Passkey,
@@ -43,38 +42,15 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const [scheme, token, extra] = (
-        request.headers.authorization ?? ""
-      ).split(" ");
-
-      if (scheme !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
-
-      const tokenHash = createHash("sha256").update(token).digest();
-      const {
-        rows: [session],
-      } = await pool.query(
-        `
-          SELECT user_id
-          FROM sessions
-          WHERE token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-        `,
-        [tokenHash],
-      );
-
-      if (!session) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      const userId = session.user_id;
+      const { principal_id: principalId } = await authenticateSession({
+        authorization: request.headers.authorization,
+        pool,
+      });
 
       reply.header("Cache-Control", "no-store");
 
       return reply.send({
-        passkeys: await listPasskeys({ pool }, { userId }),
+        passkeys: await listPasskeys({ pool }, { principalId }),
       });
     },
   );
@@ -98,38 +74,15 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const [scheme, token, extra] = (
-        request.headers.authorization ?? ""
-      ).split(" ");
-
-      if (scheme !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
-
-      const tokenHash = createHash("sha256").update(token).digest();
-      const {
-        rows: [session],
-      } = await pool.query(
-        `
-          SELECT user_id
-          FROM sessions
-          WHERE token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-        `,
-        [tokenHash],
-      );
-
-      if (!session) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      const userId = session.user_id;
+      const { principal_id: principalId } = await authenticateSession({
+        authorization: request.headers.authorization,
+        pool,
+      });
 
       reply.header("Cache-Control", "no-store");
 
       return reply.send(
-        await createPasskeyOptions({ origin, pool }, { userId }),
+        await createPasskeyOptions({ origin, pool }, { principalId }),
       );
     },
   );
@@ -156,33 +109,10 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const [scheme, token, extra] = (
-        request.headers.authorization ?? ""
-      ).split(" ");
-
-      if (scheme !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
-
-      const tokenHash = createHash("sha256").update(token).digest();
-      const {
-        rows: [session],
-      } = await pool.query(
-        `
-          SELECT user_id
-          FROM sessions
-          WHERE token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-        `,
-        [tokenHash],
-      );
-
-      if (!session) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      const userId = session.user_id;
+      const { principal_id: principalId } = await authenticateSession({
+        authorization: request.headers.authorization,
+        pool,
+      });
 
       reply.header("Cache-Control", "no-store");
 
@@ -192,7 +122,7 @@ export default async function passkeyManagementRoutes(
           {
             credential: request.body.credential,
             name: request.body.name,
-            userId,
+            principalId,
           },
         ),
       );
@@ -221,40 +151,17 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const [scheme, token, extra] = (
-        request.headers.authorization ?? ""
-      ).split(" ");
-
-      if (scheme !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
-
-      const tokenHash = createHash("sha256").update(token).digest();
-      const {
-        rows: [session],
-      } = await pool.query(
-        `
-          SELECT user_id
-          FROM sessions
-          WHERE token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-        `,
-        [tokenHash],
-      );
-
-      if (!session) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      const userId = session.user_id;
+      const { principal_id: principalId } = await authenticateSession({
+        authorization: request.headers.authorization,
+        pool,
+      });
 
       reply.header("Cache-Control", "no-store");
 
       return reply.send(
         await renamePasskey(
           { pool },
-          { id: request.params.id, name: request.body.name, userId },
+          { id: request.params.id, name: request.body.name, principalId },
         ),
       );
     },
@@ -283,35 +190,12 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const [scheme, token, extra] = (
-        request.headers.authorization ?? ""
-      ).split(" ");
+      const { principal_id: principalId } = await authenticateSession({
+        authorization: request.headers.authorization,
+        pool,
+      });
 
-      if (scheme !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
-
-      const tokenHash = createHash("sha256").update(token).digest();
-      const {
-        rows: [session],
-      } = await pool.query(
-        `
-          SELECT user_id
-          FROM sessions
-          WHERE token_hash = $1
-            AND revoked_at IS NULL
-            AND expires_at > NOW()
-        `,
-        [tokenHash],
-      );
-
-      if (!session) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      const userId = session.user_id;
-
-      await removePasskey({ pool }, { id: request.params.id, userId });
+      await removePasskey({ pool }, { id: request.params.id, principalId });
 
       return reply.code(204).send();
     },

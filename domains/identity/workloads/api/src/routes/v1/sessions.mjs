@@ -1,12 +1,14 @@
-import { ProblemResponse } from "../../platform/problem-details.mjs";
-import { createAccessToken } from "../../services/sessions/create-access-token.mjs";
+import { SignJWT } from "jose";
+
+import { authenticateSession } from "../../services/sessions/authenticate.mjs";
 import { revokeSession } from "../../services/sessions/revoke.mjs";
+import { ProblemResponse } from "../problem-details.mjs";
 import { AccessTokenResponse } from "./sessions.schemas.mjs";
 
 /**
  * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
  *   pool: import("pg").Pool,
- *   signingKey: import("../../platform/jwt-keys.mjs").JwtKeys["signingKey"],
+ *   signingKey: import("../../jwks.mjs").JwtKeys["signingKey"],
  * }>}
  */
 export default async function sessionsRoutes(fastify, { pool, signingKey }) {
@@ -29,17 +31,39 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       },
     },
     async function (req, reply) {
-      const [type, token, extra] = (req.headers.authorization ?? "").split(" ");
-
-      if (type !== "Bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
-      }
+      const session = await authenticateSession({
+        authorization: req.headers.authorization,
+        pool,
+      });
 
       reply.header("Cache-Control", "no-store");
 
-      return reply.send(
-        await createAccessToken({ pool, signingKey }, { session_token: token }),
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = Math.min(
+        now + 300,
+        Math.floor(session.expires_at.getTime() / 1000),
       );
+
+      if (expiresAt <= now) {
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      const access_token = await new SignJWT({
+        sid: session.id,
+        sub: session.principal_id,
+      })
+        .setProtectedHeader({
+          alg: "ES256",
+          kid: signingKey.kid,
+        })
+        .setIssuedAt(now)
+        .setExpirationTime(expiresAt)
+        .sign(signingKey.privateKey);
+
+      return reply.send({
+        access_token,
+        expires_in: expiresAt - now,
+      });
     },
   );
 

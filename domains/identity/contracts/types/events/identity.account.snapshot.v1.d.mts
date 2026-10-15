@@ -2,18 +2,14 @@ import { Type } from "typebox";
 export declare const AccountV1SubjectPrefix = "identity.account.v1";
 export declare const AccountSnapshotV1Schema: Type.TObject<{
   data: Type.TObject<{
-    created_at: Type.TString;
     id: Type.TString;
     name: Type.TString;
     version: Type.TInteger;
   }>;
-  datacontenttype: Type.TLiteral<"application/json">;
   dataschema: Type.TOptional<Type.TString>;
   id: Type.TString;
   source: Type.TLiteral<"/domains/identity">;
   specversion: Type.TLiteral<"1.0">;
-  subject: Type.TString;
-  time: Type.TString;
   traceparent: Type.TOptional<Type.TString>;
   tracestate: Type.TOptional<Type.TString>;
   type: Type.TLiteral<"identity.account.snapshot.v1">;

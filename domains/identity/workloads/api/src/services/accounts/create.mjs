@@ -8,9 +8,9 @@ import { context, propagation } from "@opentelemetry/api";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ currentUserId: string, name: string }} args
+ * @param {{ currentPrincipalId: string, name: string }} args
  */
-export const createAccount = async ({ pool }, { currentUserId, name }) => {
+export const createAccount = async ({ pool }, { currentPrincipalId, name }) => {
   let client;
 
   try {
@@ -35,18 +35,24 @@ export const createAccount = async ({ pool }, { currentUserId, name }) => {
       `
         INSERT INTO account_memberships (
           account_id,
-          user_id,
-          role
+          principal_id
         )
-        VALUES ($1, $2, 'owner')
-        RETURNING id, status, version
+        VALUES ($1, $2)
+        RETURNING id, version
       `,
-      [account.id, currentUserId],
+      [account.id, currentPrincipalId],
+    );
+
+    await client.query(
+      `
+        INSERT INTO account_membership_roles (membership_id, role)
+        VALUES ($1, 'account.owner')
+      `,
+      [membership.id],
     );
 
     const createdAt = account.created_at.toISOString();
     const accountSnapshotEvent = buildAccountSnapshotV1({
-      created_at: createdAt,
       id: account.id,
       name: account.name,
       version: Number(account.version),
@@ -54,9 +60,8 @@ export const createAccount = async ({ pool }, { currentUserId, name }) => {
     const membershipSnapshotEvent = buildMembershipSnapshotV1({
       account_id: account.id,
       id: membership.id,
-      role: "owner",
-      status: membership.status,
-      subject_id: currentUserId,
+      principal_id: currentPrincipalId,
+      roles: ["account.owner"],
       version: Number(membership.version),
     });
     const headers = {
@@ -108,7 +113,7 @@ export const createAccount = async ({ pool }, { currentUserId, name }) => {
         created_at: createdAt,
         id: account.id,
         name: account.name,
-        role: "owner",
+        roles: ["account.owner"],
       },
     };
   } catch (err) {

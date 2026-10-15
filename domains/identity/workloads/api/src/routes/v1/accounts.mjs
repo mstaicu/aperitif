@@ -1,7 +1,7 @@
-import { authenticateAccessToken } from "../../platform/access-token.mjs";
-import { ProblemResponse } from "../../platform/problem-details.mjs";
 import { createAccount } from "../../services/accounts/create.mjs";
 import { listAccounts } from "../../services/accounts/list.mjs";
+import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
+import { ProblemResponse } from "../problem-details.mjs";
 import {
   AccountsResponse,
   CreateAccountBody,
@@ -36,16 +36,17 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
       },
     },
     async function (request, reply) {
-      const currentUserId = await authenticateAccessToken({
+      const currentPrincipalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
         jwks,
+        pool,
       });
 
       return reply.code(201).send(
         await createAccount(
           { pool },
           {
-            currentUserId,
+            currentPrincipalId,
             name: request.body.name,
           },
         ),
@@ -58,7 +59,7 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
     {
       schema: {
         description:
-          "Lists accounts where the authenticated caller is an active member.",
+          "Lists accounts where the authenticated caller is a member.",
         operationId: "listAccounts",
         response: {
           200: AccountsResponse,
@@ -72,12 +73,13 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
       },
     },
     async function (request, reply) {
-      const currentUserId = await authenticateAccessToken({
+      const currentPrincipalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
         jwks,
+        pool,
       });
 
-      return reply.send(await listAccounts({ pool }, { currentUserId }));
+      return reply.send(await listAccounts({ pool }, { currentPrincipalId }));
     },
   );
 }

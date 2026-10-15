@@ -35,6 +35,5 @@ spec:
                   WHERE expires_at < NOW() - INTERVAL '10 minutes';
 
                   DELETE FROM sessions
-                  WHERE expires_at < NOW() - INTERVAL '30 days'
-                     OR revoked_at < NOW() - INTERVAL '30 days';
+                  WHERE expires_at <= NOW();
                   SQL
