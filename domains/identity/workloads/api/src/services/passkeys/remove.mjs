@@ -26,7 +26,7 @@ export async function removePasskey({ pool }, { id, principalId }) {
       [principalId],
     );
 
-    if (!passkeys.some((passkey) => passkey.id === id)) {
+    if (!passkeys.some((passkey) => passkey.id === id.toLowerCase())) {
       throw new Error("PASSKEY_NOT_FOUND");
     }
 

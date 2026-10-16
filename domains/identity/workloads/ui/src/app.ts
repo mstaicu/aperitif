@@ -3,7 +3,7 @@ import { createAssetServer } from "remix/assets";
 import { cop } from "remix/middleware/cop";
 import { createRouter } from "remix/router";
 
-import registerRoutes from "./routes.ts";
+import * as handlers from "./handlers.ts";
 
 const apiUrl = process.env.API_INTERNAL_V1_URL?.replace(/\/+$/, "");
 
@@ -33,4 +33,39 @@ app.get(
 app.get("/livez", () => new Response("ok"));
 app.get("/readyz", () => new Response("ok"));
 
-registerRoutes(app, { apiUrl, assets });
+app.get("/identity/login", ({ request }) =>
+  handlers.loginPage(request, assets),
+);
+app.post("/identity/login/options", () => handlers.loginOptions(apiUrl));
+app.post("/identity/login", ({ request }) => handlers.login(request, apiUrl));
+
+app.get("/identity/signup", ({ request }) =>
+  handlers.signupPage(request, assets),
+);
+app.post("/identity/signup/options", () => handlers.signupOptions(apiUrl));
+app.post("/identity/signup", ({ request }) => handlers.signup(request, apiUrl));
+
+app.post("/identity/logout", ({ request }) => handlers.logout(request, apiUrl));
+
+app.get("/identity/accounts", ({ request }) =>
+  handlers.listAccounts(request, apiUrl),
+);
+app.post("/identity/accounts", ({ request }) =>
+  handlers.createAccount(request, apiUrl),
+);
+
+app.get("/identity/passkeys", ({ request }) =>
+  handlers.listPasskeys(request, apiUrl),
+);
+app.post("/identity/passkeys/options", ({ request }) =>
+  handlers.passkeyOptions(request, apiUrl),
+);
+app.post("/identity/passkeys", ({ request }) =>
+  handlers.addPasskey(request, apiUrl),
+);
+app.patch("/identity/passkeys/:id", ({ params, request }) =>
+  handlers.renamePasskey(request, apiUrl, params.id),
+);
+app.delete("/identity/passkeys/:id", ({ params, request }) =>
+  handlers.removePasskey(request, apiUrl, params.id),
+);

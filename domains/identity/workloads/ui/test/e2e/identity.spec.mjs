@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("signs up, logs in, creates an account, and logs out", async ({
+test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
   context,
   page,
 }) => {
@@ -25,46 +25,98 @@ test("signs up, logs in, creates an account, and logs out", async ({
 
   await expect(page).toHaveURL("/identity/signup");
 
+  // Use an empty authenticator to add a second passkey.
+  for (const credential of await context.credentials.get()) {
+    await context.credentials.delete(credential.id);
+  }
+
+  const authorizationHeaders = [];
+  page.on("request", (request) => {
+    if (request.headers().authorization) {
+      authorizationHeaders.push(request.headers().authorization);
+    }
+  });
   const logoutResponse = page.waitForResponse("**/identity/logout");
   const result = await page.evaluate(async () => {
-    const access = await fetch("/identity/access-token", { method: "POST" });
-    const { access_token, expires_in } = await access.json();
-    const headers = { Authorization: `Bearer ${access_token}` };
-    const account = await fetch("/v1/accounts", {
+    const account = await fetch("/identity/accounts", {
       body: JSON.stringify({ name: "Browser test account" }),
-      headers: { ...headers, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       method: "POST",
     });
     const { account: created } = await account.json();
+    const accounts = await fetch("/identity/accounts");
+    const listed = await accounts.json();
+    const options = await fetch("/identity/passkeys/options", {
+      method: "POST",
+    });
+    const credential = await navigator.credentials.create({
+      publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(
+        await options.json(),
+      ),
+    });
+    const added = await fetch("/identity/passkeys", {
+      body: JSON.stringify({ credential: credential.toJSON(), name: "Backup" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const passkey = await added.json();
+    const renamed = await fetch(`/identity/passkeys/${passkey.id}`, {
+      body: JSON.stringify({ name: "Renamed backup" }),
+      headers: { "Content-Type": "application/json" },
+      method: "PATCH",
+    });
+    const renamedPasskey = await renamed.json();
+    const removed = await fetch(
+      `/identity/passkeys/${passkey.id.toUpperCase()}`,
+      { method: "DELETE" },
+    );
+    const remaining = await fetch("/identity/passkeys");
+    const { passkeys } = await remaining.json();
+    const last = await fetch(`/identity/passkeys/${passkeys[0].id}`, {
+      method: "DELETE",
+    });
     const logout = await fetch("/identity/logout", { method: "POST" });
-    const exchange = await fetch("/identity/access-token", { method: "POST" });
-    const revoked = await fetch("/v1/accounts", { headers });
+    const revokedAccounts = await fetch("/identity/accounts");
+    const revokedPasskeys = await fetch("/identity/passkeys");
 
     return {
-      access: access.status,
       account: account.status,
-      cacheControl: access.headers.get("Cache-Control"),
-      challenge: revoked.headers.get("WWW-Authenticate"),
-      exchange: exchange.status,
-      expiresIn: expires_in,
+      accounts: accounts.status,
+      accountVisible: listed.accounts.some(({ id }) => id === created.id),
+      added: added.status,
+      cacheControl: accounts.headers.get("Cache-Control"),
+      last: last.status,
       logoutPath: new URL(logout.url).pathname,
-      revoked: revoked.status,
+      options: options.status,
+      remaining: passkeys.length,
+      removed: removed.status,
+      renamed: renamed.status,
+      renamedName: renamedPasskey.name,
+      revokedAccounts: revokedAccounts.status,
+      revokedPasskeys: revokedPasskeys.status,
       roles: created.roles,
     };
   });
 
   // Assert
   expect(result).toEqual({
-    access: 200,
     account: 201,
+    accounts: 200,
+    accountVisible: true,
+    added: 201,
     cacheControl: "no-store",
-    challenge: "Bearer",
-    exchange: 401,
-    expiresIn: 300,
+    last: 409,
     logoutPath: "/identity/login",
-    revoked: 401,
+    options: 200,
+    remaining: 1,
+    removed: 204,
+    renamed: 200,
+    renamedName: "Renamed backup",
+    revokedAccounts: 401,
+    revokedPasskeys: 401,
     roles: ["account.owner"],
   });
+  expect(authorizationHeaders).toEqual([]);
   expect((await logoutResponse).status()).toBe(303);
   expect(
     (await context.cookies()).find(

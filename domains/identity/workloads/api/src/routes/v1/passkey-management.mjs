@@ -3,7 +3,7 @@ import { addPasskey } from "../../services/passkeys/add.mjs";
 import { listPasskeys } from "../../services/passkeys/list.mjs";
 import { removePasskey } from "../../services/passkeys/remove.mjs";
 import { renamePasskey } from "../../services/passkeys/rename.mjs";
-import { authenticateSession } from "../../services/sessions/authenticate.mjs";
+import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
 import { ProblemResponse } from "../problem-details.mjs";
 import {
   AddPasskeyBody,
@@ -16,13 +16,14 @@ import {
 
 /**
  * @type {import("@fastify/type-provider-typebox").FastifyPluginAsyncTypebox<{
+ *   jwks: import("jose").JWTVerifyGetKey,
  *   pool: import("pg").Pool,
  *   origin: string,
  * }>}
  */
 export default async function passkeyManagementRoutes(
   fastify,
-  { origin, pool },
+  { jwks, origin, pool },
 ) {
   fastify.get(
     "/passkeys",
@@ -36,14 +37,15 @@ export default async function passkeyManagementRoutes(
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ sessionTokenAuth: [] }],
+        security: [{ bearerAuth: [] }],
         summary: "List passkeys",
         tags: ["passkeys"],
       },
     },
     async function (request, reply) {
-      const { principal_id: principalId } = await authenticateSession({
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
+        jwks,
         pool,
       });
 
@@ -68,14 +70,15 @@ export default async function passkeyManagementRoutes(
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ sessionTokenAuth: [] }],
+        security: [{ bearerAuth: [] }],
         summary: "Create additional passkey options",
         tags: ["passkeys"],
       },
     },
     async function (request, reply) {
-      const { principal_id: principalId } = await authenticateSession({
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
+        jwks,
         pool,
       });
 
@@ -103,14 +106,15 @@ export default async function passkeyManagementRoutes(
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ sessionTokenAuth: [] }],
+        security: [{ bearerAuth: [] }],
         summary: "Add passkey",
         tags: ["passkeys"],
       },
     },
     async function (request, reply) {
-      const { principal_id: principalId } = await authenticateSession({
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
+        jwks,
         pool,
       });
 
@@ -145,14 +149,15 @@ export default async function passkeyManagementRoutes(
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ sessionTokenAuth: [] }],
+        security: [{ bearerAuth: [] }],
         summary: "Rename passkey",
         tags: ["passkeys"],
       },
     },
     async function (request, reply) {
-      const { principal_id: principalId } = await authenticateSession({
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
+        jwks,
         pool,
       });
 
@@ -184,14 +189,15 @@ export default async function passkeyManagementRoutes(
           500: ProblemResponse,
           503: ProblemResponse,
         },
-        security: [{ sessionTokenAuth: [] }],
+        security: [{ bearerAuth: [] }],
         summary: "Remove passkey",
         tags: ["passkeys"],
       },
     },
     async function (request, reply) {
-      const { principal_id: principalId } = await authenticateSession({
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
+        jwks,
         pool,
       });
 

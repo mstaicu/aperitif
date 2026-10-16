@@ -36,12 +36,8 @@ make -C domains/<domain> down
 `up` deploys PostgreSQL, runs the migration Job, waits for it, and then deploys
 runtime workloads. `dev` performs the same preparation before starting the
 Skaffold development loop. `down` removes resources in that domain's Skaffold
-graph. Identity's `up` and `dev` invoke `migrate-local`, which deletes the previous
-migration Job, runs it again, and waits for completion. To rerun only migrations:
-
-```sh
-make -C domains/identity migrate-local
-```
+graph. Identity's `up` and `dev` invoke migrations, which deletes the previous
+migration Job, runs it again, and waits for completion.
 
 The legacy Auth and Accounts targets retain completed migration Jobs; delete
 their Job explicitly before rerunning migrations against a disposable database.
