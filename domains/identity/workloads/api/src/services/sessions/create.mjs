@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 /**
- * @param {{ client: import("pg").PoolClient, principalId: string }} resources
+ * @param {{ client: import("pg").PoolClient | import("pg").Pool, principalId: string }} resources
  */
 export async function createSession({ client, principalId }) {
   const sessionToken = randomBytes(32).toString("base64url");

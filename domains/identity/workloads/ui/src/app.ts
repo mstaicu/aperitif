@@ -57,15 +57,15 @@ app.post("/identity/accounts", ({ request }) =>
 app.get("/identity/passkeys", ({ request }) =>
   handlers.listPasskeys(request, apiUrl),
 );
-app.post("/identity/passkeys/options", ({ request }) =>
+app.post("/identity/passkeys/registration/options", ({ request }) =>
   handlers.passkeyOptions(request, apiUrl),
 );
-app.post("/identity/passkeys", ({ request }) =>
+app.post("/identity/passkeys/registration", ({ request }) =>
   handlers.addPasskey(request, apiUrl),
 );
 app.patch("/identity/passkeys/:id", ({ params, request }) =>
   handlers.renamePasskey(request, apiUrl, params.id),
 );
-app.delete("/identity/passkeys/:id", ({ params, request }) =>
+app.post("/identity/passkeys/:id/delete", ({ params, request }) =>
   handlers.removePasskey(request, apiUrl, params.id),
 );

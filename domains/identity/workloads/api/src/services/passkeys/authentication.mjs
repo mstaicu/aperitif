@@ -1,8 +1,6 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 
-import { createSession } from "../sessions/create.mjs";
-
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
@@ -22,26 +20,25 @@ export const authenticate = async ({ origin, pool }, authentication) => {
     throw new Error("INVALID_AUTHENTICATION_RESPONSE");
   }
 
-  let client;
+  const {
+    rows: [challengeRow],
+  } = await pool.query(
+    `
+      DELETE FROM authentication_challenges
+      WHERE challenge = $1
+        AND expires_at > NOW()
+      RETURNING challenge
+    `,
+    [Buffer.from(challenge, "base64url")],
+  );
+
+  if (!challengeRow) {
+    throw new Error("AUTHENTICATION_FAILED");
+  }
+
+  const client = await pool.connect();
 
   try {
-    const {
-      rows: [challengeRow],
-    } = await pool.query(
-      `
-          DELETE FROM authentication_challenges
-          WHERE challenge = $1
-            AND expires_at > NOW()
-          RETURNING challenge
-        `,
-      [Buffer.from(challenge, "base64url")],
-    );
-
-    if (!challengeRow) {
-      throw new Error("AUTHENTICATION_FAILED");
-    }
-
-    client = await pool.connect();
     await client.query("BEGIN");
 
     const {
@@ -60,20 +57,13 @@ export const authenticate = async ({ origin, pool }, authentication) => {
       throw new Error("AUTHENTICATION_FAILED");
     }
 
-    if (authentication.response.userHandle) {
-      const userHandle = Buffer.from(
-        authentication.response.userHandle,
-        "base64url",
-      );
+    const expectedHandle = Buffer.from(
+      credential.principal_id.replace(/-/g, ""),
+      "hex",
+    ).toString("base64url");
 
-      const expectedHandle = Buffer.from(
-        credential.principal_id.replace(/-/g, ""),
-        "hex",
-      );
-
-      if (!userHandle.equals(expectedHandle)) {
-        throw new Error("AUTHENTICATION_FAILED");
-      }
+    if (authentication.response.userHandle !== expectedHandle) {
+      throw new Error("AUTHENTICATION_FAILED");
     }
 
     const { hostname, origin: expectedOrigin } = new URL(origin);
@@ -112,21 +102,13 @@ export const authenticate = async ({ origin, pool }, authentication) => {
       [credential.credential_id, newCounter],
     );
 
-    const session = await createSession({
-      client,
-      principalId: credential.principal_id,
-    });
-
     await client.query("COMMIT");
 
-    return {
-      expires_in: session.expiresIn,
-      session_token: session.sessionToken,
-    };
+    return /** @type {string} */ (credential.principal_id);
   } catch (err) {
-    await client?.query("ROLLBACK").catch(() => {});
+    await client.query("ROLLBACK").catch(() => {});
     throw err;
   } finally {
-    client?.release();
+    client.release();
   }
 };

@@ -66,7 +66,7 @@ export default async function v1(fastify, { jwks, origin, pool, signingKey }) {
 
   fastify.register(accountsRoutes, { jwks, pool });
   fastify.register(passkeyManagementRoutes, { jwks, origin, pool });
-  fastify.register(passkeysRoutes, { origin, pool });
+  fastify.register(passkeysRoutes, { jwks, origin, pool });
   fastify.register(sessionsRoutes, { pool, signingKey });
 
   await fastify.register(swaggerUI, {

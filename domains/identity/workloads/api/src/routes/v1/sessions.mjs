@@ -1,3 +1,4 @@
+import { Type } from "@fastify/type-provider-typebox";
 import { SignJWT } from "jose";
 
 import { authenticateSession } from "../../services/sessions/authenticate.mjs";
@@ -75,7 +76,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
           "Revokes the session represented by the bearer credential.",
         operationId: "deleteSession",
         response: {
-          204: { description: "Session revoked." },
+          204: Type.Null({ description: "Session revoked." }),
           401: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
@@ -94,7 +95,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
 
       await revokeSession({ pool }, { session_token: token });
 
-      return reply.code(204).send();
+      return reply.code(204).send(null);
     },
   );
 }

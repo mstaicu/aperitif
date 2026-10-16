@@ -6,9 +6,20 @@ import { createSession } from "../sessions/create.mjs";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
+ * @param {{
+ *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
+ *   name?: string,
+ *   principalId?: string,
+ * }} args
  */
-export const register = async ({ origin, pool }, credential) => {
+export const register = async (
+  { origin, pool },
+  { credential, name, principalId },
+) => {
+  if (!name || name.length < 1 || name.length > 100) {
+    throw new Error("INVALID_PASSKEY_NAME");
+  }
+
   let challenge;
 
   try {
@@ -33,7 +44,10 @@ export const register = async ({ origin, pool }, credential) => {
     [Buffer.from(challenge, "base64url")],
   );
 
-  if (!challengeRow?.principal_id || !challengeRow?.challenge) {
+  if (
+    !challengeRow ||
+    (principalId && challengeRow.principal_id !== principalId)
+  ) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
@@ -53,7 +67,7 @@ export const register = async ({ origin, pool }, credential) => {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
-  if (!verification.verified || !verification.registrationInfo) {
+  if (!verification.verified) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
@@ -64,20 +78,22 @@ export const register = async ({ origin, pool }, credential) => {
   try {
     await client.query("BEGIN");
 
-    const {
-      rows: [principal],
-    } = await client.query(
-      `
-        INSERT INTO principals (id)
-        VALUES ($1)
-        ON CONFLICT DO NOTHING
-        RETURNING id
-      `,
-      [challengeRow.principal_id],
-    );
+    if (!principalId) {
+      const {
+        rows: [principal],
+      } = await client.query(
+        `
+          INSERT INTO principals (id)
+          VALUES ($1)
+          ON CONFLICT DO NOTHING
+          RETURNING id
+        `,
+        [challengeRow.principal_id],
+      );
 
-    if (!principal) {
-      throw new Error("USER_ALREADY_REGISTERED");
+      if (!principal) {
+        throw new Error("USER_ALREADY_REGISTERED");
+      }
     }
 
     await client.query(
@@ -85,18 +101,25 @@ export const register = async ({ origin, pool }, credential) => {
         INSERT INTO passkey_credentials (
           principal_id,
           credential_id,
+          name,
           public_key,
           sign_count
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5)
       `,
       [
         challengeRow.principal_id,
         Buffer.from(registrationCredential.id, "base64url"),
+        name,
         Buffer.from(registrationCredential.publicKey),
         registrationCredential.counter,
       ],
     );
+
+    if (principalId) {
+      await client.query("COMMIT");
+      return null;
+    }
 
     const session = await createSession({
       client,

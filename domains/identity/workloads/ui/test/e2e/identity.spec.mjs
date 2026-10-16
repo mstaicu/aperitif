@@ -25,10 +25,18 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
 
   await expect(page).toHaveURL("/identity/signup");
 
-  // Use an empty authenticator to add a second passkey.
-  for (const credential of await context.credentials.get()) {
-    await context.credentials.delete(credential.id);
-  }
+  const authentication = await page.evaluate(async () => {
+    const options = await fetch("/identity/login/options", { method: "POST" });
+    const proof = await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(
+        await options.json(),
+      ),
+    });
+    return proof.toJSON();
+  });
+  const [originalCredential] = await context.credentials.get();
+  // Switch to an empty authenticator after proving possession of the original.
+  await context.credentials.delete(originalCredential.id);
 
   const authorizationHeaders = [];
   page.on("request", (request) => {
@@ -37,7 +45,7 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
     }
   });
   const logoutResponse = page.waitForResponse("**/identity/logout");
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(async (authentication) => {
     const account = await fetch("/identity/accounts", {
       body: JSON.stringify({ name: "Browser test account" }),
       headers: { "Content-Type": "application/json" },
@@ -46,7 +54,7 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
     const { account: created } = await account.json();
     const accounts = await fetch("/identity/accounts");
     const listed = await accounts.json();
-    const options = await fetch("/identity/passkeys/options", {
+    const options = await fetch("/identity/passkeys/registration/options", {
       method: "POST",
     });
     const credential = await navigator.credentials.create({
@@ -54,67 +62,142 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
         await options.json(),
       ),
     });
-    const added = await fetch("/identity/passkeys", {
+    const missingProof = await fetch("/identity/passkeys/registration", {
       body: JSON.stringify({ credential: credential.toJSON(), name: "Backup" }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });
-    const passkey = await added.json();
+    const added = await fetch("/identity/passkeys/registration", {
+      body: JSON.stringify({
+        authentication,
+        credential: credential.toJSON(),
+        name: "Backup",
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const { passkeys: updatedPasskeys } = await (
+      await fetch("/identity/passkeys")
+    ).json();
+    const passkey = updatedPasskeys.find(({ name }) => name === "Backup");
     const renamed = await fetch(`/identity/passkeys/${passkey.id}`, {
       body: JSON.stringify({ name: "Renamed backup" }),
       headers: { "Content-Type": "application/json" },
       method: "PATCH",
     });
     const renamedPasskey = await renamed.json();
+    const replay = await fetch(`/identity/passkeys/${passkey.id}/delete`, {
+      body: JSON.stringify({ authentication }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const loginReplay = await fetch("/identity/login", {
+      body: JSON.stringify(authentication),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const deletionOptions = await fetch("/identity/login/options", {
+      method: "POST",
+    });
+    const proof = await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(
+        await deletionOptions.json(),
+      ),
+    });
     const removed = await fetch(
-      `/identity/passkeys/${passkey.id.toUpperCase()}`,
-      { method: "DELETE" },
+      `/identity/passkeys/${passkey.id.toUpperCase()}/delete`,
+      {
+        body: JSON.stringify({ authentication: proof.toJSON() }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
     );
     const remaining = await fetch("/identity/passkeys");
     const { passkeys } = await remaining.json();
-    const last = await fetch(`/identity/passkeys/${passkeys[0].id}`, {
-      method: "DELETE",
-    });
-    const logout = await fetch("/identity/logout", { method: "POST" });
-    const revokedAccounts = await fetch("/identity/accounts");
-    const revokedPasskeys = await fetch("/identity/passkeys");
 
     return {
       account: account.status,
       accounts: accounts.status,
       accountVisible: listed.accounts.some(({ id }) => id === created.id),
       added: added.status,
+      addedBody: await added.text(),
       cacheControl: accounts.headers.get("Cache-Control"),
-      last: last.status,
-      logoutPath: new URL(logout.url).pathname,
+      loginReplay: loginReplay.status,
+      missingProof: missingProof.status,
       options: options.status,
       remaining: passkeys.length,
       removed: removed.status,
       renamed: renamed.status,
       renamedName: renamedPasskey.name,
-      revokedAccounts: revokedAccounts.status,
-      revokedPasskeys: revokedPasskeys.status,
+      replay: replay.status,
       roles: created.roles,
     };
-  });
+  }, authentication);
 
-  // Assert
   expect(result).toEqual({
     account: 201,
     accounts: 200,
     accountVisible: true,
-    added: 201,
+    added: 204,
+    addedBody: "",
     cacheControl: "no-store",
-    last: 409,
-    logoutPath: "/identity/login",
+    loginReplay: 401,
+    missingProof: 401,
     options: 200,
     remaining: 1,
     removed: 204,
     renamed: 200,
     renamedName: "Renamed backup",
-    revokedAccounts: 401,
-    revokedPasskeys: 401,
+    replay: 401,
     roles: ["account.owner"],
+  });
+
+  // Return to the original authenticator to verify the last-passkey guard.
+  for (const credential of await context.credentials.get()) {
+    await context.credentials.delete(credential.id);
+  }
+  await context.credentials.create(originalCredential.rpId, originalCredential);
+
+  const final = await page.evaluate(async () => {
+    const { passkeys } = await (await fetch("/identity/passkeys")).json();
+    const options = await fetch("/identity/login/options", { method: "POST" });
+    const proof = await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(
+        await options.json(),
+      ),
+    });
+    const request = {
+      body: JSON.stringify({ authentication: proof.toJSON() }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    };
+    const last = await fetch(
+      `/identity/passkeys/${passkeys[0].id}/delete`,
+      request,
+    );
+    const retry = await fetch(
+      `/identity/passkeys/${passkeys[0].id}/delete`,
+      request,
+    );
+    const logout = await fetch("/identity/logout", { method: "POST" });
+    const accounts = await fetch("/identity/accounts");
+    const keys = await fetch("/identity/passkeys");
+    return {
+      accounts: accounts.status,
+      keys: keys.status,
+      last: last.status,
+      logoutPath: new URL(logout.url).pathname,
+      retry: retry.status,
+    };
+  });
+
+  // Assert
+  expect(final).toEqual({
+    accounts: 401,
+    keys: 401,
+    last: 409,
+    logoutPath: "/identity/login",
+    retry: 401,
   });
   expect(authorizationHeaders).toEqual([]);
   expect((await logoutResponse).status()).toBe(303);

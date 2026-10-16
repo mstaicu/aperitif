@@ -2,6 +2,7 @@ import { Type } from "@fastify/type-provider-typebox";
 
 import {
   AuthenticationOptionsResponse,
+  AuthenticationResponseJSON,
   RegistrationOptionsResponse,
   RegistrationResponseJSON,
 } from "./webauthn.schemas.mjs";
@@ -15,10 +16,11 @@ const PasskeyName = Type.String({
   pattern: "^(?=[\\s\\S]*\\S)[^\\u0000]+$",
 });
 
-export const AddPasskeyBody = Type.Object(
+export const RegisterPasskeyBody = Type.Object(
   {
+    authentication: Type.Optional(AuthenticationResponseJSON),
     credential: RegistrationResponseJSON,
-    name: PasskeyName,
+    name: Type.Optional(PasskeyName),
   },
   { additionalProperties: false },
 );
@@ -56,19 +58,7 @@ export const RenamePasskeyBody = Type.Object(
   { additionalProperties: false },
 );
 
-export const SessionResponse = Type.Object(
-  {
-    expires_in: Type.Integer({
-      description: "Session lifetime in seconds.",
-      minimum: 1,
-    }),
-    session_token: Type.String({
-      description: "Opaque bearer credential for the newly created session.",
-      minLength: 1,
-    }),
-  },
-  {
-    additionalProperties: false,
-    description: "Credential and lifetime for the newly created session.",
-  },
+export const RemovePasskeyBody = Type.Object(
+  { authentication: AuthenticationResponseJSON },
+  { additionalProperties: false },
 );

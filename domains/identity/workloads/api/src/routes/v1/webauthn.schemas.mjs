@@ -32,7 +32,7 @@ export const AuthenticationResponseJSON = Type.Object(
         authenticatorData: NonEmptyString,
         clientDataJSON: NonEmptyString,
         signature: NonEmptyString,
-        userHandle: Type.Optional(Type.String()),
+        userHandle: NonEmptyString,
       },
       { additionalProperties: true },
     ),
@@ -46,7 +46,58 @@ export const AuthenticationResponseJSON = Type.Object(
 
 export const RegistrationOptionsResponse = Type.Object(
   {
+    attestation: Type.Optional(Type.String()),
+    authenticatorSelection: Type.Optional(
+      Type.Object(
+        {
+          authenticatorAttachment: Type.Optional(Type.String()),
+          requireResidentKey: Type.Optional(Type.Boolean()),
+          residentKey: Type.Optional(Type.String()),
+          userVerification: Type.Optional(Type.String()),
+        },
+        { additionalProperties: true },
+      ),
+    ),
     challenge: NonEmptyString,
+    excludeCredentials: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            id: NonEmptyString,
+            transports: Type.Optional(Type.Array(Type.String())),
+            type: NonEmptyString,
+          },
+          { additionalProperties: true },
+        ),
+      ),
+    ),
+    extensions: Type.Optional(
+      Type.Object(
+        { credProps: Type.Optional(Type.Boolean()) },
+        { additionalProperties: true },
+      ),
+    ),
+    hints: Type.Optional(Type.Array(Type.String())),
+    pubKeyCredParams: Type.Array(
+      Type.Object(
+        { alg: Type.Integer(), type: Type.Literal("public-key") },
+        { additionalProperties: true },
+      ),
+    ),
+    rp: Type.Object(
+      { id: Type.Optional(NonEmptyString), name: NonEmptyString },
+      { additionalProperties: true },
+    ),
+    timeout: Type.Optional(
+      Type.Integer({
+        description: "Ceremony timeout in milliseconds.",
+        minimum: 0,
+      }),
+    ),
+    user: Type.Object(
+      { displayName: Type.String(), id: NonEmptyString, name: NonEmptyString },
+      { additionalProperties: true },
+    ),
   },
   {
     additionalProperties: true,
@@ -57,6 +108,14 @@ export const RegistrationOptionsResponse = Type.Object(
 export const AuthenticationOptionsResponse = Type.Object(
   {
     challenge: NonEmptyString,
+    rpId: Type.Optional(NonEmptyString),
+    timeout: Type.Optional(
+      Type.Integer({
+        description: "Ceremony timeout in milliseconds.",
+        minimum: 0,
+      }),
+    ),
+    userVerification: Type.Optional(Type.String()),
   },
   {
     additionalProperties: true,

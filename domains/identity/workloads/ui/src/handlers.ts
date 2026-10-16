@@ -23,7 +23,7 @@ const session = s.object({
 });
 
 export function addPasskey(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys");
+  return apiRequest(request, apiUrl, "/passkeys/registration");
 }
 
 export function createAccount(request: Request, apiUrl: string) {
@@ -83,11 +83,15 @@ export async function logout(request: Request, apiUrl: string) {
 }
 
 export function passkeyOptions(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys/options");
+  return apiRequest(request, apiUrl, "/passkeys/registration/options");
 }
 
 export function removePasskey(request: Request, apiUrl: string, id: string) {
-  return apiRequest(request, apiUrl, `/passkeys/${encodeURIComponent(id)}`);
+  return apiRequest(
+    request,
+    apiUrl,
+    `/passkeys/${encodeURIComponent(id)}/delete`,
+  );
 }
 
 export function renamePasskey(request: Request, apiUrl: string, id: string) {
