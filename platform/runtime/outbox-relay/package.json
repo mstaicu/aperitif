@@ -1,8 +1,5 @@
 {
   "private": true,
-  "engines": {
-    "node": ">=26"
-  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc -p jsconfig.json --noEmit",

@@ -3,10 +3,8 @@
   "version": "0.2.0",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./types/index.d.mts",
-      "import": "./src/index.mjs"
-    }
+    "types": "./types/index.d.mts",
+    "import": "./src/index.mjs"
   },
   "scripts": {
     "build": "rm -rf types && tsc -p jsconfig.json",

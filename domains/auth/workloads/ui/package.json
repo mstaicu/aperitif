@@ -9,9 +9,6 @@
     "check": "npm run lint && npm run typecheck",
     "test:e2e": "playwright test"
   },
-  "engines": {
-    "node": ">=24.11.0"
-  },
   "dependencies": {
     "@opentelemetry/instrumentation-http": "^0.223.0",
     "@opentelemetry/instrumentation-undici": "^0.33.0",
