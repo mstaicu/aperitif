@@ -1,8 +1,8 @@
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ currentPrincipalId: string }} args
+ * @param {{ principalId: string }} args
  */
-export const listAccounts = async ({ pool }, { currentPrincipalId }) => {
+export const listAccounts = async ({ pool }, { principalId }) => {
   const { rows } = await pool.query(
     `
       SELECT a.id,
@@ -19,7 +19,7 @@ export const listAccounts = async ({ pool }, { currentPrincipalId }) => {
       WHERE am.principal_id = $1
       ORDER BY a.name, a.id
     `,
-    [currentPrincipalId],
+    [principalId],
   );
 
   return {

@@ -5,7 +5,7 @@
 export async function renamePasskey({ pool }, { id, name, principalId }) {
   const normalizedName = name.trim();
 
-  if (normalizedName.length < 1 || normalizedName.length > 100) {
+  if (normalizedName.length < 1 || [...normalizedName].length > 100) {
     throw new Error("INVALID_PASSKEY_NAME");
   }
 

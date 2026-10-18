@@ -36,13 +36,17 @@ app.get("/readyz", () => new Response("ok"));
 app.get("/identity/login", ({ request }) =>
   handlers.loginPage(request, assets),
 );
-app.post("/identity/login/options", () => handlers.loginOptions(apiUrl));
+app.post("/identity/login/options", ({ request }) =>
+  handlers.loginOptions(request, apiUrl),
+);
 app.post("/identity/login", ({ request }) => handlers.login(request, apiUrl));
 
 app.get("/identity/signup", ({ request }) =>
   handlers.signupPage(request, assets),
 );
-app.post("/identity/signup/options", () => handlers.signupOptions(apiUrl));
+app.post("/identity/signup/options", ({ request }) =>
+  handlers.signupOptions(request, apiUrl),
+);
 app.post("/identity/signup", ({ request }) => handlers.signup(request, apiUrl));
 
 app.post("/identity/logout", ({ request }) => handlers.logout(request, apiUrl));
@@ -58,7 +62,7 @@ app.get("/identity/passkeys", ({ request }) =>
   handlers.listPasskeys(request, apiUrl),
 );
 app.post("/identity/passkeys/registration/options", ({ request }) =>
-  handlers.passkeyOptions(request, apiUrl),
+  handlers.passkeyRegistrationOptions(request, apiUrl),
 );
 app.post("/identity/passkeys/registration", ({ request }) =>
   handlers.addPasskey(request, apiUrl),

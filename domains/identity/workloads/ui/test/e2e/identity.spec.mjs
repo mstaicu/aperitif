@@ -113,7 +113,6 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
       },
     );
     const remaining = await fetch("/identity/passkeys");
-    const { passkeys } = await remaining.json();
 
     return {
       account: account.status,
@@ -125,7 +124,7 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
       loginReplay: loginReplay.status,
       missingProof: missingProof.status,
       options: options.status,
-      remaining: passkeys.length,
+      remaining: remaining.status,
       removed: removed.status,
       renamed: renamed.status,
       renamedName: renamedPasskey.name,
@@ -141,22 +140,32 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
     added: 204,
     addedBody: "",
     cacheControl: "no-store",
-    loginReplay: 401,
-    missingProof: 401,
+    loginReplay: 422,
+    missingProof: 422,
     options: 200,
-    remaining: 1,
+    remaining: 403,
     removed: 204,
     renamed: 200,
     renamedName: "Renamed backup",
-    replay: 401,
+    replay: 422,
     roles: ["account.owner"],
   });
+
+  expect(
+    (await context.cookies()).find(
+      (cookie) => cookie.name === "identity_session_token",
+    ),
+  ).toBeUndefined();
 
   // Return to the original authenticator to verify the last-passkey guard.
   for (const credential of await context.credentials.get()) {
     await context.credentials.delete(credential.id);
   }
   await context.credentials.create(originalCredential.rpId, originalCredential);
+
+  await page.goto("/identity/login?return_to=%2Fidentity%2Fsignup");
+  await page.getByRole("button", { name: "Log in with passkey" }).click();
+  await expect(page).toHaveURL("/identity/signup");
 
   const final = await page.evaluate(async () => {
     const { passkeys } = await (await fetch("/identity/passkeys")).json();
@@ -193,11 +202,11 @@ test("signs up, logs in, manages accounts and passkeys, and logs out", async ({
 
   // Assert
   expect(final).toEqual({
-    accounts: 401,
-    keys: 401,
+    accounts: 403,
+    keys: 403,
     last: 409,
     logoutPath: "/identity/login",
-    retry: 401,
+    retry: 422,
   });
   expect(authorizationHeaders).toEqual([]);
   expect((await logoutResponse).status()).toBe(303);

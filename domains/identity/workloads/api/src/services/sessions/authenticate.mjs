@@ -2,7 +2,7 @@ import { jwtVerify } from "jose";
 import { createHash } from "node:crypto";
 
 /**
- * @param {{ authorization?: string, jwks: import("jose").JWTVerifyGetKey, pool: import("pg").Pool }} args
+ * @param {{ authorization?: string, jwks: import("jose").JWTVerifyGetKey, pool: import("pg").Pool | import("pg").PoolClient }} args
  */
 export async function authenticateAccessToken({ authorization, jwks, pool }) {
   const [type, token, extra] = (authorization ?? "").split(" ");
@@ -64,7 +64,7 @@ export async function authenticateSession({ authorization, pool }) {
   );
 
   if (!session) {
-    throw new Error("SESSION_NOT_FOUND");
+    throw new Error("INVALID_SESSION_TOKEN");
   }
 
   return session;

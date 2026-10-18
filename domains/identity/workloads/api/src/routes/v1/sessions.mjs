@@ -46,7 +46,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       );
 
       if (expiresAt <= now) {
-        throw new Error("SESSION_NOT_FOUND");
+        throw new Error("INVALID_SESSION_TOKEN");
       }
 
       const access_token = await new SignJWT({

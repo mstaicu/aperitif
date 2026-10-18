@@ -36,7 +36,9 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
       },
     },
     async function (request, reply) {
-      const currentPrincipalId = await authenticateAccessToken({
+      reply.header("Cache-Control", "no-store");
+
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
         jwks,
         pool,
@@ -46,8 +48,8 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
         await createAccount(
           { pool },
           {
-            currentPrincipalId,
             name: request.body.name,
+            principalId,
           },
         ),
       );
@@ -73,13 +75,15 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
       },
     },
     async function (request, reply) {
-      const currentPrincipalId = await authenticateAccessToken({
+      reply.header("Cache-Control", "no-store");
+
+      const principalId = await authenticateAccessToken({
         authorization: request.headers.authorization,
         jwks,
         pool,
       });
 
-      return reply.send(await listAccounts({ pool }, { currentPrincipalId }));
+      return reply.send(await listAccounts({ pool }, { principalId }));
     },
   );
 }

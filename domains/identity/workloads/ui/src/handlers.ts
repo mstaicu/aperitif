@@ -42,8 +42,11 @@ export function login(request: Request, apiUrl: string) {
   return completeLogin(request, apiUrl, "authentication");
 }
 
-export function loginOptions(apiUrl: string) {
-  return fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" });
+export function loginOptions(request: Request, apiUrl: string) {
+  return fetch(`${apiUrl}/passkeys/authentication/options`, {
+    method: "POST",
+    signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+  });
 }
 
 export function loginPage(request: Request, assets: AssetServer) {
@@ -54,21 +57,16 @@ export async function logout(request: Request, apiUrl: string) {
   const token = await sessionCookie.parse(request.headers.get("Cookie"));
 
   if (token) {
-    try {
-      const response = await fetch(`${apiUrl}/session`, {
-        headers: { Authorization: `Bearer ${token}` },
-        method: "DELETE",
-      });
+    const response = await fetch(`${apiUrl}/session`, {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "DELETE",
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+    });
 
-      if (response.status !== 204 && response.status !== 401) {
-        throw new Error(`Session revocation failed: ${response.status}`);
-      }
-    } catch (error) {
-      console.error(error);
-      return new Response("Logout failed. Please try again.", {
-        headers: { "Cache-Control": "no-store" },
-        status: 503,
-      });
+    if (response.status !== 204 && response.status !== 401) {
+      const headers = new Headers(response.headers);
+      headers.set("Cache-Control", "no-store");
+      return new Response(response.body, { headers, status: response.status });
     }
   }
 
@@ -82,16 +80,29 @@ export async function logout(request: Request, apiUrl: string) {
   });
 }
 
-export function passkeyOptions(request: Request, apiUrl: string) {
+export function passkeyRegistrationOptions(request: Request, apiUrl: string) {
   return apiRequest(request, apiUrl, "/passkeys/registration/options");
 }
 
-export function removePasskey(request: Request, apiUrl: string, id: string) {
-  return apiRequest(
+export async function removePasskey(
+  request: Request,
+  apiUrl: string,
+  id: string,
+) {
+  const response = await apiRequest(
     request,
     apiUrl,
     `/passkeys/${encodeURIComponent(id)}/delete`,
   );
+
+  if (response.status === 204) {
+    response.headers.set(
+      "Set-Cookie",
+      await sessionCookie.serialize("", { maxAge: 0 }),
+    );
+  }
+
+  return response;
 }
 
 export function renamePasskey(request: Request, apiUrl: string, id: string) {
@@ -102,8 +113,11 @@ export function signup(request: Request, apiUrl: string) {
   return completeLogin(request, apiUrl, "registration");
 }
 
-export function signupOptions(apiUrl: string) {
-  return fetch(`${apiUrl}/passkeys/registration/options`, { method: "POST" });
+export function signupOptions(request: Request, apiUrl: string) {
+  return fetch(`${apiUrl}/passkeys/registration/options`, {
+    method: "POST",
+    signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+  });
 }
 
 export function signupPage(request: Request, assets: AssetServer) {
@@ -113,46 +127,57 @@ export function signupPage(request: Request, assets: AssetServer) {
 async function apiRequest(request: Request, apiUrl: string, path: string) {
   const token = await sessionCookie.parse(request.headers.get("Cookie"));
 
-  try {
-    const exchange = await fetch(`${apiUrl}/session/access-tokens`, {
-      headers: { Authorization: `Bearer ${token ?? ""}` },
-      method: "POST",
-    });
-
-    if (!exchange.ok) {
-      const headers = new Headers(exchange.headers);
-      headers.set("Cache-Control", "no-store");
-      return new Response(exchange.body, { headers, status: exchange.status });
-    }
-
-    const { access_token } = s.parse(
-      s.object({ access_token: s.string().pipe(minLength(1)) }),
-      await exchange.json(),
+  if (!token) {
+    return Response.json(
+      {
+        status: 403,
+        title: "Session required",
+        type: "/problems/session-required",
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Type": "application/problem+json",
+        },
+        status: 403,
+      },
     );
-    const headers = new Headers({ Authorization: `Bearer ${access_token}` });
-    const contentType = request.headers.get("Content-Type");
-
-    if (contentType) headers.set("Content-Type", contentType);
-
-    const response = await fetch(`${apiUrl}${path}`, {
-      body: request.body ? await request.text() : undefined,
-      headers,
-      method: request.method,
-    });
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.set("Cache-Control", "no-store");
-
-    return new Response(response.body, {
-      headers: responseHeaders,
-      status: response.status,
-    });
-  } catch (error) {
-    console.error(error);
-    return new Response("Unable to complete the request. Please try again.", {
-      headers: { "Cache-Control": "no-store" },
-      status: 503,
-    });
   }
+
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]);
+
+  const exchange = await fetch(`${apiUrl}/session/access-tokens`, {
+    headers: { Authorization: `Bearer ${token}` },
+    method: "POST",
+    signal,
+  });
+
+  if (!exchange.ok) {
+    const headers = new Headers(exchange.headers);
+    headers.set("Cache-Control", "no-store");
+    return new Response(exchange.body, { headers, status: exchange.status });
+  }
+
+  const { access_token } = s.parse(
+    s.object({ access_token: s.string().pipe(minLength(1)) }),
+    await exchange.json(),
+  );
+  const headers = new Headers({ Authorization: `Bearer ${access_token}` });
+  const contentType = request.headers.get("Content-Type");
+
+  if (contentType) headers.set("Content-Type", contentType);
+
+  const response = await fetch(new Request(`${apiUrl}${path}`, request), {
+    headers,
+    signal,
+  });
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set("Cache-Control", "no-store");
+
+  return new Response(response.body, {
+    headers: responseHeaders,
+    status: response.status,
+  });
 }
 
 async function completeLogin(
@@ -161,11 +186,14 @@ async function completeLogin(
   ceremony: "authentication" | "registration",
 ) {
   const redirectTo = returnTo(request);
-  const response = await fetch(`${apiUrl}/passkeys/${ceremony}`, {
-    body: await request.text(),
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
-  });
+  const response = await fetch(
+    new Request(`${apiUrl}/passkeys/${ceremony}`, request),
+    {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+    },
+  );
 
   if (!response.ok) return response;
 

@@ -1,5 +1,5 @@
 import {
-  browserSupportsPasskeys,
+  browserSupportsWebAuthn,
   startAuthentication,
   startRegistration,
 } from "@simplewebauthn/browser";
@@ -9,7 +9,7 @@ const button = form.querySelector<HTMLButtonElement>("button")!;
 const status = form.querySelector<HTMLParagraphElement>("[data-status]")!;
 const registration = form.dataset.ceremony === "registration";
 
-if (await browserSupportsPasskeys()) {
+if (browserSupportsWebAuthn()) {
   button.disabled = false;
 } else {
   status.dataset.error = "true";
@@ -22,30 +22,60 @@ form.addEventListener("submit", async (event) => {
   status.dataset.error = "false";
   status.textContent = "Waiting for your passkey…";
 
+  const failureMessage = registration ? "Signup failed." : "Login failed.";
+
   try {
-    const options = await fetch(form.dataset.optionsAction!, {
+    let response = await fetch(form.dataset.optionsAction!, {
       method: "POST",
     });
 
-    if (!options.ok) throw new Error();
+    if (response.ok) {
+      const optionsJSON = await response.json();
+      const credential = registration
+        ? await startRegistration({ optionsJSON })
+        : await startAuthentication({ optionsJSON });
 
-    const optionsJSON = await options.json();
-    const credential = registration
-      ? await startRegistration({ optionsJSON })
-      : await startAuthentication({ optionsJSON });
-    const response = await fetch(form.action, {
-      body: JSON.stringify(registration ? { credential } : credential),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
+      response = await fetch(form.action, {
+        body: JSON.stringify(registration ? { credential } : credential),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
 
-    if (!response.ok) throw new Error();
+      if (response.ok) {
+        const result = (await response.json()) as { return_to: string };
+        window.location.assign(result.return_to);
+        return;
+      }
+    }
 
-    const result = (await response.json()) as { return_to: string };
-    window.location.assign(result.return_to);
+    status.dataset.error = "true";
+    status.textContent = failureMessage;
+
+    const contentType = response.headers
+      .get("Content-Type")
+      ?.split(";", 1)[0]
+      .trim()
+      .toLowerCase();
+
+    if (contentType === "application/problem+json") {
+      const problem = await response.json();
+
+      switch (problem?.type) {
+        case "/problems/authentication-failed":
+        case "/problems/registration-verification-failed":
+          status.textContent = "Passkey verification failed. Please try again.";
+          break;
+        case "/problems/credential-already-exists":
+        case "/problems/user-already-registered":
+          status.textContent =
+            "Already registered. Log in with your existing passkey.";
+          break;
+      }
+    }
   } catch {
     status.dataset.error = "true";
-    status.textContent = registration ? "Signup failed." : "Login failed.";
+    status.textContent = failureMessage;
+  } finally {
     button.disabled = false;
   }
 });

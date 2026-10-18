@@ -1,6 +1,9 @@
 import { Type } from "@fastify/type-provider-typebox";
 
-import { authenticate } from "../../services/passkeys/authentication.mjs";
+import {
+  authenticate,
+  getAuthenticationChallenge,
+} from "../../services/passkeys/authentication.mjs";
 import { listPasskeys } from "../../services/passkeys/list.mjs";
 import { removePasskey } from "../../services/passkeys/remove.mjs";
 import { renamePasskey } from "../../services/passkeys/rename.mjs";
@@ -102,15 +105,18 @@ export default async function passkeyManagementRoutes(
       schema: {
         body: RemovePasskeyBody,
         description:
-          "Verifies a fresh, single-use authentication response belonging to the caller and removes their selected passkey. Preserves the final authentication method. Failed changes require a fresh proof.",
+          "Verifies a fresh, single-use authentication response belonging to the caller, removes their selected passkey, and revokes all their sessions, including the current session. Sign in again with a remaining passkey. Preserves the final authentication method. Failed changes require a fresh proof.",
         operationId: "deletePasskey",
         params: PasskeyIdParams,
         response: {
-          204: Type.Null({ description: "Passkey removed." }),
+          204: Type.Null({
+            description: "Passkey removed and all sessions revoked.",
+          }),
           400: ProblemResponse,
           401: ProblemResponse,
           404: ProblemResponse,
           409: ProblemResponse,
+          422: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
@@ -120,26 +126,45 @@ export default async function passkeyManagementRoutes(
       },
     },
     async function (request, reply) {
-      const principalId = await authenticateAccessToken({
-        authorization: request.headers.authorization,
-        jwks,
-        pool,
-      });
-
       reply.header("Cache-Control", "no-store");
 
-      const authenticatedPrincipalId = await authenticate(
-        { origin, pool },
-        request.body.authentication,
-      );
+      const client = await pool.connect();
 
-      if (authenticatedPrincipalId !== principalId) {
-        throw new Error("AUTHENTICATION_FAILED");
+      try {
+        const challenge = await getAuthenticationChallenge(
+          { client },
+          request.body.authentication,
+        );
+
+        await client.query("BEGIN");
+
+        const authenticatedPrincipalId = await authenticate(
+          { client, origin },
+          request.body.authentication,
+          challenge,
+        );
+
+        const principalId = await authenticateAccessToken({
+          authorization: request.headers.authorization,
+          jwks,
+          pool: client,
+        });
+
+        if (authenticatedPrincipalId !== principalId) {
+          throw new Error("AUTHENTICATION_FAILED");
+        }
+
+        await removePasskey({ client }, { id: request.params.id, principalId });
+
+        await client.query("COMMIT");
+
+        return reply.code(204).send(null);
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
       }
-
-      await removePasskey({ pool }, { id: request.params.id, principalId });
-
-      return reply.code(204).send(null);
     },
   );
 }

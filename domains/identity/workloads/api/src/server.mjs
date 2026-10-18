@@ -7,6 +7,8 @@ import { createJwtKeys } from "./jwks.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 3000,
+  statement_timeout: 5000,
 });
 
 pool.on("error", (err) => console.error(err));

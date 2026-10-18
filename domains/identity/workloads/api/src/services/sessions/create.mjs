@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 
 /**
- * @param {{ client: import("pg").PoolClient | import("pg").Pool, principalId: string }} resources
+ * Uses the caller's active transaction.
+ * @param {{ client: import("pg").PoolClient, principalId: string }} resources
  */
 export async function createSession({ client, principalId }) {
   const sessionToken = randomBytes(32).toString("base64url");
@@ -23,7 +24,7 @@ export async function createSession({ client, principalId }) {
   );
 
   return {
-    expiresIn: session.expires_in,
-    sessionToken,
+    expires_in: session.expires_in,
+    session_token: sessionToken,
   };
 }

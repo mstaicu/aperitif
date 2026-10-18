@@ -1,25 +1,14 @@
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
-import { DatabaseError } from "pg";
 
 import { createSession } from "../sessions/create.mjs";
 
 /**
- * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @param {{
- *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
- *   name?: string,
- *   principalId?: string,
- * }} args
+ * Deletes and returns the challenge. Call before BEGIN.
+ * @param {{ client: import("pg").PoolClient }} resources
+ * @param {import("@simplewebauthn/server").RegistrationResponseJSON} credential
  */
-export const register = async (
-  { origin, pool },
-  { credential, name, principalId },
-) => {
-  if (!name || name.length < 1 || name.length > 100) {
-    throw new Error("INVALID_PASSKEY_NAME");
-  }
-
+export const getRegistrationChallenge = async ({ client }, credential) => {
   let challenge;
 
   try {
@@ -34,7 +23,7 @@ export const register = async (
 
   const {
     rows: [challengeRow],
-  } = await pool.query(
+  } = await client.query(
     `
       DELETE FROM registration_challenges
       WHERE challenge = $1
@@ -44,10 +33,35 @@ export const register = async (
     [Buffer.from(challenge, "base64url")],
   );
 
-  if (
-    !challengeRow ||
-    (principalId && challengeRow.principal_id !== principalId)
-  ) {
+  if (!challengeRow) {
+    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+  }
+
+  return /** @type {{ principal_id: string, challenge: Buffer }} */ (
+    challengeRow
+  );
+};
+
+/**
+ * Requires the caller's active transaction. For additions, the caller must first
+ * lock the principal, verify their existing passkey, and validate their session.
+ * @param {{ client: import("pg").PoolClient, origin: string }} resources
+ * @param {{
+ *   challenge: { principal_id: string, challenge: Buffer },
+ *   credential: import("@simplewebauthn/server").RegistrationResponseJSON,
+ *   name?: string,
+ *   principalId?: string,
+ * }} args
+ */
+export const register = async (
+  { client, origin },
+  { challenge: challengeRow, credential, name = "Passkey", principalId },
+) => {
+  if (!name || name.length < 1 || [...name].length > 100) {
+    throw new Error("INVALID_PASSKEY_NAME");
+  }
+
+  if (principalId && challengeRow.principal_id !== principalId) {
     throw new Error("REGISTRATION_VERIFICATION_FAILED");
   }
 
@@ -73,76 +87,50 @@ export const register = async (
 
   const registrationCredential = verification.registrationInfo.credential;
 
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    if (!principalId) {
-      const {
-        rows: [principal],
-      } = await client.query(
-        `
-          INSERT INTO principals (id)
-          VALUES ($1)
-          ON CONFLICT DO NOTHING
-          RETURNING id
-        `,
-        [challengeRow.principal_id],
-      );
-
-      if (!principal) {
-        throw new Error("USER_ALREADY_REGISTERED");
-      }
-    }
-
-    await client.query(
+  if (!principalId) {
+    const {
+      rows: [principal],
+    } = await client.query(
       `
-        INSERT INTO passkey_credentials (
-          principal_id,
-          credential_id,
-          name,
-          public_key,
-          sign_count
-        )
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO principals (id)
+        VALUES ($1)
+        ON CONFLICT DO NOTHING
+        RETURNING id
       `,
-      [
-        challengeRow.principal_id,
-        Buffer.from(registrationCredential.id, "base64url"),
-        name,
-        Buffer.from(registrationCredential.publicKey),
-        registrationCredential.counter,
-      ],
+      [challengeRow.principal_id],
     );
 
-    if (principalId) {
-      await client.query("COMMIT");
-      return null;
+    if (!principal) {
+      throw new Error("PRINCIPAL_ALREADY_REGISTERED");
     }
-
-    const session = await createSession({
-      client,
-      principalId: challengeRow.principal_id,
-    });
-
-    await client.query("COMMIT");
-
-    return {
-      expires_in: session.expiresIn,
-      session_token: session.sessionToken,
-    };
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-
-    if (err instanceof DatabaseError && err.code === "23505") {
-      throw new Error("CREDENTIAL_ALREADY_EXISTS", {
-        cause: err,
-      });
-    }
-
-    throw err;
-  } finally {
-    client.release();
   }
+
+  await client.query(
+    `
+      INSERT INTO passkey_credentials (
+        principal_id,
+        credential_id,
+        name,
+        public_key,
+        sign_count
+      )
+      VALUES ($1, $2, $3, $4, $5)
+    `,
+    [
+      challengeRow.principal_id,
+      Buffer.from(registrationCredential.id, "base64url"),
+      name,
+      Buffer.from(registrationCredential.publicKey),
+      registrationCredential.counter,
+    ],
+  );
+
+  if (principalId) {
+    return null;
+  }
+
+  return createSession({
+    client,
+    principalId: challengeRow.principal_id,
+  });
 };

@@ -1,9 +1,15 @@
 import { Type } from "@fastify/type-provider-typebox";
 
 import { createAuthenticationOptions } from "../../services/passkeys/authentication-options.mjs";
-import { authenticate } from "../../services/passkeys/authentication.mjs";
+import {
+  authenticate,
+  getAuthenticationChallenge,
+} from "../../services/passkeys/authentication.mjs";
 import { createRegistrationOptions } from "../../services/passkeys/registration-options.mjs";
-import { register } from "../../services/passkeys/registration.mjs";
+import {
+  getRegistrationChallenge,
+  register,
+} from "../../services/passkeys/registration.mjs";
 import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
 import { createSession } from "../../services/sessions/create.mjs";
 import { ProblemResponse } from "../problem-details.mjs";
@@ -34,7 +40,7 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
         response: {
           200: SessionResponse,
           400: ProblemResponse,
-          401: ProblemResponse,
+          422: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
@@ -45,13 +51,32 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
 
-      const principalId = await authenticate({ origin, pool }, request.body);
-      const session = await createSession({ client: pool, principalId });
+      const client = await pool.connect();
 
-      return reply.code(200).send({
-        expires_in: session.expiresIn,
-        session_token: session.sessionToken,
-      });
+      try {
+        const challenge = await getAuthenticationChallenge(
+          { client },
+          request.body,
+        );
+
+        await client.query("BEGIN");
+
+        const principalId = await authenticate(
+          { client, origin },
+          request.body,
+          challenge,
+        );
+        const session = await createSession({ client, principalId });
+
+        await client.query("COMMIT");
+
+        return reply.code(200).send(session);
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
     },
   );
 
@@ -92,6 +117,7 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           400: ProblemResponse,
           401: ProblemResponse,
           409: ProblemResponse,
+          422: ProblemResponse,
           500: ProblemResponse,
           503: ProblemResponse,
         },
@@ -103,43 +129,75 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
 
-      const principalId =
-        request.headers.authorization !== undefined
-          ? await authenticateAccessToken({
-              authorization: request.headers.authorization,
-              jwks,
-              pool,
-            })
-          : undefined;
-
-      if (principalId) {
-        if (!request.body.authentication)
-          throw new Error("AUTHENTICATION_FAILED");
-
-        const authenticatedPrincipalId = await authenticate(
-          { origin, pool },
-          request.body.authentication,
-        );
-
-        if (authenticatedPrincipalId !== principalId) {
+      if (request.headers.authorization !== undefined) {
+        if (!request.body.authentication) {
           throw new Error("AUTHENTICATION_FAILED");
         }
       } else if (request.body.authentication) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 
-      const session = await register(
-        { origin, pool },
-        {
-          credential: request.body.credential,
-          name: request.body.name,
-          principalId,
-        },
-      );
+      const client = await pool.connect();
 
-      if (session === null) return reply.code(204).send(null);
+      try {
+        const authenticationChallenge = request.body.authentication
+          ? await getAuthenticationChallenge(
+              { client },
+              request.body.authentication,
+            )
+          : undefined;
 
-      return reply.code(201).send(session);
+        const registrationChallenge = await getRegistrationChallenge(
+          { client },
+          request.body.credential,
+        );
+
+        await client.query("BEGIN");
+
+        let principalId;
+
+        if (
+          request.body.authentication &&
+          authenticationChallenge !== undefined
+        ) {
+          const authenticatedPrincipalId = await authenticate(
+            { client, origin },
+            request.body.authentication,
+            authenticationChallenge,
+          );
+
+          principalId = await authenticateAccessToken({
+            authorization: request.headers.authorization,
+            jwks,
+            pool: client,
+          });
+
+          if (authenticatedPrincipalId !== principalId) {
+            throw new Error("AUTHENTICATION_FAILED");
+          }
+        }
+
+        const session = await register(
+          { client, origin },
+          {
+            challenge: registrationChallenge,
+            credential: request.body.credential,
+            name: request.body.name,
+            principalId,
+          },
+        );
+
+        await client.query("COMMIT");
+
+        if (session === null) return reply.code(204).send(null);
+
+        return reply.code(201).send(session);
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
     },
   );
 

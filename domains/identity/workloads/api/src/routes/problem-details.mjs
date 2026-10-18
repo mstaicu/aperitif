@@ -50,7 +50,7 @@ const INTERNAL_SERVER_ERROR = {
 /** @type {Record<string, { status: number, title: string, type: string }>} */
 const PROBLEMS = {
   AUTHENTICATION_FAILED: {
-    status: 401,
+    status: 422,
     title: "Authentication failed",
     type: "/problems/authentication-failed",
   },
@@ -104,20 +104,15 @@ const PROBLEMS = {
     title: "Passkey not found",
     type: "/problems/passkey-not-found",
   },
-  REGISTRATION_VERIFICATION_FAILED: {
-    status: 401,
-    title: "Registration verification failed",
-    type: "/problems/registration-verification-failed",
-  },
-  SESSION_NOT_FOUND: {
-    status: 401,
-    title: "Invalid session token",
-    type: "/problems/invalid-session-token",
-  },
-  USER_ALREADY_REGISTERED: {
+  PRINCIPAL_ALREADY_REGISTERED: {
     status: 409,
     title: "User already registered",
     type: "/problems/user-already-registered",
+  },
+  REGISTRATION_VERIFICATION_FAILED: {
+    status: 422,
+    title: "Registration verification failed",
+    type: "/problems/registration-verification-failed",
   },
 };
 
@@ -140,30 +135,28 @@ export default function configureProblemDetails(app) {
         .send(INVALID_REQUEST);
     }
 
-    const databaseUnavailable =
-      (error instanceof DatabaseError &&
-        (error.code?.startsWith("08") ||
-          error.code === "57P01" ||
-          error.code === "57P03" ||
-          error.code === "53300")) ||
-      (Error.isError(error) &&
-        "code" in error &&
-        "syscall" in error &&
-        typeof error.code === "string");
+    let problem;
 
-    const problem = databaseUnavailable
-      ? PROBLEMS.DATABASE_UNAVAILABLE
-      : Error.isError(error)
-        ? PROBLEMS[error.message]
-        : undefined;
+    if (error instanceof DatabaseError) {
+      if (
+        error.code === "23505" &&
+        error.constraint === "passkey_credentials_credential_id_key"
+      ) {
+        problem = PROBLEMS.CREDENTIAL_ALREADY_EXISTS;
+      } else if (
+        error.code?.startsWith("08") ||
+        error.code === "57P01" ||
+        error.code === "57P03" ||
+        error.code === "53300"
+      ) {
+        problem = PROBLEMS.DATABASE_UNAVAILABLE;
+      }
+    } else if (Error.isError(error) && Object.hasOwn(PROBLEMS, error.message)) {
+      problem = PROBLEMS[error.message];
+    }
 
     if (problem) {
-      if (
-        problem === PROBLEMS.INVALID_AUTHORIZATION_HEADER ||
-        problem === PROBLEMS.INVALID_ACCESS_TOKEN ||
-        problem === PROBLEMS.INVALID_SESSION_TOKEN ||
-        problem === PROBLEMS.SESSION_NOT_FOUND
-      ) {
+      if (problem.status === 401) {
         reply.header("WWW-Authenticate", "Bearer");
       }
 

@@ -8,9 +8,9 @@ import { context, propagation } from "@opentelemetry/api";
 
 /**
  * @param {{ pool: import("pg").Pool }} resources
- * @param {{ currentPrincipalId: string, name: string }} args
+ * @param {{ principalId: string, name: string }} args
  */
-export const createAccount = async ({ pool }, { currentPrincipalId, name }) => {
+export const createAccount = async ({ pool }, { name, principalId }) => {
   let client;
 
   try {
@@ -40,7 +40,7 @@ export const createAccount = async ({ pool }, { currentPrincipalId, name }) => {
         VALUES ($1, $2)
         RETURNING id, version
       `,
-      [account.id, currentPrincipalId],
+      [account.id, principalId],
     );
 
     await client.query(
@@ -60,7 +60,7 @@ export const createAccount = async ({ pool }, { currentPrincipalId, name }) => {
     const membershipSnapshotEvent = buildMembershipSnapshotV1({
       account_id: account.id,
       id: membership.id,
-      principal_id: currentPrincipalId,
+      principal_id: principalId,
       roles: ["account.owner"],
       version: Number(membership.version),
     });

@@ -24,6 +24,6 @@ export const revokeSession = async ({ pool }, { session_token }) => {
   );
 
   if (!session) {
-    throw new Error("SESSION_NOT_FOUND");
+    throw new Error("INVALID_SESSION_TOKEN");
   }
 };
