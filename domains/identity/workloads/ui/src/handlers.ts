@@ -105,10 +105,6 @@ export async function removePasskey(
   return response;
 }
 
-export function renamePasskey(request: Request, apiUrl: string, id: string) {
-  return apiRequest(request, apiUrl, `/passkeys/${encodeURIComponent(id)}`);
-}
-
 export function signup(request: Request, apiUrl: string) {
   return completeLogin(request, apiUrl, "registration");
 }
@@ -126,8 +122,18 @@ export function signupPage(request: Request, assets: AssetServer) {
 
 async function apiRequest(request: Request, apiUrl: string, path: string) {
   const token = await sessionCookie.parse(request.headers.get("Cookie"));
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]);
+  let exchange;
 
-  if (!token) {
+  if (token) {
+    exchange = await fetch(`${apiUrl}/session/access-tokens`, {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "POST",
+      signal,
+    });
+  }
+
+  if (!exchange || exchange.status === 401) {
     return Response.json(
       {
         status: 403,
@@ -138,19 +144,12 @@ async function apiRequest(request: Request, apiUrl: string, path: string) {
         headers: {
           "Cache-Control": "no-store",
           "Content-Type": "application/problem+json",
+          "Set-Cookie": await sessionCookie.serialize("", { maxAge: 0 }),
         },
         status: 403,
       },
     );
   }
-
-  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]);
-
-  const exchange = await fetch(`${apiUrl}/session/access-tokens`, {
-    headers: { Authorization: `Bearer ${token}` },
-    method: "POST",
-    signal,
-  });
 
   if (!exchange.ok) {
     const headers = new Headers(exchange.headers);
@@ -200,7 +199,7 @@ async function completeLogin(
   const { expires_in, session_token } = s.parse(session, await response.json());
 
   return Response.json(
-    { ok: true, return_to: redirectTo },
+    { return_to: redirectTo },
     {
       headers: {
         "Cache-Control": "no-store",

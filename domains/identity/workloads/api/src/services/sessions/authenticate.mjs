@@ -5,9 +5,9 @@ import { createHash } from "node:crypto";
  * @param {{ authorization?: string, jwks: import("jose").JWTVerifyGetKey, pool: import("pg").Pool | import("pg").PoolClient }} args
  */
 export async function authenticateAccessToken({ authorization, jwks, pool }) {
-  const [type, token, extra] = (authorization ?? "").split(" ");
+  const [type, token, extra] = (authorization ?? "").split(/ +/);
 
-  if (type !== "Bearer" || !token || extra) {
+  if (type.toLowerCase() !== "bearer" || !token || extra) {
     throw new Error("INVALID_ACCESS_TOKEN");
   }
 
@@ -45,9 +45,9 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
  * @param {{ authorization?: string, pool: import("pg").Pool }} args
  */
 export async function authenticateSession({ authorization, pool }) {
-  const [scheme, token, extra] = (authorization ?? "").split(" ");
+  const [scheme, token, extra] = (authorization ?? "").split(/ +/);
 
-  if (scheme !== "Bearer" || !token || extra) {
+  if (scheme.toLowerCase() !== "bearer" || !token || extra) {
     throw new Error("INVALID_AUTHORIZATION_HEADER");
   }
 

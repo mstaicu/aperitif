@@ -15,20 +15,25 @@ export const createRegistrationOptions = async (
     rows: [registrationChallenge],
   } = await pool.query(
     `
-        INSERT INTO registration_challenges (
-          challenge,
-          principal_id
-        )
-        VALUES ($1, COALESCE($2::uuid, gen_random_uuid()))
-        RETURNING principal_id
-      `,
+      INSERT INTO registration_challenges (
+        challenge,
+        principal_id
+      )
+      VALUES ($1, COALESCE($2::uuid, gen_random_uuid()))
+      RETURNING principal_id
+    `,
     [challenge, principalId ?? null],
   );
 
   const { rows: credentials } = await pool.query(
-    `SELECT credential_id FROM passkey_credentials WHERE principal_id = $1`,
+    `
+      SELECT credential_id 
+      FROM passkey_credentials 
+      WHERE principal_id = $1
+    `,
     [registrationChallenge.principal_id],
   );
+
   const { hostname } = new URL(origin);
   const webauthnUserHandle = Buffer.from(
     registrationChallenge.principal_id.replace(/-/g, ""),

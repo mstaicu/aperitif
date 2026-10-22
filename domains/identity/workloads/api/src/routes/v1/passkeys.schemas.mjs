@@ -51,13 +51,6 @@ export const PasskeysResponse = Type.Object(
   { additionalProperties: false },
 );
 
-export const RenamePasskeyBody = Type.Object(
-  {
-    name: PasskeyName,
-  },
-  { additionalProperties: false },
-);
-
 export const RemovePasskeyBody = Type.Object(
   { authentication: AuthenticationResponseJSON },
   { additionalProperties: false },

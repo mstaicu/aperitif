@@ -87,9 +87,11 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       },
     },
     async function (req, reply) {
-      const [type, token, extra] = (req.headers.authorization ?? "").split(" ");
+      const [type, token, extra] = (req.headers.authorization ?? "").split(
+        / +/,
+      );
 
-      if (type !== "Bearer" || !token || extra) {
+      if (type.toLowerCase() !== "bearer" || !token || extra) {
         throw new Error("INVALID_AUTHORIZATION_HEADER");
       }
 

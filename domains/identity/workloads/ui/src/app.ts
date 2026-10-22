@@ -67,9 +67,6 @@ app.post("/identity/passkeys/registration/options", ({ request }) =>
 app.post("/identity/passkeys/registration", ({ request }) =>
   handlers.addPasskey(request, apiUrl),
 );
-app.patch("/identity/passkeys/:id", ({ params, request }) =>
-  handlers.renamePasskey(request, apiUrl, params.id),
-);
 app.post("/identity/passkeys/:id/delete", ({ params, request }) =>
   handlers.removePasskey(request, apiUrl, params.id),
 );
