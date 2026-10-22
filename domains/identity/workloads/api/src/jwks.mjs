@@ -1,22 +1,31 @@
 import { importJWK } from "jose";
 import { readFile } from "node:fs/promises";
 
-export const createJwtKeys = async () => {
-  const jwksPath = /** @type {string} */ (process.env.JWKS_PATH);
-  const signingKid = /** @type {string} */ (process.env.JWT_SIGNING_KID);
+/**
+ * @param {{ jwksPath: string, signingKid: string }} options
+ */
+export const loadJwtKeys = async ({ jwksPath, signingKid }) => {
   const { keys } = /** @type {{ keys: import("jose").JWK[] }} */ (
     JSON.parse(await readFile(jwksPath, "utf8"))
   );
+
+  if (keys.some(({ crv, kty }) => kty !== "EC" || crv !== "P-256")) {
+    throw new Error("Only EC P-256 keys are supported");
+  }
+
   const signingJwk = keys.find(({ kid }) => kid === signingKid);
-  const publicKeys = structuredClone(keys);
 
   if (!signingJwk?.d) {
     throw new Error(`JWT signing key ${signingKid} is unavailable`);
   }
 
-  for (const key of publicKeys) {
-    delete key.d;
-  }
+  const publicKeys = keys.map(({ crv, kid, kty, x, y }) => ({
+    crv,
+    kid,
+    kty,
+    x,
+    y,
+  }));
 
   return {
     jwks: { keys: publicKeys },
@@ -28,5 +37,5 @@ export const createJwtKeys = async () => {
 };
 
 /**
- * @typedef {Awaited<ReturnType<typeof createJwtKeys>>} JwtKeys
+ * @typedef {Awaited<ReturnType<typeof loadJwtKeys>>} JwtKeys
  */

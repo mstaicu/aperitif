@@ -3,7 +3,7 @@ import process from "node:process";
 import { Pool } from "pg";
 
 import { buildApp } from "./app.mjs";
-import { createJwtKeys } from "./jwks.mjs";
+import { loadJwtKeys } from "./jwks.mjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -14,7 +14,10 @@ const pool = new Pool({
 pool.on("error", (err) => console.error(err));
 
 try {
-  const jwt = await createJwtKeys();
+  const jwt = await loadJwtKeys({
+    jwksPath: /** @type {string} */ (process.env.JWKS_PATH),
+    signingKid: /** @type {string} */ (process.env.JWT_SIGNING_KID),
+  });
 
   await using app = buildApp({
     jwt,

@@ -11,7 +11,6 @@ CREATE TABLE accounts (
     created_at timestamptz NOT NULL DEFAULT now(),
 
     version bigint NOT NULL DEFAULT 1
-        CHECK (version BETWEEN 1 AND 9007199254740991)
 );
 
 CREATE TABLE account_memberships (
@@ -45,9 +44,6 @@ CREATE TABLE account_membership_roles (
     PRIMARY KEY (membership_id, role)
 );
 
-CREATE INDEX account_memberships_principal_id_account_id_idx
-    ON account_memberships (principal_id, account_id);
-
 CREATE TABLE passkey_credentials (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -67,10 +63,7 @@ CREATE TABLE passkey_credentials (
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX passkey_credentials_principal_id_idx
-    ON passkey_credentials (principal_id);
-
-CREATE TABLE registration_challenges (
+CREATE TABLE passkey_registration_challenges (
     challenge bytea PRIMARY KEY,
 
     principal_id uuid NOT NULL,
@@ -79,7 +72,7 @@ CREATE TABLE registration_challenges (
         DEFAULT now() + INTERVAL '2 minutes'
 );
 
-CREATE TABLE authentication_challenges (
+CREATE TABLE passkey_authentication_challenges (
     challenge bytea PRIMARY KEY,
 
     expires_at timestamptz NOT NULL
@@ -111,6 +104,3 @@ CREATE TABLE outbox_messages (
 
     queued_at timestamptz NOT NULL DEFAULT now()
 );
-
-CREATE INDEX outbox_messages_queued_at_id_idx
-    ON outbox_messages (queued_at, id);

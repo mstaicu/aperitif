@@ -28,7 +28,7 @@ export const getAuthenticationChallenge = async (
     rows: [challengeRow],
   } = await client.query(
     `
-      DELETE FROM authentication_challenges
+      DELETE FROM passkey_authentication_challenges
       WHERE challenge = $1
         AND expires_at > NOW()
       RETURNING challenge
@@ -72,10 +72,13 @@ export const authenticate = async (
     rows: [credential],
   } = await client.query(
     `
-        SELECT principal_id, credential_id, public_key, sign_count
-        FROM passkey_credentials
-        WHERE credential_id = $1
-      `,
+      SELECT principal_id,
+        credential_id,
+        public_key,
+        sign_count
+      FROM passkey_credentials
+      WHERE credential_id = $1
+    `,
     [Buffer.from(authentication.id, "base64url")],
   );
 
@@ -121,10 +124,10 @@ export const authenticate = async (
 
   await client.query(
     `
-        UPDATE passkey_credentials
-        SET sign_count = $2
-        WHERE credential_id = $1
-      `,
+      UPDATE passkey_credentials
+      SET sign_count = $2
+      WHERE credential_id = $1
+    `,
     [credential.credential_id, newCounter],
   );
 

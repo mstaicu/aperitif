@@ -25,7 +25,7 @@ export const getRegistrationChallenge = async ({ client }, credential) => {
     rows: [challengeRow],
   } = await client.query(
     `
-      DELETE FROM registration_challenges
+      DELETE FROM passkey_registration_challenges
       WHERE challenge = $1
         AND expires_at > NOW()
       RETURNING principal_id, challenge

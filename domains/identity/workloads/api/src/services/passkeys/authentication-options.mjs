@@ -9,9 +9,11 @@ export const createAuthenticationOptions = async ({ origin, pool }) => {
 
   await pool.query(
     `
-        INSERT INTO authentication_challenges (challenge)
-        VALUES ($1)
-      `,
+      INSERT INTO passkey_authentication_challenges (
+        challenge
+      )
+      VALUES ($1)
+    `,
     [challenge],
   );
 

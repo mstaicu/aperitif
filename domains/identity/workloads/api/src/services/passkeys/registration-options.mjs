@@ -15,7 +15,7 @@ export const createRegistrationOptions = async (
     rows: [registrationChallenge],
   } = await pool.query(
     `
-      INSERT INTO registration_challenges (
+      INSERT INTO passkey_registration_challenges (
         challenge,
         principal_id
       )

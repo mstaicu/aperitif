@@ -55,7 +55,9 @@ export async function authenticateSession({ authorization, pool }) {
     rows: [session],
   } = await pool.query(
     `
-      SELECT id, principal_id, expires_at
+      SELECT id,
+        principal_id,
+        expires_at
       FROM sessions
       WHERE token_hash = $1
         AND expires_at > NOW()

@@ -15,11 +15,11 @@ export const revokeSession = async ({ pool }, { session_token }) => {
     rows: [session],
   } = await pool.query(
     `
-        DELETE FROM sessions
-        WHERE token_hash = $1
-          AND expires_at > NOW()
-        RETURNING id
-      `,
+      DELETE FROM sessions
+      WHERE token_hash = $1
+        AND expires_at > NOW()
+      RETURNING id
+    `,
     [tokenHash],
   );
 
