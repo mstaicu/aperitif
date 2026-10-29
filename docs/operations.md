@@ -151,10 +151,11 @@ The production overlay configures three NATS servers.
 Domains own streams, contracts, outbox rows, consumers, and projections. Relay
 is shared executable code deployed and configured by each publishing domain.
 
-Relay reads the next locked outbox row, validates transport headers, publishes
+Relay locks a pending outbox row, validates transport headers, publishes
 with the subject's expected JetStream sequence, and deletes only after PubAck.
-Failures roll back and exit so Kubernetes restarts it. Retries may duplicate
-delivery; consumers must remain idempotent.
+Sequence conflicts roll back and retry. Other failures roll back and exit so
+Kubernetes restarts it. Retries may duplicate delivery; consumers must remain
+idempotent.
 
 The domain-owned table is:
 
@@ -164,7 +165,6 @@ The domain-owned table is:
 | `subject` | NATS subject captured by an owned stream |
 | `payload` | Complete JSON message |
 | `headers` | String-valued transport headers |
-| `queued_at` | Retry and scan ordering |
 
 Producers inject trace context into headers. Relay rejects malformed values and
 producer-supplied `Nats-*` publication controls. A failed row remains queued.
@@ -179,7 +179,7 @@ NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info IDENTITY
 NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders IDENTITY
 ```
 
-An old unpublished row points to its producer, Relay or NATS. Consumer backlog
+A growing outbox backlog points to its producer, Relay or NATS. Consumer backlog
 points to the projector.
 
 ## State-feed recovery
@@ -208,7 +208,7 @@ recreate stream from the domain's streams.json
   -> run the producer's one-shot reseed Job
   -> Relay republishes current snapshots
   -> recreate or restart lost projections
-  -> verify stream subjects, outbox age and consumer lag
+  -> verify stream subjects, outbox backlog and consumer lag
 ```
 
 The Job needs database access but no NATS access. It is invoked during recovery,

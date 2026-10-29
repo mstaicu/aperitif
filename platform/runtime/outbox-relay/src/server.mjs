@@ -1,4 +1,4 @@
-import { jetstream } from "@nats-io/jetstream";
+import { jetstreamManager } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
@@ -40,15 +40,13 @@ pool.on("error", (err) => console.error(err));
 
 try {
   await using nc = await connect({
-    maxReconnectAttempts: -1,
     name: "outbox-relay",
     servers: [/** @type {string} */ (process.env.NATS_URL)],
-    timeout: 2_000,
   });
-  const js = jetstream(nc);
-  const jsm = await js.jetstreamManager();
+  nc.closed().then(() => abortController.abort());
 
-  // Reconcile every owned stream before relaying any outbox entry.
+  const jsm = await jetstreamManager(nc);
+
   for (const streamConfiguration of streamConfigurations) {
     try {
       await jsm.streams.update(streamConfiguration.name, streamConfiguration);
@@ -92,8 +90,7 @@ try {
   try {
     await relayOutbox({
       abortSignal: abortController.signal,
-      js,
-      jsm,
+      nc,
       pool,
     });
   } finally {

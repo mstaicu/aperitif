@@ -130,6 +130,11 @@ V2 beside V1 and publish both while real V1 consumers migrate.
    string-valued `headers`.
 5. Let the domain-owned Relay Deployment publish it.
 
+See [Identity account creation](../domains/identity/workloads/api/src/services/accounts/create.mjs)
+for the transaction pattern. Creation normally has no pending snapshot to replace;
+updates must also lock the source resource and increment its version. Coalesce
+only snapshot subjects; retain every distinct delta and command.
+
 Relay is generic. It must not import the producer's contract or interpret its
 payload.
 

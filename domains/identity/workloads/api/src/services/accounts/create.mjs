@@ -45,13 +45,15 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
 
     await client.query(
       `
-        INSERT INTO account_membership_roles (membership_id, role)
+        INSERT INTO account_membership_roles (
+          membership_id,
+          role
+        )
         VALUES ($1, 'account.owner')
       `,
       [membership.id],
     );
 
-    const createdAt = account.created_at.toISOString();
     const accountSnapshotEvent = buildAccountSnapshotV1({
       id: account.id,
       name: account.name,
@@ -64,11 +66,24 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       roles: ["account.owner"],
       version: Number(membership.version),
     });
+
+    const accountSnapshotSubject = buildAccountV1Subject(account.id);
+    const membershipSnapshotSubject = buildMembershipV1Subject(membership.id);
     const headers = {
       "Content-Type": "application/cloudevents+json",
     };
 
     propagation.inject(context.active(), headers);
+
+    // Replace pending snapshots in the resource transaction, including on create
+    // so producers can follow the same pattern when implementing updates.
+    await client.query(
+      `
+        DELETE FROM outbox_messages
+        WHERE subject IN ($1, $2)
+      `,
+      [accountSnapshotSubject, membershipSnapshotSubject],
+    );
 
     await client.query(
       `
@@ -82,7 +97,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       `,
       [
         accountSnapshotEvent.id,
-        buildAccountV1Subject(account.id),
+        accountSnapshotSubject,
         accountSnapshotEvent,
         headers,
       ],
@@ -100,7 +115,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       `,
       [
         membershipSnapshotEvent.id,
-        buildMembershipV1Subject(membership.id),
+        membershipSnapshotSubject,
         membershipSnapshotEvent,
         headers,
       ],
@@ -110,7 +125,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
 
     return {
       account: {
-        created_at: createdAt,
+        created_at: account.created_at.toISOString(),
         id: account.id,
         name: account.name,
         roles: ["account.owner"],

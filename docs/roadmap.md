@@ -13,7 +13,7 @@ belongs here.
   topology placement.
 - Size NATS streams and PVCs from retained resource count and measured message
   size.
-- Alert on old outbox rows, consumer lag and failed Flux reconciliation.
+- Alert on growing outbox backlog, consumer lag and failed Flux reconciliation.
 - Give telemetry deliberate retention, recovery and availability.
 - Restrict direct origin access and define forwarded-header trust.
 - Rehearse merge-to-production and Flux recovery.

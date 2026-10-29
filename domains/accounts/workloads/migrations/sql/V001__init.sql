@@ -44,10 +44,5 @@ CREATE TABLE outbox_messages (
     payload jsonb NOT NULL,
 
     headers jsonb NOT NULL DEFAULT '{}'
-        CHECK (jsonb_typeof(headers) = 'object'),
-
-    queued_at timestamptz NOT NULL DEFAULT now()
+        CHECK (jsonb_typeof(headers) = 'object')
 );
-
-CREATE INDEX outbox_messages_queued_at_id_idx
-    ON outbox_messages (queued_at, id);
