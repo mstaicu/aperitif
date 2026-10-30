@@ -68,18 +68,6 @@ Member administration, invitations, machine principals, machine membership, and
 personal access tokens are proposed Identity extensions. They are not
 implemented. Product roles do not belong in Identity.
 
-### Legacy references
-
-[`domains/auth`](../domains/auth) and [`domains/accounts`](../domains/accounts)
-are frozen, runnable reference implementations. They exist for comparison and
-regression coverage only. New Product domains must integrate with Identity
-instead. Limit legacy maintenance to comparison, regression coverage, build
-fixes, and security fixes.
-
-The legacy `@mstaicu/accounts-contracts` package remains under
-[`domains/accounts/contracts`](../domains/accounts/contracts) for the same
-purpose. New consumers use Identity's contracts.
-
 ## Communication
 
 ### Synchronous
@@ -183,3 +171,7 @@ domain requires it. Product-owned records carry `account_id` when they belong
 to a customer. Billable and directly attributable actions use the same key.
 Isolation tests must prove that one Account cannot read or mutate another
 Account's data.
+
+An [Analytics domain](extensions/analytics.md) can own ingestion, derived
+datasets, models and reporting using managed services or deployed workloads.
+This is a proposed capability; introduce it for a concrete use case.

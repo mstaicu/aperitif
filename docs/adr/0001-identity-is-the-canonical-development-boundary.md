@@ -4,16 +4,15 @@
 
 ## Context
 
-The repository contains the older `Auth` and `Accounts` domains as separate
-implementations, and the newer `Identity` domain that combines their
-product-agnostic responsibilities. There is no deployed environment or live
-state to migrate. Continuing to describe both paths as equally current would
-create new dependencies on a topology we do not intend to extend.
+Identity combines the product-agnostic responsibilities previously implemented
+by separate `Auth` and `Accounts` domains. There is no deployed environment or
+live state to migrate. Maintaining both implementations would duplicate code,
+contracts and deployment configuration for a topology we do not intend to extend.
 
 ## Decision
 
-`domains/identity` is the sole forward-looking identity and account boundary
-for local development.
+`domains/identity` is the sole identity and account implementation for local
+development and the declared production deployment.
 
 Identity owns:
 
@@ -23,12 +22,12 @@ Identity owns:
 - the `IDENTITY` current-state feed.
 
 New product domains integrate with Identity's APIs and
-`@mstaicu/identity-contracts`. They use `identity.*` NATS subjects; they do not
-add dependencies on `Auth`, `Accounts`, or `@mstaicu/accounts-contracts`.
+`@mstaicu/identity-contracts`. They use `identity.*` NATS subjects.
 
-`domains/auth` and `domains/accounts` are frozen, runnable reference
-implementations. They remain available for comparison and regression coverage,
-but receive no new capabilities and are not composed by new product work.
+On 2026-10-29, the legacy Auth and Accounts implementations were retired,
+superseding the initial decision to retain them as frozen references. Their
+source, legacy contracts and deployment inventories are removed from the current
+tree. Historical implementations and regression scenarios remain in Git history.
 
 Identity's current public state-feed surface is:
 
@@ -59,5 +58,6 @@ event payload; consumers validate both against the contract.
 - No migration, session preservation, signing-key continuity, rollback,
   dual-write, compatibility, Flux rollout, or production cutover work is part
   of this decision: no deployed state exists.
-- A later decision is required before removing the legacy domains or introducing
-  a real deployed environment.
+- Future maintenance and regression coverage target Identity rather than parallel
+  implementations of the same capability.
+- Introducing a real deployed environment remains a separate decision.

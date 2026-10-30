@@ -29,6 +29,8 @@ Start here:
 
 Proposed capabilities:
 
+- [Analytics as a domain](extensions/analytics.md) — ownership, minimal topology,
+  staged evolution and event/metric planning.
 - [Identity membership management](extensions/identity/membership.md)
 - [Identity invitations](extensions/identity/invitations.md)
 - [Identity machine membership](extensions/identity/machine-membership.md)
@@ -38,6 +40,8 @@ Proposed capabilities:
 
 Examples:
 
+- [Messaging](examples/messaging.md) — stream, producer and consumer patterns for
+  state snapshots, deltas and commands.
 - [Automated farm](examples/automated-farm.md)
 - [Identity account snapshot](../domains/identity/contracts/examples/events/identity.account.snapshot.v1.json)
 - [Identity membership snapshot](../domains/identity/contracts/examples/events/identity.membership.snapshot.v1.json)

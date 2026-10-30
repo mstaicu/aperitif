@@ -39,13 +39,9 @@ Skaffold development loop. `down` removes resources in that domain's Skaffold
 graph. Identity's `up` and `dev` invoke migrations, which deletes the previous
 migration Job, runs it again, and waits for completion.
 
-The legacy Auth and Accounts targets retain completed migration Jobs; delete
-their Job explicitly before rerunning migrations against a disposable database.
-
 Start real domain dependencies explicitly. Identity must precede APIs that
 validate its JWTs. Identity and the event bus must precede a Product that
-consumes Identity account or membership state. `Auth` and `Accounts` are legacy
-references, not dependencies for new scenarios.
+consumes Identity account or membership state.
 
 Local traffic uses `http://localhost` on port 80. A cluster with LoadBalancer
 support exposes it directly. With Kind or another cluster without that support:
@@ -246,7 +242,3 @@ graph. To validate that composition without building images:
 ```sh
 (cd domains/identity && skaffold render --offline=true --digest-source=none >/dev/null)
 ```
-
-Run `make -C domains/auth check` or
-`make -C domains/accounts check` only when maintaining their legacy comparison
-and regression coverage.
