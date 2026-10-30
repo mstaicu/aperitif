@@ -14,10 +14,15 @@ permissions:
 
 jobs:
   changes:
-    name: Find changed components
+    name: Find components to check and build
     runs-on: ubuntu-24.04
     outputs:
-      paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      check_paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      build_paths: >-
+        ${{ toJSON(fromJSON(format('[{0},{1}]',
+          steps.domains.outputs.all_changed_and_modified_files,
+          steps.runtimes.outputs.all_changed_and_modified_files
+        )).*.*) }}
 
     steps:
       - name: Check out source
@@ -39,16 +44,40 @@ jobs:
           fail_on_initial_diff_error: true
           matrix: true
 
+      - id: domains
+        name: Find changed domain components
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: domains/*/workloads/*/**
+          files_ignore: "**/infra/**"
+          dir_names: true
+          dir_names_max_depth: 4
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
+          matrix: true
+
+      - id: runtimes
+        name: Find changed platform components
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: platform/runtime/*/**
+          files_ignore: "**/infra/**"
+          dir_names: true
+          dir_names_max_depth: 3
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
+          matrix: true
+
   check:
-    name: ${{ matrix.path }}
+    name: Check ${{ matrix.path }}
     needs: changes
-    if: needs.changes.outputs.paths != '[]'
+    if: needs.changes.outputs.check_paths != '[]'
     runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
       matrix:
-        path: ${{ fromJSON(needs.changes.outputs.paths) }}
+        path: ${{ fromJSON(needs.changes.outputs.check_paths) }}
 
     steps:
       - name: Check out source
@@ -63,3 +92,55 @@ jobs:
         env:
           UNIT: ${{ matrix.path }}
         run: make -C "$UNIT" check
+
+      - name: Set up Flux Schema
+        if: startsWith(matrix.path, 'domains/')
+        uses: fluxcd/flux2/action@v2.9.4
+        with:
+          version: 2.9.4
+          plugins: schema@0.17.0
+
+      - name: Validate domain workload manifests
+        if: startsWith(matrix.path, 'domains/')
+        working-directory: ${{ matrix.path }}
+        run: flux schema validate workloads/*/infra/overlays/* --skip-json-path v1/Secret:/sops
+
+  build:
+    name: Build ${{ matrix.path }}
+    needs: changes
+    if: needs.changes.outputs.build_paths != '[]'
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{ fromJSON(needs.changes.outputs.build_paths) }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+
+      - id: image
+        name: Read image reference
+        env:
+          COMPONENT: ${{ matrix.path }}
+        run: |
+          image=""
+          if [[ -f "$COMPONENT/skaffold.yaml" ]]; then
+            image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          fi
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Build production image
+        uses: docker/build-push-action@v7.3.0
+        if: steps.image.outputs.name != ''
+        with:
+          context: ${{ matrix.path }}
+          target: prod
+          push: false
+          provenance: false
+          sbom: false
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}

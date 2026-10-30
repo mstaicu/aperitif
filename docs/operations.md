@@ -234,10 +234,12 @@ make -C domains/identity check
 make -C platform/runtime check
 ```
 
-Domain checks run each package's checks and render individual local and
-production workload overlays. API and contract checks include tests; UI checks
-run lint and type checking. These targets do not render the composed Skaffold
-graph. To validate that composition without building images:
+Domain checks run each package's checks. API and contract checks run their
+configured test commands; UI checks run lint and type checking. The GitHub check
+workflow separately renders and validates local and production domain workload
+overlays with Flux Schema. Local `make check` does not validate those manifests.
+These targets do not render the composed Skaffold graph. To validate that
+composition without building images:
 
 ```sh
 (cd domains/identity && skaffold render --offline=true --digest-source=none >/dev/null)

@@ -8,10 +8,6 @@ check:
 	npm --prefix workloads/ui ci
 	npm --prefix workloads/ui run check
 
-	for overlay in workloads/*/infra/overlays/*; do \
-		kubectl kustomize "$$overlay" >/dev/null || exit 1; \
-	done
-
 up:
 	skaffold run -m identity-postgres
 

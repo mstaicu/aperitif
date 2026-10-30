@@ -10,16 +10,17 @@ on:
 
 concurrency:
   group: publish-images
+  queue: max
 
 permissions:
   contents: read
 
 jobs:
   changes:
-    name: Find changed components
+    name: Find components to publish
     runs-on: ubuntu-24.04
     outputs:
-      paths: >-
+      build_paths: >-
         ${{ toJSON(fromJSON(format('[{0},{1}]',
           steps.domains.outputs.all_changed_and_modified_files,
           steps.runtimes.outputs.all_changed_and_modified_files
@@ -56,9 +57,9 @@ jobs:
           matrix: true
 
   publish:
-    name: ${{ matrix.path }}
+    name: Publish ${{ matrix.path }}
     needs: changes
-    if: needs.changes.outputs.paths != '[]'
+    if: needs.changes.outputs.build_paths != '[]'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -67,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        path: ${{ fromJSON(needs.changes.outputs.paths) }}
+        path: ${{ fromJSON(needs.changes.outputs.build_paths) }}
 
     steps:
       - name: Check out source
@@ -95,7 +96,7 @@ jobs:
           password: ${{ github.token }}
 
       - id: build
-        name: Build and push SHA image
+        name: Build and push production image
         uses: docker/build-push-action@v7.3.0
         if: steps.image.outputs.name != ''
         with:
@@ -106,7 +107,7 @@ jobs:
           sbom: true
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
 
-      - name: Scan SHA image
+      - name: Scan image digest
         uses: aquasecurity/trivy-action@v0.36.0
         if: steps.image.outputs.name != ''
         with:
