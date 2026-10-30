@@ -13,6 +13,7 @@ const UuidSchema = Type.String({
 
 const AccountSnapshotV1DataSchema = Type.Object(
   {
+    created_at: Type.String({ format: "date-time" }),
     id: UuidSchema,
     name: Type.String({ maxLength: 160, minLength: 1 }),
     version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),

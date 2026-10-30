@@ -131,6 +131,37 @@ acknowledgement, deletes the row and commits. A crash between broker storage and
 database commit can cause redelivery. Broker deduplication is time-bounded;
 consumers still need the database protections below.
 
+### CloudEvent `time` versus resource timestamps
+
+CloudEvent `time` describes when the occurrence represented by that message
+happened. It is optional in the
+[CloudEvents standard](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#time).
+The following is the proposed policy for contracts that add it; the runnable
+examples do not add top-level `time` to the current contracts.
+
+| Message                 | Meaning of top-level `time`                                                    | What it does not mean                                                         |
+| ----------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| State snapshot          | When the producer captured that complete snapshot.                             | The resource's original creation time, or necessarily its last mutation time. |
+| Delta / historical fact | When the described business change occurred, according to the source contract. | When the relay eventually published it.                                       |
+| Command                 | When the producer first durably recorded the request.                          | When a worker eventually executed it.                                         |
+
+The producer chooses and validates the timestamp, then stores the entire message
+in the outbox. Publication retries preserve its `id`, `time` and contents. The
+relay does not generate or overwrite event time. A command's resulting fact is
+a different event with its own occurrence time.
+
+For example, an account created at 09:00 and renamed at 09:10 may produce a new
+snapshot with `time` 09:10 and `data.created_at` 09:00. Publication at 09:30 changes
+neither value. A deliberate fresh snapshot/reseed at 10:00 gets a new message ID
+and capture time, while retaining the same resource creation time and current
+version. A request recorded at 09:20 and executed at 09:25 keeps command `time`
+09:20; the resulting delta has its own `time` 09:25.
+
+Snapshot `data.created_at` comes from the source row and remains stable across
+updates and reseeds. Snapshot consumers compare resource versions, not these
+timestamps. Analytics records its own `ingested_at` separately. A source-recorded
+transaction timestamp is not a promise of the exact database commit instant.
+
 ## 3. State snapshot
 
 ### Producer: update the resource and replace its pending snapshot
@@ -164,7 +195,7 @@ export async function renameAccount({ pool }, { accountId, name }) {
         UPDATE accounts
         SET name = $2, version = version + 1
         WHERE id = $1
-        RETURNING id, name, version
+        RETURNING id, name, created_at, version
       `,
       [accountId, name],
     );
@@ -172,6 +203,7 @@ export async function renameAccount({ pool }, { accountId, name }) {
     if (!account) throw new Error("ACCOUNT_NOT_FOUND");
 
     const event = buildAccountSnapshotV1({
+      created_at: account.created_at.toISOString(),
       id: account.id,
       name: account.name,
       version: Number(account.version),
@@ -894,8 +926,8 @@ broker state is lost.
 
 ## 7. Verify a new domain before rollout
 
-These Markdown code blocks were extracted and exercised on 2026-10-29 using the
-actual repository relay, Identity contracts, `@nats-io/jetstream` 3.4.0 and `pg`
+These Markdown code blocks were extracted and exercised on 2026-10-30 using the
+actual repository relay, Identity contracts 0.3.0, `@nats-io/jetstream` 3.4.0 and `pg`
 8.23.1. All 17 checks passed against PostgreSQL 18.6 and three NATS 2.14.5 servers
 with three-replica streams, running Node 26.11.1. This was an isolated Docker
 integration check, not a Kubernetes deployment check.

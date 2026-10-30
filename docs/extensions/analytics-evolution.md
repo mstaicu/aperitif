@@ -39,18 +39,20 @@ framework.
 
 The only implemented public input families are:
 
-| Input                                                                                                  | Actual payload fields                                  | Honest use today                            |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------- |
-| [Account snapshot](../../domains/identity/contracts/src/events/identity.account.snapshot.v1.mjs)       | `id`, `name`, `version`                                | Current account context.                    |
-| [Membership snapshot](../../domains/identity/contracts/src/events/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `version` | Current initial-owner relationship context. |
+| Input                                                                                                  | Actual payload fields                                                | Honest use today                                                     |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Account snapshot](../../domains/identity/contracts/src/events/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
+| [Membership snapshot](../../domains/identity/contracts/src/events/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
 
 [Account creation](../../domains/identity/workloads/api/src/services/accounts/create.mjs)
 publishes both initial snapshots. Registration/login do not publish analytics
-facts. These contracts have no creation/occurrence timestamps or active/deleted
-fields. Membership updates, signup facts, usage facts and commercial facts are
-not implemented. Consequently these inputs alone cannot establish signup cohorts,
-activation, retention or historical membership. A missing row or message does
-not prove inactivity or deletion.
+facts. These snapshots include resource creation timestamps, but no top-level
+occurrence time or active/deleted fields. Membership updates, signup facts,
+usage facts and commercial facts are not implemented. Creation times can group
+observed accounts into creation cohorts, but do not prove a complete historical
+population. These inputs alone cannot establish principal signup, activation,
+retention or historical membership. A missing row or message does not prove
+inactivity or deletion.
 
 ## Minimal useful topology
 
@@ -174,16 +176,18 @@ observability system. Export a defined product-level outcome when a business
 metric needs it; do not reconstruct financial or customer facts from sampled
 traces, infrastructure logs or third-party dashboards.
 
-## Small field additions to consider now
+## Creation fields and future event time
 
-These are proposals for source contracts, not changes to the relay or a completed
-migration. Keep stable event IDs, `source`, `type`, `specversion` and resource
-versions already present.
+The creation fields are implemented in the source schema and snapshots as of
+contracts 0.3.0; that package release must be published before consumers can
+install it from the registry. Top-level event time remains a future contract
+addition. Stable event IDs, `source`, `type`, `specversion` and resource versions
+remain unchanged; no relay change is needed.
 
 | Field                        | Source and recommendation                                                                                                         | Meaning / limit                                                                                                                                                                     |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Account `data.created_at`    | Expose the existing `accounts.created_at` in the Account snapshot.                                                                | Authoritative account creation time survives snapshot replacement/replay. It is not principal signup time or proof of a complete population of accounts deleted before observation. |
-| Membership `data.created_at` | Add a recorded source creation timestamp, then export it. The current membership table has no such column.                        | When that relationship began. It does not reconstruct later role changes or membership removals.                                                                                    |
+| Account `data.created_at`    | Exported from `accounts.created_at`.                                                                                              | Authoritative account creation time survives snapshot replacement/replay. It is not principal signup time or proof of a complete population of accounts deleted before observation. |
+| Membership `data.created_at` | Recorded in `account_memberships.created_at` and exported. The initial schema is updated because this platform is not live yet.   | When that relationship began. It does not reconstruct later role changes or membership removals.                                                                                    |
 | CloudEvent `time`            | Define and validate source-time semantics when adding it. Require a documented occurrence time for new historical fact contracts. | Source occurrence/recorded business time, not relay publish time or sink ingestion time. Current snapshot contracts do not provide it.                                              |
 
 If records already exist, do not backfill missing creation times with migration
@@ -197,6 +201,8 @@ unavailable, the standard permits a substitute time but requires producers for
 the same source to use a consistent algorithm. Document that policy in the
 source contract; Analytics must not invent a business timestamp. See the
 [CloudEvents specification](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md).
+For the proposed meanings for snapshots, facts and commands, see
+[the messaging reference](../examples/messaging.md#cloudevent-time-versus-resource-timestamps).
 Do not add `updated_at`, status/deletion fields or generic actor fields merely
 as placeholders. Add their source semantics with the operation needing them.
 `queued_at` and an extra global sequence are not needed for this plan.

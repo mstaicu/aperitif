@@ -14,6 +14,7 @@ const UuidSchema = Type.String({
 const MembershipSnapshotV1DataSchema = Type.Object(
   {
     account_id: UuidSchema,
+    created_at: Type.String({ format: "date-time" }),
     id: UuidSchema,
     principal_id: Type.String({ minLength: 1 }),
     roles: Type.Array(Type.String({ minLength: 1 }), { uniqueItems: true }),

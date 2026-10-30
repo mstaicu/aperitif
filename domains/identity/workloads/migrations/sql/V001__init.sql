@@ -24,6 +24,8 @@ CREATE TABLE account_memberships (
         REFERENCES principals(id)
         ON DELETE CASCADE,
 
+    created_at timestamptz NOT NULL DEFAULT now(),
+
     version bigint NOT NULL DEFAULT 1,
 
     UNIQUE (account_id, principal_id)

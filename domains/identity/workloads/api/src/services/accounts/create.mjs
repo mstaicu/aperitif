@@ -38,7 +38,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
           principal_id
         )
         VALUES ($1, $2)
-        RETURNING id, version
+        RETURNING id, created_at, version
       `,
       [account.id, principalId],
     );
@@ -55,12 +55,14 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
     );
 
     const accountSnapshotEvent = buildAccountSnapshotV1({
+      created_at: account.created_at.toISOString(),
       id: account.id,
       name: account.name,
       version: Number(account.version),
     });
     const membershipSnapshotEvent = buildMembershipSnapshotV1({
       account_id: account.id,
+      created_at: membership.created_at.toISOString(),
       id: membership.id,
       principal_id: principalId,
       roles: ["account.owner"],

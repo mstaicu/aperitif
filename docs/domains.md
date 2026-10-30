@@ -64,6 +64,10 @@ contains one subject's relationship with one Account, including whether it is
 active. A consumer that needs membership state consumes the separate membership
 feed; it does not make the Account feed a growing aggregate.
 
+Both snapshots include `data.created_at`, serialized from their resource's
+PostgreSQL creation timestamp. It stays unchanged across later updates and
+reseeds; it is distinct from a message's occurrence or publication time.
+
 Member administration, invitations, machine principals, machine membership, and
 personal access tokens are proposed Identity extensions. They are not
 implemented. Product roles do not belong in Identity.
