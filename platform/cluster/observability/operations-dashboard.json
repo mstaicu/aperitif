@@ -14,8 +14,8 @@
         {
           "id": "Panel_ID1000003",
           "type": "line",
-          "title": "request rate",
-          "description": "If workloads are healthy, confirm traffic reaches each component. Use observed peaks as evidence when choosing rate limits.",
+          "title": "ingress request rate",
+          "description": "Requests routed through Traefik, grouped by destination service. Direct in-cluster requests are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -100,11 +100,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (server_address) (rate(http_server_request_duration_count[5m]))",
+              "query": "sum by (service) (rate(traefik_service_requests_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "http_server_request_duration_count",
+                "stream": "traefik_service_requests_total",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -117,7 +117,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{server_address}",
+                "promql_legend": "{service}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -142,8 +142,8 @@
         {
           "id": "Panel_ID1000004",
           "type": "line",
-          "title": "error responses",
-          "description": "4xx means clients were rejected. 5xx means the platform failed. Investigate sustained 5xx responses first.",
+          "title": "ingress 4xx and 5xx responses",
+          "description": "4xx and 5xx responses through Traefik, grouped by destination service and status code. Some 4xx responses are expected.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -228,11 +228,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (server_address, status_class) (label_replace(rate(http_server_request_duration_count{http_response_status_code=~\"4..|5..\"}[5m]), \"status_class\", \"$1xx\", \"http_response_status_code\", \"^([45])..$\"))",
+              "query": "sum by (service, code) (rate(traefik_service_requests_total{code=~\"4..|5..\"}[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "http_server_request_duration_count",
+                "stream": "traefik_service_requests_total",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -245,7 +245,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{server_address} · {status_class}",
+                "promql_legend": "{service} · {code}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -270,8 +270,8 @@
         {
           "id": "Panel_ID1000005",
           "type": "line",
-          "title": "p95 latency",
-          "description": "If availability and errors look healthy, use p95 latency to detect degraded service before examining individual traces.",
+          "title": "ingress p95 latency",
+          "description": "Traefik service response latency by destination. Direct in-cluster requests are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -355,11 +355,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "histogram_quantile(0.95, sum by (le, server_address) (rate(http_server_request_duration_bucket[5m])))",
+              "query": "histogram_quantile(0.95, sum by (le, service) (rate(traefik_service_request_duration_seconds_bucket[5m])))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "http_server_request_duration_bucket",
+                "stream": "traefik_service_request_duration_seconds_bucket",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -372,7 +372,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{server_address}",
+                "promql_legend": "{service}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -404,7 +404,7 @@
           "id": "Panel_ID2000003",
           "type": "line",
           "title": "CPU usage by deployment",
-          "description": "After RED identifies a component, check whether its CPU changed at the same time. Rising with traffic may be normal; rising while traffic is flat suggests expensive work.",
+          "description": "CPU usage for Kubernetes Deployments; StatefulSets such as NATS and OpenObserve are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -532,7 +532,7 @@
           "id": "Panel_ID2000004",
           "type": "line",
           "title": "memory usage by deployment",
-          "description": "After RED identifies a component, check whether its memory changed at the same time. A stable plateau is normal; continuous growth warrants investigation.",
+          "description": "Memory working set for Kubernetes Deployments; StatefulSets such as NATS and OpenObserve are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,

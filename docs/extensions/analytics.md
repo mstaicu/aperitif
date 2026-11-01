@@ -7,6 +7,11 @@ The [minimal topology and evolution plan](analytics-evolution.md) records
 production lessons, staged infrastructure and event coverage, proposed field
 additions, and a small framework for trustworthy metrics.
 
+The [capability assembly map](analytics-platform.md) identifies domain owners,
+independently useful components, prerequisites and per-capability acceptance.
+Managed analytics, flags, experiments, models and agent work can be adopted
+separately; the complete feedback loop is one optional future composition.
+
 Analytics can be an independently owned domain that consumes other domains'
 public data contracts and produces datasets, reports and model results. Its
 boundary is a cohesive capability, not automatically the entire data department.

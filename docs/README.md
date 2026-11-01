@@ -29,8 +29,16 @@ Start here:
 
 Proposed capabilities:
 
+- [Analytics crash course](extensions/analytics-primer.md) — measurement, data
+  architecture and local/SaaS component choices from first principles.
 - [Analytics as a domain](extensions/analytics.md) — ownership, minimal topology,
   staged evolution and event/metric planning.
+- [Analytics capability assembly](extensions/analytics-platform.md) — domain
+  boundaries, independently useful components and their prerequisites.
+- [Local Analytics deployment](extensions/analytics-local.md) — local placement,
+  PostHog edition limits and durable state/delta/command consumers.
+- [Analytics and agent feedback loop](extensions/analytics-agent-loop.md) —
+  industry research and an optional composed workflow using CI/Flux.
 - [Identity membership management](extensions/identity/membership.md)
 - [Identity invitations](extensions/identity/invitations.md)
 - [Identity machine membership](extensions/identity/machine-membership.md)
