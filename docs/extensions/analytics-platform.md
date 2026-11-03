@@ -1,8 +1,9 @@
 # Analytics and enabling capabilities
 
 Status: Proposed; revised after a capability-boundary review on 2026-10-30.
-No workloads, integrations or new domains are implemented by this document.
-This is an assembly map, not a requirement to deliver the complete agent loop.
+The [implemented Analytics domain](../../domains/analytics/README.md) supplies
+local ingestion, PostgreSQL and SQL views. Additional components below remain
+proposals. This assembly map does not require the complete agent loop.
 
 Current deployment target: **local/self-hosted**. The
 [local deployment and durable-consumer plan](analytics-local.md) records the
@@ -10,9 +11,9 @@ placement and message handling. The PostHog Cloud references below remain
 research options; Cloud features are not assumed to exist in its local edition.
 
 The [first-principles guide](analytics-primer.md) explains measurement and storage
-before product selection. For a reporting use case, its smallest local assembly
-is a projector, PostgreSQL and a Metabase interface; experimentation remains a
-separately adopted capability.
+before product selection. The implemented reporting baseline is a projector,
+PostgreSQL and SQL views; a Metabase interface and experimentation remain
+separately adopted capabilities.
 
 ## Domain decision
 
@@ -26,16 +27,19 @@ owns a cohesive capability and its data, logic, supported interfaces and
 lifecycle. Here, baseline/core means reusable enabling capabilities; which
 business domain is competitively core depends on the actual Product.
 
-| Boundary | Owns | Current position |
+| Accountable role | Owns | Current position |
 | --- | --- | --- |
-| Identity | Identity proofs, accounts, generic membership and its public feeds | Implemented; reuse its supported contracts |
-| Product domain(s) | User journeys, business rules, permissions/entitlements, authoritative outcomes and treatment execution | Each Product owns its vocabulary; no generic Product implementation is implied |
-| Analytics | Consumed projections, retained analytical facts, datasets, metrics, reports and analytical results | Proposed optional domain; begin with a useful dataset/report |
-| Experimentation | Experiment design, shared metric analysis and experiment administration | Optional Analytics capability initially; Products place flags, execute treatments and instrument exposure |
-| Modelling and AI analysis | Training/evaluation, analytical models and batch outputs | Optional Analytics workloads initially; Product-specific online decisions remain with their owner |
-| Operational visibility | Telemetry ingestion, querying and alerts | Existing platform capability: OTel/OpenObserve |
-| Engineering automation | Repository investigation/coding tasks and handoffs | Optional tooling; a managed/runtime choice when a task needs it |
-| Delivery | Checks, images, GitOps deployment and recovery | Existing engineering/platform capability: CI/Flux |
+| Identity team | Identity proofs, accounts, generic membership and public feeds | Implemented producer blueprint |
+| Product/domain team | Business behavior, permissions, authoritative facts, experiment hypotheses, treatment/exposure instrumentation and ship decisions | Each domain owns its vocabulary and behavior |
+| Analytics team | Consumed projections, retained facts, metric definitions, reports and analytical evidence | Implemented consumer blueprint; experiment methodology and models remain optional capabilities |
+| Selected flag/experiment service operator | Reliable configuration, assignment and evaluation infrastructure | Future capability; Analytics or Platform may operate it without owning Product behavior |
+| Platform team | Shared broker, telemetry collection and delivery infrastructure | Existing NATS, OTel/OpenObserve and CI/Flux |
+| Workload/repository owner | Service health, release policy, permitted automation and recovery | Uses Platform delivery; owns canary/blue-green policy if adopted |
+
+These are responsibilities, not a prescribed organization chart. One team can
+fill several roles. [Spotify Search](https://engineering.atspotify.com/2022/2/search-journey-towards-better-experimentation-practices)
+combines Product-team experiments with data-science guidance and shared tooling.
+Operating a tool or sharing its namespace does not transfer business authority.
 
 Do not create Agent, Warehouse, Feature Flags, Deployment or Observability
 business domains merely to mirror the available tools. A future Automation,
@@ -119,6 +123,11 @@ for its real consumer, not a universal integration framework.
   capability an accountable owner and a usable supported interface.
 - Product flag evaluation uses local context, background configuration and safe
   defaults. Flags do not grant permissions or entitlements.
+- Assignment selects a variant; actual exposure records its relevant application;
+  an outcome records what happened afterward. They are distinct inputs to
+  [experiment analysis](https://confidence.spotify.com/glossary). A flag ramp
+  controls feature availability; a canary/blue-green controller controls deployed
+  revisions and traffic. Neither alone establishes an A/B effect.
 - Engineering tasks consume evidence and propose actions through the owning
   repository or Product interface. The delivery system executes accepted
   releases. Analytics does not decide authority for every Product.
@@ -178,9 +187,11 @@ changing SQL dialects, assignment algorithms or vendor APIs still takes work.
 | Coding task | Bounded change and independent relevant checks | Automatic merging or a general coordinator |
 | Delivery | Enforced release rules, known promoted digest/running state and demonstrated recovery | AI decision-making or an A/B test |
 
-Implement domain validation as `make -C domains/<domain> check`; integration
-tests need a working Docker-compatible runtime. These remain planned checks
-for a future Analytics implementation, not commands supplied by this document.
+Use `make -C domains/<domain> check` for the checks supplied by each domain.
+Analytics currently runs dependency installation, lint and type checks; its
+projector has no integration-test suite. The separate [deployed validation report](../analytics-validation.md)
+records the live source-to-sink and replay checks already exercised. Flags,
+experiments and agents remain future integrations.
 
 ## Where a new domain would become justified
 
@@ -205,6 +216,11 @@ autonomous ownership of data, logic and user interface, with asynchronous
 collaboration. [Uber DataMesh](https://www.uber.com/us/en/blog/datamesh/) maps
 resources and lifecycle to data ownership. Its organization/resource grouping
 is not a prescription for a new bounded context per cloud component.
+[Netflix's Kayenta](https://netflixtechblog.com/automated-canary-analysis-at-netflix-with-kayenta-3260bc7acc69)
+assesses deployment risk while Spinnaker controls promotion and rollback;
+[Argo Rollouts](https://argo-rollouts.readthedocs.io/en/stable/concepts/)
+likewise distinguishes deployment control from its metric inputs. Analytics can
+supply evidence without acquiring deployment authority.
 [Spotify separates personalization and experimentation](https://engineering.atspotify.com/2026/1/why-we-use-separate-tech-stacks-for-personalization-and-experimentation)
 because serving behavior and evaluating it have different concerns. We can
 preserve those concerns as explicit capabilities before creating more domains.

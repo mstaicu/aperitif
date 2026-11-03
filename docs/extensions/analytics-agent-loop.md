@@ -3,7 +3,9 @@
 Status: Proposed. Research reviewed on 2026-10-30 by three parallel research
 agents and a synthesis review. Sources describe a mix of production experience,
 newly released capabilities and previews; those distinctions are retained
-below. No account entitlement, live integration or deployment was verified.
+below. The [Analytics baseline](../../domains/analytics/README.md) has since been
+implemented and [validated locally](../analytics-validation.md). The flag,
+experiment and agent integrations below remain proposals.
 
 Scope: This is an optional composed workflow, not the first delivery unit or
 a prerequisite for Analytics. Start with the [capability assembly map](analytics-platform.md)
@@ -31,13 +33,18 @@ not a claim that an integrated production agent system already exists here.
 
 The ownership remains simple:
 
-| Owner/system | Responsibility |
+| Accountable role | Responsibility |
 | --- | --- |
-| Source Product | Authoritative facts, behavior, permissions and flag placement |
-| Analytics / PostHog | Validated analytical data, metrics, product findings, experiments and measured outcomes |
-| OpenObserve | Operational evidence and fast health signals |
-| Repository-owned agent automations | Bounded investigation, implementation and follow-up tasks |
-| CI / Flux and repository release policy | Verification, permitted promotion, deployment state and recovery |
+| Product/domain team | Authoritative facts, behavior, permissions, hypotheses, treatment/exposure instrumentation and ship decisions |
+| Analytics team | Validated datasets, metric definitions, methodology and analytical evidence |
+| Selected flag/experiment service operator | Configuration, assignment and evaluation infrastructure; optional, not a new domain by default |
+| Platform team | Shared OTel/OpenObserve, broker and CI/Flux infrastructure |
+| Workload/repository owner | Permitted agent tasks, release policy, service health, promotion and recovery |
+
+One team may fill several roles. Assignment is not actual exposure or a business
+outcome. [Spotify's experimentation practice](https://engineering.atspotify.com/2022/2/search-journey-towards-better-experimentation-practices)
+combines Product-team decisions, analytical guidance and shared tooling. Tools
+and deployment namespaces do not determine accountable ownership.
 
 One coordinated workflow can span these tools without making Analytics a
 central authority over every Product. Choose one agent coordinator. PostHog's
@@ -161,16 +168,17 @@ messaging protocol.
 ## Platform audit: what exists and what remains
 
 The repository contains deployment configuration, not proof of a running
-production environment. Analytics, PostHog integration and agent automations
-remain proposals.
+production environment. The Analytics baseline has been
+[deployed and validated locally](../analytics-validation.md). PostHog integration
+and agent automations remain proposals.
 
 1. **Verification exists, enforcement needs checking.**
    [PR/merge-queue checks](../../.github/workflows/checks.yaml) run changed-domain
    checks, manifest validation and image builds. Required branch protection
    remains in the [roadmap](../roadmap.md). Do not assume repository settings
-   enforce what YAML merely defines. Analytics checks must follow
-   `make -C domains/analytics check`, including a working Docker-compatible
-   runtime for integration tests.
+   enforce what YAML merely defines. `make -C domains/analytics check` installs
+   dependencies and runs lint/type checking; it does not run integration tests.
+   The separate local validation report records the deployed pipeline exercise.
 2. **The declared release path already automatically advances scanned images.**
    [Publication](../../.github/workflows/publish.yaml) builds on `master`, scans
    the immutable image, then retags its digest as `latest`. It does not
@@ -208,9 +216,11 @@ remain proposals.
    query/automation for warehouse findings. Keep operational decisions on the
    faster telemetry path, and wait for sync and conversion windows before
    judging business effects.
-7. **The first useful facts still need instrumentation.** Existing public
-   inputs are account and initial-owner membership snapshots. A real product
-   outcome, eligibility/exposure and suitable historical coverage are missing.
+7. **Product measurement still needs its own facts.** Existing public inputs
+   include Identity snapshots and seven lifecycle events, consumed by the
+   [implemented Analytics baseline](../../domains/analytics/README.md). A real
+   Product outcome, eligibility/exposure and suitable historical coverage remain
+   specific to the selected workflow.
    An agent cannot infer them reliably from current state or sampled logs.
 
 ## Acceptance if the complete loop is selected

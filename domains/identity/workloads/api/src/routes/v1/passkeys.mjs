@@ -1,4 +1,5 @@
 import { Type } from "@fastify/type-provider-typebox";
+import createError from "http-errors";
 
 import { createAuthenticationOptions } from "../../services/passkeys/authentication-options.mjs";
 import {
@@ -12,7 +13,7 @@ import {
 } from "../../services/passkeys/registration.mjs";
 import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
 import { createSession } from "../../services/sessions/create.mjs";
-import { ProblemResponse } from "../problem-details.mjs";
+import { ErrorResponse } from "../errors.mjs";
 import {
   AuthenticationOptionsResponse,
   RegisterPasskeyBody,
@@ -38,11 +39,12 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           "Verifies a WebAuthn authentication response and creates an independent session.",
         operationId: "authenticateWithPasskey",
         response: {
+          "4xx": ErrorResponse,
           200: SessionResponse,
-          400: ProblemResponse,
-          422: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          400: ErrorResponse,
+          422: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Authenticate with a passkey",
         tags: ["passkeys"],
@@ -88,9 +90,10 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           "Creates the WebAuthn options required to authenticate with a passkey.",
         operationId: "createPasskeyAuthenticationOptions",
         response: {
+          "4xx": ErrorResponse,
           200: AuthenticationOptionsResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         summary: "Create passkey authentication options",
         tags: ["passkeys"],
@@ -112,14 +115,14 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           "Without Authorization, creates a principal, passkey, and session and returns 201 with the session. With a valid access token, requires authentication from an existing passkey belonging to the same principal and returns 204 without creating a session. Retrieve passkey metadata with GET /passkeys. Authentication challenges are single-use; failed changes require a fresh proof.",
         operationId: "registerWithPasskey",
         response: {
+          "4xx": ErrorResponse,
           201: SessionResponse,
           204: Type.Null({ description: "Passkey added." }),
-          400: ProblemResponse,
-          401: ProblemResponse,
-          409: ProblemResponse,
-          422: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          400: ErrorResponse,
+          401: ErrorResponse,
+          422: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{}, { bearerAuth: [] }],
         summary: "Sign up or add a passkey",
@@ -131,10 +134,10 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
 
       if (request.headers.authorization !== undefined) {
         if (!request.body.authentication) {
-          throw new Error("AUTHENTICATION_FAILED");
+          throw new createError.UnprocessableEntity();
         }
       } else if (request.body.authentication) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
+        throw new createError.Unauthorized();
       }
 
       const client = await pool.connect();
@@ -173,7 +176,7 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           });
 
           if (authenticatedPrincipalId !== principalId) {
-            throw new Error("AUTHENTICATION_FAILED");
+            throw new createError.UnprocessableEntity();
           }
         }
 
@@ -209,10 +212,11 @@ export default async function passkeysRoutes(fastify, { jwks, origin, pool }) {
           "Creates signup options without Authorization, or options for adding a passkey to the principal identified by a valid access token. Invalid supplied authorization is rejected.",
         operationId: "createPasskeyRegistrationOptions",
         response: {
+          "4xx": ErrorResponse,
           200: RegistrationOptionsResponse,
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{}, { bearerAuth: [] }],
         summary: "Create passkey registration options",

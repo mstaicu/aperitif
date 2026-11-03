@@ -2,9 +2,9 @@ import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import Fastify, { LogController } from "fastify";
 import { createLocalJWKSet } from "jose";
 
+import { errorHandler, notFoundHandler } from "./routes/errors.mjs";
 import jwksRoutes from "./routes/jwks.mjs";
 import probes from "./routes/probes.mjs";
-import configureProblemDetails from "./routes/problem-details.mjs";
 import v1 from "./routes/v1/index.mjs";
 
 /**
@@ -20,7 +20,8 @@ export function buildApp({ jwt: { jwks, signingKey }, origin, pool }) {
     logger: true,
   }).setValidatorCompiler(TypeBoxValidatorCompiler);
 
-  configureProblemDetails(app);
+  app.setNotFoundHandler(notFoundHandler);
+  app.setErrorHandler(errorHandler);
 
   app.register(probes, { pool });
   app.register(jwksRoutes, { jwks });

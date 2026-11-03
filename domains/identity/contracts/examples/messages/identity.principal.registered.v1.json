@@ -1,0 +1,10 @@
+{
+  "specversion": "1.0",
+  "id": "018f7300-8e2f-7000-8d25-00000000012c",
+  "source": "/domains/identity",
+  "type": "identity.principal.registered.v1",
+  "time": "2026-10-30T08:00:00.000Z",
+  "data": {
+    "principal_id": "018f7300-8e2f-7000-8d25-4cfe3d258e07"
+  }
+}

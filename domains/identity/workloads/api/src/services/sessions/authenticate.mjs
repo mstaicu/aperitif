@@ -1,3 +1,4 @@
+import createError from "http-errors";
 import { jwtVerify } from "jose";
 import { createHash } from "node:crypto";
 
@@ -8,7 +9,7 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
   const [type, token, extra] = (authorization ?? "").split(/ +/);
 
   if (type.toLowerCase() !== "bearer" || !token || extra) {
-    throw new Error("INVALID_ACCESS_TOKEN");
+    throw new createError.Unauthorized();
   }
 
   let payload;
@@ -18,7 +19,7 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
       requiredClaims: ["sub", "sid", "exp"],
     }));
   } catch {
-    throw new Error("INVALID_ACCESS_TOKEN");
+    throw new createError.Unauthorized();
   }
 
   const {
@@ -35,7 +36,7 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
   );
 
   if (!session) {
-    throw new Error("INVALID_ACCESS_TOKEN");
+    throw new createError.Unauthorized();
   }
 
   return session.principal_id;
@@ -48,7 +49,7 @@ export async function authenticateSession({ authorization, pool }) {
   const [scheme, token, extra] = (authorization ?? "").split(/ +/);
 
   if (scheme.toLowerCase() !== "bearer" || !token || extra) {
-    throw new Error("INVALID_AUTHORIZATION_HEADER");
+    throw new createError.Unauthorized();
   }
 
   const {
@@ -66,7 +67,7 @@ export async function authenticateSession({ authorization, pool }) {
   );
 
   if (!session) {
-    throw new Error("INVALID_SESSION_TOKEN");
+    throw new createError.Unauthorized();
   }
 
   return session;

@@ -1,8 +1,9 @@
 # Analytics domain: measurement, data and component choices
 
 Research reviewed on 2026-10-30. This is a first-principles guide and proposed
-component selection, not an implementation. Local hosting remains the target;
-SaaS equivalents are included for comparison.
+component selection. The [implemented baseline](../../domains/analytics/README.md)
+now supplies local ingestion and SQL views; the additional tools below remain
+proposals. SaaS equivalents are included for comparison.
 
 ## Why PostHog entered the proposal
 
@@ -116,16 +117,18 @@ history, not today's state joined to yesterday's event.
 | Message | Meaning | Analytics behavior |
 | --- | --- | --- |
 | State snapshot | Current exported representation | Versioned current dimension; no invented transition history |
-| Delta/fact | Something happened | Retain approved identity and duplicate-safe analytical effects |
+| Business event | Something happened | Retain approved identity and duplicate-safe analytical effects |
 | Command | An owner is requested to act | Execute only Analytics-addressed commands; observe other owners' published request/result facts |
 
 Use owned durable consumers per logical pipeline, shared by replicas. Validate
 the producer contract and actual NATS subject. Snapshot writes compare source
-versions atomically; delta receipts/effects commit together. ACK follows the
+versions atomically; event receipts/effects commit together. ACK follows the
 defined durable commit. A cursor cannot restore an empty database or recover
 expired history. WorkQueue commands disappear after ACK and are not an archive.
 Long jobs can be durably admitted before ACK, with completion recorded later.
 See the [consumer plan](analytics-local.md) and [messaging reference](../examples/messaging.md).
+These are feed patterns, not three exclusive message types; see the
+[canonical terminology](../domains.md#asynchronous).
 
 ## How to organize and store data
 

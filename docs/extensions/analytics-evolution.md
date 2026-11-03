@@ -1,7 +1,9 @@
 # Analytics: minimal topology and evolution
 
-Status: Proposed. Research reviewed on 2026-10-30. No Analytics workload, new
-event contract or schema change is implemented by this document.
+Status: Evolution proposals, researched on 2026-10-30. The
+[implemented Analytics baseline](../../domains/analytics/README.md) now supplies
+the projector, owned PostgreSQL and SQL views. Additional tools and stages below
+remain proposals.
 
 This develops [Analytics as a domain](analytics.md) into a staged plan using the
 existing platform. The order aims for the highest expected decision value per
@@ -31,26 +33,29 @@ Deployments, bounded Jobs/CronJobs, Skaffold/Kustomize, Flux/image delivery,
 ingress and OTel/OpenObserve already present in the repository. The broker is
 the existing three-server JetStream cluster. Keep the relay payload-agnostic.
 
-There is no Analytics ingestion service, warehouse/lake integration, BI service,
-model runtime, workflow engine or general managed-resource provisioner yet.
+Analytics implements ingestion and owned PostgreSQL reporting. There is no
+warehouse/lake integration, BI service, model runtime, workflow engine or general
+managed-resource provisioner yet.
 The [existing production prerequisites](../roadmap.md#before-sustained-production)
 still apply; this proposal does not implement them or add another infrastructure
 framework.
 
-The only implemented public input families are:
+The implemented current-state input families are:
 
 | Input                                                                                                  | Actual payload fields                                                | Honest use today                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| [Account snapshot](../../domains/identity/contracts/src/events/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
-| [Membership snapshot](../../domains/identity/contracts/src/events/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
+| [Account snapshot](../../domains/identity/contracts/src/messages/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
+| [Membership snapshot](../../domains/identity/contracts/src/messages/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
 
 [Account creation](../../domains/identity/workloads/api/src/services/accounts/create.mjs)
-publishes both initial snapshots. Registration/login do not publish analytics
-facts. These snapshots include resource creation timestamps, but no top-level
-occurrence time or active/deleted fields. Membership updates, signup facts,
-usage facts and commercial facts are not implemented. Creation times can group
+publishes both initial snapshots. Identity also publishes seven committed
+lifecycle events, including principal registration and session establishment;
+their exact meanings are in the [message contracts](../../domains/identity/contracts/src/messages).
+The snapshots include resource creation timestamps, but no required top-level
+occurrence time or active/deleted fields. Membership updates, product usage
+facts and commercial facts are not implemented. Creation times can group
 observed accounts into creation cohorts, but do not prove a complete historical
-population. These inputs alone cannot establish principal signup, activation,
+population. These snapshots alone cannot establish principal signup, activation,
 retention or historical membership. A missing row or message does not prove
 inactivity or deletion.
 
@@ -157,13 +162,12 @@ provider IDs, retries and corrected/reconciled results.
 
 Historical facts need a Limits stream without the snapshot cap of one message
 per subject. Group subjects with the same retention requirements rather than
-creating a stream per event. Keep their subjects disjoint from snapshot subjects:
-the current Identity stream captures `identity.account.*.*`, so a proposed shared
-subject `identity.account.created.v1` would accidentally match the snapshot
-stream. A separate namespace such as `identity.events.account.created.v1` avoids
-that overlap. These are naming examples, not implemented contracts. Add the
-appropriate source-owned stream configuration and producer contract; the relay
-needs no event-type branch.
+creating a stream per event. Keep subjects disjoint: Identity's `IDENTITY_STATE`
+captures resource snapshots under `identity.state.*`, while `IDENTITY_EVENTS`
+captures occurrences under `identity.events.>`. Future domains use the same
+state/event routing convention and source-owned retention; the relay needs no
+event-type branch. See the
+[canonical terminology](../domains.md#asynchronous).
 
 An attempted business operation whose transaction rolls back cannot preserve
 its failure event in that same transaction. A persisted workflow failure may

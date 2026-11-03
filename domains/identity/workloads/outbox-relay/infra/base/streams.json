@@ -5,10 +5,21 @@
     "max_age": 0,
     "max_bytes": 419430400,
     "max_msgs_per_subject": 1,
-    "name": "IDENTITY",
+    "name": "IDENTITY_STATE",
     "num_replicas": 3,
     "retention": "limits",
     "storage": "file",
-    "subjects": ["identity.account.*.*", "identity.membership.*.*"]
+    "subjects": ["identity.state.account.*.*", "identity.state.membership.*.*"]
+  },
+  {
+    "discard": "old",
+    "max_age": 0,
+    "max_bytes": 419430400,
+    "max_msgs_per_subject": -1,
+    "name": "IDENTITY_EVENTS",
+    "num_replicas": 3,
+    "retention": "limits",
+    "storage": "file",
+    "subjects": ["identity.events.>"]
   }
 ]

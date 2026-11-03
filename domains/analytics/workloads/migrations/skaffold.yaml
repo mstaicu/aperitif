@@ -1,0 +1,20 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+metadata:
+  name: analytics-migrations
+
+build:
+  local:
+    push: false
+  artifacts:
+    - image: ghcr.io/mstaicu/analytics-migrations
+      context: .
+      docker:
+        dockerfile: Dockerfile
+
+manifests:
+  kustomize:
+    paths:
+      - infra/overlays/local
+deploy:
+  kubectl: {}

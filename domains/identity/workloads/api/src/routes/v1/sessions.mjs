@@ -1,9 +1,10 @@
 import { Type } from "@fastify/type-provider-typebox";
+import createError from "http-errors";
 import { SignJWT } from "jose";
 
 import { authenticateSession } from "../../services/sessions/authenticate.mjs";
 import { revokeSession } from "../../services/sessions/revoke.mjs";
-import { ProblemResponse } from "../problem-details.mjs";
+import { ErrorResponse } from "../errors.mjs";
 import { AccessTokenResponse } from "./sessions.schemas.mjs";
 
 /**
@@ -21,10 +22,11 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
           "Creates a short-lived access token for the session represented by the bearer credential.",
         operationId: "createAccessToken",
         response: {
+          "4xx": ErrorResponse,
           200: AccessTokenResponse,
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ sessionTokenAuth: [] }],
         summary: "Create access token",
@@ -46,7 +48,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       );
 
       if (expiresAt <= now) {
-        throw new Error("INVALID_SESSION_TOKEN");
+        throw new createError.Unauthorized();
       }
 
       const access_token = await new SignJWT({
@@ -76,10 +78,11 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
           "Revokes the session represented by the bearer credential.",
         operationId: "deleteSession",
         response: {
+          "4xx": ErrorResponse,
           204: Type.Null({ description: "Session revoked." }),
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ sessionTokenAuth: [] }],
         summary: "Delete session",
@@ -92,7 +95,7 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       );
 
       if (type.toLowerCase() !== "bearer" || !token || extra) {
-        throw new Error("INVALID_AUTHORIZATION_HEADER");
+        throw new createError.Unauthorized();
       }
 
       await revokeSession({ pool }, { session_token: token });

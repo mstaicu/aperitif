@@ -1,108 +1,44 @@
 # Analytics as a domain
 
-Status: Proposed. No Analytics implementation exists. Add it when a concrete
-reporting or modelling use case needs it.
+Status: The baseline is implemented in
+[`domains/analytics`](../../domains/analytics/README.md). Additional tools and
+capabilities remain proposals.
 
-The [minimal topology and evolution plan](analytics-evolution.md) records
-production lessons, staged infrastructure and event coverage, proposed field
-additions, and a small framework for trustworthy metrics.
+Use the existing implementation and canonical rules:
 
-The [capability assembly map](analytics-platform.md) identifies domain owners,
-independently useful components, prerequisites and per-capability acceptance.
-Managed analytics, flags, experiments, models and agent work can be adopted
-separately; the complete feedback loop is one optional future composition.
+- [Analytics foundation](../analytics.md): facts, current state, ownership and analytical limits.
+- [Domain communication](../domains.md#asynchronous): message terminology and versioned contracts.
+- [Analytics domain](../../domains/analytics/README.md): local operation, durable consumers and SQL readers.
+- [Deployed validation](../analytics-validation.md): exercised endpoints and source-to-sink observations.
 
-Analytics can be an independently owned domain that consumes other domains'
-public data contracts and produces datasets, reports and model results. Its
-boundary is a cohesive capability, not automatically the entire data department.
-Separate capabilities can become separate domains when their ownership and
-lifecycle require it.
+Analytics owns its projectors, derived datasets and reader interfaces. Source
+domains remain authoritative for business facts; Analytics uses their public
+contracts rather than reading their databases. Managed storage and deployed
+workloads can serve the same boundary.
 
-## Ownership
+## Extend for a concrete capability
 
-Analytics may own:
+Add only the component needed by the next question:
 
-- Ingestion workers/projectors and their consumer positions.
-- Warehouse or lake datasets, schemas and transformations.
-- Model training, model artefacts and model-serving services.
-- APIs, dashboards and UIs for its consumers.
-- Deployment configuration, data quality, freshness, monitoring and recovery.
+- A warehouse or lake destination for a demonstrated storage/query requirement.
+- A BI interface when existing SQL access is insufficient.
+- Model training or serving for a defined model workload.
+- An API or UI for a supported consumer workflow.
+- Analytics-addressed commands and owned job state when asynchronous analytical
+  work requires execution. Other domains' command queues are not an analytics
+  archive; consume their published result facts.
 
-These components can be managed services or workloads deployed by the team,
-just as Identity can use managed PostgreSQL. Ownership means maintaining the
-data flow, contracts and outputs; it does not require hosting every dependency
-or running everything in one process or cluster. A managed warehouse or BI tool
-can be part of this owned capability.
+Training and long-running work use stored datasets rather than holding broker
+messages open. If Analytics publishes results, use its own business transaction
+and outbox with the existing relay. A managed dependency needs no placeholder
+container, and this does not require a data mesh or shared framework.
 
-Source domains remain authoritative for their business facts. Identity owns
-accounts and memberships; Analytics owns its derived datasets and models.
-Analytics consumes supported interfaces rather than reading another domain's
-database. Shared infrastructure remains in the platform.
+The [evolution plan](analytics-evolution.md) records research and proposed event
+coverage. The [capability assembly map](analytics-platform.md) separates optional
+analytics, experimentation, models and agent workflows by owner and prerequisite.
+The [local proposal](analytics-local.md) discusses future managed/self-hosted
+components; it does not replace the implemented workload manifests.
 
-## Data flow
-
-```text
-Source domain: business transaction + outbox
-  -> existing generic relay
-  -> JetStream stream
-  -> Analytics ingestion consumer/projector
-  -> owned warehouse/lake datasets
-  -> reports, models, APIs and UIs
-```
-
-Each independent ingestion pipeline that needs resumable progress gets its own
-durable pull consumer, filtered to the subjects it needs. Its replicas share that
-consumer. Its acknowledgement position is independent of application projectors.
-An ingestion worker handles duplicate delivery and acknowledges only after a
-durable sink commit, using the destination's transaction or idempotent commit
-mechanism. Model training normally runs against the stored dataset rather than
-holding broker deliveries open for the duration of training.
-
-Choose the input according to the dataset:
-
-- Snapshots maintain current state using resource versions. They omit
-  intermediate transitions; a fresh scan can use an ephemeral consumer, as in
-  the messaging reference.
-- Distinct events/deltas supply history within the stream's retention limits.
-  Producers must preserve each required event in the outbox. Another stream
-  cannot recover snapshots already coalesced by the producer.
-- Command results belong in published facts when analytics needs them. A
-  WorkQueue command stream removes acknowledged commands and is not an event
-  history.
-
-The relay remains payload-agnostic. Producers and consumers define any required
-per-resource sequencing protocol; the relay does not guarantee source order.
-A durable cursor cannot recover expired or removed messages. Keep the datasets
-needed for reproducible historical analysis in Analytics-owned storage.
-
-If Analytics publishes model results or other business messages, it can use its
-own outbox and the same relay. Its team can deploy its components independently
-while honoring upstream contracts and maintaining its own supported interfaces.
-
-## Start with the required workloads
-
-An illustrative layout is:
-
-```text
-domains/analytics/
-  workloads/
-    ingestion/       consumers/projectors
-    migrations/      owned storage schema, when needed
-    models/          training or serving, when needed
-    api/             reports or model results, when needed
-    ui/              dashboards, when needed
-```
-
-Start with ingestion and the storage needed by the first use case. Use an
-existing query or BI interface when it suffices. Add a custom API, UI or model
-service only when required. Managed dependencies need no placeholder container.
-This proposal does not require adopting a full data mesh or adding a new shared
-framework.
-
-See the [messaging reference](../examples/messaging.md) for stream and
-producer/consumer patterns. The established
-[data-product architecture](https://martinfowler.com/articles/data-mesh-principles.html)
-groups pipeline code, interfaces, data and infrastructure under ownership.
-[Uber's ingestion platform](https://www.uber.com/qa/en/blog/from-batch-to-streaming-accelerating-data-freshness-in-ubers-data-lake/)
-is a production example of owned ingestion into a lake for analytics and ML;
-it uses different transport and processing tools from this repository.
+[Data-product ownership](https://martinfowler.com/articles/data-mesh-principles.html)
+and [Uber's ingestion experience](https://www.uber.com/qa/en/blog/from-batch-to-streaming-accelerating-data-freshness-in-ubers-data-lake/)
+provide design precedents, not a requirement to copy their topology or tools.

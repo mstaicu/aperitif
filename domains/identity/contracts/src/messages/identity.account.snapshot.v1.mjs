@@ -4,7 +4,7 @@ import { Compile } from "typebox/compile";
 
 const source = "/domains/identity";
 const type = "identity.account.snapshot.v1";
-export const AccountV1SubjectPrefix = "identity.account.v1";
+export const AccountV1SubjectPrefix = "identity.state.account.v1";
 
 const UuidSchema = Type.String({
   pattern:
@@ -13,10 +13,27 @@ const UuidSchema = Type.String({
 
 const AccountSnapshotV1DataSchema = Type.Object(
   {
-    created_at: Type.String({ format: "date-time" }),
-    id: UuidSchema,
-    name: Type.String({ maxLength: 160, minLength: 1 }),
-    version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
+    created_at: Type.String({
+      description:
+        "Source account creation timestamp; unchanged by updates. Not snapshot publication time or proof of a newly created account.",
+      format: "date-time",
+    }),
+    id: {
+      ...UuidSchema,
+      description: "Account identity and cross-domain attribution key.",
+    },
+    name: Type.String({
+      description:
+        "Current display name; mutable and potentially identifying. Excluded from account-created events.",
+      maxLength: 160,
+      minLength: 1,
+    }),
+    version: Type.Integer({
+      description:
+        "Positive account revision; compare only revisions of the same account.",
+      maximum: Number.MAX_SAFE_INTEGER,
+      minimum: 1,
+    }),
   },
   { additionalProperties: false },
 );
@@ -24,22 +41,20 @@ const AccountSnapshotV1DataSchema = Type.Object(
 export const AccountSnapshotV1Schema = Type.Object(
   {
     data: AccountSnapshotV1DataSchema,
-    dataschema: Type.Optional(Type.String({ format: "uri" })),
-    id: UuidSchema,
+    id: {
+      ...UuidSchema,
+      description:
+        "Snapshot message identity, separate from resource identity and revision.",
+    },
     source: Type.Literal(source),
     specversion: Type.Literal("1.0"),
-    traceparent: Type.Optional(Type.String({ minLength: 1 })),
-    tracestate: Type.Optional(Type.String({ minLength: 1 })),
     type: Type.Literal(type),
   },
   {
-    additionalProperties: Type.Union([
-      Type.String(),
-      Type.Boolean(),
-      Type.Integer({ maximum: 2147483647, minimum: -2147483648 }),
-    ]),
-    dependencies: { tracestate: ["traceparent"] },
-    propertyNames: { pattern: "^[a-z0-9]+$" },
+    additionalProperties: false,
+    description:
+      "Complete exported current account state at a resource revision. Replaces earlier pending snapshots; it is not an account-created occurrence.",
+    title: type,
   },
 );
 

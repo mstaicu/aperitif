@@ -1,9 +1,11 @@
-# State snapshots, deltas and commands
+# Events, state snapshots and commands
 
 Reference patterns for new domains, using PostgreSQL, the existing outbox relay,
 and `@nats-io/jetstream`. Keep business writes, message construction and outbox
 SQL inline in the service. Contracts own wire schemas and builders. Consumers
-own their database effects. The relay stays the same for all three patterns.
+own their database effects. The relay stays the same for these feed patterns.
+See the [canonical terminology](../domains.md#asynchronous): snapshot and delta
+are payload representations, while event and command describe message purpose.
 
 The Account examples use the real Identity contract. The Product counter
 examples define a new example contract and tables below; they are not deployed
@@ -14,10 +16,11 @@ change Identity's existing schema or streams merely to run this reference.
 | Pattern  | Producer                                                   | Stream                                                   | Consumer                                                                       |
 | -------- | ---------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | Snapshot | Complete state; replace pending snapshot for that resource | Limits, one latest message per resource subject          | Fresh `last_per_subject` scan; atomic version upsert                           |
-| Delta    | Keep every distinct change                                 | Limits, retain every change within the configured limits | Durable per projection; deduplicate and apply together                         |
+| Event with delta payload | Keep every distinct increment                                 | Limits, retain every change within the configured limits | Durable per projection; deduplicate and apply together                         |
 | Command  | Keep every distinct request                                | WorkQueue, remove after acknowledgement                  | One durable worker group per command subject; deduplicate and execute together |
 
-The delta and command below both increment a counter by a positive integer.
+The event below records a counter increment; the command requests one. The
+event carries a delta (`amount`), rather than the complete counter value.
 Increments commute, so arrival order does not affect their result. The operation
 creates the counter if it does not exist. This explicitly avoids an ordering
 dependency on a separate create message. An order-dependent operation needs a
@@ -28,7 +31,7 @@ order.
 
 Use the domain relay's existing
 `workloads/outbox-relay/infra/base/streams.json`. This combined array illustrates
-all three patterns; normally Identity owns `IDENTITY` and Product owns its two
+all three patterns; normally Identity owns `IDENTITY_STATE` and Product owns its two
 streams. Do not give two deployments ownership of the same stream configuration.
 
 <!-- example: streams.json -->
@@ -36,8 +39,8 @@ streams. Do not give two deployments ownership of the same stream configuration.
 ```json
 [
   {
-    "name": "IDENTITY",
-    "subjects": ["identity.account.*.*", "identity.membership.*.*"],
+    "name": "IDENTITY_STATE",
+    "subjects": ["identity.state.account.*.*", "identity.state.membership.*.*"],
     "retention": "limits",
     "storage": "file",
     "num_replicas": 3,
@@ -48,8 +51,8 @@ streams. Do not give two deployments ownership of the same stream configuration.
     "max_bytes": 419430400
   },
   {
-    "name": "PRODUCT_DELTAS",
-    "subjects": ["product.counter.delta.v1"],
+    "name": "PRODUCT_EVENTS",
+    "subjects": ["product.events.counter.incremented.v1"],
     "retention": "limits",
     "storage": "file",
     "num_replicas": 3,
@@ -59,7 +62,7 @@ streams. Do not give two deployments ownership of the same stream configuration.
   },
   {
     "name": "PRODUCT_COMMANDS",
-    "subjects": ["product.counter.increment.v1"],
+    "subjects": ["product.commands.counter.increment.v1"],
     "retention": "workqueue",
     "storage": "file",
     "num_replicas": 3,
@@ -79,7 +82,7 @@ stream, and a majority for normal operation.
 
 With snapshot retention, replacing an existing subject is allowed even with
 `discard: new`, because `discard_new_per_subject` is false. Stream-wide capacity
-can still reject publication. Delta and command streams have no per-subject
+can still reject publication. Event and command streams have no per-subject
 message cap. `max_age: 0` disables age expiry; adding an expiry later also permits
 unread messages to expire. Acknowledgements do not remove Limits messages;
 WorkQueue acknowledgements do remove the corresponding commands.
@@ -115,7 +118,7 @@ CREATE TABLE outbox_messages (
 );
 ```
 
-Every outbox `id` equals the CloudEvent `id`. Every distinct message gets a new
+Every outbox `id` equals its envelope `id`. Every distinct message gets a new
 ID; retries of that message retain its original ID and contents. Headers contain
 only strings. Do not set reserved `Nats-*` headers: the relay owns publishing
 options, including `Nats-Msg-Id`.
@@ -131,19 +134,22 @@ acknowledgement, deletes the row and commits. A crash between broker storage and
 database commit can cause redelivery. Broker deduplication is time-bounded;
 consumers still need the database protections below.
 
-### CloudEvent `time` versus resource timestamps
+### Occurrence, request and resource timestamps
 
-CloudEvent `time` describes when the occurrence represented by that message
+For events, CloudEvent `time` describes when the represented occurrence
 happened. It is optional in the
 [CloudEvents standard](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#time).
-The following is the proposed policy for contracts that add it; the runnable
-examples do not add top-level `time` to the current contracts.
+Command request time below is a platform convention, not a CloudEvents-defined
+command attribute. The following is the proposed policy for contracts that add
+it; the runnable examples do not add top-level `time` to the current contracts.
+Identity's implemented lifecycle facts already publish `time`; their exact
+source-clock policy is in the [producer blueprint](../domains.md#producing-business-facts).
 
 | Message                 | Meaning of top-level `time`                                                    | What it does not mean                                                         |
 | ----------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
 | State snapshot          | When the producer captured that complete snapshot.                             | The resource's original creation time, or necessarily its last mutation time. |
-| Delta / historical fact | When the described business change occurred, according to the source contract. | When the relay eventually published it.                                       |
-| Command                 | When the producer first durably recorded the request.                          | When a worker eventually executed it.                                         |
+| Business event | When the described business change occurred, according to the source contract. | When the relay eventually published it.                                       |
+| Command request | When the producer first durably recorded the request.                          | When a worker eventually executed it.                                         |
 
 The producer chooses and validates the timestamp, then stores the entire message
 in the outbox. Publication retries preserve its `id`, `time` and contents. The
@@ -155,12 +161,15 @@ snapshot with `time` 09:10 and `data.created_at` 09:00. Publication at 09:30 cha
 neither value. A deliberate fresh snapshot/reseed at 10:00 gets a new message ID
 and capture time, while retaining the same resource creation time and current
 version. A request recorded at 09:20 and executed at 09:25 keeps command `time`
-09:20; the resulting delta has its own `time` 09:25.
+09:20; the resulting event has its own `time` 09:25.
 
 Snapshot `data.created_at` comes from the source row and remains stable across
 updates and reseeds. Snapshot consumers compare resource versions, not these
 timestamps. Analytics records its own `ingested_at` separately. A source-recorded
-transaction timestamp is not a promise of the exact database commit instant.
+mutation timestamp is not a promise of the exact database commit instant.
+Identity events capture database wall time after the relevant lock; transaction
+start can predate another operation that acquired the lock first. See the
+[implemented producer blueprint](../domains.md#producing-business-facts).
 
 ## 3. State snapshot
 
@@ -244,7 +253,7 @@ must not silently publish a rounded version. A rejected build rolls back the
 resource update. Keep versions positive and monotonically increasing across all
 writes to the resource.
 
-The subject is `identity.account.v1.<account-id>`. Do not add an event ID or
+The subject is `identity.state.account.v1.<account-id>`. Do not add an event ID or
 version to it: that would turn each version into a different retained resource.
 Dedicate this subject to that resource's snapshots.
 
@@ -314,14 +323,14 @@ Create a fresh ephemeral pull consumer each time this worker starts:
 import { AckPolicy, DeliverPolicy } from "@nats-io/jetstream";
 
 export async function accountConsumer({ js, jsm }) {
-  const info = await jsm.consumers.add("IDENTITY", {
+  const info = await jsm.consumers.add("IDENTITY_STATE", {
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.LastPerSubject,
-    filter_subject: "identity.account.v1.*",
+    filter_subject: "identity.state.account.v1.*",
     inactive_threshold: 300_000_000_000,
   });
 
-  return js.consumers.get("IDENTITY", info.name);
+  return js.consumers.get("IDENTITY_STATE", info.name);
 }
 ```
 
@@ -342,18 +351,20 @@ Identity does not yet define deletion events. A future deletion contract needs a
 versioned retained tombstone; silently removing a stream message cannot tell an
 offline projection to remove its database row.
 
-## 4. Delta
+## 4. Event with a delta payload
 
 ### Contract: a distinct counter increment
 
-The following module is a complete example contract for the delta and its
+The following module is a complete example contract for the increment event and its
 matching command. It uses TypeBox like the existing contracts. In a real domain,
 keep each message's public schema, builder and validator together and export
 them through the contracts package. There is no SQL or NATS client here.
 
-The deliberately closed envelopes accept only their declared attributes. Adding
-optional CloudEvents attributes requires their proper types and validation;
-accepting arbitrary extension values is not validation of standard attributes.
+The event uses CloudEvents context. The command reuses the same field shape
+as a platform convention; CloudEvents does not define a command protocol. Its
+imperative type requests work, and does not claim the increment happened. The
+closed envelopes accept only declared attributes; adding optional attributes
+requires their proper types and validation.
 
 <!-- example: counter-contracts.mjs -->
 
@@ -389,18 +400,18 @@ export const IncrementCounterV1Schema = Type.Object(
   {
     specversion: Type.Literal("1.0"),
     source: Type.Literal("/domains/product"),
-    type: Type.Literal("product.counter.increment.requested.v1"),
+    type: Type.Literal("product.counter.increment.v1"),
     id: uuid,
     data,
   },
   { additionalProperties: false },
 );
 
-const delta = Compile(CounterIncrementedV1Schema);
+const event = Compile(CounterIncrementedV1Schema);
 const command = Compile(IncrementCounterV1Schema);
 
-export const isCounterIncrementedV1 = (event) => delta.Check(event);
-export const isIncrementCounterV1 = (event) => command.Check(event);
+export const isCounterIncrementedV1 = (message) => event.Check(message);
+export const isIncrementCounterV1 = (message) => command.Check(message);
 
 export function buildCounterIncrementedV1(data) {
   const event = {
@@ -410,20 +421,20 @@ export function buildCounterIncrementedV1(data) {
     id: randomUUID(),
     data: { ...data },
   };
-  if (!isCounterIncrementedV1(event)) throw new Error("INVALID_COUNTER_DELTA");
+  if (!isCounterIncrementedV1(event)) throw new Error("INVALID_COUNTER_EVENT");
   return event;
 }
 
 export function buildIncrementCounterV1(id, data) {
-  const event = {
+  const command = {
     specversion: "1.0",
     source: "/domains/product",
-    type: "product.counter.increment.requested.v1",
+    type: "product.counter.increment.v1",
     id,
     data: { ...data },
   };
-  if (!isIncrementCounterV1(event)) throw new Error("INVALID_COUNTER_COMMAND");
-  return event;
+  if (!isIncrementCounterV1(command)) throw new Error("INVALID_COUNTER_COMMAND");
+  return command;
 }
 ```
 
@@ -431,10 +442,10 @@ The fixed subjects carry different resources in their payloads:
 
 | Message | NATS subject                   | Resource ID       |
 | ------- | ------------------------------ | ----------------- |
-| Delta   | `product.counter.delta.v1`     | `data.counter_id` |
-| Command | `product.counter.increment.v1` | `data.counter_id` |
+| Event (delta payload) | `product.events.counter.incremented.v1`     | `data.counter_id` |
+| Command | `product.commands.counter.increment.v1` | `data.counter_id` |
 
-### Producer: business change and delta in one transaction
+### Producer: business change and event in one transaction
 
 In the counter owner's database:
 
@@ -478,7 +489,7 @@ export async function incrementCounter({ pool }, { counterId, amount }) {
     await client.query(
       `
         INSERT INTO outbox_messages (id, subject, payload, headers)
-        VALUES ($1, 'product.counter.delta.v1', $2::jsonb, $3::jsonb)
+        VALUES ($1, 'product.events.counter.incremented.v1', $2::jsonb, $3::jsonb)
       `,
       [event.id, event, headers],
     );
@@ -531,10 +542,10 @@ import { isCounterIncrementedV1 } from "./counter-contracts.mjs";
 export async function projectCounter({ pool }, message) {
   const event = message.json();
   if (
-    message.subject !== "product.counter.delta.v1" ||
+    message.subject !== "product.events.counter.incremented.v1" ||
     !isCounterIncrementedV1(event)
   )
-    throw new Error("INVALID_COUNTER_DELTA");
+    throw new Error("INVALID_COUNTER_EVENT");
 
   const client = await pool.connect();
   try {
@@ -574,20 +585,20 @@ export async function projectCounter({ pool }, message) {
 
 Provision one durable for this projection, then have all its replicas bind to it:
 
-<!-- example: delta-consumer.mjs -->
+<!-- example: event-consumer.mjs -->
 
 ```javascript
 import { AckPolicy, DeliverPolicy } from "@nats-io/jetstream";
 
-export async function deltaConsumer({ js, jsm }) {
-  await jsm.consumers.add("PRODUCT_DELTAS", {
+export async function eventConsumer({ js, jsm }) {
+  await jsm.consumers.add("PRODUCT_EVENTS", {
     durable_name: "counter-totals-v1",
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
-    filter_subject: "product.counter.delta.v1",
+    filter_subject: "product.events.counter.incremented.v1",
   });
 
-  return js.consumers.get("PRODUCT_DELTAS", "counter-totals-v1");
+  return js.consumers.get("PRODUCT_EVENTS", "counter-totals-v1");
 }
 ```
 
@@ -658,7 +669,7 @@ export async function requestIncrement(
       await client.query(
         `
           INSERT INTO outbox_messages (id, subject, payload, headers)
-          VALUES ($1, 'product.counter.increment.v1', $2::jsonb, $3::jsonb)
+          VALUES ($1, 'product.commands.counter.increment.v1', $2::jsonb, $3::jsonb)
         `,
         [event.id, event, headers],
       );
@@ -701,12 +712,12 @@ domain needs an explicitly supported command source in its public contract and
 broker permissions; do not spoof Product's source. Payload validation does not
 authenticate a publisher.
 
-### Consumer: execute once and publish the resulting delta atomically
+### Consumer: execute once and publish the resulting event atomically
 
 The counter owner's database needs `counters`, `outbox_messages` and the same
 `processed_messages` table shape shown above. These are its own tables, not
 cross-domain database reads. A command changes authoritative state; the emitted
-delta reports the change to any interested projection.
+event reports the change to any interested projection.
 
 <!-- example: handle-increment.mjs -->
 
@@ -720,7 +731,7 @@ import {
 export async function handleIncrement({ pool }, message) {
   const command = message.json();
   if (
-    message.subject !== "product.counter.increment.v1" ||
+    message.subject !== "product.commands.counter.increment.v1" ||
     !isIncrementCounterV1(command)
   )
     throw new Error("INVALID_COUNTER_COMMAND");
@@ -750,16 +761,16 @@ export async function handleIncrement({ pool }, message) {
         [command.data.counter_id, command.data.amount],
       );
 
-      const delta = buildCounterIncrementedV1(command.data);
+      const event = buildCounterIncrementedV1(command.data);
       const headers = { "Content-Type": "application/cloudevents+json" };
       propagation.inject(context.active(), headers);
 
       await client.query(
         `
           INSERT INTO outbox_messages (id, subject, payload, headers)
-          VALUES ($1, 'product.counter.delta.v1', $2::jsonb, $3::jsonb)
+          VALUES ($1, 'product.events.counter.incremented.v1', $2::jsonb, $3::jsonb)
         `,
-        [delta.id, delta, headers],
+        [event.id, event, headers],
       );
     }
 
@@ -783,7 +794,7 @@ export async function commandConsumer({ js, jsm }) {
     durable_name: "increment-counter-v1",
     ack_policy: AckPolicy.Explicit,
     deliver_policy: DeliverPolicy.All,
-    filter_subject: "product.counter.increment.v1",
+    filter_subject: "product.commands.counter.increment.v1",
   });
 
   return js.consumers.get("PRODUCT_COMMANDS", "increment-counter-v1");
@@ -792,7 +803,7 @@ export async function commandConsumer({ js, jsm }) {
 
 All worker replicas share that durable. WorkQueue does not allow another
 overlapping consumer to independently execute the same command subjects. Use
-the resulting delta stream for observers. Commands may be redelivered, so the
+the resulting event stream for observers. Commands may be redelivered, so the
 database uniqueness constraint is still required.
 
 This example's effect is entirely transactional SQL. For payments, email or
@@ -842,7 +853,7 @@ export async function runConsumer({ consumer, handle, signal }) {
 }
 ```
 
-For example, the delta worker entry point is:
+For example, the event worker entry point is:
 
 <!-- example: counter-worker.mjs -->
 
@@ -850,7 +861,7 @@ For example, the delta worker entry point is:
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import { connect } from "@nats-io/transport-node";
 import { Pool } from "pg";
-import { deltaConsumer } from "./delta-consumer.mjs";
+import { eventConsumer } from "./event-consumer.mjs";
 import { projectCounter } from "./project-counter.mjs";
 import { runConsumer } from "./run-consumer.mjs";
 
@@ -870,7 +881,7 @@ try {
   nc.closed().then(() => abortController.abort());
   const js = jetstream(nc);
   const jsm = await jetstreamManager(nc);
-  const consumer = await deltaConsumer({ js, jsm });
+  const consumer = await eventConsumer({ js, jsm });
 
   await runConsumer({
     consumer,

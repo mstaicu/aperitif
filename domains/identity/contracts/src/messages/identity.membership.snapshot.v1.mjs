@@ -4,7 +4,7 @@ import { Compile } from "typebox/compile";
 
 const source = "/domains/identity";
 const type = "identity.membership.snapshot.v1";
-export const MembershipV1SubjectPrefix = "identity.membership.v1";
+export const MembershipV1SubjectPrefix = "identity.state.membership.v1";
 
 const UuidSchema = Type.String({
   pattern:
@@ -13,12 +13,37 @@ const UuidSchema = Type.String({
 
 const MembershipSnapshotV1DataSchema = Type.Object(
   {
-    account_id: UuidSchema,
-    created_at: Type.String({ format: "date-time" }),
-    id: UuidSchema,
-    principal_id: Type.String({ minLength: 1 }),
-    roles: Type.Array(Type.String({ minLength: 1 }), { uniqueItems: true }),
-    version: Type.Integer({ maximum: Number.MAX_SAFE_INTEGER, minimum: 1 }),
+    account_id: {
+      ...UuidSchema,
+      description:
+        "Account referenced by this relationship; its snapshot can arrive independently.",
+    },
+    created_at: Type.String({
+      description:
+        "Source membership creation timestamp; unchanged by updates. Not message occurrence/publication time.",
+      format: "date-time",
+    }),
+    id: {
+      ...UuidSchema,
+      description:
+        "Membership resource identity, independent of account and principal IDs.",
+    },
+    principal_id: {
+      ...UuidSchema,
+      description:
+        "Principal identity in this relationship, opaque to consumers.",
+    },
+    roles: Type.Array(Type.String({ minLength: 1 }), {
+      description:
+        "Unordered current Identity roles, not historical grants or Product-domain entitlements.",
+      uniqueItems: true,
+    }),
+    version: Type.Integer({
+      description:
+        "Positive membership revision; compare only revisions of the same membership.",
+      maximum: Number.MAX_SAFE_INTEGER,
+      minimum: 1,
+    }),
   },
   { additionalProperties: false },
 );
@@ -26,22 +51,20 @@ const MembershipSnapshotV1DataSchema = Type.Object(
 export const MembershipSnapshotV1Schema = Type.Object(
   {
     data: MembershipSnapshotV1DataSchema,
-    dataschema: Type.Optional(Type.String({ format: "uri" })),
-    id: UuidSchema,
+    id: {
+      ...UuidSchema,
+      description:
+        "Snapshot message identity, separate from resource identity and revision.",
+    },
     source: Type.Literal(source),
     specversion: Type.Literal("1.0"),
-    traceparent: Type.Optional(Type.String({ minLength: 1 })),
-    tracestate: Type.Optional(Type.String({ minLength: 1 })),
     type: Type.Literal(type),
   },
   {
-    additionalProperties: Type.Union([
-      Type.String(),
-      Type.Boolean(),
-      Type.Integer({ maximum: 2147483647, minimum: -2147483648 }),
-    ]),
-    dependencies: { tracestate: ["traceparent"] },
-    propertyNames: { pattern: "^[a-z0-9]+$" },
+    additionalProperties: false,
+    description:
+      "Complete exported current membership and roles at a resource revision. No active/deleted state is implemented.",
+    title: type,
   },
 );
 

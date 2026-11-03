@@ -2,8 +2,9 @@
 
 A Kubernetes foundation for SaaS products built from independently deployable
 domains. Identity provides passkeys, sessions, accounts, generic membership, and
-current-state feeds. Product domains own their vocabulary, workflows, data, and
-commercial model.
+current-state and lifecycle feeds. Analytics projects public outputs into owned
+PostgreSQL reporting views. Product domains own their vocabulary, workflows,
+data, and commercial model.
 
 Code, contracts, and manifests are implemented facts. An extension is a proposed
 capability. An example is an illustrative product composition.
@@ -23,6 +24,11 @@ Start here:
 - [Domains](domains.md) — implemented boundaries and the smallest new-domain
   path.
 - [Operations](operations.md) — local cluster, GitOps, recovery, and diagnosis.
+- [Deployed Analytics validation](analytics-validation.md) — exercised endpoints,
+  source-to-sink preservation, replay and analytical usefulness.
+- [Analytics foundation](analytics.md) — implemented contracts, ingestion,
+  reader interface and tested recovery boundaries.
+- [Analytics domain](../domains/analytics/README.md) — local commands and SQL readers.
 - [ADR 0001](adr/0001-identity-is-the-canonical-development-boundary.md) —
   Identity is the canonical local-development boundary.
 - [Roadmap](roadmap.md) — unresolved product-agnostic work.
@@ -51,8 +57,8 @@ Examples:
 - [Messaging](examples/messaging.md) — stream, producer and consumer patterns for
   state snapshots, deltas and commands.
 - [Automated farm](examples/automated-farm.md)
-- [Identity account snapshot](../domains/identity/contracts/examples/events/identity.account.snapshot.v1.json)
-- [Identity membership snapshot](../domains/identity/contracts/examples/events/identity.membership.snapshot.v1.json)
+- [Identity account snapshot](../domains/identity/contracts/examples/messages/identity.account.snapshot.v1.json)
+- [Identity membership snapshot](../domains/identity/contracts/examples/messages/identity.membership.snapshot.v1.json)
 
 Add infrastructure only for a concrete requirement. A domain does not need NATS,
 an outbox, Relay, a projector, or a contracts package merely because it exists.

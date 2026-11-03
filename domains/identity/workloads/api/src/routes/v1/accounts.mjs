@@ -1,7 +1,7 @@
 import { createAccount } from "../../services/accounts/create.mjs";
 import { listAccounts } from "../../services/accounts/list.mjs";
 import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
-import { ProblemResponse } from "../problem-details.mjs";
+import { ErrorResponse } from "../errors.mjs";
 import {
   AccountsResponse,
   CreateAccountBody,
@@ -24,11 +24,12 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
           "Creates an account and grants the authenticated caller its initial owner membership.",
         operationId: "createAccount",
         response: {
+          "4xx": ErrorResponse,
           201: CreateAccountResponse,
-          400: ProblemResponse,
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          400: ErrorResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Create account",
@@ -64,10 +65,11 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
           "Lists accounts where the authenticated caller is a member.",
         operationId: "listAccounts",
         response: {
+          "4xx": ErrorResponse,
           200: AccountsResponse,
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "List caller accounts",

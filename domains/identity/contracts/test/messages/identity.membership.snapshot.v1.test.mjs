@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import example from "../../examples/events/identity.membership.snapshot.v1.json" with { type: "json" };
+import example from "../../examples/messages/identity.membership.snapshot.v1.json" with { type: "json" };
 import {
   buildMembershipSnapshotV1,
   buildMembershipV1Subject,
@@ -110,7 +110,7 @@ test("builds the membership subject from the resource ID", () => {
   const subject = buildMembershipV1Subject(membershipId);
 
   // Assert
-  assert.equal(subject, `identity.membership.v1.${membershipId}`);
+  assert.equal(subject, `identity.state.membership.v1.${membershipId}`);
 });
 
 test("rejects an invalid membership ID instead of constructing a subject", () => {

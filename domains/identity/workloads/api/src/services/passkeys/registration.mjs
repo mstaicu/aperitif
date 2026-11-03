@@ -1,5 +1,13 @@
+import {
+  buildCredentialAddedV1,
+  buildPrincipalRegisteredV1,
+  CredentialAddedV1Subject,
+  PrincipalRegisteredV1Subject,
+} from "@mstaicu/identity-contracts";
+import { context, propagation } from "@opentelemetry/api";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
+import createError from "http-errors";
 
 import { createSession } from "../sessions/create.mjs";
 
@@ -14,11 +22,11 @@ export const getRegistrationChallenge = async ({ client }, credential) => {
   try {
     ({ challenge } = decodeClientDataJSON(credential.response.clientDataJSON));
   } catch {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw new createError.BadRequest();
   }
 
   if (typeof challenge !== "string") {
-    throw new Error("INVALID_REGISTRATION_RESPONSE");
+    throw new createError.BadRequest();
   }
 
   const {
@@ -34,7 +42,7 @@ export const getRegistrationChallenge = async ({ client }, credential) => {
   );
 
   if (!challengeRow) {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   return /** @type {{ principal_id: string, challenge: Buffer }} */ (
@@ -58,11 +66,11 @@ export const register = async (
   { challenge: challengeRow, credential, name = "Passkey", principalId },
 ) => {
   if (!name || name.length < 1 || [...name].length > 100) {
-    throw new Error("INVALID_PASSKEY_NAME");
+    throw new createError.BadRequest();
   }
 
   if (principalId && challengeRow.principal_id !== principalId) {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   const { hostname, origin: expectedOrigin } = new URL(origin);
@@ -78,14 +86,19 @@ export const register = async (
       response: credential,
     });
   } catch {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   if (!verification.verified) {
-    throw new Error("REGISTRATION_VERIFICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   const registrationCredential = verification.registrationInfo.credential;
+
+  const headers = {
+    "Content-Type": "application/cloudevents+json",
+  };
+  propagation.inject(context.active(), headers);
 
   if (!principalId) {
     const {
@@ -95,17 +108,37 @@ export const register = async (
         INSERT INTO principals (id)
         VALUES ($1)
         ON CONFLICT DO NOTHING
-        RETURNING id
+        RETURNING id, created_at
       `,
       [challengeRow.principal_id],
     );
 
     if (!principal) {
-      throw new Error("PRINCIPAL_ALREADY_REGISTERED");
+      throw new createError.UnprocessableEntity();
     }
+    const principalRegisteredEvent = buildPrincipalRegisteredV1({
+      data: {
+        principal_id: principal.id,
+      },
+      time: principal.created_at.toISOString(),
+    });
+    await client.query(
+      `
+        INSERT INTO outbox_messages (id, subject, payload, headers)
+        VALUES ($1, $2, $3::jsonb, $4::jsonb)
+      `,
+      [
+        principalRegisteredEvent.id,
+        PrincipalRegisteredV1Subject,
+        principalRegisteredEvent,
+        headers,
+      ],
+    );
   }
 
-  await client.query(
+  const {
+    rows: [passkey],
+  } = await client.query(
     `
       INSERT INTO passkey_credentials (
         principal_id,
@@ -115,6 +148,8 @@ export const register = async (
         sign_count
       )
       VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (credential_id) DO NOTHING
+      RETURNING id, created_at
     `,
     [
       challengeRow.principal_id,
@@ -122,6 +157,28 @@ export const register = async (
       name,
       Buffer.from(registrationCredential.publicKey),
       registrationCredential.counter,
+    ],
+  );
+
+  if (!passkey) throw new createError.UnprocessableEntity();
+
+  const credentialAddedEvent = buildCredentialAddedV1({
+    data: {
+      credential_ref: passkey.id,
+      principal_id: challengeRow.principal_id,
+    },
+    time: passkey.created_at.toISOString(),
+  });
+  await client.query(
+    `
+      INSERT INTO outbox_messages (id, subject, payload, headers)
+      VALUES ($1, $2, $3::jsonb, $4::jsonb)
+    `,
+    [
+      credentialAddedEvent.id,
+      CredentialAddedV1Subject,
+      credentialAddedEvent,
+      headers,
     ],
   );
 

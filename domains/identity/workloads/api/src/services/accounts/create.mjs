@@ -1,8 +1,12 @@
 import {
+  AccountCreatedV1Subject,
+  buildAccountCreatedV1,
   buildAccountSnapshotV1,
   buildAccountV1Subject,
+  buildMembershipCreatedV1,
   buildMembershipSnapshotV1,
   buildMembershipV1Subject,
+  MembershipCreatedV1Subject,
 } from "@mstaicu/identity-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
@@ -68,6 +72,22 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       roles: ["account.owner"],
       version: Number(membership.version),
     });
+    const accountCreatedEvent = buildAccountCreatedV1({
+      data: {
+        account_id: account.id,
+        principal_id: principalId,
+      },
+      time: account.created_at.toISOString(),
+    });
+    const membershipCreatedEvent = buildMembershipCreatedV1({
+      data: {
+        account_id: account.id,
+        membership_id: membership.id,
+        principal_id: principalId,
+        roles: ["account.owner"],
+      },
+      time: membership.created_at.toISOString(),
+    });
 
     const accountSnapshotSubject = buildAccountV1Subject(account.id);
     const membershipSnapshotSubject = buildMembershipV1Subject(membership.id);
@@ -89,37 +109,27 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
 
     await client.query(
       `
-        INSERT INTO outbox_messages (
-          id,
-          subject,
-          payload,
-          headers
-        )
-        VALUES ($1, $2, $3::jsonb, $4::jsonb)
+        INSERT INTO outbox_messages (id, subject, payload, headers)
+        VALUES
+          ($1, $2, $3::jsonb, $4::jsonb),
+          ($5, $6, $7::jsonb, $4::jsonb),
+          ($8, $9, $10::jsonb, $4::jsonb),
+          ($11, $12, $13::jsonb, $4::jsonb)
       `,
       [
         accountSnapshotEvent.id,
         accountSnapshotSubject,
         accountSnapshotEvent,
         headers,
-      ],
-    );
-
-    await client.query(
-      `
-        INSERT INTO outbox_messages (
-          id,
-          subject,
-          payload,
-          headers
-        )
-        VALUES ($1, $2, $3::jsonb, $4::jsonb)
-      `,
-      [
         membershipSnapshotEvent.id,
         membershipSnapshotSubject,
         membershipSnapshotEvent,
-        headers,
+        accountCreatedEvent.id,
+        AccountCreatedV1Subject,
+        accountCreatedEvent,
+        membershipCreatedEvent.id,
+        MembershipCreatedV1Subject,
+        membershipCreatedEvent,
       ],
     );
 

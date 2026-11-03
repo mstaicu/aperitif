@@ -22,7 +22,9 @@ form.addEventListener("submit", async (event) => {
   status.dataset.error = "false";
   status.textContent = "Waiting for your passkey…";
 
-  const failureMessage = registration ? "Signup failed." : "Login failed.";
+  const failureMessage = registration
+    ? "Signup failed. Try again or log in."
+    : "Login failed. Please try again.";
 
   try {
     let response = await fetch(form.dataset.optionsAction!, {
@@ -50,28 +52,6 @@ form.addEventListener("submit", async (event) => {
 
     status.dataset.error = "true";
     status.textContent = failureMessage;
-
-    const contentType = response.headers
-      .get("Content-Type")
-      ?.split(";", 1)[0]
-      .trim()
-      .toLowerCase();
-
-    if (contentType === "application/problem+json") {
-      const problem = await response.json();
-
-      switch (problem?.type) {
-        case "/problems/authentication-failed":
-        case "/problems/registration-verification-failed":
-          status.textContent = "Passkey verification failed. Please try again.";
-          break;
-        case "/problems/credential-already-exists":
-        case "/problems/user-already-registered":
-          status.textContent =
-            "Already registered. Log in with your existing passkey.";
-          break;
-      }
-    }
   } catch {
     status.dataset.error = "true";
     status.textContent = failureMessage;

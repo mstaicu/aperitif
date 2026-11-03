@@ -1,5 +1,6 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
+import createError from "http-errors";
 
 /**
  * Deletes and returns the challenge. Call before BEGIN.
@@ -17,11 +18,11 @@ export const getAuthenticationChallenge = async (
       authentication.response.clientDataJSON,
     ));
   } catch {
-    throw new Error("INVALID_AUTHENTICATION_RESPONSE");
+    throw new createError.BadRequest();
   }
 
   if (typeof challenge !== "string") {
-    throw new Error("INVALID_AUTHENTICATION_RESPONSE");
+    throw new createError.BadRequest();
   }
 
   const {
@@ -37,7 +38,7 @@ export const getAuthenticationChallenge = async (
   );
 
   if (!challengeRow) {
-    throw new Error("AUTHENTICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   return challengeRow.challenge.toString("base64url");
@@ -83,7 +84,7 @@ export const authenticate = async (
   );
 
   if (!credential) {
-    throw new Error("AUTHENTICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   const expectedHandle = Buffer.from(
@@ -92,7 +93,7 @@ export const authenticate = async (
   ).toString("base64url");
 
   if (authentication.response.userHandle !== expectedHandle) {
-    throw new Error("AUTHENTICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   const { hostname, origin: expectedOrigin } = new URL(origin);
@@ -113,11 +114,11 @@ export const authenticate = async (
       response: authentication,
     });
   } catch {
-    throw new Error("AUTHENTICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   if (!verification.verified) {
-    throw new Error("AUTHENTICATION_FAILED");
+    throw new createError.UnprocessableEntity();
   }
 
   const newCounter = verification.authenticationInfo.newCounter;

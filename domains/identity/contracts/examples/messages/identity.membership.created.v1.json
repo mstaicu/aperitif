@@ -1,0 +1,13 @@
+{
+  "specversion": "1.0",
+  "id": "018f7300-8e2f-7000-8d25-000000000130",
+  "source": "/domains/identity",
+  "type": "identity.membership.created.v1",
+  "time": "2026-10-30T09:00:00.000Z",
+  "data": {
+    "principal_id": "018f7300-8e2f-7000-8d25-4cfe3d258e07",
+    "account_id": "018f7300-8e2f-7000-8d25-4cfe3d258e08",
+    "membership_id": "018f7300-8e2f-7000-8d25-4cfe3d258e10",
+    "roles": ["account.owner"]
+  }
+}

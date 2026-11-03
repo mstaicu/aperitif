@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import example from "../../examples/events/identity.account.snapshot.v1.json" with { type: "json" };
+import example from "../../examples/messages/identity.account.snapshot.v1.json" with { type: "json" };
 import {
   buildAccountSnapshotV1,
   buildAccountV1Subject,
@@ -86,7 +86,7 @@ test("builds the account subject from the resource ID", () => {
   const subject = buildAccountV1Subject(accountId);
 
   // Assert
-  assert.equal(subject, `identity.account.v1.${accountId}`);
+  assert.equal(subject, `identity.state.account.v1.${accountId}`);
 });
 
 test("rejects an invalid account ID instead of constructing a subject", () => {

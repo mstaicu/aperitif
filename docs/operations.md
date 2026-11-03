@@ -171,8 +171,8 @@ Diagnose from infrastructure toward business state:
 kubectl get statefulset,pod,pvc,service -n nats
 kubectl logs -n nats -l app=nats --prefix --since=10m
 kubectl port-forward -n nats service/nats-client 4222:4222
-NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info IDENTITY
-NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders IDENTITY
+NATS_URL=nats://127.0.0.1:4222 nats --no-context stream info IDENTITY_STATE
+NATS_URL=nats://127.0.0.1:4222 nats --no-context consumer report --leaders IDENTITY_STATE
 ```
 
 A growing outbox backlog points to its producer, Relay or NATS. Consumer backlog

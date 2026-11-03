@@ -19,7 +19,7 @@ Identity owns:
 - passkey authentication, sessions, access tokens, and JWKS;
 - accounts and generic memberships;
 - its public HTTP and current-state contracts; and
-- the `IDENTITY` current-state feed.
+- the `IDENTITY_STATE` current-state feed.
 
 New product domains integrate with Identity's APIs and
 `@mstaicu/identity-contracts`. They use `identity.*` NATS subjects.
@@ -33,19 +33,19 @@ Identity's current public state-feed surface is:
 
 ```text
 package: @mstaicu/identity-contracts
-stream:  IDENTITY
+stream:  IDENTITY_STATE
 
-NATS subject: identity.account.v1.<account-id>
+NATS subject: identity.state.account.v1.<account-id>
 type:         identity.account.snapshot.v1
-CloudEvent subject: account/<account-id>
 
-NATS subject: identity.membership.v1.<membership-id>
+NATS subject: identity.state.membership.v1.<membership-id>
 type:         identity.membership.snapshot.v1
-CloudEvent subject: membership/<membership-id>
 ```
 
-The NATS subject is transport metadata. The CloudEvent `subject` is part of the
-event payload; consumers validate both against the contract.
+The NATS subject is transport metadata. Snapshot V1 contracts omit CloudEvent
+`subject` and `time`. Lifecycle events carry source mutation `time` and affected
+entity references in `data`. Consumers validate the individual message contracts
+and actual transport subjects.
 
 ## Consequences
 

@@ -1,7 +1,9 @@
 # Analytics: local deployment and durable NATS consumers
 
-Status: Proposed. Reviewed on 2026-10-30 after the deployment target was
-clarified as local/self-hosted. No workloads have been implemented or started.
+Status: Tool and job choices remain proposals, researched on 2026-10-30.
+The [implemented Analytics domain](../../domains/analytics/README.md) now supplies
+the local PostgreSQL/projector baseline; the proposed names below are not its
+deployment inventory.
 Use the existing local Kubernetes environment as the default placement for
 first-party Analytics workloads. Local hosting does not imply offline model
 inference; that is a separate requirement if selected.
@@ -40,13 +42,20 @@ replacement deployment. No separate ClickHouse is needed for this first slice.
 | Component | Where | Ownership |
 | --- | --- | --- |
 | NATS JetStream | Existing local Kubernetes namespace `nats` | Platform supplies broker; each source owns streams/contracts |
-| OTel/OpenObserve | Existing local Kubernetes namespace `otel` | Platform operational telemetry |
+| OTel/OpenObserve | Existing local Kubernetes namespace `otel` | Platform operates collection/storage; workload owners define health and respond |
 | Analytics PostgreSQL | Local Kubernetes namespace `analytics` | Analytics data, receipts/projections and any owned job state |
 | Migrations and ingestion | `domains/analytics`, namespace `analytics` | Analytics-owned first-party workloads |
 | Long analysis/agent jobs | Local process initially, or bounded Kubernetes Jobs when needed | Analytics analyses, or the repository owner for engineering tasks |
-| PostHog, if retained | Official hobby Compose on an isolated local Linux VM beside the cluster | Analytics operates the whole vendor stack |
+| PostHog, if retained | Official hobby Compose on an isolated local Linux VM beside the cluster | Named service operator; Analytics may operate analytical tools without owning Product release decisions |
 | PostHog MCP, if needed | Separate local service pointing at local PostHog | Analytics/engineering tool integration |
-| GrowthBook, if selected instead | Local Kubernetes app and metadata dependency in `analytics` | Analytics experimentation capability |
+| GrowthBook, if selected instead | Local Kubernetes app and metadata dependency in `analytics` | Named flag/experiment service operator; Product owns treatments and exposure, Analytics supplies methodology and analysis |
+
+Placement is an operational choice, not a business ownership boundary. The same
+team may operate Analytics and a flag service. Workload owners retain release
+and health responsibility; Platform supplies delivery infrastructure. A future
+canary/blue-green controller belongs on that delivery path, separate from
+analytical evidence and Product A/B decisions; see the
+[responsibility map](analytics-platform.md#domain-decision).
 
 In-cluster Analytics workers use `nats://nats-client.nats.svc.cluster.local:4222`
 and OTLP HTTP at `http://otel-collector.otel.svc.cluster.local:4318`.
@@ -85,30 +94,31 @@ The following names are proposed examples, not existing contracts or resources:
 
 | Message | Stream and durable | Handling |
 | --- | --- | --- |
-| Account state | Existing `IDENTITY`; `analytics-identity-accounts-v1`; filter `identity.account.v1.*` | `LastPerSubject` on initial creation; atomic source-version upsert |
-| Membership state | Existing `IDENTITY`; `analytics-identity-memberships-v1`; filter `identity.membership.v1.*` | Same pattern; retain only needed fields |
-| Product deltas/outcomes | Source-owned Limits stream; `analytics-product-outcomes-v1`; exact supported filters | `DeliverAll` or a documented start; receipt and fact/aggregate effects commit together |
+| Account state | Existing `IDENTITY_STATE`; `analytics-identity-accounts-v1`; filter `identity.state.account.v1.*` | `LastPerSubject` on initial creation; atomic source-version upsert |
+| Membership state | Existing `IDENTITY_STATE`; `analytics-identity-memberships-v1`; filter `identity.state.membership.v1.*` | Same pattern; retain only needed fields |
+| Product business events | Source-owned Limits stream; `analytics-product-events-v1`; exact supported filters | `DeliverAll` or a documented start; receipt and fact/aggregate effects commit together |
 | Analytics commands | Analytics-owned WorkQueue stream; `analytics-analysis-commands-v1`; commands addressed to Analytics | Execute a short owned effect or durably admit an owned job before ACK |
 
-The current public inputs implement only Identity state snapshots. Product
-delta/outcome and Analytics command contracts must be introduced with a real
+Current inputs include Identity state snapshots and seven committed lifecycle
+events; see the [message contracts](../../domains/identity/contracts/src/messages).
+Product event and Analytics command contracts must be introduced with a real
 use case. Do not configure consumers against invented subjects and treat them
 as implemented data sources. Source domains retain ownership of their stream
-configuration; Analytics does not take over the `IDENTITY` stream.
+configuration; Analytics does not take over the `IDENTITY_STATE` stream.
 
 Use durable pull consumers with explicit ACK, bounded batches/bytes and measured
 `AckWait`. Validate the pinned producer contract and actual transport subject.
 Resume compatible consumer definitions; fail visibly on an incompatible
 definition rather than deleting/resetting progress automatically.
 
-For **state**, compare resource versions and update in one SQL transaction.
+For **snapshots**, compare resource versions and update in one SQL transaction.
 `LastPerSubject` is initial delivery policy, not a rescan after every restart.
 If the projection database is lost/reset, a fresh/reset consumer is required
 to rebuild it. An old ACK cursor cannot populate an empty table. Current-state
 feeds cannot reconstruct intermediate transitions; current Identity feeds do
 not define deletion history or complete cross-resource bootstrap semantics.
 
-For **deltas**, commit deduplication keyed by `(pipeline, source, id)` and the
+For **business events**, commit deduplication keyed by `(pipeline, source, id)` and the
 required effect together. Keep receipt evidence for the supported replay
 horizon. The relay does not guarantee resource order; noncommutative deltas
 need their own sequencing/gap contract. Source retention limits and supported
@@ -202,16 +212,12 @@ kubectl apply -k platform/cluster/observability/overlays/local
 ```
 
 The existing broker has three servers; source stream replication follows the
-repository's three-replica pattern. After Analytics is implemented, its `up`
-target should start PostgreSQL, run/wait for migrations and start the selected
-workers. A `make -C domains/analytics up` target does not exist yet.
-
-Validate that future domain with `make -C domains/analytics check`, requiring
-a working Docker-compatible runtime. The first data slice proves versioned
-state, duplicate/concurrent delta delivery, commit-before-ACK recovery and
-explicit rebuild. The command slice separately proves admission retry and
-retained job/result recovery. A local query/agent finding can be accepted
-before any PostHog, experiment or automatic release integration.
+repository's three-replica pattern. `make -C domains/analytics up` now starts
+PostgreSQL, migrations and the projector. See the [domain guide](../../domains/analytics/README.md)
+for the current commands and [deployed validation](../analytics-validation.md)
+for exercised replay and projection behavior. The proposed command/job slice
+remains separate from this read-only dataset. A local query/agent finding does
+not require PostHog, experimentation or automatic release integration.
 
 Use local credentials without committing real secrets; never decrypt encrypted
 Secrets in place. Sanitize rendered Secrets before inspection as required by

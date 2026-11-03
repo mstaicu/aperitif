@@ -1,4 +1,5 @@
 import { Type } from "@fastify/type-provider-typebox";
+import createError from "http-errors";
 
 import {
   authenticate,
@@ -7,7 +8,7 @@ import {
 import { listPasskeys } from "../../services/passkeys/list.mjs";
 import { removePasskey } from "../../services/passkeys/remove.mjs";
 import { authenticateAccessToken } from "../../services/sessions/authenticate.mjs";
-import { ProblemResponse } from "../problem-details.mjs";
+import { ErrorResponse } from "../errors.mjs";
 import {
   PasskeyIdParams,
   PasskeysResponse,
@@ -32,10 +33,11 @@ export default async function passkeyManagementRoutes(
         description: "Lists passkeys belonging to the authenticated user.",
         operationId: "listPasskeys",
         response: {
+          "4xx": ErrorResponse,
           200: PasskeysResponse,
-          401: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          401: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "List passkeys",
@@ -67,16 +69,17 @@ export default async function passkeyManagementRoutes(
         operationId: "deletePasskey",
         params: PasskeyIdParams,
         response: {
+          "4xx": ErrorResponse,
           204: Type.Null({
             description: "Passkey removed and all sessions revoked.",
           }),
-          400: ProblemResponse,
-          401: ProblemResponse,
-          404: ProblemResponse,
-          409: ProblemResponse,
-          422: ProblemResponse,
-          500: ProblemResponse,
-          503: ProblemResponse,
+          400: ErrorResponse,
+          401: ErrorResponse,
+          404: ErrorResponse,
+          409: ErrorResponse,
+          422: ErrorResponse,
+          500: ErrorResponse,
+          503: ErrorResponse,
         },
         security: [{ bearerAuth: [] }],
         summary: "Remove passkey",
@@ -109,7 +112,7 @@ export default async function passkeyManagementRoutes(
         });
 
         if (authenticatedPrincipalId !== principalId) {
-          throw new Error("AUTHENTICATION_FAILED");
+          throw new createError.UnprocessableEntity();
         }
 
         await removePasskey({ client }, { id: request.params.id, principalId });

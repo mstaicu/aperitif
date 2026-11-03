@@ -23,7 +23,7 @@ route.
 Membership changes do not change Account state. Identity publishes each membership as a separate current resource with its
 own identifier and monotonic version:
 
-    NATS subject:       identity.membership.v1.{membership-id}
+    NATS subject:       identity.state.membership.v1.{membership-id}
     type:               identity.membership.snapshot.v1
     CloudEvent subject: membership/{membership-id}
     data:    id, account_id, subject_id, role, status, version

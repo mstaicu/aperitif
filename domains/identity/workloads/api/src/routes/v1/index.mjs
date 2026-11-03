@@ -38,16 +38,16 @@ export default async function v1(fastify, { jwks, origin, pool, signingKey }) {
       info: {
         description: `Identity API for passkeys, sessions, accounts, and account memberships.
 
-Errors use application/problem+json with type, title, and status. Match type for a specific reaction; title is human-readable. Unknown types, additional fields, and non-JSON failures must have a generic fallback.
+Errors use application/json with required statusCode, error, and message fields. React to the HTTP status and endpoint; messages are human-readable and must not be parsed as identifiers. Treat unrecognized statuses and non-JSON failures as generic failures.
 
-| Problem type | Status | Consumer reaction |
-| --- | --- | --- |
-| /problems/invalid-access-token | 401 | Obtain a new access token with a valid session; sign in if the session is invalid. |
-| /problems/invalid-session-token | 401 | Sign in again. |
-| /problems/invalid-authorization-header | 401 | Supply the bearer credential required by the endpoint. |
-| /problems/authentication-failed, /problems/registration-verification-failed | 422 | Obtain fresh ceremony options and proof. This does not invalidate an existing session. |
-| /problems/last-authentication-method | 409 | Add another passkey before removing this one. |
-| /problems/credential-already-exists, /problems/user-already-registered | 409 | Sign in with the existing passkey; use authenticated registration to add another. |
+| Status | Consumer reaction |
+| --- | --- |
+| 400 | Correct the request before resubmitting. |
+| 401 | Supply the bearer credential required by this endpoint. Renew an access token using a valid session, or sign in again. |
+| 404 | The requested resource is unavailable to the caller; refresh local state. |
+| 409 | Removing the final authentication method is blocked; add another passkey first. |
+| 422 | The passkey operation could not be completed. Obtain fresh options and proof. Signup may require signing in with an existing passkey instead. Failure causes are not distinguished. |
+| 500, 503 | The operation failed. Do not automatically repeat mutations; their outcome may be unknown. |
 
 Correct malformed requests before resubmitting. After a failed ceremony submission, obtain fresh options and proofs. Do not automatically repeat mutations after a server error or timeout: their outcome may be unknown.`,
         title: "Identity",

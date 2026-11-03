@@ -11,8 +11,6 @@ const pool = new Pool({
   statement_timeout: 5000,
 });
 
-pool.on("error", (err) => console.error(err));
-
 try {
   const jwt = await loadJwtKeys({
     jwksPath: /** @type {string} */ (process.env.JWKS_PATH),
@@ -24,6 +22,16 @@ try {
     origin: /** @type {string} */ (process.env.ORIGIN),
     pool,
   });
+
+  pool.on(
+    "error",
+    /** @param {NodeJS.ErrnoException} error */
+    (error) =>
+      app.log.error(
+        { code: error.code, error: error.name },
+        "database pool error",
+      ),
+  );
 
   await app.listen({ host: "0.0.0.0", port: 3000 });
 

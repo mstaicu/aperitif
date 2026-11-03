@@ -1,5 +1,7 @@
 CREATE TABLE principals (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 
 CREATE TABLE accounts (
@@ -8,9 +10,10 @@ CREATE TABLE accounts (
     name text NOT NULL
         CHECK (char_length(name) BETWEEN 1 AND 160),
 
-    created_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
 
     version bigint NOT NULL DEFAULT 1
+        CHECK (version BETWEEN 1 AND 9007199254740991)
 );
 
 CREATE TABLE account_memberships (
@@ -24,9 +27,10 @@ CREATE TABLE account_memberships (
         REFERENCES principals(id)
         ON DELETE CASCADE,
 
-    created_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
 
-    version bigint NOT NULL DEFAULT 1,
+    version bigint NOT NULL DEFAULT 1
+        CHECK (version BETWEEN 1 AND 9007199254740991),
 
     UNIQUE (account_id, principal_id)
 );
@@ -62,7 +66,7 @@ CREATE TABLE passkey_credentials (
 
     sign_count bigint NOT NULL DEFAULT 0,
 
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 
 CREATE TABLE passkey_registration_challenges (
@@ -89,6 +93,8 @@ CREATE TABLE sessions (
         ON DELETE CASCADE,
 
     token_hash bytea NOT NULL UNIQUE,
+
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
 
     expires_at timestamptz NOT NULL
 );

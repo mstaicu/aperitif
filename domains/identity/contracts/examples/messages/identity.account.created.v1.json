@@ -1,0 +1,11 @@
+{
+  "specversion": "1.0",
+  "id": "018f7300-8e2f-7000-8d25-00000000012f",
+  "source": "/domains/identity",
+  "type": "identity.account.created.v1",
+  "time": "2026-10-30T09:00:00.000Z",
+  "data": {
+    "account_id": "018f7300-8e2f-7000-8d25-4cfe3d258e08",
+    "principal_id": "018f7300-8e2f-7000-8d25-4cfe3d258e07"
+  }
+}

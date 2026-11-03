@@ -136,14 +136,13 @@ async function apiRequest(request: Request, apiUrl: string, path: string) {
   if (!exchange || exchange.status === 401) {
     return Response.json(
       {
-        status: 403,
-        title: "Session required",
-        type: "/problems/session-required",
+        error: "Forbidden",
+        message: "Forbidden",
+        statusCode: 403,
       },
       {
         headers: {
           "Cache-Control": "no-store",
-          "Content-Type": "application/problem+json",
           "Set-Cookie": await sessionCookie.serialize("", { maxAge: 0 }),
         },
         status: 403,
