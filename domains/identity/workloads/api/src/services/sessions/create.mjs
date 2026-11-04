@@ -14,6 +14,7 @@ import { createHash, randomBytes } from "node:crypto";
 export async function createSession({ client, principalId }) {
   const sessionToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(sessionToken).digest();
+
   const {
     rows: [session],
   } = await client.query(
@@ -38,8 +39,10 @@ export async function createSession({ client, principalId }) {
     },
     time: session.created_at.toISOString(),
   });
+
   const headers = { "Content-Type": "application/cloudevents+json" };
   propagation.inject(context.active(), headers);
+
   await client.query(
     `
       INSERT INTO outbox_messages (id, subject, payload, headers)

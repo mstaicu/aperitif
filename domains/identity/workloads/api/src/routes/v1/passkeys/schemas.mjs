@@ -1,13 +1,9 @@
 import { Type } from "@fastify/type-provider-typebox";
 
 import {
-  AuthenticationOptionsResponse,
   AuthenticationResponseJSON,
-  RegistrationOptionsResponse,
   RegistrationResponseJSON,
 } from "./webauthn.schemas.mjs";
-
-export { AuthenticationOptionsResponse, RegistrationOptionsResponse };
 
 const PasskeyName = Type.String({
   description: "Name chosen by the user for this passkey.",
@@ -18,7 +14,6 @@ const PasskeyName = Type.String({
 
 export const RegisterPasskeyBody = Type.Object(
   {
-    authentication: Type.Optional(AuthenticationResponseJSON),
     credential: RegistrationResponseJSON,
     name: Type.Optional(PasskeyName),
   },

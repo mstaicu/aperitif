@@ -2,15 +2,17 @@ import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 import createError from "http-errors";
 
+import { createSession } from "../sessions/create.mjs";
+
 /**
  * Deletes and returns the challenge. Call before BEGIN.
  * @param {{ client: import("pg").PoolClient }} resources
  * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
  */
-export const getAuthenticationChallenge = async (
+export async function consumeAuthenticationChallenge(
   { client },
   authentication,
-) => {
+) {
   let challenge;
 
   try {
@@ -42,19 +44,57 @@ export const getAuthenticationChallenge = async (
   }
 
   return challengeRow.challenge.toString("base64url");
-};
+}
 
 /**
- * Requires the caller's active transaction; holds the principal lock until it ends.
+ * Verifies a single-use passkey proof and creates a session in one transaction.
+ * @param {{ pool: import("pg").Pool, origin: string }} resources
+ * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
+ */
+export async function signInWithPasskey({ origin, pool }, authentication) {
+  const client = await pool.connect();
+
+  try {
+    const challenge = await consumeAuthenticationChallenge(
+      { client },
+      authentication,
+    );
+
+    await client.query("BEGIN");
+
+    const principalId = await verifyPasskey(
+      { client, origin },
+      authentication,
+      challenge,
+    );
+    const session = await createSession({ client, principalId });
+
+    await client.query("COMMIT");
+
+    return session;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Verifies the proof, advances the credential counter and returns its principal.
+ * Requires an active transaction. Holds the principal lock until it ends;
+ * callers must check any required live session after this verification.
  * @param {{ client: import("pg").PoolClient, origin: string }} resources
  * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
  * @param {string} challenge
  */
-export const authenticate = async (
+export async function verifyPasskey(
   { client, origin },
   authentication,
   challenge,
-) => {
+) {
+  const credentialId = Buffer.from(authentication.id, "base64url");
+
   await client.query(
     `
       SELECT id
@@ -66,7 +106,7 @@ export const authenticate = async (
       )
       FOR NO KEY UPDATE
     `,
-    [Buffer.from(authentication.id, "base64url")],
+    [credentialId],
   );
 
   const {
@@ -80,7 +120,7 @@ export const authenticate = async (
       FROM passkey_credentials
       WHERE credential_id = $1
     `,
-    [Buffer.from(authentication.id, "base64url")],
+    [credentialId],
   );
 
   if (!credential) {
@@ -121,16 +161,14 @@ export const authenticate = async (
     throw new createError.UnprocessableEntity();
   }
 
-  const newCounter = verification.authenticationInfo.newCounter;
-
   await client.query(
     `
       UPDATE passkey_credentials
       SET sign_count = $2
       WHERE credential_id = $1
     `,
-    [credential.credential_id, newCounter],
+    [credential.credential_id, verification.authenticationInfo.newCounter],
   );
 
   return /** @type {string} */ (credential.principal_id);
-};
+}

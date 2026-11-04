@@ -1,6 +1,11 @@
 import { Type } from "@fastify/type-provider-typebox";
 
 const NonEmptyString = Type.String({ minLength: 1 });
+const UserVerificationRequirement = Type.Union([
+  Type.Literal("discouraged"),
+  Type.Literal("preferred"),
+  Type.Literal("required"),
+]);
 
 export const RegistrationResponseJSON = Type.Object(
   {
@@ -46,14 +51,32 @@ export const AuthenticationResponseJSON = Type.Object(
 
 export const RegistrationOptionsResponse = Type.Object(
   {
-    attestation: Type.Optional(Type.String()),
+    attestation: Type.Optional(
+      Type.Union([
+        Type.Literal("direct"),
+        Type.Literal("enterprise"),
+        Type.Literal("indirect"),
+        Type.Literal("none"),
+      ]),
+    ),
     authenticatorSelection: Type.Optional(
       Type.Object(
         {
-          authenticatorAttachment: Type.Optional(Type.String()),
+          authenticatorAttachment: Type.Optional(
+            Type.Union([
+              Type.Literal("cross-platform"),
+              Type.Literal("platform"),
+            ]),
+          ),
           requireResidentKey: Type.Optional(Type.Boolean()),
-          residentKey: Type.Optional(Type.String()),
-          userVerification: Type.Optional(Type.String()),
+          residentKey: Type.Optional(
+            Type.Union([
+              Type.Literal("discouraged"),
+              Type.Literal("preferred"),
+              Type.Literal("required"),
+            ]),
+          ),
+          userVerification: Type.Optional(UserVerificationRequirement),
         },
         { additionalProperties: true },
       ),
@@ -77,7 +100,15 @@ export const RegistrationOptionsResponse = Type.Object(
         { additionalProperties: true },
       ),
     ),
-    hints: Type.Optional(Type.Array(Type.String())),
+    hints: Type.Optional(
+      Type.Array(
+        Type.Union([
+          Type.Literal("client-device"),
+          Type.Literal("hybrid"),
+          Type.Literal("security-key"),
+        ]),
+      ),
+    ),
     pubKeyCredParams: Type.Array(
       Type.Object(
         { alg: Type.Integer(), type: Type.Literal("public-key") },
@@ -115,7 +146,7 @@ export const AuthenticationOptionsResponse = Type.Object(
         minimum: 0,
       }),
     ),
-    userVerification: Type.Optional(Type.String()),
+    userVerification: Type.Optional(UserVerificationRequirement),
   },
   {
     additionalProperties: true,

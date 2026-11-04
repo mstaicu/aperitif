@@ -14,10 +14,10 @@ export const CredentialRemovedV1Schema = Type.Object(
   {
     data: Type.Object(
       {
-        credential_ref: {
+        credential_id: {
           ...UuidSchema,
           description:
-            "Internal opaque credential reference. Never a WebAuthn credential ID, key, label, secret or bearer capability.",
+            "Opaque credential record ID. Never a WebAuthn credential ID, key, label, secret or bearer capability.",
         },
         principal_id: {
           ...UuidSchema,

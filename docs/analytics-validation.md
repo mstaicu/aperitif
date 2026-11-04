@@ -1,6 +1,198 @@
 # Local analytics validation
 
-## Current baseline: contracts 0.7.0
+## Session-authorized passkey addition: 2026-11-04
+
+Deployed only the Identity API with the split signup/addition workflows and
+session-authorized addition. Existing databases, streams and Analytics workloads
+were preserved. Registration accepts only the new credential response and optional
+name; an Authorization header selects addition to the authenticated principal.
+Signup and credential removal retain their existing behavior. The UI proxy already
+forwards this registration-only body.
+
+The Identity domain check, nine generated-client checks and nine isolated
+PostgreSQL regression scenarios passed. The regression verified zero authentication
+ceremonies for addition, single-use registration challenges, invalid-session and
+cross-principal rejection, anonymous completion rejection for an existing
+principal's challenge, duplicate prevention, verifier failures, atomic fact rollback,
+and a live-session check after waiting for a concurrent principal lock. WebAuthn
+verification was mocked in those isolated scenarios.
+
+With real Chromium WebAuthn through Traefik, all 87 normal API expectations passed
+across all ten operations. The addition required one fewer request than the previous
+88-case journey because it no longer requested authentication options.
+
+**Confirmed security impact:** a separate 20-request exercise copied a valid bearer
+token belonging to a fresh synthetic principal into requests associated with a
+different browser authenticator. That authenticator could enroll its own key
+without the original key, sign in after the original session was logged out, and
+use its newly enrolled key to authorize removal of the original key. The original
+key then failed sign-in. The synthetic attacker sessions were logged out afterward.
+This demonstrated persistent account takeover after assumed bearer compromise;
+it did not discover a token-exfiltration vulnerability or involve existing users.
+
+The former existing-key proof blocked this escalation. The deployed session-only
+policy intentionally removes that protection and is not equally resistant to
+session theft. [OWASP recommends recent reauthentication for passkey enrollment](https://cheatsheetseries.owasp.org/cheatsheets/Passkey_Security_Cheat_Sheet.html).
+A recent-session requirement could narrow the exposure window, but would still
+accept a stolen session while it remained recent; it is not equivalent to fresh
+existing-key proof on every credential change.
+
+The two live exercises emitted 34 correct business facts, all matching complete
+broker envelopes, source times and successful-request trace context in Analytics.
+Seven credential facts exposed matching `credential_id` values. The outbox and
+all three consumer backlogs were empty. These records describe operations accepted
+by the current authorization policy; they do not establish the human owner's intent.
+
+## Contracts 0.8.0: local rollout, 2026-11-04
+
+Deployed Identity API and Analytics projector with the manually published
+contracts `0.8.0`. Both running containers reported that version and passed
+readiness. The reporting view now exposes `credential_id`.
+
+The user approved resetting Identity, Analytics and Identity's two NATS streams.
+Only those databases and `IDENTITY_STATE`/`IDENTITY_EVENTS` were reset. Normal
+migration Jobs initialized the fresh datasets; PostgreSQL Pods and shared
+infrastructure were preserved. Retention was suspended during the reset and
+restored afterward. An empty database/stream baseline was verified before traffic.
+
+All 88 public HTTP expectations passed with real browser WebAuthn, covering all
+ten business operations. Analytics stored exactly 24 valid facts: two principal
+registrations, five account creations, five membership creations, three credential
+additions, one removal, five session establishments and three revocations. Their
+complete broker envelopes, credential UUIDs, source times and HTTP observations
+matched. All 34 event/snapshot deliveries retained trace context and message IDs.
+
+Ten snapshots matched five source Accounts and five Memberships, including names,
+roles, timestamps and versions. The fresh projections have no stale rows. The
+reporting reader exposed all four credential facts under `credential_id` and
+could not read the raw ledger. The outbox and all three consumer backlogs were
+empty. New-fact ingestion lag was 521–708 ms in this local functional sample.
+
+Docker Desktop disk pressure initially prevented migration Pods from scheduling.
+Removing approximately 22.1 GB of unused build cache cleared the taint and both
+migrations completed. The requested cleanup also removed 70 identified project
+build containers, three obsolete project image tags and unused image layers.
+Running images, current deployment images, networks and active volumes were
+preserved. Two unreferenced PostgreSQL volumes were retained because ownership
+could not be established. The temporary NATS port-forward was closed.
+
+## Contracts 0.8.0: source verification, 2026-11-04
+
+Identity API and Analytics projector dependencies and lockfiles now pin the
+manually published `0.8.0`. Credential events and the reporting view use
+`credential_id` for the credential record UUID. Both domain checks passed;
+installed credential contract modules matched the reviewed package source.
+
+An isolated PostgreSQL check exercised Identity routes and passed 13 resulting
+outbox facts through the actual Analytics projector. All five credential facts
+exposed the correct reporting ID. Reprocessing preserved stored rows and ingestion
+times. Legacy `credential_ref` payloads were rejected. WebAuthn verification was
+mocked; broker delivery and a cluster rollout were not exercised in this check.
+
+This pre-live change updates V1 in place. Existing retained credential messages
+use the old shape, and the deployed reporting view still has its old column.
+A rollout must coordinate those datasets with the new contract and V001 schema;
+this update did not reset or deploy the local workloads.
+
+## Passkey workflow refactor: 2026-11-04
+
+Deployed the current Identity API to `docker-desktop` through its existing
+Skaffold module. PostgreSQL, migrations, shared infrastructure, retained messages
+and existing Analytics data were preserved. No contract publication was needed;
+the API and projector use the published contracts `0.7.0`.
+
+Three agents independently reviewed deployment safety, public API journeys and
+data/telemetry semantics. Two real Chromium WebAuthn journeys passed **127 HTTP
+expectations**, covering all ten business operations, JWKS, OpenAPI UI/JSON/YAML,
+the Identity UI and an unknown API route. An additional nine generated-client
+checks passed against the deployed public API; its regenerated types compiled.
+The deployed OpenAPI document is unchanged by the refactor. Documentation assets
+returned 200. Internal API liveness/readiness and projector readiness returned
+200; health endpoints remain unavailable through public ingress.
+
+The scenarios exercised signup, independent sessions, multiple devices,
+credential addition/removal, explicit logout, account ownership isolation,
+overlapping account creation and token minting, malformed requests, proof replay,
+cross-principal authorization and final-credential protection. The extra journey
+also verified JWT signatures against public JWKS, rejected tampered/unsigned
+tokens, admitted exactly one of two simultaneous logins using the same proof,
+and preserved one usable credential during simultaneous opposing removals.
+Both Identity and Analytics domain checks passed.
+
+### Business facts and projections
+
+| Event | Expected | Stored |
+| --- | ---: | ---: |
+| Principal registered | 4 | 4 |
+| Account created | 5 | 5 |
+| Membership created | 5 | 5 |
+| Credential added | 6 | 6 |
+| Credential removed | 2 | 2 |
+| Session established | 9 | 9 |
+| Session revoked | 7 | 7 |
+
+All **38** complete envelopes validated against the published contracts and
+matched JetStream payloads, exact subjects, message IDs and source mutation
+times. Rejected operations, reads, options and access-token minting contributed
+no business facts. Adding a credential created no session. Each successful
+removal emitted revocations for its two live sessions, with their shared mutation
+time. Two sessions remained from these journeys.
+
+Ten new snapshots matched the five Account and five Membership projections,
+including source creation dates, names, ownership roles and resource versions.
+Source row deltas matched the public operations. The outbox was empty and all
+three durable consumers had zero pending deliveries and acknowledgements.
+The reporting reader role saw the correct typed totals and could not read the
+raw ledger. Deployed stream settings matched the source JSON. The pre-existing
+504 facts, their ingestion timestamps and all prior projections were unchanged.
+The ledger ended at 542 unique facts and 1,022 retained event deliveries; this
+run introduced 38 deliveries, with no replay exercise in this run.
+
+### Operational telemetry
+
+OpenObserve contained matching statuses for all 127 traced requests: 126 Identity
+API SERVER spans and one Identity UI SERVER span. The inspected traces contained
+1,247 spans across Traefik, Identity, the relay, projector and UI, all carrying
+Kubernetes namespace metadata. All 38 new business facts were correlated with
+their successful originating request and the exact relay-to-projector parent
+span. The ten snapshots also had publish/project spans.
+
+New-fact ingestion lag was 29–1,030 ms, with p95 1,026 ms. API SERVER span duration
+p50 was 1.47 ms and p95 35.23 ms. These are short local functional samples, not
+capacity measurements or production latency promises. A field/pattern scan of
+the 1,247 spans and 296 logs found no credential/proof fields, JWT/private-key
+patterns, HTTP bodies or database bind parameters. It does not prove absence of
+arbitrary opaque secret values. Temporary browser contexts and the OpenObserve
+port-forward were closed.
+
+### Findings and analytical usefulness
+
+- **Existing local dataset mismatch:** before this deployment, Analytics already
+  retained 105 Account and 105 Membership projections while Identity contained
+  five of each. The 100 extra rows in each projection survived earlier ephemeral
+  source resets. These views describe latest observed resources; global totals
+  do not establish current source inventory. This verification is scoped to its
+  four new principals. Future intentional dataset resets need coordinated source,
+  retained-state and projection lifecycle management. No reset was performed.
+- **API metrics scope:** Identity exports traces but disables metrics export.
+  Trace queries supported request/status/latency checks here. Dedicated API SLOs
+  need HTTP metrics or an explicit trace-to-metrics policy that accounts for
+  sampling; the observed Traefik metrics are not dedicated Identity API metrics.
+- **Useful facts have specific meanings:** these events support observed Identity
+  lifecycle counts, registration-to-account timing, credential adoption and
+  session establishment/revocation histories. Authentication sessions are not
+  analytical visits, revocation is not necessarily logout, and sign-in has no
+  invented Account attribution. These facts alone do not measure unsuccessful
+  attempts, abandonment, product activity/retention, unique humans or experiment
+  effects. Those require facts from the relevant product/workflow owner.
+
+No API or event correctness regression was found in these scenarios. Validation
+used virtual authenticators, modest concurrency and local HTTP ingress. It did
+not test production TLS/hardware authenticators, infrastructure failure, long
+expiry windows or sustained load. Temporary runners stayed outside the
+repository; this deployment added no packages or permanent test fixtures.
+
+## Contracts 0.7.0: initial baseline
 
 Deployed on 2026-11-02 using the manually published registry package. Both
 Identity and Analytics domain checks passed. Installed contract modules and

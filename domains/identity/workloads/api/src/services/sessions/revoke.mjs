@@ -13,8 +13,10 @@ import { createHash } from "node:crypto";
 export const revokeSession = async ({ pool }, { session_token }) => {
   if (!session_token || typeof session_token !== "string")
     throw new createError.Unauthorized();
+
   const tokenHash = createHash("sha256").update(session_token).digest();
   const client = await pool.connect();
+
   try {
     await client.query("BEGIN");
     const {
@@ -33,7 +35,9 @@ export const revokeSession = async ({ pool }, { session_token }) => {
       `,
       [tokenHash],
     );
+
     if (!session) throw new createError.Unauthorized();
+
     const event = buildSessionRevokedV1({
       data: {
         principal_id: session.principal_id,
@@ -41,8 +45,10 @@ export const revokeSession = async ({ pool }, { session_token }) => {
       },
       time: session.occurred_at.toISOString(),
     });
+
     const headers = { "Content-Type": "application/cloudevents+json" };
     propagation.inject(context.active(), headers);
+
     await client.query(
       `
         INSERT INTO outbox_messages (id, subject, payload, headers)
@@ -50,6 +56,7 @@ export const revokeSession = async ({ pool }, { session_token }) => {
       `,
       [event.id, SessionRevokedV1Subject, event, headers],
     );
+
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});

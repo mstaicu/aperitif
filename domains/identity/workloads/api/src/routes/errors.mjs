@@ -3,14 +3,22 @@ import createError from "http-errors";
 import { STATUS_CODES } from "node:http";
 import { DatabaseError } from "pg";
 
-export const ErrorResponse = Type.Object(
-  {
-    error: Type.String(),
-    message: Type.String(),
-    statusCode: Type.Integer({ maximum: 599, minimum: 400 }),
+export const ErrorResponse = {
+  ...Type.Object(
+    {
+      error: Type.String(),
+      message: Type.String(),
+      statusCode: Type.Integer({ maximum: 599, minimum: 400 }),
+    },
+    { additionalProperties: false },
+  ),
+  headers: {
+    "Cache-Control": {
+      enum: ["no-store"],
+      type: "string",
+    },
   },
-  { additionalProperties: false },
-);
+};
 
 /**
  * @param {import("fastify").FastifyError} error

@@ -13,10 +13,10 @@ export const CredentialAddedV1Schema = Type.Object(
   {
     data: Type.Object(
       {
-        credential_ref: {
+        credential_id: {
           ...UuidSchema,
           description:
-            "Internal opaque credential reference. Never a WebAuthn credential ID, key, label, secret or bearer capability.",
+            "Opaque credential record ID. Never a WebAuthn credential ID, key, label, secret or bearer capability.",
         },
         principal_id: {
           ...UuidSchema,
@@ -49,7 +49,7 @@ export const CredentialAddedV1Schema = Type.Object(
   {
     additionalProperties: false,
     description:
-      "One verified passkey added, including the first passkey. The opaque credential reference is not a WebAuthn credential ID or key.",
+      "One verified passkey added, including the first passkey. The credential record ID is not a WebAuthn credential ID or key.",
     title: type,
   },
 );

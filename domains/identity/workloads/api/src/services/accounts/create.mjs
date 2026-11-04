@@ -97,16 +97,6 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
 
     propagation.inject(context.active(), headers);
 
-    // Replace pending snapshots in the resource transaction, including on create
-    // so producers can follow the same pattern when implementing updates.
-    await client.query(
-      `
-        DELETE FROM outbox_messages
-        WHERE subject IN ($1, $2)
-      `,
-      [accountSnapshotSubject, membershipSnapshotSubject],
-    );
-
     await client.query(
       `
         INSERT INTO outbox_messages (id, subject, payload, headers)

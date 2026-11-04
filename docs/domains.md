@@ -85,13 +85,20 @@ the exact commit instant or eventual publication time. Each message has its own
 stable ID. `data.principal_id` references the principal involved in the fact;
 for Account creation it is the creator. These implemented operations are
 self-service, so a duplicate actor field adds no information.
+Credential facts use `data.credential_id` for the credential record's UUID,
+distinct from the WebAuthn protocol credential identifier.
 The minimum contains no operation grouping ID or duplicate resource `subject`.
 Entity references support lifecycle joins; they do not prove that facts came from
 one operation. Trace context travels in transport headers.
 
 Signup produces principal, credential and session events. A later successful
-authentication also establishes a session. Step-up proof and access-token minting
-do not establish sessions. Credential removal reports each
+authentication also establishes a session. Adding a passkey requires a valid live
+session and the new credential's registration response, with no separate
+authentication ceremony. It emits a credential-added event without creating a
+session. A valid session is sufficient enrollment authority; no recent-authentication
+requirement is implemented. A stolen live bearer can therefore enroll a lasting
+credential. Fresh authentication proof for removal and access-token minting do not
+establish sessions. Credential removal reports each
 affected unexpired session. Natural expiry/cleanup is not explicit revocation.
 Initial membership roles are represented once in membership creation.
 

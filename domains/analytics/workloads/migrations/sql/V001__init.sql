@@ -50,7 +50,7 @@ SELECT source, id AS event_id, type, occurred_at, ingested_at,
        event->'data'->>'principal_id' AS principal_id,
        (event->'data'->>'account_id')::uuid AS account_id,
        (event->'data'->>'membership_id')::uuid AS membership_id,
-       (event->'data'->>'credential_ref')::uuid AS credential_ref,
+       (event->'data'->>'credential_id')::uuid AS credential_id,
        (event->'data'->>'session_id')::uuid AS session_id,
        (event->'data'->>'expires_at')::timestamptz AS expires_at,
        event->'data' AS data
