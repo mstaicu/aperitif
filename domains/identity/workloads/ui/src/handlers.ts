@@ -22,12 +22,49 @@ const session = s.object({
   session_token: s.string().pipe(minLength(1)),
 });
 
-export function addPasskey(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys/add");
+export function completePasskeyAddition(request: Request, apiUrl: string) {
+  return apiRequest(request, apiUrl, "/passkeys/addition");
+}
+
+export async function completePasskeyRemoval(
+  request: Request,
+  apiUrl: string,
+  id: string,
+) {
+  const response = await apiRequest(
+    request,
+    apiUrl,
+    `/passkeys/${encodeURIComponent(id)}/removal`,
+  );
+
+  if (response.status === 204) {
+    response.headers.set(
+      "Set-Cookie",
+      await sessionCookie.serialize("", { maxAge: 0 }),
+    );
+  }
+
+  return response;
 }
 
 export function createAccount(request: Request, apiUrl: string) {
   return apiRequest(request, apiUrl, "/accounts");
+}
+
+export function createPasskeyAdditionOptions(request: Request, apiUrl: string) {
+  return apiRequest(request, apiUrl, "/passkeys/addition/options");
+}
+
+export function createPasskeyRemovalOptions(
+  request: Request,
+  apiUrl: string,
+  id: string,
+) {
+  return apiRequest(
+    request,
+    apiUrl,
+    `/passkeys/${encodeURIComponent(id)}/removal/options`,
+  );
 }
 
 export function listAccounts(request: Request, apiUrl: string) {
@@ -78,43 +115,6 @@ export async function logout(request: Request, apiUrl: string) {
     },
     status: 303,
   });
-}
-
-export function passkeyAdditionOptions(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys/add/options");
-}
-
-export function passkeyRemovalOptions(
-  request: Request,
-  apiUrl: string,
-  id: string,
-) {
-  return apiRequest(
-    request,
-    apiUrl,
-    `/passkeys/${encodeURIComponent(id)}/remove/options`,
-  );
-}
-
-export async function removePasskey(
-  request: Request,
-  apiUrl: string,
-  id: string,
-) {
-  const response = await apiRequest(
-    request,
-    apiUrl,
-    `/passkeys/${encodeURIComponent(id)}/remove`,
-  );
-
-  if (response.status === 204) {
-    response.headers.set(
-      "Set-Cookie",
-      await sessionCookie.serialize("", { maxAge: 0 }),
-    );
-  }
-
-  return response;
 }
 
 export function signup(request: Request, apiUrl: string) {

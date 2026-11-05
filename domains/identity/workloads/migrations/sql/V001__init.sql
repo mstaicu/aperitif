@@ -53,7 +53,7 @@ CREATE TABLE account_membership_roles (
 CREATE TABLE passkey_credentials (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    credential_id bytea NOT NULL UNIQUE,
+    credential_id text NOT NULL UNIQUE,
 
     principal_id uuid NOT NULL
         REFERENCES principals(id)
@@ -70,7 +70,7 @@ CREATE TABLE passkey_credentials (
 );
 
 CREATE TABLE passkey_registration_challenges (
-    challenge bytea PRIMARY KEY,
+    challenge text PRIMARY KEY,
 
     principal_id uuid NOT NULL,
 
@@ -79,7 +79,7 @@ CREATE TABLE passkey_registration_challenges (
 );
 
 CREATE TABLE passkey_authentication_challenges (
-    challenge bytea PRIMARY KEY,
+    challenge text PRIMARY KEY,
 
     expires_at timestamptz NOT NULL
         DEFAULT now() + INTERVAL '2 minutes'
@@ -113,15 +113,21 @@ CREATE TABLE outbox_messages (
 
 -- Separate ceremony contexts prevent a login or signup proof authorizing credential changes.
 CREATE TABLE passkey_addition_challenges (
-    authentication_challenge bytea PRIMARY KEY,
-    registration_challenge bytea NOT NULL UNIQUE,
+    authentication_challenge text PRIMARY KEY,
+
+    registration_challenge text NOT NULL UNIQUE,
+
     session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+
     expires_at timestamptz NOT NULL DEFAULT now() + INTERVAL '2 minutes'
 );
 
 CREATE TABLE passkey_removal_challenges (
-    challenge bytea PRIMARY KEY,
-    session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    challenge text PRIMARY KEY,
+
     credential_id uuid NOT NULL REFERENCES passkey_credentials(id) ON DELETE CASCADE,
+
+    session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+
     expires_at timestamptz NOT NULL DEFAULT now() + INTERVAL '2 minutes'
 );

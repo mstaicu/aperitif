@@ -15,7 +15,7 @@ import { authenticateAccessToken } from "../sessions/authenticate.mjs";
  * @param {{ pool: import("pg").Pool, origin: string, jwks: import("jose").JWTVerifyGetKey }} resources
  * @param {{ id: string, authentication: import("@simplewebauthn/server").AuthenticationResponseJSON, authorization?: string }} args
  */
-export async function removePasskey(
+export async function completePasskeyRemoval(
   { jwks, origin, pool },
   { authentication, authorization, id },
 ) {
@@ -29,8 +29,6 @@ export async function removePasskey(
     throw new createError.BadRequest();
   }
 
-  if (typeof challenge !== "string") throw new createError.BadRequest();
-
   // Consume before the transaction so failure cannot restore the removal proof.
   const {
     rows: [attempt],
@@ -40,7 +38,7 @@ export async function removePasskey(
       WHERE challenge = $1 AND credential_id = $2 AND expires_at > clock_timestamp()
       RETURNING session_id
     `,
-    [Buffer.from(challenge, "base64url"), id],
+    [challenge, id],
   );
 
   if (!attempt) throw new createError.UnprocessableEntity();
@@ -49,8 +47,6 @@ export async function removePasskey(
 
   try {
     await client.query("BEGIN");
-
-    const credentialId = Buffer.from(authentication.id, "base64url");
 
     await client.query(
       `
@@ -63,7 +59,7 @@ export async function removePasskey(
         )
         FOR NO KEY UPDATE
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     const {
@@ -77,17 +73,16 @@ export async function removePasskey(
         FROM passkey_credentials
         WHERE credential_id = $1
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     if (!storedCredential) {
       throw new createError.UnprocessableEntity();
     }
 
-    const expectedHandle = Buffer.from(
-      storedCredential.principal_id.replace(/-/g, ""),
-      "hex",
-    ).toString("base64url");
+    const expectedHandle = Buffer.from(storedCredential.principal_id).toString(
+      "base64url",
+    );
 
     if (authentication.response.userHandle !== expectedHandle) {
       throw new createError.UnprocessableEntity();
@@ -98,13 +93,12 @@ export async function removePasskey(
     const authenticationVerification = await verifyAuthenticationResponse({
       credential: {
         counter: Number(storedCredential.sign_count),
-        id: storedCredential.credential_id.toString("base64url"),
+        id: storedCredential.credential_id,
         publicKey: new Uint8Array(storedCredential.public_key),
       },
       expectedChallenge: challenge,
       expectedOrigin,
       expectedRPID: hostname,
-      requireUserVerification: true,
       response: authentication,
     }).catch(() => {
       throw new createError.UnprocessableEntity();

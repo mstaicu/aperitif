@@ -61,16 +61,16 @@ app.post("/identity/accounts", ({ request }) =>
 app.get("/identity/passkeys", ({ request }) =>
   handlers.listPasskeys(request, apiUrl),
 );
-app.post("/identity/passkeys/add/options", ({ request }) =>
-  handlers.passkeyAdditionOptions(request, apiUrl),
+app.post("/identity/passkeys/addition/options", ({ request }) =>
+  handlers.createPasskeyAdditionOptions(request, apiUrl),
 );
-app.post("/identity/passkeys/add", ({ request }) =>
-  handlers.addPasskey(request, apiUrl),
+app.post("/identity/passkeys/addition", ({ request }) =>
+  handlers.completePasskeyAddition(request, apiUrl),
 );
-app.post("/identity/passkeys/:id/remove", ({ params, request }) =>
-  handlers.removePasskey(request, apiUrl, params.id),
+app.post("/identity/passkeys/:id/removal", ({ params, request }) =>
+  handlers.completePasskeyRemoval(request, apiUrl, params.id),
 );
 
-app.post("/identity/passkeys/:id/remove/options", ({ params, request }) =>
-  handlers.passkeyRemovalOptions(request, apiUrl, params.id),
+app.post("/identity/passkeys/:id/removal/options", ({ params, request }) =>
+  handlers.createPasskeyRemovalOptions(request, apiUrl, params.id),
 );

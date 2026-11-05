@@ -181,10 +181,10 @@ Temporary evidence:
 
 This is the current deployment. It supersedes the session-only addition policy
 recorded below. Registration and authentication retain their public names for
-signup and login. Addition uses `POST /v1/passkeys/add/options` and
-`POST /v1/passkeys/add`; removal uses
-`POST /v1/passkeys/:id/remove/options` and
-`POST /v1/passkeys/:id/remove`. No authorize endpoint is needed.
+signup and login. Addition uses `POST /v1/passkeys/addition/options` and
+`POST /v1/passkeys/addition`; removal uses
+`POST /v1/passkeys/:id/removal/options` and
+`POST /v1/passkeys/:id/removal`. No authorize endpoint is needed.
 
 Addition options return `{ authentication, registration }`. Completion accepts
 `{ authentication, credential, name? }`. The existing key proves authorization;

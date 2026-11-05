@@ -2,7 +2,7 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
 import accountsRoutes from "./accounts/routes.mjs";
-import passkeyAdditionRoutes from "./passkeys/add.mjs";
+import passkeyAdditionRoutes from "./passkeys/addition.mjs";
 import passkeyAuthenticationRoutes from "./passkeys/authentication.mjs";
 import passkeyManagementRoutes from "./passkeys/management.mjs";
 import passkeyRegistrationRoutes from "./passkeys/registration.mjs";
@@ -40,7 +40,9 @@ export default async function v1(fastify, { jwks, origin, pool, signingKey }) {
       info: {
         description: `Identity API for passkeys, sessions, accounts, and account memberships.
 
-Errors use application/json with required statusCode, error, and message fields. React to the HTTP status and endpoint; messages are human-readable and must not be parsed as identifiers. Treat unrecognized statuses and non-JSON failures as generic failures.`,
+Errors use application/json with required statusCode, error, and message fields. React to the HTTP status and endpoint; messages are human-readable and must not be parsed as identifiers. Treat unrecognized statuses and non-JSON failures as generic failures.
+
+400 means malformed input; correct it before requesting fresh options. 401 requires a valid live session or access token, as specified by the operation's security scheme. 422 means the WebAuthn proof or attempt was rejected; causes are intentionally indistinguishable. Proofs are single-use, including after failed verification: request fresh options and repeat the ceremonies. Options and read requests may be repeated. A mutation's outcome may be unknown after a timeout, 500, or 503; do not automatically replay it. Follow the operation's recovery instructions.`,
         title: "Identity",
         version: "v1",
       },
@@ -56,7 +58,7 @@ Errors use application/json with required statusCode, error, and message fields.
         },
         {
           description:
-            "Passkey signup, authentication, and credential management",
+            "Passkey registration, authentication, addition, and removal",
           name: "passkeys",
         },
         {

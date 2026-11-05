@@ -14,12 +14,12 @@ const PasskeyName = Type.String({
   pattern: "^(?=[\\s\\S]*\\S)[^\\u0000]+$",
 });
 
-export const RegisterPasskeyBody = Type.Object(
+export const PasskeyRegistrationBody = Type.Object(
   {
-    credential: RegistrationResponseJSON,
     name: Type.Optional(PasskeyName),
+    registration: RegistrationResponseJSON,
   },
-  { additionalProperties: false },
+  { additionalProperties: false, title: "PasskeyRegistrationBody" },
 );
 
 export const Passkey = Type.Object(
@@ -31,6 +31,7 @@ export const Passkey = Type.Object(
   {
     additionalProperties: false,
     description: "Passkey management metadata.",
+    title: "Passkey",
   },
 );
 
@@ -38,34 +39,29 @@ export const PasskeyIdParams = Type.Object(
   {
     id: Type.String({ format: "uuid" }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false, title: "PasskeyIdParams" },
 );
 
 export const PasskeysResponse = Type.Object(
   {
     passkeys: Type.Array(Passkey),
   },
-  { additionalProperties: false },
+  { additionalProperties: false, title: "PasskeysResponse" },
 );
 
-export const RemovePasskeyBody = Type.Object(
-  { authentication: AuthenticationResponseJSON },
-  { additionalProperties: false },
-);
-
-export const AddPasskeyBody = Type.Object(
+export const PasskeyAdditionBody = Type.Object(
   {
     authentication: AuthenticationResponseJSON,
-    credential: RegistrationResponseJSON,
     name: Type.Optional(PasskeyName),
+    registration: RegistrationResponseJSON,
   },
-  { additionalProperties: false },
+  { additionalProperties: false, title: "PasskeyAdditionBody" },
 );
 
-export const AdditionOptionsResponse = Type.Object(
+export const PasskeyAdditionOptionsResponse = Type.Object(
   {
     authentication: AuthenticationOptionsResponse,
     registration: RegistrationOptionsResponse,
   },
-  { additionalProperties: false },
+  { additionalProperties: false, title: "PasskeyAdditionOptionsResponse" },
 );

@@ -14,29 +14,19 @@ import { authenticateAccessToken } from "../sessions/authenticate.mjs";
 
 /**
  * @param {{ pool: import("pg").Pool, origin: string, jwks: import("jose").JWTVerifyGetKey }} resources
- * @param {{ authorization?: string, authentication: import("@simplewebauthn/server").AuthenticationResponseJSON, credential: import("@simplewebauthn/server").RegistrationResponseJSON, name?: string }} args
+ * @param {{ authorization?: string, authentication: import("@simplewebauthn/server").AuthenticationResponseJSON, registration: import("@simplewebauthn/server").RegistrationResponseJSON, name?: string }} args
  */
-export async function addPasskey(
+export async function completePasskeyAddition(
   { jwks, origin, pool },
-  { authentication, authorization, credential, name = "Passkey" },
+  { authentication, authorization, name = "Passkey", registration },
 ) {
-  let authenticationChallenge, registrationChallenge;
+  let authenticationChallenge;
 
   try {
     authenticationChallenge = decodeClientDataJSON(
       authentication.response.clientDataJSON,
     ).challenge;
-    registrationChallenge = decodeClientDataJSON(
-      credential.response.clientDataJSON,
-    ).challenge;
   } catch {
-    throw new createError.BadRequest();
-  }
-
-  if (
-    typeof authenticationChallenge !== "string" ||
-    typeof registrationChallenge !== "string"
-  ) {
     throw new createError.BadRequest();
   }
 
@@ -46,41 +36,34 @@ export async function addPasskey(
   } = await pool.query(
     `
       DELETE FROM passkey_addition_challenges
-      WHERE authentication_challenge = $1 AND registration_challenge = $2
+      WHERE authentication_challenge = $1
         AND expires_at > clock_timestamp()
-      RETURNING session_id
+      RETURNING registration_challenge, session_id
     `,
-    [
-      Buffer.from(authenticationChallenge, "base64url"),
-      Buffer.from(registrationChallenge, "base64url"),
-    ],
+    [authenticationChallenge],
   );
 
   if (!attempt) throw new createError.UnprocessableEntity();
 
   const { hostname, origin: expectedOrigin } = new URL(origin);
-  let verification;
 
-  try {
-    verification = await verifyRegistrationResponse({
-      expectedChallenge: registrationChallenge,
-      expectedOrigin,
-      expectedRPID: hostname,
-      requireUserVerification: true,
-      response: credential,
-    });
-  } catch {
+  const verification = await verifyRegistrationResponse({
+    expectedChallenge: attempt.registration_challenge,
+    expectedOrigin,
+    expectedRPID: hostname,
+    response: registration,
+  }).catch(() => {
+    throw new createError.UnprocessableEntity();
+  });
+
+  if (!verification.verified) {
     throw new createError.UnprocessableEntity();
   }
-
-  if (!verification.verified) throw new createError.UnprocessableEntity();
 
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-
-    const credentialId = Buffer.from(authentication.id, "base64url");
 
     await client.query(
       `
@@ -93,7 +76,7 @@ export async function addPasskey(
         )
         FOR NO KEY UPDATE
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     const {
@@ -107,17 +90,16 @@ export async function addPasskey(
         FROM passkey_credentials
         WHERE credential_id = $1
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     if (!storedCredential) {
       throw new createError.UnprocessableEntity();
     }
 
-    const expectedHandle = Buffer.from(
-      storedCredential.principal_id.replace(/-/g, ""),
-      "hex",
-    ).toString("base64url");
+    const expectedHandle = Buffer.from(storedCredential.principal_id).toString(
+      "base64url",
+    );
 
     if (authentication.response.userHandle !== expectedHandle) {
       throw new createError.UnprocessableEntity();
@@ -126,13 +108,12 @@ export async function addPasskey(
     const authenticationVerification = await verifyAuthenticationResponse({
       credential: {
         counter: Number(storedCredential.sign_count),
-        id: storedCredential.credential_id.toString("base64url"),
+        id: storedCredential.credential_id,
         publicKey: new Uint8Array(storedCredential.public_key),
       },
       expectedChallenge: authenticationChallenge,
       expectedOrigin,
       expectedRPID: hostname,
-      requireUserVerification: true,
       response: authentication,
     }).catch(() => {
       throw new createError.UnprocessableEntity();
@@ -153,6 +134,7 @@ export async function addPasskey(
         authenticationVerification.authenticationInfo.newCounter,
       ],
     );
+
     const principalId = storedCredential.principal_id;
 
     // Recheck the live session after acquiring the principal lock.
@@ -169,20 +151,27 @@ export async function addPasskey(
     }
 
     const verifiedCredential = verification.registrationInfo.credential;
+
     const {
       rows: [passkey],
     } = await client.query(
       `
-        INSERT INTO passkey_credentials (principal_id, credential_id, name, public_key, sign_count)
+        INSERT INTO passkey_credentials (
+          principal_id,
+          credential_id,
+          name,
+          public_key,
+          sign_count
+        )
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (credential_id) DO NOTHING
         RETURNING id, created_at
       `,
       [
         principalId,
-        Buffer.from(verifiedCredential.id, "base64url"),
+        verifiedCredential.id,
         name,
-        Buffer.from(verifiedCredential.publicKey),
+        verifiedCredential.publicKey,
         verifiedCredential.counter,
       ],
     );
@@ -199,7 +188,9 @@ export async function addPasskey(
 
     await client.query(
       `
-        INSERT INTO outbox_messages (id, subject, payload, headers)
+        INSERT INTO outbox_messages (
+          id, subject, payload, headers
+        )
         VALUES ($1, $2, $3::jsonb, $4::jsonb)
       `,
       [credentialAdded.id, CredentialAddedV1Subject, credentialAdded, headers],

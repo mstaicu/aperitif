@@ -1,6 +1,5 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import createError from "http-errors";
-import { randomBytes } from "node:crypto";
 
 import { authenticateAccessToken } from "../sessions/authenticate.mjs";
 
@@ -8,7 +7,7 @@ import { authenticateAccessToken } from "../sessions/authenticate.mjs";
  * @param {{ origin: string, pool: import("pg").Pool, jwks: import("jose").JWTVerifyGetKey }} resources
  * @param {{ authorization?: string, id: string }} args
  */
-export async function createRemovalOptions(
+export async function createPasskeyRemovalOptions(
   { jwks, origin, pool },
   { authorization, id },
 ) {
@@ -17,11 +16,18 @@ export async function createRemovalOptions(
     { authorization },
   );
 
-  const challenge = randomBytes(32);
+  const options = await generateAuthenticationOptions({
+    rpID: new URL(origin).hostname,
+    userVerification: "required",
+  });
 
   const { rowCount } = await pool.query(
     `
-      INSERT INTO passkey_removal_challenges (challenge, session_id, credential_id)
+      INSERT INTO passkey_removal_challenges (
+        challenge,
+        session_id,
+        credential_id
+      )
       SELECT $1, sessions.id, passkey_credentials.id
       FROM passkey_credentials
       JOIN sessions ON sessions.principal_id = passkey_credentials.principal_id
@@ -31,14 +37,10 @@ export async function createRemovalOptions(
         AND sessions.expires_at > clock_timestamp()
       FOR KEY SHARE OF passkey_credentials, sessions
     `,
-    [challenge, session.id, id, session.principal_id],
+    [options.challenge, session.id, id, session.principal_id],
   );
 
   if (!rowCount) throw new createError.NotFound();
 
-  return generateAuthenticationOptions({
-    challenge,
-    rpID: new URL(origin).hostname,
-    userVerification: "required",
-  });
+  return options;
 }

@@ -1,11 +1,13 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
-import { randomBytes } from "node:crypto";
 
 /**
  * @param {{ origin: string, pool: import("pg").Pool }} resources
  */
-export const createAuthenticationOptions = async ({ origin, pool }) => {
-  const challenge = randomBytes(32);
+export async function createPasskeyAuthenticationOptions({ origin, pool }) {
+  const options = await generateAuthenticationOptions({
+    rpID: new URL(origin).hostname,
+    userVerification: "required",
+  });
 
   await pool.query(
     `
@@ -14,12 +16,8 @@ export const createAuthenticationOptions = async ({ origin, pool }) => {
       )
       VALUES ($1)
     `,
-    [challenge],
+    [options.challenge],
   );
 
-  return generateAuthenticationOptions({
-    challenge,
-    rpID: new URL(origin).hostname,
-    userVerification: "required",
-  });
-};
+  return options;
+}

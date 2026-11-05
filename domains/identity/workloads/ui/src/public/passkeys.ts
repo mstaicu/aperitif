@@ -38,7 +38,9 @@ form.addEventListener("submit", async (event) => {
         : await startAuthentication({ optionsJSON });
 
       response = await fetch(form.action, {
-        body: JSON.stringify(registration ? { credential } : credential),
+        body: JSON.stringify(
+          registration ? { registration: credential } : credential,
+        ),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });

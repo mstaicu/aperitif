@@ -109,10 +109,19 @@ Passkey workflows have explicit routes under `/v1/passkeys`:
 | `POST /v1/passkeys/authentication/options` | Login authentication options. |
 | `POST /v1/passkeys/authentication` | Verify a passkey and create a session. |
 | `GET /v1/passkeys` | List the caller's passkeys. |
-| `POST /v1/passkeys/add/options` | Paired existing-key authentication and new-key registration options. |
-| `POST /v1/passkeys/add` | Verify both responses from that pair using the originating live session. |
-| `POST /v1/passkeys/:id/remove/options` | Authentication options bound to this credential and session. |
-| `POST /v1/passkeys/:id/remove` | Verify proof, preserve the final credential, remove the target and revoke sessions. |
+| `POST /v1/passkeys/addition/options` | Paired existing-key authentication and new-key registration options. |
+| `POST /v1/passkeys/addition` | Verify both responses from that pair using the originating live session. |
+| `POST /v1/passkeys/:id/removal/options` | Authentication options bound to this credential and session. |
+| `POST /v1/passkeys/:id/removal` | Verify proof, preserve the final credential, remove the target and revoke sessions. |
+
+Signup accepts `{ registration, name? }`; addition accepts
+`{ authentication, registration, name? }`. Login and removal accept the raw
+WebAuthn authentication response. Options and responses use SimpleWebAuthn's JSON
+representations directly. Service names and OpenAPI operation IDs use
+`createPasskey<Operation>Options` and `completePasskey<Operation>`, where Operation
+is Registration, Authentication, Addition or Removal. Services take dependencies
+first and operation input second. Authentication accepts the raw response;
+addition/removal options accept the bearer credential as `authorization`.
 
 Registration always means signup; an Authorization header never turns it into
 addition. Signup, login, addition and removal use separate pending challenge
@@ -121,6 +130,13 @@ expire after two minutes and are single-use. Credential changes and logout
 serialize on the principal; required live-session checks use current database
 time after acquiring that lock. Failed verification consumes the matched attempt,
 while a failed business transaction rolls back credential changes and their facts.
+
+WebAuthn credential identifiers and challenges are stored as base64url text;
+public keys remain binary, counters remain bigint, and credential record IDs
+remain UUIDs. SimpleWebAuthn generates the challenges. Addition consumes the
+authentication attempt and verifies the registration response against that
+attempt's stored registration challenge. This keeps the two proofs bound without
+parsing the registration client data twice. Rate limiting belongs to Cloudflare.
 
 Fresh authentication proof for credential changes and access-token minting do
 not establish sessions. Credential removal reports each affected unexpired

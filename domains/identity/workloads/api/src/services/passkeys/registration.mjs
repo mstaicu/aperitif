@@ -14,25 +14,21 @@ import { createSession } from "../sessions/create.mjs";
 /**
  * Creates a principal, its first passkey and a session atomically.
  * @param {{ pool: import("pg").Pool, origin: string }} resources
- * @param {{ credential: import("@simplewebauthn/server").RegistrationResponseJSON, name?: string }} args
+ * @param {{ registration: import("@simplewebauthn/server").RegistrationResponseJSON, name?: string }} args
  */
-export async function registerWithPasskey(
+export async function completePasskeyRegistration(
   { origin, pool },
-  { credential, name = "Passkey" },
+  { name = "Passkey", registration },
 ) {
   let challenge;
 
   try {
-    ({ challenge } = decodeClientDataJSON(credential.response.clientDataJSON));
+    ({ challenge } = decodeClientDataJSON(
+      registration.response.clientDataJSON,
+    ));
   } catch {
     throw new createError.BadRequest();
   }
-
-  if (typeof challenge !== "string") {
-    throw new createError.BadRequest();
-  }
-
-  const challengeBytes = Buffer.from(challenge, "base64url");
 
   // Consume before the transaction so a failed registration cannot restore its proof.
   const {
@@ -44,7 +40,7 @@ export async function registerWithPasskey(
         AND expires_at > NOW()
       RETURNING principal_id
     `,
-    [challengeBytes],
+    [challenge],
   );
 
   if (!registrationChallenge) {
@@ -54,11 +50,10 @@ export async function registerWithPasskey(
   const { hostname, origin: expectedOrigin } = new URL(origin);
 
   const verification = await verifyRegistrationResponse({
-    expectedChallenge: challengeBytes.toString("base64url"),
+    expectedChallenge: challenge,
     expectedOrigin,
     expectedRPID: hostname,
-    requireUserVerification: true,
-    response: credential,
+    response: registration,
   }).catch(() => {
     throw new createError.UnprocessableEntity();
   });
@@ -78,15 +73,10 @@ export async function registerWithPasskey(
       `
         INSERT INTO principals (id)
         VALUES ($1)
-        ON CONFLICT DO NOTHING
         RETURNING id, created_at
       `,
       [registrationChallenge.principal_id],
     );
-
-    if (!principal) {
-      throw new createError.UnprocessableEntity();
-    }
 
     const verifiedCredential = verification.registrationInfo.credential;
 
@@ -101,9 +91,9 @@ export async function registerWithPasskey(
       `,
       [
         principal.id,
-        Buffer.from(verifiedCredential.id, "base64url"),
+        verifiedCredential.id,
         name,
-        Buffer.from(verifiedCredential.publicKey),
+        verifiedCredential.publicKey,
         verifiedCredential.counter,
       ],
     );

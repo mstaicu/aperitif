@@ -7,11 +7,11 @@ import { createSession } from "../sessions/create.mjs";
 /**
  * Authenticates an existing passkey and creates a session atomically.
  * @param {{ origin: string, pool: import("pg").Pool }} resources
- * @param {{ authentication: import("@simplewebauthn/server").AuthenticationResponseJSON }} args
+ * @param {import("@simplewebauthn/server").AuthenticationResponseJSON} authentication
  */
-export async function authenticateWithPasskey(
+export async function completePasskeyAuthentication(
   { origin, pool },
-  { authentication },
+  authentication,
 ) {
   let challenge;
 
@@ -23,12 +23,6 @@ export async function authenticateWithPasskey(
     throw new createError.BadRequest();
   }
 
-  if (typeof challenge !== "string") {
-    throw new createError.BadRequest();
-  }
-
-  const challengeBytes = Buffer.from(challenge, "base64url");
-
   // Consume before the transaction so a failed authentication cannot restore its proof.
   const { rowCount } = await pool.query(
     `
@@ -36,7 +30,7 @@ export async function authenticateWithPasskey(
       WHERE challenge = $1
         AND expires_at > NOW()
     `,
-    [challengeBytes],
+    [challenge],
   );
 
   if (!rowCount) {
@@ -47,8 +41,6 @@ export async function authenticateWithPasskey(
 
   try {
     await client.query("BEGIN");
-
-    const credentialId = Buffer.from(authentication.id, "base64url");
 
     await client.query(
       `
@@ -61,7 +53,7 @@ export async function authenticateWithPasskey(
         )
         FOR NO KEY UPDATE
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     const {
@@ -75,17 +67,16 @@ export async function authenticateWithPasskey(
         FROM passkey_credentials
         WHERE credential_id = $1
       `,
-      [credentialId],
+      [authentication.id],
     );
 
     if (!storedCredential) {
       throw new createError.UnprocessableEntity();
     }
 
-    const expectedHandle = Buffer.from(
-      storedCredential.principal_id.replace(/-/g, ""),
-      "hex",
-    ).toString("base64url");
+    const expectedHandle = Buffer.from(storedCredential.principal_id).toString(
+      "base64url",
+    );
 
     if (authentication.response.userHandle !== expectedHandle) {
       throw new createError.UnprocessableEntity();
@@ -96,13 +87,12 @@ export async function authenticateWithPasskey(
     const authenticationVerification = await verifyAuthenticationResponse({
       credential: {
         counter: Number(storedCredential.sign_count),
-        id: storedCredential.credential_id.toString("base64url"),
+        id: storedCredential.credential_id,
         publicKey: new Uint8Array(storedCredential.public_key),
       },
-      expectedChallenge: challengeBytes.toString("base64url"),
+      expectedChallenge: challenge,
       expectedOrigin,
       expectedRPID: hostname,
-      requireUserVerification: true,
       response: authentication,
     }).catch(() => {
       throw new createError.UnprocessableEntity();
