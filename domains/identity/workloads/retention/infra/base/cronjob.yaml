@@ -34,6 +34,12 @@ spec:
                   DELETE FROM passkey_authentication_challenges
                   WHERE expires_at < NOW() - INTERVAL '10 minutes';
 
+                  DELETE FROM passkey_addition_challenges
+                  WHERE expires_at < NOW() - INTERVAL '10 minutes';
+
+                  DELETE FROM passkey_removal_challenges
+                  WHERE expires_at < NOW() - INTERVAL '10 minutes';
+
                   DELETE FROM sessions
                   WHERE expires_at <= NOW();
                   SQL

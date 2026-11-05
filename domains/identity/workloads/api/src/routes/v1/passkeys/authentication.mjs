@@ -1,5 +1,5 @@
 import { createAuthenticationOptions } from "../../../services/passkeys/authentication-options.mjs";
-import { signInWithPasskey } from "../../../services/passkeys/authentication.mjs";
+import { authenticateWithPasskey } from "../../../services/passkeys/authentication.mjs";
 import { ErrorResponse } from "../../errors.mjs";
 import { SessionResponse } from "../sessions/schemas.mjs";
 import {
@@ -57,7 +57,10 @@ export default async function authenticationRoutes(fastify, { origin, pool }) {
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
 
-      const session = await signInWithPasskey({ origin, pool }, request.body);
+      const session = await authenticateWithPasskey(
+        { origin, pool },
+        { authentication: request.body },
+      );
 
       return reply.code(200).send(session);
     },

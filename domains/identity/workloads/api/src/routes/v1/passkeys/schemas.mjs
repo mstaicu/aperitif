@@ -1,7 +1,9 @@
 import { Type } from "@fastify/type-provider-typebox";
 
 import {
+  AuthenticationOptionsResponse,
   AuthenticationResponseJSON,
+  RegistrationOptionsResponse,
   RegistrationResponseJSON,
 } from "./webauthn.schemas.mjs";
 
@@ -48,5 +50,22 @@ export const PasskeysResponse = Type.Object(
 
 export const RemovePasskeyBody = Type.Object(
   { authentication: AuthenticationResponseJSON },
+  { additionalProperties: false },
+);
+
+export const AddPasskeyBody = Type.Object(
+  {
+    authentication: AuthenticationResponseJSON,
+    credential: RegistrationResponseJSON,
+    name: Type.Optional(PasskeyName),
+  },
+  { additionalProperties: false },
+);
+
+export const AdditionOptionsResponse = Type.Object(
+  {
+    authentication: AuthenticationOptionsResponse,
+    registration: RegistrationOptionsResponse,
+  },
   { additionalProperties: false },
 );

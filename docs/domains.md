@@ -92,15 +92,40 @@ Entity references support lifecycle joins; they do not prove that facts came fro
 one operation. Trace context travels in transport headers.
 
 Signup produces principal, credential and session events. A later successful
-authentication also establishes a session. Adding a passkey requires a valid live
-session and the new credential's registration response, with no separate
-authentication ceremony. It emits a credential-added event without creating a
-session. A valid session is sufficient enrollment authority; no recent-authentication
-requirement is implemented. A stolen live bearer can therefore enroll a lasting
-credential. Fresh authentication proof for removal and access-token minting do not
-establish sessions. Credential removal reports each
-affected unexpired session. Natural expiry/cleanup is not explicit revocation.
-Initial membership roles are represented once in membership creation.
+authentication also establishes a session. Adding a passkey requires a live
+session, existing-key authentication proof and new-key registration proof. It
+emits only a credential-added event. The two challenges are stored together,
+bound to the originating session, and consumed once before the mutation
+transaction. Both expire after two minutes. Another session for the same
+principal cannot use the attempt; refreshing an access token for the same
+session does not change that binding.
+
+Passkey workflows have explicit routes under `/v1/passkeys`:
+
+| Route | Purpose |
+| --- | --- |
+| `POST /v1/passkeys/registration/options` | First-passkey registration options for a new principal. |
+| `POST /v1/passkeys/registration` | Create the principal, first passkey and session. |
+| `POST /v1/passkeys/authentication/options` | Login authentication options. |
+| `POST /v1/passkeys/authentication` | Verify a passkey and create a session. |
+| `GET /v1/passkeys` | List the caller's passkeys. |
+| `POST /v1/passkeys/add/options` | Paired existing-key authentication and new-key registration options. |
+| `POST /v1/passkeys/add` | Verify both responses from that pair using the originating live session. |
+| `POST /v1/passkeys/:id/remove/options` | Authentication options bound to this credential and session. |
+| `POST /v1/passkeys/:id/remove` | Verify proof, preserve the final credential, remove the target and revoke sessions. |
+
+Registration always means signup; an Authorization header never turns it into
+addition. Signup, login, addition and removal use separate pending challenge
+contexts. Login proofs cannot authorize credential changes. Removal challenges
+expire after two minutes and are single-use. Credential changes and logout
+serialize on the principal; required live-session checks use current database
+time after acquiring that lock. Failed verification consumes the matched attempt,
+while a failed business transaction rolls back credential changes and their facts.
+
+Fresh authentication proof for credential changes and access-token minting do
+not establish sessions. Credential removal reports each affected unexpired
+session. Natural expiry/cleanup is not explicit revocation. Initial membership
+roles are represented once in membership creation.
 
 The Identity API and Analytics projector use the published contracts package.
 The stream/subject names shown here are deployed locally. Publication remains

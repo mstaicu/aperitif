@@ -24,7 +24,11 @@ export const revokeSession = async ({ pool }, { session_token }) => {
     } = await client.query(
       `
         WITH locked AS MATERIALIZED (
-          SELECT id FROM sessions WHERE token_hash = $1 FOR UPDATE
+          SELECT sessions.id
+          FROM sessions
+          JOIN principals ON principals.id = sessions.principal_id
+          WHERE token_hash = $1
+          FOR NO KEY UPDATE OF principals
         ), mutation AS MATERIALIZED (
           SELECT id, clock_timestamp() AS occurred_at FROM locked
         )

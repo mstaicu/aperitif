@@ -5,13 +5,11 @@ import {
   SessionRevokedV1Subject,
 } from "@mstaicu/identity-contracts";
 import { context, propagation } from "@opentelemetry/api";
+import { verifyAuthenticationResponse } from "@simplewebauthn/server";
+import { decodeClientDataJSON } from "@simplewebauthn/server/helpers";
 import createError from "http-errors";
 
 import { authenticateAccessToken } from "../sessions/authenticate.mjs";
-import {
-  consumeAuthenticationChallenge,
-  verifyPasskey,
-} from "./authentication.mjs";
 
 /**
  * @param {{ pool: import("pg").Pool, origin: string, jwks: import("jose").JWTVerifyGetKey }} resources
@@ -21,28 +19,125 @@ export async function removePasskey(
   { jwks, origin, pool },
   { authentication, authorization, id },
 ) {
+  let challenge;
+
+  try {
+    ({ challenge } = decodeClientDataJSON(
+      authentication.response.clientDataJSON,
+    ));
+  } catch {
+    throw new createError.BadRequest();
+  }
+
+  if (typeof challenge !== "string") throw new createError.BadRequest();
+
+  // Consume before the transaction so failure cannot restore the removal proof.
+  const {
+    rows: [attempt],
+  } = await pool.query(
+    `
+      DELETE FROM passkey_removal_challenges
+      WHERE challenge = $1 AND credential_id = $2 AND expires_at > clock_timestamp()
+      RETURNING session_id
+    `,
+    [Buffer.from(challenge, "base64url"), id],
+  );
+
+  if (!attempt) throw new createError.UnprocessableEntity();
+
   const client = await pool.connect();
 
   try {
-    const challenge = await consumeAuthenticationChallenge(
-      { client },
-      authentication,
-    );
-
     await client.query("BEGIN");
 
-    const passkeyPrincipalId = await verifyPasskey(
-      { client, origin },
-      authentication,
-      challenge,
+    const credentialId = Buffer.from(authentication.id, "base64url");
+
+    await client.query(
+      `
+        SELECT id
+        FROM principals
+        WHERE id = (
+          SELECT principal_id
+          FROM passkey_credentials
+          WHERE credential_id = $1
+        )
+        FOR NO KEY UPDATE
+      `,
+      [credentialId],
     );
-    const principalId = await authenticateAccessToken({
-      authorization,
-      jwks,
-      pool: client,
+
+    const {
+      rows: [storedCredential],
+    } = await client.query(
+      `
+        SELECT principal_id,
+          credential_id,
+          public_key,
+          sign_count
+        FROM passkey_credentials
+        WHERE credential_id = $1
+      `,
+      [credentialId],
+    );
+
+    if (!storedCredential) {
+      throw new createError.UnprocessableEntity();
+    }
+
+    const expectedHandle = Buffer.from(
+      storedCredential.principal_id.replace(/-/g, ""),
+      "hex",
+    ).toString("base64url");
+
+    if (authentication.response.userHandle !== expectedHandle) {
+      throw new createError.UnprocessableEntity();
+    }
+
+    const { hostname, origin: expectedOrigin } = new URL(origin);
+
+    const authenticationVerification = await verifyAuthenticationResponse({
+      credential: {
+        counter: Number(storedCredential.sign_count),
+        id: storedCredential.credential_id.toString("base64url"),
+        publicKey: new Uint8Array(storedCredential.public_key),
+      },
+      expectedChallenge: challenge,
+      expectedOrigin,
+      expectedRPID: hostname,
+      requireUserVerification: true,
+      response: authentication,
+    }).catch(() => {
+      throw new createError.UnprocessableEntity();
     });
 
-    if (passkeyPrincipalId !== principalId) {
+    if (!authenticationVerification.verified) {
+      throw new createError.UnprocessableEntity();
+    }
+
+    await client.query(
+      `
+        UPDATE passkey_credentials
+        SET sign_count = $2
+        WHERE credential_id = $1
+      `,
+      [
+        storedCredential.credential_id,
+        authenticationVerification.authenticationInfo.newCounter,
+      ],
+    );
+    const passkeyPrincipalId = storedCredential.principal_id;
+
+    const session = await authenticateAccessToken(
+      { jwks, pool: client },
+      { authorization },
+    );
+
+    const principalId = session.principal_id;
+
+    if (
+      session.id !== attempt.session_id ||
+      passkeyPrincipalId !== principalId
+    ) {
       throw new createError.UnprocessableEntity();
     }
 
@@ -92,6 +187,7 @@ export async function removePasskey(
     propagation.inject(context.active(), headers);
 
     const time = new Date(removed.occurred_at).toISOString();
+
     const credentialRemovedEvent = buildCredentialRemovedV1({
       data: {
         credential_id: removed.id,
@@ -99,6 +195,7 @@ export async function removePasskey(
       },
       time,
     });
+
     await client.query(
       `
         INSERT INTO outbox_messages (id, subject, payload, headers)
@@ -111,7 +208,10 @@ export async function removePasskey(
         headers,
       ],
     );
-    for (const session of sessions.filter((session) => session.active)) {
+
+    for (const session of sessions) {
+      if (!session.active) continue;
+
       const sessionRevokedEvent = buildSessionRevokedV1({
         data: {
           principal_id: principalId,
@@ -119,6 +219,7 @@ export async function removePasskey(
         },
         time,
       });
+
       await client.query(
         `
           INSERT INTO outbox_messages (id, subject, payload, headers)

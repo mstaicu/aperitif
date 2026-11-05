@@ -1,5 +1,292 @@
 # Local analytics validation
 
+## Direct library calls correction: 2026-11-04
+
+Removed the thin `buildRegistrationOptions`, `readChallenge` and
+`verifyRegistration` wrappers after a second service review. Signup and addition
+call `generateRegistrationOptions` and `verifyRegistrationResponse` directly;
+workflows call `decodeClientDataJSON` directly. The SDK supplies its existing
+60-second timeout, no-attestation and empty-exclusion defaults. Remaining shared
+functions own database/domain behavior. Required domain checks, sixteen isolated
+regression scenarios and 138 real browser/API requests passed. Generated OpenAPI
+is unchanged and the expected 36 lifecycle events plus ten snapshots were
+validated in an isolated database. This correction has not been redeployed.
+
+
+## Service refactor deployed: 2026-11-04
+
+Deployed the previously verified service refactor to Docker Desktop, updating
+only Identity API. The observed deployment image is `ghcr.io/mstaicu/identity-api:296252a48220868f987c8152d5b599f776783e03019782b4720aeed44ca80d49`.
+Databases, streams, shared infrastructure and UI were preserved.
+
+Through public Traefik interfaces, 151 checks passed: 87 public API, 51 security
+and 13 UI proxy requests. This covers registration, authentication, addition,
+removal, all thirteen business operations, replay, altered cryptographic proofs,
+cross-principal/session binding, concurrent removals and session revocation.
+The live generated OpenAPI document is exactly unchanged.
+
+Analytics received exactly 44 expected lifecycle facts and ten state snapshots.
+Source fields, IDs, roles and timestamps match their projections; broker envelopes
+and trace headers match the ledger. All 239 existing event records and their
+ingestion timestamps retained their fingerprints. Forty-six rejected requests
+emitted zero success facts. The outbox is empty, all three consumers have zero
+pending/unacknowledged messages, and reporting access succeeds.
+
+OpenObserve matched all 151 application response statuses, all 54 relay/projector
+message pairs, and the 44 fact trace IDs. Browser contexts and the temporary
+OpenObserve forward were closed. These are local functional checks using
+software authenticators, not physical biometric-prompt or load measurements.
+Full temporary evidence: `/private/tmp/aperitif-service-deploy-report.json`.
+
+
+## Service simplification verification: 2026-11-04
+
+Reviewed all Identity service functions and their callers. Removed single-caller
+login/signup challenge-consumption helpers; each workflow now consumes its own
+challenge explicitly before BEGIN. Five duplicated client-data decoding blocks
+use one small shared reader. Transaction and verification services consistently
+accept dependencies first and named inputs second. The shared registration
+options builder has no database dependency; signup no longer queries credentials
+for a new principal. Account services return resource data and routes add the
+HTTP response envelopes. Shared verification, persistence and session creation
+remain explicit; no transaction wrapper, service factory or generic repository
+was added.
+
+`make -C domains/identity check` passed. A temporary HTTP API with isolated
+PostgreSQL passed 138 real browser/API requests (87 normal and 51 security),
+covering all thirteen business operations. Sixteen isolated regression scenarios
+also passed, including terminal proof consumption, rollback and lock ordering;
+those scenarios stub cryptographic verification, while browser requests used the
+real verifier. The generated OpenAPI document is exactly unchanged. The source
+outbox contained the expected 36 typed lifecycle events and ten snapshots, with
+resource timestamps and remaining credentials/sessions matching successful
+operations. The temporary checker initially used CommonJS resolution for the
+ESM-only contracts package; correcting that checker import completed validation
+without repeating browser mutations. Temporary server and database were removed.
+
+This refactor was subsequently deployed and validated as recorded above.
+Existing wire contracts, routes, schema and security policy are unchanged.
+
+
+## Executed passkey addition comparison: 2026-11-04
+
+Three agents independently reviewed the current implementation and ran three
+actual addition implementations. Alternatives B and C ran as disposable Fastify
+HTTP servers with separate PostgreSQL databases, Chromium virtual authenticators
+and real SimpleWebAuthn cryptographic verification. Their source and runners
+remain outside the repository. A ran through the deployed Traefik/API/UI and
+Analytics pipeline. No package installation, contract publication, production
+schema change or dataset reset was needed for this comparison.
+
+### Measured flows
+
+Counts below are direct API requests starting with a valid access token. Browser
+ceremonies are WebAuthn operations, not measured physical biometric prompts.
+
+| Implementation | Normal addition requests | Browser ceremonies | Copied fresh bearer alone can enroll a lasting key? |
+| --- | ---: | ---: | --- |
+| A: current paired authentication/registration responses | 2 | 2 | No, rejected in the exercised attack. |
+| B1: recent-login policy, already fresh session | 2 | 1 | Yes, within the ten-minute policy window. |
+| B2: client always runs existing login before B's addition | 5 | 2 | Yes, the client login sequence can be bypassed. |
+| C: authorize existing-key proof before returning registration options | 3 | 2 | No, rejected in the exercised attack. |
+
+B1 and B2 are two client journeys against the same B implementation. B2 calls
+`authentication/options`, `authentication`, `session/access-tokens`, `add/options`
+and `add`. The existing login endpoint returns an opaque session token, so the
+new access-token exchange must be counted. A UI proxy can hide that exchange
+from browser-facing requests; it does not eliminate the underlying operation.
+B2 creates another session; A and C add a key without creating a session.
+
+B's freshness checks use existing `sessions.created_at` at both addition endpoints,
+including after the principal lock at completion. A fresh JWT minted from an aged
+session still fails. Its 45 HTTP checks covered eleven scenarios, including
+single-use/session-bound challenges, expiry, concurrent replay, rollback and
+freshness during a lock wait. Nevertheless, a copied fresh bearer bypassed the
+client's login steps, enrolled an attacker-controlled credential and successfully
+logged in after the victim logged out. This is the policy's exposure window,
+not a missing freshness check. B produced exactly 14 transactional facts.
+
+C passed 51 HTTP checks, including registration, login, addition, authorization
+and registration replay, cross-session attempts, copied bearer/foreign-key proof,
+actual browser cancellation, expiry, invalid registration, outbox rollback,
+targeted removal, final-key protection and revocation. It produced exactly
+14 lifecycle facts. A single pending table stores a nonce, session, authorization
+phase and expiry. C rejects a bad existing-key proof before new-key creation,
+preventing an unenrolled local key on that particular failure branch. Final
+registration/transaction failure can still leave an unenrolled local key.
+It adds an endpoint and round trip; it does not reduce browser ceremonies.
+
+A's independent first deployment run passed 151 HTTP/browser checks, including
+real-verifier rejection of altered existing-key and registration responses,
+mixed pairs, wrong principal selection, cross-session use, proof replay,
+copied-bearer enrollment and opposing removals. A can create a local key before
+rejecting an invalid existing-key proof. Its options also currently allow the
+browser to offer another principal's credential; the server safely rejects that
+selection. These are remaining UX limitations, not enrollment bypasses.
+
+### Decision and correction
+
+Retain A for the existing requirement of per-addition existing-key proof without
+an extra authorization endpoint. Among these implementations it uses the fewest
+requests while rejecting the tested fresh-bearer attack. B is a legitimate
+recent-authentication policy with better fresh-login UX, but has different theft
+resistance. C offers earlier rejection at the cost of another phase. Tests do
+not establish a universally best design, hardware interoperability, or an exact
+number of biometric prompts.
+
+The review reproduced a separate real race in A: logout could delete the session
+between authenticating an options request and inserting its pending challenge,
+causing FK23503/HTTP500. Updated only addition/removal options SQL to select and
+key-share-lock the live referenced rows during the insert. The corresponding
+race now gives a controlled 401 or 404. Completion retains its existing live
+session and principal checks. Sixteen isolated PostgreSQL scenarios passed,
+including rollback, expiry during lock waits, concurrent replay, logout ordering,
+the reproduced races and compatible credential/session lock ordering. These
+isolated scenarios stubbed WebAuthn verification; all browser runs used the real
+verifier. Challenge TTL is checked when admitting/consuming the proof; it is not
+a promise of commit within two minutes after a potentially long database wait.
+
+### Final rollout verification
+
+`make -C domains/identity check` passed after the fix. Built and deployed only the
+Identity API, preserving UI routes, contracts, databases, broker streams and
+shared infrastructure. The final verified image is
+`ghcr.io/mstaicu/identity-api:0ae7bf08b8d7afef66e001a5cf10b3cb602b71fd924f0b603596f117a8c3f1ae`.
+
+The final independent run passed 151 checks: 87 public API, 51 security and
+13 UI proxy requests. All thirteen business operations were exercised. Its
+44 facts and ten snapshots matched source identities, roles and timestamps;
+46 rejected requests emitted zero success facts. All 195 events present at the
+new baseline retained their envelope/ingestion-time fingerprints. Outbox was
+empty and all three durable consumers had zero pending/unacknowledged messages.
+OpenObserve matched all 151 application response statuses, 54 relay/projector
+message pairs and all 44 fact trace IDs. The disposable comparison database and
+all candidate servers, browser contexts and temporary forwards were stopped.
+
+Temporary evidence:
+
+- A: `/private/tmp/aperitif-agent-browser-final-report.json` and
+  `/private/tmp/aperitif-agent-browser-{live,security,ui}-results.json`.
+- A sink/telemetry: `/private/tmp/aperitif-agent-browser-sink-results.json` and
+  `/private/tmp/aperitif-agent-browser-telemetry-results.json`.
+- B source, runner, results and README:
+  `/private/tmp/aperitif-candidate-b-20261104/`.
+- C source patch, runner, results and report:
+  `/private/tmp/aperitif-candidate-c-1793812866/`.
+- Isolated regression: `/private/tmp/aperitif-passkey-comparison-regression.mjs`
+  and `/private/tmp/aperitif-passkey-comparison-regression.log`.
+
+
+## Paired-proof passkey management: 2026-11-04
+
+This is the current deployment. It supersedes the session-only addition policy
+recorded below. Registration and authentication retain their public names for
+signup and login. Addition uses `POST /v1/passkeys/add/options` and
+`POST /v1/passkeys/add`; removal uses
+`POST /v1/passkeys/:id/remove/options` and
+`POST /v1/passkeys/:id/remove`. No authorize endpoint is needed.
+
+Addition options return `{ authentication, registration }`. Completion accepts
+`{ authentication, credential, name? }`. The existing key proves authorization;
+the new key proves its registration. Both challenges belong to one persisted
+pair bound to the originating session, with a two-minute expiry. Removal has a
+separate challenge bound to the selected credential and originating session.
+Signup and login challenges cannot authorize credential changes. Failed matched
+attempts remain consumed even when the business transaction rolls back.
+
+This follows [OWASP's passkey lifecycle guidance](https://cheatsheetseries.owasp.org/cheatsheets/Passkey_Security_Cheat_Sheet.html)
+on recent authentication and binding registration to an authorized account.
+The two browser ceremonies follow WebAuthn's distinct
+[registration and authentication protocols](https://www.w3.org/TR/webauthn-3/).
+The particular routes and pending-challenge tables are implementation choices.
+
+### Deployment
+
+Built and deployed Identity API, UI and migration images on Docker Desktop;
+updated challenge retention. The published business message package remains
+`@mstaicu/identity-contracts@0.8.0`. No package publication or distribution changes
+were needed. API and UI are ready, and Flyway validates both existing migrations.
+
+V001 contains the two new pending-challenge tables. For this pre-live local
+instance, applied only those additive CREATE TABLE statements in a transaction,
+after confirming V001's recorded checksum matched the committed baseline, and
+updated only its checksum to the amended source. The rebuilt migration Job then
+validated successfully. No database, stream, projection dataset or shared
+infrastructure was reset.
+
+### Verification
+
+The final deployed API passed:
+
+- 85 checked public requests, exercising all 13 documented business operations,
+  JWKS, documentation, account isolation, multiple sessions, two devices,
+  passkey management and replay failures.
+- 45 browser security requests. A copied bearer plus an attacker-created key
+  cannot enroll that key. Its attempt to authorize itself fails, and that
+  unenrolled key cannot log in. Mixed challenge pairs, cross-session attempts,
+  and proofs submitted to another workflow are rejected. Two opposing removals
+  return 204 and 422; one usable credential remains and all affected sessions
+  lose authority.
+- 13 UI requests using real browser WebAuthn ceremonies and HttpOnly session
+  cookies, including addition, targeted removal, cookie invalidation, login and
+  logout. JWT refresh between proxy calls preserves the session binding.
+- Nine generated OpenAPI client requests. Generation and TypeScript compilation
+  succeeded; the live specification documents all 13 operations and typed errors.
+
+The required `make -C domains/identity check` passed. Thirteen additional
+isolated PostgreSQL scenarios checked workflow/session/target binding,
+concurrent replay, final-credential protection, outbox rollback, expiry during a
+principal lock wait and logout ordering. Those isolated scenarios stubbed the
+cryptographic verifier; the deployed browser runs used the real verifier.
+Temporary runners stayed outside the repository; no packages or test fixtures
+were added.
+
+The concurrency review identified and fixed two gaps: live-session validation
+now uses database wall time after the principal lock, and logout takes that same
+principal lock in its existing SQL statement. Logout and passkey mutations now
+serialize rather than allowing enrollment to race past session revocation.
+
+### Facts and telemetry
+
+The final API, security and UI runs produced exactly 44 committed facts:
+
+| Fact | Count |
+| --- | ---: |
+| Principal registered | 4 |
+| Account created | 5 |
+| Membership created | 5 |
+| Credential added | 7 |
+| Credential removed | 3 |
+| Session established | 11 |
+| Session revoked | 9 |
+
+Verified every envelope against the published contracts and its broker copy;
+source creation timestamps, credential IDs, session lifecycles, membership
+roles and current projections agree. Analytics received ten state snapshots.
+All three durable consumers have zero pending/unacknowledged messages, the
+source outbox is empty, and the reporting reader can read the expected 44 facts.
+The 107 existing events and their ingestion timestamps, plus earlier current
+projections, retained their fingerprints. Only the normal-journey cohort retains
+two sessions; security and UI cohorts logged out or had their sessions revoked.
+
+OpenObserve contains the matching application SERVER span and HTTP status for
+all 130 directly traced API/security requests. It also contains 46 paired relay
+publish and Analytics process spans for their 36 facts and ten snapshots, with
+namespace attribution. The UI proxy flow's eight facts were checked separately
+at the sink. These counts describe this bounded run, not exactly-once transport
+or a latency/SLO guarantee.
+
+An initial security fixture selected one of its deliberately unenrolled virtual
+keys during a later login. Explicit credential selection corrected the fixture;
+no application change was made for that fixture failure. The reported final run
+used fresh principals after a new analytics baseline.
+
+These checks use local Chromium virtual authenticators. They do not establish
+hardware/browser interoperability, recovery policy, load capacity or a complete
+security audit. Identity facts describe successful lifecycle changes; they do
+not supply product engagement, experiment exposures, failed-attempt funnels or
+causal attribution.
+
 ## Session-authorized passkey addition: 2026-11-04
 
 Deployed only the Identity API with the split signup/addition workflows and

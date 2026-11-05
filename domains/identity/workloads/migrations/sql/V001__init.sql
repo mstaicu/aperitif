@@ -110,3 +110,18 @@ CREATE TABLE outbox_messages (
     headers jsonb NOT NULL DEFAULT '{}'
         CHECK (jsonb_typeof(headers) = 'object')
 );
+
+-- Separate ceremony contexts prevent a login or signup proof authorizing credential changes.
+CREATE TABLE passkey_addition_challenges (
+    authentication_challenge bytea PRIMARY KEY,
+    registration_challenge bytea NOT NULL UNIQUE,
+    session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    expires_at timestamptz NOT NULL DEFAULT now() + INTERVAL '2 minutes'
+);
+
+CREATE TABLE passkey_removal_challenges (
+    challenge bytea PRIMARY KEY,
+    session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    credential_id uuid NOT NULL REFERENCES passkey_credentials(id) ON DELETE CASCADE,
+    expires_at timestamptz NOT NULL DEFAULT now() + INTERVAL '2 minutes'
+);

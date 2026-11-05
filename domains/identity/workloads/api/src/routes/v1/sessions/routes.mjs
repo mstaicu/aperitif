@@ -57,10 +57,10 @@ export default async function sessionsRoutes(fastify, { pool, signingKey }) {
       },
     },
     async function (req, reply) {
-      const session = await authenticateSession({
-        authorization: req.headers.authorization,
-        pool,
-      });
+      const session = await authenticateSession(
+        { pool },
+        { authorization: req.headers.authorization },
+      );
 
       reply.header("Cache-Control", "no-store");
 

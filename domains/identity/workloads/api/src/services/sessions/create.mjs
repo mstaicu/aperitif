@@ -9,9 +9,10 @@ import { createHash, randomBytes } from "node:crypto";
  * Uses the caller's active transaction. The principal must be newly inserted
  * or locked by the caller until commit, serializing session issuance with
  * credential removal before capturing the mutation clock.
- * @param {{ client: import("pg").PoolClient, principalId: string }} resources
+ * @param {{ client: import("pg").PoolClient }} resources
+ * @param {{ principalId: string }} args
  */
-export async function createSession({ client, principalId }) {
+export async function createSession({ client }, { principalId }) {
   const sessionToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(sessionToken).digest();
 

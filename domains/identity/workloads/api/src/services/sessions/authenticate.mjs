@@ -3,9 +3,13 @@ import { jwtVerify } from "jose";
 import { createHash } from "node:crypto";
 
 /**
- * @param {{ authorization?: string, jwks: import("jose").JWTVerifyGetKey, pool: import("pg").Pool | import("pg").PoolClient }} args
+ * @param {{ jwks: import("jose").JWTVerifyGetKey, pool: import("pg").Pool | import("pg").PoolClient }} resources
+ * @param {{ authorization?: string }} args
  */
-export async function authenticateAccessToken({ authorization, jwks, pool }) {
+export async function authenticateAccessToken(
+  { jwks, pool },
+  { authorization },
+) {
   const [type, token, extra] = (authorization ?? "").split(/ +/);
 
   if (type.toLowerCase() !== "bearer" || !token || extra) {
@@ -26,11 +30,11 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
     rows: [session],
   } = await pool.query(
     `
-      SELECT principal_id
+      SELECT id, principal_id
       FROM sessions
       WHERE id = $1
         AND principal_id = $2
-        AND expires_at > NOW()
+        AND expires_at > clock_timestamp()
     `,
     [payload.sid, payload.sub],
   );
@@ -39,13 +43,14 @@ export async function authenticateAccessToken({ authorization, jwks, pool }) {
     throw new createError.Unauthorized();
   }
 
-  return session.principal_id;
+  return /** @type {{ id: string, principal_id: string }} */ (session);
 }
 
 /**
- * @param {{ authorization?: string, pool: import("pg").Pool }} args
+ * @param {{ pool: import("pg").Pool }} resources
+ * @param {{ authorization?: string }} args
  */
-export async function authenticateSession({ authorization, pool }) {
+export async function authenticateSession({ pool }, { authorization }) {
   const [scheme, token, extra] = (authorization ?? "").split(/ +/);
 
   if (scheme.toLowerCase() !== "bearer" || !token || extra) {
@@ -61,7 +66,7 @@ export async function authenticateSession({ authorization, pool }) {
         expires_at
       FROM sessions
       WHERE token_hash = $1
-        AND expires_at > NOW()
+        AND expires_at > clock_timestamp()
     `,
     [createHash("sha256").update(token).digest()],
   );

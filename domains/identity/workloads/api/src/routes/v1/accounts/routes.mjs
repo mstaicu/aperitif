@@ -66,21 +66,20 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
 
-      const principalId = await authenticateAccessToken({
-        authorization: request.headers.authorization,
-        jwks,
-        pool,
-      });
+      const { principal_id: principalId } = await authenticateAccessToken(
+        { jwks, pool },
+        { authorization: request.headers.authorization },
+      );
 
-      return reply.code(201).send(
-        await createAccount(
+      return reply.code(201).send({
+        account: await createAccount(
           { pool },
           {
             name: request.body.name,
             principalId,
           },
         ),
-      );
+      });
     },
   );
 
@@ -129,13 +128,14 @@ export default async function accountsRoutes(fastify, { jwks, pool }) {
     async function (request, reply) {
       reply.header("Cache-Control", "no-store");
 
-      const principalId = await authenticateAccessToken({
-        authorization: request.headers.authorization,
-        jwks,
-        pool,
-      });
+      const { principal_id: principalId } = await authenticateAccessToken(
+        { jwks, pool },
+        { authorization: request.headers.authorization },
+      );
 
-      return reply.send(await listAccounts({ pool }, { principalId }));
+      return reply.send({
+        accounts: await listAccounts({ pool }, { principalId }),
+      });
     },
   );
 }

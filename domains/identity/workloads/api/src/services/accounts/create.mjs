@@ -15,11 +15,9 @@ import { context, propagation } from "@opentelemetry/api";
  * @param {{ principalId: string, name: string }} args
  */
 export const createAccount = async ({ pool }, { name, principalId }) => {
-  let client;
+  const client = await pool.connect();
 
   try {
-    client = await pool.connect();
-
     await client.query("BEGIN");
 
     const {
@@ -126,17 +124,15 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
     await client.query("COMMIT");
 
     return {
-      account: {
-        created_at: account.created_at.toISOString(),
-        id: account.id,
-        name: account.name,
-        roles: ["account.owner"],
-      },
+      created_at: account.created_at.toISOString(),
+      id: account.id,
+      name: account.name,
+      roles: ["account.owner"],
     };
   } catch (err) {
-    await client?.query("ROLLBACK").catch(() => {});
+    await client.query("ROLLBACK").catch(() => {});
     throw err;
   } finally {
-    client?.release();
+    client.release();
   }
 };
