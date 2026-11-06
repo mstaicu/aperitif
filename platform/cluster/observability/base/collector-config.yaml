@@ -49,6 +49,12 @@ processors:
         - k8s.container.name
         - container.image.name
         - container.image.tags
+  # Minimize trace URL query/fragment data while preserving paths.
+  transform/urls:
+    trace_statements:
+      - delete_matching_keys(span.attributes, "^url\\.(query|fragment)$")
+      - replace_pattern(span.attributes["url.full"], "[?#].*", "") where IsString(span.attributes["url.full"])
+      - replace_pattern(span.attributes["url.path"], "[?#].*", "") where IsString(span.attributes["url.path"])
   batch:
 
 exporters:
@@ -67,6 +73,7 @@ service:
       processors:
         - memory_limiter
         - k8s_attributes
+        - transform/urls
         - batch
       exporters:
         - otlp_http/backend

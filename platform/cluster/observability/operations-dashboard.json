@@ -15,7 +15,7 @@
           "id": "Panel_ID1000003",
           "type": "line",
           "title": "ingress request rate",
-          "description": "Requests routed through Traefik, grouped by destination service. Direct in-cluster requests are not included.",
+          "description": "Requests received by Traefik, grouped by host. Direct in-cluster requests are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -100,11 +100,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (service) (rate(traefik_service_requests_total[5m]))",
+              "query": "sum by (server_address) (rate(http_server_request_duration_count{service_name=\"traefik\"}[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "traefik_service_requests_total",
+                "stream": "http_server_request_duration_count",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -117,7 +117,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{service}",
+                "promql_legend": "{server_address}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -143,7 +143,7 @@
           "id": "Panel_ID1000004",
           "type": "line",
           "title": "ingress 4xx and 5xx responses",
-          "description": "4xx and 5xx responses through Traefik, grouped by destination service and status code. Some 4xx responses are expected.",
+          "description": "4xx and 5xx responses received by Traefik, grouped by host and status code. Some 4xx responses are expected.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -228,11 +228,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (service, code) (rate(traefik_service_requests_total{code=~\"4..|5..\"}[5m]))",
+              "query": "sum by (server_address, http_response_status_code) (rate(http_server_request_duration_count{service_name=\"traefik\",http_response_status_code=~\"4..|5..\"}[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "traefik_service_requests_total",
+                "stream": "http_server_request_duration_count",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -245,7 +245,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{service} · {code}",
+                "promql_legend": "{server_address} · {http_response_status_code}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,
@@ -271,7 +271,7 @@
           "id": "Panel_ID1000005",
           "type": "line",
           "title": "ingress p95 latency",
-          "description": "Traefik service response latency by destination. Direct in-cluster requests are not included.",
+          "description": "Traefik request latency by host, in seconds. Direct in-cluster requests are not included.",
           "config": {
             "show_legends": true,
             "legends_position": null,
@@ -355,11 +355,11 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "histogram_quantile(0.95, sum by (le, service) (rate(traefik_service_request_duration_seconds_bucket[5m])))",
+              "query": "histogram_quantile(0.95, sum by (le, server_address) (rate(http_server_request_duration_bucket{service_name=\"traefik\"}[5m])))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
-                "stream": "traefik_service_request_duration_seconds_bucket",
+                "stream": "http_server_request_duration_bucket",
                 "stream_type": "metrics",
                 "x": [],
                 "y": [],
@@ -372,7 +372,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{service}",
+                "promql_legend": "{server_address}",
                 "layer_type": "scatter",
                 "weight_fixed": 1,
                 "limit": 0,

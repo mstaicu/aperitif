@@ -59,7 +59,7 @@ export async function relayOutbox({ abortSignal, nc, pool }) {
         const parent = propagation.extract(context.active(), entry.headers);
 
         await tracer.startActiveSpan(
-          `publish ${entry.subject}`,
+          "publish",
           {
             attributes: {
               "messaging.destination.name": entry.subject,
