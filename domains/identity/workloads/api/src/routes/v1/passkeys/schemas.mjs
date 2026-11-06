@@ -25,6 +25,7 @@ export const PasskeyRegistrationBody = Type.Object(
 export const Passkey = Type.Object(
   {
     created_at: Type.String({ format: "date-time" }),
+    credential_id: Type.String({ minLength: 1 }),
     id: Type.String({ format: "uuid" }),
     name: PasskeyName,
   },

@@ -94,7 +94,7 @@ export async function completePasskeyRemoval(
       credential: {
         counter: Number(storedCredential.sign_count),
         id: storedCredential.credential_id,
-        publicKey: new Uint8Array(storedCredential.public_key),
+        publicKey: storedCredential.public_key,
       },
       expectedChallenge: challenge,
       expectedOrigin,

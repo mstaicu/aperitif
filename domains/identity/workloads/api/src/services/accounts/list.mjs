@@ -22,10 +22,5 @@ export const listAccounts = async ({ pool }, { principalId }) => {
     [principalId],
   );
 
-  return rows.map((account) => ({
-    created_at: account.created_at.toISOString(),
-    id: account.id,
-    name: account.name,
-    roles: account.roles,
-  }));
+  return rows;
 };

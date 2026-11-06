@@ -2,11 +2,7 @@ import { Type } from "@fastify/type-provider-typebox";
 
 const NonEmptyString = Type.String({ minLength: 1 });
 const AuthenticatorAttachment = Type.Enum(["cross-platform", "platform"]);
-const ClientExtensionResults = Type.Object({
-  appid: Type.Optional(Type.Boolean()),
-  credProps: Type.Optional(Type.Object({ rk: Type.Optional(Type.Boolean()) })),
-  hmacCreateSecret: Type.Optional(Type.Boolean()),
-});
+const ClientExtensionResults = Type.Record(Type.String(), Type.Unknown());
 const CredentialDescriptor = Type.Object(
   {
     id: NonEmptyString,
