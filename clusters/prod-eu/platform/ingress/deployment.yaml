@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: traefik
+spec:
+  template:
+    spec:
+      containers:
+        - name: traefik
+          env:
+            - name: ACME_EMAIL
+              value: ops@puuury.com
+            - name: ACME_DNS_PROVIDER
+              value: cloudflare
+            - name: CF_DNS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-dns
+                  key: CF_DNS_API_TOKEN

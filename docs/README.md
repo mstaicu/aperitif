@@ -15,7 +15,7 @@ Repository layout:
 domains/                 business boundaries and deployable workloads
 platform/cluster/        ingress, NATS and observability
 platform/runtime/        shared executable infrastructure without domain rules
-clusters/prod-eu/        Flux production inventory and release state
+clusters/prod-eu/        Flux inventory, concrete deployment overlays and encrypted configuration
 docs/                    domain model, operations, extension recipes and roadmap
 ```
 

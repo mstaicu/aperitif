@@ -203,8 +203,8 @@ and agent automations remain proposals.
    external trigger integration; test schema/authentication mapping rather
    than promising a zero-configuration connector.
 5. **Native MCP exists, with an edition-specific authorization limit.**
-   OpenObserve [v0.92.2](https://github.com/openobserve/openobserve/releases/tag/v0.92.2),
-   pinned here, includes an MCP fix. Validate its actual tools against current
+   OpenObserve [v1.1.2](https://github.com/openobserve/openobserve/releases/tag/v1.1.2),
+   pinned here, supports native MCP. Validate its actual tools against current
    [MCP documentation](https://openobserve.ai/docs/integration/ai/mcp/).
    OSS calls run with the connected account's full privileges, including
    destructive operations; granular custom-role permissions are Enterprise/

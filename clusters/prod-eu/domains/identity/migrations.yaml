@@ -37,7 +37,7 @@ metadata:
 
 spec:
   interval: 10m
-  path: ./domains/identity/workloads/migrations/infra/overlays/prod-eu
+  path: ./domains/identity/workloads/migrations/infra/overlays/production
   prune: true
   sourceRef:
     kind: GitRepository

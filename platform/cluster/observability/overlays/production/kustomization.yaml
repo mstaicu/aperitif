@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: otel
+
+resources:
+  - ../../base
+  - collector-networkpolicy.yaml
+  - openobserve-networkpolicy.yaml
+
+patches:
+  - path: collector-deployment.yaml
+  - path: openobserve-statefulset.yaml

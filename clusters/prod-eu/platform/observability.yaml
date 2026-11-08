@@ -16,7 +16,7 @@ metadata:
 
 spec:
   interval: 10m
-  path: ./platform/cluster/observability/overlays/prod-eu
+  path: ./clusters/prod-eu/platform/observability
   prune: true
   sourceRef:
     kind: GitRepository

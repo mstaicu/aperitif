@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Secret
+
+metadata:
+  name: api-jwt
+
+type: Opaque
+
+stringData:
+  jwks.json: ENC[AES256_GCM,data:noSiwqDuiWSyTb+sr4jnRvVkMn4nas2LgKwUCulCxzGaVB94qN1lgzkJudJq6kT7LX+fzIgRHcU6i3bafg3XMgu3WKpRxtpwvND4Rh6jI7NWWhuq6YdBeVn7dndBgE1oSvSzjmwXg7n0LYeexww4ZUxD4OwOoSrK1uDOnB2Oly9bq2mf//WzDWO5MlPVPn/anZE5srivGgtQh84JktZulyGLCjbF+ycvsI52Kqw4z1RHCdEjBz2meNe4hUw2+f+lel7bM++5MT+2hvMixeaTTTZWk6SLjBHI8NJ0rxFwiz2VlMeELZuSph39wRbXMmpP0EWE5AWVW9/Eq3jobZG9bd0Qy5LoOSeUjPEZQXBP75FxGdpeJQ==,iv:PAjKwE8hfP8njO2RnMIdjIUvYaDWxVciwSCTJGAWHV4=,tag:d4la39zhjVQX79ORVWSjKg==,type:str]
+
+sops:
+  age:
+    - enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSArYkxoRnVML2twSWpjMnFx
+        N2M4YTRhSS9seVRWRjkzVWxtS3BoQnNZZkVzCnJOQjZaTS9lVEVUajZxQ0R1VHRz
+        VUN5NnBlQkJEV1VlcE5rWW1mMWNPVWcKLS0tIGFlZWpJaU1VeGxSbXQ5OHNNRVB3
+        c3g2R0Z2dWhxRWdqd2MrcFF4NktRaWcKhiX8sDGkrCPbKG3nAa9PRLjhW/oh9/Bw
+        pQQflsJwkHXDfBjkH/FYFIvNo5IQ9iOLJRrLioMAUZl2OyIMx92xMQ==
+        -----END AGE ENCRYPTED FILE-----
+      recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+  encrypted_regex: ^(data|stringData)$
+  lastmodified: "2026-11-08T11:17:16Z"
+  mac: ENC[AES256_GCM,data:k5VFzFSjORsnuACUPJKvrfMQv2BGCxGfg/QQJnPXCn25ghcY1WsVImrfexo22f0KLCzYZJWKvqVLC0EXZtliK5u90c/oluYTahJqJJWDtTDcBa78/Y8pCOhu/NkOOhmmhdNR5BNXVD9c3YNhjys08/gg7NiSGsM77IdgRdUvs10=,iv:gMv7raBujmqWS20YbMuIWeAb1pqAIwJl82X722qNLlc=,tag:FIlBKMAKbePzOAhZlQAukQ==,type:str]
+  version: 3.13.3

@@ -16,7 +16,7 @@ metadata:
 
 spec:
   interval: 10m
-  path: ./platform/cluster/ingress/overlays/prod-eu
+  path: ./clusters/prod-eu/platform/ingress
   prune: true
   sourceRef:
     kind: GitRepository

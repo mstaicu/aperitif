@@ -101,7 +101,7 @@ merge to master
   -> promote its immutable digest behind latest
   -> Flux observes the new digest
   -> Flux writes it into clusters/prod-eu/domains/<domain>/<component>.yaml
-  -> Flux reconciles the component's production overlay
+  -> Flux reconciles the component's selected production configuration
 ```
 
 Bootstrap only against a selected real cluster:
@@ -119,13 +119,50 @@ continues managing its own installation from Git.
 The GitHub token is used to install a read/write deploy key. The Age identity is
 stored in `flux-system` for SOPS decryption. Do not commit either credential.
 
+Workload `infra/overlays/production` profiles contain reusable production behavior.
+Where concrete settings are needed, a final overlay under
+`clusters/prod-eu/domains/<domain>/<workload>/` supplies them. Platform capabilities
+use the same pattern under `clusters/prod-eu/platform/<capability>/`. Flux points
+to that final overlay, or directly to the production profile when no overrides
+are needed. Parent inventories include namespace resources and Flux declarations,
+never the final workload overlay directories. Keep domain, platform and cluster
+directories available in the source artifact for imports.
+
+Use the same convention for every deployment: `<unit>.yaml` contains its Flux
+resources; an adjacent `<unit>/` exists only when it supplies concrete settings.
+Domain units live under `domains/<domain>/`; shared capabilities under `platform/`.
+Keep patches in the unit's `kustomization.yaml` when small, or use a resource-kind
+filename such as `deployment.yaml` when a separate patch is easier to read.
+
 Production Secrets are SOPS-encrypted for the Age recipient selected by
-[`.sops.yaml`](../.sops.yaml). Keep private Age identities outside the checkout.
+[`clusters/prod-eu/.sops.yaml`](../clusters/prod-eu/.sops.yaml). This is encryption
+authoring policy, not a Kubernetes resource or Flux runtime configuration. Do not
+include it in Kustomize `resources`. Keep private Age identities outside the checkout.
 To generate an identity, use `age-keygen -o /path/to/production-age-key` and
 configure its public recipient before encrypting new files. Bootstrap must
 receive an identity that matches the files' existing recipients through
 `SOPS_AGE_KEY_FILE`. Do not decrypt encrypted Secrets in place or commit
 plaintext secrets.
+
+SOPS searches for configuration from the working directory upward. Repository-root
+commands must select the cluster policy explicitly with
+`sops --config clusters/prod-eu/.sops.yaml ...`.
+
+One rule encrypts the `data` and `stringData` fields of `*.sops.yaml` Secrets.
+Name each file `<secret-name>.sops.yaml` and declare `type: Opaque` for ordinary
+application Secrets. Keep the existing blank lines between YAML sections.
+JWKS JSON and NATS configuration are stored as the `jwks.json` and `nats.conf`
+keys of ordinary encrypted Secrets, so neither needs a separate encryption rule.
+Rules match paths relative to the selected policy. Moving encrypted files or
+editing this policy does not rotate their existing encryption recipients.
+
+The Identity PostgreSQL deployment owns the encrypted `postgres-auth` Secret.
+API, migrations, relay and retention reference its connection keys. Updating this
+fixed-name Secret does not restart existing processes using environment variables;
+credential rotation must coordinate server/client changes and their rollout.
+The API loads signing keys at startup, so changing `api-jwt` also requires an API
+restart. NATS must reload or restart to use updated configuration. These Secrets
+use standard references; no automatic restart mechanism is introduced.
 
 Inspect reconciliation with:
 

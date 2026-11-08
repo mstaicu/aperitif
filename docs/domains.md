@@ -364,9 +364,27 @@ domains/<domain>/
 ```
 
 Every workload owns its `infra/base`, environment overlays and `skaffold.yaml`.
-The base contains the portable workload and Service. Overlays contain routing,
-access, credentials and environment configuration. The domain Skaffold file only
-requires its component configs.
+The base contains the portable workload, Service and configuration interface.
+The `local` overlay describes disposable development behavior. A `production`
+overlay describes reusable production behavior and expected Secret/ConfigMap
+references, without selecting one cluster's credentials, hostnames or provider
+bindings. The domain Skaffold file only requires its component configs.
+
+A workload needing concrete deployment settings has a final overlay in
+`clusters/<cluster>/domains/<domain>/<workload>/`. It imports the production
+profile and supplies configuration, encrypted Secrets and deployment patches.
+The adjacent `<workload>.yaml` contains Flux reconciliation and image selection;
+its `spec.path` points to the final overlay, or directly to the production profile
+when no deployment overrides are needed. Parent inventories include only the
+namespace resources and Flux declarations, never the final workload overlay
+directories. Local Skaffold composition continues using local overlays.
+
+Use the existing API deployment as the example when a workload needs cluster
+settings, and the retention deployment when it does not. Add only the resources
+that workload requires. Encrypted Secrets use `<secret-name>.sops.yaml`,
+`type: Opaque`, and normal `secretKeyRef` or Secret volume references. JSON or
+configuration files are values within the Secret, so the cluster's common SOPS
+rule works unchanged. Preserve the YAML section spacing when copying files.
 
 Add a UI, worker, contracts package, outbox relay or projection only when the
 domain requires it. Product-owned records carry `account_id` when they belong

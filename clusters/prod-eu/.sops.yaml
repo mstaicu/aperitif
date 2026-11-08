@@ -1,0 +1,9 @@
+# Paths are relative to this file. From the repository root, select this policy
+# explicitly with: sops --config clusters/prod-eu/.sops.yaml ...
+# Private Age identities are provisioned separately and must never enter Git.
+
+creation_rules:
+  # Keep Kubernetes resource metadata readable; encrypt every Secret payload.
+  - path_regex: '\.sops\.yaml$'
+    encrypted_regex: '^(data|stringData)$'
+    age: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0

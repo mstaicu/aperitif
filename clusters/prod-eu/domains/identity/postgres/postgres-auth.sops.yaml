@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Secret
+
+metadata:
+  name: postgres-auth
+
+type: Opaque
+
+stringData:
+  DATABASE_URL: ENC[AES256_GCM,data:GBzOfNsyUhp2fgVA9uZ8zXekQu2LZmq1gnkmL2G8U4e9El8i9KtysPZK6w2hNKHa1+H0,iv:o1x8bPoNeJn8gdrDUC5xS6EmTrkwOW6N3WIErAkKHvM=,tag:YhgsoSzqRypsKRpcVP2jOw==,type:str]
+  FLYWAY_URL: ENC[AES256_GCM,data:6Cd1VLO8FTQj1wwYocEyt1XR7hiN5J5LrPoBykcpkdvkZD7r5ln8CzTZtg11xtldcLorlADyFVH19IqFQThNdNJb4v5JrRvb,iv:BTeI++qWdKV2cPEmnVIgmwW7X2xueBkIewtGvHAAbOI=,tag:ezOQEvXwaSEfdraAxAd8Wg==,type:str]
+  POSTGRES_PASSWORD: ENC[AES256_GCM,data:SmMZM/pLvTc=,iv:0yIKx9gUxysgiTKjSvuQ3U1jsH3tJLgBiArcAnekl84=,tag:7km5L0+Yzf/voxGvY6Jk/A==,type:str]
+
+sops:
+  age:
+    - enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6akdnbCtnbCtiSDhnWkdu
+        RW9rL1lnbFZ3a01kUnZBVTJ6dEY2YUZ0bUNRCmVNOVRmK2h1Um1qYUxXcmVOSUlx
+        Q09YM3FoaWVtZlZUclBZWEJZd3c4dG8KLS0tIGpDNUNzMkVDN00wcVc3aCsxNHcz
+        elc5NkZkM1FGc3I2eXAwVUFTQXZZQmcKyJr2+IYtGanwFi1Mr+B+O/yzodMHLOAm
+        qc9G1kDclmf1+ZGzcaBVPlDZ3JwGxt/6PEvgdDoeuFLmooIBomXZ+A==
+        -----END AGE ENCRYPTED FILE-----
+      recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+  encrypted_regex: ^(data|stringData)$
+  lastmodified: "2026-11-08T11:08:56Z"
+  mac: ENC[AES256_GCM,data:eQ4OkiHTXVbfaJPPqrCF5WzCRZEsYrBLxoHmU07A2UcQDfX8Ni9B+iISAZNbNsYXkUpNTakms2A40/WR9I2uQfgfnKZhAmkofjwBRJS1JYOFDc8xWDxUxZz90nJ8gWeCTMXepOazA8+0xFBDrov8VtbfsICOEXdJeWTHOKZpdrc=,iv:1qe3BeKjKrhLV67cmthAH/iRP9/xjykmJ67gJpQkqw0=,tag:wiZ8NCt3BoulQ7cd/TEtXA==,type:str]
+  version: 3.13.3

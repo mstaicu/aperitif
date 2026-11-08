@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Secret
+
+metadata:
+  name: openobserve
+
+type: Opaque
+
+data:
+  OPENOBSERVE_TOKEN: ENC[AES256_GCM,data:oKgvh1nTgBm4TbV+e3bpHoKAUvtrMiZl3Eo5tAS0xFefhCXLkssvlO70SlcZJMkMks2jlamt379ntzC9xX+q2XoZwz7tpx/HYZ4J1C+w8gh1sYWAhljNXGr1Rx9rUiyu6mXIxqD7pbyxeIuD,iv:FxLtNellyBsDFEClCzlVyV8O5J+JuBFhe6r8zETeskg=,tag:M+YwMBfV/yo68rFFRaNVKQ==,type:str]
+  ZO_ROOT_USER_EMAIL: ENC[AES256_GCM,data:RL9FzhRXvWSKzEfD6K08Ji9W/nc=,iv:o2oV63/YYXhhwu1l+Um5jzRNUNQpt+FWlbMxpawGETw=,tag:VFEYY8DW5NAb63dHYwi2Kg==,type:str]
+  ZO_ROOT_USER_PASSWORD: ENC[AES256_GCM,data:MDsBWs+M6FySCclecGvoMbmBpvetoa3wyJM53YC8/fkwcKAgEkLr5fvp3bChGG+ga6XO09ksmJRI4FVr,iv:AK/tGRJC6nj8QI+QbcgtxeBvNN0IG76NX8b5fWb/KmI=,tag:vTrNPXZfUPARQ0mTeMAS5A==,type:str]
+
+sops:
+  age:
+    - enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnK3NIcTZsZThaSmlqTE5W
+        RjFacE5tcklkdnVvam9tejE0SllRZU9CakNnCmQ1Q0ZEM3hSc0ZOTUtwelRlbjg1
+        RHhKNGovR2wvZ0piaDJrNnk1aTdCRUkKLS0tIE1tYkYxT0haTGNBRUx1MG5TeVdz
+        K0lJTE1JdGx5K2ZaUjc3Y09tY21UZEUKONLpdHeOKGnkWIPrI8yuwy92Gy2h2Xtj
+        B5STCmobJPYPN37eKxgskLWIGoFCjT3pAEqRD21OnkhHz33aa+8f/w==
+        -----END AGE ENCRYPTED FILE-----
+      recipient: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0
+  encrypted_regex: ^(data|stringData)$
+  lastmodified: "2026-11-08T11:27:33Z"
+  mac: ENC[AES256_GCM,data:JnMCVC/nYYYD52fYCWA2b6vxwyisS00GmhpCR0+gA0KYLnehdOQOWxAcEIS8wV2LgYPAuTeXe5AWT9RWazXouegIOJLOM5lUiiUZc2DXp9qG/N5Wjv8INN+KWsqcI0CJkauzu7pWQJpTvY1HcO+7ZTIRjtDe96s9jh/ks2Fj2Ns=,iv:kneGkIQr5K59n6BhVh4n0ZEmwTnFLASqhRBa6RU3MRU=,tag:JpRGNLU5DyZNVfx4cT5WpA==,type:str]
+  version: 3.13.3
