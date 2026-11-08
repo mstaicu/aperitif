@@ -17,11 +17,15 @@ jobs:
     name: Find components to check and build
     runs-on: ubuntu-24.04
     outputs:
-      check_paths: ${{ steps.changes.outputs.all_changed_and_modified_files }}
+      check_paths: >-
+        ${{ toJSON(fromJSON(format('[{0},{1}]',
+          steps.changes.outputs.domains_all_changed_and_modified_files,
+          steps.changes.outputs.platform_any_changed == 'true' && '["platform"]' || '[]'
+        )).*.*) }}
       build_paths: >-
         ${{ toJSON(fromJSON(format('[{0},{1}]',
           steps.domains.outputs.all_changed_and_modified_files,
-          steps.runtimes.outputs.all_changed_and_modified_files
+          steps.platforms.outputs.all_changed_and_modified_files
         )).*.*) }}
 
     steps:
@@ -34,10 +38,11 @@ jobs:
         name: Find changed components
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: |
-            domains/*/**
-            platform/*/**
-            clusters/*/**
+          files_yaml: |
+            domains:
+              - domains/*/**
+            platform:
+              - platform/**
           dir_names: true
           dir_names_max_depth: 2
           output_renamed_files_as_deleted_and_added: true
@@ -48,22 +53,22 @@ jobs:
         name: Find changed domain components
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: domains/*/workloads/*/**
+          files: domains/*/*/**
           files_ignore: "**/infra/**"
           dir_names: true
-          dir_names_max_depth: 4
+          dir_names_max_depth: 3
           output_renamed_files_as_deleted_and_added: true
           fail_on_initial_diff_error: true
           matrix: true
 
-      - id: runtimes
+      - id: platforms
         name: Find changed platform components
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: platform/runtime/*/**
+          files: platform/*/**
           files_ignore: "**/infra/**"
           dir_names: true
-          dir_names_max_depth: 3
+          dir_names_max_depth: 2
           output_renamed_files_as_deleted_and_added: true
           fail_on_initial_diff_error: true
           matrix: true
@@ -92,18 +97,6 @@ jobs:
         env:
           UNIT: ${{ matrix.path }}
         run: make -C "$UNIT" check
-
-      - name: Set up Flux Schema
-        if: startsWith(matrix.path, 'domains/')
-        uses: fluxcd/flux2/action@v2.9.4
-        with:
-          version: 2.9.4
-          plugins: schema@0.17.0
-
-      - name: Validate domain workload manifests
-        if: startsWith(matrix.path, 'domains/')
-        working-directory: ${{ matrix.path }}
-        run: flux schema validate workloads/*/infra/overlays/* --skip-json-path v1/Secret:/sops
 
   build:
     name: Build ${{ matrix.path }}

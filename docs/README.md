@@ -12,9 +12,8 @@ capability. An example is an illustrative product composition.
 Repository layout:
 
 ```text
-domains/                 business boundaries and deployable workloads
-platform/cluster/        ingress, NATS and observability
-platform/runtime/        shared executable infrastructure without domain rules
+domains/<domain>/        business boundaries, contracts and directly owned units
+platform/<unit>/         shared capabilities and executable code without domain rules
 clusters/prod-eu/        Flux inventory, concrete deployment overlays and encrypted configuration
 docs/                    domain model, operations, extension recipes and roadmap
 ```

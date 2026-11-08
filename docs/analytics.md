@@ -80,7 +80,7 @@ produces the same business results independently of the destination tool.
 
 ## Versions and readers
 
-The [V1 projector](../domains/analytics/workloads/projector/src/identity-v1.mjs)
+The [V1 projector](../domains/analytics/projector/src/identity-v1.mjs)
 follows the historical Plans projector: validate schema and subject, execute
 native SQL in a transaction, commit, then acknowledge. Durable subscriptions
 select supported V1 subjects. V1 and V2 producers and consumers coexist during
@@ -107,12 +107,12 @@ it does not require an unrelated Product domain.
 
 ## Copyable implementation boundaries
 
-- Producer: [Identity account creation](../domains/identity/workloads/api/src/services/accounts/create.mjs)
+- Producer: [Identity account creation](../domains/identity/api/src/services/accounts/create.mjs)
   writes state, revisioned snapshots and distinct occurrences in one transaction;
   its [contracts](../domains/identity/contracts/src/messages) define their meaning.
-- Consumer: [Analytics Identity V1 projector](../domains/analytics/workloads/projector/src/identity-v1.mjs)
+- Consumer: [Analytics Identity V1 projector](../domains/analytics/projector/src/identity-v1.mjs)
   validates the supported contract and subject, applies idempotent native SQL,
-  commits, then acknowledges. Its [migration](../domains/analytics/workloads/migrations/sql/V001__init.sql)
+  commits, then acknowledges. Its [migration](../domains/analytics/migrations/sql/V001__init.sql)
   defines the stored grain and versioned reader views.
 
 Follow the [domain processing contract](domains.md) when adding another source.

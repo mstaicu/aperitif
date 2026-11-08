@@ -30,7 +30,7 @@ order.
 ## 1. Stream configuration
 
 Use the domain relay's existing
-`workloads/outbox-relay/infra/base/streams.json`. This combined array illustrates
+`outbox-relay/infra/base/streams.json`. This combined array illustrates
 all three patterns; normally Identity owns `IDENTITY_STATE` and Product owns its two
 streams. Do not give two deployments ownership of the same stream configuration.
 
@@ -96,8 +96,8 @@ its stream. Inspect the resulting configuration after deployment. Keep publish
 acknowledgements enabled and subjects untransformed for these examples.
 
 Reuse the existing domain relay's
-[ConfigMap generation](../../domains/identity/workloads/outbox-relay/infra/base/kustomization.yaml)
-and [Deployment](../../domains/identity/workloads/outbox-relay/infra/base/deployment.yaml).
+[ConfigMap generation](../../domains/identity/outbox-relay/infra/base/kustomization.yaml)
+and [Deployment](../../domains/identity/outbox-relay/infra/base/deployment.yaml).
 They mount the JSON under `/etc/outbox-relay`; the environment overlay supplies
 `NATS_STREAMS_PATH`, `NATS_URL` and `DATABASE_URL`. New event semantics require the
 corresponding stream entry and producer/consumer contract, not a new relay mode.
@@ -176,7 +176,7 @@ start can predate another operation that acquired the lock first. See the
 ### Producer: update the resource and replace its pending snapshot
 
 This extends the pattern in the existing
-[Account creation service](../../domains/identity/workloads/api/src/services/accounts/create.mjs).
+[Account creation service](../../domains/identity/api/src/services/accounts/create.mjs).
 The `UPDATE` locks the resource and increments its version before replacing the
 pending outbox row. Concurrent writers of this resource must follow that same
 locking rule. Use ordinary PostgreSQL `READ COMMITTED` transactions here; retry

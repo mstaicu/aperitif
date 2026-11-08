@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: traefik
 
 resources:
-  - ../../../../platform/cluster/ingress/overlays/production
+  - ../../../../platform/ingress/infra/overlays/production
   - cloudflare-dns.sops.yaml
 
 patches:

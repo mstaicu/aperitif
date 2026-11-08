@@ -195,9 +195,9 @@ and agent automations remain proposals.
    digest edit can be overwritten by reconciliation. A durable revert or
    deliberate policy change must establish the intended release state.
 4. **Operational evidence is private today.** The OpenObserve
-   [Service](../../platform/cluster/observability/base/openobserve-service.yaml)
+   [Service](../../platform/observability/infra/base/openobserve-service.yaml)
    is cluster-internal. Its production
-   [NetworkPolicy](../../platform/cluster/observability/overlays/prod-eu/openobserve-networkpolicy.yaml)
+   [NetworkPolicy](../../platform/observability/infra/overlays/production/openobserve-networkpolicy.yaml)
    admits collector traffic, not arbitrary cloud agents. Cloud access needs a
    deliberate supported path. Start with bounded alert evidence via an
    external trigger integration; test schema/authentication mapping rather

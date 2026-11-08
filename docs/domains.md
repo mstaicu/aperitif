@@ -304,7 +304,7 @@ Use Identity's implemented events as the producer blueprint:
 | Event `time` | Source mutation time before commit, after the relevant lock; retries preserve it. |
 | Analytics `ingested_at` | Arrival of a newly stored unique event, independent of source occurrence time. |
 
-See [account creation](../domains/identity/workloads/api/src/services/accounts/create.mjs)
+See [account creation](../domains/identity/api/src/services/accounts/create.mjs)
 for the full mutation, snapshots and facts in one transaction. Additional lifecycle
 fields and events are introduced with the operation that makes them true;
 Identity does not add unused `updated_at`/`deleted_at` fields or fabricate
@@ -320,7 +320,7 @@ attempts, role changes or credential history from its current rows.
    string-valued `headers`.
 5. Let the domain-owned Relay Deployment publish it.
 
-See [Identity account creation](../domains/identity/workloads/api/src/services/accounts/create.mjs)
+See [Identity account creation](../domains/identity/api/src/services/accounts/create.mjs)
 for the transaction pattern. Creation normally has no pending snapshot to replace;
 updates must also lock the source resource and increment its version. Coalesce
 only snapshot subjects; retain every distinct business event and command.
@@ -355,20 +355,40 @@ Start with the smallest deployable unit:
 
 ```text
 domains/<domain>/
-  workloads/
-    postgres/            local/disposable database manifests
-    migrations/          SQL, image, Skaffold and manifests
-    api/                 source, image, Skaffold and manifests
+  postgres/              local/disposable database manifests
+  migrations/            SQL, image, Skaffold and manifests
+  api/                   source, image, Skaffold and manifests
   Makefile               check, up, dev, down
   skaffold.yaml          component composition
 ```
 
-Every workload owns its `infra/base`, environment overlays and `skaffold.yaml`.
+Units live directly under their domain or under `platform/` for shared
+capabilities. Keep each implementation's language or framework layout at the
+unit root. Include only the capabilities it needs: a `Dockerfile` for an owned
+container image, `skaffold.yaml` for build or local deployment configuration,
+and `infra/` for reusable Kubernetes resources. A unit using an existing image
+does not need application source or a Dockerfile; a shared executable does not
+need a Kubernetes deployment of its own. Domain contracts remain under
+`domains/<domain>/contracts`.
+
+Image publication uses the unit's existing Skaffold build artifact and root
+Dockerfile, building from the unit root with the `prod` target. Units without
+that local image definition do not publish an image. Kubernetes-only changes
+under `infra/` do not require an image rebuild. Keep package checks in the
+owning domain Makefile, and shared capability checks in `platform/Makefile`.
+Select new units explicitly in the domain's local Skaffold composition and in
+each cluster that should run them.
+
+A Kubernetes workload owns its `infra/base` and applicable environment overlays.
 The base contains the portable workload, Service and configuration interface.
 The `local` overlay describes disposable development behavior. A `production`
 overlay describes reusable production behavior and expected Secret/ConfigMap
 references, without selecting one cluster's credentials, hostnames or provider
-bindings. The domain Skaffold file only requires its component configs.
+bindings. The domain Skaffold file only requires its component configs. Shared
+platform manifests use `platform/<unit>/infra/base` and
+`platform/<unit>/infra/overlays/<environment>`; the shared relay executable lives
+under `platform/outbox-relay`, while each domain owns its relay deployment and
+stream configuration.
 
 A workload needing concrete deployment settings has a final overlay in
 `clusters/<cluster>/domains/<domain>/<workload>/`. It imports the production

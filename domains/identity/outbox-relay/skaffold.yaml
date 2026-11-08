@@ -5,7 +5,7 @@ metadata:
   name: identity-outbox-relay
 
 requires:
-  - path: ../../../../platform/runtime/outbox-relay/skaffold.yaml
+  - path: ../../../platform/outbox-relay/skaffold.yaml
 
 manifests:
   kustomize:

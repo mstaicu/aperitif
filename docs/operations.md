@@ -10,9 +10,9 @@ root.
 Apply the shared capabilities needed by the scenario:
 
 ```sh
-kubectl apply -k platform/cluster/ingress/overlays/local
-kubectl apply -k platform/cluster/event-bus/overlays/local
-kubectl apply -k platform/cluster/observability/overlays/local
+kubectl apply -k platform/ingress/infra/overlays/local
+kubectl apply -k platform/event-bus/infra/overlays/local
+kubectl apply -k platform/observability/infra/overlays/local
 ```
 
 | Capability | Needed for |
@@ -73,8 +73,8 @@ publish a valid Identity snapshot rather than deploy Identity.
 For an integration suite, deploy the real provider:
 
 ```sh
-kubectl apply -k platform/cluster/ingress/overlays/local
-kubectl apply -k platform/cluster/event-bus/overlays/local
+kubectl apply -k platform/ingress/infra/overlays/local
+kubectl apply -k platform/event-bus/infra/overlays/local
 make -C domains/identity up
 ```
 
@@ -261,14 +261,14 @@ telemetry durability becomes a product requirement. Access it locally with:
 kubectl port-forward --namespace=otel service/openobserve 5080:5080
 ```
 
-The operations dashboard under `platform/cluster/observability` is imported
+The operations dashboard under `platform/observability` is imported
 manually and is not reconciled.
 
 ## Validation
 
 ```sh
 make -C domains/identity check
-make -C platform/runtime check
+make -C platform check
 ```
 
 Domain checks run each package's checks. API and contract checks run their

@@ -5,9 +5,9 @@ metadata:
   name: identity
 
 requires:
-  - path: workloads/postgres/skaffold.yaml
-  - path: workloads/migrations/skaffold.yaml
-  - path: workloads/api/skaffold.yaml
-  - path: workloads/outbox-relay/skaffold.yaml
-  - path: workloads/ui/skaffold.yaml
-  - path: workloads/retention/skaffold.yaml
+  - path: postgres/skaffold.yaml
+  - path: migrations/skaffold.yaml
+  - path: api/skaffold.yaml
+  - path: outbox-relay/skaffold.yaml
+  - path: ui/skaffold.yaml
+  - path: retention/skaffold.yaml

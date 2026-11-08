@@ -7,7 +7,7 @@ metadata:
 
 spec:
   interval: 10m
-  path: ./domains/identity/workloads/retention/infra/overlays/production
+  path: ./domains/identity/retention/infra/overlays/production
   prune: true
   sourceRef:
     kind: GitRepository

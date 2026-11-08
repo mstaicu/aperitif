@@ -6,7 +6,7 @@ namespace: identity
 resources:
   - namespace.yaml
   - ../../base
-  - ingress.yaml
+  - api-jwt.yaml
 
 patches:
   - path: deployment.yaml
@@ -16,8 +16,3 @@ configMapGenerator:
     literals:
       - ORIGIN=http://localhost
       - JWT_SIGNING_KID=local-2026-09-30
-
-secretGenerator:
-  - name: api-jwt
-    files:
-      - jwks.json=jwks.local.json

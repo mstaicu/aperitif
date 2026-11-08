@@ -5,5 +5,5 @@
 creation_rules:
   # Keep Kubernetes resource metadata readable; encrypt every Secret payload.
   - path_regex: '\.sops\.yaml$'
-    encrypted_regex: '^(data|stringData)$'
+    encrypted_regex: "^(data|stringData)$"
     age: age1m0848yekwnxypu3te3n55845z9mmve8qvu0dqfgs34jgn87meaksdvkyu0

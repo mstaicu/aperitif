@@ -47,7 +47,7 @@ The implemented current-state input families are:
 | [Account snapshot](../../domains/identity/contracts/src/messages/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
 | [Membership snapshot](../../domains/identity/contracts/src/messages/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
 
-[Account creation](../../domains/identity/workloads/api/src/services/accounts/create.mjs)
+[Account creation](../../domains/identity/api/src/services/accounts/create.mjs)
 publishes both initial snapshots. Identity also publishes seven committed
 lifecycle events, including principal registration and session establishment;
 their exact meanings are in the [message contracts](../../domains/identity/contracts/src/messages).
@@ -78,10 +78,9 @@ need a service or storage product.
 
 ```text
 domains/analytics/
-  workloads/
-    postgres/       local dependency, if PostgreSQL is selected
-    migrations/     owned tables, views and definitions in SQL
-    ingestion/      native JetStream consumer + pg writes
+  postgres/         local dependency, if PostgreSQL is selected
+  migrations/       owned tables, views and definitions in SQL
+  ingestion/        native JetStream consumer + pg writes
   Makefile
   skaffold.yaml
 ```

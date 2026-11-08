@@ -187,12 +187,11 @@ repository checks; production delivery remains a separate capability.
 
 ```text
 domains/analytics/
-  workloads/
-    postgres/          owned local data, persistence when retention matters
-    migrations/        projection/fact schema, receipts and jobs when selected
-    ingestion/         only required durable consumers/handlers
-    jobs/              only once bounded background work is selected
-    outbox-relay/      only once supported result publication is selected
+  postgres/            owned local data, persistence when retention matters
+  migrations/          projection/fact schema, receipts and jobs when selected
+  ingestion/           only required durable consumers/handlers
+  jobs/                only once bounded background work is selected
+  outbox-relay/        only once supported result publication is selected
   Makefile             check, up, dev, down
   skaffold.yaml        selected workload composition
 ```
@@ -206,9 +205,9 @@ not replace database persistence.
 The already implemented platform setup commands are:
 
 ```sh
-kubectl apply -k platform/cluster/ingress/overlays/local
-kubectl apply -k platform/cluster/event-bus/overlays/local
-kubectl apply -k platform/cluster/observability/overlays/local
+kubectl apply -k platform/ingress/infra/overlays/local
+kubectl apply -k platform/event-bus/infra/overlays/local
+kubectl apply -k platform/observability/infra/overlays/local
 ```
 
 The existing broker has three servers; source stream replication follows the

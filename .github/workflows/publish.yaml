@@ -4,8 +4,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "domains/*/workloads/*/**"
-      - "platform/runtime/*/**"
+      - "domains/*/*/**"
+      - "platform/*/**"
       - "!**/infra/**"
 
 concurrency:
@@ -23,7 +23,7 @@ jobs:
       build_paths: >-
         ${{ toJSON(fromJSON(format('[{0},{1}]',
           steps.domains.outputs.all_changed_and_modified_files,
-          steps.runtimes.outputs.all_changed_and_modified_files
+          steps.platforms.outputs.all_changed_and_modified_files
         )).*.*) }}
 
     steps:
@@ -36,22 +36,22 @@ jobs:
         name: Find changed domain components
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: domains/*/workloads/*/**
+          files: domains/*/*/**
           files_ignore: "**/infra/**"
           dir_names: true
-          dir_names_max_depth: 4
+          dir_names_max_depth: 3
           output_renamed_files_as_deleted_and_added: true
           fail_on_initial_diff_error: true
           matrix: true
 
-      - id: runtimes
+      - id: platforms
         name: Find changed platform components
         uses: tj-actions/changed-files@v47.0.6
         with:
-          files: platform/runtime/*/**
+          files: platform/*/**
           files_ignore: "**/infra/**"
           dir_names: true
-          dir_names_max_depth: 3
+          dir_names_max_depth: 2
           output_renamed_files_as_deleted_and_added: true
           fail_on_initial_diff_error: true
           matrix: true

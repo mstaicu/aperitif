@@ -3,6 +3,6 @@ kind: Config
 metadata:
   name: analytics
 requires:
-  - path: workloads/postgres/skaffold.yaml
-  - path: workloads/migrations/skaffold.yaml
-  - path: workloads/projector/skaffold.yaml
+  - path: postgres/skaffold.yaml
+  - path: migrations/skaffold.yaml
+  - path: projector/skaffold.yaml

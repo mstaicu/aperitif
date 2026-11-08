@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: otel
 
 resources:
-  - ../../../../platform/cluster/observability/overlays/production
+  - ../../../../platform/observability/infra/overlays/production
   - openobserve.sops.yaml
 
 patches:

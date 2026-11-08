@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: nats
 
 resources:
-  - ../../../../platform/cluster/event-bus/overlays/production
+  - ../../../../platform/event-bus/infra/overlays/production
   - nats-config.sops.yaml
 
 patches:

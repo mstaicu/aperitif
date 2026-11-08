@@ -1,8 +1,8 @@
 .PHONY: check up dev down
 
 check:
-	npm --prefix workloads/projector ci
-	npm --prefix workloads/projector run check
+	npm --prefix projector ci
+	npm --prefix projector run check
 
 up:
 	skaffold run -m analytics-postgres

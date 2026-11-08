@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: identity
 
 resources:
-  - ../../../../../domains/identity/workloads/postgres/infra/overlays/production
+  - ../../../../../domains/identity/postgres/infra/overlays/production
   - postgres-auth.sops.yaml
