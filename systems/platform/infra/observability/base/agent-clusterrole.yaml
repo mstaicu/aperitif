@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+
+metadata:
+  name: otel-agent
+
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/stats
+      # Required to read container limits for request/limit utilization metrics.
+      - nodes/pods
+    verbs:
+      - get
+  # The Kubernetes attributes processor watches pod identity and ownership.
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch

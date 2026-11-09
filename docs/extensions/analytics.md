@@ -1,14 +1,14 @@
 # Analytics as a domain
 
 Status: The baseline is implemented in
-[`domains/analytics`](../../domains/analytics/README.md). Additional tools and
+[`systems/analytics`](../../systems/analytics/README.md). Additional tools and
 capabilities remain proposals.
 
 Use the existing implementation and canonical rules:
 
 - [Analytics foundation](../analytics.md): facts, current state, ownership and analytical limits.
 - [Domain communication](../domains.md#asynchronous): message terminology and versioned contracts.
-- [Analytics domain](../../domains/analytics/README.md): local operation, durable consumers and SQL readers.
+- [Analytics domain](../../systems/analytics/README.md): local operation, durable consumers and SQL readers.
 - [Deployed validation](../analytics-validation.md): exercised endpoints and source-to-sink observations.
 
 Analytics owns its projectors, derived datasets and reader interfaces. Source

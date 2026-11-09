@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: DaemonSet
+
+metadata:
+  name: agent
+
+spec:
+  selector:
+    matchLabels:
+      app: agent
+  template:
+    metadata:
+      labels:
+        app: agent
+    spec:
+      serviceAccountName: agent
+      securityContext:
+        runAsUser: 0
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s:0.164.0
+          args:
+            - --config=/conf/otel-config.yaml
+
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: GOMEMLIMIT
+              value: 100MiB
+
+          ports:
+            - name: health
+              containerPort: 13133
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 1
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+              readOnly: true
+            - name: pod-logs
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: checkpoints
+              mountPath: /var/lib/otelcol
+
+      volumes:
+        - name: config
+          configMap:
+            name: agent
+        - name: pod-logs
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+        - name: checkpoints
+          hostPath:
+            path: /var/lib/otelcol
+            type: DirectoryOrCreate

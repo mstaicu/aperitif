@@ -12,8 +12,8 @@ capability. An example is an illustrative product composition.
 Repository layout:
 
 ```text
-domains/<domain>/        business boundaries, contracts and directly owned units
-platform/<unit>/         shared capabilities and executable code without domain rules
+systems/<system>/        independently owned source packages, contracts and reusable infra
+systems/platform/        shared capabilities and executable code without domain rules
 clusters/prod-eu/        Flux inventory, concrete deployment overlays and encrypted configuration
 docs/                    domain model, operations, extension recipes and roadmap
 ```
@@ -27,7 +27,7 @@ Start here:
   source-to-sink preservation, replay and analytical usefulness.
 - [Analytics foundation](analytics.md) — implemented contracts, ingestion,
   reader interface and tested recovery boundaries.
-- [Analytics domain](../domains/analytics/README.md) — local commands and SQL readers.
+- [Analytics domain](../systems/analytics/README.md) — local commands and SQL readers.
 - [ADR 0001](adr/0001-identity-is-the-canonical-development-boundary.md) —
   Identity is the canonical local-development boundary.
 - [Roadmap](roadmap.md) — unresolved product-agnostic work.
@@ -56,8 +56,8 @@ Examples:
 - [Messaging](examples/messaging.md) — stream, producer and consumer patterns for
   state snapshots, deltas and commands.
 - [Automated farm](examples/automated-farm.md)
-- [Identity account snapshot](../domains/identity/contracts/examples/messages/identity.account.snapshot.v1.json)
-- [Identity membership snapshot](../domains/identity/contracts/examples/messages/identity.membership.snapshot.v1.json)
+- [Identity account snapshot](../systems/identity/contracts/examples/messages/identity.account.snapshot.v1.json)
+- [Identity membership snapshot](../systems/identity/contracts/examples/messages/identity.membership.snapshot.v1.json)
 
 Add infrastructure only for a concrete requirement. A domain does not need NATS,
 an outbox, Relay, a projector, or a contracts package merely because it exists.

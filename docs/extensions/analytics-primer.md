@@ -1,7 +1,7 @@
 # Analytics domain: measurement, data and component choices
 
 Research reviewed on 2026-10-30. This is a first-principles guide and proposed
-component selection. The [implemented baseline](../../domains/analytics/README.md)
+component selection. The [implemented baseline](../../systems/analytics/README.md)
 now supplies local ingestion and SQL views; the additional tools below remain
 proposals. SaaS equivalents are included for comparison.
 

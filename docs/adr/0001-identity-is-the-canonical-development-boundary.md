@@ -11,7 +11,7 @@ contracts and deployment configuration for a topology we do not intend to extend
 
 ## Decision
 
-`domains/identity` is the sole identity and account implementation for local
+`systems/identity` is the sole identity and account implementation for local
 development and the declared production deployment.
 
 Identity owns:

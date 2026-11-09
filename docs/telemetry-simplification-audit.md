@@ -95,9 +95,9 @@ kubelet receiver reports resource usage. These are complementary data sources.
 Configured memory requests are 64MiB per agent, 128MiB for the gateway and 1GiB
 for OpenObserve. These are scheduler reservations, not measured usage or a
 capacity benchmark. OpenObserve additionally needs persistent storage and backend
-operations. Sources: [agent](../platform/cluster/observability/base/agent-daemonset.yaml),
-[gateway](../platform/cluster/observability/base/collector-deployment.yaml),
-[backend](../platform/cluster/observability/base/openobserve-statefulset.yaml).
+operations. Sources: [agent](../systems/platform/infra/observability/base/agent-daemonset.yaml),
+[gateway](../systems/platform/infra/observability/base/collector-deployment.yaml),
+[backend](../systems/platform/infra/observability/base/openobserve-statefulset.yaml).
 
 ## Alternatives challenged
 
@@ -173,7 +173,7 @@ Do not turn every collected series into a dashboard or alert.
 ## Backend choices and what portability means
 
 OpenObserve is already isolated behind `otlp_http/backend` in
-[collector-config.yaml](../platform/cluster/observability/base/collector-config.yaml).
+[collector-config.yaml](../systems/platform/infra/observability/base/collector-config.yaml).
 Its URL and Basic authorization are deployment settings. Business services do
 not know about its storage or query engine.
 

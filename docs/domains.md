@@ -32,7 +32,7 @@ Only deploy capabilities a product uses.
 
 ### Identity
 
-[`domains/identity`](../domains/identity) implements passkey registration,
+[`systems/identity`](../systems/identity) implements passkey registration,
 authentication and credential management, independent sessions, five-minute
 access tokens, JWKS, accounts, initial owner membership, and the passkey UI.
 An Account is a Product's primary customer and economic attribution key.
@@ -75,7 +75,7 @@ Identity also publishes seven committed lifecycle events under
 membership creation, credential addition/removal, session establishment and explicit
 session revocation. Their versioned types, NATS addresses, payloads and exact
 emission meanings are in the
-[message contracts](../domains/identity/contracts/src/messages).
+[message contracts](../systems/identity/contracts/src/messages).
 The `events` prefix identifies the occurrence feed; the `state` prefix identifies
 the latest-resource feed. Message types retain their business names.
 
@@ -150,11 +150,11 @@ publication. See the [validation report](analytics-validation.md).
 
 ### Analytics
 
-[`domains/analytics`](../domains/analytics) owns a PostgreSQL occurrence ledger,
+[`systems/analytics`](../systems/analytics) owns a PostgreSQL occurrence ledger,
 current Identity projections, durable NATS consumers and versioned read-only
 reporting views. It uses public source contracts, never Identity's database.
 The [Analytics foundation](analytics.md) defines source, transport and reader
-boundaries; the [domain guide](../domains/analytics/README.md) covers local use. A reporting view describes observed data, not pre-collection
+boundaries; the [domain guide](../systems/analytics/README.md) covers local use. A reporting view describes observed data, not pre-collection
 history, attempts or causal experiment results.
 
 Member administration, invitations, machine principals, machine membership, and
@@ -229,8 +229,8 @@ feed or add unused command streams. These are platform routing conventions;
 they do not redefine message purpose or payload representation.
 
 Identity's public contracts live under
-[`domains/identity/contracts`](../domains/identity/contracts). Contracts for other
-domains follow the same `domains/<domain>/contracts` structure. Keep the schema,
+[`systems/identity/contracts`](../systems/identity/contracts). Contracts for other
+domains follow the same `systems/<domain>/contracts` structure. Keep the schema,
 validator and builders for one message together and export the supported API
 through `src/index.mjs`. Definitions live in `src/messages/`, examples in
 `examples/messages/`, and contract tests in `test/messages/`. Use the exact
@@ -250,7 +250,7 @@ Consumers pin exact package versions and validate every message. Publishing is
 manual for now:
 
 ```sh
-cd domains/<domain>/contracts
+cd systems/<domain>/contracts
 npm ci
 npm run check
 npm publish
@@ -304,7 +304,7 @@ Use Identity's implemented events as the producer blueprint:
 | Event `time` | Source mutation time before commit, after the relevant lock; retries preserve it. |
 | Analytics `ingested_at` | Arrival of a newly stored unique event, independent of source occurrence time. |
 
-See [account creation](../domains/identity/api/src/services/accounts/create.mjs)
+See [account creation](../systems/identity/api/src/services/accounts/create.mjs)
 for the full mutation, snapshots and facts in one transaction. Additional lifecycle
 fields and events are introduced with the operation that makes them true;
 Identity does not add unused `updated_at`/`deleted_at` fields or fabricate
@@ -320,7 +320,7 @@ attempts, role changes or credential history from its current rows.
    string-valued `headers`.
 5. Let the domain-owned Relay Deployment publish it.
 
-See [Identity account creation](../domains/identity/api/src/services/accounts/create.mjs)
+See [Identity account creation](../systems/identity/api/src/services/accounts/create.mjs)
 for the transaction pattern. Creation normally has no pending snapshot to replace;
 updates must also lock the source resource and increment its version. Coalesce
 only snapshot subjects; retain every distinct business event and command.
@@ -342,56 +342,63 @@ projection.
 
 Use the tested Identity contract examples for current event payloads:
 
-- [Account snapshot](../domains/identity/contracts/examples/messages/identity.account.snapshot.v1.json)
-- [Membership snapshot](../domains/identity/contracts/examples/messages/identity.membership.snapshot.v1.json)
+- [Account snapshot](../systems/identity/contracts/examples/messages/identity.account.snapshot.v1.json)
+- [Membership snapshot](../systems/identity/contracts/examples/messages/identity.membership.snapshot.v1.json)
 
-These examples are validated by the [contract tests](../domains/identity/contracts/test/messages).
+These examples are validated by the [contract tests](../systems/identity/contracts/test/messages).
 A complete consumer example should be included only when it is executable and
 tested against those contracts.
 
 ## Adding a product domain
 
-Start with the smallest deployable unit:
+Start with the smallest system that owns the capability:
 
 ```text
-domains/<domain>/
-  postgres/              local/disposable database manifests
-  migrations/            SQL, image, Skaffold and manifests
-  api/                   source, image, Skaffold and manifests
-  Makefile               check, up, dev, down
-  skaffold.yaml          component composition
+systems/<system>/
+  migrations/            SQL, image and Skaffold build configuration
+  api/                   native source, image and Skaffold build configuration
+  infra/
+    migrations/          reusable base and local/production overlays
+    api/                 reusable base and local/production overlays
+    postgres/            database manifests and local Skaffold configuration
+  Makefile               current domain's check, up, dev and down commands
+  skaffold.yaml          local component composition
 ```
 
-Units live directly under their domain or under `platform/` for shared
-capabilities. Keep each implementation's language or framework layout at the
-unit root. Include only the capabilities it needs: a `Dockerfile` for an owned
-container image, `skaffold.yaml` for build or local deployment configuration,
-and `infra/` for reusable Kubernetes resources. A unit using an existing image
-does not need application source or a Dockerfile; a shared executable does not
-need a Kubernetes deployment of its own. Domain contracts remain under
-`domains/<domain>/contracts`.
+Each system owns its native packages, contracts, reusable Kubernetes definitions,
+local development and release tooling. Keep each package's language or framework
+layout at its root. Include a Dockerfile or Skaffold configuration only when that
+package uses it. A library does not need either; a deployment using an existing
+image needs no source package. Domain contracts remain under
+`systems/<system>/contracts`.
 
-Image publication uses the unit's existing Skaffold build artifact and root
-Dockerfile, building from the unit root with the `prod` target. Units without
-that local image definition do not publish an image. Kubernetes-only changes
-under `infra/` do not require an image rebuild. Keep package checks in the
-owning domain Makefile, and shared capability checks in `platform/Makefile`.
-Select new units explicitly in the domain's local Skaffold composition and in
-each cluster that should run them.
+Reusable manifests live under `systems/<system>/infra/<workload>/base` and
+`overlays/<environment>`. The base contains the portable workload, Service and
+configuration interface. The `local` overlay describes disposable development
+behavior. The `production` overlay describes reusable production behavior and
+expected Secret/ConfigMap references, without selecting one cluster's credentials,
+hostnames or provider bindings. Source-producing packages keep their Skaffold
+build configuration beside their source and reference sibling infrastructure.
+Deployment-only units keep their Skaffold configuration in their infrastructure
+folder. The system's aggregate Skaffold file composes those configurations.
 
-A Kubernetes workload owns its `infra/base` and applicable environment overlays.
-The base contains the portable workload, Service and configuration interface.
-The `local` overlay describes disposable development behavior. A `production`
-overlay describes reusable production behavior and expected Secret/ConfigMap
-references, without selecting one cluster's credentials, hostnames or provider
-bindings. The domain Skaffold file only requires its component configs. Shared
-platform manifests use `platform/<unit>/infra/base` and
-`platform/<unit>/infra/overlays/<environment>`; the shared relay executable lives
-under `platform/outbox-relay`, while each domain owns its relay deployment and
-stream configuration.
+Shared platform definitions use `systems/platform/infra/<capability>/`. The relay
+executable lives under `systems/platform/outbox-relay`; each domain owns its relay
+deployment and stream configuration. Identity still imports the shared relay's
+local build configuration and requires a compatible NATS installation.
+
+Teams own their workflow files under the repository-root `.github/workflows`.
+Identity and the shared relay have separate check and image-publication workflows.
+They retain the existing Docker `prod` target and Skaffold image reference for
+these packages; other systems may choose their own build and release tools.
+Changed source packages select image builds, while `infra/` changes do not rebuild
+images. Analytics is a local event-diagnostics system and has no image-publication
+workflow. Analytics and platform infrastructure retain their local check commands.
+Select new workloads explicitly in the owning system's local composition and each
+cluster that should run them.
 
 A workload needing concrete deployment settings has a final overlay in
-`clusters/<cluster>/domains/<domain>/<workload>/`. It imports the production
+`clusters/<cluster>/systems/<system>/<workload>/`. It imports the production
 profile and supplies configuration, encrypted Secrets and deployment patches.
 The adjacent `<workload>.yaml` contains Flux reconciliation and image selection;
 its `spec.path` points to the final overlay, or directly to the production profile

@@ -1,7 +1,7 @@
 # Analytics and enabling capabilities
 
 Status: Proposed; revised after a capability-boundary review on 2026-10-30.
-The [implemented Analytics domain](../../domains/analytics/README.md) supplies
+The [implemented Analytics domain](../../systems/analytics/README.md) supplies
 local ingestion, PostgreSQL and SQL views. Additional components below remain
 proposals. This assembly map does not require the complete agent loop.
 
@@ -187,7 +187,7 @@ changing SQL dialects, assignment algorithms or vendor APIs still takes work.
 | Coding task | Bounded change and independent relevant checks | Automatic merging or a general coordinator |
 | Delivery | Enforced release rules, known promoted digest/running state and demonstrated recovery | AI decision-making or an A/B test |
 
-Use `make -C domains/<domain> check` for the checks supplied by each domain.
+Use `make -C systems/<domain> check` for the checks supplied by each domain.
 Analytics currently runs dependency installation, lint and type checks; its
 projector has no integration-test suite. The separate [deployed validation report](../analytics-validation.md)
 records the live source-to-sink and replay checks already exercised. Flags,

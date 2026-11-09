@@ -1,8 +1,0 @@
-apiVersion: skaffold/v4beta14
-kind: Config
-metadata:
-  name: analytics
-requires:
-  - path: postgres/skaffold.yaml
-  - path: migrations/skaffold.yaml
-  - path: projector/skaffold.yaml

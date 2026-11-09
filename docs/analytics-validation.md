@@ -52,7 +52,7 @@ HTTP response envelopes. Shared verification, persistence and session creation
 remain explicit; no transaction wrapper, service factory or generic repository
 was added.
 
-`make -C domains/identity check` passed. A temporary HTTP API with isolated
+`make -C systems/identity check` passed. A temporary HTTP API with isolated
 PostgreSQL passed 138 real browser/API requests (87 normal and 51 security),
 covering all thirteen business operations. Sixteen isolated regression scenarios
 also passed, including terminal proof consumption, rollback and lock ordering;
@@ -148,7 +148,7 @@ a promise of commit within two minutes after a potentially long database wait.
 
 ### Final rollout verification
 
-`make -C domains/identity check` passed after the fix. Built and deployed only the
+`make -C systems/identity check` passed after the fix. Built and deployed only the
 Identity API, preserving UI routes, contracts, databases, broker streams and
 shared infrastructure. The final verified image is
 `ghcr.io/mstaicu/identity-api:0ae7bf08b8d7afef66e001a5cf10b3cb602b71fd924f0b603596f117a8c3f1ae`.
@@ -233,7 +233,7 @@ The final deployed API passed:
 - Nine generated OpenAPI client requests. Generation and TypeScript compilation
   succeeded; the live specification documents all 13 operations and typed errors.
 
-The required `make -C domains/identity check` passed. Thirteen additional
+The required `make -C systems/identity check` passed. Thirteen additional
 isolated PostgreSQL scenarios checked workflow/session/target binding,
 concurrent replay, final-credential protection, outbox rollback, expiry during a
 principal lock wait and logout ordering. Those isolated scenarios stubbed the

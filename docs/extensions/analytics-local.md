@@ -1,7 +1,7 @@
 # Analytics: local deployment and durable NATS consumers
 
 Status: Tool and job choices remain proposals, researched on 2026-10-30.
-The [implemented Analytics domain](../../domains/analytics/README.md) now supplies
+The [implemented Analytics domain](../../systems/analytics/README.md) now supplies
 the local PostgreSQL/projector baseline; the proposed names below are not its
 deployment inventory.
 Use the existing local Kubernetes environment as the default placement for
@@ -44,7 +44,7 @@ replacement deployment. No separate ClickHouse is needed for this first slice.
 | NATS JetStream | Existing local Kubernetes namespace `nats` | Platform supplies broker; each source owns streams/contracts |
 | OTel/OpenObserve | Existing local Kubernetes namespace `otel` | Platform operates collection/storage; workload owners define health and respond |
 | Analytics PostgreSQL | Local Kubernetes namespace `analytics` | Analytics data, receipts/projections and any owned job state |
-| Migrations and ingestion | `domains/analytics`, namespace `analytics` | Analytics-owned first-party workloads |
+| Migrations and ingestion | `systems/analytics`, namespace `analytics` | Analytics-owned first-party workloads |
 | Long analysis/agent jobs | Local process initially, or bounded Kubernetes Jobs when needed | Analytics analyses, or the repository owner for engineering tasks |
 | PostHog, if retained | Official hobby Compose on an isolated local Linux VM beside the cluster | Named service operator; Analytics may operate analytical tools without owning Product release decisions |
 | PostHog MCP, if needed | Separate local service pointing at local PostHog | Analytics/engineering tool integration |
@@ -100,7 +100,7 @@ The following names are proposed examples, not existing contracts or resources:
 | Analytics commands | Analytics-owned WorkQueue stream; `analytics-analysis-commands-v1`; commands addressed to Analytics | Execute a short owned effect or durably admit an owned job before ACK |
 
 Current inputs include Identity state snapshots and seven committed lifecycle
-events; see the [message contracts](../../domains/identity/contracts/src/messages).
+events; see the [message contracts](../../systems/identity/contracts/src/messages).
 Product event and Analytics command contracts must be introduced with a real
 use case. Do not configure consumers against invented subjects and treat them
 as implemented data sources. Source domains retain ownership of their stream
@@ -186,7 +186,7 @@ repository checks; production delivery remains a separate capability.
 ## Repository assembly and independent checks
 
 ```text
-domains/analytics/
+systems/analytics/
   postgres/            owned local data, persistence when retention matters
   migrations/          projection/fact schema, receipts and jobs when selected
   ingestion/           only required durable consumers/handlers
@@ -205,14 +205,14 @@ not replace database persistence.
 The already implemented platform setup commands are:
 
 ```sh
-kubectl apply -k platform/ingress/infra/overlays/local
-kubectl apply -k platform/event-bus/infra/overlays/local
-kubectl apply -k platform/observability/infra/overlays/local
+kubectl apply -k systems/platform/infra/ingress/overlays/local
+kubectl apply -k systems/platform/infra/event-bus/overlays/local
+kubectl apply -k systems/platform/infra/observability/overlays/local
 ```
 
 The existing broker has three servers; source stream replication follows the
-repository's three-replica pattern. `make -C domains/analytics up` now starts
-PostgreSQL, migrations and the projector. See the [domain guide](../../domains/analytics/README.md)
+repository's three-replica pattern. `make -C systems/analytics up` now starts
+PostgreSQL, migrations and the projector. See the [domain guide](../../systems/analytics/README.md)
 for the current commands and [deployed validation](../analytics-validation.md)
 for exercised replay and projection behavior. The proposed command/job slice
 remains separate from this read-only dataset. A local query/agent finding does

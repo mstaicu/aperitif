@@ -96,8 +96,8 @@ its stream. Inspect the resulting configuration after deployment. Keep publish
 acknowledgements enabled and subjects untransformed for these examples.
 
 Reuse the existing domain relay's
-[ConfigMap generation](../../domains/identity/outbox-relay/infra/base/kustomization.yaml)
-and [Deployment](../../domains/identity/outbox-relay/infra/base/deployment.yaml).
+[ConfigMap generation](../../systems/identity/infra/outbox-relay/base/kustomization.yaml)
+and [Deployment](../../systems/identity/infra/outbox-relay/base/deployment.yaml).
 They mount the JSON under `/etc/outbox-relay`; the environment overlay supplies
 `NATS_STREAMS_PATH`, `NATS_URL` and `DATABASE_URL`. New event semantics require the
 corresponding stream entry and producer/consumer contract, not a new relay mode.
@@ -176,7 +176,7 @@ start can predate another operation that acquired the lock first. See the
 ### Producer: update the resource and replace its pending snapshot
 
 This extends the pattern in the existing
-[Account creation service](../../domains/identity/api/src/services/accounts/create.mjs).
+[Account creation service](../../systems/identity/api/src/services/accounts/create.mjs).
 The `UPDATE` locks the resource and increments its version before replacing the
 pending outbox row. Concurrent writers of this resource must follow that same
 locking rule. Use ordinary PostgreSQL `READ COMMITTED` transactions here; retry
@@ -951,7 +951,7 @@ were paused. The redelivery checks temporarily shortened the test consumers'
 acknowledgement timers. Broker recovery allowed repeated relay process attempts
 while JetStream recovered, matching the deployment's restart policy.
 
-Run the domain's normal `make -C domains/<domain> check`, then exercise its real
+Run the domain's normal `make -C systems/<domain> check`, then exercise its real
 outbox, relay and consumers against a three-server JetStream cluster:
 
 | Exercise                                                | Required observation                                                             |

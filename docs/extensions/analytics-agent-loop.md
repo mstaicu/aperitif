@@ -3,7 +3,7 @@
 Status: Proposed. Research reviewed on 2026-10-30 by three parallel research
 agents and a synthesis review. Sources describe a mix of production experience,
 newly released capabilities and previews; those distinctions are retained
-below. The [Analytics baseline](../../domains/analytics/README.md) has since been
+below. The [Analytics baseline](../../systems/analytics/README.md) has since been
 implemented and [validated locally](../analytics-validation.md). The flag,
 experiment and agent integrations below remain proposals.
 
@@ -173,18 +173,18 @@ production environment. The Analytics baseline has been
 and agent automations remain proposals.
 
 1. **Verification exists, enforcement needs checking.**
-   [PR/merge-queue checks](../../.github/workflows/checks.yaml) run changed-domain
-   checks, manifest validation and image builds. Required branch protection
+   [Identity PR/merge-queue checks](../../.github/workflows/identity-checks.yaml)
+   run package checks and changed-package image builds. Required branch protection
    remains in the [roadmap](../roadmap.md). Do not assume repository settings
-   enforce what YAML merely defines. `make -C domains/analytics check` installs
+   enforce what YAML merely defines. `make -C systems/analytics check` installs
    dependencies and runs lint/type checking; it does not run integration tests.
    The separate local validation report records the deployed pipeline exercise.
 2. **The declared release path already automatically advances scanned images.**
-   [Publication](../../.github/workflows/publish.yaml) builds on `master`, scans
+   [Identity publication](../../.github/workflows/identity-publish.yaml) builds on `master`, scans
    the immutable image, then retags its digest as `latest`. It does not
    independently rerun domain checks. The
-   [image policy](../../clusters/prod-eu/domains/identity/api.yaml) observes that
-   tag's digest; [Flux automation](../../clusters/prod-eu/automation.yaml) writes
+   [image policy](../../clusters/prod-eu/systems/identity/api.yaml) observes that
+   tag's digest; [Flux automation](../../clusters/prod-eu/image-update-automation.yaml) writes
    production updates directly to `master`. A merged agent change can therefore
    enter the normal production path without another deployment action.
 3. **Release authority must be explicit.** Decide which changes an automation
@@ -195,9 +195,9 @@ and agent automations remain proposals.
    digest edit can be overwritten by reconciliation. A durable revert or
    deliberate policy change must establish the intended release state.
 4. **Operational evidence is private today.** The OpenObserve
-   [Service](../../platform/observability/infra/base/openobserve-service.yaml)
+   [Service](../../systems/platform/infra/observability/base/openobserve-service.yaml)
    is cluster-internal. Its production
-   [NetworkPolicy](../../platform/observability/infra/overlays/production/openobserve-networkpolicy.yaml)
+   [NetworkPolicy](../../systems/platform/infra/observability/overlays/production/openobserve-networkpolicy.yaml)
    admits collector traffic, not arbitrary cloud agents. Cloud access needs a
    deliberate supported path. Start with bounded alert evidence via an
    external trigger integration; test schema/authentication mapping rather
@@ -218,7 +218,7 @@ and agent automations remain proposals.
    judging business effects.
 7. **Product measurement still needs its own facts.** Existing public inputs
    include Identity snapshots and seven lifecycle events, consumed by the
-   [implemented Analytics baseline](../../domains/analytics/README.md). A real
+   [implemented Analytics baseline](../../systems/analytics/README.md). A real
    Product outcome, eligibility/exposure and suitable historical coverage remain
    specific to the selected workflow.
    An agent cannot infer them reliably from current state or sampled logs.

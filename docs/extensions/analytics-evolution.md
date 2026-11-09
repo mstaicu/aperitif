@@ -1,7 +1,7 @@
 # Analytics: minimal topology and evolution
 
 Status: Evolution proposals, researched on 2026-10-30. The
-[implemented Analytics baseline](../../domains/analytics/README.md) now supplies
+[implemented Analytics baseline](../../systems/analytics/README.md) now supplies
 the projector, owned PostgreSQL and SQL views. Additional tools and stages below
 remain proposals.
 
@@ -44,13 +44,13 @@ The implemented current-state input families are:
 
 | Input                                                                                                  | Actual payload fields                                                | Honest use today                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| [Account snapshot](../../domains/identity/contracts/src/messages/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
-| [Membership snapshot](../../domains/identity/contracts/src/messages/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
+| [Account snapshot](../../systems/identity/contracts/src/messages/identity.account.snapshot.v1.mjs)       | `id`, `name`, `created_at`, `version`                                | Current account context and source creation time.                    |
+| [Membership snapshot](../../systems/identity/contracts/src/messages/identity.membership.snapshot.v1.mjs) | `id`, `account_id`, `principal_id`, `roles`, `created_at`, `version` | Current initial-owner relationship context and source creation time. |
 
-[Account creation](../../domains/identity/api/src/services/accounts/create.mjs)
+[Account creation](../../systems/identity/api/src/services/accounts/create.mjs)
 publishes both initial snapshots. Identity also publishes seven committed
 lifecycle events, including principal registration and session establishment;
-their exact meanings are in the [message contracts](../../domains/identity/contracts/src/messages).
+their exact meanings are in the [message contracts](../../systems/identity/contracts/src/messages).
 The snapshots include resource creation timestamps, but no required top-level
 occurrence time or active/deleted fields. Membership updates, product usage
 facts and commercial facts are not implemented. Creation times can group
@@ -77,7 +77,7 @@ one Analytics database initially; raw, modeled and reporting data do not each
 need a service or storage product.
 
 ```text
-domains/analytics/
+systems/analytics/
   postgres/         local dependency, if PostgreSQL is selected
   migrations/       owned tables, views and definitions in SQL
   ingestion/        native JetStream consumer + pg writes

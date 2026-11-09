@@ -1,0 +1,111 @@
+name: Publish Identity images
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "systems/identity/*/**"
+      - "!**/infra/**"
+
+concurrency:
+  group: publish-identity-images
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Find Identity packages to publish
+    runs-on: ubuntu-24.04
+    outputs:
+      build_paths: ${{ steps.images.outputs.all_changed_and_modified_files }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+        with:
+          fetch-depth: 0
+
+      - id: images
+        name: Find changed Identity packages
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: systems/identity/*/**
+          files_ignore: "**/infra/**"
+          dir_names: true
+          dir_names_max_depth: 3
+          output_renamed_files_as_deleted_and_added: true
+          fail_on_initial_diff_error: true
+          matrix: true
+
+  publish:
+    name: Publish ${{ matrix.path }}
+    needs: changes
+    if: needs.changes.outputs.build_paths != '[]'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{ fromJSON(needs.changes.outputs.build_paths) }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+
+      - id: image
+        name: Read image reference
+        env:
+          COMPONENT: ${{ matrix.path }}
+        run: |
+          image=""
+          if [[ -f "$COMPONENT/skaffold.yaml" ]]; then
+            image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          fi
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - id: build
+        name: Build and push production image
+        uses: docker/build-push-action@v7.3.0
+        if: steps.image.outputs.name != ''
+        with:
+          context: ${{ matrix.path }}
+          target: prod
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+
+      - name: Scan image digest
+        uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.image.outputs.name != ''
+        with:
+          image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: Tag scanned image as latest
+        if: steps.image.outputs.name != ''
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: >
+          docker buildx imagetools create
+          --tag "$IMAGE:latest"
+          "$IMAGE@$DIGEST"

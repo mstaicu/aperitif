@@ -108,7 +108,7 @@ deployed and exercised. Final checks passed:
   one rejects, one usable credential remains, and existing sessions are invalid.
 - Five malformed nonstring challenges reject without custom type guards.
 - All three existing browser E2E tests and generated-client compatibility checks.
-- `make -C domains/identity check`, including 11 contract tests. The existing API
+- `make -C systems/identity check`, including 11 contract tests. The existing API
   test command discovers zero tests; deployed probes supply the API evidence.
 
 No repository tests were added. The baseline's isolated outbox contained exactly

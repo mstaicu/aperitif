@@ -108,9 +108,9 @@ design. Keep database provisioning outside business functions. Changing
 egress only to local PostgreSQL pods. Provider networking, access rules, TLS and
 credentials must be configured together.
 
-Evidence: [PostgreSQL workload](../domains/identity/workloads/postgres/infra/base/deployment.yaml),
-[production API database configuration](../domains/identity/workloads/api/infra/overlays/prod-eu/deployment.yaml),
-[API egress policy](../domains/identity/workloads/api/infra/base/networkpolicy.yaml).
+Evidence: [PostgreSQL workload](../systems/identity/infra/postgres/base/deployment.yaml),
+[production API database configuration](../systems/identity/infra/api/overlays/production/deployment.yaml),
+[API egress policy](../systems/identity/infra/api/base/networkpolicy.yaml).
 
 ### 2. Extra clusters do not create data replication
 
@@ -213,10 +213,10 @@ building an HA telemetry platform. If baggage propagation has no intended use,
 the standard propagator configuration can disable it; arbitrary baggage should
 not become an accidental cross-region personal-data channel.
 
-Evidence: [collector pipelines](../platform/cluster/observability/base/collector-config.yaml),
-[log agent](../platform/cluster/observability/base/agent-config.yaml),
-[OpenObserve configuration](../platform/cluster/observability/base/openobserve-statefulset.yaml),
-[API instrumentation](../domains/identity/workloads/api/src/index.mjs).
+Evidence: [collector pipelines](../systems/platform/infra/observability/base/collector-config.yaml),
+[log agent](../systems/platform/infra/observability/base/agent-config.yaml),
+[OpenObserve configuration](../systems/platform/infra/observability/base/openobserve-statefulset.yaml),
+[API instrumentation](../systems/identity/api/src/index.mjs).
 OpenTelemetry provides explicit guidance on
 [handling sensitive telemetry](https://opentelemetry.io/docs/security/handling-sensitive-data/).
 
@@ -246,9 +246,9 @@ must coordinate data and consumer cursors; reset/replay cannot recover events
 already evicted. Keep this as a recovery lesson rather than building a generic
 analytics recovery framework now.
 
-Evidence: [stream configuration](../domains/identity/workloads/outbox-relay/infra/base/streams.json),
-[consumer identity](../domains/analytics/workloads/projector/src/consumers.mjs),
-[projector](../domains/analytics/workloads/projector/src/identity-v1.mjs).
+Evidence: [stream configuration](../systems/identity/infra/outbox-relay/base/streams.json),
+[consumer identity](../systems/analytics/projector/src/consumers.mjs),
+[projector](../systems/analytics/projector/src/identity-v1.mjs).
 
 ## Privacy, residency and sovereignty
 
@@ -324,7 +324,7 @@ be:
 clusters/
   prod-eu/            current declared cluster entrypoint
   prod-us/            future independent cluster entrypoint
-domains/<domain>/workloads/<workload>/infra/
+systems/<domain>/workloads/<workload>/infra/
   base/
   overlays/prod-eu/
   overlays/prod-us/

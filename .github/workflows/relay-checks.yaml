@@ -1,0 +1,91 @@
+name: Check relay
+
+on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
+
+concurrency:
+  group: relay-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Find relay changes
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.changes.outputs.any_changed }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        name: Find relay changes
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: |
+            systems/platform/outbox-relay/**
+            .github/workflows/relay-*.yaml
+          fail_on_initial_diff_error: true
+
+  check:
+    name: Check relay
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+
+      - name: Set up Node 26.10.0
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: 26.10.0
+
+      - name: Run package check
+        working-directory: systems/platform/outbox-relay
+        run: |
+          npm ci
+          npm run check
+
+  build:
+    name: Build relay
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.1.0
+
+      - id: image
+        name: Read image reference
+        env:
+          COMPONENT: systems/platform/outbox-relay
+        run: |
+          image=""
+          if [[ -f "$COMPONENT/skaffold.yaml" ]]; then
+            image=$(yq -r '.build.artifacts[0].image // ""' "$COMPONENT/skaffold.yaml")
+          fi
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Build production image
+        uses: docker/build-push-action@v7.3.0
+        if: steps.image.outputs.name != ''
+        with:
+          context: systems/platform/outbox-relay
+          target: prod
+          push: false
+          provenance: false
+          sbom: false
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}

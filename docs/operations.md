@@ -10,9 +10,9 @@ root.
 Apply the shared capabilities needed by the scenario:
 
 ```sh
-kubectl apply -k platform/ingress/infra/overlays/local
-kubectl apply -k platform/event-bus/infra/overlays/local
-kubectl apply -k platform/observability/infra/overlays/local
+kubectl apply -k systems/platform/infra/ingress/overlays/local
+kubectl apply -k systems/platform/infra/event-bus/overlays/local
+kubectl apply -k systems/platform/infra/observability/overlays/local
 ```
 
 | Capability | Needed for |
@@ -27,10 +27,10 @@ event bus. Browser E2E also requires ingress. Observability is optional.
 Use the domain interface:
 
 ```sh
-make -C domains/<domain> check
-make -C domains/<domain> up
-make -C domains/<domain> dev
-make -C domains/<domain> down
+make -C systems/<domain> check
+make -C systems/<domain> up
+make -C systems/<domain> dev
+make -C systems/<domain> down
 ```
 
 `up` deploys PostgreSQL, runs the migration Job, waits for it, and then deploys
@@ -73,9 +73,9 @@ publish a valid Identity snapshot rather than deploy Identity.
 For an integration suite, deploy the real provider:
 
 ```sh
-kubectl apply -k platform/ingress/infra/overlays/local
-kubectl apply -k platform/event-bus/infra/overlays/local
-make -C domains/identity up
+kubectl apply -k systems/platform/infra/ingress/overlays/local
+kubectl apply -k systems/platform/infra/event-bus/overlays/local
+make -C systems/identity up
 ```
 
 Both forms use the same component and domain manifests. The only new artifact is
@@ -86,6 +86,22 @@ language now.
 Identity browser E2E expects Traefik at `http://localhost` by default. Set
 `PLAYWRIGHT_BASE_URL` to run the same suite against an already deployed
 environment.
+
+## Workflow ownership
+
+Identity owns `identity-checks.yaml` and `identity-publish.yaml`; the shared relay
+owns `relay-checks.yaml` and `relay-publish.yaml` under `.github/workflows`.
+Their PR and merge-group workflows select their own changes. Image publication
+runs on `master`, retaining the existing build, digest scan and latest-tag stages.
+Identity selects changed source package directories; the relay has one image.
+Analytics is a local event-diagnostics system. Its Skaffold setup and local checks
+remain available; it has no image-publication workflow. Platform infrastructure
+checks also remain available locally. The former shared workflows are removed.
+
+The workflow files live at the repository root because GitHub requires that
+location. Extracting a system includes moving its owned workflow files and
+adjusting their working-directory prefixes and publishing permissions. Each
+system may choose its own toolchain and local-development tooling.
 
 ## Deployment-ready GitOps
 
@@ -100,17 +116,12 @@ merge to master
   -> build and scan each changed first-party image
   -> promote its immutable digest behind latest
   -> Flux observes the new digest
-  -> Flux writes it into clusters/prod-eu/domains/<domain>/<component>.yaml
+  -> Flux writes it into clusters/prod-eu/systems/<domain>/<component>.yaml
   -> Flux reconciles the component's selected production configuration
 ```
 
-Bootstrap only against a selected real cluster:
-
-```sh
-export GITHUB_TOKEN='<github-token>'
-export SOPS_AGE_KEY_FILE=/path/to/production-age-key
-make -C clusters/prod-eu bootstrap
-```
+Bootstrap only against a selected real cluster, following the commented commands
+in [the prod-eu README](../clusters/prod-eu/README.md).
 
 Bootstrap generates and commits `clusters/prod-eu/flux-system`. For a retained
 cluster, add that directory to `clusters/prod-eu/kustomization.yaml` so Flux
@@ -119,18 +130,21 @@ continues managing its own installation from Git.
 The GitHub token is used to install a read/write deploy key. The Age identity is
 stored in `flux-system` for SOPS decryption. Do not commit either credential.
 
-Workload `infra/overlays/production` profiles contain reusable production behavior.
+Workload `systems/<system>/infra/<workload>/overlays/production` profiles contain
+reusable production behavior.
 Where concrete settings are needed, a final overlay under
-`clusters/prod-eu/domains/<domain>/<workload>/` supplies them. Platform capabilities
-use the same pattern under `clusters/prod-eu/platform/<capability>/`. Flux points
+`clusters/prod-eu/systems/<domain>/<workload>/` supplies them. Platform capabilities
+use the same pattern under `clusters/prod-eu/systems/platform/<capability>/`. Flux points
 to that final overlay, or directly to the production profile when no overrides
 are needed. Parent inventories include namespace resources and Flux declarations,
-never the final workload overlay directories. Keep domain, platform and cluster
-directories available in the source artifact for imports.
+never the final workload overlay directories. Keep system and cluster directories
+available in the source artifact for imports.
 
 Use the same convention for every deployment: `<unit>.yaml` contains its Flux
 resources; an adjacent `<unit>/` exists only when it supplies concrete settings.
-Domain units live under `domains/<domain>/`; shared capabilities under `platform/`.
+Native packages live under `systems/<system>/`; reusable manifests live under
+`systems/<system>/infra/<workload>/`. Shared capabilities use
+`systems/platform/infra/`.
 Keep patches in the unit's `kustomization.yaml` when small, or use a resource-kind
 filename such as `deployment.yaml` when a separate patch is easier to read.
 
@@ -261,23 +275,23 @@ telemetry durability becomes a product requirement. Access it locally with:
 kubectl port-forward --namespace=otel service/openobserve 5080:5080
 ```
 
-The operations dashboard under `platform/observability` is imported
+The operations dashboard under `systems/platform/infra/observability` is imported
 manually and is not reconciled.
 
 ## Validation
 
 ```sh
-make -C domains/identity check
+make -C systems/identity check
 make -C platform check
 ```
 
-Domain checks run each package's checks. API and contract checks run their
-configured test commands; UI checks run lint and type checking. The GitHub check
-workflow separately renders and validates local and production domain workload
-overlays with Flux Schema. Local `make check` does not validate those manifests.
-These targets do not render the composed Skaffold graph. To validate that
+Domain checks run each package's existing checks. API and contract checks run
+their configured test commands; UI checks run lint and type checking. Platform
+checks render the existing local and production infrastructure overlays. The relay
+uses its native `npm ci` and `npm run check` commands in its own workflow.
+These commands do not render the composed Skaffold graph. To render that
 composition without building images:
 
 ```sh
-(cd domains/identity && skaffold render --offline=true --digest-source=none >/dev/null)
+(cd systems/identity && skaffold render --offline=true --digest-source=none >/dev/null)
 ```

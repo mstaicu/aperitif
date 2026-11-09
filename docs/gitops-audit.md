@@ -34,8 +34,8 @@ failure modes.
 | Contracts package | Public domain messages, schemas, builders and transport addresses | Separately published npm package; consumers pin its version |
 
 The separation between the relay executable and its domain deployment is
-particularly good. [Identity's relay module](../domains/identity/workloads/outbox-relay/skaffold.yaml)
-requires the [platform runtime build](../platform/runtime/outbox-relay/skaffold.yaml),
+particularly good. [Identity's relay module](../systems/identity/infra/outbox-relay/skaffold.yaml)
+requires the [platform runtime build](../systems/platform/outbox-relay/skaffold.yaml),
 while Identity owns stream definitions, DB access, manifests and configuration.
 Reuse does not surrender domain ownership.
 
@@ -99,9 +99,9 @@ is confidence in the selected release and in recovering the underlying state.
 
 **P0 before real production use.**
 
-[The production database Flux object](../clusters/prod-eu/domains/identity/postgres.yaml)
+[The production database Flux object](../clusters/prod-eu/systems/identity/postgres.yaml)
 at line 10 selects the production overlay, which inherits
-[the PostgreSQL base Deployment](../domains/identity/workloads/postgres/infra/base/deployment.yaml).
+[the PostgreSQL base Deployment](../systems/identity/infra/postgres/base/deployment.yaml).
 The base has no persistent data volume. The production patch adds configuration
 without changing that storage model. This is consistent with a disposable local
 database, but unsuitable for retained Identity state.
@@ -114,8 +114,8 @@ RPO/RTO. A PVC alone does not provide backup or disaster recovery.
 Use different migration and runtime DB roles. Production API, relay, migration
 and retention overlays currently embed password-bearing connection information
 and use the database superuser; see
-[API deployment:12](../domains/identity/workloads/api/infra/overlays/prod-eu/deployment.yaml)
-and [migration Job:14](../domains/identity/workloads/migrations/infra/overlays/prod-eu/job.yaml).
+[API deployment:12](../systems/identity/infra/api/overlays/production/deployment.yaml)
+and [migration Job:14](../systems/identity/infra/migrations/overlays/production/job.yaml).
 Replace these with encrypted Secrets and `secretKeyRef`, provision credentials
 outside Git in plaintext, and rotate any credentials ever used for real systems.
 Credential values are intentionally omitted here.
@@ -134,9 +134,9 @@ describes backup/WAL recovery if an operator is chosen.
 
 **P1 before automatic production delivery.**
 
-[Publish:68](../.github/workflows/publish.yaml) uses independent image jobs; each
+[Identity publication](../.github/workflows/identity-publish.yaml) uses independent image jobs; each
 job moves its own `latest` after scanning. API and migration
-[image policies](../clusters/prod-eu/domains/identity/api.yaml) independently
+[image policies](../clusters/prod-eu/systems/identity/api.yaml) independently
 observe those changes. A fast API build can become eligible before its matching
 migration image; a failed sibling scan can leave a partially advanced release.
 
@@ -159,7 +159,7 @@ change. Release metadata should declare compatibility or a migration epoch when
 needed, rather than imply every artifact must always rebuild together.
 
 The migration Job's
-[resource-specific force annotation:6](../domains/identity/workloads/migrations/infra/overlays/prod-eu/job.yaml)
+[resource-specific force annotation:6](../systems/identity/infra/migrations/overlays/production/job.yaml)
 already handles immutable Job image updates correctly. Preserve it.
 [Flux explicitly supports this Job execution pattern](https://fluxcd.io/flux/use-cases/running-jobs/).
 Avoid adding a TTL to a continuously reconciled fixed-name migration Job without
@@ -169,8 +169,8 @@ considering that Flux would recreate it after garbage collection.
 
 **P1.**
 
-[Image automation:14–25](../clusters/prod-eu/automation.yaml) writes directly to
-`master`. [Checks:3–6](../.github/workflows/checks.yaml) runs only for PR and
+[Image automation:14–25](../clusters/prod-eu/image-update-automation.yaml) writes directly to
+`master`. [Identity checks](../.github/workflows/identity-checks.yaml) run only for PR and
 merge-group events, so those direct digest commits receive no declared check run.
 External branch rules may reject the push or allow a bypass; the checkout does
 not establish which.
@@ -192,9 +192,9 @@ release before relying on it.
 
 **P1. This concerns deployability, independently of application test coverage.**
 
-[Checks:96–106](../.github/workflows/checks.yaml) schema-validates domain overlays.
-[Platform checks](../platform/cluster/Makefile) and
-[cluster checks](../clusters/prod-eu/Makefile) only render YAML.
+At audit time, the former shared check workflow schema-validated domain overlays.
+[Platform checks](../systems/platform/Makefile) only render YAML. Cluster
+bootstrapping is documented in [the cluster README](../clusters/prod-eu/README.md).
 Rendering the cluster inventory emits Flux resources; it does not follow their
 `spec.path` and validate the workload trees they reference.
 
@@ -234,7 +234,7 @@ value with `dummy`, as required by AGENTS.md.
 
 **P1 before real production use.**
 
-[Production NATS configuration:35–49](../platform/cluster/event-bus/overlays/prod-eu/nats.conf)
+[Production NATS Secret](../clusters/prod-eu/systems/platform/event-bus/nats-config.sops.yaml)
 maps unauthenticated clients into APP without subject permissions and contains a
 fixed SYS credential. Client and route transports have no declared TLS, and no
 NATS NetworkPolicy exists.
@@ -259,11 +259,11 @@ untrusted; production Identity state warrants an earlier baseline.
 
 **P1 for reliable production upgrades and availability.**
 
-[Traefik base:10](../platform/cluster/ingress/base/deployment.yaml) has one replica
+[Traefik base:10](../systems/platform/infra/ingress/base/deployment.yaml) has one replica
 and default rolling deployment behavior.
-[Production:73–80](../platform/cluster/ingress/overlays/prod-eu/deployment.yaml)
+[Production:73–80](../systems/platform/infra/ingress/overlays/production/deployment.yaml)
 mounts writable ACME state from a
-[ReadWriteOnce block volume](../platform/cluster/ingress/overlays/prod-eu/acme-persistentvolumeclaim.yaml).
+[ReadWriteOnce block volume](../systems/platform/infra/ingress/overlays/production/acme-persistentvolumeclaim.yaml).
 A replacement scheduled on another node can wait on attachment while the old
 pod remains alive; two pods on the same node may instead share writable ACME state.
 These are inferred rollout risks, not observed incidents.
@@ -283,7 +283,7 @@ Traefik documents
 **P1 before relying on edge security controls.**
 
 The domain guide assigns rate limiting to Cloudflare, while the
-[production Service:7–13](../platform/cluster/ingress/overlays/prod-eu/service.yaml)
+[production Service:7–13](../systems/platform/infra/ingress/overlays/production/service.yaml)
 declares a public load balancer without source restrictions. No corresponding
 origin-authentication or cloud firewall declaration was found. External provider
 controls could exist, so this is a repository gap, not proven live exposure.
@@ -306,7 +306,7 @@ own installation and upgrade configuration.
 [Flux bootstrap customization](https://fluxcd.io/flux/installation/configuration/bootstrap-customization/)
 supports declaring those resources and controller patches.
 
-[Bootstrap:24–25](../clusters/prod-eu/Makefile) omits notification-controller.
+[Bootstrap](../clusters/prod-eu/README.md) omits notification-controller.
 There are no declared Flux Alert/Provider resources or controller-metric alerts.
 An HTTP-healthy pod can coexist with a failed Git source, stale image policy or
 stuck reconciliation.
@@ -321,7 +321,7 @@ implementation; none was contacted during this audit.
 **P2, promoted to P1 where availability is required.**
 
 Domain workload manifests lack CPU/memory budgets and Kubernetes security contexts;
-for example [API base:15–21](../domains/identity/workloads/api/infra/base/deployment.yaml).
+for example [API base:15–21](../systems/identity/infra/api/base/deployment.yaml).
 Application images run non-root, and workloads generally disable unnecessary
 service-account tokens; preserve those strengths while adding pod-level policy.
 
@@ -338,8 +338,8 @@ NATS already has three servers, persistent per-server volumes, hostname
 anti-affinity, hardened container settings, probes and graceful shutdown.
 It still needs a maintenance PDB preserving quorum, compute budgets and measured
 storage sizing. The two Identity R3 streams reserve 400 MiB each in
-[streams.json](../domains/identity/workloads/outbox-relay/infra/base/streams.json),
-against [1 GiB per-server PVCs:27](../platform/cluster/event-bus/overlays/prod-eu/statefulset.yaml).
+[streams.json](../systems/identity/infra/outbox-relay/base/streams.json),
+against [1 GiB per-server PVCs:27](../systems/platform/infra/event-bus/overlays/production/statefulset.yaml).
 Their configured maxima can approach 800 MiB per server before overhead or more
 domains. Measure actual use and reserve headroom; do not infer sufficient capacity
 merely from three replicas. Zone spreading depends on the real provider topology.
@@ -374,11 +374,11 @@ rather than making the cluster the only mechanism able to recreate itself.
 
 **P2 now; more important with additional domains.**
 
-[Identity's relay image policy:23–28](../clusters/prod-eu/domains/identity/outbox-relay.yaml)
+[Identity's relay image policy:23–28](../clusters/prod-eu/systems/identity/outbox-relay.yaml)
 tracks the shared executable's `latest`. Repeating this for more domains would
 make a runtime merge advance all consumers independently.
 
-Keep the executable in `platform/runtime`, but select its immutable digest in
+Keep the executable in `systems/platform/outbox-relay`, but select its immutable digest in
 each consuming domain release. Automation can propose upgrades to consumers.
 This preserves shared maintenance and gives domains control over adoption and
 rollout order. A runtime image update should not silently become a platform-wide
@@ -429,8 +429,8 @@ the selected cluster nodes require it.
 
 **P1 for context guards; P3 for cleanup.**
 
-[Identity Makefile:12–27,34–35](../domains/identity/Makefile) and
-[Analytics Makefile:8–22](../domains/analytics/Makefile) use the ambient Kubernetes
+[Identity Makefile:12–27,34–35](../systems/identity/Makefile) and
+[Analytics Makefile:8–22](../systems/analytics/Makefile) use the ambient Kubernetes
 context, including deleting migration Jobs and deleting the deployment graph.
 Pass an explicit approved local context to both direct `kubectl` calls and
 Skaffold. Fail early when a local command targets a retained environment.
@@ -485,7 +485,7 @@ domains/
     skaffold.yaml
   analytics/
     ...same ownership rules...
-platform/
+systems/platform/
   runtime/
     outbox-relay/             reusable executable/image
   cluster/
@@ -497,10 +497,10 @@ platform/
 clusters/
   prod-eu/
     flux-system/             generated, committed, included, self-managed
-    platform/
-    domains/
+    systems/
+      platform/
       identity/              selected digests + release marker + dependency graph
-    automation.yaml
+    image-update-automation.yaml
     kustomization.yaml
 tools/
   validate/                  small shared configuration checks, if needed
@@ -566,8 +566,8 @@ PRs; a wholesale repository move need not precede them.
 
 ## Verification and limits
 
-- `make -C platform/cluster check` passed all six local/production renders.
-- `make -C clusters/prod-eu check` passed.
+- `make -C systems/platform check` passed all six local/production renders.
+- The former cluster check target passed at audit time.
 - Offline Skaffold rendering passed for both Identity and Analytics.
 - Identity Skaffold diagnosis resolved the shared runtime dependency correctly.
 - Rendered manifest output was discarded; no rendered Secret payload was displayed,
