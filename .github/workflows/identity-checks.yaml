@@ -79,7 +79,7 @@ jobs:
 
       - name: Build production image
         if: matrix.package != 'contracts' && steps.changes.outputs.package_any_modified != 'false'
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: systems/identity/${{ matrix.package }}
           target: prod
