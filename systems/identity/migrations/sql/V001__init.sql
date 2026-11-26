@@ -44,16 +44,16 @@ CREATE TABLE account_membership_roles (
         REFERENCES account_memberships(id)
         ON DELETE CASCADE,
 
-    role text NOT NULL
+    role_id text NOT NULL
         REFERENCES roles(id),
 
-    PRIMARY KEY (membership_id, role)
+    PRIMARY KEY (membership_id, role_id)
 );
 
 CREATE TABLE passkey_credentials (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    credential_id text NOT NULL UNIQUE,
+    webauthn_credential_id text NOT NULL UNIQUE,
 
     principal_id uuid NOT NULL
         REFERENCES principals(id)
@@ -64,7 +64,8 @@ CREATE TABLE passkey_credentials (
 
     public_key bytea NOT NULL,
 
-    sign_count bigint NOT NULL DEFAULT 0,
+    sign_count bigint NOT NULL DEFAULT 0
+        CHECK (sign_count BETWEEN 0 AND 4294967295),
 
     created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
@@ -117,6 +118,8 @@ CREATE TABLE passkey_addition_challenges (
 
     registration_challenge text NOT NULL UNIQUE,
 
+    allowed_credential_ids text[] NOT NULL CHECK (cardinality(allowed_credential_ids) > 0),
+
     session_id uuid NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
 
     expires_at timestamptz NOT NULL DEFAULT now() + INTERVAL '2 minutes'
@@ -124,6 +127,8 @@ CREATE TABLE passkey_addition_challenges (
 
 CREATE TABLE passkey_removal_challenges (
     challenge text PRIMARY KEY,
+
+    allowed_credential_ids text[] NOT NULL CHECK (cardinality(allowed_credential_ids) > 0),
 
     credential_id uuid NOT NULL REFERENCES passkey_credentials(id) ON DELETE CASCADE,
 

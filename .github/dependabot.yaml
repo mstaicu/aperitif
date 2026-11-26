@@ -1,0 +1,18 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directories:
+      - /systems/identity/api
+      - /systems/identity/ui
+      - /systems/identity/migrations
+      - /systems/platform/outbox-relay
+
+    schedule:
+      interval: weekly

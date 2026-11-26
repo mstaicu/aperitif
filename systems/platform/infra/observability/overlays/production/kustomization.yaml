@@ -5,7 +5,6 @@ namespace: otel
 
 resources:
   - ../../base
-  - collector-networkpolicy.yaml
   - openobserve-networkpolicy.yaml
 
 patches:

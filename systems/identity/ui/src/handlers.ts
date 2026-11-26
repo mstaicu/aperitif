@@ -22,57 +22,62 @@ const session = s.object({
   session_token: s.string().pipe(minLength(1)),
 });
 
-export function completePasskeyAddition(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys/addition");
-}
+export async function accounts(request: Request, apiUrl: string) {
+  const token = await sessionCookie.parse(request.headers.get("Cookie"));
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]);
+  let exchange;
 
-export async function completePasskeyRemoval(
-  request: Request,
-  apiUrl: string,
-  id: string,
-) {
-  const response = await apiRequest(
-    request,
-    apiUrl,
-    `/passkeys/${encodeURIComponent(id)}/removal`,
-  );
+  if (token) {
+    exchange = await fetch(`${apiUrl}/session/access-tokens`, {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "POST",
+      signal,
+    });
+  }
 
-  if (response.status === 204) {
-    response.headers.set(
-      "Set-Cookie",
-      await sessionCookie.serialize("", { maxAge: 0 }),
+  if (!exchange || exchange.status === 401) {
+    return Response.json(
+      {
+        error: "Forbidden",
+        message: "Forbidden",
+        statusCode: 403,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+          "Set-Cookie": await sessionCookie.serialize("", { maxAge: 0 }),
+        },
+        status: 403,
+      },
     );
   }
 
-  return response;
-}
+  if (!exchange.ok) {
+    const headers = new Headers(exchange.headers);
+    headers.set("Cache-Control", "no-store");
+    return new Response(exchange.body, { headers, status: exchange.status });
+  }
 
-export function createAccount(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/accounts");
-}
-
-export function createPasskeyAdditionOptions(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys/addition/options");
-}
-
-export function createPasskeyRemovalOptions(
-  request: Request,
-  apiUrl: string,
-  id: string,
-) {
-  return apiRequest(
-    request,
-    apiUrl,
-    `/passkeys/${encodeURIComponent(id)}/removal/options`,
+  const { access_token } = s.parse(
+    s.object({ access_token: s.string().pipe(minLength(1)) }),
+    await exchange.json(),
   );
-}
+  const headers = new Headers({ Authorization: `Bearer ${access_token}` });
+  const contentType = request.headers.get("Content-Type");
 
-export function listAccounts(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/accounts");
-}
+  if (contentType) headers.set("Content-Type", contentType);
 
-export function listPasskeys(request: Request, apiUrl: string) {
-  return apiRequest(request, apiUrl, "/passkeys");
+  const response = await fetch(new Request(`${apiUrl}/accounts`, request), {
+    headers,
+    signal,
+  });
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set("Cache-Control", "no-store");
+
+  return new Response(response.body, {
+    headers: responseHeaders,
+    status: response.status,
+  });
 }
 
 export function login(request: Request, apiUrl: string) {
@@ -130,64 +135,6 @@ export function signupOptions(request: Request, apiUrl: string) {
 
 export function signupPage(request: Request, assets: AssetServer) {
   return authPage("registration", returnTo(request), assets);
-}
-
-async function apiRequest(request: Request, apiUrl: string, path: string) {
-  const token = await sessionCookie.parse(request.headers.get("Cookie"));
-  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]);
-  let exchange;
-
-  if (token) {
-    exchange = await fetch(`${apiUrl}/session/access-tokens`, {
-      headers: { Authorization: `Bearer ${token}` },
-      method: "POST",
-      signal,
-    });
-  }
-
-  if (!exchange || exchange.status === 401) {
-    return Response.json(
-      {
-        error: "Forbidden",
-        message: "Forbidden",
-        statusCode: 403,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store",
-          "Set-Cookie": await sessionCookie.serialize("", { maxAge: 0 }),
-        },
-        status: 403,
-      },
-    );
-  }
-
-  if (!exchange.ok) {
-    const headers = new Headers(exchange.headers);
-    headers.set("Cache-Control", "no-store");
-    return new Response(exchange.body, { headers, status: exchange.status });
-  }
-
-  const { access_token } = s.parse(
-    s.object({ access_token: s.string().pipe(minLength(1)) }),
-    await exchange.json(),
-  );
-  const headers = new Headers({ Authorization: `Bearer ${access_token}` });
-  const contentType = request.headers.get("Content-Type");
-
-  if (contentType) headers.set("Content-Type", contentType);
-
-  const response = await fetch(new Request(`${apiUrl}${path}`, request), {
-    headers,
-    signal,
-  });
-  const responseHeaders = new Headers(response.headers);
-  responseHeaders.set("Cache-Control", "no-store");
-
-  return new Response(response.body, {
-    headers: responseHeaders,
-    status: response.status,
-  });
 }
 
 async function completeLogin(

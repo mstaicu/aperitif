@@ -24,3 +24,12 @@ spec:
               value: otlp
             - name: OTEL_LOGS_EXPORTER
               value: none
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2

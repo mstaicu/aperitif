@@ -11,6 +11,7 @@ resources:
   - collector-clusterrolebinding.yaml
   - collector-deployment.yaml
   - collector-service.yaml
+  - collector-networkpolicy.yaml
   - openobserve-statefulset.yaml
   - openobserve-service.yaml
 

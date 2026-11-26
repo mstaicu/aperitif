@@ -84,9 +84,9 @@ export async function completePasskeyRegistration(
       rows: [passkey],
     } = await client.query(
       `
-        INSERT INTO passkey_credentials (principal_id, credential_id, name, public_key, sign_count)
+        INSERT INTO passkey_credentials (principal_id, webauthn_credential_id, name, public_key, sign_count)
         VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (credential_id) DO NOTHING
+        ON CONFLICT (webauthn_credential_id) DO NOTHING
         RETURNING id, created_at
       `,
       [

@@ -9,6 +9,20 @@ spec:
     spec:
       containers:
         - name: migrations
+          image: docker.io/flyway/flyway:13.13.0-alpine
+          args: ["migrate"]
           env:
             - name: FLYWAY_URL
               value: "jdbc:postgresql://postgres:5432/identity?user=postgres&password=postgres"
+            - name: FLYWAY_LOCATIONS
+              value: filesystem:/db/sql
+            - name: FLYWAY_FAIL_ON_MISSING_LOCATIONS
+              value: "true"
+          volumeMounts:
+            - name: migration-sql
+              mountPath: /db/sql
+
+      volumes:
+        - name: migration-sql
+          configMap:
+            name: migration-sql

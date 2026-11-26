@@ -7,5 +7,5 @@ resources:
   - migrations.yaml
   - api.yaml
   - outbox-relay.yaml
-  - retention.yaml
+  - cleanup.yaml
   - ui.yaml

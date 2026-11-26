@@ -7,8 +7,7 @@ import { createHash, randomBytes } from "node:crypto";
 
 /**
  * Uses the caller's active transaction. The principal must be newly inserted
- * or locked by the caller until commit, serializing session issuance with
- * credential removal before capturing the mutation clock.
+ * or locked by the caller until commit.
  * @param {{ client: import("pg").PoolClient }} resources
  * @param {{ principalId: string }} args
  */

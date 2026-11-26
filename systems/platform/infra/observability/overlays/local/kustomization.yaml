@@ -6,7 +6,6 @@ namespace: otel
 resources:
   - namespace.yaml
   - ../../base
-  - collector-networkpolicy.yaml
 
 secretGenerator:
   - name: openobserve

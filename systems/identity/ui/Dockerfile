@@ -1,4 +1,4 @@
-FROM docker.io/library/node:26.13.0-alpine3.24 AS base
+FROM docker.io/library/node:26.13.1-alpine3.24 AS base
 
 RUN apk add --no-cache tini
 
@@ -29,7 +29,7 @@ EXPOSE 3000
 
 USER node
 
-CMD ["./node_modules/.bin/nodemon"]
+CMD ["node", "--watch-path=src", "src/index.ts"]
 
 # PROD
 FROM base AS prod

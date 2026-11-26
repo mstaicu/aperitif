@@ -52,25 +52,8 @@ app.post("/identity/signup", ({ request }) => handlers.signup(request, apiUrl));
 app.post("/identity/logout", ({ request }) => handlers.logout(request, apiUrl));
 
 app.get("/identity/accounts", ({ request }) =>
-  handlers.listAccounts(request, apiUrl),
+  handlers.accounts(request, apiUrl),
 );
 app.post("/identity/accounts", ({ request }) =>
-  handlers.createAccount(request, apiUrl),
-);
-
-app.get("/identity/passkeys", ({ request }) =>
-  handlers.listPasskeys(request, apiUrl),
-);
-app.post("/identity/passkeys/addition/options", ({ request }) =>
-  handlers.createPasskeyAdditionOptions(request, apiUrl),
-);
-app.post("/identity/passkeys/addition", ({ request }) =>
-  handlers.completePasskeyAddition(request, apiUrl),
-);
-app.post("/identity/passkeys/:id/removal", ({ params, request }) =>
-  handlers.completePasskeyRemoval(request, apiUrl, params.id),
-);
-
-app.post("/identity/passkeys/:id/removal/options", ({ params, request }) =>
-  handlers.createPasskeyRemovalOptions(request, apiUrl, params.id),
+  handlers.accounts(request, apiUrl),
 );

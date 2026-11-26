@@ -13,11 +13,3 @@ build:
       context: .
       docker:
         dockerfile: Dockerfile
-
-manifests:
-  kustomize:
-    paths:
-      - ../infra/migrations/overlays/local
-
-deploy:
-  kubectl: {}

@@ -58,7 +58,7 @@ export const AuthenticationResponseJSON = Type.Object(
   },
   {
     description:
-      "WebAuthn authentication response produced by the client. Verification rejects a missing or mismatched userHandle because these ceremonies use discoverable passkeys.",
+      "WebAuthn authentication response produced by the client. Discoverable login requires userHandle.",
     title: "AuthenticationResponseJSON",
   },
 );

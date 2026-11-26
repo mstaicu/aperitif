@@ -31,7 +31,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: nats
-          image: docker.io/library/nats:2.14.5-alpine3.22
+          image: docker.io/library/nats:2.15.3-alpine3.22
           args:
             - --config
             - /etc/nats-config/nats.conf
@@ -112,13 +112,3 @@ spec:
             name: nats-config
         - emptyDir: {}
           name: pid
-
-  volumeClaimTemplates:
-    - metadata:
-        name: nats-storage
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi

@@ -9,13 +9,15 @@ export const startPostgres = async () => {
   const network = stack.use(await new Network().start());
 
   const postgres = stack.use(
-    await new PostgreSqlContainer("postgres:18")
+    await new PostgreSqlContainer("postgres:19.0")
       .withNetwork(network)
       .withNetworkAliases("postgres")
       .start(),
   );
 
-  const flyway = await new GenericContainer("flyway/flyway:13.3.0")
+  const flyway = await new GenericContainer(
+    "docker.io/flyway/flyway:13.13.0-alpine",
+  )
     .withNetwork(network)
     .withBindMounts([
       {

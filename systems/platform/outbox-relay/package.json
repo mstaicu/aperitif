@@ -7,31 +7,25 @@
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
-    "@nats-io/jetstream": "^3.4.0",
-    "@nats-io/transport-node": "^3.4.0",
-    "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/sdk-node": "^0.223.0",
+    "@nats-io/jetstream": "^3.5.0",
+    "@nats-io/transport-node": "^3.5.0",
+    "@opentelemetry/api": "^1.10.0",
+    "@opentelemetry/sdk-node": "^0.301.2",
     "pg": "^8.23.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@testcontainers/postgresql": "^12.2.1",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.10",
     "@types/pg": "^8.23.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-perfectionist": "^5.12.1",
+    "eslint-plugin-perfectionist": "^5.14.0",
     "eslint-plugin-prettier": "^5.5.7",
-    "globals": "^17.13.0",
-    "nodemon": "^3.1.14",
-    "prettier": "^3.9.10",
-    "testcontainers": "^12.2.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
     "typescript": "^7.0.2"
   },
   "allowScripts": {
-    "cpu-features": false,
-    "protobufjs": false,
-    "ssh2": false,
-    "fsevents": false
+    "protobufjs": false
   }
 }

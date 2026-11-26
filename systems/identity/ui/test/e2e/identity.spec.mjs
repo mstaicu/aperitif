@@ -38,26 +38,31 @@ test("logs out, loses access, and logs back in to the same identity", async ({
   await page.goto("/identity/signup?return_to=%2Fidentity%2Flogin");
   await page.getByRole("button", { name: "Sign up with passkey" }).click();
   await expect(page).toHaveURL("/identity/login");
-  const before = await page.evaluate(async () =>
-    (await fetch("/identity/passkeys")).json(),
-  );
+  const { account } = await page.evaluate(async () => {
+    const response = await fetch("/identity/accounts", {
+      body: JSON.stringify({ name: "Returning owner" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    return response.json();
+  });
 
   // Act
   const signedOut = await page.evaluate(async () => {
     await fetch("/identity/logout", { method: "POST" });
-    return (await fetch("/identity/passkeys")).status;
+    return (await fetch("/identity/accounts")).status;
   });
   await page.goto("/identity/login?return_to=%2Fidentity%2Fsignup");
   await page.getByRole("button", { name: "Log in with passkey" }).click();
   await expect(page).toHaveURL("/identity/signup");
-  const after = await page.evaluate(async () =>
-    (await fetch("/identity/passkeys")).json(),
+  const { accounts } = await page.evaluate(async () =>
+    (await fetch("/identity/accounts")).json(),
   );
 
   // Assert
   expect(signedOut).toBe(403);
-  expect(before.passkeys).toHaveLength(1);
-  expect(after.passkeys).toEqual(before.passkeys);
+  expect(account.id).toBeTruthy();
+  expect(accounts).toEqual([account]);
 });
 
 test("explains when the browser cannot use passkeys", async ({ page }) => {

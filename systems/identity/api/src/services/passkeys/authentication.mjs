@@ -42,43 +42,42 @@ export async function completePasskeyAuthentication(
   try {
     await client.query("BEGIN");
 
-    await client.query(
+    const {
+      rows: [principal],
+    } = await client.query(
       `
         SELECT id
         FROM principals
         WHERE id = (
           SELECT principal_id
           FROM passkey_credentials
-          WHERE credential_id = $1
+          WHERE webauthn_credential_id = $1
         )
         FOR NO KEY UPDATE
       `,
       [authentication.id],
     );
 
+    if (
+      !principal ||
+      authentication.response.userHandle !==
+        Buffer.from(principal.id).toString("base64url")
+    ) {
+      throw new createError.UnprocessableEntity();
+    }
+
     const {
       rows: [storedCredential],
     } = await client.query(
       `
-        SELECT principal_id,
-          credential_id,
-          public_key,
-          sign_count
+        SELECT public_key, sign_count
         FROM passkey_credentials
-        WHERE credential_id = $1
+        WHERE webauthn_credential_id = $1 AND principal_id = $2
       `,
-      [authentication.id],
+      [authentication.id, principal.id],
     );
 
     if (!storedCredential) {
-      throw new createError.UnprocessableEntity();
-    }
-
-    const expectedHandle = Buffer.from(storedCredential.principal_id).toString(
-      "base64url",
-    );
-
-    if (authentication.response.userHandle !== expectedHandle) {
       throw new createError.UnprocessableEntity();
     }
 
@@ -87,7 +86,7 @@ export async function completePasskeyAuthentication(
     const authenticationVerification = await verifyAuthenticationResponse({
       credential: {
         counter: Number(storedCredential.sign_count),
-        id: storedCredential.credential_id,
+        id: authentication.id,
         publicKey: storedCredential.public_key,
       },
       expectedChallenge: challenge,
@@ -106,15 +105,17 @@ export async function completePasskeyAuthentication(
       `
         UPDATE passkey_credentials
         SET sign_count = $2
-        WHERE credential_id = $1
+        WHERE webauthn_credential_id = $1
       `,
       [
-        storedCredential.credential_id,
+        authentication.id,
         authenticationVerification.authenticationInfo.newCounter,
       ],
     );
-    const principalId = storedCredential.principal_id;
-    const session = await createSession({ client }, { principalId });
+    const session = await createSession(
+      { client },
+      { principalId: principal.id },
+    );
 
     await client.query("COMMIT");
 

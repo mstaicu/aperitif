@@ -5,8 +5,8 @@ import {
 } from "@simplewebauthn/browser";
 
 const form = document.querySelector<HTMLFormElement>("[data-passkey]")!;
-const button = form.querySelector<HTMLButtonElement>("button")!;
-const status = form.querySelector<HTMLParagraphElement>("[data-status]")!;
+const button = form.querySelector("button")!;
+const status = form.querySelector<HTMLElement>("[data-status]")!;
 const registration = form.dataset.ceremony === "registration";
 
 if (browserSupportsWebAuthn()) {
@@ -22,41 +22,30 @@ form.addEventListener("submit", async (event) => {
   status.dataset.error = "false";
   status.textContent = "Waiting for your passkey…";
 
-  const failureMessage = registration
-    ? "Signup failed. Try again or log in."
-    : "Login failed. Please try again.";
-
   try {
-    let response = await fetch(form.dataset.optionsAction!, {
+    const options = await fetch(form.dataset.optionsAction!, {
       method: "POST",
     });
+    if (!options.ok) throw options;
 
-    if (response.ok) {
-      const optionsJSON = await response.json();
-      const credential = registration
-        ? await startRegistration({ optionsJSON })
-        : await startAuthentication({ optionsJSON });
+    const optionsJSON = await options.json();
+    const body = registration
+      ? { registration: await startRegistration({ optionsJSON }) }
+      : await startAuthentication({ optionsJSON });
 
-      response = await fetch(form.action, {
-        body: JSON.stringify(
-          registration ? { registration: credential } : credential,
-        ),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
+    const response = await fetch(form.action, {
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    if (!response.ok) throw response;
 
-      if (response.ok) {
-        const result = (await response.json()) as { return_to: string };
-        window.location.assign(result.return_to);
-        return;
-      }
-    }
-
-    status.dataset.error = "true";
-    status.textContent = failureMessage;
+    window.location.assign((await response.json()).return_to);
   } catch {
     status.dataset.error = "true";
-    status.textContent = failureMessage;
+    status.textContent = registration
+      ? "Signup failed. If your passkey was saved, try logging in."
+      : "Login failed. Please try again.";
   } finally {
     button.disabled = false;
   }

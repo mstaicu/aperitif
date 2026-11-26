@@ -18,7 +18,7 @@ export default async function registrationRoutes(fastify, { origin, pool }) {
       schema: {
         body: PasskeyRegistrationBody,
         description:
-          "Creates a principal, first passkey, and session using single-use registration options. Verification failures return 422; start again with fresh registration options and proof. Each new attempt creates a new principal identity. Does not add passkeys to an existing principal.",
+          "Successful signup creates a new principal, its first passkey, and a session. After a 422, request fresh options and repeat registration. If the outcome is unknown and the passkey was saved, try logging in with it before starting another signup.",
         operationId: "completePasskeyRegistration",
         response: {
           "4xx": ErrorResponse,
@@ -50,7 +50,7 @@ export default async function registrationRoutes(fastify, { origin, pool }) {
     {
       schema: {
         description:
-          "Creates single-use registration options for a new principal. These options cannot be used to add a passkey to an existing principal.",
+          "Creates single-use registration options for a new principal.",
         operationId: "createPasskeyRegistrationOptions",
         response: {
           "4xx": ErrorResponse,

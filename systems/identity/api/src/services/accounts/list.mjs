@@ -9,10 +9,10 @@ export const listAccounts = async ({ pool }, { principalId }) => {
         a.name,
         a.created_at,
         ARRAY(
-          SELECT amr.role
+          SELECT amr.role_id
           FROM account_membership_roles amr
           WHERE amr.membership_id = am.id
-          ORDER BY amr.role
+          ORDER BY amr.role_id
         ) AS roles
       FROM account_memberships am
       JOIN accounts a ON a.id = am.account_id

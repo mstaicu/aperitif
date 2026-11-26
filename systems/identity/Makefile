@@ -1,35 +1,18 @@
-.PHONY: check up dev e2e down
+.PHONY: up down
 
-check:
-	npm --prefix contracts ci
-	npm --prefix contracts run check
-	npm --prefix api ci
-	npm --prefix api run check
-	npm --prefix ui ci
-	npm --prefix ui run check
+KUBECTL ?= kubectl
 
 up:
-	skaffold run -m identity-postgres
+	$(KUBECTL) apply -f infra/namespace.yaml
+	$(KUBECTL) apply -k infra/postgres/overlays/local
+	$(KUBECTL) rollout status --namespace=identity deployment/postgres --timeout=300s
 
-	kubectl delete --namespace=identity --ignore-not-found job/migrations
-	skaffold run -m identity-migrations
-	kubectl wait --namespace=identity --for=condition=complete --timeout=300s job/migrations
+	$(KUBECTL) create configmap migration-sql --namespace=identity --from-file=migrations/sql --dry-run=client -o yaml \
+		| $(KUBECTL) apply --server-side -f -
 
-	skaffold run -m identity-api,identity-outbox-relay,identity-retention,identity-ui
-
-dev:
-	skaffold run -m identity-postgres
-
-	kubectl delete --namespace=identity --ignore-not-found job/migrations
-	skaffold run -m identity-migrations
-	kubectl wait --namespace=identity --for=condition=complete --timeout=300s job/migrations
-
-	skaffold dev -m identity-api,identity-outbox-relay,identity-retention,identity-ui
-
-e2e: up
-	npm --prefix ui ci
-	npm --prefix ui exec -- playwright install chromium
-	npm --prefix ui run test:e2e
+	$(KUBECTL) delete --namespace=identity --ignore-not-found job/migrations
+	$(KUBECTL) apply -k infra/migrations/overlays/local
+	$(KUBECTL) wait --namespace=identity --for=condition=complete --timeout=300s job/migrations
 
 down:
-	skaffold delete
+	$(KUBECTL) delete --ignore-not-found -f infra/namespace.yaml

@@ -2,9 +2,7 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 
 import accountsRoutes from "./accounts/routes.mjs";
-import passkeyAdditionRoutes from "./passkeys/addition.mjs";
 import passkeyAuthenticationRoutes from "./passkeys/authentication.mjs";
-import passkeyManagementRoutes from "./passkeys/management.mjs";
 import passkeyRegistrationRoutes from "./passkeys/registration.mjs";
 import sessionsRoutes from "./sessions/routes.mjs";
 
@@ -57,8 +55,7 @@ Errors use application/json with required statusCode, error, and message fields.
           name: "accounts",
         },
         {
-          description:
-            "Passkey registration, authentication, addition, and removal",
+          description: "Passkey registration and authentication",
           name: "passkeys",
         },
         {
@@ -70,10 +67,8 @@ Errors use application/json with required statusCode, error, and message fields.
   });
 
   fastify.register(accountsRoutes, { jwks, pool });
-  fastify.register(passkeyManagementRoutes, { jwks, origin, pool });
   fastify.register(passkeyAuthenticationRoutes, { origin, pool });
   fastify.register(passkeyRegistrationRoutes, { origin, pool });
-  fastify.register(passkeyAdditionRoutes, { jwks, origin, pool });
   fastify.register(sessionsRoutes, { pool, signingKey });
 
   await fastify.register(swaggerUI, {

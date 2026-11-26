@@ -49,7 +49,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       `
         INSERT INTO account_membership_roles (
           membership_id,
-          role
+          role_id
         )
         VALUES ($1, 'account.owner')
       `,
