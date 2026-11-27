@@ -1,8 +1,3 @@
-import {
-  jetstream,
-  JetStreamApiCodes,
-  JetStreamApiError,
-} from "@nats-io/jetstream";
 import { headers } from "@nats-io/transport-node";
 import {
   context,
@@ -15,130 +10,115 @@ import { setTimeout } from "node:timers/promises";
 
 /**
  * @param {{
- *   abortSignal: AbortSignal,
- *   nc: import("@nats-io/transport-node").NatsConnection,
+ *   jsm: import("@nats-io/jetstream").JetStreamManager,
  *   pool: import("pg").Pool,
- * }} args
+ *   signal: AbortSignal,
+ * }} options
  */
-export async function relayOutbox({ abortSignal, nc, pool }) {
+export async function runOutboxRelay({ jsm, pool, signal }) {
+  const publisher = jsm.jetstream();
   const tracer = trace.getTracer("outbox-relay");
 
-  const js = jetstream(nc);
-  const jsm = await js.jetstreamManager();
-
-  const wait = () =>
-    setTimeout(1_000, undefined, { signal: abortSignal }).catch(() => {});
-
   const client = await pool.connect();
+  client.on("error", (error) => console.error(error));
 
   try {
-    while (!abortSignal.aborted) {
-      try {
-        await client.query("BEGIN");
+    while (!signal.aborted) {
+      await client.query("BEGIN");
 
-        const {
-          rows: [entry],
-        } = await client.query(
-          `
-            SELECT id,
-              subject,
-              payload,
-              headers
-            FROM outbox_messages
-            LIMIT 1
-            FOR UPDATE SKIP LOCKED
-          `,
-        );
+      const {
+        rows: [message],
+      } = await client.query(`
+        SELECT id, subject, payload::text, headers
+        FROM outbox_messages
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      `);
 
-        if (!entry) {
-          await client.query("COMMIT");
-          await wait();
-          continue;
-        }
-
-        const parent = propagation.extract(context.active(), entry.headers);
-
-        await tracer.startActiveSpan(
-          "publish",
-          {
-            attributes: {
-              "messaging.destination.name": entry.subject,
-              "messaging.message.id": entry.id,
-              "messaging.operation.name": "publish",
-              "messaging.operation.type": "send",
-              "messaging.system": "nats",
-            },
-            kind: SpanKind.PRODUCER,
-          },
-          parent,
-          async (span) => {
-            try {
-              const messageHeaders = headers();
-
-              for (const [name, value] of Object.entries(entry.headers)) {
-                if (name.toLowerCase().startsWith("nats-")) {
-                  throw new Error(`Reserved NATS header: ${name}`);
-                }
-                messageHeaders.set(name, value);
-              }
-
-              propagation.inject(context.active(), messageHeaders, {
-                set: (carrier, key, value) => carrier.set(key, value),
-              });
-
-              const streamName = await jsm.streams.find(entry.subject);
-              const last = await jsm.streams.getMessage(streamName, {
-                last_by_subj: entry.subject,
-              });
-
-              await client.query("SELECT 1");
-
-              await js.publish(entry.subject, JSON.stringify(entry.payload), {
-                expect: { lastSubjectSequence: last?.seq ?? 0, streamName },
-                headers: messageHeaders,
-                msgID: entry.id,
-              });
-            } catch (err) {
-              span.setStatus({ code: SpanStatusCode.ERROR });
-
-              if (Error.isError(err)) span.recordException(err);
-
-              throw err;
-            } finally {
-              span.end();
-            }
-          },
-        );
-
-        await client.query(
-          `
-            DELETE FROM outbox_messages
-            WHERE id = $1
-          `,
-          [entry.id],
-        );
-
+      if (!message) {
         await client.query("COMMIT");
-      } catch (err) {
-        try {
-          await client.query("ROLLBACK");
-        } catch {
-          throw err;
-        }
+        await setTimeout(1_000);
+        continue;
+      }
 
-        if (
-          err instanceof JetStreamApiError &&
-          (err.code === JetStreamApiCodes.StreamWrongLastSequence ||
-            err.code === JetStreamApiCodes.StreamWrongLastSequenceUnknown)
-        ) {
-          await wait();
-          continue;
-        }
-
-        throw err;
+      try {
+        await publishMessage(message);
+        await client.query("DELETE FROM outbox_messages WHERE id = $1", [
+          message.id,
+        ]);
+        await client.query("COMMIT");
+      } catch (cause) {
+        throw new Error(
+          `Failed to deliver outbox row ${message.id} on ${message.subject}`,
+          { cause },
+        );
       }
     }
   } finally {
-    client.release();
+    // Closing the session rolls back any open transaction and releases its row lock.
+    client.release(true);
+  }
+
+  /** @param {{ id: string, subject: string, payload: string, headers: Record<string, string> }} message */
+  async function publishMessage({
+    headers: outboxHeaders,
+    id,
+    payload,
+    subject,
+  }) {
+    const parentContext = propagation.extract(context.active(), outboxHeaders);
+    const span = tracer.startSpan(
+      "publish",
+      {
+        attributes: {
+          "messaging.destination.name": subject,
+          "messaging.message.id": id,
+          "messaging.operation.name": "publish",
+          "messaging.operation.type": "send",
+          "messaging.system": "nats",
+        },
+        kind: SpanKind.PRODUCER,
+      },
+      parentContext,
+    );
+
+    try {
+      const natsHeaders = headers();
+      propagation.inject(trace.setSpan(parentContext, span), outboxHeaders);
+
+      for (const [name, value] of Object.entries(outboxHeaders)) {
+        if (name.toLowerCase().startsWith("nats-")) {
+          throw new Error(`Reserved NATS header: ${name}`);
+        }
+        natsHeaders.set(name, value);
+      }
+
+      let expectedStreamState;
+      if (subject.split(".", 2)[1] === "state") {
+        const streamName = await jsm.streams.find(subject);
+        const lastMessage = await jsm.streams.getMessage(streamName, {
+          last_by_subj: subject,
+        });
+
+        // Confirm the transaction connection is still alive after the stream read.
+        await client.query("SELECT 1");
+        expectedStreamState = {
+          lastSubjectSequence: lastMessage?.seq ?? 0,
+          streamName,
+        };
+      }
+
+      await publisher.publish(subject, payload, {
+        expect: expectedStreamState,
+        headers: natsHeaders,
+        msgID: id,
+      });
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR });
+      if (Error.isError(error)) span.recordException(error);
+      throw error;
+    } finally {
+      span.end();
+    }
   }
 }
