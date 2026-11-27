@@ -5,7 +5,7 @@ import { Compile } from "typebox/compile";
 const source = "/domains/identity";
 const type = "identity.membership.created.v1";
 export const MembershipCreatedV1Subject =
-  "identity.events.membership.created.v1";
+  "identity.event.membership.created.v1";
 const uuidPattern =
   "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-7][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
 const UuidSchema = Type.String({ pattern: uuidPattern });

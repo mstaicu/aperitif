@@ -3,8 +3,8 @@ import test from "node:test";
 
 import example from "../../examples/messages/identity.account.snapshot.v1.json" with { type: "json" };
 import {
+  AccountSnapshotV1Subject,
   buildAccountSnapshotV1,
-  buildAccountV1Subject,
   isAccountSnapshotV1,
 } from "../../src/index.mjs";
 
@@ -34,6 +34,7 @@ test("rejects invalid account snapshots at the consumer boundary", () => {
     ["wrong type", { ...example, type: "identity.account.snapshot.v2" }],
     ["wrong source", { ...example, source: "/domains/product" }],
     ["missing creation time", { ...example, data: missingCreatedAt }],
+    ["invalid resource ID", { ...example, data: { ...example.data, id: "*" } }],
     [
       "invalid creation time",
       { ...example, data: { ...example.data, created_at: "2026-10-30" } },
@@ -78,24 +79,6 @@ test("refuses to construct an account snapshot from invalid data", () => {
   assert.throws(build, { message: "INVALID_ACCOUNT_SNAPSHOT_EVENT" });
 });
 
-test("builds the account subject from the resource ID", () => {
-  // Arrange
-  const accountId = example.data.id;
-
-  // Act
-  const subject = buildAccountV1Subject(accountId);
-
-  // Assert
-  assert.equal(subject, `identity.state.account.v1.${accountId}`);
-});
-
-test("rejects an invalid account ID instead of constructing a subject", () => {
-  // Arrange
-  const accountId = "account.*";
-
-  // Act
-  const build = () => buildAccountV1Subject(accountId);
-
-  // Assert
-  assert.throws(build, { message: "INVALID_ACCOUNT_ID" });
+test("exports the fixed account snapshot subject", () => {
+  assert.equal(AccountSnapshotV1Subject, "identity.snapshot.account.v1");
 });

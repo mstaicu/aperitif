@@ -42,6 +42,8 @@ kubectl apply -k systems/identity/infra/outbox-relay/overlays/local
 kubectl rollout status -n identity deployment/outbox-relay
 ```
 
+When upgrading from contracts 0.8, pause the old API and let its relay drain the outbox. Deploy the new stream filters before starting the API built with contracts 0.9. `IDENTITY_SNAPSHOTS` starts empty. If products need to rebuild existing accounts and memberships from it, publish their current snapshots from Identity.
+
 To try a locally built relay on kind, build a fresh tag and load it into the named cluster. Select that tag in the [local relay overlay](../infra/outbox-relay/overlays/local/kustomization.yaml) before applying it. The deployment uses `IfNotPresent`.
 
 ```sh

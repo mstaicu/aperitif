@@ -4,7 +4,7 @@ import { Compile } from "typebox/compile";
 
 const source = "/domains/identity";
 const type = "identity.account.snapshot.v1";
-export const AccountV1SubjectPrefix = "identity.state.account.v1";
+export const AccountSnapshotV1Subject = "identity.snapshot.account.v1";
 
 const UuidSchema = Type.String({
   pattern:
@@ -53,7 +53,7 @@ export const AccountSnapshotV1Schema = Type.Object(
   {
     additionalProperties: false,
     description:
-      "Complete exported current account state at a resource revision. Replaces earlier pending snapshots; it is not an account-created occurrence.",
+      "Complete account state at a resource revision. Consumers apply a snapshot when its revision is newer than their stored revision for this account.",
     title: type,
   },
 );
@@ -64,7 +64,6 @@ export const AccountSnapshotV1Schema = Type.Object(
  * >} AccountSnapshotV1
  */
 
-const uuidValidator = Compile(UuidSchema);
 const accountSnapshotV1Validator = Compile(AccountSnapshotV1Schema);
 
 /**
@@ -87,17 +86,6 @@ export function buildAccountSnapshotV1(data) {
   }
 
   return event;
-}
-
-/**
- * @param {string} accountId
- */
-export function buildAccountV1Subject(accountId) {
-  if (!uuidValidator.Check(accountId)) {
-    throw new Error("INVALID_ACCOUNT_ID");
-  }
-
-  return `${AccountV1SubjectPrefix}.${accountId}`;
 }
 
 /**

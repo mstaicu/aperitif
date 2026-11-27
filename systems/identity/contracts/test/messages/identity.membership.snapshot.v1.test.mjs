@@ -4,8 +4,8 @@ import test from "node:test";
 import example from "../../examples/messages/identity.membership.snapshot.v1.json" with { type: "json" };
 import {
   buildMembershipSnapshotV1,
-  buildMembershipV1Subject,
   isMembershipSnapshotV1,
+  MembershipSnapshotV1Subject,
 } from "../../src/index.mjs";
 
 test("builds the documented membership snapshot with a fresh message ID", () => {
@@ -34,6 +34,7 @@ test("rejects invalid membership snapshots at the consumer boundary", () => {
     ["wrong type", { ...example, type: "identity.membership.snapshot.v2" }],
     ["wrong source", { ...example, source: "/domains/product" }],
     ["missing creation time", { ...example, data: missingCreatedAt }],
+    ["invalid resource ID", { ...example, data: { ...example.data, id: "*" } }],
     [
       "invalid creation time",
       { ...example, data: { ...example.data, created_at: "2026-10-30" } },
@@ -102,24 +103,6 @@ test("refuses to construct a membership snapshot from invalid data", () => {
   assert.throws(build, { message: "INVALID_MEMBERSHIP_SNAPSHOT_EVENT" });
 });
 
-test("builds the membership subject from the resource ID", () => {
-  // Arrange
-  const membershipId = example.data.id;
-
-  // Act
-  const subject = buildMembershipV1Subject(membershipId);
-
-  // Assert
-  assert.equal(subject, `identity.state.membership.v1.${membershipId}`);
-});
-
-test("rejects an invalid membership ID instead of constructing a subject", () => {
-  // Arrange
-  const membershipId = "membership.*";
-
-  // Act
-  const build = () => buildMembershipV1Subject(membershipId);
-
-  // Assert
-  assert.throws(build, { message: "INVALID_MEMBERSHIP_ID" });
+test("exports the fixed membership snapshot subject", () => {
+  assert.equal(MembershipSnapshotV1Subject, "identity.snapshot.membership.v1");
 });

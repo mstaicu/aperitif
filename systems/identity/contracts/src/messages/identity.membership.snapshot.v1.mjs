@@ -4,7 +4,7 @@ import { Compile } from "typebox/compile";
 
 const source = "/domains/identity";
 const type = "identity.membership.snapshot.v1";
-export const MembershipV1SubjectPrefix = "identity.state.membership.v1";
+export const MembershipSnapshotV1Subject = "identity.snapshot.membership.v1";
 
 const UuidSchema = Type.String({
   pattern:
@@ -74,7 +74,6 @@ export const MembershipSnapshotV1Schema = Type.Object(
  * >} MembershipSnapshotV1
  */
 
-const uuidValidator = Compile(UuidSchema);
 const membershipSnapshotV1Validator = Compile(MembershipSnapshotV1Schema);
 
 /**
@@ -97,17 +96,6 @@ export function buildMembershipSnapshotV1(data) {
   }
 
   return event;
-}
-
-/**
- * @param {string} membershipId
- */
-export function buildMembershipV1Subject(membershipId) {
-  if (!uuidValidator.Check(membershipId)) {
-    throw new Error("INVALID_MEMBERSHIP_ID");
-  }
-
-  return `${MembershipV1SubjectPrefix}.${membershipId}`;
 }
 
 /**

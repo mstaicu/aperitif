@@ -1,12 +1,12 @@
 import {
   AccountCreatedV1Subject,
+  AccountSnapshotV1Subject,
   buildAccountCreatedV1,
   buildAccountSnapshotV1,
-  buildAccountV1Subject,
   buildMembershipCreatedV1,
   buildMembershipSnapshotV1,
-  buildMembershipV1Subject,
   MembershipCreatedV1Subject,
+  MembershipSnapshotV1Subject,
 } from "@mstaicu/identity-contracts";
 import { context, propagation } from "@opentelemetry/api";
 
@@ -91,8 +91,6 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       time: membership.created_at.toISOString(),
     });
 
-    const accountSnapshotSubject = buildAccountV1Subject(account.id);
-    const membershipSnapshotSubject = buildMembershipV1Subject(membership.id);
     const headers = {
       "Content-Type": "application/cloudevents+json",
     };
@@ -110,11 +108,11 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       `,
       [
         accountSnapshotEvent.id,
-        accountSnapshotSubject,
+        AccountSnapshotV1Subject,
         accountSnapshotEvent,
         headers,
         membershipSnapshotEvent.id,
-        membershipSnapshotSubject,
+        MembershipSnapshotV1Subject,
         membershipSnapshotEvent,
         accountCreatedEvent.id,
         AccountCreatedV1Subject,

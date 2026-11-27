@@ -10,13 +10,12 @@ import { setTimeout } from "node:timers/promises";
 
 /**
  * @param {{
- *   jsm: import("@nats-io/jetstream").JetStreamManager,
+ *   js: import("@nats-io/jetstream").JetStreamClient,
  *   pool: import("pg").Pool,
  *   signal: AbortSignal,
  * }} options
  */
-export async function runOutboxRelay({ jsm, pool, signal }) {
-  const publisher = jsm.jetstream();
+export async function runOutboxRelay({ js, pool, signal }) {
   const tracer = trace.getTracer("outbox-relay");
 
   const client = await pool.connect();
@@ -93,23 +92,7 @@ export async function runOutboxRelay({ jsm, pool, signal }) {
         natsHeaders.set(name, value);
       }
 
-      let expectedStreamState;
-      if (subject.split(".", 2)[1] === "state") {
-        const streamName = await jsm.streams.find(subject);
-        const lastMessage = await jsm.streams.getMessage(streamName, {
-          last_by_subj: subject,
-        });
-
-        // Confirm the transaction connection is still alive after the stream read.
-        await client.query("SELECT 1");
-        expectedStreamState = {
-          lastSubjectSequence: lastMessage?.seq ?? 0,
-          streamName,
-        };
-      }
-
-      await publisher.publish(subject, payload, {
-        expect: expectedStreamState,
+      await js.publish(subject, payload, {
         headers: natsHeaders,
         msgID: id,
       });

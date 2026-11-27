@@ -85,7 +85,7 @@ try {
   }
 
   await once(healthServer.listen(3000, "0.0.0.0"), "listening");
-  await runOutboxRelay({ jsm, pool, signal: shutdown.signal });
+  await runOutboxRelay({ js: jsm.jetstream(), pool, signal: shutdown.signal });
 } finally {
   await Promise.all([
     nc.close(),
