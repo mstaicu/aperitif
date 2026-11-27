@@ -9,7 +9,10 @@ const AccountName = Type.String({
 
 export const CreateAccountBody = Type.Object(
   {
-    name: AccountName,
+    name: {
+      ...AccountName,
+      pattern: "^(?=[\\s\\S]*\\S)[^\\u0000]+$",
+    },
   },
   {
     additionalProperties: false,

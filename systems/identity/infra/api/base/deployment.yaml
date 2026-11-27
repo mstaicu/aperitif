@@ -36,6 +36,9 @@ spec:
                   name: api-config
                   key: JWT_SIGNING_KID
 
+            - name: OTEL_PROPAGATORS
+              value: tracecontext
+
           volumeMounts:
             - name: jwt
               mountPath: /app/keys

@@ -45,16 +45,20 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       [account.id, principalId],
     );
 
-    await client.query(
+    const {
+      rows: [ownerRole],
+    } = await client.query(
       `
         INSERT INTO account_membership_roles (
           membership_id,
           role_id
         )
         VALUES ($1, 'account.owner')
+        RETURNING role_id
       `,
       [membership.id],
     );
+    const roles = [ownerRole.role_id];
 
     const accountSnapshotEvent = buildAccountSnapshotV1({
       created_at: account.created_at.toISOString(),
@@ -67,7 +71,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       created_at: membership.created_at.toISOString(),
       id: membership.id,
       principal_id: principalId,
-      roles: ["account.owner"],
+      roles,
       version: Number(membership.version),
     });
     const accountCreatedEvent = buildAccountCreatedV1({
@@ -82,7 +86,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
         account_id: account.id,
         membership_id: membership.id,
         principal_id: principalId,
-        roles: ["account.owner"],
+        roles,
       },
       time: membership.created_at.toISOString(),
     });
@@ -127,7 +131,7 @@ export const createAccount = async ({ pool }, { name, principalId }) => {
       created_at: account.created_at.toISOString(),
       id: account.id,
       name: account.name,
-      roles: ["account.owner"],
+      roles,
     };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
