@@ -7,6 +7,7 @@ on:
       - "systems/identity/api/**"
       - "systems/identity/ui/**"
       - "systems/identity/migrations/**"
+      - "!systems/identity/*/kustomize/**"
 
 concurrency:
   group: publish-identity-images
@@ -47,6 +48,7 @@ jobs:
           files: |
             systems/identity/${{ matrix.package }}/**
             .github/workflows/identity-publish.yaml
+          files_ignore: systems/identity/${{ matrix.package }}/kustomize/**
 
       - id: image
         name: Read image reference

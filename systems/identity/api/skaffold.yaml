@@ -23,7 +23,7 @@ build:
 manifests:
   kustomize:
     paths:
-      - ../infra/api/overlays/local
+      - kustomize/overlays/local
 
 deploy:
   kubectl: {}

@@ -1,0 +1,60 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+
+metadata:
+  name: identity-ui
+  namespace: flux-system
+
+spec:
+  interval: 10m
+  path: ./systems/identity/ui/kustomize/overlays/production
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  patches:
+    - target:
+        group: networking.k8s.io
+        version: v1
+        kind: Ingress
+        name: ui
+      patch: |-
+        - op: add
+          path: /spec/rules/0/host
+          value: puuury.com
+  images:
+    - name: ghcr.io/mstaicu/identity-ui
+      newTag: latest
+      digest: "" # {"$imagepolicy": "flux-system:identity-ui:digest"}
+  wait: true
+  timeout: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+
+metadata:
+  name: identity-ui
+  namespace: flux-system
+
+spec:
+  image: ghcr.io/mstaicu/identity-ui
+  interval: 5m
+
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+
+metadata:
+  name: identity-ui
+  namespace: flux-system
+
+spec:
+  imageRepositoryRef:
+    name: identity-ui
+  filterTags:
+    pattern: "^latest$"
+  policy:
+    alphabetical: {}
+  digestReflectionPolicy: Always
+  interval: 5m
