@@ -61,7 +61,7 @@ jobs:
 
       - name: Set up Buildx
         if: steps.changes.outputs.any_modified != 'false'
-        uses: docker/setup-buildx-action@v4.2.0
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Log in to GHCR
         if: steps.changes.outputs.any_modified != 'false'
