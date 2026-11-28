@@ -5,6 +5,7 @@ metadata:
   name: api
 
 spec:
+  ingressClassName: traefik
   rules:
     - http:
         paths:

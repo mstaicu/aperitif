@@ -24,6 +24,12 @@ spec:
           containers:
             - name: cleanup
               image: docker.io/library/postgres:19.0
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: cleanup-db
+                      key: DATABASE_URL
               command:
                 - sh
                 - -c

@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - deployment.yaml
+  - ingressclass.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml
   - serviceaccount.yaml

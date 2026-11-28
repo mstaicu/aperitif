@@ -5,6 +5,7 @@ namespace: nats
 
 resources:
   - ../../base
+  - poddisruptionbudget.yaml
 
 patches:
   - path: statefulset.yaml

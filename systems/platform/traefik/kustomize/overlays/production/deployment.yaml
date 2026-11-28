@@ -5,6 +5,8 @@ metadata:
   name: traefik
 
 spec:
+  strategy:
+    type: Recreate # Only one pod may write the ACME certificate file at a time.
   template:
     spec:
       containers:

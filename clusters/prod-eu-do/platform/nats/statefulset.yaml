@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: nats
+
+spec:
+  template:
+    spec:
+      containers:
+        - name: nats
+          env:
+            - name: NATS_CLUSTER_NAME
+              value: EU
+
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-storage
+      spec:
+        storageClassName: do-block-storage
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

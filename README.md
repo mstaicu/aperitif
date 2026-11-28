@@ -7,7 +7,7 @@ Independent systems for building products on Kubernetes. Start with the owner of
 | [Systems](systems/docs/README.md) | Boundaries, account isolation, and adding a domain |
 | [Identity](systems/identity/docs/README.md) | Passkeys, sessions, accounts, and membership |
 | [Platform](systems/platform/docs/README.md) | Event delivery, ingress, and telemetry |
-| [Clusters](clusters/docs/README.md) · [prod-eu](clusters/prod-eu/docs/README.md) | Installing workloads and bootstrapping a cluster |
+| [Clusters](clusters/docs/README.md) · [prod-eu-do](clusters/prod-eu-do/docs/README.md) | Installing workloads and bootstrapping a cluster |
 
 ## Changing a rule
 

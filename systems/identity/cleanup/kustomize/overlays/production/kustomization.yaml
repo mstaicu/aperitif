@@ -5,6 +5,3 @@ namespace: identity
 
 resources:
   - ../../base
-
-patches:
-  - path: cronjob.yaml

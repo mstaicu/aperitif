@@ -19,6 +19,11 @@ spec:
         - name: postgres
           image: docker.io/library/postgres:19.0
           env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: identity
           readinessProbe:

@@ -21,6 +21,12 @@ spec:
         - name: api
           image: ghcr.io/mstaicu/identity-api
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-db
+                  key: DATABASE_URL
+
             - name: ORIGIN
               valueFrom:
                 configMapKeyRef:

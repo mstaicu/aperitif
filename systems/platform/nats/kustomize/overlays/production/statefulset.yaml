@@ -7,11 +7,14 @@ metadata:
 spec:
   template:
     spec:
-      volumes:
-        - name: config
-          configMap: null
-          secret:
-            secretName: nats-config
+      containers:
+        - name: nats
+          env:
+            - name: NATS_SYS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nats-auth
+                  key: NATS_SYS_PASSWORD
 
       affinity:
         podAntiAffinity:

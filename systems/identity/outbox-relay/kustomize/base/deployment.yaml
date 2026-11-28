@@ -20,6 +20,14 @@ spec:
       containers:
         - name: outbox-relay
           image: ghcr.io/mstaicu/outbox-relay
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outbox-relay-db
+                  key: DATABASE_URL
+            - name: NATS_STREAMS_PATH
+              value: /etc/outbox-relay/streams.json
           ports:
             - name: health
               containerPort: 3000

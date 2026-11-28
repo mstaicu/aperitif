@@ -11,12 +11,8 @@ spec:
         - name: outbox-relay
           imagePullPolicy: IfNotPresent
           env:
-            - name: DATABASE_URL
-              value: "postgres://postgres:postgres@postgres:5432/identity"
-            - name: NATS_STREAMS_PATH
-              value: /etc/outbox-relay/streams.json
             - name: NATS_URL
-              value: nats://nats-client.nats.svc.cluster.local:4222
+              value: nats://nats-client.nats:4222
             - name: OTEL_SERVICE_NAME
               value: identity-outbox-relay
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: otel
+
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: collector-exporter-config
+    literals:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5080/api/default
+
+secretGenerator:
+  - name: collector-exporter
+    literals:
+      - OTEL_EXPORTER_OTLP_AUTHORIZATION=YWRtaW5AZXhhbXBsZS5jb206TG9jYWwtMjc2YzdmNjk2ZGMzNThjOWQwMDIzMWE5LUFhMSE=
+
+patches:
+  - path: agent-daemonset.yaml

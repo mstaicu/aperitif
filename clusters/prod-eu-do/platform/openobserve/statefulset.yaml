@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: openobserve
+
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: do-block-storage
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi

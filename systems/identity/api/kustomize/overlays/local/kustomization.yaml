@@ -5,7 +5,8 @@ namespace: identity
 
 resources:
   - ../../base
-  - api-jwt.yaml
+  - database-secret.yaml
+  - jwt-signing-keys-secret.yaml
 
 patches:
   - path: deployment.yaml
@@ -13,5 +14,5 @@ patches:
 configMapGenerator:
   - name: api-config
     literals:
-      - ORIGIN=http://localhost
+      - ORIGIN=http://localhost:8080
       - JWT_SIGNING_KID=local-2026-09-30

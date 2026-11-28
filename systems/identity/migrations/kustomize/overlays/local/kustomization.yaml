@@ -5,6 +5,7 @@ namespace: identity
 
 resources:
   - ../../base
+  - database-secret.yaml
 
 patches:
   - path: job.yaml

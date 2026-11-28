@@ -5,6 +5,4 @@ namespace: identity
 
 resources:
   - ../../base
-
-patches:
-  - path: deployment.yaml
+  - admin-password-secret.yaml

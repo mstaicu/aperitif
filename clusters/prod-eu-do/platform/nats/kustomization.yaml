@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nats
+
+resources:
+  - namespace.yaml
+  - ../../../../systems/platform/nats/kustomize/overlays/production
+  - system-account-password-secret.sops.yaml
+
+patches:
+  - path: statefulset.yaml

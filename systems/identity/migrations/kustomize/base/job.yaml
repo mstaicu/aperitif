@@ -18,3 +18,9 @@ spec:
       containers:
         - name: migrations
           image: ghcr.io/mstaicu/identity-migrations
+          env:
+            - name: FLYWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: migrations-db
+                  key: FLYWAY_URL

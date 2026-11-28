@@ -10,11 +10,6 @@ spec:
       containers:
         - name: api
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-auth
-                  key: DATABASE_URL
             - name: OTEL_SERVICE_NAME
               value: identity-api
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

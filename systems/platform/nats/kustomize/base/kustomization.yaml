@@ -4,4 +4,9 @@ kind: Kustomization
 resources:
   - statefulset.yaml
   - headless-service.yaml
-  - service.yaml
+  - client-service.yaml
+
+configMapGenerator:
+  - name: nats-config
+    files:
+      - nats.conf

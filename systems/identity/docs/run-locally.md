@@ -15,12 +15,10 @@ To run a component directly after `up`, run `skaffold dev` from `systems/identit
 
 ## Browser tests
 
-After `make -C systems/identity up`, deploy the API and UI. Match the API's WebAuthn origin to the browser port.
+After `make -C systems/identity up`, deploy the API and UI. The local API and Playwright both use `http://localhost:8080` as the browser origin.
 
 ```sh
 (cd systems/identity && skaffold run -m identity-api,identity-ui)
-kubectl set env -n identity deployment/api ORIGIN=http://localhost:8080
-kubectl rollout status -n identity deployment/api
 kubectl port-forward -n identity service/ui 8080:3000
 ```
 
@@ -30,7 +28,7 @@ Leave the port forward running. Start the browser suite in a second terminal fro
 cd systems/identity/ui
 npm ci
 npx playwright install chromium
-PLAYWRIGHT_BASE_URL=http://localhost:8080 npm run test:e2e
+npm run test:e2e
 ```
 
 ## Event delivery

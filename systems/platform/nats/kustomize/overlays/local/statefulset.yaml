@@ -5,6 +5,16 @@ metadata:
   name: nats
 
 spec:
+  template:
+    spec:
+      containers:
+        - name: nats
+          env:
+            - name: NATS_CLUSTER_NAME
+              value: LOCAL
+            - name: NATS_SYS_PASSWORD
+              value: changeit
+
   volumeClaimTemplates:
     - metadata:
         name: nats-storage
